@@ -380,11 +380,7 @@ if (lead.estimateSummary) {
 }
 
 
-  let savedLead;
-
-let savedLead;
-
-let savedLead;
+ let savedLead;
 
 try {
   savedLead = await appendLead(lead);
@@ -397,33 +393,13 @@ try {
   });
 }
 
-try {
-  const emailMessages = buildLeadEmailMessages(savedLead);
-
-  await transporter.sendMail({
-    from: '"Tax Estimator" <greatestbusiness1@gmail.com>',
-    to: "greatestbusiness1@gmail.com",
-    subject: emailMessages.internalSubject,
-    text: emailMessages.internalBody
-  });
-
-  await transporter.sendMail({
-    from: '"Greatest Business Solution LLC" <greatestbusiness1@gmail.com>',
-    to: savedLead.contact.email,
-    subject: emailMessages.clientSubject,
-    text: emailMessages.clientBody
-  });
-
-  console.log("📧 Smart emails sent (internal + client)");
-} catch (err) {
-  console.error("[/api/lead] Email error:", err);
-}
+console.log("Lead saved successfully:", savedLead.leadId);
+console.log("Email sending skipped on live deploy for now.");
 
 return res.status(201).json({
   ok: true,
   leadId: savedLead.leadId,
   message: "Your request has been received. A tax professional will contact you within 1 business day."
-});
 });
 
 // =============================================================================
