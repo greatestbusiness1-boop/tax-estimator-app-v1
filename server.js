@@ -380,38 +380,44 @@ if (lead.estimateSummary) {
 }
 
 
-  try {
-    const savedLead = await appendLead(lead);
-recentLeads.set(savedLead.leadId, savedLead);
+  let savedLead;
 
-const emailMessages = buildLeadEmailMessages(savedLead);
+try {
+  savedLead = await appendLead(lead);
+  recentLeads.set(savedLead.leadId, savedLead);
+} catch (err) {
+  console.error("[/api/lead] Save error:", err);
+  return res.status(500).json({
+    ok: false,
+    errors: ["Could not save your request. Please try again."]
+  });
+}
 
-    await transporter.sendMail({
-      from: '"Tax Estimator" <greatestbusiness1@gmail.com>',
-      to: "greatestbusiness1@gmail.com",
-      subject: emailMessages.internalSubject,
-      text: emailMessages.internalBody
-    });
+try {
+  const emailMessages = buildLeadEmailMessages(savedLead);
 
-    await transporter.sendMail({
-      from: '"Greatest Business Solution LLC" <greatestbusiness1@gmail.com>',
-      to: savedLead.contact.email,
-      subject: emailMessages.clientSubject,
-      text: emailMessages.clientBody
-    });
+  await transporter.sendMail({
+    from: '"Tax Estimator" <greatestbusiness1@gmail.com>',
+    to: "greatestbusiness1@gmail.com",
+    subject: emailMessages.internalSubject,
+    text: emailMessages.internalBody
+  });
 
-    console.log("📧 Smart emails sent (internal + client)");
-  } catch (err) {
-    console.error("[/api/lead] Save error:", err);
-    return res.status(500).json({
-      ok: false,
-      errors: ["Could not save your request. Please try again."]
-    });
-  }
+  await transporter.sendMail({
+    from: '"Greatest Business Solution LLC" <greatestbusiness1@gmail.com>',
+    to: savedLead.contact.email,
+    subject: emailMessages.clientSubject,
+    text: emailMessages.clientBody
+  });
 
-  return res.status(201).json({
+  console.log("📧 Smart emails sent (internal + client)");
+} catch (err) {
+  console.error("[/api/lead] Email error:", err);
+}
+
+return res.status(201).json({
   ok: true,
-  leadId: lead.leadId,
+  leadId: savedLead.leadId,
   message: "Your request has been received. A tax professional will contact you within 1 business day."
 });
 });
