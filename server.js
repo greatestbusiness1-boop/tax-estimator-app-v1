@@ -382,6 +382,8 @@ if (lead.estimateSummary) {
 
   let savedLead;
 
+let savedLead;
+
 try {
   savedLead = await appendLead(lead);
   recentLeads.set(savedLead.leadId, savedLead);
