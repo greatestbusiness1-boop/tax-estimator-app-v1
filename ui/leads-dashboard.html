@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leads Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #12233d;
+      margin: 0;
+      padding: 24px 16px;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(15, 44, 86, 0.08);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      color: #0f2c56;
+    }
+
+    .header p {
+      margin: 0;
+      color: #5a6a85;
+      font-size: 16px;
+    }
+
+    .lead-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(15, 44, 86, 0.08);
+      border: 1px solid rgba(91, 123, 178, 0.10);
+    }
+
+    .lead-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .lead-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f2c56;
+      margin: 0 0 4px;
+    }
+
+    .lead-meta {
+      color: #5a6a85;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-right: 8px;
+    }
+
+    .priority-high { background: #fee2e2; color: #b91c1c; }
+    .priority-medium { background: #fef3c7; color: #b45309; }
+    .priority-low { background: #dcfce7; color: #15803d; }
+
+    .status-badge {
+      background: #e0ecff;
+      color: #1d4ed8;
+    }
+
+    .summary {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f9fbfe;
+      border: 1px solid #dbe4f0;
+      line-height: 1.8;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 180px 1fr 140px;
+      gap: 12px;
+      align-items: start;
+      margin-top: 14px;
+    }
+
+    select,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cfd9e8;
+      border-radius: 12px;
+      padding: 12px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      background: #0f2c56;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #173c73;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      color: #5a6a85;
+    }
+
+    .save-msg {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Leads Dashboard</h1>
+      <p>Track new leads, update statuses, and keep notes on your follow-up activity.</p>
+    </div>
+
+    <div id="leadsContainer">
+      <div class="empty">Loading leads...</div>
+    </div>
+  </div>
+
+  <script>
+    function esc(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function priorityClass(priority) {
+      if (priority === "high") return "priority-high";
+      if (priority === "medium") return "priority-medium";
+      return "priority-low";
+    }
+
+    async function loadLeads() {
+      const container = document.getElementById("leadsContainer");
+
+      try {
+        const res = await fetch("/api/leads");
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error("Could not load leads.");
+        }
+
+        const leads = data.leads || [];
+
+        if (!leads.length) {
+          container.innerHTML = `<div class="empty">No leads found yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = leads
+          .slice()
+          .reverse()
+          .map((lead) => {
+            const summary = lead.estimateSummary || {};
+            const total = summary.totalLine || "No summary available";
+            const federal = summary.federalLine || "";
+            const state = summary.stateLine || "";
+            const notes = lead.notes || "";
+            const status = lead.status || "New";
+
+            return `
+              <div class="lead-card" id="card-${esc(lead.leadId)}">
+                <div class="lead-top">
+                  <div>
+                    <div class="lead-name">${esc(lead.contact?.name || "Unknown Lead")}</div>
+                    <div class="lead-meta">
+                      ${esc(lead.contact?.email || "")}<br>
+                      ${esc(lead.contact?.phone || "No phone")}<br>
+                      Lead ID: ${esc(lead.leadId)}<br>
+                      Submitted: ${esc(lead.timestamp)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span class="badge ${priorityClass(lead.priority)}">${esc(lead.priority || "low")}</span>
+                    <span class="badge status-badge">${esc(status)}</span>
+                  </div>
+                </div>
+
+                <div class="summary">
+                  <strong>Estimate Summary</strong><br>
+                  ${esc(total)}<br>
+                  ${esc(federal)}<br>
+                  ${esc(state)}
+                </div>
+
+                <div class="controls">
+                  <select id="status-${esc(lead.leadId)}">
+                    ${["New", "Contacted", "Booked", "Follow-up Needed", "Closed"]
+                      .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
+                      .join("")}
+                  </select>
+
+                  <textarea id="notes-${esc(lead.leadId)}" placeholder="Add notes about calls, emails, bookings, follow-up, etc.">${esc(notes)}</textarea>
+
+                  <div>
+                    <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
+                    <div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      } catch (err) {
+        container.innerHTML = `<div class="empty">${esc(err.message || "Error loading leads.")}</div>`;
+      }
+    }
+
+    async function saveLead(leadId) {
+      const statusEl = document.getElementById(`status-${leadId}`);
+      const notesEl = document.getElementById(`notes-${leadId}`);
+      const msgEl = document.getElementById(`msg-${leadId}`);
+
+      msgEl.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: statusEl.value,
+            notes: notesEl.value
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data?.error || "Could not save lead.");
+        }
+
+        msgEl.textContent = "Saved";
+      } catch (err) {
+        msgEl.textContent = "Error saving";
+      }
+    }
+
+    loadLeads();
+  </script>
+</body>
+</html>
