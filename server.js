@@ -36,6 +36,24 @@ const transporter = nodemailer.createTransport({
 // LEADS FILE HELPERS
 // =============================================================================
 
+function readLeads() {
+  try {
+    if (!fs.existsSync(LEADS_FILE)) return [];
+    const raw = fs.readFileSync(LEADS_FILE, "utf8").trim();
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error("[leads] Read error:", err.message);
+    return [];
+  }
+}
+
+function writeLeads(leads) {
+  const tmp = LEADS_FILE + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(leads, null, 2), "utf8");
+  fs.renameSync(tmp, LEADS_FILE);
+}
+
 async function appendLead(lead) {
   const row = {
     leadId: lead.leadId,
@@ -55,33 +73,27 @@ async function appendLead(lead) {
     filingYear: lead.taxData?.filingYear || null
   };
 
-  const { error } = await supabase
-    .from("leads")
-    .insert([row]);
+  try {
+    const { error } = await supabase
+      .from("leads")
+      .insert([row]);
 
-  if (error) {
-    console.error("Supabase insert error:", error);
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    console.log("Lead saved to Supabase:", lead.leadId);
+    return lead;
+  } catch (err) {
+    console.error("Supabase insert failed. Saving to local leads.json instead:", err.message || err);
+
+    const leads = readLeads();
+    leads.push(lead);
+    writeLeads(leads);
+
+    console.log("Lead saved locally:", lead.leadId);
+    return lead;
   }
-
-  return lead;
-}
-
-function mapRowToLead(row) {
-  return {
-    leadId: row.leadId,
-    timestamp: row.estimate?.timestamp || row.created_at,
-    priority: row.estimate?.priority || "low",
-    status: row.estimate?.status || "New",
-    notes: row.estimate?.notes || "",
-    contact: {
-      name: row.name || "",
-      email: row.email || "",
-      phone: row.phone || ""
-    },
-    taxData: row.estimate?.taxData || null,
-    estimateSummary: row.estimate?.estimateSummary || {}
-  };
 }
 
 // =============================================================================
@@ -143,6 +155,25 @@ function buildEstimateDisplay(estimateSummary = {}) {
   };
 }
 
+function mapRowToLead(row) {
+  const estimate = row.estimate || {};
+
+  return {
+    leadId: row.leadId || estimate.leadId || "",
+    timestamp: estimate.timestamp || row.created_at || "",
+    priority: estimate.priority || "medium",
+    status: estimate.status || "New",
+    notes: estimate.notes || "",
+    contact: estimate.contact || {
+      name: row.name || "",
+      email: row.email || "",
+      phone: row.phone || ""
+    },
+    taxData: estimate.taxData || null,
+    estimateSummary: estimate.estimateSummary || {}
+  };
+}
+
 function buildLeadEmailMessages(lead) {
   const priority = lead.priority || "low";
   const name = lead.contact?.name || "Client";
@@ -166,7 +197,7 @@ function buildLeadEmailMessages(lead) {
 
     clientSubject = "Your tax estimate review is ready";
     clientBody =
-`Hello ${name},
+      `Hello ${name},
 
 Thank you for using the tax estimator.
 
@@ -191,7 +222,7 @@ Greatest Business Solution LLC`;
 
     clientSubject = "Your tax estimate summary";
     clientBody =
-`Hello ${name},
+      `Hello ${name},
 
 Thank you for using the tax estimator.
 
@@ -214,7 +245,7 @@ Greatest Business Solution LLC`;
 
     clientSubject = "Your tax estimate has been received";
     clientBody =
-`Hello ${name},
+      `Hello ${name},
 
 Thank you for using the tax estimator.
 
@@ -232,7 +263,7 @@ Greatest Business Solution LLC`;
 
   const internalSubject = `${internalHeadline} - ${name}`;
   const internalBody =
-`${internalHeadline}
+    `${internalHeadline}
 
 Lead ID: ${lead.leadId}
 Submitted: ${lead.timestamp}
@@ -334,72 +365,73 @@ app.post("/api/lead", async (req, res) => {
   const leadId = `LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
   const formattedPhone = formatPhoneNumber(phone);
 
- const lead = {
-  leadId,
-  timestamp: new Date().toISOString(),
-  priority: priority || "low",
-  status: "New",
-  notes: "",
-  contact: {
-    name: name.trim(),
-    email: email.trim(),
-    phone: formattedPhone || null
-  },
-  taxData: taxData || null,
-  estimateSummary: estimateSummary || {}
-};
+  const lead = {
+    leadId,
+    timestamp: new Date().toISOString(),
+    priority: priority || "low",
+    status: "New",
+    notes: "",
+    contact: {
+      name: name.trim(),
+      email: email.trim(),
+      phone: formattedPhone || null
+    },
+    taxData: taxData || null,
+    estimateSummary: estimateSummary || {}
+  };
 
-// 🔥 Build summary lines for dashboard
-if (lead.estimateSummary) {
-  const e = lead.estimateSummary;
+  // 🔥 Build summary lines for dashboard
+  if (lead.estimateSummary) {
+    const e = lead.estimateSummary;
 
-  const federal = e.federal?.net || 0;
-  const state = e.state?.net || 0;
-  const combined = (federal + state);
+    const federal = e.federal?.net || 0;
+    const state = e.state?.net || 0;
+    const combined = (federal + state);
 
-  lead.estimateSummary.federalLine =
-    federal > 0
-      ? `Federal Refund: $${Math.round(federal).toLocaleString()}`
-      : federal < 0
-      ? `Federal Due: $${Math.abs(Math.round(federal)).toLocaleString()}`
-      : `Federal: $0`;
+    lead.estimateSummary.federalLine =
+      federal > 0
+        ? `Federal Refund: $${Math.round(federal).toLocaleString()}`
+        : federal < 0
+          ? `Federal Due: $${Math.abs(Math.round(federal)).toLocaleString()}`
+          : `Federal: $0`;
 
-  lead.estimateSummary.stateLine =
-    state > 0
-      ? `State Refund: $${Math.round(state).toLocaleString()}`
-      : state < 0
-      ? `State Due: $${Math.abs(Math.round(state)).toLocaleString()}`
-      : `State: $0`;
+    lead.estimateSummary.stateLine =
+      state > 0
+        ? `State Refund: $${Math.round(state).toLocaleString()}`
+        : state < 0
+          ? `State Due: $${Math.abs(Math.round(state)).toLocaleString()}`
+          : `State: $0`;
 
-  lead.estimateSummary.totalLine =
-    combined > 0
-      ? `Estimated Total Refund: $${Math.round(combined).toLocaleString()}`
-      : combined < 0
-      ? `Estimated Total Due: $${Math.abs(Math.round(combined)).toLocaleString()}`
-      : `Break-even`;
-}
+    lead.estimateSummary.totalLine =
+      combined > 0
+        ? `Estimated Total Refund: $${Math.round(combined).toLocaleString()}`
+        : combined < 0
+          ? `Estimated Total Due: $${Math.abs(Math.round(combined)).toLocaleString()}`
+          : `Break-even`;
+  }
 
 
- let savedLead;
+  let savedLead;
 
-try {
-  savedLead = await appendLead(lead);
-  recentLeads.set(savedLead.leadId, savedLead);
-} catch (err) {
-  console.error("[/api/lead] Save error:", err);
-  return res.status(500).json({
-    ok: false,
-    errors: ["Could not save your request. Please try again."]
+  try {
+    savedLead = await appendLead(lead);
+    recentLeads.set(savedLead.leadId, savedLead);
+  } catch (err) {
+    console.error("[/api/lead] Save error:", err);
+    return res.status(500).json({
+      ok: false,
+      errors: ["Could not save your request. Please try again."]
+    });
+  }
+
+  console.log("Lead saved successfully:", savedLead.leadId);
+  console.log("Email sending skipped on live deploy for now.");
+
+  return res.status(201).json({
+    ok: true,
+    leadId: savedLead.leadId,
+    message: "Your request has been received. A tax professional will contact you within 1 business day."
   });
-}
-
-console.log("Lead saved successfully:", savedLead.leadId);
-console.log("Email sending skipped on live deploy for now.");
-
-return res.status(201).json({
-  ok: true,
-  leadId: savedLead.leadId,
-  message: "Your request has been received. A tax professional will contact you within 1 business day."
 });
 
 // =============================================================================
@@ -517,26 +549,36 @@ app.get("/leads-dashboard", (req, res) => {
 // =============================================================================
 
 app.get("/api/leads", async (req, res) => {
-  const { data, error } = await supabase
-    .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Supabase load leads error:", error);
-    return res.status(500).json({
-      ok: false,
-      error: "Could not load leads."
+    if (error) {
+      throw error;
+    }
+
+    const leads = (data || []).map(mapRowToLead);
+
+    return res.status(200).json({
+      ok: true,
+      source: "supabase",
+      count: leads.length,
+      leads
+    });
+  } catch (err) {
+    console.error("Supabase load leads failed. Loading local leads.json instead:", err.message || err);
+
+    const leads = readLeads();
+
+    return res.status(200).json({
+      ok: true,
+      source: "local",
+      count: leads.length,
+      leads
     });
   }
-
-  const leads = (data || []).map(mapRowToLead);
-
-  return res.status(200).json({
-    ok: true,
-    count: leads.length,
-    leads
-  });
 });
 
 // =============================================================================

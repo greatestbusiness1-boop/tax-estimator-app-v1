@@ -6,6 +6,8 @@
 
 let _lastTaxInput = null;
 let _lastEstimate = null;
+let _leadGatewayUnlocked = false;
+let _leadGatewayContact = null;
 
 // =============================================================================
 // SCREEN NAVIGATION
@@ -261,9 +263,9 @@ async function handleCalculate() {
     _lastTaxInput = input;
     _lastEstimate = data.result;
 
-    resetLeadForm();
-    renderResults(data.result, input);
-    goToScreen("results");
+    _leadGatewayUnlocked = false;
+    _leadGatewayContact = null;
+    showLeadGateway(input, data.result);
   } catch (err) {
     console.error("[handleCalculate]", err);
     showErrors([
@@ -271,6 +273,233 @@ async function handleCalculate() {
     ]);
   } finally {
     setCalculateLoading(false);
+  }
+}
+
+// =============================================================================
+// LEAD GATEWAY — CAPTURE NAME + EMAIL BEFORE SHOWING RESULTS
+// =============================================================================
+
+function showLeadGateway(input, result) {
+  const existing = document.getElementById("leadGatewayOverlay");
+  if (existing) existing.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "leadGatewayOverlay";
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:rgba(15, 23, 42, 0.78);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  `;
+
+  overlay.innerHTML = `
+    <div
+      style="
+        width:100%;
+        max-width:520px;
+        background:#ffffff;
+        border-radius:22px;
+        padding:28px;
+        box-shadow:0 30px 80px rgba(0,0,0,0.35);
+        border:3px solid #0f2c56;
+      "
+    >
+      <div style="font-size:14px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+        Your Estimate Is Ready
+      </div>
+
+      <h2 style="margin:0 0 12px;color:#0f2c56;font-size:30px;line-height:1.15;">
+        Unlock Your Full Tax Estimate
+      </h2>
+
+      <p style="margin:0 0 18px;color:#334155;font-size:16px;line-height:1.6;">
+        Enter your first name and email to view your full tax estimate and personalized tax insights.
+      </p>
+
+      <div id="leadGatewayErrors" style="display:none;background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:12px;border-radius:12px;margin-bottom:14px;font-weight:700;"></div>
+
+      <div style="display:grid;gap:12px;">
+        <div>
+          <label style="display:block;font-weight:800;color:#0f172a;margin-bottom:6px;">First Name</label>
+          <input
+            id="gatewayFirstName"
+            type="text"
+            placeholder="First name"
+            style="width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;"
+          />
+        </div>
+
+        <div>
+          <label style="display:block;font-weight:800;color:#0f172a;margin-bottom:6px;">Email Address</label>
+          <input
+            id="gatewayEmail"
+            type="email"
+            placeholder="you@email.com"
+            style="width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;"
+          />
+        </div>
+
+        <button
+          type="button"
+          id="gatewayUnlockBtn"
+          style="
+            margin-top:6px;
+            width:100%;
+            background:#0f2c56;
+            color:#fff;
+            border:none;
+            border-radius:14px;
+            padding:16px;
+            font-size:17px;
+            font-weight:900;
+            cursor:pointer;
+          "
+        >
+          View My Full Estimate
+        </button>
+
+        <div style="font-size:13px;color:#64748b;line-height:1.5;text-align:center;">
+          No spam. Your information is used to provide your estimate and follow-up tax options.
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const btn = document.getElementById("gatewayUnlockBtn");
+  if (btn) {
+    btn.addEventListener("click", () => submitLeadGateway(input, result));
+  }
+}
+
+async function submitLeadGateway(input, result) {
+  const firstName = (document.getElementById("gatewayFirstName")?.value || "").trim();
+  const email = (document.getElementById("gatewayEmail")?.value || "").trim();
+  const errorBox = document.getElementById("leadGatewayErrors");
+  const btn = document.getElementById("gatewayUnlockBtn");
+
+  const errors = [];
+
+  if (!firstName) errors.push("First name is required.");
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Please enter a valid email address.");
+  }
+
+  if (errors.length > 0) {
+    if (errorBox) {
+      errorBox.innerHTML = errors.map((e) => `<div>${escHtml(e)}</div>`).join("");
+      errorBox.style.display = "block";
+    }
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Unlocking Estimate...";
+    btn.style.opacity = "0.75";
+  }
+
+  const estimateSummary = result
+    ? {
+        taxYear: result.meta?.taxYear,
+        filingStatus: result.meta?.filingStatus,
+        stateCode: result.meta?.stateCode,
+        stateName: result.meta?.stateName,
+        federal: {
+          grossIncome: result.federal?.summary?.grossIncome,
+          agi: result.federal?.summary?.agi,
+          taxableIncome: result.federal?.summary?.taxableIncome,
+          taxBeforeCredits: result.federal?.summary?.taxBeforeCredits,
+          taxAfterCredits: result.federal?.summary?.taxAfterCredits,
+          federalWithheld: result.federal?.summary?.federalWithheld,
+          estimatedTaxPayments: result.federal?.summary?.estimatedTaxPayments,
+          selfEmploymentIncome: result.federal?.summary?.selfEmploymentIncome,
+          selfEmploymentTax: result.federal?.summary?.selfEmploymentTax,
+          net: result.federal?.summary?.net,
+          isRefund: result.federal?.summary?.isRefund,
+          refundAmount: result.federal?.summary?.refundAmount,
+          owedAmount: result.federal?.summary?.owedAmount,
+          marginalRate: result.federal?.summary?.marginalRate,
+          effectiveRate: result.federal?.summary?.effectiveRate,
+        },
+        state: {
+          stateName: result.meta?.stateName,
+          hasIncomeTax: result.state?.hasIncomeTax,
+          canEstimate: result.state?.canEstimate,
+          stateTaxableIncome: result.state?.summary?.stateTaxableIncome,
+          stateTax: result.state?.summary?.stateTax,
+          stateWithheld: result.state?.summary?.stateWithheld,
+          net: result.state?.summary?.net,
+          isRefund: result.state?.summary?.isRefund,
+          refundAmount: result.state?.summary?.refundAmount,
+          owedAmount: result.state?.summary?.owedAmount,
+        },
+        combined: result.combined,
+      }
+    : null;
+
+  try {
+    const response = await fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: firstName,
+        email,
+        phone: null,
+        priority: result
+          ? getReviewStatus(result.federal.summary, result.combined).level
+          : "low",
+        taxData: input || null,
+        estimateSummary: estimateSummary || null,
+      }),
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("The server returned an unreadable response. Please try again.");
+    }
+
+    if (!response.ok || !data.ok) {
+      const serverErrors = Array.isArray(data.errors) && data.errors.length > 0
+        ? data.errors
+        : ["Could not unlock your estimate. Please try again."];
+      throw new Error(serverErrors.join(" "));
+    }
+
+    _leadGatewayUnlocked = true;
+    _leadGatewayContact = {
+      firstName,
+      email,
+      leadId: data.leadId || null,
+    };
+
+    const overlay = document.getElementById("leadGatewayOverlay");
+    if (overlay) overlay.remove();
+
+    resetLeadForm();
+    renderResults(result, input);
+    goToScreen("results");
+  } catch (err) {
+    if (errorBox) {
+      errorBox.textContent = err.message || "Could not unlock your estimate. Please try again.";
+      errorBox.style.display = "block";
+    }
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "View My Full Estimate";
+      btn.style.opacity = "";
+    }
   }
 }
 
@@ -314,41 +543,41 @@ async function handleLeadSubmit(event) {
 
   const estimateSummary = _lastEstimate
     ? {
-        taxYear: _lastEstimate.meta?.taxYear,
-        filingStatus: _lastEstimate.meta?.filingStatus,
-        stateCode: _lastEstimate.meta?.stateCode,
+      taxYear: _lastEstimate.meta?.taxYear,
+      filingStatus: _lastEstimate.meta?.filingStatus,
+      stateCode: _lastEstimate.meta?.stateCode,
+      stateName: _lastEstimate.meta?.stateName,
+      federal: {
+        grossIncome: _lastEstimate.federal?.summary?.grossIncome,
+        agi: _lastEstimate.federal?.summary?.agi,
+        taxableIncome: _lastEstimate.federal?.summary?.taxableIncome,
+        taxBeforeCredits: _lastEstimate.federal?.summary?.taxBeforeCredits,
+        taxAfterCredits: _lastEstimate.federal?.summary?.taxAfterCredits,
+        federalWithheld: _lastEstimate.federal?.summary?.federalWithheld,
+        estimatedTaxPayments: _lastEstimate.federal?.summary?.estimatedTaxPayments,
+        selfEmploymentIncome: _lastEstimate.federal?.summary?.selfEmploymentIncome,
+        selfEmploymentTax: _lastEstimate.federal?.summary?.selfEmploymentTax,
+        net: _lastEstimate.federal?.summary?.net,
+        isRefund: _lastEstimate.federal?.summary?.isRefund,
+        refundAmount: _lastEstimate.federal?.summary?.refundAmount,
+        owedAmount: _lastEstimate.federal?.summary?.owedAmount,
+        marginalRate: _lastEstimate.federal?.summary?.marginalRate,
+        effectiveRate: _lastEstimate.federal?.summary?.effectiveRate,
+      },
+      state: {
         stateName: _lastEstimate.meta?.stateName,
-        federal: {
-          grossIncome: _lastEstimate.federal?.summary?.grossIncome,
-          agi: _lastEstimate.federal?.summary?.agi,
-          taxableIncome: _lastEstimate.federal?.summary?.taxableIncome,
-          taxBeforeCredits: _lastEstimate.federal?.summary?.taxBeforeCredits,
-          taxAfterCredits: _lastEstimate.federal?.summary?.taxAfterCredits,
-          federalWithheld: _lastEstimate.federal?.summary?.federalWithheld,
-          estimatedTaxPayments: _lastEstimate.federal?.summary?.estimatedTaxPayments,
-          selfEmploymentIncome: _lastEstimate.federal?.summary?.selfEmploymentIncome,
-          selfEmploymentTax: _lastEstimate.federal?.summary?.selfEmploymentTax,
-          net: _lastEstimate.federal?.summary?.net,
-          isRefund: _lastEstimate.federal?.summary?.isRefund,
-          refundAmount: _lastEstimate.federal?.summary?.refundAmount,
-          owedAmount: _lastEstimate.federal?.summary?.owedAmount,
-          marginalRate: _lastEstimate.federal?.summary?.marginalRate,
-          effectiveRate: _lastEstimate.federal?.summary?.effectiveRate,
-        },
-        state: {
-          stateName: _lastEstimate.meta?.stateName,
-          hasIncomeTax: _lastEstimate.state?.hasIncomeTax,
-          canEstimate: _lastEstimate.state?.canEstimate,
-          stateTaxableIncome: _lastEstimate.state?.summary?.stateTaxableIncome,
-          stateTax: _lastEstimate.state?.summary?.stateTax,
-          stateWithheld: _lastEstimate.state?.summary?.stateWithheld,
-          net: _lastEstimate.state?.summary?.net,
-          isRefund: _lastEstimate.state?.summary?.isRefund,
-          refundAmount: _lastEstimate.state?.summary?.refundAmount,
-          owedAmount: _lastEstimate.state?.summary?.owedAmount,
-        },
-        combined: _lastEstimate.combined,
-      }
+        hasIncomeTax: _lastEstimate.state?.hasIncomeTax,
+        canEstimate: _lastEstimate.state?.canEstimate,
+        stateTaxableIncome: _lastEstimate.state?.summary?.stateTaxableIncome,
+        stateTax: _lastEstimate.state?.summary?.stateTax,
+        stateWithheld: _lastEstimate.state?.summary?.stateWithheld,
+        net: _lastEstimate.state?.summary?.net,
+        isRefund: _lastEstimate.state?.summary?.isRefund,
+        refundAmount: _lastEstimate.state?.summary?.refundAmount,
+        owedAmount: _lastEstimate.state?.summary?.owedAmount,
+      },
+      combined: _lastEstimate.combined,
+    }
     : null;
 
   console.log("about to fetch /api/lead", { estimateSummary });
@@ -676,12 +905,119 @@ function renderTaxProInsightBanner(fed, combined) {
         </button>
 
         <button type="button" id="paidReviewCtaBtn" class="btn-cta-secondary" style="margin-left:10px;">
-          Unlock Paid Tax Review ($29)
+          Get Personalized Tax Strategy Review ($29)
         </button>
 
-        <div class="cta-subtext">
-          Start with a free follow-up or unlock a paid professional review
-        </div>
+        <div class="cta-subtext" style="margin-top:14px;">
+  Personalized review includes:
+</div>
+
+<div
+  style="
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:14px;
+    font-weight:600;
+    color:#1e293b;
+  "
+>
+  <div>✓ Personalized Tax Strategy Review</div>
+
+  <div>✓ Review of possible deductions and credits</div>
+
+  <div>✓ Tax Review Summary with recommended next steps</div>
+  
+  </div>
+
+<div
+  class="transcript-review-box"
+  style="
+    margin-top:24px;
+    background:#0f172a;
+    border:2px solid #38bdf8;
+    border-radius:16px;
+    padding:20px;
+    color:white;
+  "
+>
+  <div
+    style="
+      font-size:24px;
+      font-weight:800;
+      margin-bottom:12px;
+      color:#38bdf8;
+    "
+  >
+    Need IRS Transcript Review?
+  </div>
+
+  <div
+    style="
+      font-size:15px;
+      line-height:1.7;
+      color:#dbeafe;
+      margin-bottom:18px;
+    "
+  >
+    Missing tax forms or not sure what the IRS has on file?
+    Request an IRS Transcript Review so we can help identify
+    wage records, income documents, prior-year filing issues,
+    IRS account balances, and possible next steps.
+  </div>
+
+  <div
+    style="
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom:20px;
+      color:#dbeafe;
+      font-size:14px;
+      font-weight:600;
+    "
+  >
+    <div>✔ Wage & Income Transcript Review</div>
+    <div>✔ Prior-Year Filing Research</div>
+    <div>✔ IRS Notice & Balance Review</div>
+  </div>
+
+  <div
+    style="
+      margin-bottom:18px;
+      color:#fde68a;
+      font-weight:700;
+      font-size:15px;
+    "
+  >
+    Estimated Transcript Review Fee:
+    $150–$250 depending on complexity
+  </div>
+
+  <button
+    type="button"
+    id="transcriptReviewBtn"
+    class="cta-urgent-btn"
+    style="
+      width:100%;
+      max-width:360px;
+    "
+  >
+    Request Transcript Review
+  </button>
+</div>
+
+<div
+  style="
+    margin-top:14px;
+    font-size:13px;
+    color:#334155;
+    line-height:1.6;
+  "
+>
+  This paid review is designed for taxpayers who want a deeper professional analysis beyond the free estimate calculator.
+</div>
       </div>
     </div>
   `;
@@ -902,8 +1238,8 @@ function renderResults(result, input) {
   const cta = cx.cta || {};
   const ctaTitle = document.getElementById("ctaTitle");
   const ctaCtx = document.getElementById("ctaContext");
-  if (ctaTitle) ctaTitle.textContent = cta.primary || "Have a Tax Professional Review My Return";
-  if (ctaCtx) ctaCtx.textContent = cta.context || "A professional review can help confirm your estimate and identify opportunities.";
+  if (ctaTitle) ctaTitle.textContent = cta.primary || "Get a Personalized Tax Strategy Review";
+  if (ctaCtx) ctaCtx.textContent = cta.context || "Receive a personalized tax strategy review with recommendations, deduction analysis, and guidance based on your estimate results.";
 }
 
 // =============================================================================
