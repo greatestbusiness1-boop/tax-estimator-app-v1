@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -79,9 +80,20 @@
       margin-right: 8px;
     }
 
-    .priority-high { background: #fee2e2; color: #b91c1c; }
-    .priority-medium { background: #fef3c7; color: #b45309; }
-    .priority-low { background: #dcfce7; color: #15803d; }
+    .priority-high {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .priority-medium {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .priority-low {
+      background: #dcfce7;
+      color: #15803d;
+    }
 
     .status-badge {
       background: #e0ecff;
@@ -162,6 +174,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="header">
@@ -169,6 +182,45 @@
       <p>Track new leads, update statuses, and keep notes on your follow-up activity.</p>
     </div>
 
+    <div id="leadStats" style="
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:14px;
+  margin-bottom:20px;
+">
+      <div class="summary"><strong>Total Leads</strong><br><span id="statTotal">0</span></div>
+      <div class="summary"><strong>New</strong><br><span id="statNew">0</span></div>
+      <div class="summary"><strong>Contacted</strong><br><span id="statContacted">0</span></div>
+      <div class="summary"><strong>Booked</strong><br><span id="statBooked">0</span></div>
+      <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
+      <div class="summary">
+        <strong>Converted</strong><br>
+        <span id="statConverted">0</span>
+      </div>
+      <div class="summary"><strong>Today</strong><br><span id="statToday">0</span></div>
+      <div class="summary"><strong>This Week</strong><br><span id="statWeek">0</span></div>
+      <div class="summary"><strong>This Month</strong><br><span id="statMonth">0</span></div>
+      <div class="summary"><strong>This Year</strong><br><span id="statYear">0</span></div>
+    </div>
+    <div style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;">
+      <button onclick="window.print()" style="background:#0f2c56;">
+        Print Visible Leads
+      </button>
+    </div>
+
+    <div
+      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(15,44,86,0.08);">
+      <strong>Filter Leads:</strong>
+      <select id="leadFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
+        <option value="All">All Leads</option>
+        <option value="New">New</option>
+        <option value="Contacted">Contacted</option>
+        <option value="Booked">Booked</option>
+        <option value="Follow-up Needed">Follow-up Needed</option>
+        <option value="Converted - Tax Client">Converted - Tax Client</option>
+        <option value="Closed">All Closed Leads</option>
+      </select>
+    </div>
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -200,13 +252,50 @@
         }
 
         const leads = data.leads || [];
+        const selectedFilter = document.getElementById("leadFilter")?.value || "All";
 
-        if (!leads.length) {
+        const visibleLeads = leads.filter((lead) => {
+          const status = lead.status || "New";
+
+          if (selectedFilter === "All") return true;
+          if (selectedFilter === "Closed") return status.startsWith("Closed -");
+          return status === selectedFilter;
+        });
+        document.getElementById("statTotal").textContent = leads.length;
+        document.getElementById("statNew").textContent = leads.filter(l => (l.status || "New") === "New").length;
+        document.getElementById("statContacted").textContent = leads.filter(l => (l.status || "") === "Contacted").length;
+        document.getElementById("statBooked").textContent = leads.filter(l => (l.status || "") === "Booked").length;
+        document.getElementById("statClosed").textContent =
+          leads.filter(l =>
+            (l.status || "").startsWith("Closed -")
+          ).length;
+        document.getElementById("statConverted").textContent =
+          leads.filter(l =>
+            (l.status || "") === "Converted - Tax Client"
+          ).length;
+
+        const now = new Date();
+
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        const startOfWeek = new Date(startOfToday);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        const leadDate = (lead) => new Date(lead.timestamp || 0);
+
+        document.getElementById("statToday").textContent = leads.filter(l => leadDate(l) >= startOfToday).length;
+        document.getElementById("statWeek").textContent = leads.filter(l => leadDate(l) >= startOfWeek).length;
+        document.getElementById("statMonth").textContent = leads.filter(l => leadDate(l) >= startOfMonth).length;
+        document.getElementById("statYear").textContent = leads.filter(l => leadDate(l) >= startOfYear).length;
+        if (!visibleLeads.length) {
           container.innerHTML = `<div class="empty">No leads found yet.</div>`;
           return;
         }
 
-        container.innerHTML = leads
+        container.innerHTML = visibleLeads
           .slice()
           .reverse()
           .map((lead) => {
@@ -245,16 +334,27 @@
 
                 <div class="controls">
                   <select id="status-${esc(lead.leadId)}">
-                    ${["New", "Contacted", "Booked", "Follow-up Needed", "Closed"]
-                      .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
-                      .join("")}
+                    ${[
+                "New",
+                "Contacted",
+                "Booked",
+                "Follow-up Needed",
+                "Converted - Tax Client",
+                "Closed - Not Interested",
+                "Closed - Bad Lead",
+                "Closed - Future Follow-Up"
+              ]
+                .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
+                .join("")}
                   </select>
 
                   <textarea id="notes-${esc(lead.leadId)}" placeholder="Add notes about calls, emails, bookings, follow-up, etc.">${esc(notes)}</textarea>
 
                   <div>
                     <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
-                    <div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
+
+
+<div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
                   </div>
                 </div>
               </div>
@@ -265,6 +365,7 @@
         container.innerHTML = `<div class="empty">${esc(err.message || "Error loading leads.")}</div>`;
       }
     }
+
 
     async function saveLead(leadId) {
       const statusEl = document.getElementById(`status-${leadId}`);
@@ -300,4 +401,5 @@
     loadLeads();
   </script>
 </body>
+
 </html>

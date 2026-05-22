@@ -409,41 +409,41 @@ async function submitLeadGateway(input, result) {
 
   const estimateSummary = result
     ? {
-        taxYear: result.meta?.taxYear,
-        filingStatus: result.meta?.filingStatus,
-        stateCode: result.meta?.stateCode,
+      taxYear: result.meta?.taxYear,
+      filingStatus: result.meta?.filingStatus,
+      stateCode: result.meta?.stateCode,
+      stateName: result.meta?.stateName,
+      federal: {
+        grossIncome: result.federal?.summary?.grossIncome,
+        agi: result.federal?.summary?.agi,
+        taxableIncome: result.federal?.summary?.taxableIncome,
+        taxBeforeCredits: result.federal?.summary?.taxBeforeCredits,
+        taxAfterCredits: result.federal?.summary?.taxAfterCredits,
+        federalWithheld: result.federal?.summary?.federalWithheld,
+        estimatedTaxPayments: result.federal?.summary?.estimatedTaxPayments,
+        selfEmploymentIncome: result.federal?.summary?.selfEmploymentIncome,
+        selfEmploymentTax: result.federal?.summary?.selfEmploymentTax,
+        net: result.federal?.summary?.net,
+        isRefund: result.federal?.summary?.isRefund,
+        refundAmount: result.federal?.summary?.refundAmount,
+        owedAmount: result.federal?.summary?.owedAmount,
+        marginalRate: result.federal?.summary?.marginalRate,
+        effectiveRate: result.federal?.summary?.effectiveRate,
+      },
+      state: {
         stateName: result.meta?.stateName,
-        federal: {
-          grossIncome: result.federal?.summary?.grossIncome,
-          agi: result.federal?.summary?.agi,
-          taxableIncome: result.federal?.summary?.taxableIncome,
-          taxBeforeCredits: result.federal?.summary?.taxBeforeCredits,
-          taxAfterCredits: result.federal?.summary?.taxAfterCredits,
-          federalWithheld: result.federal?.summary?.federalWithheld,
-          estimatedTaxPayments: result.federal?.summary?.estimatedTaxPayments,
-          selfEmploymentIncome: result.federal?.summary?.selfEmploymentIncome,
-          selfEmploymentTax: result.federal?.summary?.selfEmploymentTax,
-          net: result.federal?.summary?.net,
-          isRefund: result.federal?.summary?.isRefund,
-          refundAmount: result.federal?.summary?.refundAmount,
-          owedAmount: result.federal?.summary?.owedAmount,
-          marginalRate: result.federal?.summary?.marginalRate,
-          effectiveRate: result.federal?.summary?.effectiveRate,
-        },
-        state: {
-          stateName: result.meta?.stateName,
-          hasIncomeTax: result.state?.hasIncomeTax,
-          canEstimate: result.state?.canEstimate,
-          stateTaxableIncome: result.state?.summary?.stateTaxableIncome,
-          stateTax: result.state?.summary?.stateTax,
-          stateWithheld: result.state?.summary?.stateWithheld,
-          net: result.state?.summary?.net,
-          isRefund: result.state?.summary?.isRefund,
-          refundAmount: result.state?.summary?.refundAmount,
-          owedAmount: result.state?.summary?.owedAmount,
-        },
-        combined: result.combined,
-      }
+        hasIncomeTax: result.state?.hasIncomeTax,
+        canEstimate: result.state?.canEstimate,
+        stateTaxableIncome: result.state?.summary?.stateTaxableIncome,
+        stateTax: result.state?.summary?.stateTax,
+        stateWithheld: result.state?.summary?.stateWithheld,
+        net: result.state?.summary?.net,
+        isRefund: result.state?.summary?.isRefund,
+        refundAmount: result.state?.summary?.refundAmount,
+        owedAmount: result.state?.summary?.owedAmount,
+      },
+      combined: result.combined,
+    }
     : null;
 
   try {
@@ -903,32 +903,64 @@ function renderTaxProInsightBanner(fed, combined) {
         <button type="button" id="taxProInsightCtaBtn" class="cta-urgent-btn">
           Request Tax Pro Follow-Up
         </button>
-
-        <button type="button" id="paidReviewCtaBtn" class="btn-cta-secondary" style="margin-left:10px;">
-          Get Personalized Tax Strategy Review ($29)
-        </button>
-
-        <div class="cta-subtext" style="margin-top:14px;">
-  Personalized review includes:
+        <div
+  style="
+    margin-top:8px;
+    font-size:13px;
+    font-weight:700;
+    color:#475569;
+  "
+>
+  Free consultation • No payment required
 </div>
+
+        <button
+  type="button"
+  id="paidReviewCtaBtn"
+  style="
+    margin-top:12px;
+    background:#f59e0b;
+    color:#111827;
+    border:2px solid #92400e;
+    border-radius:12px;
+    padding:14px 22px;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(245,158,11,0.35);
+  "
+>
+  Get Personalized Tax Strategy Review ($29)
+</button>
 
 <div
   style="
-    margin-top:12px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    font-size:14px;
-    font-weight:600;
-    color:#1e293b;
+    margin-top:16px;
+    background:#fff7ed;
+    border:2px solid #f59e0b;
+    border-radius:14px;
+    padding:16px;
+    color:#1f2937;
+    max-width:720px;
   "
 >
-  <div>✓ Personalized Tax Strategy Review</div>
+  <div style="font-size:18px;font-weight:900;margin-bottom:10px;color:#92400e;">
+    What You Get for $29
+  </div>
 
-  <div>✓ Review of possible deductions and credits</div>
+  <div style="display:grid;gap:8px;font-size:14px;line-height:1.5;font-weight:650;">
+    <div>✓ Review of your estimate for possible missed deductions or credits</div>
+    <div>✓ Filing-status and dependent review based on the information entered</div>
+    <div>✓ Self-employment, mileage, and withholding review if applicable</div>
+    <div>✓ Written Tax Strategy Summary with recommended next steps</div>
+    <div>✓ Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
+  </div>
 
-  <div>✓ Tax Review Summary with recommended next steps</div>
-  
+  <div style="margin-top:12px;font-size:13px;color:#475569;line-height:1.5;">
+    This review does not replace a completed tax return. It is a strategy review based on the information you provide.
+  </div>
+</div>
+          
   </div>
 
 <div
