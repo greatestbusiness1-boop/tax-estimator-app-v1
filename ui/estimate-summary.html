@@ -247,11 +247,6 @@
       <ul class="detail-list" id="detailsList"></ul>
 
 
-      <a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank"
-        rel="noopener noreferrer">
-        Schedule Your 15-Minute Tax Review
-      </a>
-
       <div class="note">
         This is an estimate only, based on the information entered and not a completed or reviewed tax return.
         Final numbers may change after review of your tax documents, filing status, credits, deductions, and
@@ -320,11 +315,73 @@
         document.getElementById("pageSub").textContent =
           "Prepared by Greatest Business Solution LLC — This is an estimate based on the information provided.";
 
+        const resultType = combinedNet > 0 ? "refund" : combinedNet < 0 ? "balance due" : "break-even";
+        const plainEnglishMessage =
+          combinedNet > 0
+            ? `Based on the information provided, you are currently estimated to receive a combined federal and state refund of ${fmt(Math.abs(combinedNet))}. This does not mean the final return is guaranteed, but it gives you a strong starting point before a tax professional reviews your documents.`
+            : combinedNet < 0
+              ? `Based on the information provided, you are currently estimated to owe a combined federal and state balance of ${fmt(Math.abs(combinedNet))}. A tax professional review may help confirm the numbers, identify missed deductions or credits, and help you plan the best next step.`
+              : `Based on the information provided, your estimate appears close to break-even. A tax professional review can help confirm whether anything was missed before filing.`;
+
+        const federalChangeText =
+          federalNet < 0
+            ? "Federal withholding, credits, self-employment income, business expenses, dependents, and filing status may change the federal amount due."
+            : "Federal withholding, credits, dependents, filing status, self-employment income, and business deductions may change the federal refund amount.";
+
+        const stateChangeText =
+          stateNet < 0
+            ? "State withholding, state taxable income, residency, and state-specific rules may change the state balance due."
+            : "State withholding, state taxable income, residency, and state-specific rules may change the state refund amount.";
+
         document.getElementById("results").innerHTML = `
   <h2>Quick Results</h2>
   <p><strong>${federalNet >= 0 ? "Federal Refund" : "Federal Due"}:</strong> ${fmt(Math.abs(federalNet))}</p>
   <p><strong>${stateNet >= 0 ? "State Refund" : "State Due"}:</strong> ${fmt(Math.abs(stateNet))}</p>
   <p><strong>${combinedNet >= 0 ? "Total Refund" : "Total Due"}:</strong> ${fmt(Math.abs(combinedNet))}</p>
+
+  <div style="margin-top:22px;padding:18px;border-radius:16px;background:#eef6ff;border:1px solid #bfdbfe;">
+    <h2 style="margin-top:0;margin-bottom:10px;">What This Means in Plain English</h2>
+    <p style="margin:0;color:#334155;line-height:1.7;font-size:16px;">
+      ${plainEnglishMessage}
+    </p>
+  </div>
+
+  <div style="margin-top:18px;padding:18px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;">
+    <h2 style="margin-top:0;margin-bottom:10px;">What Could Change This Estimate</h2>
+    <ul style="margin:0;padding-left:22px;color:#334155;line-height:1.8;font-size:16px;">
+      <li>${federalChangeText}</li>
+      <li>${stateChangeText}</li>
+      <li>Missing W-2s, 1099s, unemployment income, marketplace insurance forms, education forms, or dependent details can change the final result.</li>
+      <li>Business mileage, receipts, estimated tax payments, and prior-year tax issues may also affect the final outcome.</li>
+    </ul>
+  </div>
+
+  <div style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
+    <h2 style="margin-top:0;margin-bottom:10px;color:#065f46;">Recommended Next Step</h2>
+    <p style="margin:0 0 14px;color:#064e3b;line-height:1.7;font-size:16px;font-weight:600;">
+      Your estimate shows a ${resultType}. The best next step is to have a tax professional review your details before you rely on these numbers.
+    </p>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a
+        href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:12px;padding:12px 16px;font-weight:900;"
+      >
+        Schedule 15-Minute Tax Review
+      </a>
+
+      <a
+        href="https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;border:2px solid #92400e;border-radius:12px;padding:12px 16px;font-weight:900;"
+      >
+        Get $29 Tax Strategy Review
+      </a>
+    </div>
+  </div>
 `;
 
         document.getElementById("summaryCard").style.display = "block";

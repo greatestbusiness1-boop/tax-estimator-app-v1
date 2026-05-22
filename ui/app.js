@@ -1090,6 +1090,93 @@ function setText(id, text) {
   if (el) el.textContent = text;
 }
 
+function renderClientEstimateSummaryLink() {
+  const host = document.getElementById("taxProInsightBanner");
+  if (!host) return;
+
+  const existing = document.getElementById("clientSummaryLinkBox");
+  if (existing) existing.remove();
+
+  const leadId = _leadGatewayContact?.leadId;
+  if (!leadId) return;
+
+  const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(leadId)}`;
+
+  const box = document.createElement("div");
+  box.id = "clientSummaryLinkBox";
+  box.style.cssText = `
+    margin-top:16px;
+    margin-bottom:16px;
+    background:#ecfdf5;
+    border:2px solid #059669;
+    border-radius:16px;
+    padding:18px;
+    color:#064e3b;
+    box-shadow:0 10px 24px rgba(5,150,105,0.12);
+  `;
+
+  box.innerHTML = `
+    <div style="font-size:20px;font-weight:900;margin-bottom:8px;">
+      Your Tax Estimate Summary Is Ready
+    </div>
+
+    <div style="font-size:14px;line-height:1.6;margin-bottom:14px;color:#065f46;">
+      You can open your estimate summary now or copy the secure summary link for later.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <a
+        href="${escHtml(summaryUrl)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:12px;padding:12px 16px;font-weight:900;"
+      >
+        View My Tax Estimate Summary
+      </a>
+
+      <button
+        type="button"
+        id="copyClientSummaryLinkBtn"
+        style="background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer;"
+      >
+        Copy Summary Link
+      </button>
+
+      <span id="clientSummaryCopyMsg" style="font-weight:800;color:#047857;"></span>
+    </div>
+
+    <div style="margin-top:10px;font-size:12px;color:#047857;">
+      Reference ID: ${escHtml(leadId)}
+    </div>
+  `;
+
+  host.parentNode.insertBefore(box, host.nextSibling);
+
+  const copyBtn = document.getElementById("copyClientSummaryLinkBtn");
+  const msg = document.getElementById("clientSummaryCopyMsg");
+
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(summaryUrl);
+        if (msg) {
+          msg.textContent = "Link copied";
+          setTimeout(() => {
+            msg.textContent = "";
+          }, 2500);
+        }
+      } catch {
+        if (msg) {
+          msg.textContent = "Copy failed";
+          setTimeout(() => {
+            msg.textContent = "";
+          }, 2500);
+        }
+      }
+    });
+  }
+}
+
 function renderResults(result, input) {
   const { meta, federal, state, combined, clientExperience } = result;
   const fed = federal.summary;
@@ -1097,6 +1184,7 @@ function renderResults(result, input) {
   const cx = clientExperience || {};
 
   renderTaxProInsightBanner(fed, combined);
+  renderClientEstimateSummaryLink();
 
   setText("resultYear", meta.taxYear);
   setText("actionBarYear", meta.taxYear);
