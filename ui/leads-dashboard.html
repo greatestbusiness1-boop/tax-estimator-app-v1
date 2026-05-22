@@ -257,6 +257,7 @@
         const visibleLeads = leads.filter((lead) => {
           const status = lead.status || "New";
 
+
           if (selectedFilter === "All") return true;
           if (selectedFilter === "Closed") return status.startsWith("Closed -");
           return status === selectedFilter;
@@ -305,6 +306,7 @@
             const state = summary.stateLine || "";
             const notes = lead.notes || "";
             const status = lead.status || "New";
+            const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
 
             return `
               <div class="lead-card" id="card-${esc(lead.leadId)}">
@@ -326,11 +328,32 @@
                 </div>
 
                 <div class="summary">
-                  <strong>Estimate Summary</strong><br>
-                  ${esc(total)}<br>
-                  ${esc(federal)}<br>
-                  ${esc(state)}
-                </div>
+  <strong>Estimate Summary</strong><br>
+  ${esc(total)}<br>
+  ${esc(federal)}<br>
+  ${esc(state)}
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+    <a
+      href="${esc(summaryUrl)}"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
+    >
+      Open Estimate Summary
+    </a>
+
+    <button
+      type="button"
+      onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
+      style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
+    >
+      Copy Summary Link
+    </button>
+
+    <span id="copy-${esc(lead.leadId)}" style="font-weight:700;color:#15803d;align-self:center;"></span>
+  </div>
+</div>
 
                 <div class="controls">
                   <select id="status-${esc(lead.leadId)}">
@@ -366,6 +389,26 @@
       }
     }
 
+    async function copySummaryLink(url, msgId) {
+      const msgEl = document.getElementById(msgId);
+
+      try {
+        await navigator.clipboard.writeText(url);
+        if (msgEl) {
+          msgEl.textContent = "Link copied";
+          setTimeout(() => {
+            msgEl.textContent = "";
+          }, 2500);
+        }
+      } catch (err) {
+        if (msgEl) {
+          msgEl.textContent = "Copy failed";
+          setTimeout(() => {
+            msgEl.textContent = "";
+          }, 2500);
+        }
+      }
+    }
 
     async function saveLead(leadId) {
       const statusEl = document.getElementById(`status-${leadId}`);
