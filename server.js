@@ -17,7 +17,7 @@ const supabase = createClient(
 const app = express();
 const PORT = process.env.PORT || 3000;
 const LEADS_FILE = path.join(__dirname, "leads.json");
-const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app.onrender.com";
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
 const recentLeads = new Map();
 
 // =============================================================================
@@ -440,35 +440,93 @@ app.post("/api/lead", async (req, res) => {
 
 app.get("/api/estimate-summary/:leadId", async (req, res) => {
   const { leadId } = req.params;
+  const cleanId = String(leadId || "").trim();
+
+  const findLeadById = (leadList) => {
+    return (leadList || []).find((lead) => {
+      const possibleIds = [
+        lead?.leadId,
+        lead?.id,
+        lead?.estimateId,
+        lead?.lead_id
+      ];
+
+      return possibleIds.some((id) => String(id || "").trim() === cleanId);
+    });
+  };
 
   try {
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .eq("leadId", leadId)
-      .single();
+    let supabaseLeads = [];
+    let localLeads = [];
+    let foundLead = null;
+    let foundSource = null;
 
-    if (error || !data) {
-      return res.json({ ok: false, error: "Estimate not found." });
-    }
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    return res.json({
-      ok: true,
-      lead: {
-        leadId: data.leadId,
-        estimateSummary: data.estimate?.estimateSummary,
-        taxData: data.estimate?.taxData,
-        contact: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone
+      if (error) {
+        console.error("Summary Supabase lookup error:", error.message || error);
+      }
+
+      if (!error && Array.isArray(data)) {
+        supabaseLeads = data.map(mapRowToLead);
+        foundLead = findLeadById(supabaseLeads);
+
+        if (foundLead) {
+          foundSource = "supabase";
         }
       }
+    } catch (supabaseErr) {
+      console.error("Summary Supabase lookup failed:", supabaseErr.message || supabaseErr);
+    }
+
+    if (!foundLead) {
+      localLeads = readLeads();
+      foundLead = findLeadById(localLeads);
+
+      if (foundLead) {
+        foundSource = "local";
+      }
+    }
+
+    console.log("[estimate-summary lookup]", {
+      requestedLeadId: cleanId,
+      supabaseCount: supabaseLeads.length,
+      localCount: localLeads.length,
+      found: Boolean(foundLead),
+      source: foundSource
     });
 
+    if (!foundLead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Estimate not found.",
+        requestedLeadId: cleanId,
+        supabaseCount: supabaseLeads.length,
+        localCount: localLeads.length
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      source: foundSource,
+      lead: {
+        leadId: foundLead.leadId || foundLead.id || foundLead.estimateId || foundLead.lead_id,
+        timestamp: foundLead.timestamp || foundLead.created_at || null,
+        status: foundLead.status || "New",
+        priority: foundLead.priority || "medium",
+        notes: foundLead.notes || "",
+        estimateSummary: foundLead.estimateSummary || null,
+        taxData: foundLead.taxData || null,
+        contact: foundLead.contact || null
+      }
+    });
   } catch (err) {
     console.error("Estimate fetch error:", err);
-    res.status(500).json({ ok: false, error: "Server error" });
+    return res.status(500).json({ ok: false, error: "Server error" });
   }
 });
 
