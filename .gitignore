@@ -1,3 +1,6 @@
 node_modules/ 
 .env 
 leads.json 
+# Local manual backups - do not commit
+*BACKUP*
+*-BACKUP-*
