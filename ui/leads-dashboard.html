@@ -208,130 +208,158 @@
       </button>
     </div>
 
-    <div
-      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(15,44,86,0.08);">
-      <strong>Filter Leads:</strong>
-      <select id="leadFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
-        <option value="All">All Leads</option>
-        <option value="New">New</option>
-        <option value="Contacted">Contacted</option>
-        <option value="Booked">Booked</option>
-        <option value="Follow-up Needed">Follow-up Needed</option>
-        <option value="Converted - Tax Client">Converted - Tax Client</option>
-        <option value="Closed">All Closed Leads</option>
-      </select>
+    <div <div
+      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+      <div>
+        <strong>Filter Leads:</strong>
+        <select id="leadFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
+          <option value="All">All Leads</option>
+          <option value="New">New</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Booked">Booked</option>
+          <option value="Follow-up Needed">Follow-up Needed</option>
+          <option value="Converted - Tax Client">Converted - Tax Client</option>
+          <option value="Closed">All Closed Leads</option>
+        </select>
+      </div>
+
+      <div>
+        <strong>Tax Year:</strong>
+        <select id="taxYearFilter" onchange="loadLeads()" style="max-width:180px;margin-left:12px;">
+          <option value="All">All Years</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+        </select>
+      </div>
     </div>
-    <div id="leadsContainer">
-      <div class="empty">Loading leads...</div>
-    </div>
-  </div>
 
-  <script>
-    function esc(str) {
-      return String(str || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
+    <script>
+      function esc(str) {
+        return String(str || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
 
-    function priorityClass(priority) {
-      if (priority === "high") return "priority-high";
-      if (priority === "medium") return "priority-medium";
-      return "priority-low";
-    }
+      function priorityClass(priority) {
+        if (priority === "high") return "priority-high";
+        if (priority === "medium") return "priority-medium";
+        return "priority-low";
+      }
 
-    async function loadLeads() {
-      const container = document.getElementById("leadsContainer");
+      async function loadLeads() {
+        const container = document.getElementById("leadsContainer");
 
-      try {
-        const res = await fetch("/api/leads");
-        const data = await res.json();
+        try {
+          const res = await fetch("/api/leads");
+          const data = await res.json();
 
-        if (!res.ok || !data.ok) {
-          throw new Error("Could not load leads.");
-        }
+          if (!res.ok || !data.ok) {
+            throw new Error("Could not load leads.");
+          }
 
-        const leads = data.leads || [];
-        const selectedFilter = document.getElementById("leadFilter")?.value || "All";
+          const leads = data.leads || [];
+          const selectedFilter = document.getElementById("leadFilter")?.value || "All";
+          const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
 
-        const visibleLeads = leads.filter((lead) => {
-          const status = lead.status || "New";
-
-
-          if (selectedFilter === "All") return true;
-          if (selectedFilter === "Closed") return status.startsWith("Closed -");
-          return status === selectedFilter;
-        });
-        document.getElementById("statTotal").textContent = leads.length;
-        document.getElementById("statNew").textContent = leads.filter(l => (l.status || "New") === "New").length;
-        document.getElementById("statContacted").textContent = leads.filter(l => (l.status || "") === "Contacted").length;
-        document.getElementById("statBooked").textContent = leads.filter(l => (l.status || "") === "Booked").length;
-        document.getElementById("statClosed").textContent =
-          leads.filter(l =>
-            (l.status || "").startsWith("Closed -")
-          ).length;
-        document.getElementById("statConverted").textContent =
-          leads.filter(l =>
-            (l.status || "") === "Converted - Tax Client"
-          ).length;
-
-        const now = new Date();
-
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        const startOfWeek = new Date(startOfToday);
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-        const leadDate = (lead) => new Date(lead.timestamp || 0);
-
-        document.getElementById("statToday").textContent = leads.filter(l => leadDate(l) >= startOfToday).length;
-        document.getElementById("statWeek").textContent = leads.filter(l => leadDate(l) >= startOfWeek).length;
-        document.getElementById("statMonth").textContent = leads.filter(l => leadDate(l) >= startOfMonth).length;
-        document.getElementById("statYear").textContent = leads.filter(l => leadDate(l) >= startOfYear).length;
-        if (!visibleLeads.length) {
-          container.innerHTML = `<div class="empty">No leads found yet.</div>`;
-          return;
-        }
-
-        container.innerHTML = visibleLeads
-          .slice()
-          .reverse()
-          .map((lead) => {
-            const summary = lead.estimateSummary || {};
-            const total = summary.totalLine || "No summary available";
-            const federal = summary.federalLine || "";
-            const state = summary.stateLine || "";
-            const notes = lead.notes || "";
+          const visibleLeads = leads.filter((lead) => {
             const status = lead.status || "New";
-            const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
+            const taxYear = String(
+              lead?.taxData?.taxYear ||
+              lead?.estimateSummary?.taxYear ||
+              lead?.estimateSummary?.meta?.taxYear ||
+              ""
+            );
 
-            const combinedNet = Number(summary?.combined?.net ?? summary?.combinedNet ?? 0);
+            const statusMatches =
+              selectedFilter === "All"
+                ? true
+                : selectedFilter === "Closed"
+                  ? status.startsWith("Closed -")
+                  : status === selectedFilter;
 
-            const nextActionTitle =
-              combinedNet < 0
-                ? "Balance Due Lead — Schedule Review"
-                : combinedNet > 0
-                  ? "Refund Lead — Follow Up to File"
-                  : "Review Needed — Confirm Details";
+            const yearMatches =
+              selectedTaxYear === "All"
+                ? true
+                : taxYear === selectedTaxYear;
 
-            const nextActionText =
-              combinedNet < 0
-                ? "This lead may owe. Best next step: schedule a 15-minute review to discuss why they may owe and what options may be available."
-                : combinedNet > 0
-                  ? "This lead has a possible refund. Best next step: follow up and see if they want help completing the return."
-                  : "This lead is close to break-even or missing summary details. Best next step: review the estimate and confirm the client’s information.";
+            return statusMatches && yearMatches;
+          });
+          const statsLeads = visibleLeads;
 
-            const nextActionStyle =
-              combinedNet < 0
-                ? "background:#fff7ed;border:2px solid #f97316;color:#7c2d12;"
-                : combinedNet > 0
-                  ? "background:#ecfdf5;border:2px solid #059669;color:#064e3b;"
-                  : "background:#eef2ff;border:2px solid #4f46e5;color:#312e81;";
+          document.getElementById("statTotal").textContent = statsLeads.length;
+          document.getElementById("statNew").textContent = statsLeads.filter(l => (l.status || "New") === "New").length;
+          document.getElementById("statContacted").textContent = statsLeads.filter(l => (l.status || "") === "Contacted").length;
+          document.getElementById("statBooked").textContent = statsLeads.filter(l => (l.status || "") === "Booked").length;
+          document.getElementById("statClosed").textContent =
+            statsLeads.filter(l =>
+              (l.status || "").startsWith("Closed -")
+            ).length;
+          document.getElementById("statConverted").textContent =
+            statsLeads.filter(l =>
+              (l.status || "") === "Converted - Tax Client"
+            ).length;
 
-            return `
+          const now = new Date();
+
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+          const startOfWeek = new Date(startOfToday);
+          startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+          const leadDate = (lead) => new Date(lead.timestamp || 0);
+
+          document.getElementById("statToday").textContent = statsLeads.filter(l => leadDate(l) >= startOfToday).length;
+          document.getElementById("statWeek").textContent = statsLeads.filter(l => leadDate(l) >= startOfWeek).length;
+          document.getElementById("statMonth").textContent = statsLeads.filter(l => leadDate(l) >= startOfMonth).length;
+          document.getElementById("statYear").textContent = statsLeads.filter(l => leadDate(l) >= startOfYear).length;
+          if (!visibleLeads.length) {
+            container.innerHTML = `<div class="empty">No leads found yet.</div>`;
+            return;
+          }
+
+          container.innerHTML = visibleLeads
+            .slice()
+            .reverse()
+            .map((lead) => {
+              const summary = lead.estimateSummary || {};
+              const total = summary.totalLine || "No summary available";
+              const federal = summary.federalLine || "";
+              const state = summary.stateLine || "";
+              const notes = lead.notes || "";
+              const status = lead.status || "New";
+              const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
+
+              const combinedNet = Number(summary?.combined?.net ?? summary?.combinedNet ?? 0);
+
+              const nextActionTitle =
+                combinedNet < 0
+                  ? "Balance Due Lead — Schedule Review"
+                  : combinedNet > 0
+                    ? "Refund Lead — Follow Up to File"
+                    : "Review Needed — Confirm Details";
+
+              const nextActionText =
+                combinedNet < 0
+                  ? "This lead may owe. Best next step: schedule a 15-minute review to discuss why they may owe and what options may be available."
+                  : combinedNet > 0
+                    ? "This lead has a possible refund. Best next step: follow up and see if they want help completing the return."
+                    : "This lead is close to break-even or missing summary details. Best next step: review the estimate and confirm the client’s information.";
+
+              const nextActionStyle =
+                combinedNet < 0
+                  ? "background:#fff7ed;border:2px solid #f97316;color:#7c2d12;"
+                  : combinedNet > 0
+                    ? "background:#ecfdf5;border:2px solid #059669;color:#064e3b;"
+                    : "background:#eef2ff;border:2px solid #4f46e5;color:#312e81;";
+
+              return `
               <div class="lead-card" id="card-${esc(lead.leadId)}">
                 <div class="lead-top">
                   <div>
@@ -385,17 +413,17 @@
                 <div class="controls">
                   <select id="status-${esc(lead.leadId)}">
                     ${[
-                "New",
-                "Contacted",
-                "Booked",
-                "Follow-up Needed",
-                "Converted - Tax Client",
-                "Closed - Not Interested",
-                "Closed - Bad Lead",
-                "Closed - Future Follow-Up"
-              ]
-                .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
-                .join("")}
+                  "New",
+                  "Contacted",
+                  "Booked",
+                  "Follow-up Needed",
+                  "Converted - Tax Client",
+                  "Closed - Not Interested",
+                  "Closed - Bad Lead",
+                  "Closed - Future Follow-Up"
+                ]
+                  .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
+                  .join("")}
                   </select>
 
                   <textarea id="notes-${esc(lead.leadId)}" placeholder="Add notes about calls, emails, bookings, follow-up, etc.">${esc(notes)}</textarea>
@@ -409,67 +437,67 @@
                 </div>
               </div>
             `;
-          })
-          .join("");
-      } catch (err) {
-        container.innerHTML = `<div class="empty">${esc(err.message || "Error loading leads.")}</div>`;
-      }
-    }
-
-    async function copySummaryLink(url, msgId) {
-      const msgEl = document.getElementById(msgId);
-
-      try {
-        await navigator.clipboard.writeText(url);
-        if (msgEl) {
-          msgEl.textContent = "Link copied";
-          setTimeout(() => {
-            msgEl.textContent = "";
-          }, 2500);
-        }
-      } catch (err) {
-        if (msgEl) {
-          msgEl.textContent = "Copy failed";
-          setTimeout(() => {
-            msgEl.textContent = "";
-          }, 2500);
+            })
+            .join("");
+        } catch (err) {
+          container.innerHTML = `<div class="empty">${esc(err.message || "Error loading leads.")}</div>`;
         }
       }
-    }
 
-    async function saveLead(leadId) {
-      const statusEl = document.getElementById(`status-${leadId}`);
-      const notesEl = document.getElementById(`notes-${leadId}`);
-      const msgEl = document.getElementById(`msg-${leadId}`);
+      async function copySummaryLink(url, msgId) {
+        const msgEl = document.getElementById(msgId);
 
-      msgEl.textContent = "Saving...";
-
-      try {
-        const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            status: statusEl.value,
-            notes: notesEl.value
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          throw new Error(data?.error || "Could not save lead.");
+        try {
+          await navigator.clipboard.writeText(url);
+          if (msgEl) {
+            msgEl.textContent = "Link copied";
+            setTimeout(() => {
+              msgEl.textContent = "";
+            }, 2500);
+          }
+        } catch (err) {
+          if (msgEl) {
+            msgEl.textContent = "Copy failed";
+            setTimeout(() => {
+              msgEl.textContent = "";
+            }, 2500);
+          }
         }
-
-        msgEl.textContent = "Saved";
-      } catch (err) {
-        msgEl.textContent = "Error saving";
       }
-    }
 
-    loadLeads();
-  </script>
+      async function saveLead(leadId) {
+        const statusEl = document.getElementById(`status-${leadId}`);
+        const notesEl = document.getElementById(`notes-${leadId}`);
+        const msgEl = document.getElementById(`msg-${leadId}`);
+
+        msgEl.textContent = "Saving...";
+
+        try {
+          const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              status: statusEl.value,
+              notes: notesEl.value
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.ok) {
+            throw new Error(data?.error || "Could not save lead.");
+          }
+
+          msgEl.textContent = "Saved";
+        } catch (err) {
+          msgEl.textContent = "Error saving";
+        }
+      }
+
+      loadLeads();
+    </script>
 </body>
 
 </html>
