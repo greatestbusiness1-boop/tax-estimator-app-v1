@@ -164,6 +164,85 @@
       font-size: 18px;
     }
 
+    .action-button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      margin-top: 14px;
+    }
+
+    .print-copy-row {
+      margin-top: 10px;
+    }
+
+    .summary-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .summary-action-primary {
+      background: #0f2c56;
+      color: #ffffff;
+      border: 2px solid #0f2c56;
+    }
+
+    .summary-action-secondary {
+      background: #f59e0b;
+      color: #111827;
+      border: 2px solid #92400e;
+    }
+
+    .summary-action-outline {
+      background: #ffffff;
+      color: #0f2c56;
+      border: 2px solid #0f2c56;
+    }
+
+    @media (max-width: 760px) {
+      .action-button-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #d9e3f0;
+        break-inside: avoid;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .wrap {
+        max-width: 100%;
+      }
+
+      a {
+        color: #0f2c56;
+        text-decoration: none;
+      }
+    }
+
     @media (max-width: 760px) {
       body {
         padding: 20px 12px;
@@ -388,18 +467,18 @@ Thank you.`
     </ul>
   </div>
 
-    <div style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
+      <div class="no-print" style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
     <h2 style="margin-top:0;margin-bottom:10px;color:#065f46;">Recommended Next Step</h2>
     <p style="margin:0 0 14px;color:#064e3b;line-height:1.7;font-size:16px;font-weight:600;">
       ${primaryNextStepMessage}
     </p>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="action-button-row">
       <a
         href="${primaryNextStepHref}"
         target="_blank"
         rel="noopener noreferrer"
-        style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:12px;padding:12px 16px;font-weight:900;"
+        class="summary-action-btn summary-action-primary"
       >
         ${primaryNextStepTitle}
       </a>
@@ -408,16 +487,66 @@ Thank you.`
         href="https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00"
         target="_blank"
         rel="noopener noreferrer"
-        style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;border:2px solid #92400e;border-radius:12px;padding:12px 16px;font-weight:900;"
+        class="summary-action-btn summary-action-secondary"
       >
-        Get $29 Tax Strategy Review
+        $29 Strategy Review
       </a>
+
+      <button
+        type="button"
+        id="copyPublicSummaryLinkBtn"
+                class="summary-action-btn summary-action-primary no-print"
+      >
+        Copy Link
+      </button>
+
+          </div>
+
+    <div class="print-copy-row no-print">
+      <button
+        type="button"
+        class="summary-action-btn summary-action-outline"
+        onclick="window.print()"
+      >
+        Print / Save Client Copy
+      </button>
+    </div>
+
+    <div style="margin-top:8px;">
+
+      <span id="publicSummaryCopyMsg" style="font-weight:800;color:#047857;align-self:center;text-align:center;"></span>
     </div>
   </div>
 `;
 
         document.getElementById("summaryCard").style.display = "block";
         document.getElementById("detailsCard").style.display = "block";
+
+        const publicSummaryUrl = window.location.href;
+        const copyPublicSummaryLinkBtn = document.getElementById("copyPublicSummaryLinkBtn");
+        const publicSummaryCopyMsg = document.getElementById("publicSummaryCopyMsg");
+
+        if (copyPublicSummaryLinkBtn) {
+          copyPublicSummaryLinkBtn.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(publicSummaryUrl);
+
+              if (publicSummaryCopyMsg) {
+                publicSummaryCopyMsg.textContent = "Link copied";
+                setTimeout(() => {
+                  publicSummaryCopyMsg.textContent = "";
+                }, 2500);
+              }
+            } catch {
+              if (publicSummaryCopyMsg) {
+                publicSummaryCopyMsg.textContent = "Copy failed";
+                setTimeout(() => {
+                  publicSummaryCopyMsg.textContent = "";
+                }, 2500);
+              }
+            }
+          });
+        }
 
         const combinedValue = document.getElementById("combinedValue");
         const combinedLabel = document.getElementById("combinedLabel");
