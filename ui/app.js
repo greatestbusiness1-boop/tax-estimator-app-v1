@@ -124,8 +124,8 @@ function validateFormClient(input) {
     errors.push("Filing Status is required.");
     markError("filingStatus");
   }
-  if (!input.age || input.age < 1 || input.age > 120) {
-    errors.push("Age must be a number between 1 and 120.");
+  if (!input.age || input.age < 13 || input.age > 120) {
+    errors.push("Age must be a realistic taxpayer age between 13 and 120.");
     markError("age");
   }
   if (!input.stateCode) {
@@ -700,6 +700,92 @@ function formatPhoneDisplay(value) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
 }
 
+function formatWholeNumberDisplay(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) return "";
+
+  return Number(digits).toLocaleString("en-US");
+}
+
+function attachWholeNumberFormatting() {
+  const formattedFieldIds = [
+    "w2Income",
+    "otherIncome",
+    "scholarships",
+    "educationExpenses",
+    "federalWithheld",
+    "stateWithheld",
+    "selfEmploymentIncome",
+    "businessExpenses",
+    "businessMileage",
+    "estimatedTaxPayments"
+  ];
+
+  formattedFieldIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    if (input.dataset.wholeNumberFormatAttached === "true") return;
+
+    input.dataset.wholeNumberFormatAttached = "true";
+    input.setAttribute("type", "text");
+    input.setAttribute("inputmode", "numeric");
+    input.setAttribute("autocomplete", "off");
+
+    input.addEventListener("input", (e) => {
+      const cursorWasAtEnd = e.target.selectionStart === e.target.value.length;
+      e.target.value = formatWholeNumberDisplay(e.target.value);
+
+      if (cursorWasAtEnd) {
+        e.target.selectionStart = e.target.value.length;
+        e.target.selectionEnd = e.target.value.length;
+      }
+    });
+
+    input.addEventListener("blur", (e) => {
+      e.target.value = formatWholeNumberDisplay(e.target.value);
+    });
+
+    input.value = formatWholeNumberDisplay(input.value);
+  });
+}
+
+function attachAgeFormatting() {
+  const ageInput = document.getElementById("age");
+  if (!ageInput) return;
+  if (ageInput.dataset.ageFormatAttached === "true") return;
+
+  ageInput.dataset.ageFormatAttached = "true";
+  ageInput.setAttribute("type", "text");
+  ageInput.setAttribute("inputmode", "numeric");
+  ageInput.setAttribute("min", "13");
+  ageInput.setAttribute("max", "120");
+  ageInput.setAttribute("maxlength", "3");
+
+  ageInput.addEventListener("input", (e) => {
+    e.target.value = String(e.target.value || "").replace(/\D/g, "").slice(0, 3);
+  });
+
+  const hint = ageInput.closest(".field-group")?.querySelector(".field-hint");
+  if (hint) {
+    hint.textContent = "Enter taxpayer age as of December 31. Minors may still need to file depending on income and dependency status.";
+  }
+}
+
+function initGlobalInputFormatting() {
+  attachWholeNumberFormatting();
+  attachAgeFormatting();
+
+  const observer = new MutationObserver(() => {
+    attachWholeNumberFormatting();
+    attachAgeFormatting();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
 function attachPhoneInputFormatting() {
   const phoneInputs = [
     document.getElementById("leadPhone"),
@@ -1366,10 +1452,15 @@ function renderResults(result, input) {
 // INIT
 // =============================================================================
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initPhoneFormatting);
-} else {
+function initAllInputFormatting() {
   initPhoneFormatting();
+  initGlobalInputFormatting();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAllInputFormatting);
+} else {
+  initAllInputFormatting();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
