@@ -248,6 +248,12 @@
       </select>
     </div>
 
+    <div>
+      <strong>Search:</strong>
+      <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
+        style="width:300px;margin-left:12px;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+    </div>
+
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -281,6 +287,7 @@
           const selectedFilter = document.getElementById("leadFilter")?.value || "All";
           const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
           const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
+          const searchText = String(document.getElementById("leadSearch")?.value || "").trim().toLowerCase();
 
           const visibleLeads = leads.filter((lead) => {
             const status = lead.status || "New";
@@ -320,7 +327,26 @@
                       ? combinedNet === 0
                       : true;
 
-            return statusMatches && yearMatches && actionMatches;
+            const searchableText = [
+              lead?.leadId,
+              lead?.contact?.name,
+              lead?.contact?.email,
+              lead?.contact?.phone,
+              lead?.status,
+              lead?.priority,
+              lead?.notes,
+              lead?.estimateSummary?.totalLine,
+              lead?.estimateSummary?.federalLine,
+              lead?.estimateSummary?.stateLine
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
+            const searchMatches =
+              !searchText ? true : searchableText.includes(searchText);
+
+            return statusMatches && yearMatches && actionMatches && searchMatches;
           });
           const statsLeads = visibleLeads;
 
