@@ -309,6 +309,10 @@
       .controls {
         grid-template-columns: 1fr;
       }
+
+      .wrap>div[style*="grid-template-columns:1.1fr"] {
+        grid-template-columns: 1fr !important;
+      }
     }
   </style>
 </head>
@@ -347,10 +351,13 @@
     </div>
 
     <div
-      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
       <div>
-        <strong>Filter Leads:</strong>
-        <select id="leadFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
+        <label for="leadFilter"
+          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+          Filter Leads
+        </label>
+        <select id="leadFilter" onchange="loadLeads()" style="width:100%;">
           <option value="All">All Leads</option>
           <option value="New">New</option>
           <option value="Contacted">Contacted</option>
@@ -362,8 +369,11 @@
       </div>
 
       <div>
-        <strong>Tax Year:</strong>
-        <select id="taxYearFilter" onchange="loadLeads()" style="max-width:180px;margin-left:12px;">
+        <label for="taxYearFilter"
+          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+          Tax Year
+        </label>
+        <select id="taxYearFilter" onchange="loadLeads()" style="width:100%;">
           <option value="All">All Years</option>
           <option value="2024">2024</option>
           <option value="2025">2025</option>
@@ -374,26 +384,32 @@
           <option value="2030">2030</option>
         </select>
       </div>
-    </div>
 
-    <div>
-      <strong>Action Queue:</strong>
-      <select id="actionQueueFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
-        <option value="All">All Actions</option>
-        <option value="Refund">Refund Leads — Follow Up to File</option>
-        <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
-        <option value="ReviewNeeded">Review Needed</option>
-      </select>
-    </div>
+      <div>
+        <label for="actionQueueFilter"
+          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+          Action Queue
+        </label>
+        <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
+          <option value="All">All Actions</option>
+          <option value="Refund">Refund Leads — Follow Up to File</option>
+          <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
+          <option value="ReviewNeeded">Review Needed</option>
+        </select>
+      </div>
 
-    <div>
-      <strong>Search:</strong>
-      <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
-        style="width:300px;margin-left:12px;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+      <div>
+        <label for="leadSearch"
+          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+          Search
+        </label>
+        <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
+          style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+      </div>
     </div>
 
     <div id="activeFiltersLine"
-      style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);">
+      style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);text-align:center;">
       Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
     </div>
 
