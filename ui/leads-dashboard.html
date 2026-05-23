@@ -238,6 +238,16 @@
       </div>
     </div>
 
+    <div>
+      <strong>Action Queue:</strong>
+      <select id="actionQueueFilter" onchange="loadLeads()" style="max-width:260px;margin-left:12px;">
+        <option value="All">All Actions</option>
+        <option value="Refund">Refund Leads — Follow Up to File</option>
+        <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
+        <option value="ReviewNeeded">Review Needed</option>
+      </select>
+    </div>
+
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -270,6 +280,7 @@
           const leads = data.leads || [];
           const selectedFilter = document.getElementById("leadFilter")?.value || "All";
           const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
+          const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
 
           const visibleLeads = leads.filter((lead) => {
             const status = lead.status || "New";
@@ -292,7 +303,24 @@
                 ? true
                 : taxYear === selectedTaxYear;
 
-            return statusMatches && yearMatches;
+            const combinedNet = Number(
+              lead?.estimateSummary?.combined?.net ??
+              lead?.estimateSummary?.combinedNet ??
+              0
+            );
+
+            const actionMatches =
+              selectedActionQueue === "All"
+                ? true
+                : selectedActionQueue === "Refund"
+                  ? combinedNet > 0
+                  : selectedActionQueue === "BalanceDue"
+                    ? combinedNet < 0
+                    : selectedActionQueue === "ReviewNeeded"
+                      ? combinedNet === 0
+                      : true;
+
+            return statusMatches && yearMatches && actionMatches;
           });
           const statsLeads = visibleLeads;
 
