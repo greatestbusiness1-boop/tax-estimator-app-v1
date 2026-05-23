@@ -392,6 +392,11 @@
         style="width:300px;margin-left:12px;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
     </div>
 
+    <div id="activeFiltersLine"
+      style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);">
+      Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
+    </div>
+
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -427,6 +432,22 @@
           const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
           const searchText = String(document.getElementById("leadSearch")?.value || "").trim().toLowerCase();
 
+          const actionQueueLabels = {
+            All: "All Actions",
+            Refund: "Refund Leads — Follow Up to File",
+            BalanceDue: "Balance Due Leads — Schedule Review",
+            ReviewNeeded: "Review Needed"
+          };
+
+          const activeFiltersLine = document.getElementById("activeFiltersLine");
+
+          if (activeFiltersLine) {
+            activeFiltersLine.textContent =
+              `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter} | ` +
+              `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
+              `Action Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
+              `${searchText ? ` | Search: ${searchText}` : ""}`;
+          }
           const visibleLeads = leads.filter((lead) => {
             const status = lead.status || "New";
             const taxYear = String(
