@@ -308,6 +308,29 @@
             const status = lead.status || "New";
             const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
 
+            const combinedNet = Number(summary?.combined?.net ?? summary?.combinedNet ?? 0);
+
+            const nextActionTitle =
+              combinedNet < 0
+                ? "Balance Due Lead — Schedule Review"
+                : combinedNet > 0
+                  ? "Refund Lead — Follow Up to File"
+                  : "Review Needed — Confirm Details";
+
+            const nextActionText =
+              combinedNet < 0
+                ? "This lead may owe. Best next step: schedule a 15-minute review to discuss why they may owe and what options may be available."
+                : combinedNet > 0
+                  ? "This lead has a possible refund. Best next step: follow up and see if they want help completing the return."
+                  : "This lead is close to break-even or missing summary details. Best next step: review the estimate and confirm the client’s information.";
+
+            const nextActionStyle =
+              combinedNet < 0
+                ? "background:#fff7ed;border:2px solid #f97316;color:#7c2d12;"
+                : combinedNet > 0
+                  ? "background:#ecfdf5;border:2px solid #059669;color:#064e3b;"
+                  : "background:#eef2ff;border:2px solid #4f46e5;color:#312e81;";
+
             return `
               <div class="lead-card" id="card-${esc(lead.leadId)}">
                 <div class="lead-top">
@@ -353,7 +376,11 @@
 
     <span id="copy-${esc(lead.leadId)}" style="font-weight:700;color:#15803d;align-self:center;"></span>
   </div>
-</div>
+  </div>
+                  <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                  <strong>${esc(nextActionTitle)}</strong><br>
+                  ${esc(nextActionText)}
+                </div>
 
                 <div class="controls">
                   <select id="status-${esc(lead.leadId)}">
