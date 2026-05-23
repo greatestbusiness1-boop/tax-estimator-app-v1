@@ -333,6 +333,21 @@
             ? "State withholding, state taxable income, residency, and state-specific rules may change the state balance due."
             : "State withholding, state taxable income, residency, and state-specific rules may change the state refund amount.";
 
+        const primaryNextStepTitle =
+          combinedNet < 0
+            ? "Schedule 15-Minute Tax Review"
+            : "Request Tax Pro Follow-Up";
+
+        const primaryNextStepHref =
+          combinedNet < 0
+            ? "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes"
+            : "mailto:greatestbusiness1@gmail.com?subject=Tax%20Pro%20Follow-Up%20Request&body=Hello%2C%20I%20would%20like%20a%20tax%20professional%20to%20follow%20up%20with%20me%20about%20my%20tax%20estimate.";
+
+        const primaryNextStepMessage =
+          combinedNet < 0
+            ? "Your estimate shows a possible balance due. The best next step is to schedule a short tax review so a tax professional can review why you may owe and what options may be available."
+            : "Your estimate shows a possible refund. The best next step is to request a tax pro follow-up so we can help confirm your numbers and discuss completing your return.";
+
         document.getElementById("results").innerHTML = `
   <h2>Quick Results</h2>
   <p><strong>${federalNet >= 0 ? "Federal Refund" : "Federal Due"}:</strong> ${fmt(Math.abs(federalNet))}</p>
@@ -356,20 +371,20 @@
     </ul>
   </div>
 
-  <div style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
+    <div style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
     <h2 style="margin-top:0;margin-bottom:10px;color:#065f46;">Recommended Next Step</h2>
     <p style="margin:0 0 14px;color:#064e3b;line-height:1.7;font-size:16px;font-weight:600;">
-      Your estimate shows a ${resultType}. The best next step is to have a tax professional review your details before you rely on these numbers.
+      ${primaryNextStepMessage}
     </p>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <a
-        href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes"
+        href="${primaryNextStepHref}"
         target="_blank"
         rel="noopener noreferrer"
         style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:12px;padding:12px 16px;font-weight:900;"
       >
-        Schedule 15-Minute Tax Review
+        ${primaryNextStepTitle}
       </a>
 
       <a
@@ -423,11 +438,11 @@
         }
 
         const details = [
-          `Reference ID: ${lead.leadId}`
+          `Reference ID: ${lead.leadId} `
         ];
 
         document.getElementById("detailsList").innerHTML =
-          details.map(item => `<li>${item}</li>`).join("");
+          details.map(item => `< li > ${item}</li >`).join("");
       } catch (err) {
         document.getElementById("pageTitle").textContent = "We could not load this estimate summary";
         document.getElementById("pageSub").textContent = "Please contact us if you need help locating your estimate.";
