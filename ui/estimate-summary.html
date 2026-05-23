@@ -338,10 +338,27 @@
             ? "Schedule 15-Minute Tax Review"
             : "Request Tax Pro Follow-Up";
 
+        const followUpEmailSubject = encodeURIComponent(
+          `Tax Pro Follow-Up Request - ${lead.leadId}`
+        );
+
+        const followUpEmailBody = encodeURIComponent(
+          `Hello,
+
+I would like a tax professional to follow up with me about my tax estimate.
+
+Reference ID: ${lead.leadId}
+Client Name: ${lead.contact?.name || "Client"}
+Estimated Result: ${combinedNet >= 0 ? "Refund" : "Balance Due"}
+Estimated Amount: ${fmt(Math.abs(combinedNet))}
+
+Thank you.`
+        );
+
         const primaryNextStepHref =
           combinedNet < 0
             ? "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes"
-            : "mailto:greatestbusiness1@gmail.com?subject=Tax%20Pro%20Follow-Up%20Request&body=Hello%2C%20I%20would%20like%20a%20tax%20professional%20to%20follow%20up%20with%20me%20about%20my%20tax%20estimate.";
+            : `https://mail.google.com/mail/?view=cm&fs=1&to=greatestbusiness1@gmail.com&su=${followUpEmailSubject}&body=${followUpEmailBody}`;
 
         const primaryNextStepMessage =
           combinedNet < 0
@@ -442,7 +459,7 @@
         ];
 
         document.getElementById("detailsList").innerHTML =
-          details.map(item => `< li > ${item}</li >`).join("");
+          details.map(item => `<li>${item}</li>`).join("");
       } catch (err) {
         document.getElementById("pageTitle").textContent = "We could not load this estimate summary";
         document.getElementById("pageSub").textContent = "Please contact us if you need help locating your estimate.";
