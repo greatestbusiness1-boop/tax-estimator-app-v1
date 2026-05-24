@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leads Dashboard</title>
+  <title>Tax Lead Center</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -481,11 +481,12 @@
         margin-right: auto;
         max-width: 1200px;
       }
-          #stickyControlPanel {
+
+      #stickyControlPanel {
         position: static !important;
         box-shadow: none;
         border-bottom: none;
-      }  
+      }
     }
   </style>
 </head>
@@ -493,7 +494,7 @@
 
 <body>
   <aside class="dashboard-sidebar">
-    <div class="dashboard-sidebar-title">Leads Dashboard</div>
+    <div class="dashboard-sidebar-title">Tax Lead Center</div>
     <div class="dashboard-sidebar-subtitle">
       Quick actions for working tax estimate leads.
     </div>
@@ -507,6 +508,10 @@
     </div>
 
     <div class="sidebar-section-label">Lead Views</div>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Active', action: 'All', search: '' })">
+      Active Leads
+    </button>
 
     <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'All', search: '' })">
       All Leads
@@ -579,7 +584,7 @@
   </aside>
   <div class="wrap">
     <div id="stickyControlPanel">
-    <div id="mainStatsSticky" style="
+      <div id="mainStatsSticky" style="
         position:sticky;
         top:0;
         z-index:50;
@@ -592,102 +597,107 @@
         backdrop-filter: blur(8px);
         border-bottom:1px solid rgba(191,219,254,0.65);
       ">
-      <div class="summary"><strong>Total Leads</strong><br><span id="statTotal">0</span></div>
-      <div class="summary"><strong>New</strong><br><span id="statNew">0</span></div>
-      <div class="summary"><strong>Contacted</strong><br><span id="statContacted">0</span></div>
-      <div class="summary"><strong>Booked</strong><br><span id="statBooked">0</span></div>
-      <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
-    </div>
-
-
-
-    <div
-      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
-      <div>
-        <label for="leadFilter"
-          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-          Filter Leads
-        </label>
-        <select id="leadFilter" onchange="loadLeads()" style="width:100%;">
-          <option value="All">All Leads</option>
-          <option value="New">New</option>
-          <option value="Contacted">Contacted</option>
-          <option value="Booked">Booked</option>
-          <option value="Follow-up Needed">Follow-up Needed</option>
-          <option value="Converted - Tax Client">Converted - Tax Client</option>
-          <option value="Closed">All Closed Leads</option>
-        </select>
+        <div class="summary"><strong>Visible Leads</strong><br><span id="statTotal">0</span></div>
+        <div class="summary"><strong>New</strong><br><span id="statNew">0</span></div>
+        <div class="summary"><strong>Contacted</strong><br><span id="statContacted">0</span></div>
+        <div class="summary"><strong>Booked</strong><br><span id="statBooked">0</span></div>
+        <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
       </div>
 
-      <div>
-        <label for="taxYearFilter"
-          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-          Tax Year
-        </label>
-        <select id="taxYearFilter" onchange="loadLeads()" style="width:100%;">
-          <option value="All">All Years</option>
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-          <option value="2029">2029</option>
-          <option value="2030">2030</option>
-        </select>
+
+
+      <div
+        style="background:#fff;border-radius:18px;padding:16px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
+        <div>
+          <label for="leadFilter"
+            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            Filter Leads
+          </label>
+          <select id="leadFilter" onchange="loadLeads()" style="width:100%;">
+            <option value="Active">Active Leads</option>
+            <option value="All">All Leads</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Booked">Booked</option>
+            <option value="Follow-up Needed">Follow-up Needed</option>
+            <option value="Converted - Tax Client">Converted - Tax Client</option>
+            <option value="Closed">All Closed Leads</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="taxYearFilter"
+            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            Tax Year
+          </label>
+          <select id="taxYearFilter" onchange="loadLeads()" style="width:100%;">
+            <option value="All">All Years</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="actionQueueFilter"
+            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            Action Queue
+          </label>
+          <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
+            <option value="All">All Actions</option>
+            <option value="Refund">Refund Leads — Follow Up to File</option>
+            <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
+            <option value="ReviewNeeded">Review Needed</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="leadSearch"
+            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            Search
+          </label>
+          <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
+            style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+        </div>
       </div>
 
-      <div>
-        <label for="actionQueueFilter"
-          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-          Action Queue
-        </label>
-        <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
-          <option value="All">All Actions</option>
-          <option value="Refund">Refund Leads — Follow Up to File</option>
-          <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
-          <option value="ReviewNeeded">Review Needed</option>
-        </select>
+      <div id="attentionQueue"
+        style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:14px;margin-bottom:18px;">
+        <div class="summary"
+          style="background:linear-gradient(180deg,#ffffff 0%,#ecfdf5 100%);border:1px solid #bbf7d0;">
+          <strong>New Refund Leads</strong><br>
+          <span id="queueRefundLeads">0</span>
+        </div>
+
+        <div class="summary"
+          style="background:linear-gradient(180deg,#ffffff 0%,#fff7ed 100%);border:1px solid #fed7aa;">
+          <strong>Balance Due Reviews</strong><br>
+          <span id="queueBalanceDue">0</span>
+        </div>
+
+        <div class="summary"
+          style="background:linear-gradient(180deg,#ffffff 0%,#fefce8 100%);border:1px solid #fde68a;">
+          <strong>Follow-Up Needed</strong><br>
+          <span id="queueFollowUp">0</span>
+        </div>
+
+        <div class="summary"
+          style="background:linear-gradient(180deg,#ffffff 0%,#eef6ff 100%);border:1px solid #bfdbfe;">
+          <strong>Booked Consultations</strong><br>
+          <span id="queueBooked">0</span>
+        </div>
       </div>
 
-      <div>
-        <label for="leadSearch"
-          style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-          Search
-        </label>
-        <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
-          style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+
+
+      <div id="activeFiltersLine"
+        style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);text-align:center;">
+        Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
       </div>
-    </div>
-
-    <div id="attentionQueue"
-      style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:14px;margin-bottom:18px;">
-      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#ecfdf5 100%);border:1px solid #bbf7d0;">
-        <strong>New Refund Leads</strong><br>
-        <span id="queueRefundLeads">0</span>
-      </div>
-
-      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#fff7ed 100%);border:1px solid #fed7aa;">
-        <strong>Balance Due Reviews</strong><br>
-        <span id="queueBalanceDue">0</span>
-      </div>
-
-      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#fefce8 100%);border:1px solid #fde68a;">
-        <strong>Follow-Up Needed</strong><br>
-        <span id="queueFollowUp">0</span>
-      </div>
-
-      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#eef6ff 100%);border:1px solid #bfdbfe;">
-        <strong>Booked Consultations</strong><br>
-        <span id="queueBooked">0</span>
-      </div>
-    </div>
-
-
-
-    <div id="activeFiltersLine"
-      style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);text-align:center;">
-      Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
-    </div>
 
     </div>
 
@@ -734,7 +744,7 @@
           }
 
           const leads = data.leads || [];
-          const selectedFilter = document.getElementById("leadFilter")?.value || "All";
+          const selectedFilter = document.getElementById("leadFilter")?.value || "Active";
           const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
           const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
           const searchText = String(document.getElementById("leadSearch")?.value || "").trim().toLowerCase();
@@ -750,7 +760,7 @@
 
           if (activeFiltersLine) {
             activeFiltersLine.textContent =
-              `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter} | ` +
+              `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter === "Active" ? "Active Leads" : selectedFilter} | ` +
               `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
               `Action Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
               `${searchText ? ` | Search: ${searchText}` : ""}`;
@@ -764,12 +774,21 @@
               ""
             );
 
+            const activeStatuses = [
+              "New",
+              "Contacted",
+              "Booked",
+              "Follow-up Needed"
+            ];
+
             const statusMatches =
               selectedFilter === "All"
                 ? true
-                : selectedFilter === "Closed"
-                  ? status.startsWith("Closed -")
-                  : status === selectedFilter;
+                : selectedFilter === "Active"
+                  ? activeStatuses.includes(status)
+                  : selectedFilter === "Closed"
+                    ? status.startsWith("Closed -")
+                    : status === selectedFilter;
 
             const yearMatches =
               selectedTaxYear === "All"
