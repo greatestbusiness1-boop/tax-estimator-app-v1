@@ -305,6 +305,98 @@
       color: #047857;
     }
 
+    /* Left dashboard menu */
+    .dashboard-sidebar {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      bottom: 18px;
+      width: 220px;
+      background: linear-gradient(180deg, #0f2c56 0%, #173c73 100%);
+      color: #ffffff;
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 18px 44px rgba(15, 44, 86, 0.22);
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .dashboard-sidebar-title {
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-sidebar-subtitle {
+      font-size: 12px;
+      color: #dbeafe;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .sidebar-section-label {
+      font-size: 11px;
+      font-weight: 900;
+      color: #bfdbfe;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 18px 0 8px;
+    }
+
+    .sidebar-btn {
+      width: 100%;
+      display: block;
+      text-align: left;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 13px;
+      font-weight: 850;
+      cursor: pointer;
+      border: 1px solid rgba(219, 234, 254, 0.28);
+      background: rgba(255, 255, 255, 0.10);
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    .sidebar-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .sidebar-print-btn {
+      width: 100%;
+      display: block;
+      text-align: center;
+      margin: 12px 0 10px;
+      border-radius: 14px;
+      padding: 13px 12px;
+      font-size: 14px;
+      font-weight: 950;
+      cursor: pointer;
+      border: 2px solid #92400e;
+      background: #f59e0b;
+      color: #111827;
+      box-shadow: 0 10px 22px rgba(245, 158, 11, 0.32);
+    }
+
+    .sidebar-print-btn:hover {
+      background: #fbbf24;
+    }
+
+    .sidebar-note {
+      font-size: 11px;
+      color: #dbeafe;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .wrap {
+      margin-left: 260px;
+      max-width: none;
+      margin-right: 24px;
+    }
+
     @media (max-width: 900px) {
       .controls {
         grid-template-columns: 1fr;
@@ -313,28 +405,124 @@
       .wrap>div[style*="grid-template-columns:1.1fr"] {
         grid-template-columns: 1fr !important;
       }
+
+      #attentionQueue {
+        grid-template-columns: 1fr !important;
+      }
+
+      #mainStatsSticky,
+      #leadStats {
+        grid-template-columns: 1fr !important;
+        position: static !important;
+      }
+
+      .dashboard-sidebar {
+        position: static;
+        width: auto;
+        margin: 0 0 18px;
+        border-radius: 18px;
+      }
+
+      .wrap {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1200px;
+      }
     }
   </style>
 </head>
 
+
 <body>
+  <aside class="dashboard-sidebar">
+    <div class="dashboard-sidebar-title">Leads Dashboard</div>
+    <div class="dashboard-sidebar-subtitle">
+      Quick actions for working tax estimate leads.
+    </div>
+
+    <button class="sidebar-print-btn" onclick="window.print()">
+      Print Visible Leads
+    </button>
+
+    <div class="sidebar-note">
+      Prints the leads currently showing after filters are applied.
+    </div>
+
+    <div class="sidebar-section-label">Lead Views</div>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'All', search: '' })">
+      All Leads
+    </button>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'Refund', search: '' })">
+      Refund Leads
+    </button>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'BalanceDue', search: '' })">
+      Balance Due Reviews
+    </button>
+
+    <button class="sidebar-btn"
+      onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
+      Follow-Up Needed
+    </button>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Booked', action: 'All', search: '' })">
+      Booked Consultations
+    </button>
+
+    <button class="sidebar-btn"
+      onclick="setDashboardFilters({ status: 'Converted - Tax Client', action: 'All', search: '' })">
+      Converted Clients
+    </button>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '' })">
+      Closed Leads
+    </button>
+
+    <div class="sidebar-section-label">Workflow</div>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'New', action: 'All', search: '' })">
+      New Leads
+    </button>
+
+    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Contacted', action: 'All', search: '' })">
+      Contacted
+    </button>
+  </aside>
   <div class="wrap">
     <div class="header">
       <h1>Leads Dashboard</h1>
       <p>Track new leads, update statuses, and keep notes on your follow-up activity.</p>
     </div>
 
-    <div id="leadStats" style="
-  display:grid;
-  grid-template-columns:repeat(5, minmax(0, 1fr));
-  gap:14px;
-  margin-bottom:20px;
-">
+    </aside>
+    <div id="mainStatsSticky" style="
+        position:sticky;
+        top:0;
+        z-index:50;
+        display:grid;
+        grid-template-columns:repeat(5, minmax(0, 1fr));
+        gap:14px;
+        margin-bottom:14px;
+        padding:12px 0;
+        background:linear-gradient(180deg, rgba(246,248,252,0.98) 0%, rgba(238,244,248,0.94) 100%);
+        backdrop-filter: blur(8px);
+        border-bottom:1px solid rgba(191,219,254,0.65);
+      ">
       <div class="summary"><strong>Total Leads</strong><br><span id="statTotal">0</span></div>
       <div class="summary"><strong>New</strong><br><span id="statNew">0</span></div>
       <div class="summary"><strong>Contacted</strong><br><span id="statContacted">0</span></div>
       <div class="summary"><strong>Booked</strong><br><span id="statBooked">0</span></div>
       <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
+    </div>
+
+    <div id="leadStats" style="
+        display:grid;
+        grid-template-columns:repeat(5, minmax(0, 1fr));
+        gap:14px;
+        margin-bottom:20px;
+      ">
       <div class="summary">
         <strong>Converted</strong><br>
         <span id="statConverted">0</span>
@@ -344,14 +532,9 @@
       <div class="summary"><strong>This Month</strong><br><span id="statMonth">0</span></div>
       <div class="summary"><strong>This Year</strong><br><span id="statYear">0</span></div>
     </div>
-    <div style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;">
-      <button onclick="window.print()" style="background:#0f2c56;">
-        Print Visible Leads
-      </button>
-    </div>
 
     <div
-      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
+      style="background:#fff;border-radius:18px;padding:16px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
       <div>
         <label for="leadFilter"
           style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
@@ -408,6 +591,46 @@
       </div>
     </div>
 
+    <div id="attentionQueue"
+      style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:14px;margin-bottom:18px;">
+      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#ecfdf5 100%);border:1px solid #bbf7d0;">
+        <strong>New Refund Leads</strong><br>
+        <span id="queueRefundLeads">0</span>
+      </div>
+
+      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#fff7ed 100%);border:1px solid #fed7aa;">
+        <strong>Balance Due Reviews</strong><br>
+        <span id="queueBalanceDue">0</span>
+      </div>
+
+      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#fefce8 100%);border:1px solid #fde68a;">
+        <strong>Follow-Up Needed</strong><br>
+        <span id="queueFollowUp">0</span>
+      </div>
+
+      <div class="summary" style="background:linear-gradient(180deg,#ffffff 0%,#eef6ff 100%);border:1px solid #bfdbfe;">
+        <strong>Booked Consultations</strong><br>
+        <span id="queueBooked">0</span>
+      </div>
+    </div>
+
+    <div
+      style="margin:8px 0 16px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0f2c56 0%,#173c73 100%);color:#ffffff;box-shadow:0 10px 24px rgba(15,44,86,0.12);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:.2px;">
+          Needs Attention Queue
+        </div>
+        <div style="font-size:14px;line-height:1.5;color:#dbeafe;margin-top:4px;">
+          Quick work queue based on the filters selected above. Use this section to decide who needs attention first.
+        </div>
+      </div>
+
+      <button onclick="window.print()"
+        style="background:#f59e0b;color:#111827;border:2px solid #92400e;border-radius:12px;padding:12px 18px;font-weight:900;box-shadow:0 8px 18px rgba(245,158,11,0.28);">
+        Print Visible Leads
+      </button>
+    </div>
+
     <div id="activeFiltersLine"
       style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);text-align:center;">
       Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
@@ -429,6 +652,19 @@
         if (priority === "high") return "priority-high";
         if (priority === "medium") return "priority-medium";
         return "priority-low";
+      }
+      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "" }) {
+        const leadFilter = document.getElementById("leadFilter");
+        const actionQueueFilter = document.getElementById("actionQueueFilter");
+        const taxYearFilter = document.getElementById("taxYearFilter");
+        const leadSearch = document.getElementById("leadSearch");
+
+        if (leadFilter) leadFilter.value = status;
+        if (actionQueueFilter) actionQueueFilter.value = action;
+        if (taxYearFilter && taxYear) taxYearFilter.value = taxYear;
+        if (leadSearch) leadSearch.value = search;
+
+        loadLeads();
       }
 
       async function loadLeads() {
@@ -554,6 +790,34 @@
           document.getElementById("statWeek").textContent = statsLeads.filter(l => leadDate(l) >= startOfWeek).length;
           document.getElementById("statMonth").textContent = statsLeads.filter(l => leadDate(l) >= startOfMonth).length;
           document.getElementById("statYear").textContent = statsLeads.filter(l => leadDate(l) >= startOfYear).length;
+          const getLeadCombinedNet = (lead) =>
+            Number(
+              lead?.estimateSummary?.combined?.net ??
+              lead?.estimateSummary?.combinedNet ??
+              0
+            );
+
+          document.getElementById("queueRefundLeads").textContent =
+            statsLeads.filter(l =>
+              getLeadCombinedNet(l) > 0 &&
+              (l.status || "New") === "New"
+            ).length;
+
+          document.getElementById("queueBalanceDue").textContent =
+            statsLeads.filter(l =>
+              getLeadCombinedNet(l) < 0
+            ).length;
+
+          document.getElementById("queueFollowUp").textContent =
+            statsLeads.filter(l =>
+              (l.status || "") === "Follow-up Needed"
+            ).length;
+
+          document.getElementById("queueBooked").textContent =
+            statsLeads.filter(l =>
+              (l.status || "") === "Booked"
+            ).length;
+
           if (!visibleLeads.length) {
             container.innerHTML = `<div class="empty">No leads found yet.</div>`;
             return;
