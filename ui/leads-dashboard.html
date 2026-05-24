@@ -305,6 +305,30 @@
       color: #047857;
     }
 
+    /* Main sticky control panel */
+    #stickyControlPanel {
+      position: sticky;
+      top: 0;
+      z-index: 75;
+      background: linear-gradient(180deg, rgba(246, 248, 252, 0.98) 0%, rgba(238, 244, 248, 0.96) 100%);
+      backdrop-filter: blur(10px);
+      padding: 10px 0 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(191, 219, 254, 0.75);
+      box-shadow: 0 10px 24px rgba(15, 44, 86, 0.06);
+    }
+
+    #stickyControlPanel #mainStatsSticky {
+      position: static !important;
+      top: auto !important;
+      z-index: auto !important;
+      margin-bottom: 14px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border-bottom: none !important;
+      backdrop-filter: none !important;
+    }
+
     /* Left dashboard menu */
     .dashboard-sidebar {
       position: fixed;
@@ -391,6 +415,36 @@
       margin-top: 10px;
     }
 
+    .sidebar-mini-stats {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .sidebar-mini-stat {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(219, 234, 254, 0.24);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #ffffff;
+    }
+
+    .sidebar-mini-stat strong {
+      display: block;
+      font-size: 11px;
+      color: #bfdbfe;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-mini-stat span {
+      font-size: 22px;
+      font-weight: 950;
+      color: #ffffff;
+      line-height: 1;
+    }
+
     .wrap {
       margin-left: 260px;
       max-width: none;
@@ -410,8 +464,7 @@
         grid-template-columns: 1fr !important;
       }
 
-      #mainStatsSticky,
-      #leadStats {
+      #mainStatsSticky {
         grid-template-columns: 1fr !important;
         position: static !important;
       }
@@ -428,6 +481,11 @@
         margin-right: auto;
         max-width: 1200px;
       }
+          #stickyControlPanel {
+        position: static !important;
+        box-shadow: none;
+        border-bottom: none;
+      }  
     }
   </style>
 </head>
@@ -489,13 +547,38 @@
     <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Contacted', action: 'All', search: '' })">
       Contacted
     </button>
-  </aside>
-  <div class="wrap">
-    <div class="header">
-      <h1>Leads Dashboard</h1>
-      <p>Track new leads, update statuses, and keep notes on your follow-up activity.</p>
+    <div class="sidebar-section-label">Quick Counts</div>
+
+    <div class="sidebar-mini-stats">
+      <div class="sidebar-mini-stat">
+        <strong>Converted</strong>
+        <span id="statConverted">0</span>
+      </div>
+
+      <div class="sidebar-mini-stat">
+        <strong>Today</strong>
+        <span id="statToday">0</span>
+      </div>
+
+      <div class="sidebar-mini-stat">
+        <strong>This Week</strong>
+        <span id="statWeek">0</span>
+      </div>
+
+      <div class="sidebar-mini-stat">
+        <strong>This Month</strong>
+        <span id="statMonth">0</span>
+      </div>
+
+      <div class="sidebar-mini-stat">
+        <strong>This Year</strong>
+        <span id="statYear">0</span>
+      </div>
     </div>
 
+  </aside>
+  <div class="wrap">
+    <div id="stickyControlPanel">
     <div id="mainStatsSticky" style="
         position:sticky;
         top:0;
@@ -516,21 +599,7 @@
       <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
     </div>
 
-    <div id="leadStats" style="
-        display:grid;
-        grid-template-columns:repeat(5, minmax(0, 1fr));
-        gap:14px;
-        margin-bottom:20px;
-      ">
-      <div class="summary">
-        <strong>Converted</strong><br>
-        <span id="statConverted">0</span>
-      </div>
-      <div class="summary"><strong>Today</strong><br><span id="statToday">0</span></div>
-      <div class="summary"><strong>This Week</strong><br><span id="statWeek">0</span></div>
-      <div class="summary"><strong>This Month</strong><br><span id="statMonth">0</span></div>
-      <div class="summary"><strong>This Year</strong><br><span id="statYear">0</span></div>
-    </div>
+
 
     <div
       style="background:#fff;border-radius:18px;padding:16px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
@@ -613,23 +682,13 @@
       </div>
     </div>
 
-    <div
-      style="margin:8px 0 16px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0f2c56 0%,#173c73 100%);color:#ffffff;box-shadow:0 10px 24px rgba(15,44,86,0.12);display:flex;align-items:center;justify-content:center;text-align:center;gap:14px;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:18px;font-weight:900;letter-spacing:.2px;">
-          Needs Attention Queue
-        </div>
-        <div style="font-size:14px;line-height:1.5;color:#dbeafe;margin-top:4px;">
-          Quick work queue based on the filters selected above. Use this section to decide who needs attention first.
-        </div>
-      </div>
 
-
-    </div>
 
     <div id="activeFiltersLine"
       style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 16px;margin-bottom:16px;color:#475569;font-weight:700;box-shadow:0 8px 20px rgba(15,44,86,0.05);text-align:center;">
       Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
+    </div>
+
     </div>
 
     <div id="leadsContainer">
