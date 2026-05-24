@@ -388,6 +388,18 @@
       background: rgba(255, 255, 255, 0.18);
     }
 
+    .sidebar-btn.active-sidebar-btn {
+      background: #ffffff;
+      color: #0f2c56;
+      border-color: #ffffff;
+      box-shadow: 0 8px 18px rgba(255, 255, 255, 0.16);
+    }
+
+    .sidebar-btn.active-sidebar-btn:hover {
+      background: #ffffff;
+      color: #0f2c56;
+    }
+
     .sidebar-print-btn {
       width: 100%;
       display: block;
@@ -509,47 +521,55 @@
 
     <div class="sidebar-section-label">Lead Views</div>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Active', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="Active"
+      onclick="setDashboardFilters({ status: 'Active', action: 'All', search: '' })">
       Active Leads
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="All"
+      onclick="setDashboardFilters({ status: 'All', action: 'All', search: '' })">
       All Leads
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'Refund', search: '' })">
+    <button class="sidebar-btn" data-view="Refund"
+      onclick="setDashboardFilters({ status: 'All', action: 'Refund', search: '' })">
       Refund Leads
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'All', action: 'BalanceDue', search: '' })">
+    <button class="sidebar-btn" data-view="BalanceDue"
+      onclick="setDashboardFilters({ status: 'All', action: 'BalanceDue', search: '' })">
       Balance Due Reviews
     </button>
 
-    <button class="sidebar-btn"
+    <button class="sidebar-btn" data-view="Follow-up Needed"
       onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
       Follow-Up Needed
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Booked', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="Booked"
+      onclick="setDashboardFilters({ status: 'Booked', action: 'All', search: '' })">
       Booked Consultations
     </button>
 
-    <button class="sidebar-btn"
+    <button class="sidebar-btn" data-view="Converted - Tax Client"
       onclick="setDashboardFilters({ status: 'Converted - Tax Client', action: 'All', search: '' })">
       Converted Clients
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="Closed"
+      onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '' })">
       Closed Leads
     </button>
 
     <div class="sidebar-section-label">Workflow</div>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'New', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="New"
+      onclick="setDashboardFilters({ status: 'New', action: 'All', search: '' })">
       New Leads
     </button>
 
-    <button class="sidebar-btn" onclick="setDashboardFilters({ status: 'Contacted', action: 'All', search: '' })">
+    <button class="sidebar-btn" data-view="Contacted"
+      onclick="setDashboardFilters({ status: 'Contacted', action: 'All', search: '' })">
       Contacted
     </button>
     <div class="sidebar-section-label">Quick Counts</div>
@@ -718,6 +738,17 @@
         if (priority === "medium") return "priority-medium";
         return "priority-low";
       }
+      function updateActiveSidebarButton(view) {
+        document.querySelectorAll(".sidebar-btn").forEach((btn) => {
+          btn.classList.remove("active-sidebar-btn");
+        });
+
+        const activeBtn = document.querySelector(`.sidebar-btn[data-view="${view}"]`);
+        if (activeBtn) {
+          activeBtn.classList.add("active-sidebar-btn");
+        }
+      }
+
       function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
@@ -728,7 +759,13 @@
         if (actionQueueFilter) actionQueueFilter.value = action;
         if (taxYearFilter && taxYear) taxYearFilter.value = taxYear;
         if (leadSearch) leadSearch.value = search;
+        const sidebarView =
+          action !== "All"
+            ? action
+            : status;
 
+        updateActiveSidebarButton(sidebarView);
+        updateActiveSidebarButton("Active");
         loadLeads();
       }
 
