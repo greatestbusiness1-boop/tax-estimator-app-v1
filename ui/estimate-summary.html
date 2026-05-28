@@ -348,6 +348,50 @@
       el.classList.remove("refund", "due", "neutral");
       el.classList.add(cls);
     }
+    async function trackSummaryAction(leadId, actionLabel) {
+      try {
+        const stamp = new Date().toLocaleString();
+        const actionNote = `[${stamp}] Client action from public estimate summary: ${actionLabel}`;
+
+        const readRes = await fetch(`/api/estimate-summary/${encodeURIComponent(leadId)}`);
+        const readData = await readRes.json();
+
+        if (!readRes.ok || !readData.ok) {
+          console.warn("[trackSummaryAction] Could not read lead before update", readData);
+          return false;
+        }
+
+        const existingNotes = readData?.lead?.notes || "";
+        const existingStatus = readData?.lead?.status || "New";
+
+        const updatedNotes = existingNotes
+          ? `${existingNotes}\n${actionNote}`
+          : actionNote;
+
+        const patchRes = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: existingStatus,
+            notes: updatedNotes
+          })
+        });
+
+        const patchData = await patchRes.json();
+
+        if (!patchRes.ok || !patchData.ok) {
+          console.warn("[trackSummaryAction] Could not update lead notes", patchData);
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.warn("[trackSummaryAction]", err);
+        return false;
+      }
+    }
 
     async function loadEstimate() {
       const pathParts = window.location.pathname.split("/");
@@ -479,6 +523,7 @@ Thank you.`
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-primary"
+                onclick="trackSummaryAction('${lead.leadId}', '${primaryNextStepTitle}')"
       >
         ${primaryNextStepTitle}
       </a>
@@ -488,6 +533,7 @@ Thank you.`
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-secondary"
+                onclick="trackSummaryAction('${lead.leadId}', 'Get Written $29 Strategy Review')"
       >
         Get Written $29 Strategy Review
       </a>
@@ -506,7 +552,7 @@ Thank you.`
       <button
         type="button"
         class="summary-action-btn summary-action-outline"
-        onclick="window.print()"
+                onclick="trackSummaryAction('${lead.leadId}', 'Printed or Saved Client Copy'); setTimeout(() => window.print(), 250);"
       >
         Print / Save Client Copy
       </button>
@@ -531,18 +577,24 @@ Thank you.`
             try {
               await navigator.clipboard.writeText(publicSummaryUrl);
 
+              const actionSaved = await trackSummaryAction(lead.leadId, "Copied Summary Link");
+
               if (publicSummaryCopyMsg) {
-                publicSummaryCopyMsg.textContent = "Link copied";
+                publicSummaryCopyMsg.textContent = actionSaved
+                  ? "Link copied + action saved"
+                  : "Link copied, but action note was not saved";
                 setTimeout(() => {
                   publicSummaryCopyMsg.textContent = "";
-                }, 2500);
+                }, 3500);
               }
-            } catch {
+            } catch (err) {
+              console.warn("[copyPublicSummaryLinkBtn]", err);
+
               if (publicSummaryCopyMsg) {
-                publicSummaryCopyMsg.textContent = "Copy failed";
+                publicSummaryCopyMsg.textContent = "Copy failed — use browser address bar";
                 setTimeout(() => {
                   publicSummaryCopyMsg.textContent = "";
-                }, 2500);
+                }, 3500);
               }
             }
           });

@@ -545,53 +545,150 @@ app.get("/estimate/:leadId", (req, res) => {
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
   const { status, notes } = req.body;
+  const cleanId = String(leadId || "").trim();
 
-  const { data, error } = await supabase
-    .from("leads")
-    .select("*")
-    .eq("leadId", leadId)
-    .single();
+  const findMatchingRow = (rows) => {
+    return (rows || []).find((row) => {
+      const estimate = row.estimate || {};
 
-  if (error || !data) {
+      const possibleIds = [
+        row.leadId,
+        row.leadid,
+        row.lead_id,
+        row.id,
+        estimate.leadId,
+        estimate.leadid,
+        estimate.lead_id,
+        estimate.id
+      ];
+
+      return possibleIds.some((id) => String(id || "").trim() === cleanId);
+    });
+  };
+
+  const applyUpdateToEstimate = (estimate = {}) => {
+    const updatedEstimate = { ...estimate };
+
+    if (typeof status === "string" && status.trim()) {
+      updatedEstimate.status = status.trim();
+    }
+
+    if (typeof notes === "string") {
+      updatedEstimate.notes = notes;
+    }
+
+    return updatedEstimate;
+  };
+
+  try {
+    // First try Supabase using the same broad lookup style as the estimate summary route.
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[PATCH /api/leads] Supabase lookup error:", error.message || error);
+      }
+
+      if (!error && Array.isArray(data)) {
+        const matchingRow = findMatchingRow(data);
+
+        if (matchingRow) {
+          const updatedEstimate = applyUpdateToEstimate(matchingRow.estimate || {});
+
+          let updateQuery = supabase
+            .from("leads")
+            .update({ estimate: updatedEstimate });
+
+          if (matchingRow.leadId) {
+            updateQuery = updateQuery.eq("leadId", matchingRow.leadId);
+          } else if (matchingRow.leadid) {
+            updateQuery = updateQuery.eq("leadid", matchingRow.leadid);
+          } else if (matchingRow.lead_id) {
+            updateQuery = updateQuery.eq("lead_id", matchingRow.lead_id);
+          } else if (matchingRow.id) {
+            updateQuery = updateQuery.eq("id", matchingRow.id);
+          } else {
+            throw new Error("Matched Supabase row has no usable ID column.");
+          }
+
+          const { error: updateError } = await updateQuery;
+
+          if (updateError) {
+            console.error("[PATCH /api/leads] Supabase update error:", updateError.message || updateError);
+            return res.status(500).json({
+              ok: false,
+              error: "Could not update lead."
+            });
+          }
+
+          const updatedLead = mapRowToLead({
+            ...matchingRow,
+            estimate: updatedEstimate
+          });
+
+          recentLeads.set(updatedLead.leadId, updatedLead);
+
+          return res.status(200).json({
+            ok: true,
+            source: "supabase",
+            lead: updatedLead
+          });
+        }
+      }
+    } catch (supabaseErr) {
+      console.error("[PATCH /api/leads] Supabase update failed:", supabaseErr.message || supabaseErr);
+    }
+
+    // Fallback: update local leads.json if the lead was found there.
+    const localLeads = readLeads();
+    const localIndex = localLeads.findIndex((lead) => {
+      const possibleIds = [
+        lead?.leadId,
+        lead?.id,
+        lead?.estimateId,
+        lead?.lead_id
+      ];
+
+      return possibleIds.some((id) => String(id || "").trim() === cleanId);
+    });
+
+    if (localIndex >= 0) {
+      const localLead = localLeads[localIndex];
+
+      if (typeof status === "string" && status.trim()) {
+        localLead.status = status.trim();
+      }
+
+      if (typeof notes === "string") {
+        localLead.notes = notes;
+      }
+
+      localLeads[localIndex] = localLead;
+      writeLeads(localLeads);
+      recentLeads.set(localLead.leadId, localLead);
+
+      return res.status(200).json({
+        ok: true,
+        source: "local",
+        lead: localLead
+      });
+    }
+
     return res.status(404).json({
       ok: false,
-      error: "Lead not found."
+      error: "Lead not found.",
+      requestedLeadId: cleanId
     });
-  }
-
-  const estimate = data.estimate || {};
-
-  if (typeof status === "string" && status.trim()) {
-    estimate.status = status.trim();
-  }
-
-  if (typeof notes === "string") {
-    estimate.notes = notes;
-  }
-
-  const { error: updateError } = await supabase
-    .from("leads")
-    .update({ estimate })
-    .eq("leadId", leadId);
-
-  if (updateError) {
+  } catch (err) {
+    console.error("[PATCH /api/leads] Unexpected error:", err);
     return res.status(500).json({
       ok: false,
       error: "Could not update lead."
     });
   }
-
-  const updatedLead = mapRowToLead({
-    ...data,
-    estimate
-  });
-
-  recentLeads.set(updatedLead.leadId, updatedLead);
-
-  return res.status(200).json({
-    ok: true,
-    lead: updatedLead
-  });
 });
 
 // =============================================================================
