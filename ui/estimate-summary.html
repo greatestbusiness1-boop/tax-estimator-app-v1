@@ -392,6 +392,17 @@
         return false;
       }
     }
+    async function trackThenOpen(event, leadId, actionLabel, targetUrl) {
+      event.preventDefault();
+
+      const saved = await trackSummaryAction(leadId, actionLabel);
+
+      if (!saved) {
+        console.warn("[trackThenOpen] Action note was not saved before opening link.");
+      }
+
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
 
     async function loadEstimate() {
       const pathParts = window.location.pathname.split("/");
@@ -528,12 +539,12 @@ Thank you.`
         ${primaryNextStepTitle}
       </a>
 
-      <a
+            <a
         href="https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00"
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-secondary"
-                onclick="trackSummaryAction('${lead.leadId}', 'Get Written $29 Strategy Review')"
+        onclick="trackThenOpen(event, '${lead.leadId}', 'Get Written $29 Strategy Review', 'https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00')"
       >
         Get Written $29 Strategy Review
       </a>
