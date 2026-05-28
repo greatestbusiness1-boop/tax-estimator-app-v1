@@ -161,10 +161,12 @@
     }
 
     .save-msg {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #15803d;
-      font-weight: 700;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #047857;
+      font-weight: 900;
+      line-height: 1.25;
+      min-height: 16px;
     }
 
     /* Soft dashboard color upgrade */
@@ -1015,13 +1017,13 @@
 
                                     <div style="text-align:right;min-width:220px;">
                     <span class="badge ${priorityClass(lead.priority)}">${esc(lead.priority || "low")}</span>
-                    <span class="badge status-badge">${esc(status)}</span>
+                    <span id="statusBadge-${esc(lead.leadId)}" class="badge status-badge">${esc(status)}</span>
 
                     ${latestActivity
                   ? `
                         <div style="margin-top:10px;background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
-                          Latest Activity:<br>
-                          <span style="color:#334155;font-weight:700;">${esc(latestActivity)}</span>
+                          Latest Client Action:<br>
+                          <span style="color:#334155;font-weight:700;">Client clicked: ${esc(latestActivity)}</span>
                         </div>
                       `
                   : ""
@@ -1064,7 +1066,7 @@
                                 ${activityHtml}
 
                                 <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
-                  <strong style="display:block;color:#0f2c56;margin-bottom:10px;">Follow-Up Action</strong>
+                  <strong style="display:block;color:#0f2c56;margin-bottom:10px;">Internal Follow-Up Action</strong>
 
                   <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
                     <select
@@ -1089,7 +1091,7 @@
                   </div>
 
                   <div style="margin-top:8px;color:#52637a;font-size:13px;font-weight:700;">
-                    Select an action, click Apply, then click Save below.
+                    Select your office follow-up action, click Apply, then click Save below.
                   </div>
                 </div>
 
@@ -1152,7 +1154,9 @@
       }
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
+        const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
         const quickActionEl = document.getElementById(`quickAction-${leadId}`);
+        const notesEl = document.getElementById(`notes-${leadId}`);
         const msgEl = document.getElementById(`msg-${leadId}`);
 
         const selectedStatus = statusValue || quickActionEl?.value || "";
@@ -1168,12 +1172,31 @@
           statusEl.value = selectedStatus;
         }
 
+        if (statusBadgeEl) {
+          statusBadgeEl.textContent = selectedStatus;
+        }
+
+        const stamp = new Date().toLocaleString();
+        const actionNote = `[${stamp}] Internal follow-up action selected: ${selectedStatus}`;
+
+        if (notesEl) {
+          const currentNotes = String(notesEl.value || "").trim();
+
+          notesEl.value = currentNotes
+            ? `${currentNotes}\n${actionNote}\n`
+            : `${actionNote}\n`;
+
+          notesEl.focus();
+          notesEl.selectionStart = notesEl.value.length;
+          notesEl.selectionEnd = notesEl.value.length;
+        }
+
         if (quickActionEl) {
           quickActionEl.value = "";
         }
 
         if (msgEl) {
-          msgEl.textContent = `Selected: ${selectedStatus} — click Save to update`;
+          msgEl.textContent = `Internal action selected: ${selectedStatus} — Save`;
         }
       }
 
