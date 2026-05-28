@@ -1084,7 +1084,7 @@
                     <span class="badge ${priorityClass(lead.priority)}">${esc(lead.priority || "low")}</span>
                     <span id="statusBadge-${esc(lead.leadId)}" class="badge status-badge">${esc(status)}</span>
 
-                    ${latestActivity
+                                        ${latestActivity
                   ? `
                         <div style="margin-top:10px;background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
                           Latest Client Action:<br>
@@ -1093,6 +1093,11 @@
                       `
                   : ""
                 }
+
+                    <div style="margin-top:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
+                      Internal Status:<br>
+                      <span id="internalStatus-${esc(lead.leadId)}" style="color:#334155;font-weight:900;">${esc(status)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1220,6 +1225,7 @@
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
+        const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
         const quickActionEl = document.getElementById(`quickAction-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
         const msgEl = document.getElementById(`msg-${leadId}`);
@@ -1239,6 +1245,9 @@
 
         if (statusBadgeEl) {
           statusBadgeEl.textContent = selectedStatus;
+        }
+        if (internalStatusEl) {
+          internalStatusEl.textContent = selectedStatus;
         }
 
         const stamp = new Date().toLocaleString();
