@@ -957,6 +957,12 @@
 
               const activityText = activityLines.join("\n");
               const manualNotes = manualNoteLines.join("\n");
+              const latestActivity = activityLines.length
+                ? activityLines[activityLines.length - 1]
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Client action from public estimate summary:", "")
+                  .trim()
+                : "";
 
               const activityHtml = activityLines.length
                 ? `
@@ -1007,9 +1013,19 @@
                     </div>
                   </div>
 
-                  <div>
+                                    <div style="text-align:right;min-width:220px;">
                     <span class="badge ${priorityClass(lead.priority)}">${esc(lead.priority || "low")}</span>
                     <span class="badge status-badge">${esc(status)}</span>
+
+                    ${latestActivity
+                  ? `
+                        <div style="margin-top:10px;background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
+                          Latest Activity:<br>
+                          <span style="color:#334155;font-weight:700;">${esc(latestActivity)}</span>
+                        </div>
+                      `
+                  : ""
+                }
                   </div>
                 </div>
 
@@ -1131,7 +1147,7 @@
             })
           });
 
-          
+
           const data = await res.json();
 
           if (!res.ok || !data.ok) {
