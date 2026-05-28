@@ -942,6 +942,32 @@
               const federal = summary.federalLine || "";
               const state = summary.stateLine || "";
               const notes = lead.notes || "";
+              const noteLines = String(notes || "")
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+              const activityLines = noteLines.filter(line =>
+                line.includes("Client action from public estimate summary:")
+              );
+
+              const manualNoteLines = noteLines.filter(line =>
+                !line.includes("Client action from public estimate summary:")
+              );
+
+              const activityText = activityLines.join("\n");
+              const manualNotes = manualNoteLines.join("\n");
+
+              const activityHtml = activityLines.length
+                ? `
+                  <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                    <strong style="color:#0f2c56;">Client Activity</strong>
+                    <ul style="margin:8px 0 0;padding-left:20px;color:#334155;">
+                      ${activityLines.map(line => `<li>${esc(line)}</li>`).join("")}
+                    </ul>
+                  </div>
+                `
+                : "";
               const status = lead.status || "New";
               const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
 
@@ -1019,6 +1045,8 @@
                   ${esc(nextActionText)}
                 </div>
 
+                                ${activityHtml}
+
                 <div class="controls">
                   <select id="status-${esc(lead.leadId)}">
                     ${[
@@ -1035,7 +1063,9 @@
                   .join("")}
                   </select>
 
-                  <textarea id="notes-${esc(lead.leadId)}" placeholder="Add notes about calls, emails, bookings, follow-up, etc.">${esc(notes)}</textarea>
+                                    <textarea id="notes-${esc(lead.leadId)}" placeholder="Add manual notes about calls, emails, bookings, follow-up, documents needed, etc.">${esc(manualNotes)}</textarea>
+
+                  <textarea id="activity-${esc(lead.leadId)}" style="display:none;">${esc(activityText)}</textarea>
 
                   <div>
                     <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
@@ -1077,9 +1107,17 @@
       async function saveLead(leadId) {
         const statusEl = document.getElementById(`status-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
+        const activityEl = document.getElementById(`activity-${leadId}`);
         const msgEl = document.getElementById(`msg-${leadId}`);
 
         msgEl.textContent = "Saving...";
+        const activityText = String(activityEl?.value || "").trim();
+        const manualNotes = String(notesEl?.value || "").trim();
+
+        const combinedNotes =
+          activityText && manualNotes
+            ? `${activityText}\n${manualNotes}`
+            : activityText || manualNotes;
 
         try {
           const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
@@ -1089,10 +1127,11 @@
             },
             body: JSON.stringify({
               status: statusEl.value,
-              notes: notesEl.value
+              notes: combinedNotes
             })
           });
 
+          
           const data = await res.json();
 
           if (!res.ok || !data.ok) {
