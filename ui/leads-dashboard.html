@@ -783,6 +783,48 @@
       </div>
     </div>
 
+    <div id="balanceDueGuidance"
+      style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <div style="font-size:18px;font-weight:950;color:#9a3412;margin-bottom:8px;">
+        Balance Due Review Guide
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Possible Balance Due</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Client may owe federal or state tax based on the estimate. Confirm the numbers before giving final guidance.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Schedule Review</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Best first step is usually a short review to explain why they may owe and what may change.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Strategy Review Option</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            If they want written guidance, direct them to the $29 written tax strategy review workflow.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Payment Plan / Missing Info</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Look for missing credits, withholding, estimated payments, business expenses, or payment-plan needs.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;color:#7c2d12;font-size:13px;font-weight:800;">
+        Balance due estimates are not final tax returns. Review documents before giving final advice.
+      </div>
+    </div>
+
+
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -802,9 +844,14 @@
       }
       function updateWorkspaceGuidance(view) {
         const strategyGuideEl = document.getElementById("strategyReviewGuidance");
+        const balanceDueGuideEl = document.getElementById("balanceDueGuidance");
 
         if (strategyGuideEl) {
           strategyGuideEl.style.display = view === "StrategyReview" ? "block" : "none";
+        }
+
+        if (balanceDueGuideEl) {
+          balanceDueGuideEl.style.display = view === "BalanceDue" ? "block" : "none";
         }
       }
       function updateWorkspaceHeader(view) {
