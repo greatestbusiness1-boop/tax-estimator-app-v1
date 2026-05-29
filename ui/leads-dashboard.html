@@ -742,6 +742,46 @@
         booked consultations, and follow-up needed items.
       </div>
     </div>
+    <div id="strategyReviewGuidance"
+      style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <div style="font-size:18px;font-weight:950;color:#9a3412;margin-bottom:8px;">
+        Strategy Review Workflow Guide
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Requested / Clicked</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Client clicked the $29 review button. Payment is not confirmed yet.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Payment Pending</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Use this when you are waiting to verify payment manually.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Paid / Needs Written Review</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Payment is confirmed and the written tax strategy review needs to be prepared.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+          <strong style="color:#7c2d12;">Completed</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            The written strategy review has been completed and delivered or saved.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;color:#7c2d12;font-size:13px;font-weight:800;">
+        Stripe automation is not connected yet, so payment status is manual for now.
+      </div>
+    </div>
 
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
@@ -759,6 +799,13 @@
         if (priority === "high") return "priority-high";
         if (priority === "medium") return "priority-medium";
         return "priority-low";
+      }
+      function updateWorkspaceGuidance(view) {
+        const strategyGuideEl = document.getElementById("strategyReviewGuidance");
+
+        if (strategyGuideEl) {
+          strategyGuideEl.style.display = view === "StrategyReview" ? "block" : "none";
+        }
       }
       function updateWorkspaceHeader(view) {
         const titleEl = document.getElementById("workspaceTitle");
@@ -845,6 +892,7 @@
 
         updateActiveSidebarButton(sidebarView);
         updateWorkspaceHeader(sidebarView);
+        updateWorkspaceGuidance(sidebarView);
         loadLeads();
       }
 
@@ -1399,6 +1447,7 @@
 
       updateActiveSidebarButton("Active");
       updateWorkspaceHeader("Active");
+      updateWorkspaceGuidance("Active");
       loadLeads();
     </script>
 </body>
