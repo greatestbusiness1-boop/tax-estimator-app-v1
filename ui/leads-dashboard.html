@@ -1146,6 +1146,15 @@
                       Internal Status:<br>
                       <span id="internalStatus-${esc(lead.leadId)}" style="color:#334155;font-weight:900;">${esc(status)}</span>
                     </div>
+                                       ${hasStrategyReviewRequest
+                  ? `
+                        <div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
+                          Strategy Review:<br>
+                          <span id="topStrategyReview-${esc(lead.leadId)}" style="color:#7c2d12;font-weight:900;">${esc(strategyReviewStatusText)}</span>
+                        </div>
+                      `
+                  : ""
+                } 
                   </div>
                 </div>
 
@@ -1288,6 +1297,7 @@
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
         const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+        const topStrategyReviewEl = document.getElementById(`topStrategyReview-${leadId}`);
         const quickActionEl = document.getElementById(`quickAction-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
         const msgEl = document.getElementById(`msg-${leadId}`);
@@ -1311,7 +1321,18 @@
         if (internalStatusEl) {
           internalStatusEl.textContent = selectedStatus;
         }
+        if (topStrategyReviewEl) {
+          const strategyStatusText =
+            selectedStatus === "Strategy Review - Paid / Needs Written Review"
+              ? "Paid — written review needed"
+              : selectedStatus === "Strategy Review - Completed"
+                ? "Completed — written review finished"
+                : selectedStatus === "Strategy Review - Payment Pending"
+                  ? "Payment pending — not confirmed yet"
+                  : topStrategyReviewEl.textContent;
 
+          topStrategyReviewEl.textContent = strategyStatusText;
+        }
         const stamp = new Date().toLocaleString();
         const actionNote = `[${stamp}] Internal follow-up action selected: ${selectedStatus}`;
 
