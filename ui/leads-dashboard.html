@@ -1061,7 +1061,7 @@
               const activityHtml = activityLines.length
                 ? `
                   <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
-                    <strong style="color:#0f2c56;">Client Activity</strong>
+                    <strong style="color:#0f2c56;">Client Action History</strong>
                     <ul style="margin:8px 0 0;padding-left:20px;color:#334155;">
                       ${activityLines.map(line => `<li>${esc(line)}</li>`).join("")}
                     </ul>
@@ -1217,7 +1217,13 @@
                   .join("")}
                   </select>
 
-                                    <textarea id="notes-${esc(lead.leadId)}" placeholder="Add manual notes about calls, emails, bookings, follow-up, documents needed, etc.">${esc(manualNotes)}</textarea>
+                                                      <div>
+                    <div style="font-size:13px;font-weight:900;color:#0f2c56;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+                      Manual Office Notes
+                    </div>
+
+                    <textarea id="notes-${esc(lead.leadId)}" placeholder="Add manual notes about calls, emails, bookings, follow-up, documents needed, etc.">${esc(manualNotes)}</textarea>
+                  </div>
 
                   <textarea id="activity-${esc(lead.leadId)}" style="display:none;">${esc(activityText)}</textarea>
 
