@@ -522,57 +522,76 @@ Thank you.`
     </ul>
   </div>
 
-      <div class="no-print" style="margin-top:18px;padding:18px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
+            <div class="no-print" style="margin-top:18px;padding:20px;border-radius:16px;background:#ecfdf5;border:2px solid #059669;">
     <h2 style="margin-top:0;margin-bottom:10px;color:#065f46;">Choose Your Next Step</h2>
     <p style="margin:0 0 14px;color:#064e3b;line-height:1.7;font-size:16px;font-weight:600;">
       ${primaryNextStepMessage}
     </p>
 
-        <div class="action-button-row">
+    <div style="margin-top:16px;padding:18px;border-radius:16px;background:#ffffff;border:2px solid #f59e0b;">
+      <h2 style="margin:0 0 10px;color:#92400e;font-size:22px;">
+        Written Tax Estimate Review — $29
+      </h2>
+
+      <p style="margin:0 0 12px;color:#334155;line-height:1.7;font-size:16px;font-weight:700;">
+        Get a written review of your tax estimate before you rely on the numbers.
+      </p>
+
+      <ul style="margin:0 0 12px;padding-left:22px;color:#334155;line-height:1.8;font-size:16px;">
+        <li>A tax professional reviews the refund or balance due shown on your estimate.</li>
+        <li>You receive written guidance explaining possible issues, items to verify, and next steps.</li>
+        <li>This can help you understand what may change before filing your actual tax return.</li>
+      </ul>
+
+      <div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;font-size:15px;line-height:1.6;font-weight:800;">
+        Important: This $29 service is not a filed tax return, does not include full tax preparation, and does not guarantee your final refund or balance due.
+      </div>
+    </div>
+
+    <div class="action-button-row">
       <a
         href="${primaryNextStepHref}"
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-primary"
-                onclick="trackSummaryAction('${lead.leadId}', '${primaryNextStepTitle}')"
+        onclick="trackSummaryAction('${lead.leadId}', '${primaryNextStepTitle}')"
       >
         ${primaryNextStepTitle}
       </a>
 
-            <a
+      <a
         href="https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00"
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-secondary"
         onclick="trackThenOpen(event, '${lead.leadId}', 'Get Written $29 Strategy Review', 'https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00')"
       >
-        Get Written $29 Strategy Review
+        Buy Written Review — $29
       </a>
 
       <button
         type="button"
         id="copyPublicSummaryLinkBtn"
-                class="summary-action-btn summary-action-primary no-print"
+        class="summary-action-btn summary-action-primary no-print"
       >
         Copy Link
       </button>
-
-          </div>
+    </div>
 
     <div class="print-copy-row no-print">
       <button
         type="button"
         class="summary-action-btn summary-action-outline"
-                onclick="trackSummaryAction('${lead.leadId}', 'Printed or Saved Client Copy'); setTimeout(() => window.print(), 250);"
+        onclick="trackSummaryAction('${lead.leadId}', 'Printed or Saved Client Copy'); setTimeout(() => window.print(), 250);"
       >
         Print / Save Client Copy
       </button>
     </div>
 
     <div style="margin-top:8px;">
-
       <span id="publicSummaryCopyMsg" style="font-weight:800;color:#047857;align-self:center;text-align:center;"></span>
     </div>
+  </div>
   </div>
 `;
 
