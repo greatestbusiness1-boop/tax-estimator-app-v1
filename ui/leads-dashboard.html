@@ -582,6 +582,10 @@
 
     <div class="sidebar-mini-stats">
       <div class="sidebar-mini-stat">
+        <strong>Strategy Reviews</strong>
+        <span id="statStrategyReviews">0</span>
+      </div>
+      <div class="sidebar-mini-stat">
         <strong>Converted</strong>
         <span id="statConverted">0</span>
       </div>
@@ -960,6 +964,10 @@
             statsLeads.filter(l =>
               (l.status || "").startsWith("Closed -")
             ).length;
+          document.getElementById("statStrategyReviews").textContent =
+            statsLeads.filter(l =>
+              String(l.notes || "").toLowerCase().includes("get written $29 strategy review")
+            ).length;
           document.getElementById("statConverted").textContent =
             statsLeads.filter(l =>
               (l.status || "") === "Converted - Tax Client"
@@ -1038,15 +1046,28 @@
 
               const activityText = activityLines.join("\n");
               const manualNotes = manualNoteLines.join("\n");
-              const hasStrategyReviewRequest = noteLines.some(line =>
-                line.toLowerCase().includes("get written $29 strategy review")
-              );
+              const leadStatusForStrategy = lead.status || "New";
+
+              const hasStrategyReviewRequest =
+                noteLines.some(line =>
+                  line.toLowerCase().includes("get written $29 strategy review")
+                ) ||
+                leadStatusForStrategy.startsWith("Strategy Review -");
+
+              const strategyReviewStatusText =
+                leadStatusForStrategy === "Strategy Review - Paid / Needs Written Review"
+                  ? "Paid — written review needed"
+                  : leadStatusForStrategy === "Strategy Review - Completed"
+                    ? "Completed — written review finished"
+                    : leadStatusForStrategy === "Strategy Review - Payment Pending"
+                      ? "Payment pending — not confirmed yet"
+                      : "Requested / Clicked — payment not confirmed yet";
 
               const strategyReviewHtml = hasStrategyReviewRequest
                 ? `
                   <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
                     <strong style="color:#9a3412;">Strategy Review</strong><br>
-                    <span style="color:#7c2d12;font-weight:800;">Requested / Clicked — payment not confirmed yet</span>
+                    <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
                   </div>
                 `
                 : "";
