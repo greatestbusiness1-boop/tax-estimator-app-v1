@@ -542,6 +542,10 @@
       onclick="setDashboardFilters({ status: 'All', action: 'BalanceDue', search: '' })">
       Balance Due Reviews
     </button>
+    <button class="sidebar-btn" data-view="StrategyReview"
+      onclick="setDashboardFilters({ status: 'All', action: 'StrategyReview', search: '' })">
+      Strategy Reviews
+    </button>
 
     <button class="sidebar-btn" data-view="Follow-up Needed"
       onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
@@ -673,6 +677,7 @@
             <option value="All">All Actions</option>
             <option value="Refund">Refund Leads — Follow Up to File</option>
             <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
+            <option value="StrategyReview">Strategy Reviews</option>
             <option value="ReviewNeeded">Review Needed</option>
           </select>
         </div>
@@ -772,6 +777,10 @@
             title: "Balance Due Review Workspace",
             description: "These leads may owe federal or state tax. Use this view to guide them toward a review, written strategy, payment planning, or missing-information follow-up."
           },
+          StrategyReview: {
+            title: "Strategy Reviews Workspace",
+            description: "These leads are connected to the written $29 tax strategy review workflow. Use this view to manage strategy review requests, payment status, written review preparation, and completed reviews."
+          },
           "Follow-up Needed": {
             title: "Follow-Up Needed Workspace",
             description: "These leads need another touch from your office. Use this view for callbacks, reminders, unanswered messages, or missing documents."
@@ -856,6 +865,7 @@
             All: "All Actions",
             Refund: "Refund Leads — Follow Up to File",
             BalanceDue: "Balance Due Leads — Schedule Review",
+            StrategyReview: "Strategy Reviews",
             ReviewNeeded: "Review Needed"
           };
 
@@ -904,17 +914,6 @@
               0
             );
 
-            const actionMatches =
-              selectedActionQueue === "All"
-                ? true
-                : selectedActionQueue === "Refund"
-                  ? combinedNet > 0
-                  : selectedActionQueue === "BalanceDue"
-                    ? combinedNet < 0
-                    : selectedActionQueue === "ReviewNeeded"
-                      ? combinedNet === 0
-                      : true;
-
             const searchableText = [
               lead?.leadId,
               lead?.contact?.name,
@@ -930,6 +929,19 @@
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
+
+            const actionMatches =
+              selectedActionQueue === "All"
+                ? true
+                : selectedActionQueue === "Refund"
+                  ? combinedNet > 0
+                  : selectedActionQueue === "BalanceDue"
+                    ? combinedNet < 0
+                    : selectedActionQueue === "StrategyReview"
+                      ? searchableText.includes("get written $29 strategy review")
+                      : selectedActionQueue === "ReviewNeeded"
+                        ? combinedNet === 0
+                        : true;
 
             const searchMatches =
               !searchText ? true : searchableText.includes(searchText);
@@ -1024,6 +1036,19 @@
 
               const activityText = activityLines.join("\n");
               const manualNotes = manualNoteLines.join("\n");
+              const hasStrategyReviewRequest = noteLines.some(line =>
+                line.toLowerCase().includes("get written $29 strategy review")
+              );
+
+              const strategyReviewHtml = hasStrategyReviewRequest
+                ? `
+                  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                    <strong style="color:#9a3412;">Strategy Review</strong><br>
+                    <span style="color:#7c2d12;font-weight:800;">Requested / Clicked — payment not confirmed yet</span>
+                  </div>
+                `
+                : "";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1132,6 +1157,8 @@
                   <strong>${esc(nextActionTitle)}</strong><br>
                   ${esc(nextActionText)}
                 </div>
+
+                                                                ${strategyReviewHtml}
 
                                 ${activityHtml}
 
