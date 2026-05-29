@@ -824,6 +824,46 @@
       </div>
     </div>
 
+    <div id="refundGuidance"
+      style="display:none;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <div style="font-size:18px;font-weight:950;color:#064e3b;margin-bottom:8px;">
+        Refund Leads Guide
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+        <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:14px;padding:12px;">
+          <strong style="color:#047857;">Possible Refund</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Client may have a refund based on the estimate. Confirm documents before giving final numbers.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:14px;padding:12px;">
+          <strong style="color:#047857;">Follow Up to File</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Best next step is to ask if they want help completing and filing the return.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:14px;padding:12px;">
+          <strong style="color:#047857;">Confirm Documents</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Check W-2s, 1099s, dependents, credits, withholding, and any missing tax documents.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:14px;padding:12px;">
+          <strong style="color:#047857;">Convert to Tax Client</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            If they want filing help, move them toward client intake, secure upload, and paid tax prep.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;color:#064e3b;font-size:13px;font-weight:800;">
+        Refund estimates are lead-generation estimates only. Final refund depends on complete tax documents.
+      </div>
+    </div>
 
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
@@ -845,6 +885,7 @@
       function updateWorkspaceGuidance(view) {
         const strategyGuideEl = document.getElementById("strategyReviewGuidance");
         const balanceDueGuideEl = document.getElementById("balanceDueGuidance");
+        const refundGuideEl = document.getElementById("refundGuidance");
 
         if (strategyGuideEl) {
           strategyGuideEl.style.display = view === "StrategyReview" ? "block" : "none";
@@ -852,6 +893,10 @@
 
         if (balanceDueGuideEl) {
           balanceDueGuideEl.style.display = view === "BalanceDue" ? "block" : "none";
+        }
+
+        if (refundGuideEl) {
+          refundGuideEl.style.display = view === "Refund" ? "block" : "none";
         }
       }
       function updateWorkspaceHeader(view) {
