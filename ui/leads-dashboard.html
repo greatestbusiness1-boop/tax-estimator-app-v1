@@ -1084,7 +1084,9 @@
                   : selectedActionQueue === "BalanceDue"
                     ? combinedNet < 0
                     : selectedActionQueue === "StrategyReview"
-                      ? searchableText.includes("get written $29 strategy review")
+                      ? searchableText.includes("buy written review") ||
+                      searchableText.includes("get written $29 strategy review") ||
+                      status.startsWith("Strategy Review -")
                       : selectedActionQueue === "ReviewNeeded"
                         ? combinedNet === 0
                         : true;
@@ -1189,9 +1191,14 @@
               const leadStatusForStrategy = lead.status || "New";
 
               const hasStrategyReviewRequest =
-                noteLines.some(line =>
-                  line.toLowerCase().includes("get written $29 strategy review")
-                ) ||
+                noteLines.some(line => {
+                  const lowerLine = line.toLowerCase();
+
+                  return (
+                    lowerLine.includes("buy written review") ||
+                    lowerLine.includes("get written $29 strategy review")
+                  );
+                }) ||
                 leadStatusForStrategy.startsWith("Strategy Review -");
 
               const strategyReviewStatusText =
