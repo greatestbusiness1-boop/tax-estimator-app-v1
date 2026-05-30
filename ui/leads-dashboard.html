@@ -1227,7 +1227,7 @@
 
                       <button
                         type="button"
-                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
+                        onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
                         style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                       >
                         Set Paid / Needs Review
