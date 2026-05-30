@@ -1215,6 +1215,36 @@
                   <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
                     <strong style="color:#9a3412;">Strategy Review</strong><br>
                     <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
+
+                    <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
+                      <button
+                        type="button"
+                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Payment Pending')"
+                        style="background:#f59e0b;color:#111827;border:1px solid #92400e;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                      >
+                        Set Payment Pending
+                      </button>
+
+                      <button
+                        type="button"
+                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
+                        style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                      >
+                        Set Paid / Needs Review
+                      </button>
+
+                      <button
+                        type="button"
+                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
+                        style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                      >
+                        Set Completed
+                      </button>
+                    </div>
+
+                    <div style="margin-top:8px;color:#7c2d12;font-size:12px;font-weight:800;">
+                      Click a status button, then click Save below to lock in the office status.
+                    </div>
                   </div>
                 `
                 : "";
