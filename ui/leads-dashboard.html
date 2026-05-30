@@ -1235,7 +1235,7 @@
 
                       <button
                         type="button"
-                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
+                        onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
                         style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                       >
                         Set Completed
