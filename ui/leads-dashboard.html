@@ -1427,7 +1427,14 @@
                   "Closed - Bad Lead",
                   "Closed - Future Follow-Up"
                 ]
-                  .map(option => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`)
+                  .map(option => {
+                    const optionLabel =
+                      option === "Strategy Review - Payment Pending"
+                        ? "Strategy Review - Payment Pending / Not Verified"
+                        : option;
+
+                    return `<option value="${option}" ${option === status ? "selected" : ""}>${optionLabel}</option>`;
+                  })
                   .join("")}
                   </select>
 
