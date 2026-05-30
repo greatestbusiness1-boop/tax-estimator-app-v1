@@ -1107,9 +1107,16 @@
               (l.status || "").startsWith("Closed -")
             ).length;
           document.getElementById("statStrategyReviews").textContent =
-            statsLeads.filter(l =>
-              String(l.notes || "").toLowerCase().includes("get written $29 strategy review")
-            ).length;
+            statsLeads.filter(l => {
+              const notesText = String(l.notes || "").toLowerCase();
+              const statusText = String(l.status || "");
+
+              return (
+                notesText.includes("buy written review") ||
+                notesText.includes("get written $29 strategy review") ||
+                statusText.startsWith("Strategy Review -")
+              );
+            }).length;
           document.getElementById("statConverted").textContent =
             statsLeads.filter(l =>
               (l.status || "") === "Converted - Tax Client"
