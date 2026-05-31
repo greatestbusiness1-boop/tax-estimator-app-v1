@@ -318,7 +318,7 @@ function showLeadGateway(input, result) {
       </h2>
 
       <p style="margin:0 0 18px;color:#334155;font-size:16px;line-height:1.6;">
-        Enter your first name and email to view your full tax estimate and personalized tax insights.
+        Enter your full name and email to view your full tax estimate and personalized tax insights.
       </p>
 
       <div id="leadGatewayErrors" style="display:none;background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:12px;border-radius:12px;margin-bottom:14px;font-weight:700;"></div>
@@ -364,7 +364,7 @@ function showLeadGateway(input, result) {
         </button>
 
         <div style="font-size:13px;color:#64748b;line-height:1.5;text-align:center;">
-          No spam. Your information is used to provide your estimate and follow-up tax options.
+          No spam. Your information is used to provide your estimate, save your reference ID, and show follow-up tax options.
         </div>
       </div>
     </div>
