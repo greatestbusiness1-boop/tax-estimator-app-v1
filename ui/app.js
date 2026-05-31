@@ -1016,7 +1016,7 @@ function renderTaxProInsightBanner(fed, combined) {
     box-shadow:0 10px 22px rgba(245,158,11,0.35);
   "
 >
-  Get Personalized Tax Strategy Review ($29)
+    Buy Written Estimate Review — $29
 </button>
 
 <div
@@ -1445,7 +1445,7 @@ function renderResults(result, input) {
   const ctaTitle = document.getElementById("ctaTitle");
   const ctaCtx = document.getElementById("ctaContext");
   if (ctaTitle) ctaTitle.textContent = "Have a Tax Professional Review My Estimate";
-    if (ctaCtx) ctaCtx.textContent = cta.context || "Your federal and state results point in different directions. A tax professional can reconcile both, explain what may change, and help you decide your next step.";
+  if (ctaCtx) ctaCtx.textContent = cta.context || "Your federal and state results point in different directions. A tax professional can reconcile both, explain what may change, and help you decide your next step.";
 }
 
 // =============================================================================
