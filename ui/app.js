@@ -364,7 +364,7 @@ function showLeadGateway(input, result) {
         </button>
 
         <div style="font-size:13px;color:#64748b;line-height:1.5;text-align:center;">
-          No spam. Your information is used to provide your estimate, save your reference ID, and show follow-up tax options.
+          We ask for this so your estimate can be saved and you can return to it later.
         </div>
       </div>
     </div>
