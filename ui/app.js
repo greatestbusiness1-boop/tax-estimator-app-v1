@@ -325,11 +325,11 @@ function showLeadGateway(input, result) {
 
       <div style="display:grid;gap:12px;">
         <div>
-          <label style="display:block;font-weight:800;color:#0f172a;margin-bottom:6px;">First Name</label>
+          <label style="display:block;font-weight:800;color:#0f172a;margin-bottom:6px;">Full Name</label>
           <input
-            id="gatewayFirstName"
+            id="gatewayFullName"
             type="text"
-            placeholder="First name"
+            placeholder="Full name"
             style="width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;"
           />
         </div>
@@ -379,14 +379,14 @@ function showLeadGateway(input, result) {
 }
 
 async function submitLeadGateway(input, result) {
-  const firstName = (document.getElementById("gatewayFirstName")?.value || "").trim();
+  const fullName = (document.getElementById("gatewayFullName")?.value || "").trim();
   const email = (document.getElementById("gatewayEmail")?.value || "").trim();
   const errorBox = document.getElementById("leadGatewayErrors");
   const btn = document.getElementById("gatewayUnlockBtn");
 
   const errors = [];
 
-  if (!firstName) errors.push("First name is required.");
+  if (!fullName) errors.push("Full name is required.");
   if (!email) {
     errors.push("Email address is required.");
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -451,7 +451,7 @@ async function submitLeadGateway(input, result) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: firstName,
+        name: fullName,
         email,
         phone: null,
         priority: result
@@ -478,7 +478,7 @@ async function submitLeadGateway(input, result) {
 
     _leadGatewayUnlocked = true;
     _leadGatewayContact = {
-      firstName,
+      fullName,
       email,
       leadId: data.leadId || null,
     };
