@@ -1444,8 +1444,8 @@ function renderResults(result, input) {
   const cta = cx.cta || {};
   const ctaTitle = document.getElementById("ctaTitle");
   const ctaCtx = document.getElementById("ctaContext");
-  if (ctaTitle) ctaTitle.textContent = cta.primary || "Get a Personalized Tax Strategy Review";
-  if (ctaCtx) ctaCtx.textContent = cta.context || "Receive a personalized tax strategy review with recommendations, deduction analysis, and guidance based on your estimate results.";
+  if (ctaTitle) ctaTitle.textContent = "Have a Tax Professional Review My Estimate";
+    if (ctaCtx) ctaCtx.textContent = cta.context || "Your federal and state results point in different directions. A tax professional can reconcile both, explain what may change, and help you decide your next step.";
 }
 
 // =============================================================================
