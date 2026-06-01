@@ -710,10 +710,11 @@
           <span id="queueBalanceDue">0</span>
         </div>
 
-        <div class="summary"
-          style="background:linear-gradient(180deg,#ffffff 0%,#fefce8 100%);border:1px solid #fde68a;">
-          <strong>Follow-Up Needed</strong><br>
-          <span id="queueFollowUp">0</span>
+        <div class="summary" onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })"
+          title="Click to view Follow-Up Needed leads"
+          style="background:linear-gradient(180deg,#ffffff 0%,#fff7ed 100%);border:2px solid #f97316;cursor:pointer;box-shadow:0 0 0 3px rgba(249,115,22,0.12);">
+          <strong style="color:#9a3412;">Follow-Up Needed</strong><br>
+          <span id="queueFollowUp" style="color:#9a3412;">0</span>
         </div>
 
         <div class="summary"
