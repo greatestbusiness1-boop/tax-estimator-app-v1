@@ -549,7 +549,8 @@
 
     <button class="sidebar-btn" data-view="Follow-up Needed"
       onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
-      Follow-Up Needed
+      Follow-Up Needed <span id="sidebarFollowUpCount"
+        style="float:right;background:#f97316;color:#111827;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
     </button>
 
     <button class="sidebar-btn" data-view="Booked"
@@ -1157,10 +1158,16 @@
               getLeadCombinedNet(l) < 0
             ).length;
 
-          document.getElementById("queueFollowUp").textContent =
-            statsLeads.filter(l =>
-              (l.status || "") === "Follow-up Needed"
-            ).length;
+          const followUpNeededCount = statsLeads.filter(l =>
+            (l.status || "") === "Follow-up Needed"
+          ).length;
+
+          document.getElementById("queueFollowUp").textContent = followUpNeededCount;
+
+          const sidebarFollowUpCountEl = document.getElementById("sidebarFollowUpCount");
+          if (sidebarFollowUpCountEl) {
+            sidebarFollowUpCountEl.textContent = followUpNeededCount;
+          }
 
           document.getElementById("queueBooked").textContent =
             statsLeads.filter(l =>
