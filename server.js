@@ -344,7 +344,7 @@ app.post("/api/estimate", (req, res) => {
 // =============================================================================
 
 app.post("/api/lead", async (req, res) => {
-  const { name, email, phone, priority, taxData, estimateSummary } = req.body;
+  const { name, email, phone, priority, taxData, estimateSummary, status, notes } = req.body;
 
   const errors = [];
 
@@ -369,8 +369,8 @@ app.post("/api/lead", async (req, res) => {
     leadId,
     timestamp: new Date().toISOString(),
     priority: priority || "low",
-    status: "New",
-    notes: "",
+    status: status || "New",
+    notes: notes || "",
     contact: {
       name: name.trim(),
       email: email.trim(),

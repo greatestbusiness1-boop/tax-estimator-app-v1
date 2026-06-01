@@ -582,6 +582,9 @@ async function handleLeadSubmit(event) {
 
   console.log("about to fetch /api/lead", { estimateSummary });
 
+  const followUpStamp = new Date().toLocaleString();
+  const followUpNote = `[${followUpStamp}] Client action from public estimate summary: Requested Free Tax Pro Follow-Up`;
+
   try {
     const response = await fetch("/api/lead", {
       method: "POST",
@@ -593,6 +596,8 @@ async function handleLeadSubmit(event) {
         priority: _lastEstimate
           ? getReviewStatus(_lastEstimate.federal.summary, _lastEstimate.combined).level
           : "low",
+        status: "Follow-up Needed",
+        notes: followUpNote,
         taxData: _lastTaxInput || null,
         estimateSummary: estimateSummary || null,
       }),
