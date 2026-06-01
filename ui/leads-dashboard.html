@@ -1326,10 +1326,13 @@
                   : ""
                 }
 
-                    <div style="margin-top:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
-                      Internal Status:<br>
-                      <span id="internalStatus-${esc(lead.leadId)}" style="color:#334155;font-weight:900;">${esc(status)}</span>
-                    </div>
+                    <div style="${status === "Follow-up Needed"
+                  ? "margin-top:10px;background:#fff7ed;border:3px solid #f97316;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(249,115,22,0.18);"
+                  : "margin-top:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;color:#0f2c56;font-size:13px;font-weight:800;line-height:1.35;text-align:left;"
+                }">
+  Internal Status:<br>
+  <span id="internalStatus-${esc(lead.leadId)}" style="${status === "Follow-up Needed" ? "color:#9a3412;font-weight:950;" : "color:#334155;font-weight:900;"}">${esc(status)}</span>
+</div>
                                        ${hasStrategyReviewRequest
                   ? `
                         <div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
