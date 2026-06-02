@@ -1073,7 +1073,7 @@ function renderTaxProInsightBanner(fed, combined) {
       color:#38bdf8;
     "
   >
-    Need IRS Transcript Review?
+    Need Help With IRS Transcripts?
   </div>
 
   <div
@@ -1085,9 +1085,9 @@ function renderTaxProInsightBanner(fed, combined) {
     "
   >
     Missing tax forms or not sure what the IRS has on file?
-    Request an IRS Transcript Review so we can help identify
-    wage records, income documents, prior-year filing issues,
-    IRS account balances, and possible next steps.
+    Request IRS Transcript Help so we can help you understand what IRS records may be needed,
+how to get them, and whether wage records, income documents, prior-year filing issues,
+IRS account balances, or tax resolution next steps may need to be reviewed.
   </div>
 
   <div
@@ -1114,7 +1114,7 @@ function renderTaxProInsightBanner(fed, combined) {
       font-size:15px;
     "
   >
-    Estimated Transcript Review Fee:
+    Estimated IRS Transcript Help Fee:
     $150–$250 depending on complexity
   </div>
 
@@ -1127,7 +1127,7 @@ function renderTaxProInsightBanner(fed, combined) {
       max-width:360px;
     "
   >
-    Request Transcript Review
+    Request IRS Transcript Help
   </button>
 </div>
 
