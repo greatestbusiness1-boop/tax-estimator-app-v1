@@ -54,6 +54,41 @@ function openPaidReview() {
   window.open(PAID_REVIEW_URL, "_blank");
 }
 
+async function requestTranscriptHelp() {
+  const leadId = _leadGatewayContact?.leadId;
+
+  if (!leadId) {
+    alert("Please unlock your estimate first so we can attach this transcript help request to your lead record.");
+    return;
+  }
+
+  const transcriptStamp = new Date().toLocaleString();
+  const transcriptNote = `[${transcriptStamp}] Client action from public estimate summary: Requested IRS Transcript Help`;
+
+  try {
+    const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        status: "Follow-up Needed",
+        notes: transcriptNote
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data?.error || "Could not save transcript help request.");
+    }
+
+    alert("Your IRS Transcript Help request was received. Our office will follow up with next steps.");
+  } catch (err) {
+    alert(err.message || "Could not save transcript help request. Please try again.");
+  }
+}
+
 // =============================================================================
 // TAX FORM — READ
 // =============================================================================
@@ -1105,7 +1140,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
     <div>✔ Prior-Year Filing Research</div>
     <div>✔ IRS Notice & Balance Review</div>
   </div>
-  
+
   <div
     style="
       margin:16px 0 18px;
@@ -1169,6 +1204,9 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
 
   const paidBtn = document.getElementById("paidReviewCtaBtn");
   if (paidBtn) paidBtn.addEventListener("click", openPaidReview);
+
+  const transcriptBtn = document.getElementById("transcriptReviewBtn");
+  if (transcriptBtn) transcriptBtn.addEventListener("click", requestTranscriptHelp);
 }
 
 function renderBreakdownRows(elId, rows) {
