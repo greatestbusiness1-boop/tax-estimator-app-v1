@@ -1433,9 +1433,39 @@
                     ${hasTranscriptHelpRequest
                   ? `
                         <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
-                          Transcript Help:<br>
-                          <span style="color:#0f172a;font-weight:900;">Follow-up needed — client requested IRS Transcript Help</span>
-                        </div>
+  Transcript Help:<br>
+  <span style="color:#0f172a;font-weight:900;">Follow-up needed — client requested IRS Transcript Help</span>
+
+  <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
+    <button
+      type="button"
+      onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Transcript Help - Payment Pending')"
+      style="background:#38bdf8;color:#0f172a;border:1px solid #0369a1;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+    >
+      Set Payment Pending / Not Verified
+    </button>
+
+    <button
+      type="button"
+      onclick="if (confirm('Confirm transcript help payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Transcript Help - Paid / Needs Review')"
+      style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+    >
+      Set Paid / Needs Review
+    </button>
+
+    <button
+      type="button"
+      onclick="if (confirm('Mark this transcript help request as completed? Only choose OK if the review/follow-up has already been completed.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Transcript Help - Completed')"
+      style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+    >
+      Set Completed
+    </button>
+  </div>
+
+  <div style="margin-top:8px;color:#0369a1;font-size:12px;font-weight:800;">
+    Payment Pending means the client clicked the Stripe payment button, but payment has not been verified yet. Click a status button, then click Save below to lock in the office status.
+  </div>
+</div>
                       `
                   : ""
                 }
@@ -1504,6 +1534,9 @@
                       <option value="Strategy Review - Payment Pending">Strategy Review - Payment Pending / Not Verified</option>
                       <option value="Strategy Review - Paid / Needs Written Review">Strategy Review - Paid / Needs Written Review</option>
                       <option value="Strategy Review - Completed">Strategy Review - Completed</option>
+                      <option value="Transcript Help - Payment Pending">Transcript Help - Payment Pending / Not Verified</option>
+<option value="Transcript Help - Paid / Needs Review">Transcript Help - Paid / Needs Review</option>
+<option value="Transcript Help - Completed">Transcript Help - Completed</option>
                     </select>
 
                     <button
@@ -1532,6 +1565,9 @@
                   "Strategy Review - Payment Pending",
                   "Strategy Review - Paid / Needs Written Review",
                   "Strategy Review - Completed",
+                  "Transcript Help - Payment Pending",
+                  "Transcript Help - Paid / Needs Review",
+                  "Transcript Help - Completed",
                   "Closed - Not Interested",
                   "Closed - Bad Lead",
                   "Closed - Future Follow-Up"
@@ -1540,7 +1576,9 @@
                     const optionLabel =
                       option === "Strategy Review - Payment Pending"
                         ? "Strategy Review - Payment Pending / Not Verified"
-                        : option;
+                        : option === "Transcript Help - Payment Pending"
+                          ? "Transcript Help - Payment Pending / Not Verified"
+                          : option;
 
                     return `<option value="${option}" ${option === status ? "selected" : ""}>${optionLabel}</option>`;
                   })
