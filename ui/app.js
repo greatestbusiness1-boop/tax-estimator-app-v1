@@ -63,8 +63,25 @@ async function requestTranscriptHelp() {
     return;
   }
 
+  const transcriptReason = window.prompt(
+    "What do you need help with?\n\nExamples: IRS letter or notice, missing W-2 or 1099, prior-year filing issue, IRS balance question, tax records for filing, or help understanding what the IRS has on file."
+  );
+
+  if (transcriptReason === null) {
+    return;
+  }
+
+  const cleanedTranscriptReason = transcriptReason.trim();
+
+  if (!cleanedTranscriptReason) {
+    alert("Please briefly tell us what you need help with before continuing to payment.");
+    return;
+  }
+
   const transcriptStamp = new Date().toLocaleString();
-  const transcriptNote = `[${transcriptStamp}] Client action from public estimate summary: IRS Transcript Help Payment — Payment not yet confirmed`;
+  const transcriptNote =
+    `[${transcriptStamp}] Client action from public estimate summary: IRS Transcript Help Payment — Payment not yet confirmed\n` +
+    `[${transcriptStamp}] Client Transcript Request: ${cleanedTranscriptReason}`;
 
   try {
     const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
