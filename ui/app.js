@@ -63,19 +63,22 @@ async function requestTranscriptHelp() {
     return;
   }
 
-  const transcriptReason = window.prompt(
-    "What do you need help with?\n\nExamples: IRS letter or notice, missing W-2 or 1099, prior-year filing issue, IRS balance question, tax records for filing, or help understanding what the IRS has on file."
-  );
+  const transcriptReasonEl = document.getElementById("transcriptHelpRequestText");
+  const cleanedTranscriptReason = String(transcriptReasonEl?.value || "").trim();
 
-  if (transcriptReason === null) {
+  if (!cleanedTranscriptReason) {
+    alert("Please tell us what you need help with before continuing to payment.");
+    if (transcriptReasonEl) {
+      transcriptReasonEl.focus();
+      transcriptReasonEl.style.border = "3px solid #ef4444";
+      transcriptReasonEl.style.background = "#fff7ed";
+    }
     return;
   }
 
-  const cleanedTranscriptReason = transcriptReason.trim();
-
-  if (!cleanedTranscriptReason) {
-    alert("Please briefly tell us what you need help with before continuing to payment.");
-    return;
+  if (transcriptReasonEl) {
+    transcriptReasonEl.style.border = "1px solid #38bdf8";
+    transcriptReasonEl.style.background = "#ffffff";
   }
 
   const transcriptStamp = new Date().toLocaleString();
@@ -1189,6 +1192,60 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
   >
         IRS Transcript Help & Tax Records Review Fee:
     $150 flat service fee
+  </div>
+
+   <div
+    style="
+      margin:0 0 18px;
+      background:#ecfeff;
+      border:2px solid #38bdf8;
+      border-radius:14px;
+      padding:14px;
+      color:#0f172a;
+    "
+  >
+    <label
+      for="transcriptHelpRequestText"
+      style="
+        display:block;
+        font-size:15px;
+        font-weight:900;
+        color:#0369a1;
+        margin-bottom:8px;
+      "
+    >
+      What do you need help with?
+    </label>
+
+    <div
+      style="
+        font-size:13px;
+        line-height:1.5;
+        color:#334155;
+        font-weight:700;
+        margin-bottom:10px;
+      "
+    >
+      Tell us what you are trying to figure out. For example: IRS letter or notice,
+      missing W-2 or 1099, prior-year filing issue, IRS balance question, tax records
+      for filing, or help understanding what the IRS has on file.
+    </div>
+
+    <textarea
+      id="transcriptHelpRequestText"
+      placeholder="Example: I received an IRS letter and need help figuring out whether I need transcripts or help responding to the notice."
+      style="
+        width:100%;
+        box-sizing:border-box;
+        min-height:110px;
+        border:1px solid #38bdf8;
+        border-radius:12px;
+        padding:12px;
+        font-size:14px;
+        line-height:1.5;
+        resize:vertical;
+      "
+    ></textarea>
   </div>
 
   <button

@@ -1383,6 +1383,17 @@
                       ? "Completed — transcript help finished"
                       : "Follow-up needed — client requested IRS Transcript Help";
 
+              const clientTranscriptRequestLine = noteLines.find(line =>
+                line.toLowerCase().includes("client transcript request:")
+              );
+
+              const clientTranscriptRequestText = clientTranscriptRequestLine
+                ? clientTranscriptRequestLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Client Transcript Request:", "")
+                  .trim()
+                : "";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1466,6 +1477,18 @@
                         <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
   Transcript Help:<br>
   <span style="color:#0f172a;font-weight:900;">${esc(transcriptHelpStatusText)}</span>
+
+   ${clientTranscriptRequestText
+                    ? `
+<div style="margin-top:10px;background:#eef2ff;border:3px solid #6366f1;border-radius:12px;padding:12px;color:#312e81;font-size:13px;font-weight:950;line-height:1.45;box-shadow:0 0 0 3px rgba(99,102,241,0.14);">
+  Client says they need help with:<br>
+  <span style="display:block;margin-top:6px;color:#111827;font-weight:950;background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:8px;">
+    ${esc(clientTranscriptRequestText)}
+  </span>
+</div>
+    `
+                    : ""
+                  } 
 
   <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
     <button
