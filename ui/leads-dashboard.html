@@ -1160,7 +1160,8 @@
                       searchableText.includes("get written $29 strategy review") ||
                       status.startsWith("Strategy Review -")
                       : selectedActionQueue === "TranscriptHelp"
-                        ? searchableText.includes("requested irs transcript help")
+                        ? searchableText.includes("requested irs transcript help") ||
+                        searchableText.includes("irs transcript help payment")
                         : selectedActionQueue === "ReviewNeeded"
                           ? combinedNet === 0
                           : true;
@@ -1241,9 +1242,14 @@
             sidebarFollowUpCountEl.textContent = followUpNeededCount;
           }
 
-          const transcriptHelpCount = statsLeads.filter(l =>
-            String(l.notes || "").toLowerCase().includes("requested irs transcript help")
-          ).length;
+          const transcriptHelpCount = statsLeads.filter(l => {
+            const notesText = String(l.notes || "").toLowerCase();
+
+            return (
+              notesText.includes("requested irs transcript help") ||
+              notesText.includes("irs transcript help payment")
+            );
+          }).length;
 
           const queueTranscriptHelpEl = document.getElementById("queueTranscriptHelp");
           if (queueTranscriptHelpEl) {
@@ -1350,9 +1356,14 @@
                 `
                 : "";
 
-              const hasTranscriptHelpRequest = noteLines.some(line =>
-                line.toLowerCase().includes("requested irs transcript help")
-              );
+              const hasTranscriptHelpRequest = noteLines.some(line => {
+                const lowerLine = line.toLowerCase();
+
+                return (
+                  lowerLine.includes("requested irs transcript help") ||
+                  lowerLine.includes("irs transcript help payment")
+                );
+              });
 
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
