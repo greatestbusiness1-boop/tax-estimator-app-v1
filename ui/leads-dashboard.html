@@ -1372,6 +1372,17 @@
                 }) ||
                 String(lead.status || "").startsWith("Transcript Help -");
 
+               const status = lead.status || "New";
+
+              const transcriptHelpStatusText =
+                status === "Transcript Help - Payment Pending"
+                  ? "Payment pending — not verified in Stripe yet"
+                  : status === "Transcript Help - Paid / Needs Review"
+                    ? "Paid — transcript help review needed"
+                    : status === "Transcript Help - Completed"
+                      ? "Completed — transcript help finished"
+                      : "Follow-up needed — client requested IRS Transcript Help";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1389,7 +1400,7 @@
                   </div>
                 `
                 : "";
-              const status = lead.status || "New";
+              
               const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(lead.leadId)}`;
 
               const combinedNet = Number(summary?.combined?.net ?? summary?.combinedNet ?? 0);
@@ -1454,7 +1465,7 @@
                   ? `
                         <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
   Transcript Help:<br>
-  <span style="color:#0f172a;font-weight:900;">Follow-up needed — client requested IRS Transcript Help</span>
+  <span style="color:#0f172a;font-weight:900;">${esc(transcriptHelpStatusText)}</span>
 
   <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
     <button
