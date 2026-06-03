@@ -1109,7 +1109,9 @@
               "Booked",
               "Follow-up Needed",
               "Strategy Review - Payment Pending",
-              "Strategy Review - Paid / Needs Written Review"
+              "Strategy Review - Paid / Needs Written Review",
+              "Transcript Help - Payment Pending",
+              "Transcript Help - Paid / Needs Review"
             ];
 
             const statusMatches =
@@ -1161,7 +1163,8 @@
                       status.startsWith("Strategy Review -")
                       : selectedActionQueue === "TranscriptHelp"
                         ? searchableText.includes("requested irs transcript help") ||
-                        searchableText.includes("irs transcript help payment")
+                        searchableText.includes("irs transcript help payment") ||
+                        status.startsWith("Transcript Help -")
                         : selectedActionQueue === "ReviewNeeded"
                           ? combinedNet === 0
                           : true;
@@ -1244,10 +1247,12 @@
 
           const transcriptHelpCount = statsLeads.filter(l => {
             const notesText = String(l.notes || "").toLowerCase();
+            const statusText = String(l.status || "");
 
             return (
               notesText.includes("requested irs transcript help") ||
-              notesText.includes("irs transcript help payment")
+              notesText.includes("irs transcript help payment") ||
+              statusText.startsWith("Transcript Help -")
             );
           }).length;
 
@@ -1356,14 +1361,16 @@
                 `
                 : "";
 
-              const hasTranscriptHelpRequest = noteLines.some(line => {
-                const lowerLine = line.toLowerCase();
+              const hasTranscriptHelpRequest =
+                noteLines.some(line => {
+                  const lowerLine = line.toLowerCase();
 
-                return (
-                  lowerLine.includes("requested irs transcript help") ||
-                  lowerLine.includes("irs transcript help payment")
-                );
-              });
+                  return (
+                    lowerLine.includes("requested irs transcript help") ||
+                    lowerLine.includes("irs transcript help payment")
+                  );
+                }) ||
+                String(lead.status || "").startsWith("Transcript Help -");
 
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
