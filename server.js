@@ -699,6 +699,10 @@ app.get("/leads-dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "leads-dashboard.html"));
 });
 
+app.get("/transcript-thank-you", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "transcript-thank-you.html"));
+});
+
 // =============================================================================
 // GET /stripe-thank-you
 // =============================================================================
