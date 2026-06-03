@@ -1105,6 +1105,25 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
     <div>✔ Prior-Year Filing Research</div>
     <div>✔ IRS Notice & Balance Review</div>
   </div>
+  
+  <div
+    style="
+      margin:16px 0 18px;
+      background:#1e293b;
+      border:1px solid #38bdf8;
+      border-radius:14px;
+      padding:14px;
+      color:#dbeafe;
+      font-size:13px;
+      line-height:1.6;
+    "
+  >
+    <strong style="color:#fde68a;">Important timing note:</strong><br>
+    IRS transcripts are generally available only after the IRS has processed the return.
+    If you recently e-filed, transcripts may not be available for about 2–3 weeks.
+    If you mailed a paper return, it may take about 6–8 weeks.
+    Our office can help identify which IRS records may be needed and review available records quickly once authorization and access are complete.
+  </div>
 
   <div
     style="
