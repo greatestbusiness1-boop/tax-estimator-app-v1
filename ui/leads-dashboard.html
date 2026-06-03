@@ -758,6 +758,50 @@
         booked consultations, and follow-up needed items.
       </div>
     </div>
+
+    <div id="transcriptHelpGuidance"
+      style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <div style="font-size:18px;font-weight:950;color:#0369a1;margin-bottom:8px;">
+        IRS Transcript Help Workflow Guide
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+          <strong style="color:#0369a1;">Client Requested Help</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Client clicked Request IRS Transcript Help from the public estimate page.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+          <strong style="color:#0369a1;">Contact Client</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Ask whether they are missing W-2s, 1099s, prior-year records, IRS balance details, or notice information.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+          <strong style="color:#0369a1;">Authorization Needed</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Do not pull or review IRS records until proper client authorization and identity information are complete.
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+          <strong style="color:#0369a1;">Next Step</strong>
+          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+            Decide if the client needs transcript help, prior-year filing research, tax prep, or tax resolution
+            follow-up.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;color:#0369a1;font-size:13px;font-weight:800;">
+        IRS transcript availability depends on IRS processing. Your office can still provide fast follow-up once
+        authorization and available records are ready.
+      </div>
+    </div>
+
     <div id="strategyReviewGuidance"
       style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
       <div style="font-size:18px;font-weight:950;color:#9a3412;margin-bottom:8px;">
@@ -900,11 +944,16 @@
       }
       function updateWorkspaceGuidance(view) {
         const strategyGuideEl = document.getElementById("strategyReviewGuidance");
+        const transcriptHelpGuideEl = document.getElementById("transcriptHelpGuidance");
         const balanceDueGuideEl = document.getElementById("balanceDueGuidance");
         const refundGuideEl = document.getElementById("refundGuidance");
 
         if (strategyGuideEl) {
           strategyGuideEl.style.display = view === "StrategyReview" ? "block" : "none";
+        }
+
+        if (transcriptHelpGuideEl) {
+          transcriptHelpGuideEl.style.display = view === "TranscriptHelp" ? "block" : "none";
         }
 
         if (balanceDueGuideEl) {
