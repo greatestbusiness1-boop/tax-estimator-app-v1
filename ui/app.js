@@ -49,6 +49,7 @@ function scrollToLead() {
 }
 
 const PAID_REVIEW_URL = "https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00";
+const TRANSCRIPT_HELP_PAYMENT_URL = "https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01";
 
 function openPaidReview() {
   window.open(PAID_REVIEW_URL, "_blank");
@@ -63,7 +64,7 @@ async function requestTranscriptHelp() {
   }
 
   const transcriptStamp = new Date().toLocaleString();
-  const transcriptNote = `[${transcriptStamp}] Client action from public estimate summary: Requested IRS Transcript Help`;
+  const transcriptNote = `[${transcriptStamp}] Client action from public estimate summary: IRS Transcript Help Payment — Payment not yet confirmed`;
 
   try {
     const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
@@ -83,7 +84,8 @@ async function requestTranscriptHelp() {
       throw new Error(data?.error || "Could not save transcript help request.");
     }
 
-    alert("Your IRS Transcript Help request was received. Our office will follow up with next steps.");
+    alert("Your IRS Transcript Help payment page will open now. Payment is not confirmed until Stripe checkout is completed.");
+    window.open(TRANSCRIPT_HELP_PAYMENT_URL, "_blank");
   } catch (err) {
     alert(err.message || "Could not save transcript help request. Please try again.");
   }
@@ -1168,8 +1170,8 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       font-size:15px;
     "
   >
-    Estimated IRS Transcript Help Fee:
-    $150–$250 depending on complexity
+        IRS Transcript Help & Tax Records Review Fee:
+    $150 flat service fee
   </div>
 
   <button
@@ -1181,7 +1183,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       max-width:360px;
     "
   >
-    Request IRS Transcript Help
+        Pay for IRS Transcript Help — $150
   </button>
 </div>
 
