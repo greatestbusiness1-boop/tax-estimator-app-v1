@@ -547,6 +547,12 @@
       Strategy Reviews
     </button>
 
+    <button class="sidebar-btn" data-view="TranscriptHelp"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })">
+      Transcript Help <span id="sidebarTranscriptHelpCount"
+        style="float:right;background:#38bdf8;color:#0f172a;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
+    </button>
+
     <button class="sidebar-btn" data-view="Follow-up Needed"
       onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
       Follow-Up Needed <span id="sidebarFollowUpCount"
@@ -683,6 +689,7 @@
             <option value="Refund">Refund Leads — Follow Up to File</option>
             <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
             <option value="StrategyReview">Strategy Reviews</option>
+            <option value="TranscriptHelp">Transcript Help</option>
             <option value="ReviewNeeded">Review Needed</option>
           </select>
         </div>
@@ -698,7 +705,7 @@
       </div>
 
       <div id="attentionQueue"
-        style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:14px;margin-bottom:18px;">
+        style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:14px;margin-bottom:18px;">
         <div class="summary"
           style="background:linear-gradient(180deg,#ffffff 0%,#ecfdf5 100%);border:1px solid #bbf7d0;">
           <strong>New Refund Leads</strong><br>
@@ -716,6 +723,13 @@
           style="background:linear-gradient(180deg,#ffffff 0%,#fff7ed 100%);border:2px solid #f97316;cursor:pointer;box-shadow:0 0 0 3px rgba(249,115,22,0.12);">
           <strong style="color:#9a3412;">Follow-Up Needed</strong><br>
           <span id="queueFollowUp" style="color:#9a3412;">0</span>
+        </div>
+
+        <div class="summary" onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+          title="Click to view Transcript Help leads"
+          style="background:linear-gradient(180deg,#ffffff 0%,#ecfeff 100%);border:2px solid #38bdf8;cursor:pointer;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
+          <strong style="color:#0369a1;">Transcript Help</strong><br>
+          <span id="queueTranscriptHelp" style="color:#0369a1;">0</span>
         </div>
 
         <div class="summary"
@@ -1012,6 +1026,7 @@
             Refund: "Refund Leads — Follow Up to File",
             BalanceDue: "Balance Due Leads — Schedule Review",
             StrategyReview: "Strategy Reviews",
+            TranscriptHelp: "Transcript Help",
             ReviewNeeded: "Review Needed"
           };
 
@@ -1089,9 +1104,11 @@
                       ? searchableText.includes("buy written review") ||
                       searchableText.includes("get written $29 strategy review") ||
                       status.startsWith("Strategy Review -")
-                      : selectedActionQueue === "ReviewNeeded"
-                        ? combinedNet === 0
-                        : true;
+                      : selectedActionQueue === "TranscriptHelp"
+                        ? searchableText.includes("requested irs transcript help")
+                        : selectedActionQueue === "ReviewNeeded"
+                          ? combinedNet === 0
+                          : true;
 
             const searchMatches =
               !searchText ? true : searchableText.includes(searchText);
@@ -1167,6 +1184,20 @@
           const sidebarFollowUpCountEl = document.getElementById("sidebarFollowUpCount");
           if (sidebarFollowUpCountEl) {
             sidebarFollowUpCountEl.textContent = followUpNeededCount;
+          }
+
+          const transcriptHelpCount = statsLeads.filter(l =>
+            String(l.notes || "").toLowerCase().includes("requested irs transcript help")
+          ).length;
+
+          const queueTranscriptHelpEl = document.getElementById("queueTranscriptHelp");
+          if (queueTranscriptHelpEl) {
+            queueTranscriptHelpEl.textContent = transcriptHelpCount;
+          }
+
+          const sidebarTranscriptHelpCountEl = document.getElementById("sidebarTranscriptHelpCount");
+          if (sidebarTranscriptHelpCountEl) {
+            sidebarTranscriptHelpCountEl.textContent = transcriptHelpCount;
           }
 
           document.getElementById("queueBooked").textContent =
@@ -1264,6 +1295,10 @@
                 `
                 : "";
 
+              const hasTranscriptHelpRequest = noteLines.some(line =>
+                line.toLowerCase().includes("requested irs transcript help")
+              );
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1341,6 +1376,16 @@
   Internal Status:<br>
   <span id="internalStatus-${esc(lead.leadId)}" style="${status === "Follow-up Needed" ? "color:#9a3412;font-weight:950;" : "color:#334155;font-weight:900;"}">${esc(status)}</span>
 </div>
+
+                    ${hasTranscriptHelpRequest
+                  ? `
+                        <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
+                          Transcript Help:<br>
+                          <span style="color:#0f172a;font-weight:900;">Follow-up needed — client requested IRS Transcript Help</span>
+                        </div>
+                      `
+                  : ""
+                }
                                        ${hasStrategyReviewRequest
                   ? `
                         <div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
