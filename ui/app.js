@@ -1194,6 +1194,88 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
     $150 flat service fee
   </div>
 
+    <div
+    style="
+      margin:0 0 18px;
+      background:#f8fafc;
+      border:2px solid #bae6fd;
+      border-radius:14px;
+      padding:14px;
+      color:#0f172a;
+      font-size:13px;
+      line-height:1.6;
+    "
+  >
+    <div style="font-size:16px;font-weight:900;color:#0369a1;margin-bottom:8px;">
+      What the $150 service covers
+    </div>
+
+    <div style="font-weight:700;color:#334155;">
+      The $150 fee covers one transcript-help matter for one taxpayer. We will review
+      the issue you describe, determine which IRS transcript type(s) may be needed,
+      review available transcript information related to that issue, and explain the
+      recommended next step.
+    </div>
+
+    <div
+      style="
+        margin-top:10px;
+        background:#fff7ed;
+        border:1px solid #fed7aa;
+        border-radius:10px;
+        padding:10px;
+        color:#7c2d12;
+        font-weight:800;
+      "
+    >
+      This service does not include full tax preparation, amended returns, IRS representation,
+      tax resolution work, or ongoing monitoring unless separately agreed in writing.
+    </div>
+  </div>
+
+    <div
+    style="
+      margin:0 0 18px;
+      background:#eef2ff;
+      border:2px solid #6366f1;
+      border-radius:14px;
+      padding:14px;
+      color:#0f172a;
+      font-size:13px;
+      line-height:1.55;
+    "
+  >
+    <div style="font-size:16px;font-weight:900;color:#312e81;margin-bottom:8px;">
+      Not sure which IRS transcript you need?
+    </div>
+
+    <div style="font-weight:800;color:#334155;margin-bottom:10px;">
+      That is part of the service. We help identify which IRS record may answer your question.
+    </div>
+
+    <div style="display:grid;gap:8px;">
+      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
+        <strong>Missing W-2s or 1099s:</strong> Wage and Income Transcript
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
+        <strong>IRS notice, balance, payments, or account activity:</strong> Tax Account Transcript
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
+        <strong>Need information from a filed return:</strong> Tax Return Transcript
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
+        <strong>Need filed-return details and account activity together:</strong> Record of Account Transcript
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
+        <strong>Need proof no return was filed:</strong> Verification of Non-Filing
+      </div>
+    </div>
+  </div>
+
    <div
     style="
       margin:0 0 18px;
