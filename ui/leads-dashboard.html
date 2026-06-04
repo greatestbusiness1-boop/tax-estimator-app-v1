@@ -1403,6 +1403,40 @@
                       ? "Completed"
                       : "Requested / waiting for payment verification";
 
+              const clientIssueLine = noteLines.find(line =>
+                line.toLowerCase().includes("client needs help with:")
+              );
+
+              const transcriptTypeLine = noteLines.find(line =>
+                line.toLowerCase().includes("transcript type selected:")
+              );
+
+              const transcriptAdditionalDetailsLine = noteLines.find(line =>
+                line.toLowerCase().includes("additional details:")
+              );
+
+              const clientIssueText = clientIssueLine
+                ? clientIssueLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Client Transcript Request:", "")
+                  .replace("Client needs help with:", "")
+                  .trim()
+                : "Not captured yet";
+
+              const transcriptTypeRequestedText = transcriptTypeLine
+                ? transcriptTypeLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Transcript type selected:", "")
+                  .trim()
+                : "Not selected / client may need help deciding";
+
+              const transcriptAdditionalDetailsText = transcriptAdditionalDetailsLine
+                ? transcriptAdditionalDetailsLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Additional details:", "")
+                  .trim()
+                : "";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1505,6 +1539,16 @@
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
+            <div style="background:#eef2ff;border:2px solid #6366f1;border-radius:10px;padding:8px;">
+        <strong style="color:#312e81;">Client Issue</strong><br>
+        ${esc(clientIssueText)}
+      </div>
+
+      <div style="background:#eef2ff;border:2px solid #6366f1;border-radius:10px;padding:8px;">
+        <strong style="color:#312e81;">Transcript Type Requested</strong><br>
+        ${esc(transcriptTypeRequestedText)}
+      </div>
+
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <strong style="color:#334155;">Service</strong><br>
         IRS Transcript Help & Tax Records Review
@@ -1534,7 +1578,16 @@
         <strong style="color:#334155;">Delivery</strong><br>
         Not delivered yet
       </div>
-    </div>
+           ${transcriptAdditionalDetailsText
+                    ? `
+          <div style="grid-column:1 / -1;background:#f8fafc;border:1px solid #c7d2fe;border-radius:10px;padding:8px;">
+            <strong style="color:#312e81;">Additional Details</strong><br>
+            ${esc(transcriptAdditionalDetailsText)}
+          </div>
+        `
+                    : ""
+                  }
+   </div>
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
