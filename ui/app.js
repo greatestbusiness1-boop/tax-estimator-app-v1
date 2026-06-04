@@ -63,28 +63,38 @@ async function requestTranscriptHelp() {
     return;
   }
 
+  const selectedNeeds = Array.from(document.querySelectorAll(".transcriptNeedOption:checked"))
+    .map(input => input.value);
+
+  const selectedTranscriptTypes = Array.from(document.querySelectorAll(".transcriptTypeOption:checked"))
+    .map(input => input.value);
+
   const transcriptReasonEl = document.getElementById("transcriptHelpRequestText");
   const cleanedTranscriptReason = String(transcriptReasonEl?.value || "").trim();
 
-  if (!cleanedTranscriptReason) {
-    alert("Please tell us what you need help with before continuing to payment.");
-    if (transcriptReasonEl) {
-      transcriptReasonEl.focus();
-      transcriptReasonEl.style.border = "3px solid #ef4444";
-      transcriptReasonEl.style.background = "#fff7ed";
+  if (!selectedNeeds.length) {
+    alert("Please select at least one item under 'What do you need help with?' before continuing to payment.");
+    const firstNeedOption = document.querySelector(".transcriptNeedOption");
+    if (firstNeedOption) {
+      firstNeedOption.focus();
     }
     return;
   }
 
-  if (transcriptReasonEl) {
-    transcriptReasonEl.style.border = "1px solid #38bdf8";
-    transcriptReasonEl.style.background = "#ffffff";
-  }
+  const transcriptNeedText = selectedNeeds.join(", ");
+  const transcriptTypeText = selectedTranscriptTypes.length
+    ? selectedTranscriptTypes.join(", ")
+    : "Not selected / client may need help deciding";
+
+  const transcriptRequestSummary =
+    `Client needs help with: ${transcriptNeedText}\n` +
+    `Transcript type selected: ${transcriptTypeText}` +
+    (cleanedTranscriptReason ? `\nAdditional details: ${cleanedTranscriptReason}` : "");
 
   const transcriptStamp = new Date().toLocaleString();
   const transcriptNote =
     `[${transcriptStamp}] Client action from public estimate summary: IRS Transcript Help Payment — Payment not yet confirmed\n` +
-    `[${transcriptStamp}] Client Transcript Request: ${cleanedTranscriptReason}`;
+    `[${transcriptStamp}] Client Transcript Request: ${transcriptRequestSummary}`;
 
   try {
     const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
@@ -1276,7 +1286,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
     </div>
   </div>
 
-   <div
+     <div
     style="
       margin:0 0 18px;
       background:#ecfeff;
@@ -1286,6 +1296,79 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       color:#0f172a;
     "
   >
+    <div
+      style="
+        font-size:17px;
+        font-weight:950;
+        color:#0369a1;
+        margin-bottom:8px;
+      "
+    >
+      Tell us what you need help with
+    </div>
+
+    <div
+      style="
+        font-size:13px;
+        line-height:1.5;
+        color:#334155;
+        font-weight:800;
+        margin-bottom:12px;
+      "
+    >
+      Select any that apply. At least one item is required before continuing to payment.
+    </div>
+
+    <div
+      style="
+        background:#ffffff;
+        border:1px solid #67e8f9;
+        border-radius:12px;
+        padding:12px;
+        margin-bottom:12px;
+      "
+    >
+      <div style="font-size:14px;font-weight:950;color:#0369a1;margin-bottom:8px;">
+        What do you need help with?
+      </div>
+
+      <div style="display:grid;gap:8px;font-size:13px;color:#0f172a;font-weight:800;">
+        <label><input type="checkbox" class="transcriptNeedOption" value="I received an IRS letter or notice"> I received an IRS letter or notice</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a W-2"> I am missing a W-2</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a 1099"> I am missing a 1099</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need wage or income records"> I need wage or income records</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need to know if a return was filed"> I need to know if a return was filed</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need prior-year tax records"> I need prior-year tax records</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need to know what I owe the IRS"> I need to know what I owe the IRS</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need help with an IRS balance"> I need help with an IRS balance</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I need records for tax preparation"> I need records for tax preparation</label>
+        <label><input type="checkbox" class="transcriptNeedOption" value="I am not sure / I need help figuring it out"> I am not sure / I need help figuring it out</label>
+      </div>
+    </div>
+
+    <div
+      style="
+        background:#eef2ff;
+        border:1px solid #c7d2fe;
+        border-radius:12px;
+        padding:12px;
+        margin-bottom:12px;
+      "
+    >
+      <div style="font-size:14px;font-weight:950;color:#312e81;margin-bottom:8px;">
+        Which IRS transcript do you think you need? <span style="font-size:12px;color:#64748b;">Optional</span>
+      </div>
+
+      <div style="display:grid;gap:8px;font-size:13px;color:#0f172a;font-weight:800;">
+        <label><input type="checkbox" class="transcriptTypeOption" value="Wage and Income Transcript"> Wage and Income Transcript</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Tax Account Transcript"> Tax Account Transcript</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Tax Return Transcript"> Tax Return Transcript</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Record of Account Transcript"> Record of Account Transcript</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Verification of Non-Filing"> Verification of Non-Filing</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Not sure — please help me decide"> Not sure — please help me decide</label>
+      </div>
+    </div>
+
     <label
       for="transcriptHelpRequestText"
       style="
@@ -1296,30 +1379,16 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
         margin-bottom:8px;
       "
     >
-      What do you need help with?
+      Additional details <span style="font-size:12px;color:#64748b;">Optional</span>
     </label>
-
-    <div
-      style="
-        font-size:13px;
-        line-height:1.5;
-        color:#334155;
-        font-weight:700;
-        margin-bottom:10px;
-      "
-    >
-      Tell us what you are trying to figure out. For example: IRS letter or notice,
-      missing W-2 or 1099, prior-year filing issue, IRS balance question, tax records
-      for filing, or help understanding what the IRS has on file.
-    </div>
 
     <textarea
       id="transcriptHelpRequestText"
-      placeholder="Example: I received an IRS letter and need help figuring out whether I need transcripts or help responding to the notice."
+      placeholder="Example: I received an IRS letter about 2022 and need help figuring out whether I need transcripts or help responding to the notice."
       style="
         width:100%;
         box-sizing:border-box;
-        min-height:110px;
+        min-height:95px;
         border:1px solid #38bdf8;
         border-radius:12px;
         padding:12px;
