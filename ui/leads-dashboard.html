@@ -549,7 +549,7 @@
 
     <button class="sidebar-btn" data-view="TranscriptHelp"
       onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })">
-      Transcript Help <span id="sidebarTranscriptHelpCount"
+      Transcript Requests <span id="sidebarTranscriptHelpCount"
         style="float:right;background:#38bdf8;color:#0f172a;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
     </button>
 
@@ -689,7 +689,7 @@
             <option value="Refund">Refund Leads — Follow Up to File</option>
             <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
             <option value="StrategyReview">Strategy Reviews</option>
-            <option value="TranscriptHelp">Transcript Help</option>
+            <option value="TranscriptHelp">Transcript Requests</option>
             <option value="ReviewNeeded">Review Needed</option>
           </select>
         </div>
@@ -728,7 +728,7 @@
         <div class="summary" onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
           title="Click to view Transcript Help leads"
           style="background:linear-gradient(180deg,#ffffff 0%,#ecfeff 100%);border:2px solid #38bdf8;cursor:pointer;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
-          <strong style="color:#0369a1;">Transcript Help</strong><br>
+          <strong style="color:#0369a1;">Transcript Requests</strong><br>
           <span id="queueTranscriptHelp" style="color:#0369a1;">0</span>
         </div>
 
@@ -762,7 +762,7 @@
     <div id="transcriptHelpGuidance"
       style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
       <div style="font-size:18px;font-weight:950;color:#0369a1;margin-bottom:8px;">
-        IRS Transcript Help Workflow Guide
+        IRS Transcript Requests Workflow Guide
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
@@ -992,8 +992,8 @@
             description: "These leads are connected to the $29 Written Tax Estimate Review workflow. Use this view to manage written review requests, payment status, review preparation, and completed reviews."
           },
           TranscriptHelp: {
-            title: "Transcript Help Workspace",
-            description: "These leads requested IRS Transcript Help. Contact the client to determine whether they need help getting IRS records, finding missing W-2s or 1099s, reviewing IRS account balances, checking prior-year filing issues, or deciding if tax resolution help is needed."
+            title: "Transcript Requests Workspace",
+            description: "These are transcript-related service requests. Use this workspace to review what the client needs, payment status, authorization needs, transcript types, transcript pull status, delivery method, and next-step guidance."
           },
           "Follow-up Needed": {
             title: "Follow-Up Needed Workspace",
@@ -1081,7 +1081,7 @@
             Refund: "Refund Leads — Follow Up to File",
             BalanceDue: "Balance Due Leads — Schedule Review",
             StrategyReview: "Strategy Reviews",
-            TranscriptHelp: "Transcript Help",
+            TranscriptHelp: "Transcript Requests",
             ReviewNeeded: "Review Needed"
           };
 
@@ -1484,7 +1484,7 @@
                     ${hasTranscriptHelpRequest
                   ? `
                         <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
-  Transcript Help:<br>
+  Transcript Request:<br>
   <span style="color:#0f172a;font-weight:900;">${esc(transcriptHelpStatusText)}</span>
 
    ${clientTranscriptRequestText
