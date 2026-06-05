@@ -1505,10 +1505,15 @@
               const trackingDeliveryDate = getTranscriptTrackingValue("- Delivery Date:", "Not entered");
               const trackingMailFee = getTranscriptTrackingValue("- Mail / Certified Mail Fee:", "Not added");
 
+              const cleanTrackingAuthStatus =
+                trackingAuthDate && trackingAuthDate !== "Not entered" && trackingAuthStatus === "Pending / not uploaded yet"
+                  ? "Received / needs review"
+                  : trackingAuthStatus;
+
               const transcriptAuthorizationOverview =
                 trackingAuthDate && trackingAuthDate !== "Not entered"
-                  ? `${trackingAuthStatus} — received ${trackingAuthDate}`
-                  : trackingAuthStatus;
+                  ? `${cleanTrackingAuthStatus} — received ${trackingAuthDate}`
+                  : cleanTrackingAuthStatus;
 
               const transcriptPullOverview =
                 trackingPulledDate !== "Not entered" || trackingReceivedDate !== "Not entered"
