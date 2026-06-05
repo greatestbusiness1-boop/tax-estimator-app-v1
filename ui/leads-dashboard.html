@@ -161,12 +161,16 @@
     }
 
     .save-msg {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #047857;
-      font-weight: 900;
-      line-height: 1.25;
-      min-height: 16px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #065f46;
+      font-weight: 950;
+      line-height: 1.35;
+      min-height: 20px;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 8px 10px;
     }
 
     /* Soft dashboard color upgrade */
@@ -1743,11 +1747,16 @@
     onclick="saveLead('${esc(lead.leadId)}')"
     style="width:100%;margin-top:10px;background:#0f766e;color:#ffffff;border:2px solid #134e4a;border-radius:12px;padding:12px 10px;font-size:13px;font-weight:950;box-shadow:0 8px 18px rgba(15,118,110,0.20);"
   >
-    Save Transcript Status Now
+    Save Transcript Status Change
   </button>
 
+   <div
+    id="transcriptStatusMsg-${esc(lead.leadId)}"
+    style="margin-top:8px;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;color:#065f46;font-size:13px;font-weight:950;display:none;"
+  ></div> 
+
   <div style="margin-top:8px;color:#0f172a;font-size:12px;font-weight:900;background:#ffffff;border:1px solid #67e8f9;border-radius:10px;padding:8px;">
-    After choosing a Transcript Help status, click this green save button to lock in the office status.
+    After choosing Payment Pending, Paid / Needs Review, or Completed, click this green button to save the status change.
   </div>
 </div>
                       `
@@ -2151,8 +2160,15 @@
         const notesEl = document.getElementById(`notes-${leadId}`);
         const activityEl = document.getElementById(`activity-${leadId}`);
         const msgEl = document.getElementById(`msg-${leadId}`);
+        const transcriptStatusMsgEl = document.getElementById(`transcriptStatusMsg-${leadId}`);
 
-        msgEl.textContent = "Saving...";
+        if (msgEl) msgEl.textContent = "Saving...";
+
+        if (transcriptStatusMsgEl) {
+          transcriptStatusMsgEl.style.display = "block";
+          transcriptStatusMsgEl.textContent = "Saving transcript status change...";
+        }
+        
         const activityText = String(activityEl?.value || "").trim();
         const manualNotes = String(notesEl?.value || "").trim();
 
@@ -2180,9 +2196,21 @@
             throw new Error(data?.error || "Could not save lead.");
           }
 
-          msgEl.textContent = "Saved";
+          if (msgEl) {
+            msgEl.textContent = "Saved successfully — status and notes updated.";
+          }
+
+          if (transcriptStatusMsgEl) {
+            transcriptStatusMsgEl.style.display = "block";
+            transcriptStatusMsgEl.textContent = "Transcript status saved successfully.";
+          }
         } catch (err) {
-          msgEl.textContent = "Error saving";
+          if (msgEl) msgEl.textContent = "Error saving";
+
+          if (transcriptStatusMsgEl) {
+            transcriptStatusMsgEl.style.display = "block";
+            transcriptStatusMsgEl.textContent = "Error saving transcript status. Please try again.";
+          }
         }
       }
 
