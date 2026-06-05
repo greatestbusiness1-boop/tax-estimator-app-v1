@@ -1620,58 +1620,94 @@
                   }
    </div>
   </div>
-  <div style="margin-top:12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:12px;color:#0f172a;font-size:12px;line-height:1.55;">
+    <div style="margin-top:12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:12px;color:#0f172a;font-size:12px;line-height:1.55;">
     <div style="font-size:14px;font-weight:950;color:#0f2c56;margin-bottom:8px;">
       Transcript Request Tracking Fields
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Authorization Status</strong><br>
-        Pending / not uploaded yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Authorization Status
+        </label>
+        <select id="transcriptAuthStatus-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
+          <option value="Pending / not uploaded yet">Pending / not uploaded yet</option>
+          <option value="Requested from client">Requested from client</option>
+          <option value="Received / needs review">Received / needs review</option>
+          <option value="Complete">Complete</option>
+        </select>
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Authorization Received Date</strong><br>
-        Not entered yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Authorization Received Date
+        </label>
+        <input id="transcriptAuthDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Transcript Pulled Date</strong><br>
-        Not entered yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Transcript Pulled Date
+        </label>
+        <input id="transcriptPulledDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Transcript Received Date</strong><br>
-        Not entered yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Transcript Received Date
+        </label>
+        <input id="transcriptReceivedDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Delivery Method</strong><br>
-        Not selected yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Delivery Method
+        </label>
+        <select id="transcriptDeliveryMethod-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
+          <option value="Not selected yet">Not selected yet</option>
+          <option value="Client portal">Client portal</option>
+          <option value="Email">Email</option>
+          <option value="Regular mail">Regular mail</option>
+          <option value="Certified mail">Certified mail</option>
+          <option value="Pickup / in-person">Pickup / in-person</option>
+        </select>
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Delivery Date</strong><br>
-        Not entered yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Delivery Date
+        </label>
+        <input id="transcriptDeliveryDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Mail / Certified Mail Fee</strong><br>
-        Not added yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Mail / Certified Mail Fee
+        </label>
+        <input id="transcriptMailFee-${esc(lead.leadId)}" type="text" placeholder="Example: $0, $15, $25" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
-        <strong style="color:#334155;">Internal Transcript Notes</strong><br>
-        Not entered yet
+        <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+          Internal Transcript Notes
+        </label>
+        <textarea id="transcriptInternalNotes-${esc(lead.leadId)}" placeholder="Example: Client has IRS notice for 2022. Need account transcript and wage/income records." style="width:100%;box-sizing:border-box;min-height:72px;border:1px solid #cbd5e1;border-radius:10px;padding:9px;"></textarea>
       </div>
     </div>
+
+    <button
+      type="button"
+      onclick="addTranscriptTrackingToNotes('${esc(lead.leadId)}')"
+      style="width:100%;margin-top:10px;background:#4f46e5;color:#ffffff;border:2px solid #312e81;border-radius:12px;padding:12px 10px;font-size:13px;font-weight:950;box-shadow:0 8px 18px rgba(79,70,229,0.18);"
+    >
+      Save Transcript Tracking Details
+    </button>
 
     <div style="margin-top:8px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px;color:#312e81;font-weight:900;">
-      Next build step: these tracking fields will become editable and saved to the Transcript Request record.
+      Enter the transcript tracking details, then click Save Transcript Tracking Details. This saves the tracking update to the lead notes.
     </div>
   </div>
-  
+
   <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
     <button
       type="button"
@@ -1879,6 +1915,83 @@
           }
         }
       }
+      async function addTranscriptTrackingToNotes(leadId) {
+        const notesEl = document.getElementById(`notes-${leadId}`);
+        const msgEl = document.getElementById(`msg-${leadId}`);
+
+        const getValue = (id) => String(document.getElementById(`${id}-${leadId}`)?.value || "").trim();
+
+        const formatFee = (value) => {
+          const raw = String(value || "").trim();
+
+          if (!raw) return "Not added";
+
+          const cleaned = raw.replace(/[^0-9.]/g, "");
+          const amount = Number(cleaned);
+
+          if (!Number.isFinite(amount)) return raw;
+
+          return amount.toLocaleString("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        };
+
+        const authStatus = getValue("transcriptAuthStatus") || "Pending / not uploaded yet";
+        const authDate = getValue("transcriptAuthDate") || "Not entered";
+        const pulledDate = getValue("transcriptPulledDate") || "Not entered";
+        const receivedDate = getValue("transcriptReceivedDate") || "Not entered";
+        const deliveryMethod = getValue("transcriptDeliveryMethod") || "Not selected yet";
+        const deliveryDate = getValue("transcriptDeliveryDate") || "Not entered";
+        const mailFee = formatFee(getValue("transcriptMailFee"));
+        const internalNotes = getValue("transcriptInternalNotes") || "None";
+
+        const stamp = new Date().toLocaleString();
+
+        const trackingNote =
+          `\n[${stamp}] Transcript Request Tracking Update\n` +
+          `----------------------------------------\n` +
+          `Authorization\n` +
+          `- Status: ${authStatus}\n` +
+          `- Authorization Received Date: ${authDate}\n\n` +
+          `Transcript Records\n` +
+          `- Transcript Pulled Date: ${pulledDate}\n` +
+          `- Transcript Received Date: ${receivedDate}\n\n` +
+          `Delivery\n` +
+          `- Method: ${deliveryMethod}\n` +
+          `- Delivery Date: ${deliveryDate}\n` +
+          `- Mail / Certified Mail Fee: ${mailFee}\n\n` +
+          `Internal Transcript Notes\n` +
+          `- ${internalNotes}\n` +
+          `----------------------------------------\n`;
+
+        if (notesEl) {
+          const currentNotes = String(notesEl.value || "").trim();
+
+          notesEl.value = currentNotes
+            ? `${currentNotes}\n${trackingNote}`
+            : trackingNote.trim();
+
+          notesEl.focus();
+          notesEl.selectionStart = notesEl.value.length;
+          notesEl.selectionEnd = notesEl.value.length;
+        }
+
+        if (msgEl) {
+          msgEl.textContent = "Saving transcript tracking details...";
+        }
+
+        await saveLead(leadId);
+
+        if (msgEl) {
+          msgEl.textContent = "Transcript tracking details saved.";
+        }
+      }
+
+
+
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
