@@ -1472,6 +1472,54 @@
                   .trim()
                 : "";
 
+              const transcriptTrackingBlocks = String(notes || "")
+                .split(/\n(?=\[[^\]]+\]\s*Transcript Request Tracking Update)/)
+                .filter(block => block.includes("Transcript Request Tracking Update"));
+
+              const latestTranscriptTrackingBlock = transcriptTrackingBlocks.length
+                ? transcriptTrackingBlocks[transcriptTrackingBlocks.length - 1]
+                : "";
+
+              const getTranscriptTrackingValue = (label, fallback = "") => {
+                if (!latestTranscriptTrackingBlock) return fallback;
+
+                const trackingLines = latestTranscriptTrackingBlock
+                  .split(/\r?\n/)
+                  .map(line => line.trim())
+                  .filter(Boolean);
+
+                const foundLine = trackingLines.find(line =>
+                  line.toLowerCase().startsWith(label.toLowerCase())
+                );
+
+                return foundLine
+                  ? foundLine.slice(label.length).trim()
+                  : fallback;
+              };
+
+              const trackingAuthStatus = getTranscriptTrackingValue("- Status:", "Pending / not uploaded yet");
+              const trackingAuthDate = getTranscriptTrackingValue("- Authorization Received Date:", "Not entered");
+              const trackingPulledDate = getTranscriptTrackingValue("- Transcript Pulled Date:", "Not entered");
+              const trackingReceivedDate = getTranscriptTrackingValue("- Transcript Received Date:", "Not entered");
+              const trackingDeliveryMethod = getTranscriptTrackingValue("- Method:", "Not selected yet");
+              const trackingDeliveryDate = getTranscriptTrackingValue("- Delivery Date:", "Not entered");
+              const trackingMailFee = getTranscriptTrackingValue("- Mail / Certified Mail Fee:", "Not added");
+
+              const transcriptAuthorizationOverview =
+                trackingAuthDate && trackingAuthDate !== "Not entered"
+                  ? `${trackingAuthStatus} — received ${trackingAuthDate}`
+                  : trackingAuthStatus;
+
+              const transcriptPullOverview =
+                trackingPulledDate !== "Not entered" || trackingReceivedDate !== "Not entered"
+                  ? `Pulled: ${trackingPulledDate} | Received: ${trackingReceivedDate}`
+                  : "Not pulled yet";
+
+              const transcriptDeliveryOverview =
+                trackingDeliveryMethod !== "Not selected yet" || trackingDeliveryDate !== "Not entered"
+                  ? `${trackingDeliveryMethod} | Date: ${trackingDeliveryDate} | Fee: ${trackingMailFee}`
+                  : "Not delivered yet";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1601,17 +1649,17 @@
 
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <strong style="color:#334155;">Authorization</strong><br>
-        Pending / not uploaded yet
+                ${esc(transcriptAuthorizationOverview)}
       </div>
 
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <strong style="color:#334155;">Transcript Pull Status</strong><br>
-        Not pulled yet
+                ${esc(transcriptPullOverview)}
       </div>
 
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <strong style="color:#334155;">Delivery</strong><br>
-        Not delivered yet
+                ${esc(transcriptDeliveryOverview)}
       </div>
            ${transcriptAdditionalDetailsText
                     ? `
