@@ -2001,8 +2001,13 @@
           });
         };
 
-        const authStatus = getValue("transcriptAuthStatus") || "Pending / not uploaded yet";
+        const rawAuthStatus = getValue("transcriptAuthStatus") || "Pending / not uploaded yet";
         const authDate = getValue("transcriptAuthDate") || "Not entered";
+
+        const authStatus =
+          authDate !== "Not entered" && rawAuthStatus === "Pending / not uploaded yet"
+            ? "Received / needs review"
+            : rawAuthStatus;
         const pulledDate = getValue("transcriptPulledDate") || "Not entered";
         const receivedDate = getValue("transcriptReceivedDate") || "Not entered";
         const deliveryMethod = getValue("transcriptDeliveryMethod") || "Not selected yet";
