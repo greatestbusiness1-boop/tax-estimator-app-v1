@@ -1727,7 +1727,7 @@
 
     <button
       type="button"
-      onclick="if (confirm('Mark this transcript help request as completed? Only choose OK if the review/follow-up has already been completed.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Transcript Help - Completed')"
+            onclick="confirmTranscriptRequestCompleted('${esc(lead.leadId)}')"
       style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
     >
       Set Completed
@@ -1990,7 +1990,97 @@
         }
       }
 
+      function confirmTranscriptRequestCompleted(leadId) {
+        const notesText = String(document.getElementById(`notes-${leadId}`)?.value || "").toLowerCase();
+        const statusValue = String(document.getElementById(`status-${leadId}`)?.value || "");
 
+        const getValue = (id) => String(document.getElementById(`${id}-${leadId}`)?.value || "").trim();
+
+        const authStatus = getValue("transcriptAuthStatus");
+        const authDate = getValue("transcriptAuthDate");
+        const pulledDate = getValue("transcriptPulledDate");
+        const receivedDate = getValue("transcriptReceivedDate");
+        const deliveryMethod = getValue("transcriptDeliveryMethod");
+        const deliveryDate = getValue("transcriptDeliveryDate");
+
+        const hasPayment =
+          statusValue === "Transcript Help - Paid / Needs Review" ||
+          statusValue === "Transcript Help - Completed" ||
+          notesText.includes("paid / needs transcript review") ||
+          notesText.includes("transcript help payment");
+
+        const hasAuthorization =
+          authStatus === "Complete" ||
+          authStatus === "Received / needs review" ||
+          !!authDate ||
+          (
+            notesText.includes("authorization received date:") &&
+            !notesText.includes("authorization received date: not entered")
+          );
+
+        const hasTranscriptRecord =
+          !!pulledDate ||
+          !!receivedDate ||
+          (
+            notesText.includes("transcript pulled date:") &&
+            !notesText.includes("transcript pulled date: not entered")
+          ) ||
+          (
+            notesText.includes("transcript received date:") &&
+            !notesText.includes("transcript received date: not entered")
+          );
+
+        const hasDelivery =
+          (
+            deliveryMethod &&
+            deliveryMethod !== "Not selected yet"
+          ) ||
+          (
+            notesText.includes("delivery") &&
+            !notesText.includes("method: not selected yet")
+          );
+
+        const hasDeliveryDate =
+          !!deliveryDate ||
+          (
+            notesText.includes("delivery date:") &&
+            !notesText.includes("delivery date: not entered")
+          );
+
+        const missingItems = [];
+
+        if (!hasPayment) missingItems.push("- Payment has not been marked Paid / Needs Review");
+        if (!hasAuthorization) missingItems.push("- Authorization does not appear complete or received");
+        if (!hasTranscriptRecord) missingItems.push("- Transcript pulled/received date is missing");
+        if (!hasDelivery) missingItems.push("- Delivery method is missing");
+        if (!hasDeliveryDate) missingItems.push("- Delivery date is missing");
+
+        if (missingItems.length > 0) {
+          const proceed = confirm(
+            "This Transcript Request may not be ready to mark Completed.\n\n" +
+            "Missing or incomplete items:\n" +
+            missingItems.join("\n") +
+            "\n\nYou can still continue, but this may close the request before the work is fully documented.\n\n" +
+            "Do you still want to mark this Transcript Request Completed?"
+          );
+
+          if (!proceed) return;
+        } else {
+          const proceed = confirm(
+            "Before marking this Transcript Request Completed, confirm:\n\n" +
+            "- Payment has been verified\n" +
+            "- Authorization was received\n" +
+            "- Transcript records were pulled/reviewed\n" +
+            "- Delivery method and delivery date were recorded\n" +
+            "- Client next-step guidance was completed\n\n" +
+            "Mark this Transcript Request Completed?"
+          );
+
+          if (!proceed) return;
+        }
+
+        setLeadStatusChoice(leadId, "Transcript Help - Completed");
+      }
 
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
