@@ -2012,6 +2012,26 @@
         const receivedDate = getValue("transcriptReceivedDate") || "Not entered";
         const deliveryMethod = getValue("transcriptDeliveryMethod") || "Not selected yet";
         const deliveryDate = getValue("transcriptDeliveryDate") || "Not entered";
+        
+        if (deliveryDate !== "Not entered" && deliveryMethod === "Not selected yet") {
+          const proceed = confirm(
+            "Delivery Date was entered, but Delivery Method is still 'Not selected yet'.\n\n" +
+            "Choose OK to save anyway, or Cancel to go back and select Client portal, Email, Regular mail, Certified mail, or Pickup / in-person."
+          );
+
+          if (!proceed) {
+            if (msgEl) {
+              msgEl.textContent = "Delivery method needed before saving tracking details.";
+            }
+
+            const deliveryMethodEl = document.getElementById(`transcriptDeliveryMethod-${leadId}`);
+            if (deliveryMethodEl) {
+              deliveryMethodEl.focus();
+            }
+
+            return;
+          }
+        }
         const mailFee = formatFee(getValue("transcriptMailFee"));
         const internalNotes = getValue("transcriptInternalNotes") || "None";
 
