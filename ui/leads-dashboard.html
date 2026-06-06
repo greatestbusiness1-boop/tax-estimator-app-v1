@@ -2117,7 +2117,22 @@
           msgEl.textContent = "Saving transcript tracking details...";
         }
 
-        await saveLead(leadId);
+        const transcriptRequestPayload = {
+          requested: true,
+          serviceName: "IRS Transcript Help & Tax Records Review",
+          fee: 150,
+          authorizationStatus: authStatus,
+          authorizationReceivedDate: authDate === "Not entered" ? "" : authDate,
+          transcriptPulledDate: pulledDate === "Not entered" ? "" : pulledDate,
+          transcriptReceivedDate: receivedDate === "Not entered" ? "" : receivedDate,
+          deliveryMethod: deliveryMethod === "Not selected yet" ? "" : deliveryMethod,
+          deliveryDate: deliveryDate === "Not entered" ? "" : deliveryDate,
+          mailCertifiedFee: mailFee === "Not added" ? "" : mailFee,
+          internalNotes,
+          lastTrackingNote: trackingNote.trim()
+        };
+
+        await saveLead(leadId, transcriptRequestPayload);
 
         if (msgEl) {
           msgEl.textContent = "Transcript tracking details saved.";
@@ -2280,7 +2295,7 @@
         }
       }
 
-      async function saveLead(leadId) {
+      async function saveLead(leadId, transcriptRequestPayload = null) {
         const statusEl = document.getElementById(`status-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
         const activityEl = document.getElementById(`activity-${leadId}`);
@@ -2309,8 +2324,9 @@
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              status: statusEl.value,
-              notes: combinedNotes
+              status,
+              notes: combinedNotes,
+              ...(transcriptRequestPayload ? { transcriptRequest: transcriptRequestPayload } : {})
             })
           });
 
