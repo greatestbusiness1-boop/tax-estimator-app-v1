@@ -1642,6 +1642,83 @@
                     ? "background:#ecfdf5;border:2px solid #059669;color:#064e3b;"
                     : "background:#eef2ff;border:2px solid #4f46e5;color:#312e81;";
 
+              const taxEstimateDetailsHtml =
+                selectedActionQueue === "TranscriptHelp"
+                  ? `
+                    <details style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:12px 14px;margin:14px 0;">
+                      <summary style="cursor:pointer;font-weight:950;color:#0f2c56;font-size:14px;">
+                        Show Tax Estimate Details
+                      </summary>
+
+                      <div class="summary" style="margin-top:12px;">
+                        <strong>Estimate Summary</strong><br>
+                        ${esc(total)}<br>
+                        ${esc(federal)}<br>
+                        ${esc(state)}
+
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+                          <a
+                            href="${esc(summaryUrl)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
+                          >
+                            Open Estimate Summary
+                          </a>
+
+                          <button
+                            type="button"
+                            onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
+                            style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
+                          >
+                            Copy Summary Link
+                          </button>
+
+                          <span id="copy-${esc(lead.leadId)}" style="font-weight:700;color:#15803d;align-self:center;"></span>
+                        </div>
+                      </div>
+
+                      <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                        <strong>${esc(nextActionTitle)}</strong><br>
+                        ${esc(nextActionText)}
+                      </div>
+                    </details>
+                  `
+                  : `
+                    <div class="summary">
+                      <strong>Estimate Summary</strong><br>
+                      ${esc(total)}<br>
+                      ${esc(federal)}<br>
+                      ${esc(state)}
+
+                      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+                        <a
+                          href="${esc(summaryUrl)}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
+                        >
+                          Open Estimate Summary
+                        </a>
+
+                        <button
+                          type="button"
+                          onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
+                          style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
+                        >
+                          Copy Summary Link
+                        </button>
+
+                        <span id="copy-${esc(lead.leadId)}" style="font-weight:700;color:#15803d;align-self:center;"></span>
+                      </div>
+                    </div>
+
+                    <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                      <strong>${esc(nextActionTitle)}</strong><br>
+                      ${esc(nextActionText)}
+                    </div>
+                  `;
+
               return `
               <div class="lead-card" id="card-${esc(lead.leadId)}">
                 <div class="lead-top">
@@ -1921,37 +1998,7 @@
                   </div>
                 </div>
 
-                <div class="summary">
-  <strong>Estimate Summary</strong><br>
-  ${esc(total)}<br>
-  ${esc(federal)}<br>
-  ${esc(state)}
-
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-    <a
-      href="${esc(summaryUrl)}"
-      target="_blank"
-      rel="noopener noreferrer"
-      style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
-    >
-      Open Estimate Summary
-    </a>
-
-    <button
-      type="button"
-      onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
-      style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
-    >
-      Copy Summary Link
-    </button>
-
-    <span id="copy-${esc(lead.leadId)}" style="font-weight:700;color:#15803d;align-self:center;"></span>
-  </div>
-  </div>
-                  <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
-                  <strong>${esc(nextActionTitle)}</strong><br>
-                  ${esc(nextActionText)}
-                </div>
+                                ${taxEstimateDetailsHtml}
 
                                                                 ${strategyReviewHtml}
 
@@ -2277,16 +2324,16 @@
 
         setLeadStatusChoice(leadId, "Transcript Help - Completed");
       }
-      
-    function toggleTranscriptTrackingFields(leadId) {
-      const panel = document.getElementById(`transcriptTrackingFields-${leadId}`);
 
-      if (!panel) return;
+      function toggleTranscriptTrackingFields(leadId) {
+        const panel = document.getElementById(`transcriptTrackingFields-${leadId}`);
 
-      panel.style.display = panel.style.display === "none" || !panel.style.display
-        ? "block"
-        : "none";
-    }
+        if (!panel) return;
+
+        panel.style.display = panel.style.display === "none" || !panel.style.display
+          ? "block"
+          : "none";
+      }
 
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
