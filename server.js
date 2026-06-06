@@ -170,7 +170,8 @@ function mapRowToLead(row) {
       phone: row.phone || ""
     },
     taxData: estimate.taxData || null,
-    estimateSummary: estimate.estimateSummary || {}
+    estimateSummary: estimate.estimateSummary || {},
+    transcriptRequest: estimate.transcriptRequest || row.transcriptRequest || null
   };
 }
 
@@ -544,7 +545,7 @@ app.get("/estimate/:leadId", (req, res) => {
 
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
-  const { status, notes } = req.body;
+  const { status, notes, transcriptRequest } = req.body;
   const cleanId = String(leadId || "").trim();
 
   const findMatchingRow = (rows) => {
@@ -575,6 +576,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
     if (typeof notes === "string") {
       updatedEstimate.notes = notes;
+    }
+
+    if (transcriptRequest && typeof transcriptRequest === "object" && !Array.isArray(transcriptRequest)) {
+      updatedEstimate.transcriptRequest = {
+        ...(updatedEstimate.transcriptRequest || {}),
+        ...transcriptRequest,
+        updatedAt: new Date().toISOString()
+      };
     }
 
     return updatedEstimate;
@@ -664,6 +673,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof notes === "string") {
         localLead.notes = notes;
+      }
+
+      if (transcriptRequest && typeof transcriptRequest === "object" && !Array.isArray(transcriptRequest)) {
+        localLead.transcriptRequest = {
+          ...(localLead.transcriptRequest || {}),
+          ...transcriptRequest,
+          updatedAt: new Date().toISOString()
+        };
       }
 
       localLeads[localIndex] = localLead;
