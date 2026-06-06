@@ -1320,6 +1320,7 @@
               const federal = summary.federalLine || "";
               const state = summary.stateLine || "";
               const notes = lead.notes || "";
+              const transcriptRequest = lead.transcriptRequest || {};
               const noteLines = String(notes || "")
                 .split(/\r?\n/)
                 .map(line => line.trim())
@@ -1497,13 +1498,33 @@
                   : fallback;
               };
 
-              const trackingAuthStatus = getTranscriptTrackingValue("- Status:", "Pending / not uploaded yet");
-              const trackingAuthDate = getTranscriptTrackingValue("- Authorization Received Date:", "Not entered");
-              const trackingPulledDate = getTranscriptTrackingValue("- Transcript Pulled Date:", "Not entered");
-              const trackingReceivedDate = getTranscriptTrackingValue("- Transcript Received Date:", "Not entered");
-              const trackingDeliveryMethod = getTranscriptTrackingValue("- Method:", "Not selected yet");
-              const trackingDeliveryDate = getTranscriptTrackingValue("- Delivery Date:", "Not entered");
-              const trackingMailFee = getTranscriptTrackingValue("- Mail / Certified Mail Fee:", "Not added");
+              const trackingAuthStatus =
+                transcriptRequest.authorizationStatus ||
+                getTranscriptTrackingValue("- Status:", "Pending / not uploaded yet");
+
+              const trackingAuthDate =
+                transcriptRequest.authorizationReceivedDate ||
+                getTranscriptTrackingValue("- Authorization Received Date:", "Not entered");
+
+              const trackingPulledDate =
+                transcriptRequest.transcriptPulledDate ||
+                getTranscriptTrackingValue("- Transcript Pulled Date:", "Not entered");
+
+              const trackingReceivedDate =
+                transcriptRequest.transcriptReceivedDate ||
+                getTranscriptTrackingValue("- Transcript Received Date:", "Not entered");
+
+              const trackingDeliveryMethod =
+                transcriptRequest.deliveryMethod ||
+                getTranscriptTrackingValue("- Method:", "Not selected yet");
+
+              const trackingDeliveryDate =
+                transcriptRequest.deliveryDate ||
+                getTranscriptTrackingValue("- Delivery Date:", "Not entered");
+
+              const trackingMailFee =
+                transcriptRequest.mailCertifiedFee ||
+                getTranscriptTrackingValue("- Mail / Certified Mail Fee:", "Not added");
 
               const getTranscriptTrackingSectionValue = (sectionTitle, fallback = "") => {
                 if (!latestTranscriptTrackingBlock) return fallback;
@@ -1538,7 +1559,9 @@
                   : fallback;
               };
 
-              const trackingInternalNotes = getTranscriptTrackingSectionValue("Internal Transcript Notes", "None");
+              const trackingInternalNotes =
+                transcriptRequest.internalNotes ||
+                getTranscriptTrackingSectionValue("Internal Transcript Notes", "None");
 
               const cleanTrackingAuthStatus =
                 trackingAuthDate && trackingAuthDate !== "Not entered" && trackingAuthStatus === "Pending / not uploaded yet"
@@ -1550,14 +1573,21 @@
                   ? `${cleanTrackingAuthStatus} — received ${trackingAuthDate}`
                   : cleanTrackingAuthStatus;
 
+              const displayPulledDate = trackingPulledDate || "Not entered";
+              const displayReceivedDate = trackingReceivedDate || "Not entered";
+
               const transcriptPullOverview =
-                trackingPulledDate !== "Not entered" || trackingReceivedDate !== "Not entered"
-                  ? `Pulled: ${trackingPulledDate} | Received: ${trackingReceivedDate}`
+                displayPulledDate !== "Not entered" || displayReceivedDate !== "Not entered"
+                  ? `Pulled: ${displayPulledDate} | Received: ${displayReceivedDate}`
                   : "Not pulled yet";
 
+              const displayDeliveryMethod = trackingDeliveryMethod || "Not selected yet";
+              const displayDeliveryDate = trackingDeliveryDate || "Not entered";
+              const displayMailFee = trackingMailFee || "Not added";
+
               const transcriptDeliveryOverview =
-                trackingDeliveryMethod !== "Not selected yet" || trackingDeliveryDate !== "Not entered"
-                  ? `${trackingDeliveryMethod} | Date: ${trackingDeliveryDate} | Fee: ${trackingMailFee}`
+                displayDeliveryMethod !== "Not selected yet" || displayDeliveryDate !== "Not entered"
+                  ? `${displayDeliveryMethod} | Date: ${displayDeliveryDate} | Fee: ${displayMailFee}`
                   : "Not delivered yet";
 
               const latestActivity = activityLines.length
