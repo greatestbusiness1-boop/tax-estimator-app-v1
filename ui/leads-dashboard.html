@@ -1763,7 +1763,15 @@
                   }
    </div>
   </div>
-    <div style="margin-top:12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:12px;color:#0f172a;font-size:12px;line-height:1.55;">
+    <button
+    type="button"
+    onclick="toggleTranscriptTrackingFields('${esc(lead.leadId)}')"
+    style="width:100%;margin-top:12px;background:#312e81;color:#ffffff;border:2px solid #1e1b4b;border-radius:12px;padding:12px 10px;font-size:13px;font-weight:950;box-shadow:0 8px 18px rgba(49,46,129,0.18);"
+  >
+    Show / Hide Transcript Tracking Fields
+  </button>
+  
+      <div id="transcriptTrackingFields-${esc(lead.leadId)}" style="display:none;margin-top:12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:12px;color:#0f172a;font-size:12px;line-height:1.55;">
     <div style="font-size:14px;font-weight:950;color:#0f2c56;margin-bottom:8px;">
       Transcript Request Tracking Fields
     </div>
@@ -2269,6 +2277,16 @@
 
         setLeadStatusChoice(leadId, "Transcript Help - Completed");
       }
+      
+    function toggleTranscriptTrackingFields(leadId) {
+      const panel = document.getElementById(`transcriptTrackingFields-${leadId}`);
+
+      if (!panel) return;
+
+      panel.style.display = panel.style.display === "none" || !panel.style.display
+        ? "block"
+        : "none";
+    }
 
       function setLeadStatusChoice(leadId, statusValue) {
         const statusEl = document.getElementById(`status-${leadId}`);
