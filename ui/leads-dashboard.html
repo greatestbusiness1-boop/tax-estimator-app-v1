@@ -1590,6 +1590,15 @@
                   ? `${displayDeliveryMethod} | Date: ${displayDeliveryDate} | Fee: ${displayMailFee}`
                   : "Not delivered yet";
 
+              const transcriptAuthStatusFieldValue = trackingAuthStatus || "Pending / not uploaded yet";
+              const transcriptAuthDateFieldValue = trackingAuthDate && trackingAuthDate !== "Not entered" ? trackingAuthDate : "";
+              const transcriptPulledDateFieldValue = trackingPulledDate && trackingPulledDate !== "Not entered" ? trackingPulledDate : "";
+              const transcriptReceivedDateFieldValue = trackingReceivedDate && trackingReceivedDate !== "Not entered" ? trackingReceivedDate : "";
+              const transcriptDeliveryMethodFieldValue = trackingDeliveryMethod || "Not selected yet";
+              const transcriptDeliveryDateFieldValue = trackingDeliveryDate && trackingDeliveryDate !== "Not entered" ? trackingDeliveryDate : "";
+              const transcriptMailFeeFieldValue = trackingMailFee && trackingMailFee !== "Not added" ? trackingMailFee : "";
+              const transcriptInternalNotesFieldValue = trackingInternalNotes && trackingInternalNotes !== "None" ? trackingInternalNotes : "";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -1764,11 +1773,11 @@
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Authorization Status
         </label>
-        <select id="transcriptAuthStatus-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
-          <option value="Pending / not uploaded yet">Pending / not uploaded yet</option>
-          <option value="Requested from client">Requested from client</option>
-          <option value="Received / needs review">Received / needs review</option>
-          <option value="Complete">Complete</option>
+                <select id="transcriptAuthStatus-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
+          <option value="Pending / not uploaded yet" ${transcriptAuthStatusFieldValue === "Pending / not uploaded yet" ? "selected" : ""}>Pending / not uploaded yet</option>
+          <option value="Requested from client" ${transcriptAuthStatusFieldValue === "Requested from client" ? "selected" : ""}>Requested from client</option>
+          <option value="Received / needs review" ${transcriptAuthStatusFieldValue === "Received / needs review" ? "selected" : ""}>Received / needs review</option>
+          <option value="Complete" ${transcriptAuthStatusFieldValue === "Complete" ? "selected" : ""}>Complete</option>
         </select>
       </div>
 
@@ -1776,34 +1785,34 @@
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Authorization Received Date
         </label>
-        <input id="transcriptAuthDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
+                <input id="transcriptAuthDate-${esc(lead.leadId)}" type="date" value="${esc(transcriptAuthDateFieldValue)}" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Transcript Pulled Date
         </label>
-        <input id="transcriptPulledDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
+                <input id="transcriptPulledDate-${esc(lead.leadId)}" type="date" value="${esc(transcriptPulledDateFieldValue)}" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Transcript Received Date
         </label>
-        <input id="transcriptReceivedDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
+                <input id="transcriptReceivedDate-${esc(lead.leadId)}" type="date" value="${esc(transcriptReceivedDateFieldValue)}" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Delivery Method
         </label>
-        <select id="transcriptDeliveryMethod-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
-          <option value="Not selected yet">Not selected yet</option>
-          <option value="Client portal">Client portal</option>
-          <option value="Email">Email</option>
-          <option value="Regular mail">Regular mail</option>
-          <option value="Certified mail">Certified mail</option>
-          <option value="Pickup / in-person">Pickup / in-person</option>
+                <select id="transcriptDeliveryMethod-${esc(lead.leadId)}" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">
+          <option value="Not selected yet" ${transcriptDeliveryMethodFieldValue === "Not selected yet" ? "selected" : ""}>Not selected yet</option>
+          <option value="Client portal" ${transcriptDeliveryMethodFieldValue === "Client portal" ? "selected" : ""}>Client portal</option>
+          <option value="Email" ${transcriptDeliveryMethodFieldValue === "Email" ? "selected" : ""}>Email</option>
+          <option value="Regular mail" ${transcriptDeliveryMethodFieldValue === "Regular mail" ? "selected" : ""}>Regular mail</option>
+          <option value="Certified mail" ${transcriptDeliveryMethodFieldValue === "Certified mail" ? "selected" : ""}>Certified mail</option>
+          <option value="Pickup / in-person" ${transcriptDeliveryMethodFieldValue === "Pickup / in-person" ? "selected" : ""}>Pickup / in-person</option>
         </select>
       </div>
 
@@ -1811,21 +1820,21 @@
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Delivery Date
         </label>
-        <input id="transcriptDeliveryDate-${esc(lead.leadId)}" type="date" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
+                <input id="transcriptDeliveryDate-${esc(lead.leadId)}" type="date" value="${esc(transcriptDeliveryDateFieldValue)}" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Mail / Certified Mail Fee
         </label>
-        <input id="transcriptMailFee-${esc(lead.leadId)}" type="text" placeholder="Example: $0, $15, $25" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
+                <input id="transcriptMailFee-${esc(lead.leadId)}" type="text" value="${esc(transcriptMailFeeFieldValue)}" placeholder="Example: $0, $15, $25" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;" />
       </div>
 
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Internal Transcript Notes
         </label>
-        <textarea id="transcriptInternalNotes-${esc(lead.leadId)}" placeholder="Example: Client has IRS notice for 2022. Need account transcript and wage/income records." style="width:100%;box-sizing:border-box;min-height:72px;border:1px solid #cbd5e1;border-radius:10px;padding:9px;"></textarea>
+                <textarea id="transcriptInternalNotes-${esc(lead.leadId)}" placeholder="Example: Client has IRS notice for 2022. Need account transcript and wage/income records." style="width:100%;box-sizing:border-box;min-height:72px;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">${esc(transcriptInternalNotesFieldValue)}</textarea>
       </div>
     </div>
 
