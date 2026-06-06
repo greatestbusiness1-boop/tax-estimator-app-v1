@@ -1431,12 +1431,12 @@
 
               const transcriptOverviewStatus =
                 status === "Transcript Help - Payment Pending"
-                  ? "Payment pending / not verified"
+                  ? "Payment Clicked / Not Verified"
                   : status === "Transcript Help - Paid / Needs Review"
-                    ? "Paid / needs transcript review"
+                    ? "Payment Verified / Ready for Review"
                     : status === "Transcript Help - Completed"
-                      ? "Completed"
-                      : "Requested / waiting for payment verification";
+                      ? "Completed / Delivered"
+                      : "Requested / Waiting for Payment Verification";
 
               const clientIssueLine = noteLines.find(line =>
                 line.toLowerCase().includes("client needs help with:")
