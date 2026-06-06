@@ -1505,6 +1505,41 @@
               const trackingDeliveryDate = getTranscriptTrackingValue("- Delivery Date:", "Not entered");
               const trackingMailFee = getTranscriptTrackingValue("- Mail / Certified Mail Fee:", "Not added");
 
+              const getTranscriptTrackingSectionValue = (sectionTitle, fallback = "") => {
+                if (!latestTranscriptTrackingBlock) return fallback;
+
+                const trackingLines = latestTranscriptTrackingBlock
+                  .split(/\r?\n/)
+                  .map(line => line.trim());
+
+                const sectionIndex = trackingLines.findIndex(line =>
+                  line.toLowerCase() === sectionTitle.toLowerCase()
+                );
+
+                if (sectionIndex === -1) return fallback;
+
+                const collectedLines = [];
+
+                for (let i = sectionIndex + 1; i < trackingLines.length; i++) {
+                  const line = trackingLines[i];
+
+                  if (!line) continue;
+                  if (/^-{5,}$/.test(line)) break;
+
+                  const cleanedLine = line.replace(/^-\s*/, "").trim();
+
+                  if (cleanedLine) {
+                    collectedLines.push(cleanedLine);
+                  }
+                }
+
+                return collectedLines.length
+                  ? collectedLines.join(" ")
+                  : fallback;
+              };
+
+              const trackingInternalNotes = getTranscriptTrackingSectionValue("Internal Transcript Notes", "None");
+
               const cleanTrackingAuthStatus =
                 trackingAuthDate && trackingAuthDate !== "Not entered" && trackingAuthStatus === "Pending / not uploaded yet"
                   ? "Received / needs review"
@@ -1666,6 +1701,18 @@
         <strong style="color:#334155;">Delivery</strong><br>
                 ${esc(transcriptDeliveryOverview)}
       </div>
+
+            ${trackingInternalNotes && trackingInternalNotes !== "None"
+                    ? `
+          <div style="grid-column:1 / -1;background:#eef2ff;border:2px solid #6366f1;border-radius:10px;padding:8px;">
+            <strong style="color:#312e81;">Latest Internal Transcript Notes</strong><br>
+            <span style="display:block;margin-top:4px;color:#111827;font-weight:900;background:#ffffff;border:1px solid #c7d2fe;border-radius:8px;padding:8px;">
+              ${esc(trackingInternalNotes)}
+            </span>
+          </div>
+        `
+                    : ""
+                  }
            ${transcriptAdditionalDetailsText
                     ? `
           <div style="grid-column:1 / -1;background:#f8fafc;border:1px solid #c7d2fe;border-radius:10px;padding:8px;">
@@ -2012,7 +2059,7 @@
         const receivedDate = getValue("transcriptReceivedDate") || "Not entered";
         const deliveryMethod = getValue("transcriptDeliveryMethod") || "Not selected yet";
         const deliveryDate = getValue("transcriptDeliveryDate") || "Not entered";
-        
+
         if (deliveryDate !== "Not entered" && deliveryMethod === "Not selected yet") {
           const proceed = confirm(
             "Delivery Date was entered, but Delivery Method is still 'Not selected yet'.\n\n" +
