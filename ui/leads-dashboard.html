@@ -767,120 +767,126 @@
     </div>
 
     <div id="transcriptHelpGuidance"
-      style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
-      <div style="font-size:18px;font-weight:950;color:#0369a1;margin-bottom:8px;">
-        IRS Transcript Requests Workflow Guide
-      </div>
+      style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <details>
+        <summary style="cursor:pointer;font-size:16px;font-weight:950;color:#0369a1;">
+          IRS Transcript Requests Workflow Guide
+        </summary>
+        
 
-      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">1. Review Client Issue</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Start with what the client selected and wrote. Determine if the issue is an IRS notice, missing W-2/1099,
-            balance question, prior-year filing issue, or tax prep record request.
+        <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">1. Review Client Issue</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Start with what the client selected and wrote. Determine if the issue is an IRS notice, missing W-2/1099,
+              balance question, prior-year filing issue, or tax prep record request.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">2. Verify Payment</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Check Stripe before doing transcript work. Use Payment Pending until payment is verified, then mark Paid /
+              Needs Review.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">3. Collect Authorization</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Do not pull or review IRS records until proper client authorization and identity information are complete.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">4. Choose Needed Records</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Decide whether the issue needs Wage and Income, Tax Account, Tax Return, Record of Account, Verification
+              of
+              Non-Filing, or notice review.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">5. Record Pull / Received Dates</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Track the date records were requested or pulled and the date transcript records were received or
+              available.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">6. Deliver Safely</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Record whether the document was placed in the client portal, emailed, mailed, or sent certified mail. Use
+              mail/certified mail only when appropriate and priced separately.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
+            <strong style="color:#0369a1;">7. Mark Completed</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Mark completed only after the transcript review, delivery, and next-step guidance have been documented.
+            </div>
+          </div>
+
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:14px;padding:12px;">
+            <strong style="color:#312e81;">Office Reminder</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              This workspace is for transcript-related service requests. Tax prep, amended returns, IRS representation,
+              and tax resolution should be quoted separately when needed.
+            </div>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">2. Verify Payment</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Check Stripe before doing transcript work. Use Payment Pending until payment is verified, then mark Paid /
-            Needs Review.
-          </div>
+        <div style="margin-top:10px;color:#0369a1;font-size:13px;font-weight:800;">
+          IRS transcript availability depends on IRS processing. Your office can still provide fast follow-up once
+          authorization and available records are ready.
         </div>
-
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">3. Collect Authorization</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Do not pull or review IRS records until proper client authorization and identity information are complete.
-          </div>
-        </div>
-
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">4. Choose Needed Records</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Decide whether the issue needs Wage and Income, Tax Account, Tax Return, Record of Account, Verification of
-            Non-Filing, or notice review.
-          </div>
-        </div>
-
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">5. Record Pull / Received Dates</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Track the date records were requested or pulled and the date transcript records were received or available.
-          </div>
-        </div>
-
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">6. Deliver Safely</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Record whether the document was placed in the client portal, emailed, mailed, or sent certified mail. Use
-            mail/certified mail only when appropriate and priced separately.
-          </div>
-        </div>
-
-        <div style="background:#ffffff;border:1px solid #67e8f9;border-radius:14px;padding:12px;">
-          <strong style="color:#0369a1;">7. Mark Completed</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Mark completed only after the transcript review, delivery, and next-step guidance have been documented.
-          </div>
-        </div>
-
-        <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:14px;padding:12px;">
-          <strong style="color:#312e81;">Office Reminder</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            This workspace is for transcript-related service requests. Tax prep, amended returns, IRS representation,
-            and tax resolution should be quoted separately when needed.
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:10px;color:#0369a1;font-size:13px;font-weight:800;">
-        IRS transcript availability depends on IRS processing. Your office can still provide fast follow-up once
-        authorization and available records are ready.
-      </div>
+      </details>
     </div>
 
-
     <div id="strategyReviewGuidance"
-      style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
-      <div style="font-size:18px;font-weight:950;color:#9a3412;margin-bottom:8px;">
-        Written Tax Estimate Review Workflow Guide
-      </div>
+      style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
+      <details>
+        <summary style="cursor:pointer;font-size:16px;font-weight:950;color:#9a3412;">
+          Written Tax Estimate Review Workflow Guide
+        </summary>
 
-      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
-        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
-          <strong style="color:#7c2d12;">Requested / Clicked</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Client clicked Buy Written Review. Payment is not confirmed yet.
+        <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;">
+          <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+            <strong style="color:#7c2d12;">Requested / Clicked</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Client clicked Buy Written Review. Payment is not confirmed yet.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+            <strong style="color:#7c2d12;">Payment Pending / Not Verified</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Use this when the client clicked the Stripe button, but payment has not been verified yet.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+            <strong style="color:#7c2d12;">Paid / Needs Written Review</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              Payment is confirmed and the written tax estimate review needs to be prepared.
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+            <strong style="color:#7c2d12;">Completed</strong>
+            <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
+              The written tax estimate review has been completed and delivered or saved.
+            </div>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
-          <strong style="color:#7c2d12;">Payment Pending / Not Verified</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Use this when the client clicked the Stripe button, but payment has not been verified yet.
-          </div>
+        <div style="margin-top:10px;color:#7c2d12;font-size:13px;font-weight:800;">
+          Stripe automation is not connected yet, so payment status is manual for now.
         </div>
-
-        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
-          <strong style="color:#7c2d12;">Paid / Needs Written Review</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            Payment is confirmed and the written tax estimate review needs to be prepared.
-          </div>
-        </div>
-
-        <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
-          <strong style="color:#7c2d12;">Completed</strong>
-          <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-            The written tax estimate review has been completed and delivered or saved.
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:10px;color:#7c2d12;font-size:13px;font-weight:800;">
-        Stripe automation is not connected yet, so payment status is manual for now.
-      </div>
+      </details>
     </div>
 
     <div id="balanceDueGuidance"
