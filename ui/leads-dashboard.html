@@ -1856,7 +1856,7 @@
   <span id="internalStatus-${esc(lead.leadId)}" style="${status === "Follow-up Needed" ? "color:#9a3412;font-weight:950;" : "color:#334155;font-weight:900;"}">${esc(status)}</span>
 </div>
 
-                    ${hasTranscriptHelpRequest
+${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   ? `
                         <div style="margin-top:10px;background:#ecfeff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;color:#0369a1;font-size:13px;font-weight:900;line-height:1.35;text-align:left;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
   Transcript Request:<br>
