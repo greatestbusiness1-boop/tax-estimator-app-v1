@@ -2172,7 +2172,15 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
                 ${activityHtml}
 
-                                <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
+                                <button
+                  type="button"
+                  onclick="toggleOfficeNotesPanel('${esc(lead.leadId)}')"
+                  style="width:100%;margin-top:10px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:950;"
+                >
+                  Show / Hide Office Notes & Manual Status
+                </button>
+                                               <div id="officeNotesPanel-${esc(lead.leadId)}" style="display:none;">
+                <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
                   <strong style="display:block;color:#0f2c56;margin-bottom:10px;">Internal Follow-Up Action</strong>
 
                   <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
@@ -2258,6 +2266,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   </div>
                 </div>
               </div>
+             </div>
             `;
             })
             .join("");
@@ -2491,6 +2500,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
 
         setLeadStatusChoice(leadId, "Transcript Help - Completed");
+      }
+
+      function toggleOfficeNotesPanel(leadId) {
+        const panel = document.getElementById(`officeNotesPanel-${leadId}`);
+
+        if (!panel) return;
+
+        panel.style.display = panel.style.display === "none" || !panel.style.display
+          ? "block"
+          : "none";
       }
 
       function toggleTranscriptTrackingFields(leadId) {
