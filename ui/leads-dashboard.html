@@ -1073,6 +1073,20 @@
         }
       }
 
+      function getWorkspaceSearchPlaceholder(view) {
+        const placeholders = {
+          TranscriptHelp: "Search transcript requests by name, email, phone, or Lead ID",
+          StrategyReview: "Search strategy reviews by name, email, phone, or Lead ID",
+          Refund: "Search refund leads by name, email, phone, or Lead ID",
+          BalanceDue: "Search balance due reviews by name, email, phone, or Lead ID",
+          "Follow-up Needed": "Search follow-up leads by name, email, phone, or Lead ID",
+          Booked: "Search booked consultations by name, email, phone, or Lead ID",
+          "Converted - Tax Client": "Search converted clients by name, email, phone, or Lead ID"
+        };
+
+        return placeholders[view] || "Name, email, phone, lead ID, notes";
+      }
+
       function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
@@ -1082,7 +1096,16 @@
         if (leadFilter) leadFilter.value = status;
         if (actionQueueFilter) actionQueueFilter.value = action;
         if (taxYearFilter && taxYear) taxYearFilter.value = taxYear;
-        if (leadSearch) leadSearch.value = search;
+        if (leadSearch) {
+          leadSearch.value = search;
+
+          const searchView = action !== "All" ? action : status;
+          leadSearch.placeholder = getWorkspaceSearchPlaceholder(searchView);
+
+          if (searchView === "TranscriptHelp" || searchView === "StrategyReview") {
+            setTimeout(() => leadSearch.focus(), 0);
+          }
+        }
         const sidebarView =
           action !== "All"
             ? action
@@ -1110,7 +1133,12 @@
           const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
           const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
           const searchText = String(document.getElementById("leadSearch")?.value || "").trim().toLowerCase();
+          const leadSearchEl = document.getElementById("leadSearch");
+          const currentSearchView = selectedActionQueue !== "All" ? selectedActionQueue : selectedFilter;
 
+          if (leadSearchEl) {
+            leadSearchEl.placeholder = getWorkspaceSearchPlaceholder(currentSearchView);
+          }
           const actionQueueLabels = {
             All: "All Actions",
             Refund: "Refund Leads — Follow Up to File",
