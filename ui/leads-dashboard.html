@@ -57,16 +57,17 @@
     }
 
     .lead-name {
-      font-size: 21px;
-      font-weight: 800;
+      font-size: 24px;
+      font-weight: 900;
       color: #0f2c56;
-      margin: 0 0 3px;
+      margin: 0 0 4px;
     }
 
     .lead-meta {
-      color: #5a6a85;
-      font-size: 13px;
-      line-height: 1.35;
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 650;
     }
 
     .badge {
@@ -1464,7 +1465,7 @@
 
               const strategyReviewHtml = hasStrategyReviewRequest
                 ? `
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;${selectedActionQueue === "StrategyReview" ? "" : "display:none;"}">
+                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;${selectedActionQueue === "StrategyReview" ? "" : "display:none;"}">
                     <strong style="color:#9a3412;">Strategy Review</strong><br>
                     <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
 
@@ -1813,7 +1814,7 @@
                             href="${esc(summaryUrl)}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
+                            style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:9px 13px;font-size:14px;font-weight:800;"
                           >
                             Open Estimate Summary
                           </a>
@@ -1821,7 +1822,7 @@
                           <button
                             type="button"
                             onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
-                            style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
+                           style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:14px;font-weight:800;"
                           >
                             Copy Summary Link
                           </button>
@@ -1830,7 +1831,7 @@
                         </div>
                       </div>
 
-                      <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                      <div style="${nextActionStyle}border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;">
                         <strong>${esc(nextActionTitle)}</strong><br>
                         ${esc(nextActionText)}
                       </div>
@@ -1848,7 +1849,7 @@
                           href="${esc(summaryUrl)}"
                           target="_blank"
                           rel="noopener noreferrer"
-                          style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px;font-weight:700;"
+                         style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:10px;padding:9px 13px;font-size:14px;font-weight:800;"
                         >
                           Open Estimate Summary
                         </a>
@@ -1856,7 +1857,7 @@
                         <button
                           type="button"
                           onclick="copySummaryLink('${esc(summaryUrl)}', 'copy-${esc(lead.leadId)}')"
-                          style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:10px 14px;font-weight:700;"
+                          style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:14px;font-weight:800;"
                         >
                           Copy Summary Link
                         </button>
@@ -1865,7 +1866,7 @@
                       </div>
                     </div>
 
-                    <div style="${nextActionStyle}border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                    <div style="${nextActionStyle}border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;">
                       <strong>${esc(nextActionTitle)}</strong><br>
                       ${esc(nextActionText)}
                     </div>
@@ -1908,9 +1909,9 @@
 
                                         ${latestActivity
                   ? `
-                        <div style="margin-top:6px;background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:7px 9px;color:#0f2c56;font-size:11px;font-weight:850;line-height:1.25;text-align:left;">
-  <strong>Latest:</strong>
-  <span style="color:#334155;font-weight:750;">Client clicked: ${esc(latestActivity)}</span>
+                        <div style="margin-top:8px;background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;color:#0f2c56;font-size:13px;font-weight:900;line-height:1.3;text-align:left;">
+  <strong>Latest Client Action:</strong><br>
+  <span style="color:#334155;font-weight:800;">Client clicked: ${esc(latestActivity)}</span>
 </div>
                       `
                   : ""
