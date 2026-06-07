@@ -1360,7 +1360,7 @@
 
               const strategyReviewHtml = hasStrategyReviewRequest
                 ? `
-                  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
+                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;${selectedActionQueue === "StrategyReview" ? "" : "display:none;"}">
                     <strong style="color:#9a3412;">Strategy Review</strong><br>
                     <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
 
@@ -1394,6 +1394,51 @@
                                             Payment Pending means the client clicked the Stripe button, but payment has not been verified yet. Click a status button, then click Save below to lock in the office status.
                     </div>
                   </div>
+                                   ${selectedActionQueue === "StrategyReview"
+                    ? ""
+                    : `
+                      <details style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px 14px;margin:14px 0;">
+                        <summary style="cursor:pointer;font-weight:950;color:#9a3412;font-size:14px;">
+                          Show Strategy Review Details
+                        </summary>
+
+                        <div style="margin-top:12px;background:#ffffff;border:1px solid #fed7aa;border-radius:12px;padding:12px;color:#7c2d12;font-weight:850;line-height:1.55;">
+                          <strong>Strategy Review</strong><br>
+                          <span style="color:#7c2d12;font-weight:900;">${esc(strategyReviewStatusText)}</span>
+
+                          <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
+                            <button
+                              type="button"
+                              onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Payment Pending')"
+                              style="background:#f59e0b;color:#111827;border:1px solid #92400e;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                            >
+                              Set Payment Pending / Not Verified
+                            </button>
+
+                            <button
+                              type="button"
+                              onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
+                              style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                            >
+                              Set Paid / Needs Review
+                            </button>
+
+                            <button
+                              type="button"
+                              onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
+                              style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
+                            >
+                              Set Completed
+                            </button>
+                          </div>
+
+                          <div style="margin-top:8px;color:#7c2d12;font-size:12px;font-weight:800;">
+                            Payment Pending means the client clicked the Stripe button, but payment has not been verified yet. Click a status button, then click Save below to lock in the office status.
+                          </div>
+                        </div>
+                      </details>
+                    `
+                  } 
                 `
                 : "";
 
