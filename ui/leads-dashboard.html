@@ -435,29 +435,32 @@
 
     .sidebar-mini-stats {
       display: grid;
-      gap: 8px;
-      margin-top: 10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
     }
 
     .sidebar-mini-stat {
       background: rgba(255, 255, 255, 0.10);
       border: 1px solid rgba(219, 234, 254, 0.24);
-      border-radius: 12px;
-      padding: 10px 12px;
+      border-radius: 10px;
+      padding: 7px 8px;
       color: #ffffff;
+      min-height: 46px;
     }
 
     .sidebar-mini-stat strong {
       display: block;
-      font-size: 11px;
+      font-size: 9px;
       color: #bfdbfe;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      line-height: 1.15;
     }
 
     .sidebar-mini-stat span {
-      font-size: 22px;
+      font-size: 17px;
       font-weight: 950;
       color: #ffffff;
       line-height: 1;
