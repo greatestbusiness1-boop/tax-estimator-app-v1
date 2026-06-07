@@ -376,6 +376,14 @@
       font-weight: 950;
     }
 
+    #leadFilter,
+    #taxYearFilter,
+    #actionQueueFilter {
+      border-radius: 10px !important;
+      padding: 9px 10px !important;
+      font-size: 13px;
+    }
+
     /* Left dashboard menu */
     .dashboard-sidebar {
       position: fixed;
@@ -692,10 +700,10 @@
 
 
       <div
-        style="background:#fff;border-radius:18px;padding:16px;margin-bottom:18px;box-shadow:0 10px 30px rgba(15,44,86,0.08);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:12px;align-items:end;">
+        style="background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 8px 18px rgba(15,44,86,0.05);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:10px;align-items:end;">
         <div>
           <label for="leadFilter"
-            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Filter Leads
           </label>
           <select id="leadFilter" onchange="loadLeads()" style="width:100%;">
@@ -712,7 +720,7 @@
 
         <div>
           <label for="taxYearFilter"
-            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Tax Year
           </label>
           <select id="taxYearFilter" onchange="loadLeads()" style="width:100%;">
@@ -729,7 +737,7 @@
 
         <div>
           <label for="actionQueueFilter"
-            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Action Queue
           </label>
           <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
@@ -744,11 +752,11 @@
 
         <div>
           <label for="leadSearch"
-            style="display:block;font-size:13px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Search
           </label>
           <input id="leadSearch" type="text" placeholder="Name, email, phone, lead ID, notes" oninput="loadLeads()"
-            style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;box-sizing:border-box;" />
+            style="width:100%;border:1px solid #cfd9e8;border-radius:10px;padding:9px 10px;box-sizing:border-box;" />
         </div>
       </div>
 
