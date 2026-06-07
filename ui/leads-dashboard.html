@@ -1205,6 +1205,16 @@
               lead?.status,
               lead?.priority,
               lead?.notes,
+              lead?.transcriptRequest?.serviceName,
+              lead?.transcriptRequest?.paymentStatus,
+              lead?.transcriptRequest?.authorizationStatus,
+              lead?.transcriptRequest?.authorizationReceivedDate,
+              lead?.transcriptRequest?.transcriptPulledDate,
+              lead?.transcriptRequest?.transcriptReceivedDate,
+              lead?.transcriptRequest?.deliveryMethod,
+              lead?.transcriptRequest?.deliveryDate,
+              lead?.transcriptRequest?.mailCertifiedFee,
+              lead?.transcriptRequest?.internalNotes,
               lead?.estimateSummary?.totalLine,
               lead?.estimateSummary?.federalLine,
               lead?.estimateSummary?.stateLine
@@ -1225,7 +1235,8 @@
                       searchableText.includes("get written $29 strategy review") ||
                       status.startsWith("Strategy Review -")
                       : selectedActionQueue === "TranscriptHelp"
-                        ? searchableText.includes("requested irs transcript help") ||
+                        ? Boolean(lead?.transcriptRequest?.requested) ||
+                        searchableText.includes("requested irs transcript help") ||
                         searchableText.includes("irs transcript help payment") ||
                         status.startsWith("Transcript Help -")
                         : selectedActionQueue === "ReviewNeeded"
