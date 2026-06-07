@@ -1756,12 +1756,15 @@
 
               const activityHtml = activityLines.length
                 ? `
-                  <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:14px 0;line-height:1.6;">
-                    <strong style="color:#0f2c56;">Client Action History</strong>
-                    <ul style="margin:8px 0 0;padding-left:20px;color:#334155;">
+                  <details style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;margin:10px 0;line-height:1.45;">
+                    <summary style="cursor:pointer;font-weight:950;color:#0f2c56;font-size:13px;">
+                      Show Client Action History
+                    </summary>
+
+                    <ul style="margin:8px 0 0;padding-left:20px;color:#334155;font-size:12px;">
                       ${activityLines.map(line => `<li>${esc(line)}</li>`).join("")}
                     </ul>
-                  </div>
+                  </details>
                 `
                 : "";
 
