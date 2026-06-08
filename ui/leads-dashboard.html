@@ -1172,6 +1172,41 @@
 
         return placeholders[view] || "Name, email, phone, lead ID, notes";
       }
+      function getOfficeQueueDateKey() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+      }
+
+      function getOfficeQueueHandledKey() {
+        return `taxLeadCenterOfficeQueueHandled:${getOfficeQueueDateKey()}`;
+      }
+
+      function getOfficeQueueHandledMap() {
+        try {
+          return JSON.parse(localStorage.getItem(getOfficeQueueHandledKey()) || "{}");
+        } catch (err) {
+          return {};
+        }
+      }
+
+      function isOfficeQueueHandled(leadId, taskType) {
+        const handledMap = getOfficeQueueHandledMap();
+        return Boolean(handledMap[`${leadId}:${taskType}`]);
+      }
+
+      function toggleOfficeQueueHandled(leadId, taskType) {
+        const handledMap = getOfficeQueueHandledMap();
+        const key = `${leadId}:${taskType}`;
+
+        handledMap[key] = !handledMap[key];
+
+        localStorage.setItem(getOfficeQueueHandledKey(), JSON.stringify(handledMap));
+        loadLeads();
+      }
 
       function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "" }) {
         const leadFilter = document.getElementById("leadFilter");
@@ -1468,7 +1503,7 @@
                 );
               };
 
-              const renderDailyRow = (lead, label, targetAction) => {
+              const renderDailyRow = (lead, label, targetAction, taskType) => {
                 const combinedNet = getLeadCombinedNet(lead);
                 const summaryText =
                   combinedNet > 0
@@ -1477,8 +1512,9 @@
                       ? `${esc(lead?.estimateSummary?.totalLine || "Possible balance due")}`
                       : "Review estimate details";
 
+                const handled = isOfficeQueueHandled(lead.leadId, taskType);
                 return `
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:700;">${esc(lead?.contact?.email || "No email")}</div>
@@ -1492,6 +1528,14 @@
                     ${summaryText}
                   </div>
 
+                                  <button
+                    type="button"
+                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', '${esc(taskType)}')"
+                    style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
+                  >
+                    ${handled ? "✓ Handled" : "Mark Handled"}
+                  </button>
+                  
                   <button
                     type="button"
                     onclick="setDashboardFilters({ status: 'All', action: '${esc(targetAction)}', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: '${esc(targetAction)}' })"
@@ -1526,7 +1570,7 @@
 
                 <div style="margin-top:6px;">
                   ${leadsForSection.length
-                  ? leadsForSection.map(lead => renderDailyRow(lead, label, typeof targetAction === "function" ? targetAction(lead) : targetAction)).join("")
+                  ? leadsForSection.map(lead => renderDailyRow(lead, label, typeof targetAction === "function" ? targetAction(lead) : targetAction, label)).join("")
                   : `<div style="padding:8px 0;color:#64748b;font-size:13px;font-weight:750;">No items for today.</div>`
                 }
                 </div>
