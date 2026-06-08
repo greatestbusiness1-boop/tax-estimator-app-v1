@@ -817,6 +817,10 @@
       </div>
     </div>
 
+    <div id="dailyWorkQueue"
+      style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+    </div>
+
     <div id="transcriptHelpGuidance"
       style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
       <details>
@@ -1410,6 +1414,109 @@
             statsLeads.filter(l =>
               (l.status || "") === "Booked"
             ).length;
+
+          const dailyWorkQueueEl = document.getElementById("dailyWorkQueue");
+
+          if (dailyWorkQueueEl) {
+            const todayLeads = leads.filter(lead => leadDate(lead) >= startOfToday);
+
+            const isTranscriptRequestLead = (lead) => {
+              const notesText = String(lead.notes || "").toLowerCase();
+              const statusText = String(lead.status || "");
+
+              return (
+                Boolean(lead?.transcriptRequest?.requested) ||
+                notesText.includes("requested irs transcript help") ||
+                notesText.includes("irs transcript help payment") ||
+                statusText.startsWith("Transcript Help -")
+              );
+            };
+
+            const isStrategyReviewLead = (lead) => {
+              const notesText = String(lead.notes || "").toLowerCase();
+              const statusText = String(lead.status || "");
+
+              return (
+                notesText.includes("buy written review") ||
+                notesText.includes("get written $29 strategy review") ||
+                statusText.startsWith("Strategy Review -")
+              );
+            };
+
+            const renderDailyRow = (lead, label) => {
+              const combinedNet = getLeadCombinedNet(lead);
+              const refundText =
+                combinedNet > 0
+                  ? `Refund estimate: ${esc(lead?.estimateSummary?.totalLine || "")}`
+                  : combinedNet < 0
+                    ? `Balance due estimate: ${esc(lead?.estimateSummary?.totalLine || "")}`
+                    : "Review estimate details";
+
+              return `
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:12px;color:#475569;font-weight:700;">${esc(lead?.contact?.email || "No email")}</div>
+                  </div>
+
+                  <div style="font-weight:850;color:#334155;">
+                    ${esc(label)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:750;">
+                    ${refundText}
+                  </div>
+
+                  <a
+                    href="#card-${esc(lead.leadId)}"
+                    style="background:#0f2c56;color:#ffffff;text-decoration:none;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;"
+                  >
+                    Open
+                  </a>
+                </div>
+              `;
+            };
+
+            const todaysTaxEstimateLeads = todayLeads;
+            const todaysTranscriptRequests = todayLeads.filter(isTranscriptRequestLead);
+            const todaysStrategyReviews = todayLeads.filter(isStrategyReviewLead);
+
+            const renderSection = (title, leadsForSection, label) => `
+              <details open style="margin-top:8px;">
+                <summary style="cursor:pointer;font-weight:950;color:#0f2c56;font-size:14px;">
+                  ${title} (${leadsForSection.length})
+                </summary>
+
+                <div style="margin-top:6px;">
+                  ${leadsForSection.length
+                ? leadsForSection.map(lead => renderDailyRow(lead, label)).join("")
+                : `<div style="padding:8px 0;color:#64748b;font-size:13px;font-weight:750;">No items for today.</div>`
+              }
+                </div>
+              </details>
+            `;
+
+            dailyWorkQueueEl.innerHTML = `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:17px;font-weight:950;color:#0f2c56;">
+                    Today’s Office Work Queue
+                  </div>
+                  <div style="font-size:12px;color:#475569;font-weight:750;margin-top:2px;">
+                    Quick list of today’s new estimate leads and service requests.
+                  </div>
+                </div>
+
+                <div style="font-size:12px;color:#334155;font-weight:900;background:#f8fafc;border:1px solid #dbeafe;border-radius:999px;padding:6px 10px;">
+                  Today: ${todayLeads.length} total
+                </div>
+              </div>
+
+              ${renderSection("Tax Estimate Leads Received Today", todaysTaxEstimateLeads, "Tax Estimate")}
+              ${renderSection("Transcript Requests Received Today", todaysTranscriptRequests, "Transcript Request")}
+              ${renderSection("Strategy Reviews Received Today", todaysStrategyReviews, "Strategy Review")}
+            `;
+          }
 
           if (!visibleLeads.length) {
             container.innerHTML = `<div class="empty">No leads found yet.</div>`;
