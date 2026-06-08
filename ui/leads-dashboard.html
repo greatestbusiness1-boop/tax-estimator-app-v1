@@ -1605,6 +1605,99 @@
             return;
           }
 
+
+          if (selectedActionQueue === "StrategyReview" && !focusedLeadId) {
+            const strategyRows = visibleLeads.map((lead) => {
+              const notesText = String(lead.notes || "").toLowerCase();
+              const statusText = String(lead.status || "New");
+
+              const strategyStatusText =
+                statusText === "Strategy Review - Paid / Needs Written Review"
+                  ? "Paid / needs written review"
+                  : statusText === "Strategy Review - Completed"
+                    ? "Completed"
+                    : statusText === "Strategy Review - Payment Pending"
+                      ? "Payment pending / not verified"
+                      : "Requested / clicked";
+
+              const combinedNet = getLeadCombinedNet(lead);
+
+              const estimateText =
+                combinedNet > 0
+                  ? `${esc(lead?.estimateSummary?.totalLine || "Possible refund")}`
+                  : combinedNet < 0
+                    ? `${esc(lead?.estimateSummary?.totalLine || "Possible balance due")}`
+                    : "Review estimate details";
+
+              const latestStrategyAction =
+                notesText.includes("buy written review")
+                  ? "Client clicked Buy Written Review"
+                  : notesText.includes("get written $29 strategy review")
+                    ? "Client requested $29 written strategy review"
+                    : "Strategy review request";
+
+              return `
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+                    <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(strategyStatusText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${estimateText}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(latestStrategyAction)}
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: 'StrategyReview', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'StrategyReview' })"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Open
+                  </button>
+                </div>
+              `;
+            }).join("");
+
+            container.innerHTML = `
+              <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#9a3412;">
+                      Strategy Reviews Worklist
+                    </div>
+                    <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                      $29 written tax estimate review requests only. Click Open to work one review.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 11px;">
+                    ${visibleLeads.length} strategy review${visibleLeads.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Status</div>
+                  <div>Estimate</div>
+                  <div>Request</div>
+                  <div>Action</div>
+                </div>
+
+                ${strategyRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No strategy review requests found.</div>`}
+              </div>
+            `;
+            return;
+          }
+
           if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
             const transcriptRows = visibleLeads.map((lead) => {
               const notesText = String(lead.notes || "");
@@ -2206,7 +2299,7 @@
                       onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : "Previous Workspace")}
+                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : "Previous Workspace")}
                     </button>
                   `
                   : ""
