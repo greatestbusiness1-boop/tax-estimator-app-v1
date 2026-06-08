@@ -1037,6 +1037,9 @@
     </div>
 
     <script>
+
+      let focusedLeadId = "";
+
       function esc(str) {
         return String(str || "")
           .replaceAll("&", "&amp;")
@@ -1157,11 +1160,13 @@
         return placeholders[view] || "Name, email, phone, lead ID, notes";
       }
 
-      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "" }) {
+      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
         const taxYearFilter = document.getElementById("taxYearFilter");
         const leadSearch = document.getElementById("leadSearch");
+
+        focusedLeadId = focusLeadId || "";
 
         if (leadFilter) leadFilter.value = status;
         if (actionQueueFilter) actionQueueFilter.value = action;
@@ -1516,6 +1521,138 @@
               ${renderSection("Transcript Requests Received Today", todaysTranscriptRequests, "Transcript Request")}
               ${renderSection("Strategy Reviews Received Today", todaysStrategyReviews, "Strategy Review")}
             `;
+          }
+
+          if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
+            const transcriptRows = visibleLeads.map((lead) => {
+              const notesText = String(lead.notes || "");
+              const noteLines = notesText
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+              const statusText = String(lead.status || "New");
+
+              const clientIssueLine = noteLines.find(line =>
+                line.toLowerCase().includes("client needs help with:")
+              );
+
+              const transcriptTypeLine = noteLines.find(line =>
+                line.toLowerCase().includes("transcript type selected:")
+              );
+
+              const clientIssueText = clientIssueLine
+                ? clientIssueLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Client Transcript Request:", "")
+                  .replace("Client needs help with:", "")
+                  .trim()
+                : "Review request";
+
+              const transcriptTypeText = transcriptTypeLine
+                ? transcriptTypeLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Transcript type selected:", "")
+                  .trim()
+                : "Not selected / needs review";
+
+              const transcriptRequest = lead.transcriptRequest || {};
+
+              const authorizationText =
+                transcriptRequest.authorizationReceivedDate
+                  ? `${transcriptRequest.authorizationStatus || "Received / needs review"} — ${transcriptRequest.authorizationReceivedDate}`
+                  : transcriptRequest.authorizationStatus || "Pending / not uploaded yet";
+
+              const pullText =
+                transcriptRequest.transcriptPulledDate || transcriptRequest.transcriptReceivedDate
+                  ? `Pulled: ${transcriptRequest.transcriptPulledDate || "Not entered"} | Received: ${transcriptRequest.transcriptReceivedDate || "Not entered"}`
+                  : "Not pulled yet";
+
+              const deliveryText =
+                transcriptRequest.deliveryMethod || transcriptRequest.deliveryDate
+                  ? `${transcriptRequest.deliveryMethod || "Not selected"} | ${transcriptRequest.deliveryDate || "No date"}`
+                  : "Not delivered yet";
+
+              const paymentText =
+                statusText === "Transcript Help - Payment Pending"
+                  ? "Payment clicked / not verified"
+                  : statusText === "Transcript Help - Paid / Needs Review"
+                    ? "Payment verified / ready for review"
+                    : statusText === "Transcript Help - Completed"
+                      ? "Completed"
+                      : "Requested / waiting";
+
+              return `
+                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+                    <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(clientIssueText)}
+                    <div style="font-size:12px;color:#64748b;font-weight:750;margin-top:3px;">${esc(transcriptTypeText)}</div>
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(paymentText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(authorizationText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(pullText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(deliveryText)}
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}' })"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Open
+                  </button>
+                </div>
+              `;
+            }).join("");
+
+            container.innerHTML = `
+              <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#0369a1;">
+                      Transcript Requests Worklist
+                    </div>
+                    <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                      Transcript service requests only. Click Open to work a client request.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#0369a1;font-weight:950;background:#ecfeff;border:1px solid #67e8f9;border-radius:999px;padding:7px 11px;">
+                    ${visibleLeads.length} transcript request${visibleLeads.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Request</div>
+                  <div>Payment</div>
+                  <div>Authorization</div>
+                  <div>Pull Status</div>
+                  <div>Delivery</div>
+                  <div>Action</div>
+                </div>
+
+                ${transcriptRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No transcript requests found.</div>`}
+              </div>
+            `;
+            return;
           }
 
           if (!visibleLeads.length) {
