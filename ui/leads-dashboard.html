@@ -581,6 +581,11 @@
 
     <div class="sidebar-section-label">Lead Views</div>
 
+    <button class="sidebar-btn" data-view="OfficeWorkQueue"
+      onclick="setDashboardFilters({ status: 'All', action: 'OfficeWorkQueue', search: '' })">
+      Office Work Queue
+    </button>
+
     <button class="sidebar-btn" data-view="Active"
       onclick="setDashboardFilters({ status: 'Active', action: 'All', search: '' })">
       Active Leads
@@ -744,6 +749,7 @@
           </label>
           <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
             <option value="All">All Actions</option>
+            <option value="OfficeWorkQueue">Office Work Queue</option>
             <option value="Refund">Refund Leads — Follow Up to File</option>
             <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
             <option value="StrategyReview">Strategy Reviews</option>
@@ -1039,6 +1045,7 @@
     <script>
 
       let focusedLeadId = "";
+      let focusedReturnAction = "";
 
       function esc(str) {
         return String(str || "")
@@ -1079,6 +1086,11 @@
         const descriptionEl = document.getElementById("workspaceDescription");
 
         const workspaceMap = {
+
+          OfficeWorkQueue: {
+            title: "Office Work Queue",
+            description: "Use this workspace as the daily office checklist. Review today’s estimate leads, open transcript requests, and open strategy reviews without hunting through full lead cards."
+          },
           Active: {
             title: "Active Leads Workspace",
             description: "These are leads that still need action from your office. Use this view to work new leads, contacted leads, booked consultations, and follow-up needed items."
@@ -1148,6 +1160,7 @@
 
       function getWorkspaceSearchPlaceholder(view) {
         const placeholders = {
+          OfficeWorkQueue: "Search office work queue by name, email, phone, or Lead ID",
           TranscriptHelp: "Search transcript requests by name, email, phone, or Lead ID",
           StrategyReview: "Search strategy reviews by name, email, phone, or Lead ID",
           Refund: "Search refund leads by name, email, phone, or Lead ID",
@@ -1160,13 +1173,14 @@
         return placeholders[view] || "Name, email, phone, lead ID, notes";
       }
 
-      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "" }) {
+      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
         const taxYearFilter = document.getElementById("taxYearFilter");
         const leadSearch = document.getElementById("leadSearch");
 
         focusedLeadId = focusLeadId || "";
+        focusedReturnAction = returnAction || "";
 
         if (leadFilter) leadFilter.value = status;
         if (actionQueueFilter) actionQueueFilter.value = action;
@@ -1215,6 +1229,7 @@
             leadSearchEl.placeholder = getWorkspaceSearchPlaceholder(currentSearchView);
           }
           const actionQueueLabels = {
+            OfficeWorkQueue: "Office Work Queue",
             All: "All Actions",
             Refund: "Refund Leads — Follow Up to File",
             BalanceDue: "Balance Due Leads — Schedule Review",
@@ -1299,7 +1314,7 @@
               .toLowerCase();
 
             const actionMatches =
-              selectedActionQueue === "All"
+              selectedActionQueue === "All" || selectedActionQueue === "OfficeWorkQueue"
                 ? true
                 : selectedActionQueue === "Refund"
                   ? combinedNet > 0
@@ -1423,41 +1438,46 @@
           const dailyWorkQueueEl = document.getElementById("dailyWorkQueue");
 
           if (dailyWorkQueueEl) {
-            const todayLeads = leads.filter(lead => leadDate(lead) >= startOfToday);
+            if (selectedActionQueue !== "OfficeWorkQueue") {
+              dailyWorkQueueEl.style.display = "none";
+              dailyWorkQueueEl.innerHTML = "";
+            } else {
+              dailyWorkQueueEl.style.display = "block";
+              const todayLeads = leads.filter(lead => leadDate(lead) >= startOfToday);
 
-            const isTranscriptRequestLead = (lead) => {
-              const notesText = String(lead.notes || "").toLowerCase();
-              const statusText = String(lead.status || "");
+              const isTranscriptRequestLead = (lead) => {
+                const notesText = String(lead.notes || "").toLowerCase();
+                const statusText = String(lead.status || "");
 
-              return (
-                Boolean(lead?.transcriptRequest?.requested) ||
-                notesText.includes("requested irs transcript help") ||
-                notesText.includes("irs transcript help payment") ||
-                statusText.startsWith("Transcript Help -")
-              );
-            };
+                return (
+                  Boolean(lead?.transcriptRequest?.requested) ||
+                  notesText.includes("requested irs transcript help") ||
+                  notesText.includes("irs transcript help payment") ||
+                  statusText.startsWith("Transcript Help -")
+                );
+              };
 
-            const isStrategyReviewLead = (lead) => {
-              const notesText = String(lead.notes || "").toLowerCase();
-              const statusText = String(lead.status || "");
+              const isStrategyReviewLead = (lead) => {
+                const notesText = String(lead.notes || "").toLowerCase();
+                const statusText = String(lead.status || "");
 
-              return (
-                notesText.includes("buy written review") ||
-                notesText.includes("get written $29 strategy review") ||
-                statusText.startsWith("Strategy Review -")
-              );
-            };
+                return (
+                  notesText.includes("buy written review") ||
+                  notesText.includes("get written $29 strategy review") ||
+                  statusText.startsWith("Strategy Review -")
+                );
+              };
 
-            const renderDailyRow = (lead, label) => {
-              const combinedNet = getLeadCombinedNet(lead);
-              const refundText =
-                combinedNet > 0
-                  ? `Refund estimate: ${esc(lead?.estimateSummary?.totalLine || "")}`
-                  : combinedNet < 0
-                    ? `Balance due estimate: ${esc(lead?.estimateSummary?.totalLine || "")}`
-                    : "Review estimate details";
+              const renderDailyRow = (lead, label, targetAction) => {
+                const combinedNet = getLeadCombinedNet(lead);
+                const summaryText =
+                  combinedNet > 0
+                    ? `${esc(lead?.estimateSummary?.totalLine || "Possible refund")}`
+                    : combinedNet < 0
+                      ? `${esc(lead?.estimateSummary?.totalLine || "Possible balance due")}`
+                      : "Review estimate details";
 
-              return `
+                return `
                 <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
@@ -1469,24 +1489,36 @@
                   </div>
 
                   <div style="color:#334155;font-weight:750;">
-                    ${refundText}
+                    ${summaryText}
                   </div>
 
-                  <a
-                    href="#card-${esc(lead.leadId)}"
-                    style="background:#0f2c56;color:#ffffff;text-decoration:none;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;"
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: '${esc(targetAction)}', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: '${esc(targetAction)}' })"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
                     Open
-                  </a>
+                  </button>
                 </div>
               `;
-            };
+              };
 
-            const todaysTaxEstimateLeads = todayLeads;
-            const todaysTranscriptRequests = todayLeads.filter(isTranscriptRequestLead);
-            const todaysStrategyReviews = todayLeads.filter(isStrategyReviewLead);
+              const openLeads = leads.filter(lead => {
+                const statusText = String(lead.status || "");
+                return !statusText.startsWith("Closed -") && statusText !== "Converted - Tax Client";
+              });
 
-            const renderSection = (title, leadsForSection, label) => `
+              const todaysTaxEstimateLeads = todayLeads;
+
+              const openTranscriptRequests = openLeads
+                .filter(isTranscriptRequestLead)
+                .filter(lead => String(lead.status || "") !== "Transcript Help - Completed");
+
+              const openStrategyReviews = openLeads
+                .filter(isStrategyReviewLead)
+                .filter(lead => String(lead.status || "") !== "Strategy Review - Completed");
+
+              const renderSection = (title, leadsForSection, label, targetAction) => `
               <details open style="margin-top:8px;">
                 <summary style="cursor:pointer;font-weight:950;color:#0f2c56;font-size:14px;">
                   ${title} (${leadsForSection.length})
@@ -1494,14 +1526,14 @@
 
                 <div style="margin-top:6px;">
                   ${leadsForSection.length
-                ? leadsForSection.map(lead => renderDailyRow(lead, label)).join("")
-                : `<div style="padding:8px 0;color:#64748b;font-size:13px;font-weight:750;">No items for today.</div>`
-              }
+                  ? leadsForSection.map(lead => renderDailyRow(lead, label, typeof targetAction === "function" ? targetAction(lead) : targetAction)).join("")
+                  : `<div style="padding:8px 0;color:#64748b;font-size:13px;font-weight:750;">No items for today.</div>`
+                }
                 </div>
               </details>
             `;
 
-            dailyWorkQueueEl.innerHTML = `
+              dailyWorkQueueEl.innerHTML = `
               <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                 <div>
                   <div style="font-size:17px;font-weight:950;color:#0f2c56;">
@@ -1517,10 +1549,16 @@
                 </div>
               </div>
 
-              ${renderSection("Tax Estimate Leads Received Today", todaysTaxEstimateLeads, "Tax Estimate")}
-              ${renderSection("Transcript Requests Received Today", todaysTranscriptRequests, "Transcript Request")}
-              ${renderSection("Strategy Reviews Received Today", todaysStrategyReviews, "Strategy Review")}
-            `;
+                            ${renderSection("Tax Estimate Leads Received Today", todaysTaxEstimateLeads, "Tax Estimate", lead => getLeadCombinedNet(lead) > 0 ? "Refund" : getLeadCombinedNet(lead) < 0 ? "BalanceDue" : "All")}
+              ${renderSection("Transcript Requests Needing Action", openTranscriptRequests, "Transcript Request", "TranscriptHelp")}
+              ${renderSection("Strategy Reviews Needing Action", openStrategyReviews, "Strategy Review", "StrategyReview")}
+                        `;
+            }
+          }
+
+          if (selectedActionQueue === "OfficeWorkQueue") {
+            container.innerHTML = `<div class="empty">Use the Office Work Queue above. Click Open on a row to open that client in the correct workspace.</div>`;
+            return;
           }
 
           if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
@@ -1613,7 +1651,7 @@
 
                   <button
                     type="button"
-                    onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}' })"
+                    onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'TranscriptHelp' })"
                     style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
                     Open
@@ -2117,6 +2155,19 @@
                   `;
 
               return `
+                              ${focusedLeadId && focusedLeadId === lead.leadId
+                  ? `
+                    <button
+                      type="button"
+                      onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
+                      style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
+                    >
+                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : "Previous Workspace")}
+                    </button>
+                  `
+                  : ""
+                }
+
               <div class="lead-card" id="card-${esc(lead.leadId)}">
                 <div class="lead-top">
                   <div>
