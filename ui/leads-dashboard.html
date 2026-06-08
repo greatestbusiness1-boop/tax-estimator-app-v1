@@ -1693,7 +1693,92 @@
             `;
             return;
           }
-          
+          if (selectedFilter === "Follow-up Needed" && selectedActionQueue === "All" && !focusedLeadId) {
+            const followUpRows = visibleLeads.map((lead) => {
+              const combinedNet = getLeadCombinedNet(lead);
+
+              const estimateText =
+                combinedNet > 0
+                  ? lead?.estimateSummary?.totalLine || "Possible refund"
+                  : combinedNet < 0
+                    ? lead?.estimateSummary?.totalLine || "Possible balance due"
+                    : lead?.estimateSummary?.totalLine || "Review estimate details";
+
+              const latestActionText =
+                lead?.latestAction ||
+                lead?.lastClientAction ||
+                "Follow-up needed";
+
+              const contactText =
+                lead?.contact?.phone
+                  ? `Call / text: ${lead.contact.phone}`
+                  : lead?.contact?.email
+                    ? `Email: ${lead.contact.email}`
+                    : "Contact info needs review";
+
+              return `
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1.1fr 1.1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+                    <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                  </div>
+
+                  <div style="color:#9a3412;font-weight:950;">
+                    Follow-up Needed
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(estimateText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(contactText)}
+                    <div style="font-size:12px;color:#64748b;font-weight:750;margin-top:3px;">${esc(latestActionText)}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'Follow-up Needed' })"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Open
+                  </button>
+                </div>
+              `;
+            }).join("");
+
+            container.innerHTML = `
+              <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#9a3412;">
+                      Follow-Up Needed Worklist
+                    </div>
+                    <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                      Leads that need another office touch. Click Open to work one follow-up.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 11px;">
+                    ${visibleLeads.length} follow-up item${visibleLeads.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1.1fr 1.1fr auto;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Status</div>
+                  <div>Estimate</div>
+                  <div>Contact / Latest</div>
+                  <div>Action</div>
+                </div>
+
+                ${followUpRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No follow-up needed leads found.</div>`}
+              </div>
+            `;
+            return;
+          }
+
           if (selectedActionQueue === "BalanceDue" && !focusedLeadId) {
             const balanceDueRows = visibleLeads.map((lead) => {
               const statusText = String(lead.status || "New");
@@ -2475,7 +2560,7 @@
                       onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : "Previous Workspace")}
+                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
                     </button>
                   `
                   : ""
