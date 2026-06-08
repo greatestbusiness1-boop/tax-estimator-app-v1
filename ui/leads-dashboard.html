@@ -2009,6 +2009,8 @@
                   ? `${transcriptRequest.deliveryMethod || "Not selected"} | ${transcriptRequest.deliveryDate || "No date"}`
                   : "Not delivered yet";
 
+              const handled = isOfficeQueueHandled(lead.leadId, "Transcript Requests Worklist");
+
               const paymentText =
                 statusText === "Transcript Help - Payment Pending"
                   ? "Payment clicked / not verified"
@@ -2019,7 +2021,7 @@
                       : "Requested / waiting";
 
               return `
-                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -2046,6 +2048,14 @@
                   <div style="color:#334155;font-weight:850;">
                     ${esc(deliveryText)}
                   </div>
+
+                                    <button
+                    type="button"
+                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Transcript Requests Worklist')"
+                    style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
+                  >
+                    ${handled ? "✓ Handled" : "Mark Handled"}
+                  </button>
 
                   <button
                     type="button"
@@ -2075,13 +2085,14 @@
                   </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Request</div>
                   <div>Payment</div>
                   <div>Authorization</div>
                   <div>Pull Status</div>
                   <div>Delivery</div>
+                  <div>Handled</div>
                   <div>Action</div>
                 </div>
 
