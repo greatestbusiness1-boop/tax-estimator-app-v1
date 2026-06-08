@@ -1605,7 +1605,94 @@
             return;
           }
 
+          if (selectedActionQueue === "BalanceDue" && !focusedLeadId) {
+            const balanceDueRows = visibleLeads.map((lead) => {
+              const statusText = String(lead.status || "New");
+              const combinedNet = getLeadCombinedNet(lead);
+              const amountDue = Math.abs(combinedNet);
 
+              const estimateText =
+                lead?.estimateSummary?.totalLine ||
+                `Possible balance due: $${amountDue.toLocaleString()}`;
+
+              const federalText =
+                lead?.estimateSummary?.federalLine ||
+                "Federal estimate needs review";
+
+              const stateText =
+                lead?.estimateSummary?.stateLine ||
+                "State estimate needs review";
+
+              const nextStepText =
+                statusText === "Follow-up Needed"
+                  ? "Follow-up already marked"
+                  : statusText === "Booked"
+                    ? "Review booked"
+                    : "Schedule review / explain balance due";
+
+              return `
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+                    <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                  </div>
+
+                  <div style="color:#9a3412;font-weight:950;">
+                    ${esc(estimateText)}
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(federalText)}
+                    <div style="font-size:12px;color:#64748b;font-weight:750;margin-top:3px;">${esc(stateText)}</div>
+                  </div>
+
+                  <div style="color:#334155;font-weight:850;">
+                    ${esc(nextStepText)}
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: 'BalanceDue', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'BalanceDue' })"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Open
+                  </button>
+                </div>
+              `;
+            }).join("");
+
+            container.innerHTML = `
+              <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#9a3412;">
+                      Balance Due Reviews Worklist
+                    </div>
+                    <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                      Leads showing a possible amount owed. Click Open to review the estimate and follow-up options.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 11px;">
+                    ${visibleLeads.length} balance due review${visibleLeads.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Balance Due</div>
+                  <div>Federal / State</div>
+                  <div>Next Step</div>
+                  <div>Action</div>
+                </div>
+
+                ${balanceDueRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No balance due reviews found.</div>`}
+              </div>
+            `;
+            return;
+          }
+          
           if (selectedActionQueue === "StrategyReview" && !focusedLeadId) {
             const strategyRows = visibleLeads.map((lead) => {
               const notesText = String(lead.notes || "").toLowerCase();
@@ -2299,7 +2386,7 @@
                       onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : "Previous Workspace")}
+                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : "Previous Workspace")}
                     </button>
                   `
                   : ""
