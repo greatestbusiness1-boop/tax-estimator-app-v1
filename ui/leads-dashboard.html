@@ -1047,6 +1047,7 @@
       let focusedLeadId = "";
       let focusedReturnAction = "";
       let transcriptReadyToPullList = [];
+      let transcriptRequestWorklist = [];
 
       function getTranscriptTypeForLead(lead) {
         const transcriptRequest = lead?.transcriptRequest || {};
@@ -1159,6 +1160,92 @@
             window.prompt("Copy this API-ready transcript payload:", text);
           });
       }
+
+          function copyTranscriptReadinessBlockerList() {
+        const rows = transcriptRequestWorklist || [];
+
+        if (!rows.length) {
+          alert("No transcript requests are currently showing.");
+          return;
+        }
+
+        const blockedRows = rows.map((lead) => {
+          const transcriptRequest = lead?.transcriptRequest || {};
+          const statusText = String(lead?.status || "New");
+          const transcriptType = getTranscriptTypeForLead(lead);
+
+          const paymentLooksVerified =
+            statusText === "Transcript Help - Paid / Needs Review" ||
+            statusText === "Transcript Help - Completed" ||
+            String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+            String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+          const authorizationLooksReceived =
+            Boolean(transcriptRequest.authorizationReceivedDate) ||
+            String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+            String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+          const transcriptTypeLooksSelected =
+            transcriptType &&
+            !String(transcriptType).toLowerCase().includes("review transcript type") &&
+            !String(transcriptType).toLowerCase().includes("not selected") &&
+            !String(transcriptType).toLowerCase().includes("needs review");
+
+          const transcriptAlreadyPulled =
+            Boolean(transcriptRequest.transcriptPulledDate) ||
+            Boolean(transcriptRequest.transcriptReceivedDate);
+
+          const missingItems = [];
+
+          if (!paymentLooksVerified) missingItems.push("payment");
+          if (!authorizationLooksReceived) missingItems.push("authorization");
+          if (!transcriptTypeLooksSelected) missingItems.push("transcript type");
+
+          return {
+            lead,
+            missingItems,
+            transcriptAlreadyPulled
+          };
+        }).filter(item => item.missingItems.length && !item.transcriptAlreadyPulled);
+
+        if (!blockedRows.length) {
+          alert("No blocker list to copy. All visible transcript requests appear ready or already pulled.");
+          return;
+        }
+
+        const text = blockedRows.map((item, index) => {
+          const lead = item.lead;
+          const name = lead?.contact?.name || "Unknown Lead";
+          const email = lead?.contact?.email || "No email";
+          const phone = lead?.contact?.phone || "No phone";
+          const leadId = lead?.leadId || "No Lead ID";
+          const missingText = item.missingItems.join(", ");
+
+          const nextSteps = item.missingItems.map((itemName) => {
+            if (itemName === "payment") return "verify payment";
+            if (itemName === "authorization") return "collect authorization";
+            if (itemName === "transcript type") return "confirm transcript type";
+            return itemName;
+          }).join(" and ");
+
+          return [
+            `${index + 1}. ${name}`,
+            `Email: ${email}`,
+            `Phone: ${phone}`,
+            `Lead ID: ${leadId}`,
+            `Blocked By: ${missingText}`,
+            `Next Step: ${nextSteps}`
+          ].join("\n");
+        }).join("\n\n");
+
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            alert(`Copied ${blockedRows.length} transcript blocker item${blockedRows.length === 1 ? "" : "s"}.`);
+          })
+          .catch(() => {
+            window.prompt("Copy this transcript blocker list:", text);
+          });
+      }  
 
 
       function esc(str) {
@@ -2331,6 +2418,14 @@
                     📋 Copy API Payload
                   </button>
 
+                   <button
+                    type="button"
+                    onclick="copyTranscriptReadinessBlockerList()"
+                    style="background:#9a3412;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    📋 Copy Blocker List
+                  </button>  
+
                 </div>
 
                 ${transcriptReadyToPullLeads.length
@@ -2362,6 +2457,8 @@
               }
               </div>
             `;
+
+            transcriptRequestWorklist = visibleLeads;
 
             const transcriptRows = visibleLeads.map((lead) => {
               const notesText = String(lead.notes || "");
