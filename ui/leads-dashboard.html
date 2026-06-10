@@ -1161,7 +1161,7 @@
           });
       }
 
-          function copyTranscriptReadinessBlockerList() {
+      function copyTranscriptReadinessBlockerList() {
         const rows = transcriptRequestWorklist || [];
 
         if (!rows.length) {
@@ -1245,7 +1245,96 @@
           .catch(() => {
             window.prompt("Copy this transcript blocker list:", text);
           });
-      }  
+      }
+
+      function copyTranscriptReadinessReport() {
+        const rows = transcriptRequestWorklist || [];
+
+        if (!rows.length) {
+          alert("No transcript requests are currently showing.");
+          return;
+        }
+
+        const summary = rows.reduce((counts, lead) => {
+          const transcriptRequest = lead?.transcriptRequest || {};
+          const statusText = String(lead?.status || "New");
+          const transcriptType = getTranscriptTypeForLead(lead);
+
+          const paymentLooksVerified =
+            statusText === "Transcript Help - Paid / Needs Review" ||
+            statusText === "Transcript Help - Completed" ||
+            String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+            String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+          const authorizationLooksReceived =
+            Boolean(transcriptRequest.authorizationReceivedDate) ||
+            String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+            String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+          const transcriptTypeLooksSelected =
+            transcriptType &&
+            !String(transcriptType).toLowerCase().includes("review transcript type") &&
+            !String(transcriptType).toLowerCase().includes("not selected") &&
+            !String(transcriptType).toLowerCase().includes("needs review");
+
+          const transcriptAlreadyPulled =
+            Boolean(transcriptRequest.transcriptPulledDate) ||
+            Boolean(transcriptRequest.transcriptReceivedDate);
+
+          if (
+            paymentLooksVerified &&
+            authorizationLooksReceived &&
+            transcriptTypeLooksSelected &&
+            !transcriptAlreadyPulled
+          ) {
+            counts.ready += 1;
+          }
+
+          if (!paymentLooksVerified) counts.needPayment += 1;
+          if (!authorizationLooksReceived) counts.needAuthorization += 1;
+          if (!transcriptTypeLooksSelected) counts.needTranscriptType += 1;
+          if (transcriptAlreadyPulled) counts.alreadyPulled += 1;
+
+          return counts;
+        }, {
+          ready: 0,
+          needPayment: 0,
+          needAuthorization: 0,
+          needTranscriptType: 0,
+          alreadyPulled: 0
+        });
+
+        const blockedCount =
+          rows.length - summary.ready - summary.alreadyPulled;
+
+        const recommendation =
+          summary.ready > 0
+            ? "Some requests are ready to pull. Continue testing the manual ready-to-pull workflow before purchasing transcript software/API."
+            : "Do not purchase transcript software/API yet. Focus on clearing payment, authorization, and transcript type blockers first.";
+
+        const text = [
+          "Transcript API Readiness Report",
+          "--------------------------------",
+          `Total transcript requests showing: ${rows.length}`,
+          `Ready to pull: ${summary.ready}`,
+          `Blocked / not ready: ${blockedCount < 0 ? 0 : blockedCount}`,
+          `Need payment: ${summary.needPayment}`,
+          `Need authorization: ${summary.needAuthorization}`,
+          `Need transcript type: ${summary.needTranscriptType}`,
+          `Already pulled / received: ${summary.alreadyPulled}`,
+          "",
+          "Recommendation:",
+          recommendation
+        ].join("\n");
+
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            alert("Copied transcript API readiness report.");
+          })
+          .catch(() => {
+            window.prompt("Copy this transcript API readiness report:", text);
+          });
+      }
 
 
       function esc(str) {
@@ -2424,7 +2513,15 @@
                     style="background:#9a3412;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
                     📋 Copy Blocker List
-                  </button>  
+                  </button>
+                  
+                                   <button
+                    type="button"
+                    onclick="copyTranscriptReadinessReport()"
+                    style="background:#312e81;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    📋 Copy Readiness Report
+                  </button> 
 
                 </div>
 
