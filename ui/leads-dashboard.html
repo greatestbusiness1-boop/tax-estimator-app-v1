@@ -1046,6 +1046,44 @@
 
       let focusedLeadId = "";
       let focusedReturnAction = "";
+      let transcriptReadyToPullList = [];
+
+      function copyTranscriptReadyToPullList() {
+        const rows = transcriptReadyToPullList || [];
+
+        if (!rows.length) {
+          alert("No transcript requests are ready to pull yet.");
+          return;
+        }
+
+        const text = rows.map((lead, index) => {
+          const transcriptRequest = lead.transcriptRequest || {};
+          const name = lead?.contact?.name || "Unknown Lead";
+          const email = lead?.contact?.email || "No email";
+          const phone = lead?.contact?.phone || "No phone";
+          const leadId = lead?.leadId || "No Lead ID";
+          const transcriptType = transcriptRequest.transcriptType || "Review transcript type in lead card";
+          const taxYear = lead?.taxData?.taxYear || lead?.estimateSummary?.taxYear || "Review tax year";
+
+          return [
+            `${index + 1}. ${name}`,
+            `Email: ${email}`,
+            `Phone: ${phone}`,
+            `Lead ID: ${leadId}`,
+            `Tax Year: ${taxYear}`,
+            `Transcript Type: ${transcriptType}`
+          ].join("\n");
+        }).join("\n\n");
+
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            alert(`Copied ${rows.length} ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
+          })
+          .catch(() => {
+            window.prompt("Copy this ready-to-pull list:", text);
+          });
+      }
+
 
       function esc(str) {
         return String(str || "")
@@ -2089,6 +2127,8 @@
               );
             });
 
+            transcriptReadyToPullList = transcriptReadyToPullLeads;
+
             const readyToPullSectionHtml = `
               <div style="background:#ecfdf5;border:2px solid #22c55e;border-radius:14px;padding:12px;margin:10px 0 12px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
@@ -2104,6 +2144,14 @@
                   <div style="font-size:13px;color:#047857;font-weight:950;background:#ffffff;border:1px solid #86efac;border-radius:999px;padding:7px 11px;">
                     ${transcriptReadyToPullLeads.length} ready
                   </div>
+
+                  <button
+                    type="button"
+                    onclick="copyTranscriptReadyToPullList()"
+                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Copy Ready List
+                  </button>
                 </div>
 
                 ${transcriptReadyToPullLeads.length
@@ -2300,7 +2348,7 @@
                 </div>
 
                 ${readyToPullSectionHtml}
-                
+
                 <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Request</div>
