@@ -2040,6 +2040,98 @@
                 !transcriptAlreadyPulled
               );
             }).length;
+            const transcriptReadyToPullLeads = visibleLeads.filter((lead) => {
+              const transcriptRequest = lead.transcriptRequest || {};
+              const statusText = String(lead.status || "New");
+              const notesText = String(lead.notes || "");
+
+              const noteLines = notesText
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+              const transcriptTypeLine = noteLines.find(line =>
+                line.toLowerCase().includes("transcript type selected:")
+              );
+
+              const transcriptTypeText = transcriptTypeLine
+                ? transcriptTypeLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Transcript type selected:", "")
+                  .trim()
+                : "Not selected / needs review";
+
+              const paymentLooksVerified =
+                statusText === "Transcript Help - Paid / Needs Review" ||
+                statusText === "Transcript Help - Completed" ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationLooksReceived =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeLooksSelected =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review");
+
+              const transcriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              return (
+                paymentLooksVerified &&
+                authorizationLooksReceived &&
+                transcriptTypeLooksSelected &&
+                !transcriptAlreadyPulled
+              );
+            });
+
+            const readyToPullSectionHtml = `
+              <div style="background:#ecfdf5;border:2px solid #22c55e;border-radius:14px;padding:12px;margin:10px 0 12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:17px;font-weight:950;color:#047857;">
+                      Ready to Pull Now
+                    </div>
+                    <div style="font-size:12px;color:#334155;font-weight:750;margin-top:2px;">
+                      Payment, authorization, and transcript type appear ready. These are the best candidates for future transcript software/API automation.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#047857;font-weight:950;background:#ffffff;border:1px solid #86efac;border-radius:999px;padding:7px 11px;">
+                    ${transcriptReadyToPullLeads.length} ready
+                  </div>
+                </div>
+
+                ${transcriptReadyToPullLeads.length
+                ? transcriptReadyToPullLeads.map((lead) => `
+                      <div style="display:grid;grid-template-columns:1.3fr 1fr auto;gap:8px;align-items:center;border-top:1px solid #bbf7d0;padding:8px 0;font-size:13px;">
+                        <div style="font-weight:950;color:#0f2c56;">
+                          ${esc(lead?.contact?.name || "Unknown Lead")}
+                          <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+                          <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                        </div>
+
+                        <div style="color:#047857;font-weight:950;">
+                          READY TO PULL
+                        </div>
+
+                        <button
+                          type="button"
+                          onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'TranscriptHelp' })"
+                          style="background:#047857;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                        >
+                          Open
+                        </button>
+                      </div>
+                    `).join("")
+                : `<div style="padding:8px 0;color:#64748b;font-size:13px;font-weight:800;">No transcript requests are ready to pull yet.</div>`
+              }
+              </div>
+            `;
 
             const transcriptRows = visibleLeads.map((lead) => {
               const notesText = String(lead.notes || "");
@@ -2207,6 +2299,8 @@
                   </div>
                 </div>
 
+                ${readyToPullSectionHtml}
+                
                 <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Request</div>
