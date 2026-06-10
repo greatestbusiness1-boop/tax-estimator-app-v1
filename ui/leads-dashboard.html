@@ -1991,6 +1991,56 @@
           }
 
           if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
+
+            const transcriptReadyToPullCount = visibleLeads.filter((lead) => {
+              const transcriptRequest = lead.transcriptRequest || {};
+              const statusText = String(lead.status || "New");
+              const notesText = String(lead.notes || "");
+
+              const noteLines = notesText
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+              const transcriptTypeLine = noteLines.find(line =>
+                line.toLowerCase().includes("transcript type selected:")
+              );
+
+              const transcriptTypeText = transcriptTypeLine
+                ? transcriptTypeLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Transcript type selected:", "")
+                  .trim()
+                : "Not selected / needs review";
+
+              const paymentLooksVerified =
+                statusText === "Transcript Help - Paid / Needs Review" ||
+                statusText === "Transcript Help - Completed" ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationLooksReceived =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeLooksSelected =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review");
+
+              const transcriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              return (
+                paymentLooksVerified &&
+                authorizationLooksReceived &&
+                transcriptTypeLooksSelected &&
+                !transcriptAlreadyPulled
+              );
+            }).length;
+
             const transcriptRows = visibleLeads.map((lead) => {
               const notesText = String(lead.notes || "");
               const noteLines = notesText
@@ -2153,7 +2203,7 @@
                   </div>
 
                   <div style="font-size:13px;color:#0369a1;font-weight:950;background:#ecfeff;border:1px solid #67e8f9;border-radius:999px;padding:7px 11px;">
-                    ${visibleLeads.length} transcript request${visibleLeads.length === 1 ? "" : "s"}
+                                        ${visibleLeads.length} transcript request${visibleLeads.length === 1 ? "" : "s"} | Ready to Pull: ${transcriptReadyToPullCount}
                   </div>
                 </div>
 
