@@ -2106,6 +2106,100 @@
 
           if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
 
+
+            const transcriptReadinessCounts = visibleLeads.reduce((counts, lead) => {
+              const transcriptRequest = lead.transcriptRequest || {};
+              const statusText = String(lead.status || "New");
+              const notesText = String(lead.notes || "");
+
+              const noteLines = notesText
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+              const transcriptTypeLine = noteLines.find(line =>
+                line.toLowerCase().includes("transcript type selected:")
+              );
+
+              const transcriptTypeText = transcriptTypeLine
+                ? transcriptTypeLine
+                  .replace(/^\[[^\]]+\]\s*/, "")
+                  .replace("Transcript type selected:", "")
+                  .trim()
+                : "Not selected / needs review";
+
+              const paymentLooksVerified =
+                statusText === "Transcript Help - Paid / Needs Review" ||
+                statusText === "Transcript Help - Completed" ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationLooksReceived =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeLooksSelected =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review");
+
+              const transcriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              if (
+                paymentLooksVerified &&
+                authorizationLooksReceived &&
+                transcriptTypeLooksSelected &&
+                !transcriptAlreadyPulled
+              ) {
+                counts.ready += 1;
+              }
+
+              if (!paymentLooksVerified) counts.needPayment += 1;
+              if (!authorizationLooksReceived) counts.needAuthorization += 1;
+              if (!transcriptTypeLooksSelected) counts.needTranscriptType += 1;
+              if (transcriptAlreadyPulled) counts.alreadyPulled += 1;
+
+              return counts;
+            }, {
+              ready: 0,
+              needPayment: 0,
+              needAuthorization: 0,
+              needTranscriptType: 0,
+              alreadyPulled: 0
+            });
+
+            const transcriptApiReadinessSummaryHtml = `
+              <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:8px;margin:10px 0 12px;">
+                <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:12px;padding:9px 10px;">
+                  <div style="font-size:10px;font-weight:950;color:#047857;text-transform:uppercase;">Ready</div>
+                  <div style="font-size:20px;font-weight:950;color:#047857;">${transcriptReadinessCounts.ready}</div>
+                </div>
+
+                <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:9px 10px;">
+                  <div style="font-size:10px;font-weight:950;color:#9a3412;text-transform:uppercase;">Need Payment</div>
+                  <div style="font-size:20px;font-weight:950;color:#9a3412;">${transcriptReadinessCounts.needPayment}</div>
+                </div>
+
+                <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:9px 10px;">
+                  <div style="font-size:10px;font-weight:950;color:#9a3412;text-transform:uppercase;">Need Authorization</div>
+                  <div style="font-size:20px;font-weight:950;color:#9a3412;">${transcriptReadinessCounts.needAuthorization}</div>
+                </div>
+
+                <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:9px 10px;">
+                  <div style="font-size:10px;font-weight:950;color:#9a3412;text-transform:uppercase;">Need Type</div>
+                  <div style="font-size:20px;font-weight:950;color:#9a3412;">${transcriptReadinessCounts.needTranscriptType}</div>
+                </div>
+
+                <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:9px 10px;">
+                  <div style="font-size:10px;font-weight:950;color:#312e81;text-transform:uppercase;">Pulled / Received</div>
+                  <div style="font-size:20px;font-weight:950;color:#312e81;">${transcriptReadinessCounts.alreadyPulled}</div>
+                </div>
+              </div>
+            `;
+
             const transcriptReadyToPullCount = visibleLeads.filter((lead) => {
               const transcriptRequest = lead.transcriptRequest || {};
               const statusText = String(lead.status || "New");
@@ -2236,7 +2330,7 @@
                   >
                     Copy API Payload
                   </button>
-                   
+
                 </div>
 
                 ${transcriptReadyToPullLeads.length
@@ -2436,6 +2530,7 @@
                 </div>
 
                 ${readyToPullSectionHtml}
+                ${transcriptApiReadinessSummaryHtml}
 
                 <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
