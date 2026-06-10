@@ -1120,6 +1120,46 @@
           });
       }
 
+      function copyTranscriptReadyToPullApiPayload() {
+        const rows = transcriptReadyToPullList || [];
+
+        if (!rows.length) {
+          alert("No transcript requests are ready to pull yet.");
+          return;
+        }
+
+        const payload = rows.map((lead) => {
+          const transcriptRequest = lead?.transcriptRequest || {};
+
+          return {
+            leadId: lead?.leadId || "",
+            clientName: lead?.contact?.name || "",
+            email: lead?.contact?.email || "",
+            phone: lead?.contact?.phone || "",
+            taxYear: getTranscriptTaxYearForLead(lead),
+            transcriptType: getTranscriptTypeForLead(lead),
+            paymentStatus: "verified",
+            authorizationStatus: "received",
+            requestStatus: "ready_to_pull",
+            transcriptPulledDate: transcriptRequest.transcriptPulledDate || "",
+            transcriptReceivedDate: transcriptRequest.transcriptReceivedDate || "",
+            deliveryMethod: transcriptRequest.deliveryMethod || "",
+            deliveryDate: transcriptRequest.deliveryDate || "",
+            internalNotes: transcriptRequest.internalNotes || ""
+          };
+        });
+
+        const text = JSON.stringify(payload, null, 2);
+
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            alert(`Copied API-ready payload for ${rows.length} transcript request${rows.length === 1 ? "" : "s"}.`);
+          })
+          .catch(() => {
+            window.prompt("Copy this API-ready transcript payload:", text);
+          });
+      }
+
 
       function esc(str) {
         return String(str || "")
@@ -2188,6 +2228,15 @@
                   >
                     Copy Ready List
                   </button>
+                
+                                   <button
+                    type="button"
+                    onclick="copyTranscriptReadyToPullApiPayload()"
+                    style="background:#047857;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Copy API Payload
+                  </button>
+                   
                 </div>
 
                 ${transcriptReadyToPullLeads.length
