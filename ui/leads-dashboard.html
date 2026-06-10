@@ -1048,6 +1048,41 @@
       let focusedReturnAction = "";
       let transcriptReadyToPullList = [];
 
+      function getTranscriptTypeForLead(lead) {
+        const transcriptRequest = lead?.transcriptRequest || {};
+
+        if (transcriptRequest.transcriptType) {
+          return transcriptRequest.transcriptType;
+        }
+
+        const noteLines = String(lead?.notes || "")
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(Boolean);
+
+        const transcriptTypeLine = noteLines.find(line =>
+          line.toLowerCase().includes("transcript type selected:")
+        );
+
+        if (transcriptTypeLine) {
+          return transcriptTypeLine
+            .replace(/^\[[^\]]+\]\s*/, "")
+            .replace("Transcript type selected:", "")
+            .trim() || "Review transcript type in lead card";
+        }
+
+        return "Review transcript type in lead card";
+      }
+
+      function getTranscriptTaxYearForLead(lead) {
+        return (
+          lead?.taxData?.taxYear ||
+          lead?.estimateSummary?.taxYear ||
+          lead?.estimateSummary?.meta?.taxYear ||
+          "Review tax year"
+        );
+      }
+
       function copyTranscriptReadyToPullList() {
         const rows = transcriptReadyToPullList || [];
 
@@ -1062,8 +1097,8 @@
           const email = lead?.contact?.email || "No email";
           const phone = lead?.contact?.phone || "No phone";
           const leadId = lead?.leadId || "No Lead ID";
-          const transcriptType = transcriptRequest.transcriptType || "Review transcript type in lead card";
-          const taxYear = lead?.taxData?.taxYear || lead?.estimateSummary?.taxYear || "Review tax year";
+          const transcriptType = getTranscriptTypeForLead(lead);
+          const taxYear = getTranscriptTaxYearForLead(lead);
 
           return [
             `${index + 1}. ${name}`,
@@ -1071,7 +1106,8 @@
             `Phone: ${phone}`,
             `Lead ID: ${leadId}`,
             `Tax Year: ${taxYear}`,
-            `Transcript Type: ${transcriptType}`
+            `Transcript Type: ${transcriptType}`,
+            `Readiness: Payment verified | Authorization received | Transcript type selected`
           ].join("\n");
         }).join("\n\n");
 
@@ -2163,8 +2199,11 @@
                           <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
                         </div>
 
-                        <div style="color:#047857;font-weight:950;">
+                         <div style="color:#047857;font-weight:950;">
                           READY TO PULL
+                          <div style="font-size:12px;color:#334155;font-weight:750;margin-top:3px;">
+                            Payment verified | Authorization received | Transcript type selected
+                          </div>
                         </div>
 
                         <button
