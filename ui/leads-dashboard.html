@@ -1129,35 +1129,41 @@
           return;
         }
 
-        const payload = rows.map((lead) => {
+        const text = rows.map((lead, index) => {
           const transcriptRequest = lead?.transcriptRequest || {};
+          const name = lead?.contact?.name || "Unknown Lead";
+          const email = lead?.contact?.email || "No email";
+          const phone = lead?.contact?.phone || "No phone";
+          const leadId = lead?.leadId || "No Lead ID";
+          const transcriptType = getTranscriptTypeForLead(lead);
+          const taxYear = getTranscriptTaxYearForLead(lead);
 
-          return {
-            leadId: lead?.leadId || "",
-            clientName: lead?.contact?.name || "",
-            email: lead?.contact?.email || "",
-            phone: lead?.contact?.phone || "",
-            taxYear: getTranscriptTaxYearForLead(lead),
-            transcriptType: getTranscriptTypeForLead(lead),
-            paymentStatus: "verified",
-            authorizationStatus: "received",
-            requestStatus: "ready_to_pull",
-            transcriptPulledDate: transcriptRequest.transcriptPulledDate || "",
-            transcriptReceivedDate: transcriptRequest.transcriptReceivedDate || "",
-            deliveryMethod: transcriptRequest.deliveryMethod || "",
-            deliveryDate: transcriptRequest.deliveryDate || "",
-            internalNotes: transcriptRequest.internalNotes || ""
-          };
-        });
-
-        const text = JSON.stringify(payload, null, 2);
+          return [
+            `PitBullTax Pull Item ${index + 1}`,
+            "-------------------------",
+            `Client Name: ${name}`,
+            `Email: ${email}`,
+            `Phone: ${phone}`,
+            `Lead ID: ${leadId}`,
+            `Tax Year: ${taxYear}`,
+            `Transcript Type Needed: ${transcriptType}`,
+            "Payment Status: Verified / Ready",
+            "Authorization Status: Received / Ready",
+            "Identity Info: Verify in secure client file before pulling",
+            `Pulled Date: ${transcriptRequest.transcriptPulledDate || "Not pulled yet"}`,
+            `Received Date: ${transcriptRequest.transcriptReceivedDate || "Not received yet"}`,
+            `Delivery Method: ${transcriptRequest.deliveryMethod || "Not delivered yet"}`,
+            `Delivery Date: ${transcriptRequest.deliveryDate || "Not delivered yet"}`,
+            `Internal Notes: ${transcriptRequest.internalNotes || "None"}`
+          ].join("\n");
+        }).join("\n\n");
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied PitBullTax pull info for ${rows.length} transcript request${rows.length === 1 ? "" : "s"}.`);
+            alert(`Copied PitBullTax pull sheet for ${rows.length} transcript request${rows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
-            window.prompt("Copy this PitBullTax pull info:", text);
+            window.prompt("Copy this PitBullTax pull sheet:", text);
           });
       }
 
