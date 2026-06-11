@@ -2376,6 +2376,46 @@
               </div>
             `;
 
+            const transcriptBlockedCount =
+              Math.max(
+                0,
+                visibleLeads.length -
+                transcriptReadinessCounts.ready -
+                transcriptReadinessCounts.alreadyPulled
+              );
+
+            const transcriptPurchaseReady =
+              transcriptReadinessCounts.ready >= 5 &&
+              transcriptBlockedCount <= 2;
+
+            const transcriptPurchaseReadinessHtml = `
+              <div style="background:${transcriptPurchaseReady ? "#ecfdf5" : "#fff7ed"};border:2px solid ${transcriptPurchaseReady ? "#22c55e" : "#f97316"};border-radius:14px;padding:12px;margin:10px 0 12px;">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                  <div>
+                    <div style="font-size:17px;font-weight:950;color:${transcriptPurchaseReady ? "#047857" : "#9a3412"};">
+                      ${transcriptPurchaseReady ? "Transcript Software/API Purchase: Getting Close" : "Transcript Software/API Purchase: Not Ready Yet"}
+                    </div>
+
+                    <div style="font-size:13px;color:#334155;font-weight:750;line-height:1.45;margin-top:5px;">
+                      Ready to pull: <strong>${transcriptReadinessCounts.ready}</strong> |
+                      Blocked / not ready: <strong>${transcriptBlockedCount}</strong> |
+                      Pulled / received: <strong>${transcriptReadinessCounts.alreadyPulled}</strong>
+                    </div>
+
+                    <div style="font-size:13px;color:#334155;font-weight:750;line-height:1.45;margin-top:6px;">
+                      ${transcriptPurchaseReady
+                ? "You are getting close. Continue testing the manual ready-to-pull workflow before spending money on transcript software/API."
+                : "Do not purchase transcript software/API yet. Clear payment, authorization, and transcript type blockers first so the software has clean requests to process."}
+                    </div>
+                  </div>
+
+                  <div style="background:#ffffff;border:1px solid ${transcriptPurchaseReady ? "#86efac" : "#fed7aa"};border-radius:999px;padding:7px 11px;font-size:12px;font-weight:950;color:${transcriptPurchaseReady ? "#047857" : "#9a3412"};">
+                    ${transcriptPurchaseReady ? "Manual workflow nearly ready" : "Keep manual workflow for now"}
+                  </div>
+                </div>
+              </div>
+            `;
+
             const transcriptReadyToPullCount = visibleLeads.filter((lead) => {
               const transcriptRequest = lead.transcriptRequest || {};
               const statusText = String(lead.status || "New");
@@ -2728,6 +2768,7 @@
 
                 ${readyToPullSectionHtml}
                 ${transcriptApiReadinessSummaryHtml}
+                ${transcriptPurchaseReadinessHtml}
 
                 <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
