@@ -2766,6 +2766,54 @@
                   </div>
                 </div>
 
+                                <div style="background:#f0f9ff;border:2px solid #38bdf8;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+                  <div style="font-size:15px;font-weight:950;color:#0369a1;margin-bottom:6px;">
+                    Daily Transcript Work Rule
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px;">
+                    <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px;">
+                      <div style="font-size:12px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+                        1. Work Ready First
+                      </div>
+                      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.4;">
+                        Pull only the requests shown as Ready to Pull before opening other cards.
+                      </div>
+                    </div>
+
+                    <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px;">
+                      <div style="font-size:12px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+                        2. Review Blockers
+                      </div>
+                      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.4;">
+                        Use blocker reports for missing payment, authorization, or transcript type.
+                      </div>
+                    </div>
+
+                    <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px;">
+                      <div style="font-size:12px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+                        3. Open Exceptions
+                      </div>
+                      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.4;">
+                        Open a client card only when the row needs review, correction, or final tracking.
+                      </div>
+                    </div>
+
+                    <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px;">
+                      <div style="font-size:12px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+                        4. Mark Handled
+                      </div>
+                      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.4;">
+                        Mark handled after the request has been worked for the day.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:8px;background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px 10px;font-size:13px;color:#0369a1;font-weight:850;line-height:1.4;">
+                    Goal: work from this list first. The opened client card is for exceptions, not for reviewing every transcript request one by one.
+                  </div>
+                </div>
+
                 ${readyToPullSectionHtml}
                 ${transcriptApiReadinessSummaryHtml}
                 ${transcriptPurchaseReadinessHtml}
