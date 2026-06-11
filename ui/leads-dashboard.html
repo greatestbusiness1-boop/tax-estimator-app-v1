@@ -1219,7 +1219,7 @@
           return;
         }
 
-        const text = blockedRows.map((item, index) => {
+        const missingItemsText = blockedRows.map((item, index) => {
 
           const lead = item.lead;
           const name = lead?.contact?.name || "Unknown Lead";
@@ -1240,10 +1240,18 @@
             `Email: ${email}`,
             `Phone: ${phone}`,
             `Lead ID: ${leadId}`,
-            `Blocked By: ${missingText}`,
+            `Missing Items: ${missingText}`,
             `Next Step: ${nextSteps}`
           ].join("\n");
         }).join("\n\n");
+
+        const text = [
+          "Transcript Missing Items List",
+          "-----------------------------",
+          `Total transcript requests with missing items: ${blockedRows.length}`,
+          "",
+          missingItemsText
+        ].join("\n");
 
         navigator.clipboard.writeText(text)
           .then(() => {
