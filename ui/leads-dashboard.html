@@ -1175,7 +1175,7 @@
           return;
         }
 
-        const blockedRows = rows.map((lead) => {
+        const missingItemsRows = rows.map((lead) => {
           const transcriptRequest = lead?.transcriptRequest || {};
           const statusText = String(lead?.status || "New");
           const transcriptType = getTranscriptTypeForLead(lead);
@@ -1214,12 +1214,12 @@
           };
         }).filter(item => item.missingItems.length && !item.transcriptAlreadyPulled);
 
-        if (!blockedRows.length) {
+        if (!missingItemsRows.length) {
           alert("No missing items list to copy. All visible transcript requests appear ready or already pulled.");
           return;
         }
 
-        const missingItemsText = blockedRows.map((item, index) => {
+        const missingItemsText = missingItemsRows.map((item, index) => {
 
           const lead = item.lead;
           const name = lead?.contact?.name || "Unknown Lead";
@@ -1248,14 +1248,14 @@
         const text = [
           "Transcript Missing Items List",
           "-----------------------------",
-          `Total transcript requests with missing items: ${blockedRows.length}`,
+          `Total transcript requests with missing items: ${missingItemsRows.length}`,
           "",
           missingItemsText
         ].join("\n");
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied ${blockedRows.length} transcript missing item${blockedRows.length === 1 ? "" : "s"}.`);
+            alert(`Copied ${missingItemsRows.length} transcript missing item${missingItemsRows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
             window.prompt("Copy this transcript missing items list:", text);
