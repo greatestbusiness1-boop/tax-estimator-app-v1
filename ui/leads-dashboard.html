@@ -1167,7 +1167,7 @@
           });
       }
 
-      function copyTranscriptReadinessBlockerList() {
+      function copyTranscriptMissingItemsList() {
         const rows = transcriptRequestWorklist || [];
 
         if (!rows.length) {
@@ -1220,6 +1220,7 @@
         }
 
         const text = blockedRows.map((item, index) => {
+
           const lead = item.lead;
           const name = lead?.contact?.name || "Unknown Lead";
           const email = lead?.contact?.email || "No email";
@@ -2557,7 +2558,7 @@
 
                    <button
                     type="button"
-                    onclick="copyTranscriptReadinessBlockerList()"
+                    onclick="copyTranscriptMissingItemsList()"
                     style="background:#9a3412;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
                     📋 Copy Missing Items List
