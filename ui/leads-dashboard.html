@@ -1215,7 +1215,7 @@
         }).filter(item => item.missingItems.length && !item.transcriptAlreadyPulled);
 
         if (!blockedRows.length) {
-          alert("No blocker list to copy. All visible transcript requests appear ready or already pulled.");
+          alert("No missing items list to copy. All visible transcript requests appear ready or already pulled.");
           return;
         }
 
@@ -1246,10 +1246,10 @@
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied ${blockedRows.length} transcript blocker item${blockedRows.length === 1 ? "" : "s"}.`);
+            alert(`Copied ${blockedRows.length} transcript missing item${blockedRows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
-            window.prompt("Copy this transcript blocker list:", text);
+            window.prompt("Copy this transcript missing items list:", text);
           });
       }
 
