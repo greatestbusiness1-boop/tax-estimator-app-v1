@@ -1092,7 +1092,7 @@
           return;
         }
 
-        const text = rows.map((lead, index) => {
+        const readyListText = rows.map((lead, index) => {
           const transcriptRequest = lead.transcriptRequest || {};
           const name = lead?.contact?.name || "Unknown Lead";
           const email = lead?.contact?.email || "No email";
@@ -1112,6 +1112,15 @@
           ].join("\n");
         }).join("\n\n");
 
+        const text = [
+          "Transcript Ready to Pull List",
+          "-----------------------------",
+          `Generated: ${getTranscriptReportGeneratedStamp()}`,
+          `Total ready to pull: ${rows.length}`,
+          "",
+          readyListText
+        ].join("\n");
+
         navigator.clipboard.writeText(text)
           .then(() => {
             alert(`Copied ${rows.length} ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
@@ -1129,7 +1138,7 @@
           return;
         }
 
-        const text = rows.map((lead, index) => {
+        const pitBullTaxPullText = rows.map((lead, index) => {
           const transcriptRequest = lead?.transcriptRequest || {};
           const name = lead?.contact?.name || "Unknown Lead";
           const email = lead?.contact?.email || "No email";
@@ -1157,6 +1166,15 @@
             `Internal Notes: ${transcriptRequest.internalNotes || "None"}`
           ].join("\n");
         }).join("\n\n");
+
+        const text = [
+          "PitBullTax Pull Info Sheet",
+          "--------------------------",
+          `Generated: ${getTranscriptReportGeneratedStamp()}`,
+          `Total ready to pull: ${rows.length}`,
+          "",
+          pitBullTaxPullText
+        ].join("\n");
 
         navigator.clipboard.writeText(text)
           .then(() => {
@@ -1248,6 +1266,7 @@
         const text = [
           "Transcript Missing Items List",
           "-----------------------------",
+          `Generated: ${getTranscriptReportGeneratedStamp()}`,
           `Total transcript requests with missing items: ${missingItemsRows.length}`,
           "",
           missingItemsText
@@ -1330,6 +1349,7 @@
         const text = [
           "Transcript Pull Readiness Report",
           "--------------------------------",
+          `Generated: ${getTranscriptReportGeneratedStamp()}`,
           `Total transcript requests showing: ${rows.length}`,
           `Ready to pull: ${summary.ready}`,
           `Missing items / not ready: ${missingItemsCount < 0 ? 0 : missingItemsCount}`,
@@ -1351,6 +1371,9 @@
           });
       }
 
+      function getTranscriptReportGeneratedStamp() {
+        return new Date().toLocaleString();
+      }
 
       function esc(str) {
         return String(str || "")
