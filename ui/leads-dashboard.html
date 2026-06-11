@@ -1309,11 +1309,11 @@
 
         const recommendation =
           summary.ready > 0
-            ? "Some requests are ready to pull. Continue testing the manual ready-to-pull workflow before purchasing transcript software/API."
-            : "Do not purchase transcript software/API yet. Focus on clearing payment, authorization, and transcript type blockers first.";
+            ? "Some requests are ready to pull. Continue testing the manual PitBullTax ready-to-pull workflow before relying on transcript software daily."
+            : "Do not rely on transcript software yet. Focus on clearing payment, authorization, and transcript type blockers first.";
 
         const text = [
-          "Transcript API Readiness Report",
+          "Transcript Pull Readiness Report",
           "--------------------------------",
           `Total transcript requests showing: ${rows.length}`,
           `Ready to pull: ${summary.ready}`,
@@ -1329,10 +1329,10 @@
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert("Copied transcript API readiness report.");
+            alert("Copied transcript pull readiness report.");
           })
           .catch(() => {
-            window.prompt("Copy this transcript API readiness report:", text);
+            window.prompt("Copy this transcript pull readiness report:", text);
           });
       }
 
