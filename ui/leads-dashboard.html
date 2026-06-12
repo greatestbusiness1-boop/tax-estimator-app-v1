@@ -4012,11 +4012,23 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         if (actionType === "deliveredClientPortal") {
           setSelectFieldValue(deliveryMethodEl, "Client portal");
           if (deliveryDateEl) deliveryDateEl.value = today;
+
+          const completedStatus = "Transcript Help - Completed";
+          const statusEl = document.getElementById(`status-${leadId}`);
+          const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
+          const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+
+          if (statusEl) statusEl.value = completedStatus;
+          if (statusBadgeEl) statusBadgeEl.textContent = completedStatus;
+          if (internalStatusEl) internalStatusEl.textContent = completedStatus;
         }
 
         if (msgEl) {
           msgEl.style.display = "block";
-          msgEl.textContent = "Quick action applied. Review the fields, then click Save Transcript Status Change.";
+          msgEl.textContent =
+            actionType === "deliveredClientPortal"
+              ? "Delivery applied and status set to Transcript Help - Completed. Click Save Transcript Status Change."
+              : "Quick action applied. Review the fields, then click Save Transcript Status Change.";
         }
       }
 
