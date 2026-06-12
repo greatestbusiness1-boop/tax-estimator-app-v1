@@ -3238,12 +3238,51 @@
               const transcriptFollowUpDateFieldValue = transcriptRequest.followUpDate || getTranscriptTrackingValue("- Follow-Up Date:", "");
               const transcriptErrorStatusFieldValue = transcriptRequest.errorStatus || getTranscriptTrackingValue("- Status:", "No error");
               const transcriptErrorNotesFieldValue = transcriptRequest.errorNotes || getTranscriptTrackingSectionValue("Problem / Error Notes", "");
+              const summaryPaymentReady =
+                String(lead.status || "").includes("Transcript Help - Paid") ||
+                String(lead.status || "").includes("Transcript Help - Completed") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const summaryAuthorizationReady =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const summaryTranscriptTypeText = getTranscriptTypeForLead(lead);
+
+              const summaryTranscriptTypeReady =
+                summaryTranscriptTypeText &&
+                !String(summaryTranscriptTypeText).toLowerCase().includes("not selected") &&
+                !String(summaryTranscriptTypeText).toLowerCase().includes("needs review") &&
+                !String(summaryTranscriptTypeText).toLowerCase().includes("review transcript type");
+
+              const summaryTranscriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              const summaryDeliveryDone =
+                transcriptDeliveryMethodFieldValue &&
+                transcriptDeliveryMethodFieldValue !== "Not selected yet";
+
               const transcriptFrontStatus =
                 transcriptErrorStatusFieldValue && transcriptErrorStatusFieldValue !== "No error"
                   ? "Error / Needs Correction"
-                  : transcriptRequest.status ||
-                  lead.status ||
-                  "Open Transcript Request";
+                  : summaryDeliveryDone
+                    ? "Delivered / Client Follow-Up"
+                    : summaryTranscriptAlreadyPulled
+                      ? "Pulled / Needs Review"
+                      : summaryPaymentReady && summaryAuthorizationReady && summaryTranscriptTypeReady
+                        ? "Ready to Pull"
+                        : !summaryPaymentReady
+                          ? "Waiting on Payment"
+                          : !summaryAuthorizationReady
+                            ? "Waiting on Authorization"
+                            : !summaryTranscriptTypeReady
+                              ? "Need Transcript Type"
+                              : transcriptRequest.status ||
+                              lead.status ||
+                              "Open Transcript Request";
 
               const transcriptFrontNextStep =
                 transcriptNextStepFieldValue || "No next step entered";
