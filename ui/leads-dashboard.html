@@ -3234,6 +3234,25 @@
               const transcriptDeliveryDateFieldValue = trackingDeliveryDate && trackingDeliveryDate !== "Not entered" ? trackingDeliveryDate : "";
               const transcriptMailFeeFieldValue = trackingMailFee && trackingMailFee !== "Not added" ? trackingMailFee : "";
               const transcriptInternalNotesFieldValue = trackingInternalNotes && trackingInternalNotes !== "None" ? trackingInternalNotes : "";
+              const transcriptNextStepFieldValue = transcriptRequest.nextStep || getTranscriptTrackingValue("- Next Step:", "");
+              const transcriptFollowUpDateFieldValue = transcriptRequest.followUpDate || getTranscriptTrackingValue("- Follow-Up Date:", "");
+              const transcriptErrorStatusFieldValue = transcriptRequest.errorStatus || getTranscriptTrackingValue("- Status:", "No error");
+              const transcriptErrorNotesFieldValue = transcriptRequest.errorNotes || getTranscriptTrackingSectionValue("Problem / Error Notes", "");
+              const transcriptFrontStatus =
+                transcriptErrorStatusFieldValue && transcriptErrorStatusFieldValue !== "No error"
+                  ? "Error / Needs Correction"
+                  : transcriptRequest.status ||
+                  lead.status ||
+                  "Open Transcript Request";
+
+              const transcriptFrontNextStep =
+                transcriptNextStepFieldValue || "No next step entered";
+
+              const transcriptFrontFollowUp =
+                transcriptFollowUpDateFieldValue || "No follow-up date";
+
+              const transcriptFrontError =
+                transcriptErrorStatusFieldValue || "No error";
 
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
@@ -3490,7 +3509,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       </div>
     </div>
 
-        <details open style="background:#ffffff;border:2px solid #0f2c56;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+        <details style="background:#ffffff;border:2px solid #0f2c56;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
       <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#0f2c56;">
         PitBullTax Manual Pull Checklist
       </summary>
@@ -3513,10 +3532,10 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       </div>
     </details>
 
-        <div style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
-      <div style="font-size:15px;font-weight:950;color:#334155;margin-bottom:6px;">
+<details style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+      <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
         After PitBullTax Pull — Record These Items
-      </div>
+      </summary>
 
       <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
         <div>✓ Transcript pulled/requested date</div>
@@ -3532,10 +3551,10 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       </div>
     </div>
 
-        <div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
-      <div style="font-size:15px;font-weight:950;color:#166534;margin-bottom:6px;">
+        <details style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+      <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#166534;">
         Transcript Automation Plan
-      </div>
+      </summary>
 
       <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;">
         <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:10px;padding:9px;">
@@ -3568,7 +3587,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
       <div style="margin-top:8px;background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:8px 10px;font-size:13px;color:#166534;font-weight:850;line-height:1.45;">
         Daily goal: work from the dashboard queue first. Open the client card only when a transcript request needs review, correction, or final tracking.
-      </div>
+      </details>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
@@ -3642,7 +3661,35 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     Show / Hide Transcript Tracking Fields
   </button>
   
-      <div id="transcriptTrackingFields-${esc(lead.leadId)}" style="display:none;margin-top:12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:12px;color:#0f172a;font-size:12px;line-height:1.55;">
+<div style="background:#eef6ff;border:3px solid #0f2c56;border-radius:14px;padding:12px;margin:12px 0;color:#0f172a;">
+      <div style="font-size:16px;font-weight:950;color:#0f2c56;margin-bottom:8px;">
+        Transcript Work Summary
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px;">
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:10px;padding:9px;">
+          <div style="font-size:10px;font-weight:950;color:#475569;text-transform:uppercase;">Current Status</div>
+          <div style="font-size:13px;font-weight:950;color:#0f2c56;margin-top:4px;">${esc(transcriptFrontStatus)}</div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:10px;padding:9px;">
+          <div style="font-size:10px;font-weight:950;color:#475569;text-transform:uppercase;">Next Step</div>
+          <div style="font-size:13px;font-weight:950;color:#0f2c56;margin-top:4px;">${esc(transcriptFrontNextStep)}</div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:10px;padding:9px;">
+          <div style="font-size:10px;font-weight:950;color:#475569;text-transform:uppercase;">Follow-Up Date</div>
+          <div style="font-size:13px;font-weight:950;color:#0f2c56;margin-top:4px;">${esc(transcriptFrontFollowUp)}</div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:10px;padding:9px;">
+          <div style="font-size:10px;font-weight:950;color:#475569;text-transform:uppercase;">Problem / Error</div>
+          <div style="font-size:13px;font-weight:950;color:#991b1b;margin-top:4px;">${esc(transcriptFrontError)}</div>
+        </div>
+      </div>
+    </div>
+
+      <div id="transcriptTrackingFields-${esc(lead.leadId)}" style="display:block;margin-top:12px;background:#f8fafc;border:3px solid #0f2c56;border-radius:12px;padding:14px;color:#0f172a;font-size:12px;line-height:1.55;">
     <div style="font-size:14px;font-weight:950;color:#0f2c56;margin-bottom:8px;">
       Transcript Request Tracking Fields
     </div>
@@ -3690,13 +3737,37 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   </button>
 </div>
 
-<div
-  id="transcriptQuickActionStatus-${esc(lead.leadId)}"
-  style="display:none;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px;color:#92400e;font-weight:950;line-height:1.4;"
->
-</div>
+
 
     <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
+ 
+ 
+
+<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
+  <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+    Payment Verification Status
+  </label>
+  <input
+    id="transcriptPaymentVerified-${esc(lead.leadId)}"
+    type="text"
+    value="${esc(lead?.transcriptRequest?.paymentStatus || '')}"
+    placeholder="Not verified yet"
+    readonly
+    style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;"
+  />
+</div>
+
+<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
+  <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
+    Payment Verified Date
+  </label>
+  <input
+    id="transcriptPaymentVerifiedDate-${esc(lead.leadId)}"
+    type="date"
+    value="${esc(lead?.transcriptRequest?.paymentVerifiedDate || '')}"
+    style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px;"
+  />
+</div>
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
           Authorization Status
@@ -3763,6 +3834,43 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           Internal Transcript Notes
         </label>
                 <textarea id="transcriptInternalNotes-${esc(lead.leadId)}" placeholder="Example: Client has IRS notice for 2022. Need account transcript and wage/income records." style="width:100%;box-sizing:border-box;min-height:72px;border:1px solid #cbd5e1;border-radius:10px;padding:9px;">${esc(transcriptInternalNotesFieldValue)}</textarea>
+      </div>
+
+      <div style="background:#fff7ed;border:2px solid #f97316;border-radius:10px;padding:8px;">
+        <label style="display:block;color:#9a3412;font-weight:950;margin-bottom:6px;">
+          Next Step / Get Back to Client
+        </label>
+        <input id="transcriptNextStep-${esc(lead.leadId)}" type="text" value="${esc(transcriptNextStepFieldValue)}" placeholder="Example: Call client with transcript results, request authorization, explain IRS notice" style="width:100%;box-sizing:border-box;border:1px solid #fdba74;border-radius:10px;padding:9px;" />
+      </div>
+
+      <div style="background:#fff7ed;border:2px solid #f97316;border-radius:10px;padding:8px;">
+        <label style="display:block;color:#9a3412;font-weight:950;margin-bottom:6px;">
+          Follow-Up Date
+        </label>
+        <input id="transcriptFollowUpDate-${esc(lead.leadId)}" type="date" value="${esc(transcriptFollowUpDateFieldValue)}" style="width:100%;box-sizing:border-box;border:1px solid #fdba74;border-radius:10px;padding:9px;" />
+      </div>
+
+      <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:10px;padding:8px;">
+        <label style="display:block;color:#991b1b;font-weight:950;margin-bottom:6px;">
+          Problem / Error Status
+        </label>
+        <select id="transcriptErrorStatus-${esc(lead.leadId)}" style="width:100%;border:1px solid #fca5a5;border-radius:10px;padding:9px;">
+          <option value="No error" ${transcriptErrorStatusFieldValue === "No error" ? "selected" : ""}>No error</option>
+          <option value="Needs correction" ${transcriptErrorStatusFieldValue === "Needs correction" ? "selected" : ""}>Needs correction</option>
+          <option value="Authorization issue" ${transcriptErrorStatusFieldValue === "Authorization issue" ? "selected" : ""}>Authorization issue</option>
+          <option value="Payment issue" ${transcriptErrorStatusFieldValue === "Payment issue" ? "selected" : ""}>Payment issue</option>
+          <option value="PitBullTax pull issue" ${transcriptErrorStatusFieldValue === "PitBullTax pull issue" ? "selected" : ""}>PitBullTax pull issue</option>
+          <option value="Wrong transcript type" ${transcriptErrorStatusFieldValue === "Wrong transcript type" ? "selected" : ""}>Wrong transcript type</option>
+          <option value="Client info incomplete" ${transcriptErrorStatusFieldValue === "Client info incomplete" ? "selected" : ""}>Client info incomplete</option>
+          <option value="Other error" ${transcriptErrorStatusFieldValue === "Other error" ? "selected" : ""}>Other error</option>
+        </select>
+      </div>
+
+      <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:10px;padding:8px;">
+        <label style="display:block;color:#991b1b;font-weight:950;margin-bottom:6px;">
+          Problem / Error Notes
+        </label>
+        <textarea id="transcriptErrorNotes-${esc(lead.leadId)}" placeholder="Example: PitBullTax pull failed. Need to confirm spouse SSN before retry." style="width:100%;box-sizing:border-box;min-height:72px;border:1px solid #fca5a5;border-radius:10px;padding:9px;">${esc(transcriptErrorNotesFieldValue)}</textarea>
       </div>
     </div>
 
@@ -4003,6 +4111,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           trackingPanel.style.display = "block";
         }
 
+        const paymentVerifiedEl = getField("transcriptPaymentVerified");
+        const paymentVerifiedDateEl = getField("transcriptPaymentVerifiedDate");
         const authStatusEl = getField("transcriptAuthStatus");
         const authDateEl = getField("transcriptAuthDate");
         const pulledDateEl = getField("transcriptPulledDate");
@@ -4010,7 +4120,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         const deliveryMethodEl = getField("transcriptDeliveryMethod");
         const deliveryDateEl = getField("transcriptDeliveryDate");
         const msgEl = document.getElementById(`transcriptStatusMsg-${leadId}`) || document.getElementById(`msg-${leadId}`);
-        const quickActionStatusEl = document.getElementById(`transcriptQuickActionStatus-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
@@ -4032,6 +4141,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           if (statusEl) statusEl.value = paidStatus;
           if (statusBadgeEl) statusBadgeEl.textContent = paidStatus;
           if (internalStatusEl) internalStatusEl.textContent = paidStatus;
+
+          if (paymentVerifiedEl) paymentVerifiedEl.value = "Verified / Ready";
+          if (paymentVerifiedDateEl) paymentVerifiedDateEl.value = today;
 
           if (notesEl) {
             const currentNotes = String(notesEl.value || "").trim();
@@ -4074,11 +4186,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           actionType === "deliveredClientPortal"
             ? `${quickActionLabel} applied. Delivery fields updated and status set to Transcript Help - Completed. Click Save Transcript Status Change.`
             : `${quickActionLabel} applied. Review the fields, then click Save Transcript Status Change.`;
-
-        if (quickActionStatusEl) {
-          quickActionStatusEl.style.display = "block";
-          quickActionStatusEl.textContent = `Last quick action: ${quickActionMessage}`;
-        }
 
         if (msgEl) {
           msgEl.style.display = "block";
@@ -4143,6 +4250,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
         const mailFee = formatFee(getValue("transcriptMailFee"));
         const internalNotes = getValue("transcriptInternalNotes") || "None";
+        const nextStep = getValue("transcriptNextStep") || "None";
+        const followUpDate = getValue("transcriptFollowUpDate") || "Not entered";
+        const errorStatus = getValue("transcriptErrorStatus") || "No error";
+        const errorNotes = getValue("transcriptErrorNotes") || "None";
+        const paymentFieldStatus = getValue("transcriptPaymentVerified");
+        const paymentVerifiedDate = getValue("transcriptPaymentVerifiedDate") || "Not recorded";
         const statusEl = document.getElementById(`status-${leadId}`);
         const officeStatus = statusEl?.value || "New";
 
@@ -4160,7 +4273,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           `\n[${stamp}] Transcript Request Tracking Update\n` +
           `----------------------------------------\n` +
           `Payment\n` +
-          `- Status: ${paymentStatus}\n` +
+          `- Status: ${paymentFieldStatus || paymentStatus}\n` +
+          `- Verified Date: ${paymentVerifiedDate}\n` +
           `- Office Status: ${officeStatus}\n\n` +
           `Authorization\n` +
           `- Status: ${authStatus}\n` +
@@ -4173,7 +4287,14 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           `- Delivery Date: ${deliveryDate}\n` +
           `- Mail / Certified Mail Fee: ${mailFee}\n\n` +
           `Internal Transcript Notes\n` +
-          `- ${internalNotes}\n` +
+          `- ${internalNotes}\n\n` +
+          `Client Follow-Up\n` +
+          `- Next Step: ${nextStep}\n` +
+          `- Follow-Up Date: ${followUpDate}\n\n` +
+          `Problem / Error Tracking\n` +
+          `- Status: ${errorStatus}\n\n` +
+          `Problem / Error Notes\n` +
+          `- ${errorNotes}\n` +
           `----------------------------------------\n`;
 
         if (notesEl) {
@@ -4197,6 +4318,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           serviceName: "IRS Transcript Help & Tax Records Review",
           fee: 150,
           paymentStatus,
+          paymentVerifiedDate,
           authorizationStatus: authStatus,
           authorizationReceivedDate: authDate === "Not entered" ? "" : authDate,
           transcriptPulledDate: pulledDate === "Not entered" ? "" : pulledDate,
@@ -4205,6 +4327,10 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           deliveryDate: deliveryDate === "Not entered" ? "" : deliveryDate,
           mailCertifiedFee: mailFee === "Not added" ? "" : mailFee,
           internalNotes,
+          nextStep,
+          followUpDate: followUpDate === "Not entered" ? "" : followUpDate,
+          errorStatus,
+          errorNotes,
           lastTrackingNote: trackingNote.trim()
         };
 
