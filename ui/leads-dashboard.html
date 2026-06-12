@@ -3254,6 +3254,43 @@
               const transcriptFrontError =
                 transcriptErrorStatusFieldValue || "No error";
 
+              const paymentLooksVerified =
+                String(lead.status || "").includes("Transcript Help - Paid") ||
+                String(lead.status || "").includes("Transcript Help - Completed") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationLooksReceived =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const checklistTranscriptTypeText = getTranscriptTypeForLead(lead);
+
+              const transcriptTypeLooksSelected =
+                checklistTranscriptTypeText &&
+                !String(checklistTranscriptTypeText).toLowerCase().includes("not selected") &&
+                !String(checklistTranscriptTypeText).toLowerCase().includes("needs review") &&
+                !String(checklistTranscriptTypeText).toLowerCase().includes("review transcript type");
+
+              const transcriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              const checklistPaymentMark = paymentLooksVerified ? "☑" : "☐";
+              const checklistAuthorizationMark = authorizationLooksReceived ? "☑" : "☐";
+              const checklistIdentityMark = authorizationLooksReceived ? "☑" : "☐";
+              const checklistTranscriptTypeMark = transcriptTypeLooksSelected ? "☑" : "☐";
+              const checklistTaxYearMark = getTranscriptTaxYearForLead(lead) !== "Review tax year" ? "☑" : "☐";
+              const checklistPulledMark = transcriptAlreadyPulled ? "☑" : "☐";
+              const checklistReportSavedMark = transcriptAlreadyPulled ? "☑" : "☐";
+              const checklistRecordedDatesMark =
+                transcriptPulledDateFieldValue || transcriptReceivedDateFieldValue ? "☑" : "☐";
+              const checklistDeliveryMark =
+                transcriptDeliveryMethodFieldValue && transcriptDeliveryMethodFieldValue !== "Not selected yet" ? "☑" : "☐";
+              const checklistNextStepMark =
+                transcriptNextStepFieldValue || transcriptInternalNotesFieldValue ? "☑" : "☐";
+
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
                   .replace(/^\[[^\]]+\]\s*/, "")
@@ -3515,16 +3552,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       </summary>
 
       <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin-top:10px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
-        <div>☐ Confirm IRS e-Services / PitBullTax access is ready</div>
-        <div>☐ Confirm client authorization is received</div>
-        <div>☐ Confirm client identity information is complete</div>
-        <div>☐ Confirm transcript type needed</div>
-        <div>☐ Confirm tax year needed</div>
-        <div>☐ Pull transcript in PitBullTax</div>
-        <div>☐ Save or download PitBullTax report</div>
-        <div>☐ Record pulled / received date in tracking fields</div>
-        <div>☐ Deliver safely to client</div>
-        <div>☐ Add final internal note / next step</div>
+        <div>☑ Confirm IRS e-Services / PitBullTax access is ready</div>
+        <div>${checklistAuthorizationMark} Confirm client authorization is received</div>
+        <div>${checklistIdentityMark} Confirm client identity information is complete</div>
+        <div>${checklistTranscriptTypeMark} Confirm transcript type needed</div>
+        <div>${checklistTaxYearMark} Confirm tax year needed</div>
+        <div>${checklistPulledMark} Pull transcript in PitBullTax</div>
+        <div>${checklistReportSavedMark} Save or download PitBullTax report</div>
+        <div>${checklistRecordedDatesMark} Record pulled / received date in tracking fields</div>
+        <div>${checklistDeliveryMark} Deliver safely to client</div>
+        <div>${checklistNextStepMark} Add final internal note / next step</div>
       </div>
 
       <div style="margin-top:10px;background:#ecfeff;border:1px solid #67e8f9;border-radius:10px;padding:8px 10px;font-size:13px;color:#0369a1;font-weight:850;line-height:1.45;">
