@@ -3906,7 +3906,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     </div>
 
 <div style="margin-top:14px;border-top:2px solid #e2e8f0;padding-top:12px;">
-      <details style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+      <details style="display:none;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
         <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
           After PitBullTax Pull — Record These Items
         </summary>
@@ -3925,7 +3925,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         </div>
       </details>
 
-      <details style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
+      <details style="display:none;background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
         <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#166534;">
           Transcript Automation Plan
         </summary>
@@ -4037,6 +4037,60 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                 </div>
 
                 ${selectedActionQueue === "StrategyReview" ? strategyReviewHtml : ""}
+
+<details style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:10px 0;">
+  <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
+    After PitBullTax Pull — Record These Items
+  </summary>
+
+  <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin-top:10px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
+    <div>✓ Transcript pulled/requested date</div>
+    <div>✓ Transcript received/available date</div>
+    <div>✓ Report saved or downloaded</div>
+    <div>✓ Delivery method used</div>
+    <div>✓ Delivery date</div>
+    <div>✓ Internal note / next client step</div>
+  </div>
+
+  <div style="margin-top:8px;font-size:12px;color:#475569;font-weight:800;line-height:1.45;">
+    Use this as a lower reference section only. Enter the real tracking in the Transcript Request Tracking Fields above.
+  </div>
+</details>
+
+<details style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:10px 12px;margin:10px 0;">
+  <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#166534;">
+    Transcript Automation Plan
+  </summary>
+
+  <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:10px;">
+    <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:10px;padding:9px;">
+      <div style="font-size:12px;font-weight:950;color:#166534;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+        Manual Now
+      </div>
+      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
+        Use PitBullTax to pull transcripts. Use this app to track readiness, blockers, results, delivery, and client follow-up.
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:10px;padding:9px;">
+      <div style="font-size:12px;font-weight:950;color:#166534;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+        Semi-Automatic Next
+      </div>
+      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
+        App sorts requests into Ready, Blocked, Pulled, Needs Delivery, and Needs Follow-Up so you only review exceptions.
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:10px;padding:9px;">
+      <div style="font-size:12px;font-weight:950;color:#166534;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+        Integration Later
+      </div>
+      <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
+        Do not build a custom API until the manual PitBullTax workflow proves what needs to be automated.
+      </div>
+    </div>
+  </div>
+</details>
 
                 ${taxEstimateDetailsHtml}
 
