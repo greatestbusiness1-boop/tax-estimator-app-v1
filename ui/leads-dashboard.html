@@ -1113,7 +1113,7 @@
         }).join("\n\n");
 
         const text = [
-          "Transcript Ready to Pull List",
+          "PitBullTax Ready to Pull List",
           "-----------------------------",
           `Generated: ${getTranscriptReportGeneratedStamp()}`,
           `Total ready to pull: ${rows.length}`,
@@ -1123,7 +1123,7 @@
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied ${rows.length} ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
+            alert(`Copied ${rows.length} PitBullTax ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
             window.prompt("Copy this ready-to-pull list:", text);
@@ -2576,7 +2576,7 @@
                     onclick="copyTranscriptReadyToPullList()"
                     style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
-                    📋 Copy Ready List
+                    📋 Copy PitBullTax Ready List
                   </button>
                 
                   <button
