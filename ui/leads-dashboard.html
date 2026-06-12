@@ -3690,6 +3690,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   </button>
 </div>
 
+<div
+  id="transcriptQuickActionStatus-${esc(lead.leadId)}"
+  style="display:none;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px;color:#92400e;font-weight:950;line-height:1.4;"
+>
+</div>
+
     <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
       <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;">
         <label style="display:block;color:#334155;font-weight:950;margin-bottom:6px;">
@@ -4004,10 +4010,19 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         const deliveryMethodEl = getField("transcriptDeliveryMethod");
         const deliveryDateEl = getField("transcriptDeliveryDate");
         const msgEl = document.getElementById(`transcriptStatusMsg-${leadId}`) || document.getElementById(`msg-${leadId}`);
+        const quickActionStatusEl = document.getElementById(`transcriptQuickActionStatus-${leadId}`);
         const notesEl = document.getElementById(`notes-${leadId}`);
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
         const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+
+        const quickActionLabels = {
+          paymentVerified: "Payment Verified Today",
+          authorizationReceived: "Authorization Received Today",
+          transcriptPulled: "Transcript Pulled Today",
+          transcriptReceived: "Transcript Received Today",
+          deliveredClientPortal: "Delivered Today - Client Portal"
+        };
 
         if (actionType === "paymentVerified") {
           const paidStatus = "Transcript Help - Paid / Needs Review";
@@ -4053,12 +4068,21 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           if (internalStatusEl) internalStatusEl.textContent = completedStatus;
         }
 
+        const quickActionLabel = quickActionLabels[actionType] || "Quick action";
+
+        const quickActionMessage =
+          actionType === "deliveredClientPortal"
+            ? `${quickActionLabel} applied. Delivery fields updated and status set to Transcript Help - Completed. Click Save Transcript Status Change.`
+            : `${quickActionLabel} applied. Review the fields, then click Save Transcript Status Change.`;
+
+        if (quickActionStatusEl) {
+          quickActionStatusEl.style.display = "block";
+          quickActionStatusEl.textContent = `Last quick action: ${quickActionMessage}`;
+        }
+
         if (msgEl) {
           msgEl.style.display = "block";
-          msgEl.textContent =
-            actionType === "deliveredClientPortal"
-              ? "Delivery applied and status set to Transcript Help - Completed. Click Save Transcript Status Change."
-              : "Quick action applied. Review the fields, then click Save Transcript Status Change.";
+          msgEl.textContent = quickActionMessage;
         }
       }
 
