@@ -3796,7 +3796,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
   <button
     type="button"
-    onclick="saveLead('${esc(lead.leadId)}')"
+    onclick="addTranscriptTrackingToNotes('${esc(lead.leadId)}')"
     style="width:100%;margin-top:10px;background:#0f766e;color:#ffffff;border:2px solid #134e4a;border-radius:12px;padding:12px 10px;font-size:13px;font-weight:950;box-shadow:0 8px 18px rgba(15,118,110,0.20);"
   >
     Save Transcript Status Change
@@ -4337,6 +4337,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           transcriptStatusMsgEl.textContent = "Saving transcript status change...";
         }
 
+        const status = statusEl?.value || "New";
         const activityText = String(activityEl?.value || "").trim();
         const manualNotes = String(notesEl?.value || "").trim();
 
@@ -4366,7 +4367,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           }
 
           if (msgEl) {
-            msgEl.textContent = "Saved successfully — status and notes updated.";
+            msgEl.textContent = "Saved successfully — status, notes, and transcript tracking updated.";
           }
 
           if (transcriptStatusMsgEl) {
