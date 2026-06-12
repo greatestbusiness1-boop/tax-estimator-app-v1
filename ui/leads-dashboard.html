@@ -3647,7 +3647,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       Transcript Request Tracking Fields
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:8px;margin-bottom:10px;">
+     
+      <button
+  type="button"
+  onclick="applyTranscriptQuickAction('${esc(lead.leadId)}', 'paymentVerified')"
+  style="background:#92400e;color:#ffffff;border-radius:10px;padding:9px 8px;font-size:12px;font-weight:950;box-shadow:none;"
+>
+  Payment Verified Today
+</button>
+
   <button
     type="button"
     onclick="applyTranscriptQuickAction('${esc(lead.leadId)}', 'authorizationReceived')"
@@ -3995,6 +4004,27 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         const deliveryMethodEl = getField("transcriptDeliveryMethod");
         const deliveryDateEl = getField("transcriptDeliveryDate");
         const msgEl = document.getElementById(`transcriptStatusMsg-${leadId}`) || document.getElementById(`msg-${leadId}`);
+        const notesEl = document.getElementById(`notes-${leadId}`);
+        const statusEl = document.getElementById(`status-${leadId}`);
+        const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
+        const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+
+        if (actionType === "paymentVerified") {
+          const paidStatus = "Transcript Help - Paid / Needs Review";
+          const stamp = new Date().toLocaleString();
+          const paymentNote = `[${stamp}] Transcript payment verified. Status set to Transcript Help - Paid / Needs Review.`;
+
+          if (statusEl) statusEl.value = paidStatus;
+          if (statusBadgeEl) statusBadgeEl.textContent = paidStatus;
+          if (internalStatusEl) internalStatusEl.textContent = paidStatus;
+
+          if (notesEl) {
+            const currentNotes = String(notesEl.value || "").trim();
+            notesEl.value = currentNotes
+              ? `${currentNotes}\n${paymentNote}\n`
+              : `${paymentNote}\n`;
+          }
+        }
 
         if (actionType === "authorizationReceived") {
           setSelectFieldValue(authStatusEl, "Received / needs review");
@@ -4089,12 +4119,25 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
         const mailFee = formatFee(getValue("transcriptMailFee"));
         const internalNotes = getValue("transcriptInternalNotes") || "None";
+        const statusEl = document.getElementById(`status-${leadId}`);
+        const officeStatus = statusEl?.value || "New";
+
+        const paymentStatus =
+          officeStatus === "Transcript Help - Paid / Needs Review" ||
+            officeStatus === "Transcript Help - Completed"
+            ? "Verified / Ready"
+            : officeStatus === "Transcript Help - Payment Pending"
+              ? "Payment pending / not verified"
+              : "Review payment status";
 
         const stamp = new Date().toLocaleString();
 
         const trackingNote =
           `\n[${stamp}] Transcript Request Tracking Update\n` +
           `----------------------------------------\n` +
+          `Payment\n` +
+          `- Status: ${paymentStatus}\n` +
+          `- Office Status: ${officeStatus}\n\n` +
           `Authorization\n` +
           `- Status: ${authStatus}\n` +
           `- Authorization Received Date: ${authDate}\n\n` +
@@ -4129,6 +4172,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           requested: true,
           serviceName: "IRS Transcript Help & Tax Records Review",
           fee: 150,
+          paymentStatus,
           authorizationStatus: authStatus,
           authorizationReceivedDate: authDate === "Not entered" ? "" : authDate,
           transcriptPulledDate: pulledDate === "Not entered" ? "" : pulledDate,
