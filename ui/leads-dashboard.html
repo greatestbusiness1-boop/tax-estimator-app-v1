@@ -4358,11 +4358,11 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   onclick="toggleOfficeNotesPanel('${esc(lead.leadId)}')"
                   style="width:100%;margin-top:10px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:950;"
                 >
-                  Show / Hide Office Notes & Manual Status
+                  ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
                 </button>
                                                <div id="officeNotesPanel-${esc(lead.leadId)}" style="display:none;">
                 <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
-                  <strong style="display:block;color:#0f2c56;margin-bottom:10px;">Internal Follow-Up Action</strong>
+                  <strong style="display:block;color:#0f2c56;margin-bottom:10px;">${selectedActionQueue === "TranscriptHelp" ? "Optional General Lead Admin" : "Internal Follow-Up Action"}</strong>
 
                   <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
                     <select
@@ -4393,7 +4393,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   </div>
 
                   <div style="margin-top:8px;color:#52637a;font-size:13px;font-weight:700;">
-                    Select your office follow-up action, click Apply, then click Save below.
+                    ${selectedActionQueue === "TranscriptHelp" ? "Use this only if you need to change the general lead status. Transcript work should be handled in the Transcript Request Tracking Fields above." : "Select your office follow-up action, click Apply, then click Save below."}
                   </div>
                 </div>
 
