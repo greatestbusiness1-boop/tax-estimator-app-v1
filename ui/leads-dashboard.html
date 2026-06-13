@@ -4368,15 +4368,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       </div>
     </details>
 
-   <button
-  type="button"
-  onclick="toggleOfficeNotesPanel('${esc(lead.leadId)}')"
-  style="width:100%;margin-top:10px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:950;"
->
-  ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
-</button>
+   <details style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:12px 14px;margin:14px 0;">
+  <summary style="cursor:pointer;font-weight:950;color:#334155;font-size:14px;text-align:left;">
+    ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
+  </summary>
 
-<div id="officeNotesPanel-${esc(lead.leadId)}" style="display:none;">
+<div id="officeNotesPanel-${esc(lead.leadId)}" style="display:block;margin-top:12px;">
   <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
     <strong style="display:block;color:#0f2c56;margin-bottom:10px;">${selectedActionQueue === "TranscriptHelp" ? "Optional General Lead Admin" : "Internal Follow-Up Action"}</strong>
 
@@ -4460,7 +4457,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
     <div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
   </div>
-</div> 
+</div>
+</details> 
   `
                   : ""
                 }
