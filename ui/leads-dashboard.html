@@ -1442,7 +1442,7 @@
           },
           TranscriptHelp: {
             title: "Transcript Requests Workspace",
-            description: "These are transcript-related service requests. Use this workspace to review what the client needs, payment status, authorization needs, transcript types, transcript pull status, delivery method, and next-step guidance."
+            description: "Work only transcript requests here: payment, authorization, transcript type, pull status, delivery, follow-up, and errors."
           },
           "Follow-up Needed": {
             title: "Follow-Up Needed Workspace",
@@ -1474,6 +1474,18 @@
 
         if (titleEl) titleEl.textContent = workspace.title;
         if (descriptionEl) descriptionEl.textContent = workspace.description;
+
+        const workspaceHeaderEl = document.getElementById("workspaceHeader");
+
+        if (workspaceHeaderEl) {
+          if (view === "TranscriptHelp") {
+            workspaceHeaderEl.style.border = "2px solid #38bdf8";
+            workspaceHeaderEl.style.background = "linear-gradient(180deg,#ffffff 0%,#ecfeff 100%)";
+          } else {
+            workspaceHeaderEl.style.border = "1px solid #dbeafe";
+            workspaceHeaderEl.style.background = "#ffffff";
+          }
+        }
       }
 
       function updateActiveSidebarButton(view) {
