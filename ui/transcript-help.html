@@ -358,12 +358,20 @@
                     </a>
 
                     <div style="margin-top:10px;font-size:12px;font-weight:850;line-height:1.45;color:#713f12;">
-                        Your $150 payment covers the IRS Transcript Help review and transcript assistance described above. Signed authorization and identity verification may still be required before records can be requested or reviewed. Additional fees only apply if you request services outside of transcript help, such as tax preparation, amended returns, IRS representation, tax resolution, or optional mailing/certified mail services. Any additional service would be discussed and approved before work begins.
+                        Your $150 payment covers the IRS Transcript Help review and transcript assistance described
+                        above. Signed authorization and identity verification may still be required before records can
+                        be requested or reviewed. Additional fees only apply if you request services outside of
+                        transcript help, such as tax preparation, amended returns, IRS representation, tax resolution,
+                        or optional mailing/certified mail services. Any additional service would be discussed and
+                        approved before work begins.
                     </div>
                 </div>
 
                 <div class="next-box">
-                    Next step after submission: your request will be reviewed. If you choose to continue with IRS Transcript Help, the $150 service fee covers the transcript help review and transcript assistance described on this page. Signed authorization and secure identity/document steps may still be required before transcript records can be requested.
+                    Next step after submission: your request will be reviewed. If you choose to continue with IRS
+                    Transcript Help, the $150 service fee covers the transcript help review and transcript assistance
+                    described on this page. Signed authorization and secure identity/document steps may still be
+                    required before transcript records can be requested.
                 </div>
             </form>
         </div>
@@ -471,14 +479,14 @@
 
                 showStatus(
                     "ok",
-                    "Your Transcript Help Request was received. Please review the payment step below if you are ready to continue with IRS Transcript Help."
+                    "Your Transcript Help Request was received. Opening the next step page..."
                 );
 
-                if (paymentNextStep) {
-                    paymentNextStep.style.display = "block";
-                }
-
                 form.reset();
+
+                setTimeout(() => {
+                    window.location.href = "/transcript-help-next.html";
+                }, 800);
             } catch (err) {
                 showStatus(
                     "error",
