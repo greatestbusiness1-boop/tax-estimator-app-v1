@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IRS Transcript Help Request</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 32%),
+                linear-gradient(180deg, #f6f8fc 0%, #eef6ff 100%);
+            color: #12233d;
+        }
+
+        .wrap {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%);
+            border: 2px solid #67e8f9;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 14px 34px rgba(15, 44, 86, 0.10);
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            color: #0f2c56;
+            font-size: 32px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            margin: 0;
+            color: #334155;
+            font-size: 16px;
+            line-height: 1.55;
+            font-weight: 700;
+        }
+
+        .notice {
+            background: #fff7ed;
+            border: 2px solid #fed7aa;
+            border-radius: 16px;
+            padding: 14px 16px;
+            color: #7c2d12;
+            font-weight: 850;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 12px 28px rgba(15, 44, 86, 0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 950;
+            color: #0f2c56;
+            margin: 0 0 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 950;
+            color: #334155;
+            margin: 14px 0 6px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 15px;
+            background: #ffffff;
+            color: #17243a;
+        }
+
+        textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .helper {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 800;
+            line-height: 1.4;
+            margin-top: 6px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 20px;
+            border: none;
+            border-radius: 14px;
+            padding: 15px 18px;
+            background: #0f2c56;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 950;
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(15, 44, 86, 0.18);
+        }
+
+        .submit-btn:hover {
+            background: #173c73;
+        }
+
+        .status {
+            display: none;
+            margin-top: 14px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-weight: 900;
+            line-height: 1.45;
+        }
+
+        .status.ok {
+            display: block;
+            background: #ecfdf5;
+            border: 2px solid #22c55e;
+            color: #065f46;
+        }
+
+        .status.error {
+            display: block;
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .next-box {
+            margin-top: 16px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            padding: 14px 16px;
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.5;
+            font-weight: 800;
+        }
+
+        @media (max-width: 720px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="hero">
+            <h1>IRS Transcript Help Request</h1>
+            <p>
+                Need help finding missing W-2s, 1099s, prior-year tax records, IRS account information,
+                or documents needed to respond to an IRS notice? Submit a request and we will review what
+                type of transcript or tax record help may be needed.
+            </p>
+        </div>
+
+        <div class="notice">
+            Important: IRS transcript help may require payment, identity verification, and signed authorization
+            before any IRS records can be requested or reviewed.
+        </div>
+
+        <div class="card">
+            <div class="section-title">Tell us what you need help with</div>
+
+            <form id="transcriptHelpForm">
+                <div class="grid">
+                    <div>
+                        <label for="clientName">First and Last Name</label>
+                        <input id="clientName" name="clientName" type="text" autocomplete="name"
+                            placeholder="First and Last Name" required />
+                    </div>
+
+                    <div>
+                        <label for="clientPhone">Phone Number</label>
+                        <input id="clientPhone" name="clientPhone" type="tel" autocomplete="tel" required />
+                    </div>
+                </div>
+
+                <label for="clientEmail">Email Address</label>
+                <input id="clientEmail" name="clientEmail" type="email" autocomplete="email" required />
+
+                <div class="grid">
+                    <div>
+                        <label for="taxYear">Tax Year Needed</label>
+                        <select id="taxYear" name="taxYear" required>
+                            <option value="">Select tax year...</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021</option>
+                            <option value="Multiple Years">Multiple Years</option>
+                            <option value="Not Sure">Not Sure</option>
+                        </select>
+                        <div id="multipleYearsBox" style="display:none;">
+                            <label for="multipleYears">Enter the tax years needed</label>
+                            <input id="multipleYears" name="multipleYears" type="text"
+                                placeholder="Example: 2021, 2022, 2023, 2024" />
+                            <div class="helper">
+                                Enter each year separated by commas if more than one tax year is needed.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="issueType">What do you need help with?</label>
+                        <select id="issueType" name="issueType" required>
+                            <option value="">Select one...</option>
+                            <option value="Missing W-2 or 1099">Missing W-2 or 1099</option>
+                            <option value="IRS notice">IRS notice</option>
+                            <option value="Prior-year tax return issue">Prior-year tax return issue</option>
+                            <option value="Need wage and income information">Need wage and income information</option>
+                            <option value="Need IRS account or balance information">Need IRS account or balance
+                                information</option>
+                            <option value="Need proof a return was not filed">Need proof a return was not filed</option>
+                            <option value="Need tax records for filing">Need tax records for filing</option>
+                            <option value="Not sure / need review">Not sure / need review</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label for="transcriptType">Transcript Type Needed, If Known</label>
+                <select id="transcriptType" name="transcriptType">
+                    <option value="Not sure / preparer review needed">Not sure / preparer review needed</option>
+                    <option value="Wage and Income Transcript">Wage and Income Transcript</option>
+                    <option value="Tax Account Transcript">Tax Account Transcript</option>
+                    <option value="Tax Return Transcript">Tax Return Transcript</option>
+                    <option value="Record of Account Transcript">Record of Account Transcript</option>
+                    <option value="Verification of Non-Filing">Verification of Non-Filing</option>
+                    <option value="Multiple transcript types may be needed">Multiple transcript types may be needed
+                    </option>
+                </select>
+
+                <label for="clientExplanation">Explain what is going on</label>
+                <textarea id="clientExplanation" name="clientExplanation"
+                    placeholder="Example: I am missing a W-2 from 2024, I received an IRS notice, or I need prior-year records to file my return."
+                    required></textarea>
+
+                <div class="helper">
+                    Do not enter your full Social Security number on this page. If identity verification or
+                    authorization is needed,
+                    we will provide the next step securely.
+                </div>
+
+                <button class="submit-btn" type="submit">
+                    Submit Transcript Help Request
+                </button>
+
+                <div id="formStatus" class="status"></div>
+
+                <div class="next-box">
+                    Next step after submission: your request will be reviewed. Some services may require payment,
+                    signed authorization, and secure document upload before transcript records can be requested.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("transcriptHelpForm");
+        const formStatus = document.getElementById("formStatus");
+        const clientNameInput = document.getElementById("clientName");
+        const clientPhoneInput = document.getElementById("clientPhone");
+        const taxYearInput = document.getElementById("taxYear");
+        const multipleYearsBox = document.getElementById("multipleYearsBox");
+        const multipleYearsInput = document.getElementById("multipleYears");
+
+        function formatName(value) {
+            return String(value || "")
+                .toLowerCase()
+                .replace(/\b[a-z]/g, letter => letter.toUpperCase())
+                .replace(/\s+/g, " ")
+                .trimStart();
+        }
+
+        function formatPhone(value) {
+            const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+
+            if (digits.length <= 3) {
+                return digits;
+            }
+
+            if (digits.length <= 6) {
+                return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+            }
+
+            return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+        }
+
+        clientNameInput.addEventListener("blur", () => {
+            clientNameInput.value = formatName(clientNameInput.value);
+        });
+
+        clientPhoneInput.addEventListener("input", () => {
+            clientPhoneInput.value = formatPhone(clientPhoneInput.value);
+        });
+
+        taxYearInput.addEventListener("change", () => {
+            const showMultipleYears = taxYearInput.value === "Multiple Years";
+
+            multipleYearsBox.style.display = showMultipleYears ? "block" : "none";
+
+            if (!showMultipleYears) {
+                multipleYearsInput.value = "";
+            }
+        });
+
+        function showStatus(type, message) {
+            formStatus.className = `status ${type}`;
+            formStatus.textContent = message;
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const payload = {
+                clientName: document.getElementById("clientName").value.trim(),
+                clientEmail: document.getElementById("clientEmail").value.trim(),
+                clientPhone: document.getElementById("clientPhone").value.trim(),
+                taxYear: document.getElementById("taxYear").value,
+                multipleYears: document.getElementById("multipleYears").value.trim(),
+                issueType: document.getElementById("issueType").value,
+                transcriptType: document.getElementById("transcriptType").value,
+                clientExplanation: document.getElementById("clientExplanation").value.trim()
+            };
+
+            if (!payload.clientName || !payload.clientEmail || !payload.clientPhone || !payload.taxYear || !payload.issueType || !payload.clientExplanation) {
+                showStatus("error", "Please complete all required fields before submitting.");
+                return;
+            }
+
+            if (payload.taxYear === "Multiple Years" && !payload.multipleYears) {
+                showStatus("error", "Please enter the tax years needed, such as 2021, 2022, 2023, 2024.");
+                return;
+            }
+
+            showStatus("ok", "Saving your transcript help request...");
+
+            try {
+                const res = await fetch("/api/transcript-help", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.error || "Could not submit request.");
+                }
+
+                showStatus(
+                    "ok",
+                    "Your Transcript Help Request was received. We will review your issue and provide the next step for payment, authorization, or secure upload if needed."
+                );
+
+                form.reset();
+            } catch (err) {
+                showStatus(
+                    "error",
+                    "The request page is ready, but the server save route is not connected yet. Next step is adding /api/transcript-help to the server."
+                );
+            }
+        });
+    </script>
+</body>
+
+</html>
