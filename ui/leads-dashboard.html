@@ -697,11 +697,12 @@
         backdrop-filter: blur(8px);
         border-bottom:1px solid rgba(191,219,254,0.65);
       ">
-        <div class="summary"><strong>Visible Leads</strong><br><span id="statTotal">0</span></div>
-        <div class="summary"><strong>New</strong><br><span id="statNew">0</span></div>
-        <div class="summary"><strong>Contacted</strong><br><span id="statContacted">0</span></div>
-        <div class="summary"><strong>Booked</strong><br><span id="statBooked">0</span></div>
-        <div class="summary"><strong>Closed</strong><br><span id="statClosed">0</span></div>
+        <div class="summary"><strong id="statTotalLabel">Visible Leads</strong><br><span id="statTotal">0</span></div>
+        <div class="summary"><strong id="statNewLabel">New</strong><br><span id="statNew">0</span></div>
+        <div class="summary"><strong id="statContactedLabel">Contacted</strong><br><span id="statContacted">0</span>
+        </div>
+        <div class="summary"><strong id="statBookedLabel">Booked</strong><br><span id="statBooked">0</span></div>
+        <div class="summary"><strong id="statClosedLabel">Closed</strong><br><span id="statClosed">0</span></div>
       </div>
 
 
@@ -1703,14 +1704,79 @@
           });
           const statsLeads = visibleLeads;
 
-          document.getElementById("statTotal").textContent = statsLeads.length;
-          document.getElementById("statNew").textContent = statsLeads.filter(l => (l.status || "New") === "New").length;
-          document.getElementById("statContacted").textContent = statsLeads.filter(l => (l.status || "") === "Contacted").length;
-          document.getElementById("statBooked").textContent = statsLeads.filter(l => (l.status || "") === "Booked").length;
-          document.getElementById("statClosed").textContent =
-            statsLeads.filter(l =>
-              (l.status || "").startsWith("Closed -")
-            ).length;
+          const setTopStatLabel = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+          };
+
+          if (selectedActionQueue === "TranscriptHelp") {
+            setTopStatLabel("statTotalLabel", "Transcript Requests");
+            setTopStatLabel("statNewLabel", "Waiting Payment");
+            setTopStatLabel("statContactedLabel", "Waiting Authorization");
+            setTopStatLabel("statBookedLabel", "Ready to Pull");
+            setTopStatLabel("statClosedLabel", "Errors");
+
+            const transcriptStats = statsLeads.reduce((counts, lead) => {
+              const transcriptRequest = lead?.transcriptRequest || {};
+              const statusText = String(lead?.status || "");
+              const transcriptTypeText = getTranscriptTypeForLead(lead);
+
+              const paymentReady =
+                statusText.includes("Transcript Help - Paid") ||
+                statusText.includes("Transcript Help - Completed") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationReady =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeReady =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review") &&
+                !String(transcriptTypeText).toLowerCase().includes("review transcript type");
+
+              const hasError =
+                transcriptRequest.errorStatus &&
+                transcriptRequest.errorStatus !== "No error";
+
+              if (!paymentReady) counts.waitingPayment += 1;
+              if (paymentReady && !authorizationReady) counts.waitingAuthorization += 1;
+              if (paymentReady && authorizationReady && transcriptTypeReady && !hasError) counts.readyToPull += 1;
+              if (hasError) counts.errors += 1;
+
+              return counts;
+            }, {
+              waitingPayment: 0,
+              waitingAuthorization: 0,
+              readyToPull: 0,
+              errors: 0
+            });
+
+            document.getElementById("statTotal").textContent = statsLeads.length;
+            document.getElementById("statNew").textContent = transcriptStats.waitingPayment;
+            document.getElementById("statContacted").textContent = transcriptStats.waitingAuthorization;
+            document.getElementById("statBooked").textContent = transcriptStats.readyToPull;
+            document.getElementById("statClosed").textContent = transcriptStats.errors;
+          } else {
+            setTopStatLabel("statTotalLabel", "Visible Leads");
+            setTopStatLabel("statNewLabel", "New");
+            setTopStatLabel("statContactedLabel", "Contacted");
+            setTopStatLabel("statBookedLabel", "Booked");
+            setTopStatLabel("statClosedLabel", "Closed");
+
+            document.getElementById("statTotal").textContent = statsLeads.length;
+            document.getElementById("statNew").textContent = statsLeads.filter(l => (l.status || "New") === "New").length;
+            document.getElementById("statContacted").textContent = statsLeads.filter(l => (l.status || "") === "Contacted").length;
+            document.getElementById("statBooked").textContent = statsLeads.filter(l => (l.status || "") === "Booked").length;
+            document.getElementById("statClosed").textContent =
+              statsLeads.filter(l =>
+                (l.status || "").startsWith("Closed -")
+              ).length;
+          }
+
           document.getElementById("statStrategyReviews").textContent =
             statsLeads.filter(l => {
               const notesText = String(l.notes || "").toLowerCase();
