@@ -710,7 +710,7 @@
       <div
         style="background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 8px 18px rgba(15,44,86,0.05);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:10px;align-items:end;">
         <div>
-          <label for="leadFilter"
+          <label id="leadFilterLabel" for="leadFilter"
             style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Filter Leads
           </label>
@@ -727,7 +727,7 @@
         </div>
 
         <div>
-          <label for="taxYearFilter"
+          <label id="taxYearFilterLabel" for="taxYearFilter"
             style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Tax Year
           </label>
@@ -744,7 +744,7 @@
         </div>
 
         <div>
-          <label for="actionQueueFilter"
+          <label id="actionQueueFilterLabel" for="actionQueueFilter"
             style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Action Queue
           </label>
@@ -760,7 +760,7 @@
         </div>
 
         <div>
-          <label for="leadSearch"
+          <label id="leadSearchLabel" for="leadSearch"
             style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
             Search
           </label>
@@ -1602,14 +1602,39 @@
             ReviewNeeded: "Review Needed"
           };
 
+          const leadFilterLabel = document.getElementById("leadFilterLabel");
+          const taxYearFilterLabel = document.getElementById("taxYearFilterLabel");
+          const actionQueueFilterLabel = document.getElementById("actionQueueFilterLabel");
+          const leadSearchLabel = document.getElementById("leadSearchLabel");
+
+          if (selectedActionQueue === "TranscriptHelp") {
+            if (leadFilterLabel) leadFilterLabel.textContent = "Transcript View";
+            if (taxYearFilterLabel) taxYearFilterLabel.textContent = "Transcript Tax Year";
+            if (actionQueueFilterLabel) actionQueueFilterLabel.textContent = "Transcript Work Queue";
+            if (leadSearchLabel) leadSearchLabel.textContent = "Search Transcripts";
+          } else {
+            if (leadFilterLabel) leadFilterLabel.textContent = "Filter Leads";
+            if (taxYearFilterLabel) taxYearFilterLabel.textContent = "Tax Year";
+            if (actionQueueFilterLabel) actionQueueFilterLabel.textContent = "Action Queue";
+            if (leadSearchLabel) leadSearchLabel.textContent = "Search";
+          }
+
           const activeFiltersLine = document.getElementById("activeFiltersLine");
 
           if (activeFiltersLine) {
-            activeFiltersLine.textContent =
-              `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter === "Active" ? "Active Leads" : selectedFilter} | ` +
-              `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
-              `Action Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
-              `${searchText ? ` | Search: ${searchText}` : ""}`;
+            if (selectedActionQueue === "TranscriptHelp") {
+              activeFiltersLine.textContent =
+                `Showing: Transcript Requests | ` +
+                `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
+                `Transcript Work Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
+                `${searchText ? ` | Search: ${searchText}` : ""}`;
+            } else {
+              activeFiltersLine.textContent =
+                `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter === "Active" ? "Active Leads" : selectedFilter} | ` +
+                `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
+                `Action Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
+                `${searchText ? ` | Search: ${searchText}` : ""}`;
+            }
           }
           const visibleLeads = leads.filter((lead) => {
             const status = lead.status || "New";
