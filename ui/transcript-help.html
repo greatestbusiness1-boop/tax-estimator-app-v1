@@ -290,6 +290,28 @@
 
                 <div id="formStatus" class="status"></div>
 
+                <div id="paymentNextStep"
+                    style="display:none;margin-top:14px;background:#fef08a;border:4px solid #ca8a04;border-radius:16px;padding:16px;color:#111827;box-shadow:0 0 0 4px rgba(202,138,4,0.20);">
+                    <div style="font-size:16px;font-weight:950;color:#713f12;margin-bottom:6px;">
+                        Next Step: IRS Transcript Help Payment
+                    </div>
+
+                    <div style="font-size:14px;font-weight:850;line-height:1.45;margin-bottom:12px;">
+                        Your transcript help request has been received. Payment may be required before transcript work,
+                        authorization review, or IRS record assistance begins.
+                    </div>
+
+                    <a href="https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01" target="_blank" rel="noopener noreferrer"
+                        style="display:block;text-align:center;background:#0f2c56;color:#ffffff;text-decoration:none;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:950;box-shadow:0 10px 22px rgba(15,44,86,0.18);">
+                        Pay for IRS Transcript Help
+                    </a>
+
+                    <div style="margin-top:10px;font-size:12px;font-weight:800;line-height:1.4;color:#713f12;">
+                        After payment, signed authorization and identity verification may still be required before
+                        records can be requested or reviewed.
+                    </div>
+                </div>
+
                 <div class="next-box">
                     Next step after submission: your request will be reviewed. Some services may require payment,
                     signed authorization, and secure document upload before transcript records can be requested.
@@ -306,6 +328,7 @@
         const taxYearInput = document.getElementById("taxYear");
         const multipleYearsBox = document.getElementById("multipleYearsBox");
         const multipleYearsInput = document.getElementById("multipleYears");
+        const paymentNextStep = document.getElementById("paymentNextStep");
 
         function formatName(value) {
             return String(value || "")
@@ -350,6 +373,10 @@
         function showStatus(type, message) {
             formStatus.className = `status ${type}`;
             formStatus.textContent = message;
+
+            if (type === "error" && paymentNextStep) {
+                paymentNextStep.style.display = "none";
+            }
         }
 
         form.addEventListener("submit", async (event) => {
@@ -395,8 +422,12 @@
 
                 showStatus(
                     "ok",
-                    "Your Transcript Help Request was received. We will review your issue and provide the next step for payment, authorization, or secure upload if needed."
+                    "Your Transcript Help Request was received. Please review the payment step below if you are ready to continue with IRS Transcript Help."
                 );
+
+                if (paymentNextStep) {
+                    paymentNextStep.style.display = "block";
+                }
 
                 form.reset();
             } catch (err) {
