@@ -789,6 +789,106 @@ app.use((err, req, res, next) => {
 // START
 // =============================================================================
 
+app.post("/api/transcript-help", (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const clientName = String(body.clientName || "").trim();
+    const clientEmail = String(body.clientEmail || "").trim();
+    const clientPhone = String(body.clientPhone || "").trim();
+    const taxYear = String(body.taxYear || "").trim();
+    const multipleYears = String(body.multipleYears || "").trim();
+    const issueType = String(body.issueType || "").trim();
+    const transcriptType = String(body.transcriptType || "Not sure / preparer review needed").trim();
+    const clientExplanation = String(body.clientExplanation || "").trim();
+
+    if (!clientName || !clientEmail || !clientPhone || !taxYear || !issueType || !clientExplanation) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing required transcript help request fields."
+      });
+    }
+
+    if (taxYear === "Multiple Years" && !multipleYears) {
+      return res.status(400).json({
+        ok: false,
+        error: "Please enter the tax years needed."
+      });
+    }
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const leadId = `transcript-${Date.now()}`;
+    const taxYearForLead = taxYear === "Multiple Years" && multipleYears ? multipleYears : taxYear;
+
+    const notes = [
+      `[${nowIso}] Client submitted Transcript Help Request.`,
+      `Issue Type: ${issueType}`,
+      `Tax Year Needed: ${taxYearForLead}`,
+      `Transcript Type Selected: ${transcriptType}`,
+      `Client Explanation: ${clientExplanation}`,
+      `Payment Status: Requested / Waiting for Payment Verification`,
+      `Authorization Status: Not requested yet`
+    ].join("\n");
+
+    const leads = readLeads();
+
+    const newLead = {
+      leadId,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      status: "Transcript Help - Payment Pending",
+      priority: "high",
+      source: "Transcript Help Request Page",
+      contact: {
+        name: clientName,
+        email: clientEmail,
+        phone: clientPhone
+      },
+      taxData: {
+        taxYear: taxYearForLead
+      },
+      notes,
+      transcriptRequest: {
+        requested: true,
+        requestedAt: nowIso,
+        serviceName: "IRS Transcript Help & Tax Records Review",
+        issueType,
+        transcriptType,
+        clientExplanation,
+        taxYear,
+        multipleYears,
+        paymentStatus: "Requested / Waiting for Payment Verification",
+        authorizationStatus: "Not requested yet",
+        authorizationReceivedDate: "",
+        transcriptPulledDate: "",
+        transcriptReceivedDate: "",
+        deliveryMethod: "",
+        deliveryDate: "",
+        mailCertifiedFee: "",
+        errorStatus: "No error",
+        internalNotes: "New client-facing transcript help request submitted.",
+        fee: "$150 flat service fee"
+      }
+    };
+
+    leads.unshift(newLead);
+    writeLeads(leads);
+
+    res.json({
+      ok: true,
+      leadId,
+      message: "Transcript help request saved."
+    });
+  } catch (err) {
+    console.error("[transcript-help] Save error:", err);
+    res.status(500).json({
+      ok: false,
+      error: "Could not save transcript help request."
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("=".repeat(54));
   console.log("  Greatest Business Solution LLC");
