@@ -3965,6 +3965,22 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         <div style="margin-top:5px;font-size:12px;font-weight:850;color:#475569;line-height:1.35;">
           This status updates from the transcript tracking fields when Save Transcript Tracking Details is clicked.
         </div>
+
+      <div style="background:#fef08a;border:4px solid #ca8a04;border-radius:12px;padding:12px 14px;margin-top:10px;text-align:left;box-shadow:0 0 0 4px rgba(202,138,4,0.20);">
+        <div style="font-size:12px;font-weight:950;color:#713f12;text-transform:uppercase;letter-spacing:.45px;margin-bottom:5px;">
+  Client Transcript Request
+</div>
+
+        <div style="font-size:14px;font-weight:950;color:#713f12;line-height:1.45;margin-bottom:6px;">
+          ${esc(transcriptRequest.issueType || "Issue type not selected")}
+          ${transcriptRequest.taxYear || transcriptRequest.multipleYears ? ` | Tax Year: ${esc(transcriptRequest.multipleYears || transcriptRequest.taxYear)}` : ""}
+        </div>
+
+        <div style="font-size:15px;font-weight:950;color:#111827;line-height:1.5;">
+          ${esc(transcriptRequest.clientExplanation || "No client explanation captured yet.")}
+        </div>
+      </div>
+
       </div> 
 
       <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px;">
