@@ -3952,6 +3952,21 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         Transcript Work Summary
       </div>
 
+           <div style="background:#ffffff;border:3px solid #38bdf8;border-radius:12px;padding:10px 12px;margin-bottom:10px;text-align:left;">
+        <div style="font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
+          Current Transcript Work Status
+        </div>
+        <div
+          id="transcriptAutoStatus-${esc(lead.leadId)}"
+          style="font-size:18px;font-weight:950;color:#0f172a;line-height:1.25;"
+        >
+          ${esc(transcriptOverviewStatus)}
+        </div>
+        <div style="margin-top:5px;font-size:12px;font-weight:850;color:#475569;line-height:1.35;">
+          This status updates from the transcript tracking fields when Save Transcript Tracking Details is clicked.
+        </div>
+      </div> 
+
       <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px;">
         <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:10px;padding:9px;">
           <div style="font-size:10px;font-weight:950;color:#475569;text-transform:uppercase;">Current Status</div>
@@ -4542,6 +4557,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         const statusEl = document.getElementById(`status-${leadId}`);
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
         const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+        const transcriptAutoStatusEl = document.getElementById(`transcriptAutoStatus-${leadId}`);
 
         const quickActionLabels = {
           paymentVerified: "Payment Verified Today",
@@ -4733,6 +4749,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
         const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
         const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+        const transcriptAutoStatusEl = document.getElementById(`transcriptAutoStatus-${leadId}`);
 
         const paymentReady =
           String(paymentFieldStatus || paymentStatus || "").toLowerCase().includes("verified") ||
@@ -4771,7 +4788,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         if (statusEl) statusEl.value = autoTranscriptLeadStatus;
         if (statusBadgeEl) statusBadgeEl.textContent = autoTranscriptLeadStatus;
         if (internalStatusEl) internalStatusEl.textContent = autoTranscriptLeadStatus;
-
+        if (transcriptAutoStatusEl) {
+          transcriptAutoStatusEl.textContent = autoTranscriptLeadStatus;
+        }
         const transcriptRequestPayload = {
           requested: true,
           serviceName: "IRS Transcript Help & Tax Records Review",
