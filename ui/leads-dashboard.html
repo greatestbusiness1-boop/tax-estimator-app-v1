@@ -4224,6 +4224,11 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       Save Transcript Tracking Details
     </button>
 
+<div
+  id="transcriptStatusMsg-${esc(lead.leadId)}"
+  style="margin-top:8px;background:#ecfdf5;border:2px solid #22c55e;border-radius:10px;padding:10px;color:#065f46;font-size:13px;font-weight:950;display:none;"
+></div>
+
     <div style="margin-top:8px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:8px;color:#312e81;font-weight:900;">
       Enter the transcript tracking details, then click Save Transcript Tracking Details. This saves the tracking update to the lead notes.
     </div>
@@ -4726,6 +4731,47 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           msgEl.textContent = "Saving transcript tracking details...";
         }
 
+        const statusBadgeEl = document.getElementById(`statusBadge-${leadId}`);
+        const internalStatusEl = document.getElementById(`internalStatus-${leadId}`);
+
+        const paymentReady =
+          String(paymentFieldStatus || paymentStatus || "").toLowerCase().includes("verified") ||
+          String(paymentFieldStatus || paymentStatus || "").toLowerCase().includes("paid");
+
+        const authorizationReady =
+          authDate !== "Not entered" ||
+          String(authStatus || "").toLowerCase().includes("received") ||
+          String(authStatus || "").toLowerCase().includes("complete") ||
+          String(authStatus || "").toLowerCase().includes("uploaded");
+
+        const transcriptPulledOrReceived =
+          pulledDate !== "Not entered" ||
+          receivedDate !== "Not entered";
+
+        const deliveryDone =
+          deliveryDate !== "Not entered" ||
+          deliveryMethod !== "Not selected yet";
+
+        const hasTranscriptError =
+          errorStatus && errorStatus !== "No error";
+
+        const autoTranscriptLeadStatus =
+          hasTranscriptError
+            ? "Transcript Help - Paid / Needs Review"
+            : deliveryDone
+              ? "Transcript Help - Completed"
+              : transcriptPulledOrReceived
+                ? "Transcript Help - Paid / Needs Review"
+                : paymentReady && authorizationReady
+                  ? "Transcript Help - Paid / Needs Review"
+                  : paymentReady
+                    ? "Transcript Help - Paid / Needs Review"
+                    : "Transcript Help - Payment Pending";
+
+        if (statusEl) statusEl.value = autoTranscriptLeadStatus;
+        if (statusBadgeEl) statusBadgeEl.textContent = autoTranscriptLeadStatus;
+        if (internalStatusEl) internalStatusEl.textContent = autoTranscriptLeadStatus;
+
         const transcriptRequestPayload = {
           requested: true,
           serviceName: "IRS Transcript Help & Tax Records Review",
@@ -4750,7 +4796,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         await saveLead(leadId, transcriptRequestPayload);
 
         if (msgEl) {
-          msgEl.textContent = "Transcript tracking details saved.";
+          msgEl.textContent = `Transcript tracking details saved. Lead status auto-updated to: ${autoTranscriptLeadStatus}`;
         }
       }
 
