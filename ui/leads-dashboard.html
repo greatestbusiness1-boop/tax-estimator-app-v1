@@ -4367,106 +4367,106 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         </div>
       </div>
     </details>
+
+   <button
+  type="button"
+  onclick="toggleOfficeNotesPanel('${esc(lead.leadId)}')"
+  style="width:100%;margin-top:10px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:950;"
+>
+  ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
+</button>
+
+<div id="officeNotesPanel-${esc(lead.leadId)}" style="display:none;">
+  <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
+    <strong style="display:block;color:#0f2c56;margin-bottom:10px;">${selectedActionQueue === "TranscriptHelp" ? "Optional General Lead Admin" : "Internal Follow-Up Action"}</strong>
+
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
+      <select
+        id="quickAction-${esc(lead.leadId)}"
+        style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;background:#ffffff;"
+      >
+        <option value="">Select quick action...</option>
+        <option value="Contacted">Mark Contacted</option>
+        <option value="Booked">Book Consultation</option>
+        <option value="Follow-up Needed">Needs Follow-Up</option>
+        <option value="Converted - Tax Client">Convert to Tax Client</option>
+        <option value="Closed - Future Follow-Up">Close - Future Follow-Up</option>
+        <option value="Strategy Review - Payment Pending">Strategy Review - Payment Pending / Not Verified</option>
+        <option value="Strategy Review - Paid / Needs Written Review">Strategy Review - Paid / Needs Written Review</option>
+        <option value="Strategy Review - Completed">Strategy Review - Completed</option>
+        <option value="Transcript Help - Payment Pending">Transcript Help - Payment Pending / Not Verified</option>
+        <option value="Transcript Help - Paid / Needs Review">Transcript Help - Paid / Needs Review</option>
+        <option value="Transcript Help - Completed">Transcript Help - Completed</option>
+      </select>
+
+      <button
+        type="button"
+        onclick="setLeadStatusChoice('${esc(lead.leadId)}')"
+        style="background:#0f2c56;color:#fff;border-radius:10px;padding:12px 16px;font-weight:900;white-space:nowrap;"
+      >
+        Apply
+      </button>
+    </div>
+
+    <div style="margin-top:8px;color:#52637a;font-size:13px;font-weight:700;">
+      ${selectedActionQueue === "TranscriptHelp" ? "Use this only if you need to change the general lead status. Transcript work should be handled in the Transcript Request Tracking Fields above." : "Select your office follow-up action, click Apply, then click Save below."}
+    </div>
+
+    <div class="controls">
+      <select id="status-${esc(lead.leadId)}">
+        ${[
+                    "New",
+                    "Contacted",
+                    "Booked",
+                    "Follow-up Needed",
+                    "Converted - Tax Client",
+                    "Strategy Review - Payment Pending",
+                    "Strategy Review - Paid / Needs Written Review",
+                    "Strategy Review - Completed",
+                    "Transcript Help - Payment Pending",
+                    "Transcript Help - Paid / Needs Review",
+                    "Transcript Help - Completed",
+                    "Closed - Not Interested",
+                    "Closed - Bad Lead",
+                    "Closed - Future Follow-Up"
+                  ]
+                    .map(option => {
+                      const optionLabel =
+                        option === "Strategy Review - Payment Pending"
+                          ? "Strategy Review - Payment Pending / Not Verified"
+                          : option === "Transcript Help - Payment Pending"
+                            ? "Transcript Help - Payment Pending / Not Verified"
+                            : option;
+
+                      return `<option value="${option}" ${option === status ? "selected" : ""}>${optionLabel}</option>`;
+                    })
+                    .join("")}
+      </select>
+
+      <div>
+        <div style="font-size:13px;font-weight:900;color:#0f2c56;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+          Manual Office Notes
+        </div>
+      </div>
+
+      <textarea id="notes-${esc(lead.leadId)}" placeholder="Add manual notes about calls, emails, bookings, follow-up, documents needed, etc.">${esc(manualNotes)}</textarea>
+    </div>
+
+    <textarea id="activity-${esc(lead.leadId)}" style="display:none;">${esc(activityText)}</textarea>
+
+    <div>
+      <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
+    </div>
+
+    <div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
+  </div>
+</div> 
   `
                   : ""
                 }
                 
 
-                                <button
-                  type="button"
-                  onclick="toggleOfficeNotesPanel('${esc(lead.leadId)}')"
-                  style="width:100%;margin-top:10px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:950;"
-                >
-                  ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
-                </button>
-                                               <div id="officeNotesPanel-${esc(lead.leadId)}" style="display:none;">
-                <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin:14px 0;">
-                  <strong style="display:block;color:#0f2c56;margin-bottom:10px;">${selectedActionQueue === "TranscriptHelp" ? "Optional General Lead Admin" : "Internal Follow-Up Action"}</strong>
-
-                  <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
-                    <select
-                      id="quickAction-${esc(lead.leadId)}"
-                      style="width:100%;border:1px solid #cfd9e8;border-radius:12px;padding:12px;background:#ffffff;"
-                    >
-                      <option value="">Select quick action...</option>
-                      <option value="Contacted">Mark Contacted</option>
-                      <option value="Booked">Book Consultation</option>
-                      <option value="Follow-up Needed">Needs Follow-Up</option>
-                      <option value="Converted - Tax Client">Convert to Tax Client</option>
-                      <option value="Closed - Future Follow-Up">Close - Future Follow-Up</option>
-                      <option value="Strategy Review - Payment Pending">Strategy Review - Payment Pending / Not Verified</option>
-                      <option value="Strategy Review - Paid / Needs Written Review">Strategy Review - Paid / Needs Written Review</option>
-                      <option value="Strategy Review - Completed">Strategy Review - Completed</option>
-                      <option value="Transcript Help - Payment Pending">Transcript Help - Payment Pending / Not Verified</option>
-<option value="Transcript Help - Paid / Needs Review">Transcript Help - Paid / Needs Review</option>
-<option value="Transcript Help - Completed">Transcript Help - Completed</option>
-                    </select>
-
-                    <button
-                      type="button"
-                      onclick="setLeadStatusChoice('${esc(lead.leadId)}')"
-                      style="background:#0f2c56;color:#fff;border-radius:10px;padding:12px 16px;font-weight:900;white-space:nowrap;"
-                    >
-                      Apply
-                    </button>
-                  </div>
-
-                  <div style="margin-top:8px;color:#52637a;font-size:13px;font-weight:700;">
-                    ${selectedActionQueue === "TranscriptHelp" ? "Use this only if you need to change the general lead status. Transcript work should be handled in the Transcript Request Tracking Fields above." : "Select your office follow-up action, click Apply, then click Save below."}
-                  </div>
-                </div>
-
-                <div class="controls">
-
-                  <select id="status-${esc(lead.leadId)}">
-                    ${[
-                  "New",
-                  "Contacted",
-                  "Booked",
-                  "Follow-up Needed",
-                  "Converted - Tax Client",
-                  "Strategy Review - Payment Pending",
-                  "Strategy Review - Paid / Needs Written Review",
-                  "Strategy Review - Completed",
-                  "Transcript Help - Payment Pending",
-                  "Transcript Help - Paid / Needs Review",
-                  "Transcript Help - Completed",
-                  "Closed - Not Interested",
-                  "Closed - Bad Lead",
-                  "Closed - Future Follow-Up"
-                ]
-                  .map(option => {
-                    const optionLabel =
-                      option === "Strategy Review - Payment Pending"
-                        ? "Strategy Review - Payment Pending / Not Verified"
-                        : option === "Transcript Help - Payment Pending"
-                          ? "Transcript Help - Payment Pending / Not Verified"
-                          : option;
-
-                    return `<option value="${option}" ${option === status ? "selected" : ""}>${optionLabel}</option>`;
-                  })
-                  .join("")}
-                  </select>
-
-                                                      <div>
-                    <div style="font-size:13px;font-weight:900;color:#0f2c56;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-                      Manual Office Notes
-                    </div>
-
-                    <textarea id="notes-${esc(lead.leadId)}" placeholder="Add manual notes about calls, emails, bookings, follow-up, documents needed, etc.">${esc(manualNotes)}</textarea>
-                  </div>
-
-                  <textarea id="activity-${esc(lead.leadId)}" style="display:none;">${esc(activityText)}</textarea>
-
-                  <div>
-                    <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
-
-
-<div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
-                  </div>
-                </div>
-              </div>
-             </div>
+                                
             `;
             })
             .join("");
