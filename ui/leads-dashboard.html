@@ -1816,22 +1816,91 @@
               0
             );
 
-          document.getElementById("queueRefundLeads").textContent =
-            statsLeads.filter(l =>
-              getLeadCombinedNet(l) > 0 &&
-              (l.status || "New") === "New"
-            ).length;
+          const setQueueLabel = (spanId, text) => {
+            const spanEl = document.getElementById(spanId);
+            const strongEl = spanEl?.parentElement?.querySelector("strong");
+            if (strongEl) strongEl.textContent = text;
+          };
 
-          document.getElementById("queueBalanceDue").textContent =
-            statsLeads.filter(l =>
-              getLeadCombinedNet(l) < 0
-            ).length;
-
-          const followUpNeededCount = statsLeads.filter(l =>
+          let followUpNeededCount = statsLeads.filter(l =>
             (l.status || "") === "Follow-up Needed"
           ).length;
 
-          document.getElementById("queueFollowUp").textContent = followUpNeededCount;
+          if (selectedActionQueue === "TranscriptHelp") {
+            setQueueLabel("queueRefundLeads", "Waiting Payment");
+            setQueueLabel("queueBalanceDue", "Waiting Authorization");
+            setQueueLabel("queueFollowUp", "Need Transcript Type");
+            setQueueLabel("queueTranscriptHelp", "Ready to Pull");
+            setQueueLabel("queueBooked", "Errors");
+
+            const transcriptQueueStats = statsLeads.reduce((counts, lead) => {
+              const transcriptRequest = lead?.transcriptRequest || {};
+              const statusText = String(lead?.status || "");
+              const transcriptTypeText = getTranscriptTypeForLead(lead);
+
+              const paymentReady =
+                statusText.includes("Transcript Help - Paid") ||
+                statusText.includes("Transcript Help - Completed") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationReady =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeReady =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review") &&
+                !String(transcriptTypeText).toLowerCase().includes("review transcript type");
+
+              const hasError =
+                transcriptRequest.errorStatus &&
+                transcriptRequest.errorStatus !== "No error";
+
+              if (!paymentReady) counts.waitingPayment += 1;
+              if (paymentReady && !authorizationReady) counts.waitingAuthorization += 1;
+              if (paymentReady && authorizationReady && !transcriptTypeReady) counts.needTranscriptType += 1;
+              if (paymentReady && authorizationReady && transcriptTypeReady && !hasError) counts.readyToPull += 1;
+              if (hasError) counts.errors += 1;
+
+              return counts;
+            }, {
+              waitingPayment: 0,
+              waitingAuthorization: 0,
+              needTranscriptType: 0,
+              readyToPull: 0,
+              errors: 0
+            });
+
+            document.getElementById("queueRefundLeads").textContent = transcriptQueueStats.waitingPayment;
+            document.getElementById("queueBalanceDue").textContent = transcriptQueueStats.waitingAuthorization;
+            document.getElementById("queueFollowUp").textContent = transcriptQueueStats.needTranscriptType;
+            document.getElementById("queueTranscriptHelp").textContent = transcriptQueueStats.readyToPull;
+            document.getElementById("queueBooked").textContent = transcriptQueueStats.errors;
+
+            followUpNeededCount = transcriptQueueStats.needTranscriptType;
+          } else {
+            setQueueLabel("queueRefundLeads", "New Refund Leads");
+            setQueueLabel("queueBalanceDue", "Balance Due Reviews");
+            setQueueLabel("queueFollowUp", "Follow-Up Needed");
+            setQueueLabel("queueTranscriptHelp", "Transcript Requests");
+            setQueueLabel("queueBooked", "Booked Consultations");
+
+            document.getElementById("queueRefundLeads").textContent =
+              statsLeads.filter(l =>
+                getLeadCombinedNet(l) > 0 &&
+                (l.status || "New") === "New"
+              ).length;
+
+            document.getElementById("queueBalanceDue").textContent =
+              statsLeads.filter(l =>
+                getLeadCombinedNet(l) < 0
+              ).length;
+
+            document.getElementById("queueFollowUp").textContent = followUpNeededCount;
+          }
 
           const sidebarFollowUpCountEl = document.getElementById("sidebarFollowUpCount");
           if (sidebarFollowUpCountEl) {
