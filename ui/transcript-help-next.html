@@ -1,254 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Transcript Help Next Steps</title>
+    <title>Transcript Help Next Steps</title>
 
-  <style>
-    body {
-      margin: 0;
-      padding: 24px 16px;
-      font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(250, 204, 21, 0.20), transparent 32%),
-        linear-gradient(180deg, #f6f8fc 0%, #eef6ff 100%);
-      color: #12233d;
-    }
+    <style>
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(250, 204, 21, 0.20), transparent 32%),
+                linear-gradient(180deg, #f6f8fc 0%, #eef6ff 100%);
+            color: #12233d;
+        }
 
-    .wrap {
-      max-width: 880px;
-      margin: 0 auto;
-    }
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+        }
 
-    .hero {
-      background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%);
-      border: 2px solid #67e8f9;
-      border-radius: 22px;
-      padding: 24px;
-      box-shadow: 0 14px 34px rgba(15, 44, 86, 0.10);
-      margin-bottom: 16px;
-      text-align: left;
-    }
+        .hero {
+            background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%);
+            border: 2px solid #67e8f9;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 14px 34px rgba(15, 44, 86, 0.10);
+            margin-bottom: 16px;
+            text-align: left;
+        }
 
-    .hero h1 {
-      margin: 0 0 10px;
-      color: #0f2c56;
-      font-size: 32px;
-      line-height: 1.1;
-    }
+        .hero h1 {
+            margin: 0 0 10px;
+            color: #0f2c56;
+            font-size: 32px;
+            line-height: 1.1;
+        }
 
-    .hero p {
-      margin: 0;
-      color: #334155;
-      font-size: 16px;
-      line-height: 1.55;
-      font-weight: 800;
-    }
+        .hero p {
+            margin: 0;
+            color: #334155;
+            font-size: 16px;
+            line-height: 1.55;
+            font-weight: 800;
+        }
 
-    .received-box {
-      background: #ecfdf5;
-      border: 3px solid #22c55e;
-      border-radius: 18px;
-      padding: 16px;
-      color: #065f46;
-      font-size: 16px;
-      font-weight: 950;
-      line-height: 1.45;
-      margin-bottom: 16px;
-    }
+        .received-box {
+            background: #ecfdf5;
+            border: 3px solid #22c55e;
+            border-radius: 18px;
+            padding: 16px;
+            color: #065f46;
+            font-size: 16px;
+            font-weight: 950;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
 
-    .payment-box {
-      background: #fef08a;
-      border: 4px solid #ca8a04;
-      border-radius: 20px;
-      padding: 20px;
-      color: #111827;
-      box-shadow: 0 0 0 4px rgba(202, 138, 4, 0.20);
-      margin-bottom: 16px;
-    }
+        .payment-box {
+            background: #fef08a;
+            border: 4px solid #ca8a04;
+            border-radius: 20px;
+            padding: 20px;
+            color: #111827;
+            box-shadow: 0 0 0 4px rgba(202, 138, 4, 0.20);
+            margin-bottom: 16px;
+        }
 
-    .payment-box h2 {
-      margin: 0 0 10px;
-      font-size: 26px;
-      line-height: 1.15;
-      color: #713f12;
-    }
+        .payment-box h2 {
+            margin: 0 0 10px;
+            font-size: 26px;
+            line-height: 1.15;
+            color: #713f12;
+        }
 
-    .payment-intro {
-      font-size: 15px;
-      font-weight: 900;
-      line-height: 1.5;
-      margin-bottom: 14px;
-      color: #111827;
-    }
+        .payment-intro {
+            font-size: 15px;
+            font-weight: 900;
+            line-height: 1.5;
+            margin-bottom: 14px;
+            color: #111827;
+        }
 
-    .info-card {
-      background: #ffffff;
-      border: 2px solid #eab308;
-      border-radius: 14px;
-      padding: 13px 14px;
-      margin-bottom: 12px;
-    }
+        .info-card {
+            background: #ffffff;
+            border: 2px solid #eab308;
+            border-radius: 14px;
+            padding: 13px 14px;
+            margin-bottom: 12px;
+        }
 
-    .info-card strong {
-      display: block;
-      font-size: 14px;
-      font-weight: 950;
-      color: #713f12;
-      margin-bottom: 6px;
-    }
+        .info-card strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 950;
+            color: #713f12;
+            margin-bottom: 6px;
+        }
 
-    .info-card div {
-      font-size: 13px;
-      font-weight: 800;
-      line-height: 1.55;
-      color: #1f2937;
-    }
+        .info-card div {
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.55;
+            color: #1f2937;
+        }
 
-    .not-included {
-      background: #fff7ed;
-      border-color: #fed7aa;
-    }
+        .not-included {
+            background: #fff7ed;
+            border-color: #fed7aa;
+        }
 
-    .not-included strong {
-      color: #9a3412;
-    }
+        .not-included strong {
+            color: #9a3412;
+        }
 
-    .timing {
-      background: #ecfeff;
-      border-color: #67e8f9;
-    }
+        .timing {
+            background: #ecfeff;
+            border-color: #67e8f9;
+        }
 
-    .timing strong {
-      color: #0369a1;
-    }
+        .timing strong {
+            color: #0369a1;
+        }
 
-    .pay-btn {
-      display: block;
-      text-align: center;
-      background: #0f2c56;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 14px;
-      padding: 15px 18px;
-      font-size: 17px;
-      font-weight: 950;
-      box-shadow: 0 10px 22px rgba(15, 44, 86, 0.18);
-      margin-top: 14px;
-    }
+        .pay-btn {
+            display: block;
+            text-align: center;
+            background: #0f2c56;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 14px;
+            padding: 15px 18px;
+            font-size: 17px;
+            font-weight: 950;
+            box-shadow: 0 10px 22px rgba(15, 44, 86, 0.18);
+            margin-top: 14px;
+        }
 
-    .pay-btn:hover {
-      background: #173c73;
-    }
+        .pay-btn:hover {
+            background: #173c73;
+        }
 
-    .fine-print {
-      margin-top: 12px;
-      font-size: 12px;
-      font-weight: 850;
-      line-height: 1.45;
-      color: #713f12;
-    }
+        .fine-print {
+            margin-top: 12px;
+            font-size: 12px;
+            font-weight: 850;
+            line-height: 1.45;
+            color: #713f12;
+        }
 
-    .back-link {
-      display: inline-block;
-      margin-top: 10px;
-      color: #0f2c56;
-      font-size: 13px;
-      font-weight: 950;
-      text-decoration: none;
-    }
+        .back-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #0f2c56;
+            font-size: 13px;
+            font-weight: 950;
+            text-decoration: none;
+        }
 
-    .back-link:hover {
-      text-decoration: underline;
-    }
+        .back-link:hover {
+            text-decoration: underline;
+        }
 
-    @media (max-width: 720px) {
-      .hero h1 {
-        font-size: 26px;
-      }
+        @media (max-width: 720px) {
+            .hero h1 {
+                font-size: 26px;
+            }
 
-      .payment-box h2 {
-        font-size: 22px;
-      }
-    }
-  </style>
+            .payment-box h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="hero">
-      <h1>Transcript Help Request Received</h1>
-      <p>
-        Thank you. Your request was submitted. Review the IRS Transcript Help service details below before deciding whether to continue with payment.
-      </p>
-    </div>
-
-    <div class="received-box">
-      Your Transcript Help Request was received. The next step is to review the service details and decide whether you want to continue with IRS Transcript Help.
-    </div>
-
-    <div class="payment-box">
-      <h2>IRS Transcript Help Service — $150</h2>
-
-      <div class="payment-intro">
-        Your $150 payment covers the IRS Transcript Help review and transcript assistance described below.
-      </div>
-
-      <div class="info-card">
-        <strong>What this service can help with</strong>
-        <div>
-          This service may help with missing W-2s or 1099s, IRS notices, prior-year tax records,
-          wage and income records, account transcript questions, proof of non-filing, or records
-          needed to help prepare or review a tax matter.
+    <div class="wrap">
+        <div class="hero">
+            <h1>Transcript Help Request Received</h1>
+            <p>
+                Thank you. Your request was submitted. Review the IRS Transcript Help service details below before
+                deciding whether to continue with payment.
+            </p>
         </div>
-      </div>
 
-      <div class="info-card">
-        <strong>What is included</strong>
-        <div>
-          The $150 service fee includes review of your transcript help request, guidance on which IRS
-          transcript or tax record may be needed, authorization review, and assistance with requesting
-          or reviewing available IRS transcript records.
+        <div class="received-box">
+            Your Transcript Help Request was received. The next step is to review the service details and decide whether
+            you want to continue with IRS Transcript Help.
         </div>
-      </div>
 
-      <div class="info-card not-included">
-        <strong>What is not included</strong>
-        <div>
-          This fee does not include full tax preparation, amended returns, tax resolution,
-          IRS representation, or additional mailing/certified mail fees unless separately agreed.
-          Any additional service would be discussed and approved before work begins.
-        </div>
-      </div>
+        <div class="payment-box">
+            <h2>IRS Transcript Help Service — $150</h2>
 
-      <div class="info-card timing">
-        <strong>Estimated timing</strong>
-        <div>
-          Once payment, signed authorization, and required identity information are received,
-          transcript assistance can usually begin within a few business days. Timing may depend on
-          IRS availability, verification requirements, and the records requested.
-        </div>
-      </div>
+            <div class="payment-intro">
+                Your $150 payment covers the IRS Transcript Help review and transcript assistance described below.
+            </div>
 
-      <a
-        class="pay-btn"
-        href="https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Pay $150 for IRS Transcript Help
-      </a>
+            <div class="info-card">
+                <strong>What this service can help with</strong>
+                <div>
+                    This service may help with missing W-2s or 1099s, IRS notices, prior-year tax records,
+                    wage and income records, account transcript questions, proof of non-filing, or records
+                    needed to help prepare or review a tax matter.
+                </div>
+            </div>
 
-      <div class="fine-print">
-        Signed authorization and identity verification may still be required before IRS records can be requested or reviewed.
-        Additional fees only apply if you request services outside of transcript help, such as tax preparation,
-        amended returns, IRS representation, tax resolution, or optional mailing/certified mail services.
-      </div>
+            <div class="info-card">
+                <strong>What is included</strong>
+                <div>
+                    The $150 service fee includes review of your transcript help request, guidance on which IRS
+                    transcript or tax record may be needed, authorization review, and assistance with requesting
+                    or reviewing available IRS transcript records.
+                </div>
+            </div>
 
-            <div
-        style="
+            <div class="info-card not-included">
+                <strong>What is not included</strong>
+                <div>
+                    This fee does not include full tax preparation, amended returns, tax resolution,
+                    IRS representation, or additional mailing/certified mail fees unless separately agreed.
+                    Any additional service would be discussed and approved before work begins.
+                </div>
+            </div>
+
+            <div class="info-card timing">
+                <strong>Estimated timing</strong>
+                <div>
+                    Once payment, signed authorization, and required identity information are received,
+                    transcript assistance can usually begin within a few business days. Timing may depend on
+                    IRS availability, verification requirements, and the records requested.
+                </div>
+            </div>
+
+            <a class="pay-btn" href="https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01" target="_blank"
+                rel="noopener noreferrer">
+                Pay $150 for IRS Transcript Help
+            </a>
+
+            <div class="fine-print">
+                Signed authorization and identity verification may still be required before IRS records can be requested
+                or reviewed.
+                Additional fees only apply if you request services outside of transcript help, such as tax preparation,
+                amended returns, IRS representation, tax resolution, or optional mailing/certified mail services.
+            </div>
+
+            <div style="
           margin-top: 14px;
           background: #ecfdf5;
           border: 3px solid #22c55e;
@@ -258,29 +257,29 @@
           font-size: 13px;
           line-height: 1.55;
           font-weight: 850;
-        "
-      >
-        <div
-          style="
+        ">
+                <div style="
             font-size: 16px;
             font-weight: 950;
             color: #065f46;
             margin-bottom: 8px;
-          "
-        >
-          What happens after payment
+          ">
+                    What happens after payment
+                </div>
+
+                <div style="display: grid; gap: 7px;">
+                    <div>✓ Your payment will be reviewed and matched to your transcript help request.</div>
+                    <div>✓ You may be asked to complete signed authorization and identity verification before IRS
+                        records can be requested.</div>
+                    <div>✓ Transcript work begins after payment, authorization, and required client information are
+                        complete.</div>
+                    <div>✓ You will be contacted with the next step after your request and payment are reviewed.</div>
+                </div>
+            </div>
         </div>
 
-        <div style="display: grid; gap: 7px;">
-          <div>✓ Your payment will be reviewed and matched to your transcript help request.</div>
-          <div>✓ You may be asked to complete signed authorization and identity verification before IRS records can be requested.</div>
-          <div>✓ Transcript work begins after payment, authorization, and required client information are complete.</div>
-          <div>✓ You will be contacted with the next step after your request and payment are reviewed.</div>
-        </div>
-      </div>
+
     </div>
-
-    
-  </div>
 </body>
+
 </html>
