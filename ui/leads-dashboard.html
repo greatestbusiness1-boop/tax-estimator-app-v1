@@ -2906,7 +2906,7 @@
 
               const paymentText =
                 statusText === "Transcript Help - Payment Pending"
-                  ? "Payment clicked / not verified"
+                  ? "Payment Pending / Waiting for Stripe Verification"
                   : statusText === "Transcript Help - Paid / Needs Review"
                     ? "Payment verified / ready for review"
                     : statusText === "Transcript Help - Completed"
@@ -3240,7 +3240,7 @@
 
               const transcriptOverviewStatus =
                 status === "Transcript Help - Payment Pending"
-                  ? "Payment Clicked / Not Verified"
+                  ? "Payment Pending / Waiting for Stripe Verification"
                   : status === "Transcript Help - Paid / Needs Review"
                     ? "Payment Verified / Ready for Review"
                     : status === "Transcript Help - Completed"
@@ -4361,7 +4361,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
             onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Transcript Help - Payment Pending')"
             style="background:#38bdf8;color:#0f172a;border:1px solid #0369a1;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
           >
-            Payment Clicked / Not Verified
+            Payment Pending / Waiting for Stripe Verification
           </button>
 
           <button
@@ -4382,7 +4382,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         </div>
 
         <div style="margin-top:8px;color:#0369a1;font-size:12px;font-weight:800;">
-          Payment Clicked / Not Verified means the client clicked the Stripe payment button, but Stripe payment has not been verified yet.
+          Payment Pending / Waiting for Stripe Verification means the client clicked the Stripe payment button, but Stripe payment has not been verified yet.
         </div>
 
         <button
@@ -4399,7 +4399,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         ></div>
 
         <div style="margin-top:8px;color:#0f172a;font-size:12px;font-weight:900;background:#ffffff;border:1px solid #67e8f9;border-radius:10px;padding:8px;">
-          After choosing Payment Clicked / Not Verified, Payment Verified / Ready for Review, or Completed / Delivered, click this green button to save the status change.
+          After choosing PaymentPayment Pending / Waiting for Stripe Verification Clicked / Not Verified, Payment Verified / Ready for Review, or Completed / Delivered, click this green button to save the status change.
         </div>
       </div>
     </details>
