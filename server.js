@@ -889,6 +889,46 @@ app.post("/api/transcript-help", (req, res) => {
   }
 });
 
+app.delete("/api/leads/:leadId", (req, res) => {
+  try {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Lead ID is required."
+      });
+    }
+
+    const leads = readLeads();
+    const originalCount = leads.length;
+
+    const updatedLeads = leads.filter((lead) => String(lead.leadId) !== leadId);
+
+    if (updatedLeads.length === originalCount) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead was not found."
+      });
+    }
+
+    writeLeads(updatedLeads);
+
+    return res.json({
+      ok: true,
+      removed: true,
+      leadId
+    });
+  } catch (err) {
+    console.error("[leads] Delete error:", err);
+
+    return res.status(500).json({
+      ok: false,
+      error: "Could not delete lead."
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("=".repeat(54));
   console.log("  Greatest Business Solution LLC");
