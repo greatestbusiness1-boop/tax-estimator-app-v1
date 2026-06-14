@@ -2134,10 +2134,14 @@
 
               return `
                 <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
-                  <div style="font-weight:950;color:#0f2c56;">
+                   <div style="font-weight:950;color:#0f2c56;min-width:0;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
-                    <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
-                    <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
+                    <div style="font-size:11px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;">
+                      ${esc(lead?.contact?.email || "No email")}
+                    </div>
+                    <div style="font-size:10px;color:#64748b;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;">
+                      ${esc(lead.leadId)}
+                    </div>
                   </div>
 
                   <div style="color:#047857;font-weight:950;">
@@ -2848,16 +2852,6 @@
 
               const transcriptRequest = lead.transcriptRequest || {};
 
-              const authorizationText =
-                transcriptRequest.authorizationReceivedDate
-                  ? `${transcriptRequest.authorizationStatus || "Received / needs review"} — ${transcriptRequest.authorizationReceivedDate}`
-                  : transcriptRequest.authorizationStatus || "Pending / not uploaded yet";
-
-              const pullText =
-                transcriptRequest.transcriptPulledDate || transcriptRequest.transcriptReceivedDate
-                  ? `Pulled: ${transcriptRequest.transcriptPulledDate || "Not entered"} | Received: ${transcriptRequest.transcriptReceivedDate || "Not entered"}`
-                  : "Not pulled yet";
-
               const paymentLooksVerified =
                 statusText === "Transcript Help - Paid / Needs Review" ||
                 statusText === "Transcript Help - Completed" ||
@@ -2886,35 +2880,46 @@
 
               const missingReadyItems = [];
 
-              if (!paymentLooksVerified) missingReadyItems.push("payment");
-              if (!authorizationLooksReceived) missingReadyItems.push("authorization");
-              if (!transcriptTypeLooksSelected) missingReadyItems.push("transcript type");
+              if (!paymentLooksVerified) missingReadyItems.push("Payment");
+              if (!authorizationLooksReceived) missingReadyItems.push("Auth");
+              if (!transcriptTypeLooksSelected) missingReadyItems.push("Type");
+
+              const authorizationText = authorizationLooksReceived
+                ? "Auth Received"
+                : "Need Auth";
+
+              const pullText =
+                transcriptAlreadyPulled
+                  ? "Pulled"
+                  : "Not Pulled";
 
               const readyPullText =
                 transcriptAlreadyPulled
-                  ? pullText
+                  ? "Pulled"
                   : readyToPull
-                    ? "READY TO PULL"
-                    : `Need ${missingReadyItems.join(", ")}`;
+                    ? "Ready"
+                    : `Need ${missingReadyItems.join(" / ")}`;
 
               const deliveryText =
                 transcriptRequest.deliveryMethod || transcriptRequest.deliveryDate
-                  ? `${transcriptRequest.deliveryMethod || "Not selected"} | ${transcriptRequest.deliveryDate || "No date"}`
-                  : "Not delivered yet";
+                  ? "Delivered"
+                  : "Not Delivered";
 
               const handled = isOfficeQueueHandled(lead.leadId, "Transcript Requests Worklist");
 
               const paymentText =
                 statusText === "Transcript Help - Payment Pending"
-                  ? "Payment Pending / Waiting for Stripe Verification"
+                  ? "Payment Pending"
                   : statusText === "Transcript Help - Paid / Needs Review"
-                    ? "Payment verified / ready for review"
+                    ? "Paid / Review"
                     : statusText === "Transcript Help - Completed"
                       ? "Completed"
-                      : "Requested / waiting";
+                      : paymentLooksVerified
+                        ? "Paid / Review"
+                        : "Need Payment";
 
               return `
-                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -3052,7 +3057,7 @@
                   </div>
                 </details> 
 
-                <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                <div style="display:grid;grid-template-cgrid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;olumns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Request</div>
                   <div>Payment</div>
