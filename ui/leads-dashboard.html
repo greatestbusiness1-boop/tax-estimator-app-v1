@@ -3040,7 +3040,20 @@
                   <div style="margin-top:8px;background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px 10px;font-size:13px;color:#0369a1;font-weight:850;line-height:1.4;">
                     Goal: work from this list first. The opened client card is for exceptions, not for reviewing every transcript request one by one.
                   </div>
+                </div><div style="display:grid;grid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Request</div>
+                  <div>Payment</div>
+                  <div>Authorization</div>
+                  <div>Pull Status</div>
+                  <div>Delivery</div>
+                  <div>Handled</div>
+                  <div>Action</div>
                 </div>
+
+                ${transcriptRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No transcript requests found.</div>`}
+
+
 
                 ${readyToPullSectionHtml}
                 ${transcriptApiReadinessSummaryHtml}
@@ -3070,18 +3083,7 @@
                   </div>
                 </details> 
 
-                <div style="display:grid;grid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
-                  <div>Client</div>
-                  <div>Request</div>
-                  <div>Payment</div>
-                  <div>Authorization</div>
-                  <div>Pull Status</div>
-                  <div>Delivery</div>
-                  <div>Handled</div>
-                  <div>Action</div>
-                </div>
-
-                ${transcriptRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No transcript requests found.</div>`}
+                
               </div>
             `;
             return;
