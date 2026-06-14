@@ -2033,7 +2033,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', '${esc(taskType)}')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Handled"}
+                    ${handled ? "✓ Handled" : "Mark Done"}
                   </button>
                   
                   <button
@@ -2162,7 +2162,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Refund Leads Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Handled"}
+                    ${handled ? "✓ Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2198,7 +2198,7 @@
                   <div>Refund Estimate</div>
                   <div>Federal / State</div>
                   <div>Next Step</div>
-                  <div>Handled</div>
+                  <div>Done</div>
                   <div>Action</div>
                 </div>
 
@@ -2345,7 +2345,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Balance Due Reviews Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Handled"}
+                    ${handled ? "✓ Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2381,7 +2381,7 @@
                   <div>Balance Due</div>
                   <div>Federal / State</div>
                   <div>Next Step</div>
-                  <div>Handled</div>
+                  <div>Done</div>
                   <div>Action</div>
                 </div>
 
@@ -2448,7 +2448,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Strategy Reviews Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Handled"}
+                    ${handled ? "✓ Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2484,7 +2484,7 @@
                   <div>Status</div>
                   <div>Estimate</div>
                   <div>Next Step</div>
-                  <div>Handled</div>
+                  <div>Done</div>
                   <div>Action</div>
                 </div>
 
@@ -2941,7 +2941,7 @@
                         : "Need Payment";
 
               return `
-                <div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr 1fr .9fr .9fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr .85fr .8fr .9fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -2976,7 +2976,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Transcript Requests Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Handled"}
+                    ${handled ? "✓ Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -3051,7 +3051,7 @@
 
                     <div style="background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px;">
                       <div style="font-size:12px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
-                        4. Mark Handled
+                        4. Mark Done
                       </div>
                       <div style="font-size:13px;color:#334155;font-weight:800;line-height:1.4;">
                         Mark handled after the request has been worked for the day.
@@ -3062,14 +3062,14 @@
                   <div style="margin-top:8px;background:#ffffff;border:1px solid #bae6fd;border-radius:10px;padding:8px 10px;font-size:13px;color:#0369a1;font-weight:850;line-height:1.4;">
                     Goal: work from this list first. The opened client card is for exceptions, not for reviewing every transcript request one by one.
                   </div>
-                </div><div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr 1fr .9fr .9fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                </div><div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr .85fr .8fr .9fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Next Step</div>
                   <div>Payment</div>
-                  <div>Authorization</div>
-                  <div>Pull Status</div>
+                  <div>Auth</div>
+                  <div>Pull</div>
                   <div>Delivery</div>
-                  <div>Handled</div>
+                  <div>Done</div>
                   <div>Action</div>
                 </div>
 
