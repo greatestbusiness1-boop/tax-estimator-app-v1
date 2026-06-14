@@ -1124,7 +1124,7 @@
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied ${rows.length} PitBullTax ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
+            alert(`Copied ${rows.length} ready-to-pull transcript request${rows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
             window.prompt("Copy this ready-to-pull list:", text);
@@ -1149,7 +1149,7 @@
           const taxYear = getTranscriptTaxYearForLead(lead);
 
           return [
-            `PitBullTax Pull Item ${index + 1}`,
+            `Transcript Pull Item ${index + 1}`,
             "-------------------------",
             `Client Name: ${name}`,
             `Email: ${email}`,
@@ -1169,7 +1169,7 @@
         }).join("\n\n");
 
         const text = [
-          "PitBullTax Pull Info Sheet",
+          "Transcript Pull Info Sheet",
           "--------------------------",
           `Generated: ${getTranscriptReportGeneratedStamp()}`,
           `Total ready to pull: ${rows.length}`,
@@ -1179,10 +1179,10 @@
 
         navigator.clipboard.writeText(text)
           .then(() => {
-            alert(`Copied PitBullTax pull sheet for ${rows.length} transcript request${rows.length === 1 ? "" : "s"}.`);
+            alert(`Copied transcript pull sheet for ${rows.length} transcript request${rows.length === 1 ? "" : "s"}.`);
           })
           .catch(() => {
-            window.prompt("Copy this PitBullTax pull sheet:", text);
+            window.prompt("Copy this transcript pull sheet:", text);
           });
       }
 
