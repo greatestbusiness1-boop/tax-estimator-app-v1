@@ -3057,7 +3057,7 @@
                   </div>
                 </details> 
 
-                <div style="display:grid;grid-template-cgrid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;olumns:1.1fr 1.2fr 1fr 1fr 1fr 1fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
+                <div style="display:grid;grid-template-columns:1.45fr 1fr .85fr .85fr .85fr .85fr auto auto;gap:8px;background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Request</div>
                   <div>Payment</div>
@@ -4408,7 +4408,41 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         </div>
       </div>
     </details>
+<div
+                  style="
+                    margin-top:14px;
+                    background:#fff7ed;
+                    border:2px solid #fb923c;
+                    border-radius:14px;
+                    padding:12px;
+                  "
+                >
+                  <div style="font-size:14px;font-weight:950;color:#9a3412;margin-bottom:6px;">
+                    Privacy / Removal Request
+                  </div>
 
+                  <div style="font-size:12px;font-weight:850;color:#7c2d12;line-height:1.45;margin-bottom:10px;">
+                    Use this only when the customer requested removal, the record is a duplicate, or this is a test record.
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="deleteLeadRecord('${esc(lead.leadId)}', this)"
+                    style="
+                      width:100%;
+                      background:#991b1b;
+                      color:#ffffff;
+                      border:2px solid #7f1d1d;
+                      border-radius:12px;
+                      padding:12px 16px;
+                      font-size:13px;
+                      font-weight:950;
+                      box-shadow:0 8px 18px rgba(153,27,27,0.20);
+                    "
+                  >
+                    Delete / Remove Client Info
+                  </button>
+                </div>
    <details style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:12px 14px;margin:14px 0;">
   <summary style="cursor:pointer;font-weight:950;color:#334155;font-size:14px;text-align:left;">
     ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
@@ -4495,42 +4529,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                       <div>
                     <button onclick="saveLead('${esc(lead.leadId)}')">Save</button>
 
-                    <button
-                      type="button"
-                      onclick="deleteLeadRecord('${esc(lead.leadId)}', this)"
-                      style="
-                        margin-top:10px;
-                        width:100%;
-                        background:#991b1b;
-                        color:#ffffff;
-                        border:2px solid #7f1d1d;
-                        border-radius:12px;
-                        padding:12px 16px;
-                        font-size:13px;
-                        font-weight:950;
-                        box-shadow:0 8px 18px rgba(153,27,27,0.20);
-                      "
-                    >
-                      Delete / Remove Client Info
-                    </button>
+                    
 
-                    <div
-                      style="
-                        margin-top:8px;
-                        background:#fef2f2;
-                        border:1px solid #fecaca;
-                        border-radius:10px;
-                        padding:8px;
-                        color:#7f1d1d;
-                        font-size:12px;
-                        font-weight:850;
-                        line-height:1.4;
-                      "
-                    >
-                      Use only when the customer requested removal, this is a duplicate, or this is a test record.
-                    </div>
+                    
 
                     <div class="save-msg" id="msg-${esc(lead.leadId)}"></div>
+                                    
                   </div>
 </div>
 </details> 
