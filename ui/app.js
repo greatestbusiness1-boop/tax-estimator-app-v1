@@ -73,7 +73,7 @@ async function requestTranscriptHelp() {
   const cleanedTranscriptReason = String(transcriptReasonEl?.value || "").trim();
 
   if (!selectedNeeds.length) {
-    alert("Please select at least one item under 'What do you need help with?' before continuing to payment.");
+    alert("Please select at least one item under 'What do you need help with?' before continuing.");
     const firstNeedOption = document.querySelector(".transcriptNeedOption");
     if (firstNeedOption) {
       firstNeedOption.focus();
@@ -86,15 +86,19 @@ async function requestTranscriptHelp() {
     ? selectedTranscriptTypes.join(", ")
     : "Not selected / client may need help deciding";
 
+  const transcriptStamp = new Date().toLocaleString();
+  const transcriptIso = new Date().toISOString();
+
   const transcriptRequestSummary =
     `Client needs help with: ${transcriptNeedText}\n` +
     `Transcript type selected: ${transcriptTypeText}` +
     (cleanedTranscriptReason ? `\nAdditional details: ${cleanedTranscriptReason}` : "");
 
-  const transcriptStamp = new Date().toLocaleString();
   const transcriptNote =
-    `[${transcriptStamp}] Client action from public estimate summary: IRS Transcript Help Payment — Payment not yet confirmed\n` +
-    `[${transcriptStamp}] Client Transcript Request: ${transcriptRequestSummary}`;
+    `[${transcriptStamp}] Client submitted IRS Transcript Help Request from public estimate summary.\n` +
+    `[${transcriptStamp}] Client Transcript Request:\n${transcriptRequestSummary}\n` +
+    `[${transcriptStamp}] Payment Status: Requested / Waiting for Payment Verification\n` +
+    `[${transcriptStamp}] Authorization Status: Not requested yet`;
 
   try {
     const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
@@ -103,8 +107,29 @@ async function requestTranscriptHelp() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        status: "Follow-up Needed",
-        notes: transcriptNote
+        status: "Transcript Help - Payment Pending",
+        notes: transcriptNote,
+        transcriptRequest: {
+          requested: true,
+          requestedAt: transcriptIso,
+          serviceName: "IRS Transcript Help & Tax Records Review",
+          issueType: transcriptNeedText,
+          transcriptType: transcriptTypeText,
+          clientExplanation: cleanedTranscriptReason || transcriptNeedText,
+          taxYear: _lastTaxInput?.taxYear || "",
+          multipleYears: "",
+          paymentStatus: "Requested / Waiting for Payment Verification",
+          authorizationStatus: "Not requested yet",
+          authorizationReceivedDate: "",
+          transcriptPulledDate: "",
+          transcriptReceivedDate: "",
+          deliveryMethod: "",
+          deliveryDate: "",
+          mailCertifiedFee: "",
+          errorStatus: "No error",
+          internalNotes: "Client requested IRS Transcript Help from the free estimate results page.",
+          fee: "$150 flat service fee"
+        }
       })
     });
 
@@ -114,8 +139,7 @@ async function requestTranscriptHelp() {
       throw new Error(data?.error || "Could not save transcript help request.");
     }
 
-    alert("Your IRS Transcript Help payment page will open now. Payment is not confirmed until Stripe checkout is completed.");
-    window.open(TRANSCRIPT_HELP_PAYMENT_URL, "_blank");
+    window.location.href = "/transcript-help-next.html";
   } catch (err) {
     alert(err.message || "Could not save transcript help request. Please try again.");
   }
@@ -1408,7 +1432,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       max-width:360px;
     "
   >
-        Pay for IRS Transcript Help — $150
+        Review IRS Transcript Help - $150 Service
   </button>
 </div>
 
