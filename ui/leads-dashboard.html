@@ -3521,6 +3521,66 @@
 
               const transcriptFrontError =
                 transcriptErrorStatusFieldValue || "No error";
+              const transcriptMissingItems = [];
+              const transcriptReadyItems = [];
+
+              if (summaryPaymentReady) {
+                transcriptReadyItems.push("Payment verified");
+              } else {
+                transcriptMissingItems.push("Payment not verified");
+              }
+
+              if (summaryAuthorizationReady) {
+                transcriptReadyItems.push("Authorization received");
+              } else {
+                transcriptMissingItems.push("Authorization not received");
+              }
+
+              if (summaryTranscriptTypeReady) {
+                transcriptReadyItems.push("Transcript type selected");
+              } else {
+                transcriptMissingItems.push("Transcript type not confirmed");
+              }
+
+              if (summaryTranscriptAlreadyPulled) {
+                transcriptReadyItems.push("Transcript pulled or received");
+              }
+
+              if (summaryDeliveryDone) {
+                transcriptReadyItems.push("Delivery completed");
+              }
+
+              const transcriptReadinessBoxHtml = `
+                <div style="background:${transcriptMissingItems.length ? "#fff7ed" : "#ecfdf5"};border:3px solid ${transcriptMissingItems.length ? "#f97316" : "#16a34a"};border-radius:14px;padding:12px;margin:10px 0;color:#0f172a;">
+                  <div style="font-size:15px;font-weight:950;color:${transcriptMissingItems.length ? "#9a3412" : "#166534"};margin-bottom:8px;">
+                    ${transcriptMissingItems.length ? "Missing Items / Ready Status" : "Ready Status"}
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;">
+                    <div style="background:#ffffff;border:1px solid ${transcriptMissingItems.length ? "#fed7aa" : "#bbf7d0"};border-radius:10px;padding:9px;">
+                      <div style="font-size:11px;font-weight:950;color:${transcriptMissingItems.length ? "#9a3412" : "#166534"};text-transform:uppercase;margin-bottom:5px;">
+                        ${transcriptMissingItems.length ? "Missing / Blocking" : "Ready"}
+                      </div>
+                      ${
+                        transcriptMissingItems.length
+                          ? `<ul style="margin:0;padding-left:18px;color:#7c2d12;font-size:13px;font-weight:850;line-height:1.45;">${transcriptMissingItems.map(item => `<li>${esc(item)}</li>`).join("")}</ul>`
+                          : `<div style="color:#166534;font-size:13px;font-weight:900;line-height:1.45;">Core items are ready. This request can move forward based on the next step shown above.</div>`
+                      }
+                    </div>
+
+                    <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:10px;padding:9px;">
+                      <div style="font-size:11px;font-weight:950;color:#166534;text-transform:uppercase;margin-bottom:5px;">
+                        Completed / Ready
+                      </div>
+                      ${
+                        transcriptReadyItems.length
+                          ? `<ul style="margin:0;padding-left:18px;color:#166534;font-size:13px;font-weight:850;line-height:1.45;">${transcriptReadyItems.map(item => `<li>${esc(item)}</li>`).join("")}</ul>`
+                          : `<div style="color:#475569;font-size:13px;font-weight:850;line-height:1.45;">No ready items yet.</div>`
+                      }
+                    </div>
+                  </div>
+                </div>
+              `;
 
               const paymentLooksVerified =
                 String(lead.status || "").includes("Transcript Help - Paid") ||
@@ -4062,6 +4122,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         </div>
       </div>
     </div>
+
+      ${transcriptReadinessBoxHtml}
 
       <div id="transcriptTrackingFields-${esc(lead.leadId)}" style="display:block;margin-top:12px;background:#f8fafc;border:3px solid #0f2c56;border-radius:12px;padding:14px;color:#0f172a;font-size:12px;line-height:1.55;">
     <div style="font-size:14px;font-weight:950;color:#0f2c56;margin-bottom:8px;text-align:left;">
