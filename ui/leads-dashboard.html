@@ -617,6 +617,35 @@
         style="float:right;background:#38bdf8;color:#0f172a;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
     </button>
 
+    <button class="sidebar-btn" data-view="TranscriptWaitingPayment"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      style="font-size:11px;padding-left:18px;">
+      Waiting Payment
+    </button>
+
+    <button class="sidebar-btn" data-view="TranscriptWaitingAuthorization"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      style="font-size:11px;padding-left:18px;">
+      Waiting Authorization
+    </button>
+
+    <button class="sidebar-btn" data-view="TranscriptNeedType"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      style="font-size:11px;padding-left:18px;">
+      Need Transcript Type
+    </button>
+
+    <button class="sidebar-btn" data-view="TranscriptReadyToPull"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      style="font-size:11px;padding-left:18px;">
+      Ready to Pull
+    </button>
+
+    <button class="sidebar-btn" data-view="TranscriptErrors"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      style="font-size:11px;padding-left:18px;">
+      Errors
+    </button>
     <button class="sidebar-btn" data-view="Follow-up Needed"
       onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
       Follow-Up Needed <span id="sidebarFollowUpCount"
