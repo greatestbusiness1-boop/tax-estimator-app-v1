@@ -3499,7 +3499,22 @@
                               "Open Transcript Request";
 
               const transcriptFrontNextStep =
-                transcriptNextStepFieldValue || "No next step entered";
+                transcriptNextStepFieldValue ||
+                (
+                  transcriptErrorStatusFieldValue && transcriptErrorStatusFieldValue !== "No error"
+                    ? "Fix Error"
+                    : summaryDeliveryDone
+                      ? "Client Follow-Up / Close Out"
+                      : summaryTranscriptAlreadyPulled
+                        ? "Review Transcript / Deliver"
+                        : !summaryPaymentReady
+                          ? "Verify Payment"
+                          : !summaryAuthorizationReady
+                            ? "Collect Authorization"
+                            : !summaryTranscriptTypeReady
+                              ? "Confirm Transcript Type"
+                              : "Ready to Pull"
+                );
 
               const transcriptFrontFollowUp =
                 transcriptFollowUpDateFieldValue || "No follow-up date";
