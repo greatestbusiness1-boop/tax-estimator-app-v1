@@ -1039,6 +1039,10 @@
       </details>
     </div>
 
+    <div id="focusedTranscriptFileHeader"
+      style="display:none;background:#fffbeb;border:3px solid #f59e0b;border-radius:16px;padding:12px 14px;margin-bottom:12px;box-shadow:0 8px 18px rgba(15,44,86,0.06);">
+    </div>
+
     <div id="leadsContainer">
       <div class="empty">Loading leads...</div>
     </div>
@@ -1778,6 +1782,72 @@
 
             return statusMatches && yearMatches && actionMatches && searchMatches;
           });
+          const focusedTranscriptFileOpen =
+            Boolean(focusedLeadId) && focusedReturnAction === "TranscriptHelp";
+
+          const focusedTranscriptLead = focusedTranscriptFileOpen
+            ? leads.find(lead => String(lead?.leadId || "") === String(focusedLeadId))
+            : null;
+
+          const layoutToggles = [
+            "stickyControlPanel",
+            "workspaceHeader",
+            "dailyWorkQueue",
+            "transcriptHelpGuidance",
+            "strategyReviewGuidance",
+            "balanceDueGuidance",
+            "refundGuidance"
+          ];
+
+          layoutToggles.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.style.display = focusedTranscriptFileOpen ? "none" : "";
+            }
+          });
+
+          const focusedTranscriptFileHeader = document.getElementById("focusedTranscriptFileHeader");
+
+          if (focusedTranscriptFileHeader) {
+            if (focusedTranscriptFileOpen) {
+              const clientName = focusedTranscriptLead?.contact?.name || "Transcript Client";
+              const clientEmail = focusedTranscriptLead?.contact?.email || "No email";
+              const clientPhone = focusedTranscriptLead?.contact?.phone || "No phone";
+
+              focusedTranscriptFileHeader.style.display = "block";
+              focusedTranscriptFileHeader.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#92400e;">
+                      Transcript Client File
+                    </div>
+                    <div style="font-size:14px;font-weight:900;color:#0f172a;margin-top:3px;">
+                      ${esc(clientName)}
+                    </div>
+                    <div style="font-size:12px;font-weight:800;color:#475569;margin-top:2px;">
+                      ${esc(clientEmail)} | ${esc(clientPhone)} | ${esc(focusedLeadId)}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' })"
+                    style="background:#92400e;color:#ffffff;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
+                  >
+                    Back to Transcript Requests
+                  </button>
+                </div>
+
+                <div style="margin-top:8px;font-size:12px;font-weight:850;color:#78350f;line-height:1.35;">
+                  Focused transcript service file. Work only this client’s transcript request, tracking fields, work summary, notes, delivery, and privacy/removal request here.
+                </div>
+              `;
+            } else {
+              focusedTranscriptFileHeader.style.display = "none";
+              focusedTranscriptFileHeader.innerHTML = "";
+            }
+          }
+
           const statsLeads = visibleLeads;
 
           const setTopStatLabel = (id, text) => {
