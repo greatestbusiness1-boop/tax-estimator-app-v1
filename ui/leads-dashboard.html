@@ -4104,7 +4104,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
   <button
     type="button"
-    onclick="applyTranscriptQuickAction('${esc(lead.leadId)}', 'deliveredClientPortal')"
+    onclick="if (confirm('Mark this transcript request delivered and completed? Only choose OK if the transcript work has been delivered through the client portal and is ready to close.')) applyTranscriptQuickAction('${esc(lead.leadId)}', 'deliveredClientPortal')"
     style="background:#166534;color:#ffffff;border-radius:10px;padding:9px 8px;font-size:12px;font-weight:950;box-shadow:none;"
   >
     Delivered Today - Client Portal / Complete
