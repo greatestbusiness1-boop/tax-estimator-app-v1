@@ -4080,7 +4080,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
   <button
     type="button"
-    onclick="applyTranscriptQuickAction('${esc(lead.leadId)}', 'authorizationReceived')"
+    onclick="if (confirm('Mark authorization received today? Only choose OK after the client authorization has been received or uploaded and is ready for review.')) applyTranscriptQuickAction('${esc(lead.leadId)}', 'authorizationReceived')"
     style="background:#047857;color:#ffffff;border-radius:10px;padding:9px 8px;font-size:12px;font-weight:950;box-shadow:none;"
   >
     Authorization Received Today
