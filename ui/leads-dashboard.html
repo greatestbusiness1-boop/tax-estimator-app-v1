@@ -662,31 +662,31 @@
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptWaitingPayment"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingPayment' })"
       style="font-size:11px;padding-left:18px;">
       Waiting Payment
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptWaitingAuthorization"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingAuthorization' })"
       style="font-size:11px;padding-left:18px;">
       Waiting Authorization
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptNeedType"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptNeedType' })"
       style="font-size:11px;padding-left:18px;">
       Need Transcript Type
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptReadyToPull"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptReadyToPull' })"
       style="font-size:11px;padding-left:18px;">
       Ready to Pull
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptErrors"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptErrors' })"
       style="font-size:11px;padding-left:18px;">
       Errors
     </button>
@@ -1645,7 +1645,7 @@
         loadLeads();
       }
 
-      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "" }) {
+      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "", sidebarView = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
         const taxYearFilter = document.getElementById("taxYearFilter");
@@ -1667,14 +1667,13 @@
             setTimeout(() => leadSearch.focus(), 0);
           }
         }
-        const sidebarView =
-          action !== "All"
-            ? action
-            : status;
+        const workspaceView = action !== "All" ? action : status;
 
-        updateActiveSidebarButton(sidebarView);
-        updateWorkspaceHeader(sidebarView);
-        updateWorkspaceGuidance(sidebarView);
+        const activeSidebarView = sidebarView || workspaceView;
+
+        updateActiveSidebarButton(activeSidebarView);
+        updateWorkspaceHeader(workspaceView);
+        updateWorkspaceGuidance(workspaceView);
         loadLeads();
       }
 
