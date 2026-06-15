@@ -2855,9 +2855,63 @@
               </div>
             `;
 
-            transcriptRequestWorklist = visibleLeads;
+            const getTranscriptWorkPriority = (lead) => {
+              const transcriptRequest = lead?.transcriptRequest || {};
+              const statusText = String(lead?.status || "New");
+              const transcriptTypeText = getTranscriptTypeForLead(lead);
 
-            const transcriptRows = visibleLeads.map((lead) => {
+              const paymentLooksVerified =
+                statusText === "Transcript Help - Paid / Needs Review" ||
+                statusText === "Transcript Help - Completed" ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+                String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+              const authorizationLooksReceived =
+                Boolean(transcriptRequest.authorizationReceivedDate) ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("received") ||
+                String(transcriptRequest.authorizationStatus || "").toLowerCase().includes("uploaded");
+
+              const transcriptTypeLooksSelected =
+                transcriptTypeText &&
+                !String(transcriptTypeText).toLowerCase().includes("not selected") &&
+                !String(transcriptTypeText).toLowerCase().includes("needs review") &&
+                !String(transcriptTypeText).toLowerCase().includes("review transcript type");
+
+              const transcriptAlreadyPulled =
+                Boolean(transcriptRequest.transcriptPulledDate) ||
+                Boolean(transcriptRequest.transcriptReceivedDate);
+
+              const deliveryDone =
+                Boolean(transcriptRequest.deliveryMethod) ||
+                Boolean(transcriptRequest.deliveryDate);
+
+              const hasTranscriptError =
+                transcriptRequest.errorStatus &&
+                transcriptRequest.errorStatus !== "No error";
+
+              if (hasTranscriptError) return 1;
+              if (!paymentLooksVerified) return 2;
+              if (!authorizationLooksReceived) return 3;
+              if (!transcriptTypeLooksSelected) return 4;
+              if (!transcriptAlreadyPulled) return 5;
+              if (!deliveryDone) return 6;
+              if (statusText === "Transcript Help - Completed") return 8;
+              return 7;
+            };
+
+            const sortedTranscriptLeads = [...visibleLeads].sort((a, b) => {
+              const priorityDiff = getTranscriptWorkPriority(a) - getTranscriptWorkPriority(b);
+
+              if (priorityDiff !== 0) return priorityDiff;
+
+              const aDate = new Date(a?.createdAt || a?.updatedAt || 0).getTime() || 0;
+              const bDate = new Date(b?.createdAt || b?.updatedAt || 0).getTime() || 0;
+
+              return bDate - aDate;
+            });
+            transcriptRequestWorklist = sortedTranscriptLeads;
+
+            const transcriptRows = sortedTranscriptLeads.map((lead) => {
               const notesText = String(lead.notes || "");
               const noteLines = notesText
                 .split(/\r?\n/)
