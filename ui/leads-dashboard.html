@@ -523,6 +523,29 @@
       margin-right: 24px;
     }
 
+
+    /* Strong selected sidebar button highlight */
+    .sidebar-btn.active-sidebar-btn {
+      background: #ffffff !important;
+      color: #0f2c56 !important;
+      border: 2px solid #f59e0b !important;
+      border-left: 8px solid #f59e0b !important;
+      box-shadow: 0 8px 18px rgba(245, 158, 11, 0.28) !important;
+      font-weight: 950 !important;
+      transform: translateX(2px);
+    }
+
+    .sidebar-btn.active-sidebar-btn::before {
+      content: "? ";
+      color: #92400e;
+      font-weight: 950;
+    }
+
+    .sidebar-btn.active-sidebar-btn:hover {
+      background: #ffffff !important;
+      color: #0f2c56 !important;
+      border-color: #f59e0b !important;
+    }
     @media (max-width: 900px) {
       .controls {
         grid-template-columns: 1fr;
