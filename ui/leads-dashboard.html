@@ -1282,6 +1282,45 @@
           });
       }
 
+      function copyTranscriptMissingItemsMessage(encodedClientName, encodedMissingItems) {
+        const clientName = decodeURIComponent(encodedClientName || "Client") || "Client";
+        const rawMissingItems = decodeURIComponent(encodedMissingItems || "");
+
+        const missingItems = rawMissingItems
+          .split("||")
+          .map(item => item.trim())
+          .filter(Boolean);
+
+        if (!missingItems.length) {
+          alert("No missing items to copy for this transcript request.");
+          return;
+        }
+
+        const friendlyItems = missingItems.map((item) => {
+          if (item === "Payment not verified") return "payment verification";
+          if (item === "Authorization not received") return "signed authorization";
+          if (item === "Transcript type not confirmed") return "transcript type confirmation";
+          return item.toLowerCase();
+        });
+
+        const text = [
+          `Hi ${clientName},`,
+          "",
+          "We are ready to continue your IRS transcript request, but we still need the following:",
+          "",
+          ...friendlyItems.map(item => `- ${item}`),
+          "",
+          "Please complete these items so we can move forward with your transcript request."
+        ].join("\n");
+
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            alert("Copied missing items client message.");
+          })
+          .catch(() => {
+            window.prompt("Copy this missing items message:", text);
+          });
+      }
       function copyTranscriptReadinessReport() {
         const rows = transcriptRequestWorklist || [];
 
@@ -3578,7 +3617,26 @@
                           : `<div style="color:#475569;font-size:13px;font-weight:850;line-height:1.45;">No ready items yet.</div>`
                       }
                     </div>
-                  </div>
+
+                  <div style="margin-top:10px;">
+                    ${
+                      transcriptMissingItems.length
+                        ? `<button
+                            type="button"
+                            onclick="copyTranscriptMissingItemsMessage('${encodeURIComponent(lead?.contact?.name || "Client")}', '${encodeURIComponent(transcriptMissingItems.join("||"))}')"
+                            style="background:#9a3412;color:#ffffff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:950;box-shadow:none;"
+                          >
+                            Copy Missing Items Message
+                          </button>`
+                        : `<button
+                            type="button"
+                            disabled
+                            style="background:#e2e8f0;color:#475569;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:950;box-shadow:none;cursor:not-allowed;"
+                          >
+                            No Missing Items to Copy
+                          </button>`
+                    }
+                  </div>                  </div>
                 </div>
               `;
 
