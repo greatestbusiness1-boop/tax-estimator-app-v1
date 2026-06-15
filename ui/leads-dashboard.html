@@ -633,7 +633,28 @@
       Strategy Reviews
     </button>
 
-    <div style="width:100%;box-sizing:border-box;text-align:center;margin:12px 0 7px;border-radius:12px;padding:9px 10px;font-size:12px;font-weight:950;border:2px solid #92400e;background:#f59e0b;color:#111827;box-shadow:0 6px 14px rgba(245,158,11,0.24);text-transform:uppercase;letter-spacing:.45px;">Transcript Center</div>
+        <button class="sidebar-btn" data-view="Follow-up Needed"
+      onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
+      Follow-Up Needed <span id="sidebarFollowUpCount"
+        style="float:right;background:#f97316;color:#111827;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
+    </button>
+
+    <button class="sidebar-btn" data-view="Booked"
+      onclick="setDashboardFilters({ status: 'Booked', action: 'All', search: '' })">
+      Booked Consultations
+    </button>
+
+    <button class="sidebar-btn" data-view="Converted - Tax Client"
+      onclick="setDashboardFilters({ status: 'Converted - Tax Client', action: 'All', search: '' })">
+      Converted Clients
+    </button>
+
+    <button class="sidebar-btn" data-view="Closed"
+      onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '' })">
+      Closed Leads
+    </button>
+
+<div style="width:100%;box-sizing:border-box;text-align:center;margin:12px 0 7px;border-radius:12px;padding:9px 10px;font-size:12px;font-weight:950;border:2px solid #92400e;background:#f59e0b;color:#111827;box-shadow:0 6px 14px rgba(245,158,11,0.24);text-transform:uppercase;letter-spacing:.45px;">Transcript Center</div>
     <button class="sidebar-btn" data-view="TranscriptHelp"
       onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })">
       Transcript Requests <span id="sidebarTranscriptHelpCount"
@@ -669,27 +690,6 @@
       style="font-size:11px;padding-left:18px;">
       Errors
     </button>
-    <button class="sidebar-btn" data-view="Follow-up Needed"
-      onclick="setDashboardFilters({ status: 'Follow-up Needed', action: 'All', search: '' })">
-      Follow-Up Needed <span id="sidebarFollowUpCount"
-        style="float:right;background:#f97316;color:#111827;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
-    </button>
-
-    <button class="sidebar-btn" data-view="Booked"
-      onclick="setDashboardFilters({ status: 'Booked', action: 'All', search: '' })">
-      Booked Consultations
-    </button>
-
-    <button class="sidebar-btn" data-view="Converted - Tax Client"
-      onclick="setDashboardFilters({ status: 'Converted - Tax Client', action: 'All', search: '' })">
-      Converted Clients
-    </button>
-
-    <button class="sidebar-btn" data-view="Closed"
-      onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '' })">
-      Closed Leads
-    </button>
-
     <div class="sidebar-section-label">Workflow</div>
 
     <button class="sidebar-btn" data-view="New"
