@@ -662,7 +662,7 @@
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptWaitingPayment"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingPayment' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingPayment', transcriptStage: 'WaitingPayment' })"
       style="font-size:11px;padding-left:18px;">
       Waiting Payment
     </button>
@@ -1106,6 +1106,7 @@
       let focusedReturnAction = "";
       let transcriptReadyToPullList = [];
       let transcriptRequestWorklist = [];
+      let selectedTranscriptStage = "";
 
       function getTranscriptTypeForLead(lead) {
         const transcriptRequest = lead?.transcriptRequest || {};
@@ -1133,6 +1134,23 @@
         return "Review transcript type in lead card";
       }
 
+
+      function transcriptStageMatchesLead(lead, stage) {
+        const transcriptRequest = lead?.transcriptRequest || {};
+        const statusText = String(lead?.status || "New");
+
+        const paymentLooksVerified =
+          statusText === "Transcript Help - Paid / Needs Review" ||
+          statusText === "Transcript Help - Completed" ||
+          String(transcriptRequest.paymentStatus || "").toLowerCase().includes("paid") ||
+          String(transcriptRequest.paymentStatus || "").toLowerCase().includes("verified");
+
+        if (stage === "WaitingPayment") {
+          return !paymentLooksVerified;
+        }
+
+        return true;
+      }
       function getTranscriptTaxYearForLead(lead) {
         return (
           lead?.taxData?.taxYear ||
@@ -1645,7 +1663,7 @@
         loadLeads();
       }
 
-      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "", sidebarView = "" }) {
+      function setDashboardFilters({ status = "All", action = "All", taxYear = null, search = "", focusLeadId = "", returnAction = "", sidebarView = "", transcriptStage = "" }) {
         const leadFilter = document.getElementById("leadFilter");
         const actionQueueFilter = document.getElementById("actionQueueFilter");
         const taxYearFilter = document.getElementById("taxYearFilter");
@@ -1653,6 +1671,7 @@
 
         focusedLeadId = focusLeadId || "";
         focusedReturnAction = returnAction || "";
+        selectedTranscriptStage = transcriptStage || "";
 
         if (leadFilter) leadFilter.value = status;
         if (actionQueueFilter) actionQueueFilter.value = action;
@@ -1829,10 +1848,15 @@
                           ? combinedNet === 0
                           : true;
 
+            const transcriptStageMatches =
+              selectedActionQueue === "TranscriptHelp" && selectedTranscriptStage
+                ? transcriptStageMatchesLead(lead, selectedTranscriptStage)
+                : true;
+
             const searchMatches =
               !searchText ? true : searchableText.includes(searchText);
 
-            return statusMatches && yearMatches && actionMatches && searchMatches;
+            return statusMatches && yearMatches && actionMatches && transcriptStageMatches && searchMatches;
           });
           const focusedTranscriptFileOpen =
             Boolean(focusedLeadId) && focusedReturnAction === "TranscriptHelp";
