@@ -4072,7 +4072,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
      
       <button
   type="button"
-  onclick="applyTranscriptQuickAction('${esc(lead.leadId)}', 'paymentVerified')"
+  onclick="if (confirm('Mark payment verified today? Only choose OK after you confirmed the Stripe/payment record.')) applyTranscriptQuickAction('${esc(lead.leadId)}', 'paymentVerified')"
   style="background:#92400e;color:#ffffff;border-radius:10px;padding:9px 8px;font-size:12px;font-weight:950;box-shadow:none;"
 >
   Payment Verified Today
