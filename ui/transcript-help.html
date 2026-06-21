@@ -237,7 +237,7 @@
                         <div id="multipleYearsBox" style="display:none;">
                             <label for="multipleYears">Enter the tax years needed</label>
                             <input id="multipleYears" name="multipleYears" type="text"
-                                placeholder="Example: 2021, 2022, 2023, 2024" />
+                                placeholder="Example: 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030" />
                             <div class="helper">
                                 Enter each year separated by commas if more than one tax year is needed.
                             </div>
@@ -456,7 +456,7 @@
             }
 
             if (payload.taxYear === "Multiple Years" && !payload.multipleYears) {
-                showStatus("error", "Please enter the tax years needed, such as 2021, 2022, 2023, 2024.");
+                showStatus("error", "Please enter the tax years needed, such as 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030.");
                 return;
             }
 

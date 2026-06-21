@@ -1332,11 +1332,20 @@ const STATE_RULES = {
 // =============================================================================
 
 function getStateRules(stateCode, taxYear) {
-  const yearRules = STATE_RULES[taxYear];
+  const requestedYear = Number(taxYear);
+  let yearRules = STATE_RULES[requestedYear];
+
   if (!yearRules) {
-    return { name: stateCode, type: "unknown" };
+    const availableYears = Object.keys(STATE_RULES)
+      .map(Number)
+      .filter(y => !Number.isNaN(y))
+      .sort((a, b) => b - a);
+
+    const fallbackYear = availableYears.find(y => y <= requestedYear) || availableYears[0];
+    yearRules = STATE_RULES[fallbackYear];
   }
-  return yearRules[stateCode] || { name: stateCode, type: "unknown" };
+
+  return yearRules?.[stateCode] || { name: stateCode, type: "unknown" };
 }
 
 // =============================================================================

@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 // =============================================================================
 // MODULE STATE
@@ -51,8 +51,39 @@ function scrollToLead() {
 const PAID_REVIEW_URL = "https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00";
 const TRANSCRIPT_HELP_PAYMENT_URL = "https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01";
 
-function openPaidReview() {
+async function openPaidReview() {
   window.open(PAID_REVIEW_URL, "_blank");
+
+  const leadId = _leadGatewayContact?.leadId;
+  if (!leadId) return;
+
+  const stamp = new Date().toLocaleString();
+  const actionNote = "[" + stamp + "] Client clicked Buy Written Estimate Red Flag Review - Payment not yet confirmed";
+
+  try {
+    let existingNotes = "";
+
+    try {
+      const readRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const readData = await readRes.json();
+      existingNotes = readData?.lead?.notes || "";
+    } catch (readErr) {
+      existingNotes = "";
+    }
+
+    const notes = existingNotes ? existingNotes + "\n" + actionNote : actionNote;
+
+    await fetch("/api/leads/" + encodeURIComponent(leadId), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "Written Review - Payment Pending",
+        notes
+      })
+    });
+  } catch (err) {
+    console.warn("Could not record written review request before opening Stripe", err);
+  }
 }
 
 async function requestTranscriptHelp() {
@@ -139,14 +170,32 @@ async function requestTranscriptHelp() {
       throw new Error(data?.error || "Could not save transcript help request.");
     }
 
-    window.location.href = "/transcript-help-next.html";
+    const checkoutResponse = await fetch("/api/create-transcript-checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        leadId,
+        clientName: _leadGatewayContact?.name || "",
+        clientEmail: _leadGatewayContact?.email || ""
+      })
+    });
+
+    const checkoutData = await checkoutResponse.json();
+
+    if (!checkoutResponse.ok || !checkoutData.ok || !checkoutData.checkoutUrl) {
+      throw new Error(checkoutData?.error || "Could not open Stripe checkout.");
+    }
+
+    window.location.href = checkoutData.checkoutUrl;
   } catch (err) {
     alert(err.message || "Could not save transcript help request. Please try again.");
   }
 }
 
 // =============================================================================
-// TAX FORM — READ
+// TAX FORM - READ
 // =============================================================================
 
 function readForm() {
@@ -205,7 +254,7 @@ function readForm() {
 }
 
 // =============================================================================
-// TAX FORM — VALIDATE
+// TAX FORM - VALIDATE
 // =============================================================================
 
 function validateFormClient(input) {
@@ -313,7 +362,7 @@ function setLeadLoading(isLoading) {
 }
 
 // =============================================================================
-// CALCULATE — SUBMIT TO /api/estimate
+// CALCULATE - SUBMIT TO /api/estimate
 // =============================================================================
 
 async function handleCalculate() {
@@ -368,7 +417,7 @@ async function handleCalculate() {
 }
 
 // =============================================================================
-// LEAD GATEWAY — CAPTURE NAME + EMAIL BEFORE SHOWING RESULTS
+// LEAD GATEWAY - CAPTURE NAME + EMAIL BEFORE SHOWING RESULTS
 // =============================================================================
 
 function showLeadGateway(input, result) {
@@ -595,7 +644,7 @@ async function submitLeadGateway(input, result) {
 }
 
 // =============================================================================
-// LEAD FORM — SUBMIT TO /api/lead
+// LEAD FORM - SUBMIT TO /api/lead
 // =============================================================================
 
 async function handleLeadSubmit(event) {
@@ -773,7 +822,7 @@ function fmt(n) {
 
 function signedFmt(n) {
   if (n > 0) return `+${fmt(n)}`;
-  if (n < 0) return `−${fmt(Math.abs(n))}`;
+  if (n < 0) return `-${fmt(Math.abs(n))}`;
   return "$0";
 }
 
@@ -989,7 +1038,7 @@ function getPrimaryTaxProInsight(fed, combined) {
     return {
       priority: "medium",
       title: "What This Means For You",
-      body: `You’re currently estimated to get back ${fmt(combined.refundAmount)} between your federal and state returns. A professional follow-up can confirm whether additional deductions or credits may improve this result.`,
+      body: `You're currently estimated to get back ${fmt(combined.refundAmount)} between your federal and state returns. A professional follow-up can confirm whether additional deductions or credits may improve this result.`,
     };
   }
 
@@ -997,7 +1046,7 @@ function getPrimaryTaxProInsight(fed, combined) {
     return {
       priority: "high",
       title: "What This Means For You",
-      body: `You’re currently estimated to owe ${fmt(combined.owedAmount)} between your federal and state returns. A professional follow-up may help reduce what you owe and improve your tax planning.`,
+      body: `You're currently estimated to owe ${fmt(combined.owedAmount)} between your federal and state returns. A professional follow-up may help reduce what you owe and improve your tax planning.`,
     };
   }
 
@@ -1070,7 +1119,7 @@ function renderTaxProInsightBanner(fed, combined) {
           <span class="taxpro-status-label">${escHtml(reviewStatus.label)}</span>
         </div>
         <div class="taxpro-banner-mini">
-          Free instant estimate review • Professional follow-up available
+          Free instant estimate review - Professional follow-up available
         </div>
       </div>
 
@@ -1093,7 +1142,7 @@ function renderTaxProInsightBanner(fed, combined) {
     color:#475569;
   "
 >
-  Free consultation • No payment required
+  Free consultation - No payment required
 </div>
 
         <button
@@ -1112,7 +1161,7 @@ function renderTaxProInsightBanner(fed, combined) {
     box-shadow:0 10px 22px rgba(245,158,11,0.35);
   "
 >
-    Buy Written Estimate Review — $29
+    Buy Written Estimate Red Flag Review - $29
 </button>
 
 <div
@@ -1127,15 +1176,15 @@ function renderTaxProInsightBanner(fed, combined) {
   "
 >
   <div style="font-size:18px;font-weight:900;margin-bottom:10px;color:#92400e;">
-    What You Get for $29
+    What You Receive for $29
   </div>
 
   <div style="display:grid;gap:8px;font-size:14px;line-height:1.5;font-weight:650;">
-    <div>✓ Review of your estimate for possible missed deductions or credits</div>
-    <div>✓ Filing-status and dependent review based on the information entered</div>
-    <div>✓ Self-employment, mileage, and withholding review if applicable</div>
-    <div>✓ Written Tax Strategy Summary with recommended next steps</div>
-    <div>✓ Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
+    <div>- Review of your estimate for possible missed deductions or credits</div>
+    <div>- Filing-status and dependent review based on the information entered</div>
+    <div>- Self-employment, mileage, and withholding review if applicable</div>
+    <div>- Written Tax Strategy Summary with recommended next steps</div>
+    <div>- Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
   </div>
 
   <div style="margin-top:12px;font-size:13px;color:#475569;line-height:1.5;">
@@ -1192,9 +1241,9 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       font-weight:600;
     "
   >
-    <div>✔ Wage & Income Transcript Review</div>
-    <div>✔ Prior-Year Filing Research</div>
-    <div>✔ IRS Notice & Balance Review</div>
+    <div>- Wage & Income Transcript Review</div>
+    <div>- Prior-Year Filing Research</div>
+    <div>- IRS Notice & Balance Review</div>
   </div>
 
   <div
@@ -1211,8 +1260,8 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
   >
     <strong style="color:#fde68a;">Important timing note:</strong><br>
     IRS transcripts are generally available only after the IRS has processed the return.
-    If you recently e-filed, transcripts may not be available for about 2–3 weeks.
-    If you mailed a paper return, it may take about 6–8 weeks.
+    If you recently e-filed, transcripts may not be available for about 2-3 weeks.
+    If you mailed a paper return, it may take about 6-8 weeks.
     Our office can help identify which IRS records may be needed and review available records quickly once authorization and access are complete.
   </div>
 
@@ -1389,7 +1438,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
         <label><input type="checkbox" class="transcriptTypeOption" value="Tax Return Transcript"> Tax Return Transcript</label>
         <label><input type="checkbox" class="transcriptTypeOption" value="Record of Account Transcript"> Record of Account Transcript</label>
         <label><input type="checkbox" class="transcriptTypeOption" value="Verification of Non-Filing"> Verification of Non-Filing</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Not sure — please help me decide"> Not sure — please help me decide</label>
+        <label><input type="checkbox" class="transcriptTypeOption" value="Not sure - please help me decide"> Not sure - please help me decide</label>
       </div>
     </div>
 
@@ -1432,7 +1481,7 @@ IRS account balances, or tax resolution next steps may need to be reviewed.
       max-width:360px;
     "
   >
-        Review IRS Transcript Help - $150 Service
+        Purchase IRS Transcript Help - $150
   </button>
 </div>
 
@@ -1520,7 +1569,7 @@ function renderClientEstimateSummaryLink() {
     </div>
 
     <div style="font-size:14px;line-height:1.6;margin-bottom:14px;color:#065f46;">
-      You can open your estimate summary now or copy the secure summary link for later.
+      You can open your estimate summary now. If you click Copy Summary Link, the link is saved to your clipboard so you can paste it into a text message, email, or browser. The copied link will also show below for confirmation.
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
@@ -1535,7 +1584,7 @@ function renderClientEstimateSummaryLink() {
 
       <button
         type="button"
-        id="copyClientSummaryLinkBtn"
+        id="copyClientSummaryLinkBtn" style="display:none;"
         style="background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer;"
       >
         Copy Summary Link
@@ -1559,7 +1608,7 @@ function renderClientEstimateSummaryLink() {
       try {
         await navigator.clipboard.writeText(summaryUrl);
         if (msg) {
-          msg.textContent = "Link copied";
+          msg.textContent = "Link copied. Paste it into a text message, email, or browser: " + summaryUrl;
           setTimeout(() => {
             msg.textContent = "";
           }, 2500);
@@ -1586,7 +1635,7 @@ function renderResults(result, input) {
   renderClientEstimateSummaryLink();
 
   setText("resultYear", meta.taxYear);
-  setText("actionBarYear", meta.taxYear);
+  setText("actionBarYear", meta.taxYear); setText("combinedTaxYearLine", "Tax Year " + meta.taxYear);
 
   const heroAmount = document.getElementById("heroAmount");
   const heroStatus = document.getElementById("heroStatus");
@@ -1602,9 +1651,9 @@ function renderResults(result, input) {
 
   if (heroStatus) {
     heroStatus.textContent = combined.isRefund
-      ? "Estimated combined refund — you may be getting money back"
+      ? "Estimated combined refund - you may be getting money back"
       : combined.isOwed
-        ? "Estimated combined balance due — you may owe this amount"
+        ? "Estimated combined balance due - you may owe this amount"
         : "You appear to be near break-even this year";
   }
 
@@ -1620,25 +1669,25 @@ function renderResults(result, input) {
   const fedRows = [];
   fedRows.push({ label: "W-2 wages", val: fmt((fed.grossIncome || 0) - (fed.netSelfEmploymentIncome || 0)) });
   if (fed.hasSelfEmployment) {
-    fedRows.push({ label: "— 1099 / self-employment income", val: fmt(fed.selfEmploymentIncome) });
+    fedRows.push({ label: "- 1099 / self-employment income", val: fmt(fed.selfEmploymentIncome) });
     if ((fed.businessExpenses || 0) > 0) {
-      fedRows.push({ label: "— Business expenses", val: `−${fmt(fed.businessExpenses)}` });
+      fedRows.push({ label: "- Business expenses", val: `-${fmt(fed.businessExpenses)}` });
     }
     if ((fed.mileageDeduction || 0) > 0) {
-      fedRows.push({ label: "— Mileage deduction", val: `−${fmt(fed.mileageDeduction)}` });
+      fedRows.push({ label: "- Mileage deduction", val: `-${fmt(fed.mileageDeduction)}` });
     }
-    fedRows.push({ label: "— Net business income", val: fmt(fed.netSelfEmploymentIncome) });
+    fedRows.push({ label: "- Net business income", val: fmt(fed.netSelfEmploymentIncome) });
     fedRows.push({ label: "Self-employment tax", val: fmt(fed.selfEmploymentTax) });
     if ((fed.seAboveLineDeduction || 0) > 0) {
-      fedRows.push({ label: "SE tax deduction (50%)", val: `−${fmt(fed.seAboveLineDeduction)}` });
+      fedRows.push({ label: "SE tax deduction (50%)", val: `-${fmt(fed.seAboveLineDeduction)}` });
     }
   }
   fedRows.push({ label: "Adjusted gross income", val: fmt(fed.agi) });
-  fedRows.push({ label: "Standard deduction", val: `−${fmt(fed.standardDeduction)}` });
+  fedRows.push({ label: "Standard deduction", val: `-${fmt(fed.standardDeduction)}` });
   fedRows.push({ label: "Taxable income", val: fmt(fed.taxableIncome) });
   fedRows.push({ label: "Income tax", val: fmt(fed.taxBeforeCredits) });
-  if ((fed.educationCredit || 0) > 0) fedRows.push({ label: "Education credit", val: `−${fmt(fed.educationCredit)}` });
-  if ((fed.childTaxCredit || 0) > 0) fedRows.push({ label: "Child Tax Credit", val: `−${fmt(fed.childTaxCredit)}` });
+  if ((fed.educationCredit || 0) > 0) fedRows.push({ label: "Education credit", val: `-${fmt(fed.educationCredit)}` });
+  if ((fed.childTaxCredit || 0) > 0) fedRows.push({ label: "Child Tax Credit", val: `-${fmt(fed.childTaxCredit)}` });
   fedRows.push({ label: "Federal tax withheld", val: fmt(fed.federalWithheld) });
   if ((fed.estimatedTaxPayments || 0) > 0) fedRows.push({ label: "Estimated tax payments", val: fmt(fed.estimatedTaxPayments) });
 
@@ -1646,7 +1695,7 @@ function renderResults(result, input) {
   renderBreakdownTotal(
     "federalTotal",
     fed.isRefund ? "Federal refund" : fed.isOwed ? "Federal balance due" : "Federal break-even",
-    fed.isRefund ? `+${fmt(fed.refundAmount)}` : fed.isOwed ? `−${fmt(fed.owedAmount)}` : "$0",
+    fed.isRefund ? `+${fmt(fed.refundAmount)}` : fed.isOwed ? `-${fmt(fed.owedAmount)}` : "$0",
     fed.isRefund ? "refund" : fed.isOwed ? "owe" : "none"
   );
 
@@ -1656,13 +1705,13 @@ function renderResults(result, input) {
   if (!state.hasIncomeTax) {
     renderBreakdownRows("stateRows", [
       { label: "State income tax", val: "$0" },
-      { label: "No state tax", val: "✓" },
+      { label: "No state tax", val: "-" },
     ]);
     const sw = st.stateWithheld || 0;
     renderBreakdownTotal("stateTotal", "State result", sw > 0 ? `+${fmt(sw)}` : "$0", sw > 0 ? "refund" : "none");
   } else if (!state.canEstimate) {
     renderBreakdownRows("stateRows", [{ label: "State estimate", val: "Not available" }]);
-    renderBreakdownTotal("stateTotal", "Cannot estimate", "—", "none");
+    renderBreakdownTotal("stateTotal", "Cannot estimate", "-", "none");
   } else {
     renderBreakdownRows("stateRows", [
       { label: "State taxable income", val: fmt(st.stateTaxableIncome) },
@@ -1672,7 +1721,7 @@ function renderResults(result, input) {
     renderBreakdownTotal(
       "stateTotal",
       st.isRefund ? "State refund" : st.isOwed ? "State balance due" : "State break-even",
-      st.isRefund ? `+${fmt(st.refundAmount)}` : st.isOwed ? `−${fmt(st.owedAmount)}` : "$0",
+      st.isRefund ? `+${fmt(st.refundAmount)}` : st.isOwed ? `-${fmt(st.owedAmount)}` : "$0",
       st.isRefund ? "refund" : st.isOwed ? "owe" : "none"
     );
   }
@@ -1684,7 +1733,7 @@ function renderResults(result, input) {
   renderBreakdownTotal(
     "combinedTotal",
     combined.isRefund ? "Total refund" : combined.isOwed ? "Total balance due" : "Break-even",
-    combined.isRefund ? `+${fmt(combined.refundAmount)}` : combined.isOwed ? `−${fmt(combined.owedAmount)}` : "$0",
+    combined.isRefund ? `+${fmt(combined.refundAmount)}` : combined.isOwed ? `-${fmt(combined.owedAmount)}` : "$0",
     combined.isRefund ? "refund" : combined.isOwed ? "owe" : "none"
   );
 
@@ -1721,7 +1770,7 @@ function renderResults(result, input) {
       .map(
         (c) => `
           <div class="change-item">
-            <div class="change-impact ${escHtml(c.impact || "neutral")}">${c.impact === "positive" ? "+" : c.impact === "negative" ? "−" : "~"}</div>
+            <div class="change-impact ${escHtml(c.impact || "neutral")}">${c.impact === "positive" ? "+" : c.impact === "negative" ? "-" : "~"}</div>
             <div class="change-body">
               <div class="change-label">${escHtml(c.label)}</div>
               <div class="change-detail">${escHtml(c.detail)}</div>
@@ -1779,3 +1828,172 @@ if (document.readyState === "loading") {
 document.addEventListener("DOMContentLoaded", () => {
   goToScreen("welcome");
 });
+
+
+/* Launch safety: no broad state income tax states should not use State Tax Withheld */ (function(){ const noTaxStates=new Set(["AK","FL","NV","SD","TN","TX","WA","WY","NH"]); function applyNoTaxStateWithheldRule(){ const stateEl=document.getElementById("stateCode"); const withheldEl=document.getElementById("stateWithheld"); if(!stateEl||!withheldEl)return; let note=document.getElementById("noTaxStateWithheldNote"); if(!note){ note=document.createElement("div"); note.id="noTaxStateWithheldNote"; note.style.cssText="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;background:#ecfeff;border:1px solid #38bdf8;color:#075985;font-weight:800;font-size:13px;line-height:1.45;"; note.textContent="This state has no broad state income tax, so State Tax Withheld is not used in this estimate."; const wrapper=withheldEl.closest(".field-group")||withheldEl.parentElement; if(wrapper)wrapper.appendChild(note); } if(noTaxStates.has(String(stateEl.value||"").toUpperCase())){ withheldEl.value="0"; withheldEl.disabled=true; withheldEl.style.background="#e2e8f0"; withheldEl.style.cursor="not-allowed"; note.style.display="block"; }else{ withheldEl.disabled=false; withheldEl.style.background=""; withheldEl.style.cursor=""; note.style.display="none"; } } document.addEventListener("change",function(e){ if(e.target&&e.target.id==="stateCode")applyNoTaxStateWithheldRule(); }); document.addEventListener("input",function(e){ const stateEl=document.getElementById("stateCode"); if(e.target&&e.target.id==="stateWithheld"&&stateEl&&noTaxStates.has(String(stateEl.value||"").toUpperCase())){ e.target.value="0"; } }); document.addEventListener("DOMContentLoaded",applyNoTaxStateWithheldRule); setTimeout(applyNoTaxStateWithheldRule,0); })();
+
+
+
+
+
+
+// PAID-REVIEW-INTAKE-OVERRIDE
+(function () {
+  if (window.__paidReviewIntakeOverride) return;
+  window.__paidReviewIntakeOverride = true;
+
+  function showPaidReviewIntakeModal() {
+    return new Promise((resolve) => {
+      const old = document.getElementById("paidReviewIntakeOverlay");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "paidReviewIntakeOverlay";
+      overlay.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.78);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;";
+
+      overlay.innerHTML = `
+        <div style="background:#ffffff;width:min(920px,96vw);max-height:92vh;overflow:auto;border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.35);border:3px solid #0f2c56;">
+          <div style="padding:22px 24px;border-bottom:1px solid #dbe4f0;background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);">
+            <div style="font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.45px;">Written Estimate Red Flag Review - $29</div>
+            <div style="font-size:26px;font-weight:950;color:#0f2c56;margin-top:5px;">Before payment, tell us what may affect your estimate</div>
+            <div style="margin-top:8px;color:#334155;font-size:15px;line-height:1.55;font-weight:750;">
+              This helps us prepare a more useful written review. The review is limited to the estimate information you entered and the answers below. It is not full tax preparation or a document-by-document tax return review.
+            </div>
+          </div>
+
+          <div style="padding:22px 24px;">
+            <div style="background:#fff7ed;border:2px solid #f59e0b;border-radius:16px;padding:14px 16px;color:#7c2d12;font-weight:850;line-height:1.55;margin-bottom:16px;">
+              Select anything that applies. If you answer yes to any item, briefly explain it below. This protects both you and our office from relying on an estimate that may be missing important tax information.
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+              ${[
+                "I had W-2 wages from one or more jobs.",
+                "I had 1099-NEC, 1099-MISC, gig work, or independent contractor income.",
+                "I had business expenses, mileage, tools, supplies, insurance, phone, advertising, or subcontractor costs.",
+                "I received bank interest, dividends, stock sales, crypto, retirement income, unemployment, Social Security, or gambling income.",
+                "I received Form 1099-C for cancellation of debt.",
+                "I had mortgage interest, property taxes, or large charitable donations.",
+                "I had marketplace health insurance and may receive Form 1095-A.",
+                "I paid childcare, education expenses, or student loan interest.",
+                "I moved states, worked in more than one state, or had income from another state.",
+                "I received an IRS or state notice, have prior-year issues, or need transcript help."
+              ].map((text, i) => `
+                <label style="display:flex;gap:9px;align-items:flex-start;border:1px solid #dbe4f0;border-radius:14px;padding:12px;background:#f8fafc;font-size:14px;line-height:1.45;color:#0f172a;font-weight:750;">
+                  <input class="paidReviewRedFlag" type="checkbox" value="${text.replace(/"/g, "&quot;")}" style="margin-top:3px;transform:scale(1.15);" />
+                  <span>${text}</span>
+                </label>
+              `).join("")}
+            </div>
+
+            <label style="display:block;margin-top:16px;font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.35px;">
+              Briefly explain any checked items
+            </label>
+            <textarea id="paidReviewIntakeComment" style="width:100%;min-height:110px;box-sizing:border-box;border:2px solid #cbd5e1;border-radius:14px;padding:12px;font-size:15px;line-height:1.55;margin-top:7px;font-family:Arial,sans-serif;" placeholder="Example: I have one W-2, mortgage interest, bank interest, and a 1099-NEC from side work. I am not sure if I included all business expenses."></textarea>
+
+            <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:14px;padding:12px;color:#065f46;font-size:14px;line-height:1.45;font-weight:850;">
+              <input id="paidReviewScopeAck" type="checkbox" style="margin-top:3px;transform:scale(1.15);" />
+              <span>I understand this is a limited written red-flag review based on the information I entered and disclosed here. It is not full tax preparation, IRS/state representation, audit protection, or a guarantee of my final refund or balance due.</span>
+            </label>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px;">
+              <button id="paidReviewCancelBtn" type="button" style="background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:11px 15px;font-weight:950;cursor:pointer;">Cancel</button>
+              <button id="paidReviewContinueBtn" type="button" style="background:#0f2c56;color:#ffffff;border:2px solid #0f2c56;border-radius:12px;padding:11px 15px;font-weight:950;cursor:pointer;">Continue to Payment</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      document.getElementById("paidReviewCancelBtn").onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+
+      document.getElementById("paidReviewContinueBtn").onclick = () => {
+        const selected = Array.from(document.querySelectorAll(".paidReviewRedFlag:checked")).map(x => x.value);
+        const comment = String(document.getElementById("paidReviewIntakeComment")?.value || "").trim();
+        const ack = document.getElementById("paidReviewScopeAck")?.checked;
+
+        if (selected.length && comment.length < 10) {
+          alert("Please briefly explain the items you checked before continuing.");
+          return;
+        }
+
+        if (!selected.length && comment.length < 5) {
+          alert("Please either select at least one item or briefly write that no other items apply.");
+          return;
+        }
+
+        if (!ack) {
+          alert("Please check the limited-scope acknowledgement before continuing.");
+          return;
+        }
+
+        overlay.remove();
+        resolve({ selected, comment, ack });
+      };
+    });
+  }
+
+  openPaidReview = async function () {
+    const leadId = _leadGatewayContact?.leadId;
+
+    if (!leadId) {
+      alert("Please unlock your estimate first so the written review request can be attached to your record.");
+      return;
+    }
+
+    const intake = await showPaidReviewIntakeModal();
+    if (!intake) return;
+
+    const paymentWindow = window.open("about:blank", "_blank");
+
+    const stamp = new Date().toLocaleString();
+    const actionNote =
+      "[" + stamp + "] Client clicked Buy Written Estimate Red Flag Review and completed Written Estimate Red Flag Review intake. Payment not yet confirmed.\n" +
+      "Paid Review Intake - Selected Items: " + (intake.selected.length ? intake.selected.join("; ") : "None selected") + "\n" +
+      "Paid Review Intake - Client Explanation: " + intake.comment + "\n" +
+      "Paid Review Intake - Limited Scope Acknowledged: Yes";
+
+    try {
+      let existingNotes = "";
+
+      try {
+        const readRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const readData = await readRes.json();
+        existingNotes = readData?.lead?.notes || "";
+      } catch (readErr) {
+        existingNotes = "";
+      }
+
+      const notes = existingNotes ? existingNotes + "\n\n" + actionNote : actionNote;
+
+      await fetch("/api/leads/" + encodeURIComponent(leadId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "Written Review - Payment Pending",
+          notes
+        })
+      });
+    } catch (err) {
+      console.warn("Could not record written review intake before Stripe", err);
+    }
+
+    if (paymentWindow) {
+      paymentWindow.location.href = PAID_REVIEW_URL;
+    } else {
+      window.location.href = PAID_REVIEW_URL;
+    }
+  };
+})();
+
+
+
+
+
+
+
+

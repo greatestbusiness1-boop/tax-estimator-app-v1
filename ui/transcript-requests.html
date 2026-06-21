@@ -1,0 +1,523 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Transcript Requests Tracker</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#f6f8fc;color:#0f172a;}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px;}
+    .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px;}
+    h1{margin:0;color:#0369a1;font-size:28px;}
+    .sub{font-size:14px;color:#475569;font-weight:800;line-height:1.45;margin-top:5px;}
+    .btn{border:0;border-radius:12px;padding:10px 13px;font-weight:950;cursor:pointer;background:#0369a1;color:white;}
+    .btn.secondary{background:white;color:#0f2c56;border:2px solid #0f2c56;}
+    .panel{background:white;border:1px solid #bae6fd;border-radius:18px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,.06);}
+    .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .pill{display:inline-block;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;border:1px solid #bae6fd;background:#ecfeff;color:#0369a1;}
+    .header,.row{display:grid;grid-template-columns:1.25fr 1.15fr 1fr 1fr 1fr auto;gap:10px;align-items:center;}
+    .header{background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:9px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;position:sticky;top:0;z-index:5;}
+    .row{border-top:1px solid #e2e8f0;padding:11px 0;font-size:13px;}
+    .name{font-weight:950;color:#0f2c56;}
+    .small{font-size:12px;color:#64748b;font-weight:800;line-height:1.35;}
+    .status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:950;margin:2px 3px 2px 0;}
+    .good{background:#ecfdf5;color:#047857;border:1px solid #86efac;}
+    .need{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;}
+    details{grid-column:1/-1;background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:10px;margin-top:8px;}
+    summary{cursor:pointer;font-weight:950;color:#0f2c56;}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px;}
+    label{display:block;}
+    label span{display:block;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:5px;}
+    input,select,textarea{width:100%;box-sizing:border-box;border:2px solid #bae6fd;border-radius:12px;padding:9px 10px;font-size:14px;font-weight:750;background:white;}
+    textarea{min-height:80px;font-family:Arial,sans-serif;line-height:1.45;}
+    .msg{font-size:13px;font-weight:950;color:#047857;margin-left:8px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Transcript Requests Tracker</h1>
+        <div class="sub">Manage IRS transcript help requests: payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery.</div>
+      </div>
+      <button class="btn secondary" onclick="window.location.href='/leads-dashboard'">Back to Tax Lead Center</button>
+    </div>
+
+    <div id="officeProcedurePanel" class="panel" style="margin-bottom:14px;position:sticky;top:0;z-index:50;border:2px solid #0f2c56;box-shadow:0 12px 28px rgba(15,44,86,.16);">
+      <details>
+        <summary style="cursor:pointer;font-size:18px;font-weight:950;color:#0f2c56;">
+          Office Procedure Before Pulling IRS Transcripts
+        </summary>
+
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+          <div class="mini"><strong>1. Verify Payment</strong>Confirm Stripe payment before doing transcript work. Then mark Payment Status as Paid / Verified.</div>
+          <div class="mini"><strong>2. Send Form 8821</strong>Payment does not authorize transcript access. Send or request the signed IRS authorization.</div>
+          <div class="mini"><strong>3. Receive Signed 8821</strong>Mark Form 8821 Status as 8821 Signed / Received and enter the received date.</div>
+          <div class="mini"><strong>4. Verify Identity</strong>Confirm required identity information before accessing IRS records. Enter the identity verified date.</div>
+          <div class="mini"><strong>5. Confirm Transcript Type and Years</strong>Confirm what records are needed: Wage and Income, Account, Return, Record of Account, or other records.</div>
+          <div class="mini"><strong>6. Pull in PitBullTax</strong>Only pull once payment, authorization, identity, transcript type, and tax years are complete.</div>
+          <div class="mini"><strong>7. Review and Deliver</strong>Enter pull date, received date, delivery method, delivery date, and final notes.</div>
+          <div class="mini"><strong>8. Complete the Request</strong>Once delivered, the request moves out of open work and into Completed Transcript Requests.</div>
+        </div>
+
+        <div class="notice" style="margin-top:12px;">
+          Automation plan: Stripe payment verification first, then authorization follow-up, then PitBullTax monitoring alerts, then client alert emails. Human review stays required before explaining IRS activity to the client.
+        </div>
+      </details>
+    </div>
+
+    <div class="panel" style="margin-bottom:14px;border:2px solid #047857;">
+      <details>
+        <summary style="cursor:pointer;font-size:18px;font-weight:950;color:#047857;">
+          PitBullTax Purchase Readiness Checklist
+        </summary>
+
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+          <div class="mini"><strong>1. Estimate Page Purchase Works</strong>Client can click Purchase IRS Transcript Help - $150 and reach Stripe.</div>
+          <div class="mini"><strong>2. Request Saves Before Payment</strong>Transcript request appears in the tracker even before payment is manually verified.</div>
+          <div class="mini"><strong>3. Client Issue Shows</strong>The customer explanation appears in the Client Issue column.</div>
+          <div class="mini"><strong>4. Focused Client Mode Works</strong>When editing one client, only that client shows.</div>
+          <div class="mini"><strong>5. Email to Client Works</strong>Open Email to Client opens Gmail with the client email, subject, and authorization message.</div>
+          <div class="mini"><strong>6. 8821 Sent Tracking Works</strong>Email action fills 8821 Sent, Sent Date, and Signing Method.</div>
+          <div class="mini"><strong>7. 8821 Received Tracking Works</strong>Signed / Received status, received date, file location, and authorization notes save.</div>
+          <div class="mini"><strong>8. Identity Verification Works</strong>Identity Verified and Identity Verified Date save.</div>
+          <div class="mini"><strong>9. Ready to Pull Rule Works</strong>Only complete requests become Ready to Pull.</div>
+          <div class="mini"><strong>10. Completed Workflow Works</strong>Delivery Date removes the request from open work and moves it to Completed.</div>
+        </div>
+
+        <div class="notice" style="margin-top:12px;">
+          Purchase rule: buy PitBullTax only after one full test client goes from purchase request to email, 8821 sent, payment verified, 8821 received, identity verified, ready to pull, delivered, and completed.
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <div class="stats">
+        <span class="pill" id="countOpen">Open: 0</span>
+        <span class="pill" id="countReady">Ready to Pull: 0</span>
+        <span class="pill" id="countNeed8821">Need 8821: 0</span>
+        <button class="btn secondary" id="toggleCompletedBtn" onclick="toggleCompleted()">Show Completed</button>
+      </div>
+
+      <div class="header">
+        <div>Client</div>
+        <div>Client Issue</div>
+        <div>Payment / 8821</div>
+        <div>Type / Years</div>
+        <div>Pull / Delivery</div>
+        <div>Action</div>
+      </div>
+
+      <div id="rows"></div>
+    </div>
+  </div>
+
+<script>
+let showCompleted=false;
+let focusedTranscriptLeadId="";
+
+function toggleCompleted(){
+  showCompleted=!showCompleted;
+  focusedTranscriptLeadId="";
+  load();
+}
+
+function focusTranscriptClient(id){
+  focusedTranscriptLeadId=String(id||"");
+  load().then(()=>{
+    const d=document.getElementById(`edit-${focusedTranscriptLeadId}`);
+    if(d){
+      d.open=true;
+      d.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  });
+}
+
+function backToTranscriptList(){
+  focusedTranscriptLeadId="";
+  load();
+}
+function esc(v){return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+function isTranscriptLead(lead){
+  const status=String(lead.status||"");
+  const notes=String(lead.notes||"").toLowerCase();
+  return status.startsWith("Transcript Help -") || notes.includes("irs transcript") || notes.includes("transcript help") || Boolean(lead.transcriptRequest&&lead.transcriptRequest.requested);
+}
+function leadTime(lead){
+  const m=String(lead.leadId||"").match(/LEAD-(\d+)/i);
+  if(m) return Number(m[1]);
+  const t=Date.parse(String(lead.timestamp||lead.submittedAt||lead.createdAt||lead.updatedAt||""));
+  return Number.isFinite(t)?t:0;
+}
+function pill(text,good){return `<span class="status ${good?'good':'need'}">${esc(text)}</span>`;}
+function pay(lead){
+  const tr=lead.transcriptRequest||{};
+  const status=String(lead.status||"");
+  const p=String(tr.paymentStatus||"").toLowerCase();
+  if(status.includes("Paid")||p.includes("paid")||p.includes("verified")) return {text:"Paid / Verified",good:true};
+  return {text:"Need Payment",good:false};
+}
+function auth(lead){
+  const tr=lead.transcriptRequest||{};
+  const a=String(tr.authorizationStatus||"").toLowerCase();
+  if(tr.authorizationReceivedDate||a.includes("received")||a.includes("signed")||a.includes("uploaded")) return {text:tr.authorizationReceivedDate?`8821 Received ${tr.authorizationReceivedDate}`:"8821 Received",good:true};
+  if(a.includes("sent")) return {text:"8821 Sent",good:false};
+  return {text:"Need 8821",good:false};
+}
+function pull(lead){
+  const tr=lead.transcriptRequest||{};
+  if(tr.transcriptReceivedDate) return {text:`Received ${tr.transcriptReceivedDate}`,good:true};
+  if(tr.transcriptPulledDate) return {text:`Pulled ${tr.transcriptPulledDate}`,good:true};
+  return {text:"Not Pulled",good:false};
+}
+function deliv(lead){
+  const tr=lead.transcriptRequest||{};
+  if(tr.deliveryDate) return {text:`Delivered ${tr.deliveryDate}`,good:true};
+  if(tr.deliveryMethod) return {text:`Delivery: ${tr.deliveryMethod}`,good:false};
+  return {text:"Not Delivered",good:false};
+}
+function getType(lead){return (lead.transcriptRequest||{}).transcriptType || "Need type";}
+function getYears(lead){const tr=lead.transcriptRequest||{};return tr.yearsNeeded||tr.taxYears||lead?.taxData?.taxYear||lead?.estimateSummary?.taxYear||lead?.estimateSummary?.meta?.taxYear||"Need years";}
+function getIssue(lead){const tr=lead.transcriptRequest||{};return tr.clientIssue||tr.clientComment||tr.clientExplanation||tr.issueType||"Review request";}
+function nextAction(lead){
+  const tr=lead.transcriptRequest||{};
+  const p=pay(lead);
+
+  const authText=String(tr.authorizationStatus||"").toLowerCase();
+  const hasReceived8821=Boolean(tr.authorizationReceivedDate) ||
+    authText.includes("signed") ||
+    authText.includes("received") ||
+    authText.includes("uploaded");
+
+  const identityYes=String(tr.identityVerified||"").toLowerCase()==="yes";
+  const transcriptType=String(getType(lead)||"").toLowerCase();
+  const years=String(getYears(lead)||"").toLowerCase();
+
+  if(!p.good) return {text:"Next: Verify payment",good:false};
+
+  if(!hasReceived8821){
+    if(authText.includes("sent")) return {text:"Next: Get signed 8821",good:false};
+    return {text:"Next: Send 8821",good:false};
+  }
+
+  if(!tr.authorizationReceivedDate){
+    return {text:"Next: Enter 8821 received date",good:false};
+  }
+
+  if(!identityYes) return {text:"Next: Verify identity",good:false};
+
+  if(!tr.identityVerifiedDate){
+    return {text:"Next: Enter identity verified date",good:false};
+  }
+
+  if(!transcriptType || transcriptType.includes("need") || transcriptType.includes("not sure")){
+    return {text:"Next: Select transcript type",good:false};
+  }
+
+  if(!years || years.includes("need")){
+    return {text:"Next: Enter tax years",good:false};
+  }
+
+  if(!tr.transcriptPulledDate) return {text:"Next: Pull in PitBullTax",good:true};
+  if(!tr.transcriptReceivedDate) return {text:"Next: Record transcript received",good:false};
+  if(!tr.deliveryDate) return {text:"Next: Deliver to client",good:false};
+
+  return {text:"Ready to complete",good:true};
+}
+
+function field(label,html){return `<label><span>${esc(label)}</span>${html}</label>`;}
+function input(id,value,type="text"){return `<input id="${id}" type="${type}" value="${esc(value||"")}">`;}
+function select(id,current,opts){return `<select id="${id}">${opts.map(o=>`<option value="${esc(o)}"${String(o)===String(current)?" selected":""}>${esc(o)}</option>`).join("")}</select>`;}
+function area(id,value){return `<textarea id="${id}">${esc(value||"")}</textarea>`;}
+
+async function load(){
+  const res=await fetch("/api/leads");
+  const data=await res.json();
+  const all=Array.isArray(data)?data:(Array.isArray(data.leads)?data.leads:[]);
+  const transcriptRows=all.filter(isTranscriptLead);
+  const openRows=transcriptRows.filter(l=>String(l.status||"")!=="Transcript Help - Completed");
+  const completedRows=transcriptRows.filter(l=>String(l.status||"")==="Transcript Help - Completed");
+  const rows=(showCompleted?completedRows:openRows).sort((a,b)=>leadTime(b)-leadTime(a));
+
+  document.getElementById("countOpen").textContent=`Open: ${openRows.length}`;
+  document.getElementById("countReady").textContent=`Ready to Pull: ${openRows.filter(l=>nextAction(l).text==="Next: Pull in PitBullTax").length}`;
+  document.getElementById("countNeed8821").textContent=`Need 8821: ${openRows.filter(l=>!auth(l).good).length}`;
+
+  const toggleBtn=document.getElementById("toggleCompletedBtn");
+  if(toggleBtn){
+    toggleBtn.textContent=showCompleted?`Show Open (${openRows.length})`:`Show Completed (${completedRows.length})`;
+  }
+
+  const displayRows=focusedTranscriptLeadId
+    ? rows.filter(l=>String(l.leadId||"")===String(focusedTranscriptLeadId))
+    : rows;
+
+  if(focusedTranscriptLeadId && !displayRows.length){
+    focusedTranscriptLeadId="";
+    return load();
+  }
+
+  const rowsEl=document.getElementById("rows");
+
+  rowsEl.innerHTML=(focusedTranscriptLeadId ? `
+    <div style="background:#fff7ed;border:2px solid #f59e0b;border-radius:16px;padding:12px 14px;margin:12px 0;font-weight:900;color:#7c2d12;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div>
+        Focused Client Mode: showing only the selected transcript client.
+        <div style="font-size:12px;color:#92400e;margin-top:3px;">Use this mode when editing one client so the rest of the list does not distract you.</div>
+      </div>
+      <button class="btn secondary" onclick="backToTranscriptList()">Back to Transcript Requests</button>
+    </div>
+  ` : "") + displayRows.map(lead=>{
+    const tr=lead.transcriptRequest||{};
+    const p=pay(lead), a=auth(lead), pu=pull(lead), d=deliv(lead);
+    const id=lead.leadId;
+    return `<div class="row">
+      <div><div class="name">${esc(lead?.contact?.name||"Unknown")}</div><div class="small">${esc(lead?.contact?.email||"No email")}</div><div class="small">${esc(id)}</div></div>
+      <div class="small">${esc(getIssue(lead))}</div>
+      <div>${pill(p.text,p.good)}${pill(a.text,a.good)}</div>
+      <div><strong>${esc(getType(lead))}</strong><div class="small">Years: ${esc(getYears(lead))}</div></div>
+      <div>${pill(nextAction(lead).text,nextAction(lead).good)}<div style="height:4px"></div>${pill(pu.text,pu.good)}${pill(d.text,d.good)}</div>
+      <div><button class="btn" onclick="focusTranscriptClient('${esc(id)}')">Edit</button></div>
+      <details id="edit-${esc(id)}" ${focusedTranscriptLeadId===String(id)?"open":""}>
+        <summary>Transcript Service Checklist - ${esc(lead?.contact?.name||"Client")}</summary>
+        <div class="grid">
+          ${field("Payment Status",select(`pay-${id}`,tr.paymentStatus||"",["Need Payment","Payment Pending","Paid / Verified"]))}
+          ${field("Form 8821 Status",select(`auth-${id}`,tr.authorizationStatus||"",["Need 8821","8821 Sent","8821 Signed / Received"]))}
+          ${field("8821 Signing Method",select(`signmethod-${id}`,tr.signingMethod||"",["Not selected","Secure e-sign link","Attached PDF","In person","Mailed","PitBullTax authorization workflow"]))}
+          ${field("8821 Sent Date",input(`authsent-${id}`,tr.authorizationSentDate||"","date"))}
+          ${field("Form 8821 Received Date",input(`authdate-${id}`,tr.authorizationReceivedDate||"","date"))}
+          ${field("Signed 8821 Storage / File Location",input(`authfile-${id}`,tr.authorizationFileLocation||""))}
+          ${field("IRS / CAF Authorization Status",select(`cafstatus-${id}`,tr.cafAuthorizationStatus||"",["Not submitted / not checked","Submitted / pending","Accepted / active","Rejected / needs correction","Not required for current step"]))}
+          ${field("Identity Verified",select(`idv-${id}`,tr.identityVerified||"",["No","Yes"]))}
+          ${field("Identity Verified Date",input(`iddate-${id}`,tr.identityVerifiedDate||"","date"))}
+          ${field("Transcript Type",select(`type-${id}`,tr.transcriptType||"",["Not sure / preparer review needed","Wage and Income Transcript","Account Transcript","Return Transcript","Record of Account","Verification of Non-Filing","Multiple transcript types"]))}
+          ${field("Tax Years Needed",input(`years-${id}`,tr.yearsNeeded||tr.taxYears||""))}
+          ${field("Client Issue / Reason",input(`issue-${id}`,tr.clientIssue||tr.clientComment||""))}
+          ${field("PitBullTax Pull Date",input(`pulled-${id}`,tr.transcriptPulledDate||"","date"))}
+          ${field("Transcript Received Date",input(`received-${id}`,tr.transcriptReceivedDate||"","date"))}
+          ${field("Delivery Method",select(`method-${id}`,tr.deliveryMethod||"",["Not delivered yet","Email","Client portal","Mail","Certified mail","In-person pickup"]))}
+          ${field("Delivery Date",input(`deldate-${id}`,tr.deliveryDate||"","date"))}
+          ${field("Delivery Fee",input(`fee-${id}`,tr.deliveryFee||""))}
+          ${field("Internal Status",select(`internal-${id}`,tr.internalStatus||"",["Open","Waiting on payment","Waiting on 8821","Waiting on transcript type","Ready to pull","Pulled / waiting review","Delivered / ready to complete","Completed"]))}
+        </div>
+        <div style="margin-top:10px;">${field("Form 8821 / Authorization Notes",area(`authnotes-${id}`,tr.authorizationNotes||""))}</div>
+        <div style="margin-top:10px;">${field("Internal Transcript Notes",area(`notes-${id}`,tr.internalNotes||""))}</div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn" onclick="save('${esc(id)}')">Save Transcript Checklist</button>
+          <button class="btn secondary" onclick="openAuthorizationEmail('${esc(id)}','${esc(lead?.contact?.email||"")}','${esc(lead?.contact?.name||"Client")}', this)">Open Email to Client</button>
+          <span class="msg" id="msg-${esc(id)}"></span>
+        </div>
+      </details>
+    </div>`;
+  }).join("") || `<div style="padding:14px 0;color:#64748b;font-weight:850;">${showCompleted?"No completed transcript requests found.":"No open transcript requests found."}</div>`;
+}
+
+function copyAuthorizationMessage(id,btn){
+  const text=buildAuthorizationMessage(id,"");
+
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn){
+      const oldText=btn.textContent;
+      btn.textContent="Copied 8821 Message";
+      setTimeout(()=>{btn.textContent=oldText;},1800);
+    }
+  }).catch(()=>{
+    alert(text);
+  });
+}
+
+function buildAuthorizationMessage(id,clientName){
+  const payment=document.getElementById(`pay-${id}`)?.value || "Need Payment";
+  const authStatus=document.getElementById(`auth-${id}`)?.value || "Need 8821";
+  const identity=document.getElementById(`idv-${id}`)?.value || "No";
+  const transcriptType=document.getElementById(`type-${id}`)?.value || "Not sure / preparer review needed";
+  const years=document.getElementById(`years-${id}`)?.value || "Not entered yet";
+  const issue=document.getElementById(`issue-${id}`)?.value || "your IRS transcript request";
+  const name=clientName && clientName !== "Client" ? clientName : "";
+
+  return [
+    name ? "Hello " + name + "," : "Hello,",
+    "",
+    "Thank you for requesting IRS Transcript Help from Greatest Business Solution LLC.",
+    "",
+    "We received your transcript-help request regarding: " + issue,
+    "",
+    "This email is about the authorization step needed before our office can access or review IRS transcript information.",
+    "",
+    "Please look for this subject line if you need to find this message again:",
+    "Greatest Business Solution LLC - IRS Transcript Authorization Form Needed",
+    "",
+    "Current status:",
+    "- Payment status: " + payment,
+    "- IRS Form 8821 authorization status: " + authStatus,
+    "- Identity verification status: " + identity,
+    "- Transcript type: " + transcriptType,
+    "- Tax year(s): " + years,
+    "",
+    "Important: Payment by itself does not authorize access to IRS records. We must receive the required IRS authorization, generally Form 8821, and verify the required client information before any transcript can be requested or reviewed.",
+    "",
+    "Next step: Please complete and return the authorization information requested by our office. You may receive a secure signing link or a prepared Form 8821 attachment from our office. Please do not email your full SSN or sensitive identity documents unless we provide a secure upload or signing method. Once payment, authorization, identity verification, transcript type, and tax year information are complete, we can continue with the transcript request.",
+    "",
+    "Thank you,",
+    "Greatest Business Solution LLC"
+  ].join("\n");
+}
+
+function openAuthorizationEmail(id,email,clientName,btn){
+  const cleanEmail=String(email||"").trim();
+  if(!cleanEmail || cleanEmail==="No email"){
+    alert("No client email address is on file for this transcript request.");
+    return;
+  }
+
+  const authStatusEl=document.getElementById(`auth-${id}`);
+  if(authStatusEl && authStatusEl.value !== "8821 Signed / Received"){
+    authStatusEl.value="8821 Sent";
+  }
+
+  const sentDateEl=document.getElementById(`authsent-${id}`);
+  if(sentDateEl && !sentDateEl.value){
+    sentDateEl.value=new Date().toISOString().slice(0,10);
+  }
+
+  const signMethodEl=document.getElementById(`signmethod-${id}`);
+  if(signMethodEl && (!signMethodEl.value || signMethodEl.value === "Not selected")){
+    signMethodEl.value="Secure e-sign link";
+  }
+
+  const subject="Greatest Business Solution LLC - IRS Transcript Authorization Form Needed";
+  const body=buildAuthorizationMessage(id,clientName);
+
+  const gmailUrl=
+    "https://mail.google.com/mail/?view=cm&fs=1" +
+    "&to=" + encodeURIComponent(cleanEmail) +
+    "&su=" + encodeURIComponent(subject) +
+    "&body=" + encodeURIComponent(body);
+
+  window.open(gmailUrl,"_blank");
+
+  if(btn){
+    const oldText=btn.textContent;
+    btn.textContent="Email Opened";
+    setTimeout(()=>{btn.textContent=oldText;},1800);
+  }
+}
+
+async function save(id){
+  const transcriptRequest={
+    requested:true,
+    paymentStatus:document.getElementById(`pay-${id}`).value,
+    authorizationStatus:document.getElementById(`auth-${id}`).value,
+    signingMethod:document.getElementById(`signmethod-${id}`)?.value || "",
+    authorizationSentDate:document.getElementById(`authsent-${id}`)?.value || "",
+    authorizationReceivedDate:document.getElementById(`authdate-${id}`)?.value || "",
+    authorizationFileLocation:document.getElementById(`authfile-${id}`)?.value || "",
+    cafAuthorizationStatus:document.getElementById(`cafstatus-${id}`)?.value || "",
+    authorizationNotes:document.getElementById(`authnotes-${id}`)?.value || "",
+    identityVerified:document.getElementById(`idv-${id}`).value,
+    identityVerifiedDate:document.getElementById(`iddate-${id}`)?.value || "",
+    transcriptType:document.getElementById(`type-${id}`).value,
+    yearsNeeded:document.getElementById(`years-${id}`).value,
+    clientIssue:document.getElementById(`issue-${id}`).value,
+    transcriptPulledDate:document.getElementById(`pulled-${id}`).value,
+    transcriptReceivedDate:document.getElementById(`received-${id}`).value,
+    deliveryMethod:document.getElementById(`method-${id}`).value,
+    deliveryDate:document.getElementById(`deldate-${id}`).value,
+    deliveryFee:document.getElementById(`fee-${id}`).value,
+    internalStatus:document.getElementById(`internal-${id}`).value,
+    internalNotes:document.getElementById(`notes-${id}`).value,
+    lastSavedAt:new Date().toISOString()
+  };
+
+  let status="Transcript Help - Payment Pending";
+  if(transcriptRequest.paymentStatus==="Paid / Verified") status="Transcript Help - Paid / Needs Review";
+  if(transcriptRequest.internalStatus==="Completed"||transcriptRequest.deliveryDate) status="Transcript Help - Completed";
+
+  const res=await fetch(`/api/leads/${encodeURIComponent(id)}`,{
+    method:"PATCH",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({status,transcriptRequest})
+  });
+
+  const msg=document.getElementById(`msg-${id}`);
+  if(res.ok){
+    msg.textContent="Saved.";
+    setTimeout(()=>{msg.textContent=""; load().then(()=>{ const d=document.getElementById(`edit-${id}`); if(d){ d.open=true; d.scrollIntoView({behavior:"smooth",block:"center"}); } }); },900);
+  }else{
+    msg.textContent="Save failed.";
+  }
+}
+
+load();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script id="PITBULLTAX-READINESS-CHECKBOXES">
+(function(){
+  function installReadinessCheckboxes(){
+    const summaries=Array.from(document.querySelectorAll("summary"));
+    const summary=summaries.find(s => (s.textContent || "").includes("PitBullTax Purchase Readiness Checklist"));
+    if(!summary) return;
+
+    const details=summary.closest("details");
+    if(!details) return;
+
+    const items=Array.from(details.querySelectorAll(".mini"));
+    if(!items.length) return;
+
+    items.forEach((item,index)=>{
+      if(item.dataset.readinessCheckboxInstalled==="true") return;
+      item.dataset.readinessCheckboxInstalled="true";
+
+      const itemNumber=index+1;
+      const key="pitbulltax-readiness-item-" + itemNumber;
+      const checked=localStorage.getItem(key)==="done";
+
+      const box=document.createElement("label");
+      box.style.cssText="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;background:#ecfdf5;border:1px solid #86efac;border-radius:10px;padding:7px 9px;color:#047857;font-size:13px;font-weight:950;cursor:pointer;";
+      box.innerHTML='<input type="checkbox" style="margin-top:2px;transform:scale(1.15);" ' + (checked ? "checked" : "") + '> <span>Done - only check when Cedric confirms this step is complete</span>';
+
+      const input=box.querySelector("input");
+      input.addEventListener("change",function(){
+        if(input.checked){
+          localStorage.setItem(key,"done");
+          item.style.borderColor="#86efac";
+          item.style.background="#f0fdf4";
+        }else{
+          localStorage.removeItem(key);
+          item.style.borderColor="";
+          item.style.background="";
+        }
+      });
+
+      if(checked){
+        item.style.borderColor="#86efac";
+        item.style.background="#f0fdf4";
+      }
+
+      item.prepend(box);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded",installReadinessCheckboxes);
+  setTimeout(installReadinessCheckboxes,500);
+})();
+</script>
+
+

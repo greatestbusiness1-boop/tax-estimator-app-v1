@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tax Estimator Portal — Greatest Business Solution LLC</title>
+  <title>Tax Estimator Portal - Greatest Business Solution LLC</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
@@ -60,9 +60,9 @@
 
   <main class="main-content">
 
-    <!-- ══════════════════════════════════
-         SCREEN 1 — WELCOME
-    ══════════════════════════════════ -->
+    <!-- â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-
+         SCREEN 1 - WELCOME
+    â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â- -->
     <section class="screen active" id="screen-welcome">
 
       <div class="welcome-hero-section">
@@ -234,9 +234,9 @@
 
     </section>
 
-    <!-- ══════════════════════════════════
-         SCREEN 2 — FORM
-    ══════════════════════════════════ -->
+    <!-- â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-
+         SCREEN 2 - FORM
+    â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â- -->
     <section class="screen" id="screen-form">
       <div class="form-wrap">
 
@@ -280,7 +280,7 @@
                   <label class="field-label" for="filingStatus">Filing Status <span class="req-star">*</span></label>
                   <div class="select-wrap">
                     <select id="filingStatus" name="filingStatus" required>
-                      <option value="">— Select —</option>
+                      <option value="">- Select -</option>
                       <option value="single">Single</option>
                       <option value="mfj">Married Filing Jointly</option>
                       <option value="mfs">Married Filing Separately</option>
@@ -332,7 +332,7 @@
                   <label class="field-label" for="stateCode">State of Residence <span class="req-star">*</span></label>
                   <div class="select-wrap">
                     <select id="stateCode" name="stateCode" required>
-                      <option value="">— Select your state —</option>
+                      <option value="">- Select your state -</option>
                       <optgroup label="No Income Tax">
                         <option value="AK">Alaska</option>
                         <option value="FL">Florida</option>
@@ -477,7 +477,7 @@
             <div class="form-section-head">
               <div class="section-icon purple-icon">&#x1F4BC;</div>
               <div class="section-head-text">
-                <div class="section-title">Section D — Self-Employment</div>
+                <div class="section-title">Section D - Self-Employment</div>
                 <div class="section-subtitle">1099 income, side gigs, and business activity</div>
               </div>
             </div>
@@ -538,9 +538,9 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         SCREEN 3 — RESULTS
-    ══════════════════════════════════ -->
+    <!-- â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-
+         SCREEN 3 - RESULTS
+    â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â- -->
     <section class="screen" id="screen-results">
       <div class="results-wrap">
 
@@ -570,7 +570,7 @@
             <div class="confidence-desc" id="confidenceDesc"></div>
           </div>
         </div>
-        <!-- 🔥 Tax Pro Insight Banner -->
+        <!-- ðŸ"¥ Tax Pro Insight Banner -->
         <div id="taxProInsightBanner" style="margin-top:16px;"></div>
 
         <!-- Breakdown -->
@@ -594,7 +594,7 @@
           <div class="breakdown-card combined-card">
             <div class="breakdown-header">
               <div class="breakdown-flag">&#x1F4CA;</div>
-              <div class="breakdown-type">Combined Total</div>
+              <div class="breakdown-type">Combined Total</div><div id="combinedTaxYearLine" style="margin-top:4px;font-size:12px;font-weight:900;color:#475569;">Tax Year</div>
             </div>
             <ul class="breakdown-rows" id="combinedRows"></ul>
             <div class="breakdown-total combined-total" id="combinedTotal"></div>
@@ -615,20 +615,29 @@
           </div>
         </div>
 
-        <!-- Key Drivers -->
+        <!-- Paid Review Upsell - Key Drivers Hidden From Free Estimate -->
         <div class="results-section">
           <div class="results-section-header">
-            <div class="results-section-icon icon-teal">&#x1F527;</div>
+            <div class="results-section-icon icon-teal">&#x1F512;</div>
             <div>
-              <div class="results-section-title">Key Drivers of This Estimate</div>
-              <div class="results-section-sub">The main factors that shaped your result</div>
+              <div class="results-section-title">Want to Know What Is Driving This Estimate?</div>
+              <div class="results-section-sub">The free estimate shows your estimated result. The paid review explains the key reasons behind it.</div>
             </div>
           </div>
           <div class="results-section-body">
-            <div class="drivers-grid" id="driversGrid"></div>
+            <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:16px;line-height:1.55;">
+              <p style="margin:0 0 10px 0;font-weight:800;color:#0f172a;">
+                Your free estimate gives you a general refund or balance due estimate based on the information entered.
+              </p>
+              <p style="margin:0 0 12px 0;color:#475569;">
+                A <strong>Written Estimate Red Flag Review</strong> explains the key drivers behind the result, possible withholding issues, credit or dependent concerns, state tax impact, and recommended next steps before filing.
+              </p>
+              <button type="button" class="btn-primary" onclick="openPaidReview()">
+                Get Written Red Flag Review - $29
+              </button>
+            </div>
           </div>
         </div>
-
         <!-- What Could Change -->
         <div class="results-section">
           <div class="results-section-header">
@@ -657,9 +666,9 @@
           </div>
         </div>
 
-        <!-- ══════════════════════════════════
+        <!-- â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-
              LEAD CAPTURE SECTION
-        ══════════════════════════════════ -->
+        â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â-â- -->
         <div class="lead-section" id="leadSection">
           <div class="lead-inner">
 
@@ -772,7 +781,7 @@
           <div class="cta-actions">
             <button class="btn-cta-primary" onclick="scrollToLead()">Request Free Tax Pro Follow-Up</button>
             <button class="btn-cta-secondary" onclick="openPaidReview()">
-              Buy Written Estimate Review — $29
+              Buy Written Estimate Review - $29
             </button>
           </div>
         </div>
@@ -852,3 +861,5 @@
 </body>
 
 </html>
+
+

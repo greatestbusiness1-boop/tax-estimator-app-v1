@@ -279,16 +279,7 @@ const TAX_RULES = {
 // CONFIG ACCESSOR
 // =============================================================================
 
-function getRules(taxYear) {
-  const rules = TAX_RULES[taxYear];
-  if (!rules) {
-    throw new Error(
-      `federalEngine: No rules found for tax year ${taxYear}. ` +
-      `Supported years: ${Object.keys(TAX_RULES).join(", ")}.`
-    );
-  }
-  return rules;
-}
+function getRules(taxYear) { const requestedYear = Number(taxYear); const rules = TAX_RULES[requestedYear] || (requestedYear >= 2025 ? TAX_RULES[2024] : null); if (!rules) { throw new Error(`federalEngine: No rules found for tax year ${taxYear}. Supported years: ${Object.keys(TAX_RULES).join(", ")}.`); } return rules; }
 
 // =============================================================================
 // HELPERS

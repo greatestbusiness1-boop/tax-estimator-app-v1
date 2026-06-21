@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -535,12 +535,6 @@
       transform: translateX(2px);
     }
 
-    .sidebar-btn.active-sidebar-btn::before {
-      content: "? ";
-      color: #92400e;
-      font-weight: 950;
-    }
-
     .sidebar-btn.active-sidebar-btn:hover {
       background: #ffffff !important;
       color: #0f2c56 !important;
@@ -583,11 +577,19 @@
         border-bottom: none;
       }
     }
-  </style>
+    /* Transcript visibility freeze - hides Transcript UI without deleting logic */
+    body:not(.show-transcripts) .sidebar-btn[data-view^="Transcript"],
+    body:not(.show-transcripts) #transcriptHelpGuidance,
+    body:not(.show-transcripts) #focusedTranscriptFileHeader,
+    body:not(.show-transcripts) .summary:has(#queueTranscriptHelp),
+    body:not(.show-transcripts) option[value="TranscriptHelp"] {
+      display: none !important;
+    }</style>
 </head>
 
 
-<body>
+<body class="show-transcripts">
+<!-- SHOW-TRANSCRIPT-MODULE-NOW -->
   <aside class="dashboard-sidebar">
     <div class="dashboard-sidebar-title">Tax Lead Center</div>
     <div class="dashboard-sidebar-subtitle">
@@ -630,7 +632,7 @@
     </button>
     <button class="sidebar-btn" data-view="StrategyReview"
       onclick="setDashboardFilters({ status: 'All', action: 'StrategyReview', search: '' })">
-      Strategy Reviews
+      Written Review Requests
     </button>
 
         <button class="sidebar-btn" data-view="Follow-up Needed"
@@ -654,39 +656,39 @@
       Closed Leads
     </button>
 
-<div style="width:100%;box-sizing:border-box;text-align:center;margin:12px 0 7px;border-radius:12px;padding:9px 10px;font-size:12px;font-weight:950;border:2px solid #92400e;background:#f59e0b;color:#111827;box-shadow:0 6px 14px rgba(245,158,11,0.24);text-transform:uppercase;letter-spacing:.45px;">Transcript Center</div>
+
     <button class="sidebar-btn" data-view="TranscriptHelp"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })">
+      onclick="window.location.href='/transcript-requests'">
       Transcript Requests <span id="sidebarTranscriptHelpCount"
         style="float:right;background:#38bdf8;color:#0f172a;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptWaitingPayment"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingPayment', transcriptStage: 'WaitingPayment' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '', sidebarView: 'TranscriptWaitingPayment', transcriptStage: 'WaitingPayment' })"
       style="font-size:11px;padding-left:18px;">
       Waiting Payment
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptWaitingAuthorization"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptWaitingAuthorization' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '', sidebarView: 'TranscriptWaitingAuthorization' })"
       style="font-size:11px;padding-left:18px;">
       Waiting Authorization
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptNeedType"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptNeedType' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '', sidebarView: 'TranscriptNeedType' })"
       style="font-size:11px;padding-left:18px;">
       Need Transcript Type
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptReadyToPull"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptReadyToPull' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '', sidebarView: 'TranscriptReadyToPull' })"
       style="font-size:11px;padding-left:18px;">
       Ready to Pull
     </button>
 
     <button class="sidebar-btn" data-view="TranscriptErrors"
-      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', sidebarView: 'TranscriptErrors' })"
+      onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '', sidebarView: 'TranscriptErrors' })"
       style="font-size:11px;padding-left:18px;">
       Errors
     </button>
@@ -705,7 +707,7 @@
 
     <div class="sidebar-mini-stats">
       <div class="sidebar-mini-stat">
-        <strong>Strategy Reviews</strong>
+        <strong>Written Review Requests</strong>
         <span id="statStrategyReviews">0</span>
       </div>
       <div class="sidebar-mini-stat">
@@ -764,9 +766,7 @@
         style="background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 8px 18px rgba(15,44,86,0.05);display:grid;grid-template-columns:1.1fr 0.8fr 1.25fr 1.4fr;gap:10px;align-items:end;">
         <div>
           <label id="leadFilterLabel" for="leadFilter"
-            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
-            Filter Leads
-          </label>
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">Lead Status</label>
           <select id="leadFilter" onchange="loadLeads()" style="width:100%;">
             <option value="Active">Active Leads</option>
             <option value="All">All Leads</option>
@@ -798,16 +798,13 @@
 
         <div>
           <label id="actionQueueFilterLabel" for="actionQueueFilter"
-            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">
-            Action Queue
-          </label>
+            style="display:block;font-size:11px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;">Work Queue</label>
           <select id="actionQueueFilter" onchange="loadLeads()" style="width:100%;">
             <option value="All">All Actions</option>
             <option value="OfficeWorkQueue">Office Work Queue</option>
-            <option value="Refund">Refund Leads — Follow Up to File</option>
-            <option value="BalanceDue">Balance Due Leads — Schedule Review</option>
-            <option value="StrategyReview">Strategy Reviews</option>
-            <option value="TranscriptHelp">Transcript Requests</option>
+            <option value="Refund">Refund Leads - Follow Up to File</option>
+            <option value="BalanceDue">Balance Due Leads - Schedule Review</option>
+            <option value="StrategyReview">Written Review Requests</option>
             <option value="ReviewNeeded">Review Needed</option>
           </select>
         </div>
@@ -843,7 +840,7 @@
           <span id="queueFollowUp" style="color:#9a3412;">0</span>
         </div>
 
-        <div class="summary" onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '' })"
+        <div class="summary" onclick="focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' }); setTimeout(function(){ focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} loadLeads(); },150);"
           title="Click to view Transcript Help leads"
           style="background:linear-gradient(180deg,#ffffff 0%,#ecfeff 100%);border:2px solid #38bdf8;cursor:pointer;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
           <strong style="color:#0369a1;">Transcript Requests</strong><br>
@@ -861,7 +858,7 @@
 
       <div id="activeFiltersLine"
         style="background:#ffffff;border:1px solid #dbeafe;border-radius:12px;padding:7px 12px;margin-bottom:10px;color:#475569;font-size:12px;font-weight:800;box-shadow:0 6px 14px rgba(15,44,86,0.04);text-align:center;">
-        Showing: All Leads | Tax Year: All Years | Action Queue: All Actions
+        Showing: All Leads | Tax Year: All Years | Work Queue: All Actions
       </div>
 
     </div>
@@ -1028,9 +1025,9 @@
           </div>
 
           <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
-            <strong style="color:#7c2d12;">Strategy Review Option</strong>
+            <strong style="color:#7c2d12;">Written Review Option</strong>
             <div style="margin-top:6px;color:#52637a;font-size:13px;line-height:1.45;">
-              If they want written guidance, direct them to the $29 written tax strategy review workflow.
+              If they want written guidance, direct them to the $29 $29 Written Tax Estimate Review workflow.
             </div>
           </div>
 
@@ -1532,7 +1529,7 @@
 
           OfficeWorkQueue: {
             title: "Office Work Queue",
-            description: "Use this workspace as the daily office checklist. Review today’s estimate leads, open transcript requests, and open strategy reviews without hunting through full lead cards."
+            description: "Use this workspace as the daily office checklist. Review today's estimate leads, follow-up items without hunting through full lead cards."
           },
           Active: {
             title: "Active Leads Workspace",
@@ -1551,7 +1548,7 @@
             description: "These leads may owe federal or state tax. Use this view to guide them toward a review, written strategy, payment planning, or missing-information follow-up."
           },
           StrategyReview: {
-            title: "Strategy Reviews Workspace",
+            title: "Written Review Requests Workspace",
             description: "These leads are connected to the $29 Written Tax Estimate Review workflow. Use this view to manage written review requests, payment status, review preparation, and completed reviews."
           },
           TranscriptHelp: {
@@ -1617,7 +1614,7 @@
         const placeholders = {
           OfficeWorkQueue: "Search office work queue by name, email, phone, or Lead ID",
           TranscriptHelp: "Search transcript requests by name, email, phone, or Lead ID",
-          StrategyReview: "Search strategy reviews by name, email, phone, or Lead ID",
+          StrategyReview: "Search Written Review Requests by name, email, phone, or Lead ID",
           Refund: "Search refund leads by name, email, phone, or Lead ID",
           BalanceDue: "Search balance due reviews by name, email, phone, or Lead ID",
           "Follow-up Needed": "Search follow-up leads by name, email, phone, or Lead ID",
@@ -1707,7 +1704,40 @@
             throw new Error("Could not load leads.");
           }
 
-          const leads = data.leads || [];
+          // DASHBOARD-SORT-LEADS-AT-SOURCE
+          const getSubmittedLeadSortTime = (lead) => {
+            const leadIdMatch = String(lead?.leadId || "").match(/LEAD-(\d+)/i);
+            if (leadIdMatch) return Number(leadIdMatch[1]);
+
+            const values = [
+              lead?.timestamp,
+              lead?.submittedAt,
+              lead?.createdAt,
+              lead?.estimateSummary?.submittedAt,
+              lead?.estimateSummary?.timestamp,
+              lead?.estimateSummary?.createdAt,
+              lead?.taxData?.timestamp,
+              lead?.updatedAt,
+              lead?.lastUpdated
+            ];
+
+            for (const value of values) {
+              if (!value) continue;
+
+              if (typeof value === "number" && Number.isFinite(value)) {
+                return value;
+              }
+
+              const parsed = Date.parse(String(value));
+              if (Number.isFinite(parsed)) {
+                return parsed;
+              }
+            }
+
+            return 0;
+          };
+
+          const leads = [...(data.leads || [])].sort((a, b) => getSubmittedLeadSortTime(b) - getSubmittedLeadSortTime(a));
           const selectedFilter = document.getElementById("leadFilter")?.value || "Active";
           const selectedTaxYear = document.getElementById("taxYearFilter")?.value || "All";
           const selectedActionQueue = document.getElementById("actionQueueFilter")?.value || "All";
@@ -1715,15 +1745,20 @@
           const leadSearchEl = document.getElementById("leadSearch");
           const currentSearchView = selectedActionQueue !== "All" ? selectedActionQueue : selectedFilter;
 
+          const attentionQueueEl = document.getElementById("attentionQueue");
+          if (attentionQueueEl) {
+            attentionQueueEl.style.display = currentSearchView === "OfficeWorkQueue" ? "grid" : "none";
+          }
+
           if (leadSearchEl) {
             leadSearchEl.placeholder = getWorkspaceSearchPlaceholder(currentSearchView);
           }
           const actionQueueLabels = {
             OfficeWorkQueue: "Office Work Queue",
             All: "All Actions",
-            Refund: "Refund Leads — Follow Up to File",
-            BalanceDue: "Balance Due Leads — Schedule Review",
-            StrategyReview: "Strategy Reviews",
+            Refund: "Refund Leads - Follow Up to File",
+            BalanceDue: "Balance Due Leads - Schedule Review",
+            StrategyReview: "Written Review Requests",
             TranscriptHelp: "Transcript Requests",
             ReviewNeeded: "Review Needed"
           };
@@ -1758,7 +1793,7 @@
               activeFiltersLine.textContent =
                 `Showing: ${selectedFilter === "All" ? "All Leads" : selectedFilter === "Active" ? "Active Leads" : selectedFilter} | ` +
                 `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
-                `Action Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
+                `Work Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
                 `${searchText ? ` | Search: ${searchText}` : ""}`;
             }
           }
@@ -1776,8 +1811,8 @@
               "Contacted",
               "Booked",
               "Follow-up Needed",
-              "Strategy Review - Payment Pending",
-              "Strategy Review - Paid / Needs Written Review",
+              "Written Review - Payment Pending",
+              "Written Review - Paid / Needs Written Review",
               "Transcript Help - Payment Pending",
               "Transcript Help - Paid / Needs Review"
             ];
@@ -1837,8 +1872,8 @@
                     ? combinedNet < 0
                     : selectedActionQueue === "StrategyReview"
                       ? searchableText.includes("buy written review") ||
-                      searchableText.includes("get written $29 strategy review") ||
-                      status.startsWith("Strategy Review -")
+                      searchableText.includes("get written $29 Written Review") ||
+                      status.startsWith("Written Review -")
                       : selectedActionQueue === "TranscriptHelp"
                         ? Boolean(lead?.transcriptRequest?.requested) ||
                         searchableText.includes("requested irs transcript help") ||
@@ -1907,7 +1942,7 @@
 
                   <button
                     type="button"
-                    onclick="setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' })"
+                    onclick="focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' }); setTimeout(function(){ focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} loadLeads(); },150);"
                     style="background:#92400e;color:#ffffff;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                   >
                     Back to Transcript Requests
@@ -1915,7 +1950,7 @@
                 </div>
 
                 <div style="margin-top:8px;font-size:12px;font-weight:850;color:#78350f;line-height:1.35;">
-                  Focused transcript service file. Work only this client�s transcript request, tracking fields, work summary, notes, delivery, and privacy/removal request here.
+                  Focused transcript service file. Work only this clientï¿½s transcript request, tracking fields, work summary, notes, delivery, and privacy/removal request here.
                 </div>
               `;
             } else {
@@ -2006,8 +2041,8 @@
 
               return (
                 notesText.includes("buy written review") ||
-                notesText.includes("get written $29 strategy review") ||
-                statusText.startsWith("Strategy Review -")
+                notesText.includes("get written $29 Written Review") ||
+                statusText.startsWith("Written Review -")
               );
             }).length;
           document.getElementById("statConverted").textContent =
@@ -2183,8 +2218,8 @@
 
                 return (
                   notesText.includes("buy written review") ||
-                  notesText.includes("get written $29 strategy review") ||
-                  statusText.startsWith("Strategy Review -")
+                  notesText.includes("get written $29 Written Review") ||
+                  statusText.startsWith("Written Review -")
                 );
               };
 
@@ -2218,7 +2253,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', '${esc(taskType)}')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Done"}
+                    ${handled ? "- Handled" : "Mark Done"}
                   </button>
                   
                   <button
@@ -2245,7 +2280,7 @@
 
               const openStrategyReviews = openLeads
                 .filter(isStrategyReviewLead)
-                .filter(lead => String(lead.status || "") !== "Strategy Review - Completed");
+                .filter(lead => String(lead.status || "") !== "Written Review - Completed");
 
               const renderSection = (title, leadsForSection, label, targetAction) => `
               <details open style="margin-top:8px;">
@@ -2266,10 +2301,10 @@
               <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                 <div>
                   <div style="font-size:17px;font-weight:950;color:#0f2c56;">
-                    Today’s Office Work Queue
+                    Today's Office Work Queue
                   </div>
                   <div style="font-size:12px;color:#475569;font-weight:750;margin-top:2px;">
-                    Quick list of today’s new estimate leads and service requests.
+                    Quick list of today's new estimate leads and service requests.
                   </div>
                 </div>
 
@@ -2279,8 +2314,6 @@
               </div>
 
                             ${renderSection("Tax Estimate Leads Received Today", todaysTaxEstimateLeads, "Tax Estimate", lead => getLeadCombinedNet(lead) > 0 ? "Refund" : getLeadCombinedNet(lead) < 0 ? "BalanceDue" : "All")}
-              ${renderSection("Transcript Requests Needing Action", openTranscriptRequests, "Transcript Request", "TranscriptHelp")}
-              ${renderSection("Strategy Reviews Needing Action", openStrategyReviews, "Strategy Review", "StrategyReview")}
                         `;
             }
           }
@@ -2347,7 +2380,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Refund Leads Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Done"}
+                    ${handled ? "- Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2530,7 +2563,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Balance Due Reviews Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Done"}
+                    ${handled ? "- Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2581,14 +2614,14 @@
               const notesText = String(lead.notes || "").toLowerCase();
               const statusText = String(lead.status || "New");
 
-              const handled = isOfficeQueueHandled(lead.leadId, "Strategy Reviews Worklist");
+              const handled = isOfficeQueueHandled(lead.leadId, "Written Review Requests Worklist");
 
               const strategyStatusText =
-                statusText === "Strategy Review - Paid / Needs Written Review"
+                statusText === "Written Review - Paid / Needs Written Review"
                   ? "Paid / needs written review"
-                  : statusText === "Strategy Review - Completed"
+                  : statusText === "Written Review - Completed"
                     ? "Completed"
-                    : statusText === "Strategy Review - Payment Pending"
+                    : statusText === "Written Review - Payment Pending"
                       ? "Payment pending / not verified"
                       : "Requested / clicked";
 
@@ -2604,9 +2637,9 @@
               const latestStrategyAction =
                 notesText.includes("buy written review")
                   ? "Client clicked Buy Written Review"
-                  : notesText.includes("get written $29 strategy review")
-                    ? "Client requested $29 written strategy review"
-                    : "Strategy review request";
+                  : notesText.includes("get written $29 Written Review")
+                    ? "Client requested $29 written Written Review"
+                    : "Written Review request";
 
               return `
                 <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
@@ -2630,10 +2663,10 @@
 
                   <button
                     type="button"
-                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Strategy Reviews Worklist')"
+                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Written Review Requests Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Done"}
+                    ${handled ? "- Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -2652,7 +2685,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
                   <div>
                     <div style="font-size:20px;font-weight:950;color:#9a3412;">
-                      Strategy Reviews Worklist
+                      Written Review Requests Worklist
                     </div>
                     <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
                       $29 written tax estimate review requests only. Click Open to work one review.
@@ -2660,7 +2693,7 @@
                   </div>
 
                   <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 11px;">
-                    ${visibleLeads.length} strategy review${visibleLeads.length === 1 ? "" : "s"}
+                    ${visibleLeads.length} Written Review${visibleLeads.length === 1 ? "" : "s"}
                   </div>
                 </div>
 
@@ -2673,7 +2706,7 @@
                   <div>Action</div>
                 </div>
 
-                ${strategyRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No strategy review requests found.</div>`}
+                ${strategyRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No Written Review requests found.</div>`}
               </div>
             `;
             return;
@@ -2937,7 +2970,7 @@
                     onclick="copyPitBullTaxReadyList()"
                     style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
-                    📋 Copy Ready-to-Pull List
+                    ðŸ“‹ Copy Ready-to-Pull List
                   </button>
                 
                   <button
@@ -2945,7 +2978,7 @@
                     onclick="copyPitBullTaxPullInfo()"
                     style="background:#047857;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
-                    📋 Copy Pull Info Sheet
+                    ðŸ“‹ Copy Pull Info Sheet
                   </button>
 
                    <button
@@ -2953,7 +2986,7 @@
                     onclick="copyTranscriptMissingItemsList()"
                     style="background:#9a3412;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
-                    📋 Copy Missing Items List
+                    ðŸ“‹ Copy Missing Items List
                   </button>
                   
                                    <button
@@ -2961,7 +2994,7 @@
                     onclick="copyTranscriptReadinessReport()"
                     style="background:#312e81;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
-                    📋 Copy Pull Readiness Report
+                    ðŸ“‹ Copy Pull Readiness Report
                   </button>
                   </div>  
 
@@ -3215,7 +3248,7 @@
                     onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Transcript Requests Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
-                    ${handled ? "✓ Handled" : "Mark Done"}
+                    ${handled ? "- Handled" : "Mark Done"}
                   </button>
 
                   <button
@@ -3329,14 +3362,14 @@
 </div>
 
                   <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin-top:10px;font-size:13px;color:#334155;font-weight:750;line-height:1.45;">
-                    <div>✓ Cost per transcript request</div>
-                    <div>✓ Monthly minimum or subscription fee</div>
-                    <div>✓ Supported transcript types</div>
-                    <div>✓ Authorization / consent requirements</div>
-                    <div>✓ IRS transcript delivery method</div>
-                    <div>✓ Data security and storage policy</div>
-                    <div>✓ Export/download format and report naming</div>
-                    <div>✓ Cancellation terms and contract length</div>
+                    <div>- Cost per transcript request</div>
+                    <div>- Monthly minimum or subscription fee</div>
+                    <div>- Supported transcript types</div>
+                    <div>- Authorization / consent requirements</div>
+                    <div>- IRS transcript delivery method</div>
+                    <div>- Data security and storage policy</div>
+                    <div>- Export/download format and report naming</div>
+                    <div>- Cancellation terms and contract length</div>
                   </div>
 
                   <div style="margin-top:10px;font-size:13px;color:#312e81;font-weight:850;line-height:1.45;">
@@ -3357,7 +3390,6 @@
 
           container.innerHTML = visibleLeads
             .slice()
-            .reverse()
             .map((lead) => {
               const summary = lead.estimateSummary || {};
               const total = summary.totalLine || "No summary available";
@@ -3388,49 +3420,49 @@
 
                   return (
                     lowerLine.includes("buy written review") ||
-                    lowerLine.includes("get written $29 strategy review")
+                    lowerLine.includes("get written $29 Written Review")
                   );
                 }) ||
-                leadStatusForStrategy.startsWith("Strategy Review -");
+                leadStatusForStrategy.startsWith("Written Review -");
 
               const strategyReviewStatusText =
-                leadStatusForStrategy === "Strategy Review - Paid / Needs Written Review"
-                  ? "Paid — written review needed"
-                  : leadStatusForStrategy === "Strategy Review - Completed"
-                    ? "Completed — written review finished"
-                    : leadStatusForStrategy === "Strategy Review - Payment Pending"
-                      ? "Payment pending — not confirmed yet"
-                      : "Requested / Clicked — payment not confirmed yet";
+                leadStatusForStrategy === "Written Review - Paid / Needs Written Review"
+                  ? "Paid - written review needed"
+                  : leadStatusForStrategy === "Written Review - Completed"
+                    ? "Completed - written review finished"
+                    : leadStatusForStrategy === "Written Review - Payment Pending"
+                      ? "Payment pending - not confirmed yet"
+                      : "Requested / Clicked - payment not confirmed yet";
 
               const strategyReviewHtml = hasStrategyReviewRequest
                 ? `
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;${selectedActionQueue === "StrategyReview" ? "" : "display:none;"}">
-                    <strong style="color:#9a3412;">Strategy Review</strong><br>
+                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;">
+                    <strong style="color:#9a3412;">Written Review</strong><br>
                     <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
 
                     <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
                       <button
                         type="button"
-                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Payment Pending')"
+                        onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Payment Pending')"
                         style="background:#f59e0b;color:#111827;border:1px solid #92400e;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                       >
-                                                Set Payment Pending / Not Verified
+                                                No Payment Found Yet
                       </button>
 
                       <button
                         type="button"
-                        onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
+                        onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Paid / Needs Written Review')"
                         style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                       >
-                        Set Paid / Needs Review
+                        Payment Confirmed - Prepare Review
                       </button>
 
                       <button
                         type="button"
-                        onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
+                        onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Completed')"
                         style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                       >
-                        Set Completed
+                        Review Completed
                       </button>
                     </div>
 
@@ -3443,36 +3475,36 @@
                   : `
                       <details style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px 14px;margin:14px 0;">
                         <summary style="cursor:pointer;font-weight:950;color:#9a3412;font-size:14px;">
-                          Show Strategy Review Details
+                          Show Written Review Details
                         </summary>
 
                         <div style="margin-top:12px;background:#ffffff;border:1px solid #fed7aa;border-radius:12px;padding:12px;color:#7c2d12;font-weight:850;line-height:1.55;">
-                          <strong>Strategy Review</strong><br>
+                          <strong>Written Review</strong><br>
                           <span style="color:#7c2d12;font-weight:900;">${esc(strategyReviewStatusText)}</span>
 
                           <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;margin-top:12px;">
                             <button
                               type="button"
-                              onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Payment Pending')"
+                              onclick="setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Payment Pending')"
                               style="background:#f59e0b;color:#111827;border:1px solid #92400e;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                             >
-                              Set Payment Pending / Not Verified
+                              No Payment Found Yet
                             </button>
 
                             <button
                               type="button"
-                              onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Paid / Needs Written Review')"
+                              onclick="if (confirm('Confirm payment was received in Stripe? Only choose OK if payment has been verified.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Paid / Needs Written Review')"
                               style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                             >
-                              Set Paid / Needs Review
+                              Payment Confirmed - Prepare Review
                             </button>
 
                             <button
                               type="button"
-                              onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Strategy Review - Completed')"
+                              onclick="if (confirm('Mark this written review as completed? Only choose OK if the written review has already been prepared and delivered or saved.')) setLeadStatusChoice('${esc(lead.leadId)}', 'Written Review - Completed')"
                               style="background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:900;"
                             >
-                              Set Completed
+                              Review Completed
                             </button>
                           </div>
 
@@ -3501,12 +3533,12 @@
 
               const transcriptHelpStatusText =
                 status === "Transcript Help - Payment Pending"
-                  ? "Payment pending — not verified in Stripe yet"
+                  ? "Payment pending - not verified in Stripe yet"
                   : status === "Transcript Help - Paid / Needs Review"
-                    ? "Paid — transcript help review needed"
+                    ? "Paid - transcript help review needed"
                     : status === "Transcript Help - Completed"
-                      ? "Completed — transcript help finished"
-                      : "Follow-up needed — client requested IRS Transcript Help";
+                      ? "Completed - transcript help finished"
+                      : "Follow-up needed - client requested IRS Transcript Help";
 
               const clientTranscriptRequestLine = noteLines.find(line =>
                 line.toLowerCase().includes("client transcript request:")
@@ -3659,7 +3691,7 @@
 
               const transcriptAuthorizationOverview =
                 trackingAuthDate && trackingAuthDate !== "Not entered"
-                  ? `${cleanTrackingAuthStatus} — received ${trackingAuthDate}`
+                  ? `${cleanTrackingAuthStatus} - received ${trackingAuthDate}`
                   : cleanTrackingAuthStatus;
 
               const displayPulledDate = trackingPulledDate || "Not entered";
@@ -3863,19 +3895,19 @@
                 Boolean(transcriptRequest.transcriptPulledDate) ||
                 Boolean(transcriptRequest.transcriptReceivedDate);
 
-              const checklistPaymentMark = paymentLooksVerified ? "☑" : "☐";
-              const checklistAuthorizationMark = authorizationLooksReceived ? "☑" : "☐";
-              const checklistIdentityMark = authorizationLooksReceived ? "☑" : "☐";
-              const checklistTranscriptTypeMark = transcriptTypeLooksSelected ? "☑" : "☐";
-              const checklistTaxYearMark = getTranscriptTaxYearForLead(lead) !== "Review tax year" ? "☑" : "☐";
-              const checklistPulledMark = transcriptAlreadyPulled ? "☑" : "☐";
-              const checklistReportSavedMark = transcriptAlreadyPulled ? "☑" : "☐";
+              const checklistPaymentMark = paymentLooksVerified ? "â˜'" : "â˜";
+              const checklistAuthorizationMark = authorizationLooksReceived ? "â˜'" : "â˜";
+              const checklistIdentityMark = authorizationLooksReceived ? "â˜'" : "â˜";
+              const checklistTranscriptTypeMark = transcriptTypeLooksSelected ? "â˜'" : "â˜";
+              const checklistTaxYearMark = getTranscriptTaxYearForLead(lead) !== "Review tax year" ? "â˜'" : "â˜";
+              const checklistPulledMark = transcriptAlreadyPulled ? "â˜'" : "â˜";
+              const checklistReportSavedMark = transcriptAlreadyPulled ? "â˜'" : "â˜";
               const checklistRecordedDatesMark =
-                transcriptPulledDateFieldValue || transcriptReceivedDateFieldValue ? "☑" : "☐";
+                transcriptPulledDateFieldValue || transcriptReceivedDateFieldValue ? "â˜'" : "â˜";
               const checklistDeliveryMark =
-                transcriptDeliveryMethodFieldValue && transcriptDeliveryMethodFieldValue !== "Not selected yet" ? "☑" : "☐";
+                transcriptDeliveryMethodFieldValue && transcriptDeliveryMethodFieldValue !== "Not selected yet" ? "â˜'" : "â˜";
               const checklistNextStepMark =
-                transcriptNextStepFieldValue || transcriptInternalNotesFieldValue ? "☑" : "☐";
+                transcriptNextStepFieldValue || transcriptInternalNotesFieldValue ? "â˜'" : "â˜";
 
               const latestActivity = activityLines.length
                 ? activityLines[activityLines.length - 1]
@@ -3904,17 +3936,17 @@
 
               const nextActionTitle =
                 combinedNet < 0
-                  ? "Balance Due Lead — Schedule Review"
+                  ? "Balance Due Lead - Schedule Review"
                   : combinedNet > 0
-                    ? "Refund Lead — Follow Up to File"
-                    : "Review Needed — Confirm Details";
+                    ? "Refund Lead - Follow Up to File"
+                    : "Review Needed - Confirm Details";
 
               const nextActionText =
                 combinedNet < 0
                   ? "This lead may owe. Best next step: schedule a 15-minute review to discuss why they may owe and what options may be available."
                   : combinedNet > 0
                     ? "This lead has a possible refund. Best next step: follow up and see if they want help completing the return."
-                    : "This lead is close to break-even or missing summary details. Best next step: review the estimate and confirm the client’s information.";
+                    : "This lead is close to break-even or missing summary details. Best next step: review the estimate and confirm the client's information.";
 
               const nextActionStyle =
                 combinedNet < 0
@@ -4001,14 +4033,14 @@
                   `;
 
               return `
-                              ${focusedLeadId && focusedLeadId === lead.leadId
+                              ${focusedLeadId && focusedLeadId === lead.leadId && focusedReturnAction !== "TranscriptHelp"
                   ? `
                     <button
                       type="button"
                       onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      ← Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Strategy Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
+                      â† Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
                     </button>
                   `
                   : ""
@@ -4033,7 +4065,7 @@
                                         ${hasStrategyReviewRequest
                   ? `
                         <span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;margin-top:6px;">
-                          Strategy Review
+                          Written Review
                         </span>
                       `
                   : ""
@@ -4196,16 +4228,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
 <details style="display:none;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
       <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
-        After PitBullTax Pull — Record These Items
+        After PitBullTax Pull - Record These Items
       </summary>
 
       <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
-        <div>✓ Transcript pulled/requested date</div>
-        <div>✓ Transcript received/available date</div>
-        <div>✓ Report saved or downloaded</div>
-        <div>✓ Delivery method used</div>
-        <div>✓ Delivery date</div>
-        <div>✓ Internal note / next client step</div>
+        <div>- Transcript pulled/requested date</div>
+        <div>- Transcript received/available date</div>
+        <div>- Report saved or downloaded</div>
+        <div>- Delivery method used</div>
+        <div>- Delivery date</div>
+        <div>- Internal note / next client step</div>
       </div>
 
       <div style="margin-top:8px;font-size:12px;color:#475569;font-weight:800;line-height:1.45;">
@@ -4571,16 +4603,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 <div style="margin-top:14px;border-top:2px solid #e2e8f0;padding-top:12px;">
       <details style="display:none;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:0 0 10px;">
         <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
-          After PitBullTax Pull — Record These Items
+          After PitBullTax Pull - Record These Items
         </summary>
 
         <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin-top:10px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
-          <div>✓ Transcript pulled/requested date</div>
-          <div>✓ Transcript received/available date</div>
-          <div>✓ Report saved or downloaded</div>
-          <div>✓ Delivery method used</div>
-          <div>✓ Delivery date</div>
-          <div>✓ Internal note / next client step</div>
+          <div>- Transcript pulled/requested date</div>
+          <div>- Transcript received/available date</div>
+          <div>- Report saved or downloaded</div>
+          <div>- Delivery method used</div>
+          <div>- Delivery date</div>
+          <div>- Internal note / next client step</div>
         </div>
 
         <div style="margin-top:8px;font-size:12px;color:#475569;font-weight:800;line-height:1.45;">
@@ -4649,7 +4681,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                                        ${hasStrategyReviewRequest
                   ? `
                         <div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
-                          Strategy Review:<br>
+                          Written Review:<br>
                           <span id="topStrategyReview-${esc(lead.leadId)}" style="color:#7c2d12;font-weight:900;">${esc(strategyReviewStatusText)}</span>
                         </div>
                       `
@@ -4662,16 +4694,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
 <details style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:10px 0;">
   <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
-    After PitBullTax Pull — Record These Items
+    After PitBullTax Pull - Record These Items
   </summary>
 
   <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin-top:10px;font-size:13px;color:#334155;font-weight:800;line-height:1.45;">
-    <div>✓ Transcript pulled/requested date</div>
-    <div>✓ Transcript received/available date</div>
-    <div>✓ Report saved or downloaded</div>
-    <div>✓ Delivery method used</div>
-    <div>✓ Delivery date</div>
-    <div>✓ Internal note / next client step</div>
+    <div>- Transcript pulled/requested date</div>
+    <div>- Transcript received/available date</div>
+    <div>- Report saved or downloaded</div>
+    <div>- Delivery method used</div>
+    <div>- Delivery date</div>
+    <div>- Internal note / next client step</div>
   </div>
 
   <div style="margin-top:8px;font-size:12px;color:#475569;font-weight:800;line-height:1.45;">
@@ -4817,7 +4849,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                 </div>
    <details style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:12px 14px;margin:14px 0;">
   <summary style="cursor:pointer;font-weight:950;color:#334155;font-size:14px;text-align:left;">
-    ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Show / Hide Office Notes & Manual Status"}
+    ${selectedActionQueue === "TranscriptHelp" ? "Optional: Show General Lead Admin Controls" : "Office Notes & Lead Status"}
   </summary>
 
 <div id="officeNotesPanel-${esc(lead.leadId)}" style="display:block;margin-top:12px;">
@@ -4835,9 +4867,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         <option value="Follow-up Needed">Needs Follow-Up</option>
         <option value="Converted - Tax Client">Convert to Tax Client</option>
         <option value="Closed - Future Follow-Up">Close - Future Follow-Up</option>
-        <option value="Strategy Review - Payment Pending">Strategy Review - Payment Pending / Not Verified</option>
-        <option value="Strategy Review - Paid / Needs Written Review">Strategy Review - Paid / Needs Written Review</option>
-        <option value="Strategy Review - Completed">Strategy Review - Completed</option>
+        <option value="Written Review - Payment Pending">Written Review - Payment Pending / Not Verified</option>
+        <option value="Written Review - Paid / Needs Written Review">Written Review - Paid / Needs Written Review</option>
+        <option value="Written Review - Completed">Written Review - Completed</option>
         <option value="Transcript Help - Payment Pending">Transcript Help - Payment Pending / Not Verified</option>
         <option value="Transcript Help - Paid / Needs Review">Transcript Help - Paid / Needs Review</option>
         <option value="Transcript Help - Completed">Transcript Help - Completed</option>
@@ -4864,9 +4896,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                     "Booked",
                     "Follow-up Needed",
                     "Converted - Tax Client",
-                    "Strategy Review - Payment Pending",
-                    "Strategy Review - Paid / Needs Written Review",
-                    "Strategy Review - Completed",
+                    "Written Review - Payment Pending",
+                    "Written Review - Paid / Needs Written Review",
+                    "Written Review - Completed",
                     "Transcript Help - Payment Pending",
                     "Transcript Help - Paid / Needs Review",
                     "Transcript Help - Completed",
@@ -4876,8 +4908,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   ]
                     .map(option => {
                       const optionLabel =
-                        option === "Strategy Review - Payment Pending"
-                          ? "Strategy Review - Payment Pending / Not Verified"
+                        option === "Written Review - Payment Pending"
+                          ? "Written Review - Payment Pending / Not Verified"
                           : option === "Transcript Help - Payment Pending"
                             ? "Transcript Help - Payment Pending / Not Verified"
                             : option;
@@ -5392,12 +5424,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
         if (topStrategyReviewEl) {
           const strategyStatusText =
-            selectedStatus === "Strategy Review - Paid / Needs Written Review"
-              ? "Paid — written review needed"
-              : selectedStatus === "Strategy Review - Completed"
-                ? "Completed — written review finished"
-                : selectedStatus === "Strategy Review - Payment Pending"
-                  ? "Payment pending — not confirmed yet"
+            selectedStatus === "Written Review - Paid / Needs Written Review"
+              ? "Paid - written review needed"
+              : selectedStatus === "Written Review - Completed"
+                ? "Completed - written review finished"
+                : selectedStatus === "Written Review - Payment Pending"
+                  ? "Payment pending - not confirmed yet"
                   : topStrategyReviewEl.textContent;
 
           topStrategyReviewEl.textContent = strategyStatusText;
@@ -5422,7 +5454,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
 
         if (msgEl) {
-          msgEl.textContent = `Internal action selected: ${selectedStatus} — Save`;
+          msgEl.textContent = `Internal action selected: ${selectedStatus} - Save`;
         }
       }
 
@@ -5511,7 +5543,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           }
 
           if (msgEl) {
-            msgEl.textContent = "Saved successfully — status, notes, and transcript tracking updated.";
+            msgEl.textContent = "Saved successfully - status, notes, and transcript tracking updated.";
           }
 
           if (transcriptStatusMsgEl) {
@@ -5527,12 +5559,361 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
           }
         }
       }
+      function moveRefundGuideToBottom(){ const guide=document.getElementById("refundGuidance"); const leads=document.getElementById("leadsContainer"); if(guide && leads && leads.parentElement){ leads.insertAdjacentElement("afterend", guide); } } moveRefundGuideToBottom();
+      function moveAllGuidesToBottom(){ const leads=document.getElementById("leadsContainer"); if(!leads || !leads.parentElement)return; ["strategyReviewGuidance","balanceDueGuidance","refundGuidance","transcriptHelpGuidance","focusedTranscriptFileHeader"].forEach(id=>{ const guide=document.getElementById(id); if(guide){ leads.insertAdjacentElement("afterend", guide); } }); } moveAllGuidesToBottom();
+      function hideTranscriptTextOnLeadCards(){ document.querySelectorAll(".lead-card .badge, .lead-card [id^=\"statusBadge-\"], .lead-card [id^=\"internalStatus-\"]").forEach(el=>{ const t=(el.textContent||"").toLowerCase(); if(t.includes("transcript help") || t.includes("transcript request")){ el.style.display="none"; } }); } const originalLoadLeadsForTranscriptTextHide=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForTranscriptTextHide.apply(this,args); hideTranscriptTextOnLeadCards(); };
+      function hideTranscriptPanelsOnLeadCards(){ document.querySelectorAll(".lead-card details").forEach(el=>{ const t=(el.textContent||"").toLowerCase(); if(t.includes("pitbulltax") || t.includes("transcript automation plan")){ el.style.display="none"; } }); } const originalLoadLeadsForTranscriptPanelHide=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForTranscriptPanelHide.apply(this,args); hideTranscriptPanelsOnLeadCards(); };
+      function hideOldTranscriptStatusButtons(){ document.querySelectorAll(".lead-card details").forEach(el=>{ const t=(el.textContent||"").toLowerCase(); if(t.includes("old transcript status buttons")){ el.style.display="none"; } }); } const originalLoadLeadsForOldTranscriptStatusButtonsHide=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForOldTranscriptStatusButtonsHide.apply(this,args); hideOldTranscriptStatusButtons(); };
+      async function showTaxYearOnVisibleLeadCards(){ try{ const res=await fetch("/api/leads"); const data=await res.json(); const leads=data.leads||[]; const getYear=(lead)=>lead?.taxData?.taxYear||lead?.estimateSummary?.taxYear||lead?.estimateSummary?.meta?.taxYear||lead?.taxYear||lead?.filingYear||"Review"; document.querySelectorAll(".lead-card").forEach(card=>{ if(card.querySelector(".launch-tax-year-line"))return; const text=card.textContent||""; const lead=leads.find(l=>l?.leadId&&text.includes(l.leadId)); if(!lead)return; const meta=card.querySelector(".lead-meta")||card; const div=document.createElement("div"); div.className="launch-tax-year-line"; div.style.cssText="font-weight:950;color:#0f2c56;margin-top:2px;"; div.textContent="Tax Year: "+getYear(lead); meta.appendChild(div); }); const queue=document.getElementById("dailyWorkQueue"); if(queue){ leads.forEach(lead=>{ if(!lead?.leadId)return; Array.from(queue.querySelectorAll("div,td,tr")).filter(el=>(el.textContent||"").includes(lead.leadId)&&!el.querySelector(".launch-tax-year-line")).slice(0,1).forEach(el=>{ const div=document.createElement("div"); div.className="launch-tax-year-line"; div.style.cssText="font-size:12px;font-weight:950;color:#0f2c56;margin-top:2px;"; div.textContent="Tax Year: "+getYear(lead); el.appendChild(div); }); }); } }catch(err){ console.warn("Tax year display skipped:",err); } } const originalLoadLeadsForTaxYearDisplay=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForTaxYearDisplay.apply(this,args); showTaxYearOnVisibleLeadCards(); };
+
+
+
+
+
+
 
       updateActiveSidebarButton("Active");
       updateWorkspaceHeader("Active");
       updateWorkspaceGuidance("Active");
+            function flattenLeadCardsAfterRender(){ const c=document.getElementById("leadsContainer"); if(!c)return; Array.from(c.querySelectorAll(".lead-card")).forEach(card=>{ if(card.parentElement!==c)c.appendChild(card); }); } const originalLoadLeadsForCardFlatten=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForCardFlatten.apply(this,args); flattenLeadCardsAfterRender(); };
       loadLeads();
     </script>
+<script>
+(function () {
+  if (window.__writtenReviewVisibleWordingPolish) return;
+  window.__writtenReviewVisibleWordingPolish = true;
+
+  function polishWrittenReviewVisibleText() {
+    const replacements = [
+      ["Strategy Review - Payment Pending", "Written Review - Needs Stripe Check"],
+      ["Strategy Review - Paid / Needs Written Review", "Written Review - Payment Confirmed"],
+      ["Strategy Review - Completed", "Written Review - Completed"],
+      ["Requested / Clicked - payment not confirmed yet", "Needs Stripe Check - payment not confirmed yet"],
+      ["Requested / clicked", "Needs Stripe Check"],
+      ["Client clicked Buy Written Review", "Check Stripe payment, then prepare review"],
+      ["Paid / needs written review", "Payment confirmed - prepare written review"],
+      ["Completed - written review finished", "Review completed"],
+      ["Payment Pending means the client clicked the Stripe button, but payment has not been verified yet. Click a status button, then click Save below to lock in the office status.", "Check Stripe for payment. If payment is confirmed, choose Payment Confirmed - Prepare Review. If no payment is found, leave it as Needs Stripe Check."]
+    ];
+
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      let text = node.nodeValue;
+      for (const [from, to] of replacements) {
+        text = text.split(from).join(to);
+      }
+      node.nodeValue = text;
+    }
+
+    document.querySelectorAll("button").forEach(btn => {
+      const on = btn.getAttribute("onclick") || "";
+      if (on.includes("Strategy Review - Payment Pending")) {
+        btn.textContent = "No Payment Found Yet";
+      }
+      if (on.includes("Strategy Review - Paid / Needs Written Review")) {
+        btn.textContent = "Payment Confirmed - Prepare Review";
+      }
+      if (on.includes("Strategy Review - Completed")) {
+        btn.textContent = "Review Completed";
+      }
+    });
+  }
+
+  const oldLoadLeadsForWrittenReviewPolish = window.loadLeads;
+  if (typeof oldLoadLeadsForWrittenReviewPolish === "function") {
+    window.loadLeads = async function (...args) {
+      const result = await oldLoadLeadsForWrittenReviewPolish.apply(this, args);
+      setTimeout(polishWrittenReviewVisibleText, 50);
+      return result;
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(polishWrittenReviewVisibleText, 100);
+    setTimeout(polishWrittenReviewVisibleText, 500);
+  });
+})();
+</script>
+<!-- force-clean-written-review-back-button -->
+<script>(function(){function fixBackButton(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"");if(t.indexOf("Back to Written Review Requests Worklist")>=0){el.textContent="Back to Written Review Requests Worklist";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(fixBackButton,100);setTimeout(fixBackButton,500);});setInterval(fixBackButton,1000);})();</script>
+<!-- BACK-BUTTON-COPY-SUMMARY-LAUNCH-CLEAN -->
+<script>(function(){function cleanLaunchText(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"").trim();if(t.indexOf("Back to ")>=0&&t.indexOf("Worklist")>=0){var i=t.indexOf("Back to ");el.textContent=t.substring(i);}if(t==="Copy Summary Link"){el.style.display="none";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(cleanLaunchText,100);setTimeout(cleanLaunchText,500);});setInterval(cleanLaunchText,1000);})();</script>
+<script id="WRR-CLIENT-CARD-REPORT-BUTTON">(function(){function addWrittenReviewReportButtons(){document.querySelectorAll(".lead-card").forEach(function(card){if(card.querySelector(".written-review-report-btn"))return;var text=card.textContent||"";if(text.toLowerCase().indexOf("written review")<0)return;var match=text.match(/Lead ID:\s*(LEAD-[A-Z0-9-]+)/i);if(!match)return;var leadId=match[1];var row=document.createElement("div");row.style.cssText="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";var btn=document.createElement("button");btn.type="button";btn.className="written-review-report-btn";btn.textContent="Prepare Written Review Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";btn.onclick=function(){window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};var note=document.createElement("span");note.textContent="Open paid report page, review it, then Print / Save PDF.";note.style.cssText="font-size:12px;font-weight:800;color:#7c2d12;";row.appendChild(btn);row.appendChild(note);var buttons=Array.from(card.querySelectorAll("button"));var payBtn=buttons.find(function(b){return (b.textContent||"").indexOf("Payment Confirmed - Prepare Review")>=0;});var grid=payBtn?payBtn.closest("div"):null;if(grid){grid.insertAdjacentElement("afterend",row);}else{card.insertBefore(row,card.children[1]||null);}})}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWrittenReviewReportButtons,200);setTimeout(addWrittenReviewReportButtons,800);});setInterval(addWrittenReviewReportButtons,1500);})();</script><script id="WRR-WORKLIST-PREPARE-REPORT-BUTTON">(function(){function addWorklistPrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;var container=document.getElementById("leadsContainer");if(!container)return;Array.from(container.querySelectorAll("div")).forEach(function(row){if(row.querySelector(".wrr-worklist-prepare-btn"))return;var text=row.textContent||"";if(text.indexOf("LEAD-")<0)return;if(text.toLowerCase().indexOf("written review")<0&&text.toLowerCase().indexOf("payment pending")<0&&text.toLowerCase().indexOf("needs written review")<0)return;var openBtn=Array.from(row.querySelectorAll("button")).find(function(b){return (b.textContent||"").trim()==="Open";});if(!openBtn)return;var match=text.match(/LEAD-[A-Z0-9-]+/i);if(!match)return;var leadId=match[0];var btn=document.createElement("button");btn.type="button";btn.className="wrr-worklist-prepare-btn";btn.textContent="Prepare Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;";btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};openBtn.insertAdjacentElement("beforebegin",btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWorklistPrepareButtons,200);setTimeout(addWorklistPrepareButtons,800);});setInterval(addWorklistPrepareButtons,1500);})();</script><script id="WRR-MOVE-WORKLIST-PREPARE-UNDER-LEAD">(function(){function movePrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;document.querySelectorAll(".wrr-worklist-prepare-btn").forEach(function(btn){var row=btn.parentElement;if(!row)return;while(row&&row.id!=="leadsContainer"&&!(row.textContent||"").includes("LEAD-")){row=row.parentElement;}if(!row||row.id==="leadsContainer")return;var leadMatch=(row.textContent||"").match(/LEAD-[A-Z0-9-]+/i);if(!leadMatch)return;var clientCell=Array.from(row.children).find(function(el){return (el.textContent||"").includes(leadMatch[0]);});if(!clientCell)return;if(clientCell.querySelector(".wrr-worklist-prepare-btn"))return;btn.textContent="Prepare Report";btn.style.cssText="display:block;margin-top:8px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;box-shadow:none;width:max-content;max-width:100%;";clientCell.appendChild(btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(movePrepareButtons,200);setTimeout(movePrepareButtons,800);});setInterval(movePrepareButtons,1200);})();</script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script id="DASHBOARD-COMPACT-OFFICE-WORK-QUEUE">
+(function(){
+  if(window.__compactOfficeWorkQueueInstalled) return;
+  window.__compactOfficeWorkQueueInstalled = true;
+
+  function esc(v){
+    return String(v || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  function getLeadTime(lead){
+    var m=String(lead && lead.leadId || "").match(/LEAD-(\d+)/i);
+    if(m) return Number(m[1]);
+
+    var values=[
+      lead && lead.timestamp,
+      lead && lead.submittedAt,
+      lead && lead.createdAt,
+      lead && lead.updatedAt
+    ];
+
+    for(var i=0;i<values.length;i++){
+      if(!values[i]) continue;
+      var t=Date.parse(String(values[i]));
+      if(Number.isFinite(t)) return t;
+    }
+
+    return 0;
+  }
+
+  function combinedNet(lead){
+    return Number(
+      (lead && lead.estimateSummary && lead.estimateSummary.combined && lead.estimateSummary.combined.net) ??
+      (lead && lead.estimateSummary && lead.estimateSummary.combinedNet) ??
+      0
+    );
+  }
+
+  function estimateText(lead){
+    var summary=lead.estimateSummary || {};
+    return summary.totalLine || (combinedNet(lead) > 0 ? "Possible refund" : combinedNet(lead) < 0 ? "Possible balance due" : "Review estimate");
+  }
+
+  function isWrittenReview(lead){
+    var status=String(lead.status || "");
+    var notes=String(lead.notes || "").toLowerCase();
+    return status.indexOf("Written Review -") === 0 || notes.includes("buy written review") || notes.includes("red flag review");
+  }
+
+  function isTranscript(lead){
+    var status=String(lead.status || "");
+    var notes=String(lead.notes || "").toLowerCase();
+    return status.indexOf("Transcript Help -") === 0 || notes.includes("irs transcript") || Boolean(lead.transcriptRequest && lead.transcriptRequest.requested);
+  }
+
+  function serviceLabel(lead){
+    var status=String(lead.status || "");
+
+    if(isTranscript(lead)) return "Transcript Request";
+    if(isWrittenReview(lead)) return "Written Red Flag Review";
+    if(status === "Follow-up Needed") return "Follow-Up Needed";
+
+    var net=combinedNet(lead);
+    if(net > 0) return "Refund Lead";
+    if(net < 0) return "Balance Due Review";
+
+    return "Tax Estimate Lead";
+  }
+
+  function targetAction(lead){
+    if(isTranscript(lead)) return "TranscriptHelp";
+    if(isWrittenReview(lead)) return "StrategyReview";
+
+    var status=String(lead.status || "");
+    if(status === "Follow-up Needed") return "All";
+
+    var net=combinedNet(lead);
+    if(net > 0) return "Refund";
+    if(net < 0) return "BalanceDue";
+
+    return "All";
+  }
+
+  function priorityScore(lead){
+    if(isTranscript(lead)) return 1;
+    if(isWrittenReview(lead)) return 2;
+    if(String(lead.status || "") === "Follow-up Needed") return 3;
+    if(combinedNet(lead) < 0) return 4;
+    if(combinedNet(lead) > 0) return 5;
+    return 6;
+  }
+
+  async function renderCompactOfficeQueue(){
+    var selected=document.getElementById("actionQueueFilter")?.value || "";
+    if(selected !== "OfficeWorkQueue") return;
+
+    var oldTop=document.getElementById("dailyWorkQueue");
+    if(oldTop){
+      oldTop.style.display="none";
+      oldTop.innerHTML="";
+    }
+
+    var container=document.getElementById("leadsContainer");
+    if(!container) return;
+
+    try{
+      var res=await fetch("/api/leads");
+      var data=await res.json();
+      var leads=Array.isArray(data) ? data : (Array.isArray(data.leads) ? data.leads : []);
+
+      var open=leads
+        .filter(function(lead){
+          var status=String(lead.status || "New");
+          return !status.startsWith("Closed -") && status !== "Converted - Tax Client" && status !== "Written Review - Completed" && status !== "Transcript Help - Completed";
+        })
+        .sort(function(a,b){
+          var p=priorityScore(a) - priorityScore(b);
+          if(p !== 0) return p;
+          return getLeadTime(b) - getLeadTime(a);
+        })
+        .slice(0,30);
+
+      var rows=open.map(function(lead){
+        var leadId=String(lead.leadId || "");
+        var action=targetAction(lead);
+        var status=String(lead.status || "New");
+        var net=combinedNet(lead);
+        var color=isTranscript(lead) ? "#0369a1" : isWrittenReview(lead) ? "#9a3412" : net < 0 ? "#b91c1c" : net > 0 ? "#047857" : "#4f46e5";
+
+        return `
+          <div style="display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+            <div style="font-weight:950;color:#0f2c56;min-width:0;">
+              ${esc(lead?.contact?.name || "Unknown Lead")}
+              <div style="font-size:12px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(lead?.contact?.email || "No email")}</div>
+              <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(leadId)}</div>
+            </div>
+
+            <div style="font-weight:950;color:${color};">
+              ${esc(serviceLabel(lead))}
+            </div>
+
+            <div style="font-weight:850;color:#334155;">
+              ${esc(status)}
+            </div>
+
+            <div style="font-weight:850;color:#334155;">
+              ${esc(estimateText(lead))}
+            </div>
+
+            <button
+              type="button"
+              onclick="setDashboardFilters({ status: 'All', action: '${esc(action)}', search: '${esc(leadId)}', focusLeadId: '${esc(leadId)}', returnAction: '${esc(action)}' })"
+              style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;white-space:nowrap;"
+            >
+              Open
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+            <div>
+              <div style="font-size:21px;font-weight:950;color:#0f2c56;">
+                Office Work Queue
+              </div>
+              <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                Newest and most important open work first. Use this list to jump into the correct workspace.
+              </div>
+            </div>
+
+            <div style="font-size:13px;color:#0f2c56;font-weight:950;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:7px 11px;">
+              ${open.length} open item${open.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr auto;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.35px;">
+            <div>Client</div>
+            <div>Service</div>
+            <div>Status</div>
+            <div>Estimate</div>
+            <div>Action</div>
+          </div>
+
+          ${rows || `<div style="padding:14px 0;color:#64748b;font-weight:850;">No open office work found.</div>`}
+        </div>
+      `;
+    }catch(e){
+      container.innerHTML = `<div class="empty">Could not load compact office work queue.</div>`;
+    }
+  }
+
+  function wrapLoadLeads(){
+    if(typeof loadLeads !== "function") return;
+    if(loadLeads.__compactOfficeQueueWrapped) return;
+
+    var original=loadLeads;
+    loadLeads=async function(){
+      var result=await original.apply(this, arguments);
+      setTimeout(renderCompactOfficeQueue,150);
+      return result;
+    };
+    loadLeads.__compactOfficeQueueWrapped=true;
+  }
+
+  document.addEventListener("DOMContentLoaded",function(){
+    wrapLoadLeads();
+    setTimeout(renderCompactOfficeQueue,800);
+    setTimeout(renderCompactOfficeQueue,1800);
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

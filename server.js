@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const express = require("express");
 const path = require("path");
@@ -7,6 +7,7 @@ const nodemailer = require("nodemailer");
 const { estimate } = require("./taxEstimator");
 
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
@@ -212,7 +213,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-👉 Schedule your 15-minute tax review now:
+ðŸ‘‰ Schedule your 15-minute tax review now:
 ${bookingLink}
 
 Thank you,
@@ -235,7 +236,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-👉 Schedule your 15-minute tax review:
+ðŸ‘‰ Schedule your 15-minute tax review:
 ${bookingLink}
 
 Thank you,
@@ -290,6 +291,175 @@ ${internalAction}`;
     clientBody
   };
 }
+
+
+async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
+  const cleanId = String(leadId || "").trim();
+
+  if (!cleanId) {
+    return { ok: false, error: "Missing leadId." };
+  }
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  const paymentNote =
+    "[" + nowDisplay + "] Stripe confirmed IRS Transcript Help payment." +
+    (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
+    (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
+
+  function matchesLeadId(obj = {}) {
+    const estimate = obj.estimate || {};
+    const possibleIds = [
+      obj.leadId,
+      obj.leadid,
+      obj.lead_id,
+      obj.id,
+      obj.estimateId,
+      estimate.leadId,
+      estimate.leadid,
+      estimate.lead_id,
+      estimate.id,
+      estimate.estimateId
+    ];
+
+    return possibleIds.some((id) => String(id || "").trim() === cleanId);
+  }
+
+  function applyPaidUpdate(record = {}) {
+    const updated = { ...record };
+
+    const existingTranscriptRequest = updated.transcriptRequest || {};
+    updated.transcriptRequest = {
+      ...existingTranscriptRequest,
+      requested: true,
+      paymentStatus: "Paid / Verified",
+      paymentVerifiedAt: nowIso,
+      paidAt: nowIso,
+      stripeCheckoutSessionId: paymentInfo.sessionId || existingTranscriptRequest.stripeCheckoutSessionId || "",
+      stripePaymentIntentId: paymentInfo.paymentIntentId || existingTranscriptRequest.stripePaymentIntentId || "",
+      paymentSource: "Stripe Checkout"
+    };
+
+    updated.status = "Transcript Help - Paid / Needs Review";
+    updated.updatedAt = nowIso;
+
+    const oldNotes = typeof updated.notes === "string" ? updated.notes.trim() : "";
+    updated.notes = oldNotes ? oldNotes + "\n" + paymentNote : paymentNote;
+
+    return updated;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[stripe webhook] Supabase lookup error:", error.message || error);
+    }
+
+    if (!error && Array.isArray(data)) {
+      const matchingRow = data.find(matchesLeadId);
+
+      if (matchingRow) {
+        const updatedEstimate = applyPaidUpdate(matchingRow.estimate || {});
+
+        let updateQuery = supabase
+          .from("leads")
+          .update({ estimate: updatedEstimate });
+
+        if (matchingRow.leadId) {
+          updateQuery = updateQuery.eq("leadId", matchingRow.leadId);
+        } else if (matchingRow.leadid) {
+          updateQuery = updateQuery.eq("leadid", matchingRow.leadid);
+        } else if (matchingRow.lead_id) {
+          updateQuery = updateQuery.eq("lead_id", matchingRow.lead_id);
+        } else if (matchingRow.id) {
+          updateQuery = updateQuery.eq("id", matchingRow.id);
+        } else {
+          throw new Error("Matched Supabase row has no usable ID column.");
+        }
+
+        const { error: updateError } = await updateQuery;
+
+        if (updateError) {
+          console.error("[stripe webhook] Supabase update error:", updateError.message || updateError);
+          return { ok: false, error: "Could not update Supabase lead." };
+        }
+
+        return { ok: true, source: "supabase" };
+      }
+    }
+  } catch (err) {
+    console.error("[stripe webhook] Supabase update failed:", err.message || err);
+  }
+
+  const localLeads = readLeads();
+  const localIndex = localLeads.findIndex(matchesLeadId);
+
+  if (localIndex >= 0) {
+    localLeads[localIndex] = applyPaidUpdate(localLeads[localIndex]);
+    writeLeads(localLeads);
+    return { ok: true, source: "local" };
+  }
+
+  return { ok: false, error: "Lead not found." };
+}
+
+
+// =============================================================================
+// POST /api/stripe-webhook
+// =============================================================================
+
+app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error("[stripe webhook] STRIPE_WEBHOOK_SECRET is not configured.");
+    return res.status(500).send("Stripe webhook secret is not configured.");
+  }
+
+  const signature = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("[stripe webhook] Signature verification failed:", err.message || err);
+    return res.status(400).send("Webhook signature verification failed.");
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object || {};
+      const service = session.metadata?.service || "";
+      const leadId = session.metadata?.leadId || session.client_reference_id || "";
+
+      if (service === "irs_transcript_help" && session.payment_status === "paid") {
+        const result = await applyStripePaidTranscriptUpdate(leadId, {
+          sessionId: session.id,
+          paymentIntentId: session.payment_intent
+        });
+
+        if (!result.ok) {
+          console.error("[stripe webhook] Could not mark transcript lead paid:", result.error || result);
+        } else {
+          console.log("[stripe webhook] Transcript lead marked paid:", leadId, result.source);
+        }
+      }
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error("[stripe webhook] Handler error:", err.message || err);
+    return res.status(500).send("Webhook handler failed.");
+  }
+});
 
 // =============================================================================
 // MIDDLEWARE
@@ -381,7 +551,7 @@ app.post("/api/lead", async (req, res) => {
     estimateSummary: estimateSummary || {}
   };
 
-  // 🔥 Build summary lines for dashboard
+  // ðŸ”¥ Build summary lines for dashboard
   if (lead.estimateSummary) {
     const e = lead.estimateSummary;
 
@@ -712,6 +882,88 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 // GET /leads-dashboard
 // =============================================================================
 
+
+// =============================================================================
+// POST /api/create-transcript-checkout
+// =============================================================================
+
+app.post("/api/create-transcript-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "Stripe secret key is not configured."
+      });
+    }
+
+    const body = req.body || {};
+    const leadId = String(body.leadId || "").trim();
+    const clientName = String(body.clientName || "").trim();
+    const clientEmail = String(body.clientEmail || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Lead ID is required before checkout can be created."
+      });
+    }
+
+    if (!clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error: "Client email is required before checkout can be created."
+      });
+    }
+
+    const amount = Number(process.env.TRANSCRIPT_HELP_PRICE_CENTS || 15000);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: leadId,
+      customer_email: clientEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "IRS Transcript Help & Tax Records Review",
+              description: "One-time transcript help service. Authorization and identity verification are required before IRS records can be accessed."
+            },
+            unit_amount: amount
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        leadId,
+        clientName,
+        clientEmail,
+        service: "irs_transcript_help"
+      },
+      success_url: `${APP_BASE_URL}/transcript-help-next.html?checkout=success&leadId=${encodeURIComponent(leadId)}`,
+      cancel_url: `${APP_BASE_URL}/?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
+    });
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url,
+      sessionId: session.id
+    });
+  } catch (err) {
+    console.error("[create-transcript-checkout] Error:", err.message || err);
+    return res.status(500).json({
+      ok: false,
+      error: "Could not create Stripe checkout session."
+    });
+  }
+});
+
+app.get("/written-review-report/:leadId", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "written-review-report.html"));
+});
+
+app.get("/transcript-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "transcript-requests.html")); });
+
 app.get("/leads-dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "leads-dashboard.html"));
 });
@@ -943,3 +1195,8 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+
+
+
+

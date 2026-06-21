@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -289,10 +289,10 @@
 
       <div class="eyebrow">Tax Estimate Summary</div>
 
-      <h1 id="pageTitle">Loading your estimate…</h1>
+      <h1 id="pageTitle">Loading your estimate...</h1>
 
       <p class="sub" id="pageSub">
-        Prepared by Greatest Business Solution LLC — This is an estimate based on the information provided.
+        Prepared by Greatest Business Solution LLC - This is an estimate based on the information provided.
       </p>
     </div>
 
@@ -319,7 +319,7 @@
     </div>
 
     <div class="card" id="detailsCard" style="display:none;">
-      <h2 style="margin-top:0;">Estimate Details</h2>
+      <h2 id="estimateDetailsTitle" style="margin-top:0;">Estimate Details</h2>
 
       <div id="results"></div>
 
@@ -447,7 +447,7 @@
           `Tax Estimate Summary for ${lead.contact?.name || "Client"}`;
 
         document.getElementById("pageSub").textContent =
-          "Prepared by Greatest Business Solution LLC — This is an estimate based on the information provided.";
+          "Prepared by Greatest Business Solution LLC - This is an estimate based on the information provided.";
 
         const resultType = combinedNet > 0 ? "refund" : combinedNet < 0 ? "balance due" : "break-even";
         const plainEnglishMessage =
@@ -530,21 +530,21 @@ Thank you.`
 
     <div style="margin-top:16px;padding:18px;border-radius:16px;background:#ffffff;border:2px solid #f59e0b;">
       <h2 style="margin:0 0 10px;color:#92400e;font-size:22px;">
-        Written Tax Estimate Review — $29
+        Written Estimate Review Report - $29
       </h2>
 
       <p style="margin:0 0 12px;color:#334155;line-height:1.7;font-size:16px;font-weight:700;">
-        Get a written review of your tax estimate before you rely on the numbers.
+        Have a tax professional review your estimate and prepare a short written report before you rely on the numbers.
       </p>
 
       <ul style="margin:0 0 12px;padding-left:22px;color:#334155;line-height:1.8;font-size:16px;">
-        <li>A tax professional reviews the refund or balance due shown on your estimate.</li>
-        <li>You receive written guidance explaining possible issues, items to verify, and next steps.</li>
-        <li>This can help you understand what may change before filing your actual tax return.</li>
+        <li>Your free estimate gives you an instant calculation. The paid report adds a manual review for possible problem areas, missing items, and next-step guidance.</li>
+        <li>You receive a written list of items you may need to verify before filing.</li>
+        <li>You receive notes about what could cause the refund or balance due to change.</li>
       </ul>
 
       <div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;font-size:15px;line-height:1.6;font-weight:800;">
-        Important: This $29 service is not a filed tax return, does not include full tax preparation, and does not guarantee your final refund or balance due.
+        Important: This $29 service is not a filed tax return, full tax preparation, audit protection, IRS/state representation, or a guarantee of your final refund or balance due. Final results may change after review of your actual tax documents.
       </div>
     </div>
 
@@ -564,9 +564,9 @@ Thank you.`
         target="_blank"
         rel="noopener noreferrer"
         class="summary-action-btn summary-action-secondary"
-        onclick="trackThenOpen(event, '${lead.leadId}', 'Buy Written Review — Payment not yet confirmed', 'https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00')"
+        onclick="trackThenOpen(event, '${lead.leadId}', 'Buy Written Review - Payment not yet confirmed', 'https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00')"
       >
-        Buy Written Review — $29
+        Buy Written Review Report - $29
       </a>
 
       <button
@@ -605,14 +605,10 @@ Thank you.`
         if (copyPublicSummaryLinkBtn) {
           copyPublicSummaryLinkBtn.addEventListener("click", async () => {
             try {
-              await navigator.clipboard.writeText(publicSummaryUrl);
-
-              const actionSaved = await trackSummaryAction(lead.leadId, "Copied Summary Link");
+              await navigator.clipboard.writeText(publicSummaryUrl); const originalCopyText = copyPublicSummaryLinkBtn.textContent; copyPublicSummaryLinkBtn.textContent = "Copied!"; setTimeout(() => { copyPublicSummaryLinkBtn.textContent = originalCopyText; }, 2500); const actionSaved = await trackSummaryAction(lead.leadId, "Copied Summary Link");
 
               if (publicSummaryCopyMsg) {
-                publicSummaryCopyMsg.textContent = actionSaved
-                  ? "Link copied + action saved"
-                  : "Link copied, but action note was not saved";
+                publicSummaryCopyMsg.textContent = "Link copied. Paste it into a text message, email, or browser: " + publicSummaryUrl;
                 setTimeout(() => {
                   publicSummaryCopyMsg.textContent = "";
                 }, 3500);
@@ -621,7 +617,7 @@ Thank you.`
               console.warn("[copyPublicSummaryLinkBtn]", err);
 
               if (publicSummaryCopyMsg) {
-                publicSummaryCopyMsg.textContent = "Copy failed — use browser address bar";
+                publicSummaryCopyMsg.textContent = "Copy failed - use browser address bar";
                 setTimeout(() => {
                   publicSummaryCopyMsg.textContent = "";
                 }, 3500);
@@ -669,7 +665,7 @@ Thank you.`
           `Reference ID: ${lead.leadId} `
         ];
 
-        document.getElementById("detailsList").innerHTML =
+        const estimateDetailsTitle = document.getElementById("estimateDetailsTitle"); if (estimateDetailsTitle) estimateDetailsTitle.textContent = "Estimate Details - Tax Year " + (summary.taxYear || lead.estimateSummary?.taxYear || ""); document.getElementById("detailsList").innerHTML =
           details.map(item => `<li>${item}</li>`).join("");
       } catch (err) {
         document.getElementById("pageTitle").textContent = "We could not load this estimate summary";
@@ -681,6 +677,14 @@ Thank you.`
 
     loadEstimate();
   </script>
+<!-- HIDE-SUMMARY-COPY-LINK-LAUNCH -->
+<script>(function(){function hideCopyLink(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"").trim();if(t==="Copy Link"||t==="Copy Summary Link"){el.style.display="none";}});document.querySelectorAll("p,div").forEach(function(el){var t=(el.textContent||"");if(t.indexOf("Copy Summary Link")>=0){el.textContent="You can open your estimate summary, print it, or save a client copy for your records.";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(hideCopyLink,100);setTimeout(hideCopyLink,500);});setInterval(hideCopyLink,1000);})();</script>
 </body>
 
 </html>
+
+
+
+
+
+
