@@ -5640,6 +5640,314 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 <!-- BACK-BUTTON-COPY-SUMMARY-LAUNCH-CLEAN -->
 <script>(function(){function cleanLaunchText(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"").trim();if(t.indexOf("Back to ")>=0&&t.indexOf("Worklist")>=0){var i=t.indexOf("Back to ");el.textContent=t.substring(i);}if(t==="Copy Summary Link"){el.style.display="none";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(cleanLaunchText,100);setTimeout(cleanLaunchText,500);});setInterval(cleanLaunchText,1000);})();</script>
 <script id="WRR-CLIENT-CARD-REPORT-BUTTON">(function(){function addWrittenReviewReportButtons(){document.querySelectorAll(".lead-card").forEach(function(card){if(card.querySelector(".written-review-report-btn"))return;var text=card.textContent||"";if(text.toLowerCase().indexOf("written review")<0)return;var match=text.match(/Lead ID:\s*(LEAD-[A-Z0-9-]+)/i);if(!match)return;var leadId=match[1];var row=document.createElement("div");row.style.cssText="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";var btn=document.createElement("button");btn.type="button";btn.className="written-review-report-btn";btn.textContent="Prepare Written Review Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";btn.onclick=function(){window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};var note=document.createElement("span");note.textContent="Open paid report page, review it, then Print / Save PDF.";note.style.cssText="font-size:12px;font-weight:800;color:#7c2d12;";row.appendChild(btn);row.appendChild(note);var buttons=Array.from(card.querySelectorAll("button"));var payBtn=buttons.find(function(b){return (b.textContent||"").indexOf("Payment Confirmed - Prepare Review")>=0;});var grid=payBtn?payBtn.closest("div"):null;if(grid){grid.insertAdjacentElement("afterend",row);}else{card.insertBefore(row,card.children[1]||null);}})}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWrittenReviewReportButtons,200);setTimeout(addWrittenReviewReportButtons,800);});setInterval(addWrittenReviewReportButtons,1500);})();</script><script id="WRR-WORKLIST-PREPARE-REPORT-BUTTON">(function(){function addWorklistPrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;var container=document.getElementById("leadsContainer");if(!container)return;Array.from(container.querySelectorAll("div")).forEach(function(row){if(row.querySelector(".wrr-worklist-prepare-btn"))return;var text=row.textContent||"";if(text.indexOf("LEAD-")<0)return;if(text.toLowerCase().indexOf("written review")<0&&text.toLowerCase().indexOf("payment pending")<0&&text.toLowerCase().indexOf("needs written review")<0)return;var openBtn=Array.from(row.querySelectorAll("button")).find(function(b){return (b.textContent||"").trim()==="Open";});if(!openBtn)return;var match=text.match(/LEAD-[A-Z0-9-]+/i);if(!match)return;var leadId=match[0];var btn=document.createElement("button");btn.type="button";btn.className="wrr-worklist-prepare-btn";btn.textContent="Prepare Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;";btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};openBtn.insertAdjacentElement("beforebegin",btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWorklistPrepareButtons,200);setTimeout(addWorklistPrepareButtons,800);});setInterval(addWorklistPrepareButtons,1500);})();</script><script id="WRR-MOVE-WORKLIST-PREPARE-UNDER-LEAD">(function(){function movePrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;document.querySelectorAll(".wrr-worklist-prepare-btn").forEach(function(btn){var row=btn.parentElement;if(!row)return;while(row&&row.id!=="leadsContainer"&&!(row.textContent||"").includes("LEAD-")){row=row.parentElement;}if(!row||row.id==="leadsContainer")return;var leadMatch=(row.textContent||"").match(/LEAD-[A-Z0-9-]+/i);if(!leadMatch)return;var clientCell=Array.from(row.children).find(function(el){return (el.textContent||"").includes(leadMatch[0]);});if(!clientCell)return;if(clientCell.querySelector(".wrr-worklist-prepare-btn"))return;btn.textContent="Prepare Report";btn.style.cssText="display:block;margin-top:8px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;box-shadow:none;width:max-content;max-width:100%;";clientCell.appendChild(btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(movePrepareButtons,200);setTimeout(movePrepareButtons,800);});setInterval(movePrepareButtons,1200);})();</script>
+<script id="CLIENT-CRM-SUMMARY-PANEL">
+(function () {
+  function esc(v) {
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function clean(v) {
+    const s = String(v ?? "").trim();
+    if (!s) return "";
+    if (["none", "not selected", "not sure", "n/a", "na", "undefined", "null"].includes(s.toLowerCase())) return "";
+    return s;
+  }
+
+  function pick(obj, paths, fallback = "") {
+    for (const path of paths) {
+      let cur = obj || {};
+      for (const part of path.split(".")) {
+        if (!cur || cur[part] === undefined || cur[part] === null || cur[part] === "") {
+          cur = null;
+          break;
+        }
+        cur = cur[part];
+      }
+      const value = clean(cur);
+      if (value) return value;
+    }
+    return fallback;
+  }
+
+  function money(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "";
+    const sign = n >= 0 ? "$" : "-$";
+    return sign + Math.abs(Math.round(n)).toLocaleString();
+  }
+
+  function getLeadIdFromCard(card) {
+    const text = card.textContent || "";
+    const match = text.match(/LEAD-[A-Z0-9-]+|transcript-\d+/i);
+    return match ? match[0] : "";
+  }
+
+  function hasWrittenReviewAction(card) {
+    const clone = card.cloneNode(true);
+    clone.querySelectorAll(".client-crm-summary-panel").forEach(el => el.remove());
+
+    const text = (clone.textContent || "").toLowerCase();
+
+    return (
+      text.includes("prepare written review report") ||
+      text.includes("prepare written review") ||
+      text.includes("written review report") ||
+      text.includes("red flag review") ||
+      text.includes("open paid report page")
+    );
+  }
+
+  function getTranscriptStatusFromData(lead) {
+    const leadId = String(lead.leadId || lead.clientId || lead.id || "").toLowerCase();
+    const source = String(lead.source || "").toLowerCase();
+    const status = String(lead.status || "").toLowerCase();
+
+    if (
+      lead.transcriptRequest?.requested === true ||
+      leadId.startsWith("transcript-") ||
+      source.includes("transcript") ||
+      status.includes("transcript")
+    ) {
+      return pick(lead, [
+        "transcriptRequest.paymentStatus",
+        "transcript.paymentStatus",
+        "transcript.status",
+        "transcriptStatus",
+        "transcript.workflowStatus"
+      ], "Transcript request");
+    }
+
+    return "None";
+  }
+
+  function getWrittenStatusFromData(lead, card) {
+    const status = String(lead.status || "").toLowerCase();
+    const notes = String(lead.notes || "").toLowerCase();
+
+    if (
+      hasWrittenReviewAction(card) ||
+      status.includes("written") ||
+      status.includes("red flag") ||
+      notes.includes("written review") ||
+      notes.includes("red flag review")
+    ) {
+      return pick(lead, [
+        "writtenReview.status",
+        "reviewStatus",
+        "writtenReviewStatus"
+      ], "Needs written review");
+    }
+
+    return "None";
+  }
+
+  function calculateNextAction(card, writtenStatus, transcriptStatus) {
+    const actionText = Array.from(card.querySelectorAll("button, a"))
+      .map(el => (el.textContent || "").toLowerCase())
+      .join(" ");
+
+    if (transcriptStatus !== "None") {
+      if (transcriptStatus.toLowerCase().includes("payment")) return "Verify or collect transcript payment";
+      return "Review transcript workflow";
+    }
+
+    if (writtenStatus !== "None") {
+      return "Prepare written review";
+    }
+
+    if (actionText.includes("follow-up")) {
+      return "Follow up with client";
+    }
+
+    return "Review client and choose next step";
+  }
+
+  async function addClientCrmSummaryPanels() {
+    let payload = [];
+    try {
+      const res = await fetch("/api/leads");
+      payload = await res.json();
+    } catch (err) {
+      console.log("[CRM panel] skipped:", err.message);
+      return;
+    }
+
+    const leads = Array.isArray(payload) ? payload : (payload.leads || payload.clients || []);
+    if (!Array.isArray(leads)) return;
+
+    document.querySelectorAll(".lead-card").forEach(card => {
+      if (card.querySelector(".client-crm-summary-panel")) return;
+
+      const leadId = getLeadIdFromCard(card);
+      if (!leadId) return;
+
+      const lead = leads.find(l => String(l.leadId || l.clientId || l.id || "").toLowerCase() === leadId.toLowerCase()) || {};
+
+      const taxYear = pick(lead, [
+        "taxData.taxYear",
+        "estimate.taxYear",
+        "estimateSummary.taxYear",
+        "estimateSummary.meta.taxYear",
+        "taxYear"
+      ], "Review");
+
+      const combined = pick(lead, [
+        "estimate.combined",
+        "estimateSummary.combined",
+        "estimateSummary.combinedTotal",
+        "combinedTotal",
+        "result.combined",
+        "estimateSummary.combined.net"
+      ], "");
+
+      const paymentStatus = pick(lead, [
+        "paymentStatus",
+        "payments.status",
+        "payments.transcriptStatus",
+        "payments.reviewStatus"
+      ], "Not confirmed");
+
+      const transcriptStatus = getTranscriptStatusFromData(lead);
+      const writtenStatus = getWrittenStatusFromData(lead, card);
+
+      const leadStage = pick(lead, [
+        "lifecycle.stage",
+        "stage",
+        "status"
+      ], "Lead");
+
+      const latestAction = pick(lead, [
+        "latestClientAction",
+        "latestAction",
+        "lastAction",
+        "clientActivity.latestAction"
+      ], "No recent action found");
+
+      const nextAction = calculateNextAction(card, writtenStatus, transcriptStatus);
+
+      const panel = document.createElement("div");
+      panel.className = "client-crm-summary-panel";
+      panel.style.cssText = "margin:12px 0 14px;padding:14px;border:2px solid #0f2c56;border-radius:14px;background:#f8fbff;box-shadow:0 6px 16px rgba(15,44,86,.08);";
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <div style="font-size:16px;font-weight:950;color:#0f2c56;">Client CRM Summary</div>
+          <div style="font-size:12px;font-weight:900;color:#475569;">${esc(leadId)}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;">
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">LEAD STAGE</div><div style="font-weight:900;">${esc(leadStage)}</div></div>
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">TAX YEAR</div><div style="font-weight:900;">${esc(taxYear)}</div></div>
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">ESTIMATE RESULT</div><div style="font-weight:900;">${combined !== "" ? esc(money(combined)) : "Review"}</div></div>
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">PAYMENT</div><div style="font-weight:900;">${esc(paymentStatus)}</div></div>
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">TRANSCRIPT</div><div style="font-weight:900;">${esc(transcriptStatus)}</div></div>
+          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">WRITTEN REVIEW</div><div style="font-weight:900;">${esc(writtenStatus)}</div></div>
+        </div>
+
+        <div style="margin-top:12px;padding:10px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;">
+          <div style="font-size:11px;font-weight:950;color:#9a3412;">NEXT ACTION</div>
+          <div style="font-size:15px;font-weight:950;color:#7c2d12;">${esc(nextAction)}</div>
+        </div>
+
+        <div style="margin-top:8px;font-size:12px;font-weight:800;color:#475569;">
+          <strong>Last Action:</strong> ${esc(latestAction)}
+        </div>
+      `;
+
+      const top = card.querySelector(".lead-top");
+      if (top) {
+        top.insertAdjacentElement("afterend", panel);
+      } else {
+        card.insertBefore(panel, card.firstChild);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(addClientCrmSummaryPanels, 400);
+    setTimeout(addClientCrmSummaryPanels, 1200);
+  });
+  // CRM panel loads when lead cards appear or change. Debounced to avoid flicker.
+  let crmPanelTimer = null;
+  function scheduleCrmPanelLoad() {
+    clearTimeout(crmPanelTimer);
+    crmPanelTimer = setTimeout(addClientCrmSummaryPanels, 300);
+  }
+
+  setTimeout(addClientCrmSummaryPanels, 800);
+  setTimeout(addClientCrmSummaryPanels, 2000);
+
+  const crmObserver = new MutationObserver(scheduleCrmPanelLoad);
+  crmObserver.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<script id="CRM-WRITTEN-REVIEW-FORCE-CORRECTOR">
+(function () {
+  function setCrmValue(panel, labelText, newValue) {
+    const labels = Array.from(panel.querySelectorAll("div"));
+    const label = labels.find(el => (el.textContent || "").trim().toUpperCase() === labelText.toUpperCase());
+    if (!label) return;
+
+    const box = label.parentElement;
+    if (!box) return;
+
+    const valueDivs = Array.from(box.children).filter(el => el !== label);
+    const value = valueDivs[valueDivs.length - 1];
+    if (value) value.textContent = newValue;
+  }
+
+  function setNextAction(panel, newValue) {
+    const labels = Array.from(panel.querySelectorAll("div"));
+    const label = labels.find(el => (el.textContent || "").trim().toUpperCase() === "NEXT ACTION");
+    if (!label) return;
+
+    const box = label.parentElement;
+    if (!box) return;
+
+    const valueDivs = Array.from(box.children).filter(el => el !== label);
+    const value = valueDivs[valueDivs.length - 1];
+    if (value) value.textContent = newValue;
+  }
+
+  function fixWrittenReviewCrmCards() {
+    document.querySelectorAll(".lead-card").forEach(card => {
+      const cardText = (card.textContent || "").toLowerCase();
+
+      const hasWrittenReview =
+        card.querySelector(".written-review-report-btn") ||
+        cardText.includes("prepare written review report") ||
+        cardText.includes("open paid report page") ||
+        cardText.includes("written review report");
+
+      if (!hasWrittenReview) return;
+
+      const panel = card.querySelector(".client-crm-summary-panel");
+      if (!panel) return;
+
+      setCrmValue(panel, "WRITTEN REVIEW", "Needs written review");
+      setNextAction(panel, "Prepare written review");
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(fixWrittenReviewCrmCards, 500);
+    setTimeout(fixWrittenReviewCrmCards, 1500);
+    setTimeout(fixWrittenReviewCrmCards, 3000);
+  });
+
+  let timer = null;
+  const observer = new MutationObserver(function () {
+    clearTimeout(timer);
+    timer = setTimeout(fixWrittenReviewCrmCards, 250);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 
 </html>
@@ -5903,6 +6211,17 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
