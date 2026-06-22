@@ -5576,7 +5576,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       updateWorkspaceHeader("Active");
       updateWorkspaceGuidance("Active");
             function flattenLeadCardsAfterRender(){ const c=document.getElementById("leadsContainer"); if(!c)return; Array.from(c.querySelectorAll(".lead-card")).forEach(card=>{ if(card.parentElement!==c)c.appendChild(card); }); } const originalLoadLeadsForCardFlatten=loadLeads; loadLeads=async function(...args){ await originalLoadLeadsForCardFlatten.apply(this,args); flattenLeadCardsAfterRender(); };
-      loadLeads();
+      setDashboardFilters({ status: "All", action: "OfficeWorkQueue", search: "", sidebarView: "OfficeWorkQueue" });
     </script>
 <script>
 (function () {
@@ -5903,6 +5903,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
 
 
 
