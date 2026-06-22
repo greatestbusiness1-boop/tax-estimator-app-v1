@@ -1,12 +1,110 @@
-"use strict";
+﻿"use strict";
 
 // =============================================================================
-// CONFIG — TAX RULES BY YEAR
+// CONFIG â€” TAX RULES BY YEAR
 // =============================================================================
 
 const TAX_RULES = {
 
-  2024: {
+  2025: {
+    standardDeduction: {
+      single: 15750,
+      mfj:    31500,
+      mfs:    15750,
+      hoh:    23625,
+      qw:     31500,
+    },
+    dependentDeduction: {
+      floor:       1350,
+      earnedBonus: 450,
+    },
+    seniorAdditional: {
+      single: 2000,
+      mfj:    1600,
+      mfs:    1600,
+      hoh:    2000,
+      qw:     1600,
+    },
+    mileageRatePerMile: 0.70,
+    selfEmploymentTaxRate: 0.1530,
+    selfEmploymentTaxDeductionRate: 0.50,
+    brackets: {
+      single: [
+        { min: 0,      max: 11925,  rate: 0.10 },
+        { min: 11925,  max: 48475,  rate: 0.12 },
+        { min: 48475,  max: 103350, rate: 0.22 },
+        { min: 103350, max: 197300, rate: 0.24 },
+        { min: 197300, max: 250525, rate: 0.32 },
+        { min: 250525, max: 626350, rate: 0.35 },
+        { min: 626350, max: null,   rate: 0.37 },
+      ],
+      mfj: [
+        { min: 0,      max: 23850,  rate: 0.10 },
+        { min: 23850,  max: 96950,  rate: 0.12 },
+        { min: 96950,  max: 206700, rate: 0.22 },
+        { min: 206700, max: 394600, rate: 0.24 },
+        { min: 394600, max: 501050, rate: 0.32 },
+        { min: 501050, max: 751600, rate: 0.35 },
+        { min: 751600, max: null,   rate: 0.37 },
+      ],
+      mfs: [
+        { min: 0,      max: 11925,  rate: 0.10 },
+        { min: 11925,  max: 48475,  rate: 0.12 },
+        { min: 48475,  max: 103350, rate: 0.22 },
+        { min: 103350, max: 197300, rate: 0.24 },
+        { min: 197300, max: 250525, rate: 0.32 },
+        { min: 250525, max: 375800, rate: 0.35 },
+        { min: 375800, max: null,   rate: 0.37 },
+      ],
+      hoh: [
+        { min: 0,      max: 17000,  rate: 0.10 },
+        { min: 17000,  max: 64850,  rate: 0.12 },
+        { min: 64850,  max: 103350, rate: 0.22 },
+        { min: 103350, max: 197300, rate: 0.24 },
+        { min: 197300, max: 250500, rate: 0.32 },
+        { min: 250500, max: 626350, rate: 0.35 },
+        { min: 626350, max: null,   rate: 0.37 },
+      ],
+      qw: [
+        { min: 0,      max: 23850,  rate: 0.10 },
+        { min: 23850,  max: 96950,  rate: 0.12 },
+        { min: 96950,  max: 206700, rate: 0.22 },
+        { min: 206700, max: 394600, rate: 0.24 },
+        { min: 394600, max: 501050, rate: 0.32 },
+        { min: 501050, max: 751600, rate: 0.35 },
+        { min: 751600, max: null,   rate: 0.37 },
+      ],
+    },
+    americanOpportunityCredit: {
+      maxCredit:      2500,
+      refundableRate: 0.40,
+      tier1Cap:       2000,
+      tier2Cap:       2000,
+      tier2Rate:      0.25,
+      phaseOutStart:  { single: 80000,  mfj: 160000 },
+      phaseOutEnd:    { single: 90000,  mfj: 180000 },
+    },
+    lifetimeLearningCredit: {
+      rate:          0.20,
+      maxExpenses:   10000,
+      maxCredit:     2000,
+      phaseOutStart: { single: 80000,  mfj: 160000 },
+      phaseOutEnd:   { single: 90000,  mfj: 180000 },
+    },
+    childTaxCredit: {
+      perChild:          2200,
+      refundablePortion: 1700,
+      phaseOutThreshold: {
+        single: 200000,
+        mfj:    400000,
+        mfs:    200000,
+        hoh:    200000,
+        qw:     400000,
+      },
+      phaseOutPer1000: 50,
+    },
+  },
+2024: {
     standardDeduction: {
       single: 14600,
       mfj:    29200,
@@ -279,7 +377,16 @@ const TAX_RULES = {
 // CONFIG ACCESSOR
 // =============================================================================
 
-function getRules(taxYear) { const requestedYear = Number(taxYear); const rules = TAX_RULES[requestedYear] || (requestedYear >= 2025 ? TAX_RULES[2024] : null); if (!rules) { throw new Error(`federalEngine: No rules found for tax year ${taxYear}. Supported years: ${Object.keys(TAX_RULES).join(", ")}.`); } return rules; }
+function getRules(taxYear) {
+  const requestedYear = Number(taxYear);
+  const rules = TAX_RULES[requestedYear];
+
+  if (!rules) {
+    throw new Error(`federalEngine: No rules found for tax year ${taxYear}. Supported years: ${Object.keys(TAX_RULES).join(", ")}.`);
+  }
+
+  return rules;
+}
 
 // =============================================================================
 // HELPERS
@@ -294,7 +401,7 @@ function phaseOutKey(filingStatus) {
 }
 
 // =============================================================================
-// STEP 1 — SELF-EMPLOYMENT INCOME
+// STEP 1 â€” SELF-EMPLOYMENT INCOME
 // =============================================================================
 
 function computeSelfEmployment(input, rules) {
@@ -332,7 +439,7 @@ const seAboveLineDeduction = dollars(selfEmploymentTax * rules.selfEmploymentTax
 }
 
 // =============================================================================
-// STEP 2 — TAXABLE SCHOLARSHIP INCOME
+// STEP 2 â€” TAXABLE SCHOLARSHIP INCOME
 // =============================================================================
 
 function computeTaxableScholarships(input) {
@@ -348,7 +455,7 @@ function computeTaxableScholarships(input) {
 }
 
 // =============================================================================
-// STEP 3 — GROSS INCOME
+// STEP 3 â€” GROSS INCOME
 // =============================================================================
 
 function computeGrossIncome(input, taxableScholarshipIncome, netSelfEmploymentIncome) {
@@ -365,7 +472,7 @@ function computeGrossIncome(input, taxableScholarshipIncome, netSelfEmploymentIn
 }
 
 // =============================================================================
-// STEP 4 — ADJUSTED GROSS INCOME
+// STEP 4 â€” ADJUSTED GROSS INCOME
 // =============================================================================
 
 function computeAGI(grossIncome, seAboveLineDeduction) {
@@ -378,7 +485,7 @@ function computeAGI(grossIncome, seAboveLineDeduction) {
 }
 
 // =============================================================================
-// STEP 5 — STANDARD DEDUCTION
+// STEP 5 â€” STANDARD DEDUCTION
 // =============================================================================
 
 function computeStandardDeduction(input, rules) {
@@ -412,7 +519,7 @@ function computeStandardDeduction(input, rules) {
 }
 
 // =============================================================================
-// STEP 6 — TAXABLE INCOME
+// STEP 6 â€” TAXABLE INCOME
 // =============================================================================
 
 function computeTaxableIncome(agi, standardDeduction) {
@@ -420,7 +527,7 @@ function computeTaxableIncome(agi, standardDeduction) {
 }
 
 // =============================================================================
-// STEP 7 — PROGRESSIVE BRACKET TAX
+// STEP 7 â€” PROGRESSIVE BRACKET TAX
 // =============================================================================
 
 function computeBracketTax(taxableIncome, filingStatus, rules) {
@@ -456,7 +563,7 @@ function computeBracketTax(taxableIncome, filingStatus, rules) {
 }
 
 // =============================================================================
-// STEP 8 — EDUCATION CREDIT
+// STEP 8 â€” EDUCATION CREDIT
 // =============================================================================
 
 function computeEducationCredit(input, agi, rules) {
@@ -514,7 +621,7 @@ function computeEducationCredit(input, agi, rules) {
 }
 
 // =============================================================================
-// STEP 9 — CHILD TAX CREDIT
+// STEP 9 â€” CHILD TAX CREDIT
 // =============================================================================
 
 function computeChildTaxCredit(input, agi, rules) {
@@ -537,7 +644,7 @@ function computeChildTaxCredit(input, agi, rules) {
 }
 
 // =============================================================================
-// STEP 10 — FINAL FEDERAL RESULT
+// STEP 10 â€” FINAL FEDERAL RESULT
 // =============================================================================
 
 function computeFederalResult(
@@ -586,7 +693,7 @@ function computeFederalResult(
 }
 
 // =============================================================================
-// ORCHESTRATOR — calculateFederal()
+// ORCHESTRATOR â€” calculateFederal()
 // =============================================================================
 
 function calculateFederal(input) {
@@ -684,3 +791,4 @@ module.exports = {
   computeFederalResult,
   getRules,
 };
+
