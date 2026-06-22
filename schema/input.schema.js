@@ -1,29 +1,29 @@
-/**
+﻿/**
  * input.schema.js
- * Greatest Business Solution LLC — Tax Estimator
+ * Greatest Business Solution LLC â€” Tax Estimator
  *
  * Responsibilities:
  *   1. Define the canonical shape of every input field
- *   2. Normalize raw form values (strings → numbers, yes/no → booleans)
+ *   2. Normalize raw form values (strings â†’ numbers, yes/no â†’ booleans)
  *   3. Apply safe defaults for optional fields
  *   4. Validate all fields and return { valid, errors }
  *
  * Usage:
  *   const { normalize, validate, prepareInput } = require('./schema/input.schema');
  *
- *   const input   = normalize(rawFormData);   // step 1 — clean the data
- *   const check   = validate(input);          // step 2 — check it
+ *   const input   = normalize(rawFormData);   // step 1 â€” clean the data
+ *   const check   = validate(input);          // step 2 â€” check it
  *   if (!check.valid) return check.errors;
  *   // input is now safe to pass to any engine
  */
 
 "use strict";
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const SUPPORTED_TAX_YEARS = [2022, 2023, 2024];
+const SUPPORTED_TAX_YEARS = [2022, 2023, 2024, 2025];
 
 const FILING_STATUSES = ["single", "mfj", "mfs", "hoh", "qw"];
 
@@ -45,14 +45,14 @@ const VALID_STATE_CODES = new Set([
   "DC",
 ]);
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // FIELD DEFINITIONS
 // Used for documentation, default application, and structured error messages.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const FIELDS = {
 
-  // ── Required ──────────────────────────────────────────────
+  // â”€â”€ Required â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   taxYear: {
     required:    true,
@@ -132,7 +132,7 @@ const FIELDS = {
     default:     0,
   },
 
-  // ── Optional ──────────────────────────────────────────────
+  // â”€â”€ Optional â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   otherIncome: {
     required:    false,
@@ -192,7 +192,7 @@ estimatedTaxPayments: {
   default: 0,
 },
 
-// 🔥 ADD THIS RIGHT HERE
+// ðŸ”¥ ADD THIS RIGHT HERE
 selfEmploymentStreams: {
   required: false,
   type: "array",
@@ -201,11 +201,11 @@ selfEmploymentStreams: {
 },
 
 };
-// ─────────────────────────────────────────────────────────────────────────────
-// STEP 1 — NORMALIZE
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// STEP 1 â€” NORMALIZE
 // Converts raw form values into typed, clean values.
-// Safe to call on any raw input — will never throw.
-// ─────────────────────────────────────────────────────────────────────────────
+// Safe to call on any raw input â€” will never throw.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Convert a value to a boolean.
@@ -250,7 +250,7 @@ function toInteger(value) {
 
 /**
  * Normalize a raw input object into typed values.
- * Does not validate — just cleans and converts.
+ * Does not validate â€” just cleans and converts.
  *
  * @param  {object} raw   Raw data from the UI form
  * @returns {object}      Normalized input object
@@ -263,7 +263,7 @@ function normalize(raw) {
   // Tax Year
   out.taxYear = toInteger(raw.taxYear);
 
-  // Filing Status — lowercase and trim
+  // Filing Status â€” lowercase and trim
   out.filingStatus = (typeof raw.filingStatus === "string")
     ? raw.filingStatus.trim().toLowerCase()
     : raw.filingStatus;
@@ -275,7 +275,7 @@ function normalize(raw) {
   out.isFullTimeStudent        = toBoolean(raw.isFullTimeStudent);
   out.canBeClaimedAsDependent  = toBoolean(raw.canBeClaimedAsDependent);
 
-  // State Code — uppercase and trim
+  // State Code â€” uppercase and trim
   out.stateCode = (typeof raw.stateCode === "string")
     ? raw.stateCode.trim().toUpperCase()
     : raw.stateCode;
@@ -283,7 +283,7 @@ function normalize(raw) {
   // Integer count
   out.numberOfDependents = toInteger(raw.numberOfDependents) ?? 0;
 
-  // Dollar amounts — floor to 2 decimal places, never negative
+  // Dollar amounts â€” floor to 2 decimal places, never negative
   const moneyFields = [
   "w2Income",
   "federalWithheld",
@@ -292,7 +292,7 @@ function normalize(raw) {
   "scholarships",
   "educationExpenses",
 
-  // 🔥 ADD THESE
+  // ðŸ”¥ ADD THESE
   "selfEmploymentIncome",
   "businessExpenses",
   "businessMileage",
@@ -304,7 +304,7 @@ function normalize(raw) {
   out[field] = n !== null ? Math.max(0, Math.round(n * 100) / 100) : null;
 }
 
-// 🔥 ADD THIS RIGHT HERE (before return)
+// ðŸ”¥ ADD THIS RIGHT HERE (before return)
 if (Array.isArray(raw.selfEmploymentStreams)) {
   out.selfEmploymentStreams = raw.selfEmploymentStreams.map(stream => ({
     source: typeof stream.source === "string" ? stream.source.trim() : "",
@@ -318,11 +318,11 @@ if (Array.isArray(raw.selfEmploymentStreams)) {
 return out;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STEP 2 — APPLY DEFAULTS
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// STEP 2 â€” APPLY DEFAULTS
 // Fills in safe zero-values for optional fields that were not provided.
 // Call after normalize(), before validate().
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Apply field defaults to a normalized input object.
@@ -346,11 +346,11 @@ function applyDefaults(normalized) {
   return out;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STEP 3 — VALIDATE
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// STEP 3 â€” VALIDATE
 // Checks all fields and returns { valid: boolean, errors: string[] }.
 // Expects input that has already been through normalize() and applyDefaults().
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Validate a normalized, defaulted input object.
@@ -365,7 +365,7 @@ function validate(input) {
     const value = input[field];
     const label = rules.label || field;
 
-    // ── Presence check ─────────────────────────────────────
+    // â”€â”€ Presence check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const missing = value === null || value === undefined;
 
     if (rules.required && missing) {
@@ -373,9 +373,9 @@ function validate(input) {
       continue; // no point running further checks on a missing value
     }
 
-    if (missing) continue; // optional and absent — skip all checks
+    if (missing) continue; // optional and absent â€” skip all checks
 
-    // ── Type checks ────────────────────────────────────────
+    // â”€â”€ Type checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (rules.type === "boolean" && typeof value !== "boolean") {
       errors.push(`"${label}" must be Yes or No.`);
       continue;
@@ -400,7 +400,7 @@ function validate(input) {
       continue;
     }
 
-    // ── Allowed values ─────────────────────────────────────
+    // â”€â”€ Allowed values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (rules.allowed && !rules.allowed.includes(value)) {
       if (field === "taxYear") {
         errors.push(
@@ -415,13 +415,13 @@ function validate(input) {
       continue;
     }
 
-    // ── State code ─────────────────────────────────────────
+    // â”€â”€ State code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (field === "stateCode" && !VALID_STATE_CODES.has(value)) {
       errors.push(`"${label}" must be a valid two-letter US state code (e.g. CA, TX, NY).`);
       continue;
     }
 
-    // ── Range checks ───────────────────────────────────────
+    // â”€â”€ Range checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (rules.min !== undefined && value < rules.min) {
       errors.push(`"${label}" must be at least ${rules.min}.`);
     }
@@ -430,7 +430,7 @@ function validate(input) {
     }
   }
 
-  // ── Cross-field rules ──────────────────────────────────────
+  // â”€â”€ Cross-field rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Withholding sanity check: federal withheld should not exceed total income
   const totalIncome = (input.w2Income || 0) + (input.otherIncome || 0);
@@ -450,14 +450,14 @@ function validate(input) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONVENIENCE — prepareInput()
-// Runs normalize → applyDefaults → validate in one call.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// CONVENIENCE â€” prepareInput()
+// Runs normalize â†’ applyDefaults â†’ validate in one call.
 // Returns { valid, errors, input } where input is ready for engines.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Full pipeline: normalize → defaults → validate.
+ * Full pipeline: normalize â†’ defaults â†’ validate.
  * Use this in the orchestrator instead of calling each step manually.
  *
  * @param  {object} raw   Raw data from the UI form
@@ -475,9 +475,9 @@ function prepareInput(raw) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // INTERNAL HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function fmt(amount) {
   return new Intl.NumberFormat("en-US", {
@@ -485,9 +485,9 @@ function fmt(amount) {
   }).format(amount || 0);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // EXPORTS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports = {
   // Main pipeline (use this in the orchestrator)
@@ -510,3 +510,6 @@ module.exports = {
   VALID_STATE_CODES,
   SUPPORTED_TAX_YEARS,
 };
+
+
+
