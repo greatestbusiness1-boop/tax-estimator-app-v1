@@ -1957,17 +1957,19 @@ document.addEventListener("DOMContentLoaded", () => {
       "Paid Review Intake - Client Explanation: " + intake.comment + "\n" +
       "Paid Review Intake - Limited Scope Acknowledged: Yes";
 
+    let clientName = "";
+    let clientEmail = "";
+
     try {
-      let existingNotes = "";
+      const readRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const readData = await readRes.json();
 
-      try {
-        const readRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
-        const readData = await readRes.json();
-        existingNotes = readData?.lead?.notes || "";
-      } catch (readErr) {
-        existingNotes = "";
-      }
+      const lead = readData?.lead || {};
+      const contact = lead.contact || {};
+      clientName = contact.name || _leadGatewayContact?.name || "";
+      clientEmail = contact.email || _leadGatewayContact?.email || "";
 
+      const existingNotes = lead.notes || "";
       const notes = existingNotes ? existingNotes + "\n\n" + actionNote : actionNote;
 
       await fetch("/api/leads/" + encodeURIComponent(leadId), {
@@ -1982,13 +1984,35 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("Could not record written review intake before Stripe", err);
     }
 
-    if (paymentWindow) {
-      paymentWindow.location.href = PAID_REVIEW_URL;
-    } else {
-      window.location.href = PAID_REVIEW_URL;
+    try {
+      const checkoutRes = await fetch("/api/create-written-review-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId,
+          clientName,
+          clientEmail
+        })
+      });
+
+      const checkoutData = await checkoutRes.json();
+
+      if (!checkoutRes.ok || !checkoutData.ok || !checkoutData.checkoutUrl) {
+        throw new Error(checkoutData.error || "Could not open Written Review Stripe checkout.");
+      }
+
+      if (paymentWindow) {
+        paymentWindow.location.href = checkoutData.checkoutUrl;
+      } else {
+        window.location.href = checkoutData.checkoutUrl;
+      }
+    } catch (err) {
+      if (paymentWindow) paymentWindow.close();
+      alert("Payment error: " + (err.message || "Could not open Written Review Stripe checkout."));
     }
   };
 })();
+
 
 
 

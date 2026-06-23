@@ -1250,6 +1250,81 @@ app.delete("/api/leads/:leadId", (req, res) => {
   }
 });
 
+// =============================================================================
+// POST /api/create-written-review-checkout
+// =============================================================================
+
+app.post("/api/create-written-review-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "Stripe secret key is not configured."
+      });
+    }
+
+    const body = req.body || {};
+    const leadId = String(body.leadId || "").trim();
+    const clientName = String(body.clientName || "").trim();
+    const clientEmail = String(body.clientEmail || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Lead ID is required before checkout can be created."
+      });
+    }
+
+    if (!clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error: "Client email is required before checkout can be created."
+      });
+    }
+
+    const amount = Number(process.env.WRITTEN_REVIEW_PRICE_CENTS || 2900);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: leadId,
+      customer_email: clientEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Written Estimate Red Flag Review",
+              description: "One-time written review of the tax estimate for possible red flags, missing items, and next-step guidance. This is not full tax preparation."
+            },
+            unit_amount: amount
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        leadId,
+        clientName,
+        clientEmail,
+        service: "written_review"
+      },
+      success_url: `${APP_BASE_URL}/stripe-thank-you?service=written-review&leadId=${encodeURIComponent(leadId)}`,
+      cancel_url: `${APP_BASE_URL}/estimate/${encodeURIComponent(leadId)}?checkout=cancelled`
+    });
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url,
+      sessionId: session.id
+    });
+  } catch (err) {
+    console.error("[create-written-review-checkout] Error:", err.message || err);
+    return res.status(500).json({
+      ok: false,
+      error: "Could not create Written Review Stripe checkout session."
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("=".repeat(54));
   console.log("  Greatest Business Solution LLC");
@@ -1330,5 +1405,6 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 

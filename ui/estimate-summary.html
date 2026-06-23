@@ -392,6 +392,50 @@
         return false;
       }
     }
+    async function startWrittenReviewCheckout(event, leadId) {
+      event.preventDefault();
+
+      const paymentWindow = window.open("about:blank", "_blank");
+
+      try {
+        await trackSummaryAction(leadId, "Buy Written Review - Payment not yet confirmed");
+
+        const readRes = await fetch(`/api/estimate-summary/${encodeURIComponent(leadId)}`);
+        const readData = await readRes.json();
+
+        if (!readRes.ok || !readData.ok || !readData.lead) {
+          throw new Error(readData.error || "Could not find this estimate record.");
+        }
+
+        const lead = readData.lead;
+        const contact = lead.contact || {};
+
+        const checkoutRes = await fetch("/api/create-written-review-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadId,
+            clientName: contact.name || "",
+            clientEmail: contact.email || ""
+          })
+        });
+
+        const checkoutData = await checkoutRes.json();
+
+        if (!checkoutRes.ok || !checkoutData.ok || !checkoutData.checkoutUrl) {
+          throw new Error(checkoutData.error || "Could not open Written Review Stripe checkout.");
+        }
+
+        if (paymentWindow) {
+          paymentWindow.location.href = checkoutData.checkoutUrl;
+        } else {
+          window.location.href = checkoutData.checkoutUrl;
+        }
+      } catch (err) {
+        if (paymentWindow) paymentWindow.close();
+        alert("Payment error: " + (err.message || "Could not open Written Review Stripe checkout."));
+      }
+    }
     async function trackThenOpen(event, leadId, actionLabel, targetUrl) {
       event.preventDefault();
 
@@ -682,6 +726,7 @@ Thank you.`
 </body>
 
 </html>
+
 
 
 
