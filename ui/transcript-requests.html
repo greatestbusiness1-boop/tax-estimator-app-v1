@@ -424,74 +424,10 @@ async function save(id){
 
 load();
 </script>
-<script id="LOCAL-TRANSCRIPT-PAID-TEST-UI">
-(function () {
-  if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
 
-  function findIdFromSaveButton(btn) {
-    const onclick = btn.getAttribute("onclick") || "";
-    const match = onclick.match(/save\('([^']+)'\)/);
-    return match ? match[1] : "";
-  }
-
-  function addLocalPaidButtons() {
-    document.querySelectorAll("button").forEach(saveBtn => {
-      if ((saveBtn.textContent || "").trim() !== "Save Transcript Checklist") return;
-
-      const row = saveBtn.parentElement;
-      if (!row || row.querySelector(".local-paid-test-btn")) return;
-
-      const id = findIdFromSaveButton(saveBtn);
-      if (!id) return;
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn secondary local-paid-test-btn";
-      btn.textContent = "Mark Paid - Local Test";
-      btn.style.cssText = "background:#dcfce7;color:#14532d;border:2px solid #16a34a;font-weight:950;";
-
-      btn.addEventListener("click", async function () {
-        const ok = confirm("LOCAL TEST ONLY: Mark this transcript request as Paid / Verified without charging Stripe?");
-        if (!ok) return;
-
-        const payEl = document.getElementById("pay-" + id);
-        const internalEl = document.getElementById("internal-" + id);
-        const msg = document.getElementById("msg-" + id);
-
-        if (!payEl) {
-          alert("Payment field was not found for this transcript request.");
-          return;
-        }
-
-        payEl.value = "Paid / Verified";
-
-        if (internalEl && String(internalEl.value || "").toLowerCase().includes("payment")) {
-          internalEl.value = "Waiting on 8821";
-        }
-
-        if (msg) msg.textContent = "Local test: marking payment paid...";
-
-        saveBtn.click();
-      });
-
-      saveBtn.insertAdjacentElement("afterend", btn);
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    setTimeout(addLocalPaidButtons, 500);
-    setTimeout(addLocalPaidButtons, 1500);
-  });
-
-  const observer = new MutationObserver(function () {
-    setTimeout(addLocalPaidButtons, 250);
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
 </body>
 </html>
+
 
 
 
