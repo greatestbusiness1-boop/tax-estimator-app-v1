@@ -294,20 +294,12 @@ ${internalAction}`;
 }
 
 
-async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
+async function updateLeadAfterStripePayment(leadId, applyUpdate) {
   const cleanId = String(leadId || "").trim();
 
   if (!cleanId) {
     return { ok: false, error: "Missing leadId." };
   }
-
-  const nowIso = new Date().toISOString();
-  const nowDisplay = new Date().toLocaleString();
-
-  const paymentNote =
-    "[" + nowDisplay + "] Stripe confirmed IRS Transcript Help payment." +
-    (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
-    (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
 
   function matchesLeadId(obj = {}) {
     const estimate = obj.estimate || {};
@@ -327,41 +319,6 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
     return possibleIds.some((id) => String(id || "").trim() === cleanId);
   }
 
-  function applyPaidUpdate(record = {}) {
-    const updated = { ...record };
-
-    const existingTranscriptRequest =
-      updated.transcriptRequest ||
-      updated.Request ||
-      {};
-
-    updated.transcriptRequest = {
-      ...existingTranscriptRequest,
-      requested: true,
-      paymentStatus: "Paid / Verified",
-      paymentVerifiedAt: nowIso,
-      paidAt: nowIso,
-      stripeCheckoutSessionId: paymentInfo.sessionId || existingTranscriptRequest.stripeCheckoutSessionId || "",
-      stripePaymentIntentId: paymentInfo.paymentIntentId || existingTranscriptRequest.stripePaymentIntentId || "",
-      paymentSource: "Stripe Checkout",
-      updatedAt: nowIso
-    };
-
-    // Keep legacy field in sync in case any old code still checks it
-    updated.Request = {
-      ...(updated.Request || {}),
-      ...updated.transcriptRequest
-    };
-
-    updated.status = "Transcript Help - Paid / Needs Review";
-    updated.updatedAt = nowIso;
-
-    const oldNotes = typeof updated.notes === "string" ? updated.notes.trim() : "";
-    updated.notes = oldNotes ? oldNotes + "\n" + paymentNote : paymentNote;
-
-    return updated;
-  }
-
   try {
     const { data, error } = await supabase
       .from("leads")
@@ -376,7 +333,7 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
       const matchingRow = data.find(matchesLeadId);
 
       if (matchingRow) {
-        const updatedEstimate = applyPaidUpdate(matchingRow.estimate || matchingRow);
+        const updatedEstimate = applyUpdate(matchingRow.estimate || matchingRow);
 
         let updateQuery = supabase
           .from("leads")
@@ -412,12 +369,101 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
   const localIndex = localLeads.findIndex(matchesLeadId);
 
   if (localIndex >= 0) {
-    localLeads[localIndex] = applyPaidUpdate(localLeads[localIndex]);
+    localLeads[localIndex] = applyUpdate(localLeads[localIndex]);
     writeLeads(localLeads);
     return { ok: true, source: "local" };
   }
 
   return { ok: false, error: "Lead not found." };
+}
+
+async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(leadId, function applyTranscriptPaid(record = {}) {
+    const updated = { ...record };
+
+    const existingTranscriptRequest =
+      updated.transcriptRequest ||
+      updated.Request ||
+      {};
+
+    const paymentNote =
+      "[" + nowDisplay + "] Stripe confirmed IRS Transcript Help payment." +
+      (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
+      (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
+
+    updated.transcriptRequest = {
+      ...existingTranscriptRequest,
+      requested: true,
+      paymentStatus: "Paid / Verified",
+      paymentVerifiedAt: nowIso,
+      paidAt: nowIso,
+      stripeCheckoutSessionId: paymentInfo.sessionId || existingTranscriptRequest.stripeCheckoutSessionId || "",
+      stripePaymentIntentId: paymentInfo.paymentIntentId || existingTranscriptRequest.stripePaymentIntentId || "",
+      paymentSource: "Stripe Checkout",
+      updatedAt: nowIso
+    };
+
+    // Keep legacy field in sync in case older dashboard code still checks it.
+    updated.Request = {
+      ...(updated.Request || {}),
+      ...updated.transcriptRequest
+    };
+
+    updated.status = "Transcript Help - Paid / Needs Review";
+    updated.updatedAt = nowIso;
+
+    const oldNotes = typeof updated.notes === "string" ? updated.notes.trim() : "";
+    updated.notes = oldNotes ? oldNotes + "\n" + paymentNote : paymentNote;
+
+    return updated;
+  });
+}
+
+async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(leadId, function applyWrittenPaid(record = {}) {
+    const updated = { ...record };
+    const existingWrittenReview = updated.writtenReview || {};
+    const existingPayments = updated.payments || {};
+
+    const paymentNote =
+      "[" + nowDisplay + "] Stripe confirmed Written Estimate Red Flag Review payment." +
+      (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
+      (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
+
+    updated.writtenReview = {
+      ...existingWrittenReview,
+      requested: true,
+      status: "Paid / Needs Written Review",
+      paymentStatus: "Paid / Verified",
+      paymentVerifiedAt: nowIso,
+      paidAt: nowIso,
+      stripeCheckoutSessionId: paymentInfo.sessionId || existingWrittenReview.stripeCheckoutSessionId || "",
+      stripePaymentIntentId: paymentInfo.paymentIntentId || existingWrittenReview.stripePaymentIntentId || "",
+      paymentSource: "Stripe Checkout",
+      updatedAt: nowIso
+    };
+
+    updated.payments = {
+      ...existingPayments,
+      reviewStatus: "Paid / Verified",
+      writtenReviewStatus: "Paid / Verified"
+    };
+
+    updated.paymentStatus = "Paid / Verified";
+    updated.status = "Written Review - Paid / Needs Written Review";
+    updated.updatedAt = nowIso;
+
+    const oldNotes = typeof updated.notes === "string" ? updated.notes.trim() : "";
+    updated.notes = oldNotes ? oldNotes + "\n" + paymentNote : paymentNote;
+
+    return updated;
+  });
 }
 
 // =============================================================================
@@ -504,9 +550,22 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         });
 
         if (!result.ok) {
-          console.error("[stripe webhook] Could not mark  lead paid:", result.error || result);
+          console.error("[stripe webhook] Could not mark transcript lead paid:", result.error || result);
         } else {
-          console.log("[stripe webhook]  lead marked paid:", leadId, result.source);
+          console.log("[stripe webhook] Transcript lead marked paid:", leadId, result.source);
+        }
+      }
+
+      if (service === "written_review" && session.payment_status === "paid") {
+        const result = await applyWrittenReviewPaidUpdate(leadId, {
+          sessionId: session.id,
+          paymentIntentId: session.payment_intent
+        });
+
+        if (!result.ok) {
+          console.error("[stripe webhook] Could not mark written review paid:", result.error || result);
+        } else {
+          console.log("[stripe webhook] Written review marked paid:", leadId, result.source);
         }
       }
     }
@@ -1405,6 +1464,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
