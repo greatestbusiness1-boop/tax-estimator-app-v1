@@ -1,6 +1,7 @@
 ﻿"use strict";
 
 const express = require("express");
+const clientCore = require("./server/clientCore");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
@@ -86,7 +87,7 @@ async function appendLead(lead) {
     console.log("Lead saved to Supabase:", lead.leadId);
     return lead;
   } catch (err) {
-    console.error("Supabase insert failed. Saving to local leads.json instead:", err.message || err);
+    console.error("Supabase insert failed. Saving to local  instead:", err.message || err);
 
     const leads = readLeads();
     leads.push(lead);
@@ -172,7 +173,7 @@ function mapRowToLead(row) {
     },
     taxData: estimate.taxData || null,
     estimateSummary: estimate.estimateSummary || {},
-    transcriptRequest: estimate.transcriptRequest || row.transcriptRequest || null
+    Request: estimate.Request || row.Request || null
   };
 }
 
@@ -293,7 +294,7 @@ ${internalAction}`;
 }
 
 
-async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
+async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
   const cleanId = String(leadId || "").trim();
 
   if (!cleanId) {
@@ -329,7 +330,11 @@ async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
   function applyPaidUpdate(record = {}) {
     const updated = { ...record };
 
-    const existingTranscriptRequest = updated.transcriptRequest || {};
+    const existingTranscriptRequest =
+      updated.transcriptRequest ||
+      updated.Request ||
+      {};
+
     updated.transcriptRequest = {
       ...existingTranscriptRequest,
       requested: true,
@@ -338,7 +343,14 @@ async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
       paidAt: nowIso,
       stripeCheckoutSessionId: paymentInfo.sessionId || existingTranscriptRequest.stripeCheckoutSessionId || "",
       stripePaymentIntentId: paymentInfo.paymentIntentId || existingTranscriptRequest.stripePaymentIntentId || "",
-      paymentSource: "Stripe Checkout"
+      paymentSource: "Stripe Checkout",
+      updatedAt: nowIso
+    };
+
+    // Keep legacy field in sync in case any old code still checks it
+    updated.Request = {
+      ...(updated.Request || {}),
+      ...updated.transcriptRequest
     };
 
     updated.status = "Transcript Help - Paid / Needs Review";
@@ -364,7 +376,7 @@ async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
       const matchingRow = data.find(matchesLeadId);
 
       if (matchingRow) {
-        const updatedEstimate = applyPaidUpdate(matchingRow.estimate || {});
+        const updatedEstimate = applyPaidUpdate(matchingRow.estimate || matchingRow);
 
         let updateQuery = supabase
           .from("leads")
@@ -408,7 +420,52 @@ async function applyStripePaidTranscriptUpdate(leadId, paymentInfo = {}) {
   return { ok: false, error: "Lead not found." };
 }
 
+// =============================================================================
+// LOCAL ONLY: Simulate $150 transcript payment without Stripe charge
+// =============================================================================
 
+app.get("/api/dev/simulate-transcript-paid", async (req, res) => {
+  try {
+    const host = String(req.headers.host || "").toLowerCase();
+    const isLocal =
+      host.includes("localhost") ||
+      host.includes("127.0.0.1");
+
+    if (!isLocal && process.env.ALLOW_PAYMENT_SIMULATION !== "true") {
+      return res.status(403).json({
+        ok: false,
+        error: "Payment simulation is disabled outside localhost."
+      });
+    }
+
+    const leadId = String(req.query.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing leadId. Example: /api/dev/simulate-transcript-paid?leadId=LEAD-123"
+      });
+    }
+
+    const result = await applyStripePaidUpdate(leadId, {
+      sessionId: "LOCAL_SIMULATED_CHECKOUT_SESSION",
+      paymentIntentId: "LOCAL_SIMULATED_PAYMENT_INTENT"
+    });
+
+    return res.json({
+      ok: result.ok,
+      source: result.source || null,
+      error: result.error || null,
+      leadId
+    });
+  } catch (err) {
+    console.error("[local payment simulation] Error:", err.message || err);
+    return res.status(500).json({
+      ok: false,
+      error: "Local payment simulation failed."
+    });
+  }
+});
 // =============================================================================
 // POST /api/stripe-webhook
 // =============================================================================
@@ -440,16 +497,16 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
       const service = session.metadata?.service || "";
       const leadId = session.metadata?.leadId || session.client_reference_id || "";
 
-      if (service === "irs_transcript_help" && session.payment_status === "paid") {
-        const result = await applyStripePaidTranscriptUpdate(leadId, {
+      if ((service === "irs_transcript_help" || service === "irs__help") && session.payment_status === "paid") {
+        const result = await applyStripePaidUpdate(leadId, {
           sessionId: session.id,
           paymentIntentId: session.payment_intent
         });
 
         if (!result.ok) {
-          console.error("[stripe webhook] Could not mark transcript lead paid:", result.error || result);
+          console.error("[stripe webhook] Could not mark  lead paid:", result.error || result);
         } else {
-          console.log("[stripe webhook] Transcript lead marked paid:", leadId, result.source);
+          console.log("[stripe webhook]  lead marked paid:", leadId, result.source);
         }
       }
     }
@@ -479,6 +536,19 @@ app.use((req, res, next) => {
 // =============================================================================
 
 app.post("/api/estimate", (req, res) => {
+  try {
+    const leadId = result?.leadId || result?.id || req.body?.leadId;
+
+    if (leadId) {
+      clientCore.getOrCreateClient(leadId, {
+        name: (req.body?.firstName || "") + " " + (req.body?.lastName || ""),
+        email: req.body?.email || ""
+      });
+    }
+  } catch (err) {
+    console.log("[clientCore] mirror failed:", err.message);
+  }
+
   if (!req.body || typeof req.body !== "object") {
     return res.status(400).json({
       ok: false,
@@ -715,7 +785,7 @@ app.get("/estimate/:leadId", (req, res) => {
 
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
-  const { status, notes, transcriptRequest } = req.body;
+  const { status, notes, Request } = req.body;
   const cleanId = String(leadId || "").trim();
 
   const findMatchingRow = (rows) => {
@@ -748,10 +818,10 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.notes = notes;
     }
 
-    if (transcriptRequest && typeof transcriptRequest === "object" && !Array.isArray(transcriptRequest)) {
-      updatedEstimate.transcriptRequest = {
-        ...(updatedEstimate.transcriptRequest || {}),
-        ...transcriptRequest,
+    if (Request && typeof Request === "object" && !Array.isArray(Request)) {
+      updatedEstimate.Request = {
+        ...(updatedEstimate.Request || {}),
+        ...Request,
         updatedAt: new Date().toISOString()
       };
     }
@@ -821,7 +891,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       console.error("[PATCH /api/leads] Supabase update failed:", supabaseErr.message || supabaseErr);
     }
 
-    // Fallback: update local leads.json if the lead was found there.
+    // Fallback: update local  if the lead was found there.
     const localLeads = readLeads();
     const localIndex = localLeads.findIndex((lead) => {
       const possibleIds = [
@@ -845,10 +915,10 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         localLead.notes = notes;
       }
 
-      if (transcriptRequest && typeof transcriptRequest === "object" && !Array.isArray(transcriptRequest)) {
-        localLead.transcriptRequest = {
-          ...(localLead.transcriptRequest || {}),
-          ...transcriptRequest,
+      if (Request && typeof Request === "object" && !Array.isArray(Request)) {
+        localLead.Request = {
+          ...(localLead.Request || {}),
+          ...Request,
           updatedAt: new Date().toISOString()
         };
       }
@@ -941,7 +1011,7 @@ app.post("/api/create-transcript-checkout", async (req, res) => {
         service: "irs_transcript_help"
       },
       success_url: `${APP_BASE_URL}/transcript-help-next.html?checkout=success&leadId=${encodeURIComponent(leadId)}`,
-      cancel_url: `${APP_BASE_URL}/?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
+      cancel_url: `${APP_BASE_URL}/transcript-help-next.html?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
     });
 
     return res.status(200).json({
@@ -957,19 +1027,18 @@ app.post("/api/create-transcript-checkout", async (req, res) => {
     });
   }
 });
-
 app.get("/written-review-report/:leadId", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "written-review-report.html"));
 });
 
-app.get("/transcript-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "transcript-requests.html")); });
+app.get("/-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "-requests.html")); });
 
 app.get("/leads-dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "leads-dashboard.html"));
 });
 
-app.get("/transcript-thank-you", (req, res) => {
-  res.sendFile(path.join(__dirname, "ui", "transcript-thank-you.html"));
+app.get("/-thank-you", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "-thank-you.html"));
 });
 
 // =============================================================================
@@ -1004,7 +1073,7 @@ app.get("/api/leads", async (req, res) => {
       leads
     });
   } catch (err) {
-    console.error("Supabase load leads failed. Loading local leads.json instead:", err.message || err);
+    console.error("Supabase load leads failed. Loading local  instead:", err.message || err);
 
     const leads = readLeads();
 
@@ -1041,7 +1110,7 @@ app.use((err, req, res, next) => {
 // START
 // =============================================================================
 
-app.post("/api/transcript-help", (req, res) => {
+app.post("/api/-help", (req, res) => {
   try {
     const body = req.body || {};
 
@@ -1051,13 +1120,13 @@ app.post("/api/transcript-help", (req, res) => {
     const taxYear = String(body.taxYear || "").trim();
     const multipleYears = String(body.multipleYears || "").trim();
     const issueType = String(body.issueType || "").trim();
-    const transcriptType = String(body.transcriptType || "Not sure / preparer review needed").trim();
+    const Type = String(body.Type || "Not sure / preparer review needed").trim();
     const clientExplanation = String(body.clientExplanation || "").trim();
 
     if (!clientName || !clientEmail || !clientPhone || !taxYear || !issueType || !clientExplanation) {
       return res.status(400).json({
         ok: false,
-        error: "Missing required transcript help request fields."
+        error: "Missing required  help request fields."
       });
     }
 
@@ -1070,14 +1139,14 @@ app.post("/api/transcript-help", (req, res) => {
 
     const now = new Date();
     const nowIso = now.toISOString();
-    const leadId = `transcript-${Date.now()}`;
+    const leadId = `-${Date.now()}`;
     const taxYearForLead = taxYear === "Multiple Years" && multipleYears ? multipleYears : taxYear;
 
     const notes = [
-      `[${nowIso}] Client submitted Transcript Help Request.`,
+      `[${nowIso}] Client submitted  Help Request.`,
       `Issue Type: ${issueType}`,
       `Tax Year Needed: ${taxYearForLead}`,
-      `Transcript Type Selected: ${transcriptType}`,
+      ` Type Selected: ${Type}`,
       `Client Explanation: ${clientExplanation}`,
       `Payment Status: Requested / Waiting for Payment Verification`,
       `Authorization Status: Not requested yet`
@@ -1089,9 +1158,9 @@ app.post("/api/transcript-help", (req, res) => {
       leadId,
       createdAt: nowIso,
       updatedAt: nowIso,
-      status: "Transcript Help - Payment Pending",
+      status: " Help - Payment Pending",
       priority: "high",
-      source: "Transcript Help Request Page",
+      source: " Help Request Page",
       contact: {
         name: clientName,
         email: clientEmail,
@@ -1101,25 +1170,25 @@ app.post("/api/transcript-help", (req, res) => {
         taxYear: taxYearForLead
       },
       notes,
-      transcriptRequest: {
+      Request: {
         requested: true,
         requestedAt: nowIso,
-        serviceName: "IRS Transcript Help & Tax Records Review",
+        serviceName: "IRS  Help & Tax Records Review",
         issueType,
-        transcriptType,
+        Type,
         clientExplanation,
         taxYear,
         multipleYears,
         paymentStatus: "Requested / Waiting for Payment Verification",
         authorizationStatus: "Not requested yet",
         authorizationReceivedDate: "",
-        transcriptPulledDate: "",
-        transcriptReceivedDate: "",
+        PulledDate: "",
+        ReceivedDate: "",
         deliveryMethod: "",
         deliveryDate: "",
         mailCertifiedFee: "",
         errorStatus: "No error",
-        internalNotes: "New client-facing transcript help request submitted.",
+        internalNotes: "New client-facing  help request submitted.",
         fee: "$150 flat service fee"
       }
     };
@@ -1130,13 +1199,13 @@ app.post("/api/transcript-help", (req, res) => {
     res.json({
       ok: true,
       leadId,
-      message: "Transcript help request saved."
+      message: " help request saved."
     });
   } catch (err) {
-    console.error("[transcript-help] Save error:", err);
+    console.error("[-help] Save error:", err);
     res.status(500).json({
       ok: false,
-      error: "Could not save transcript help request."
+      error: "Could not save  help request."
     });
   }
 });
@@ -1198,5 +1267,68 @@ module.exports = app;
 
 
 
+
+
+
+
+
+
+app.get("/api/leads", (req, res) => {
+  try {
+    const clients = clientCore.getClientMasterData();
+    return res.json(clients || []);
+  } catch (err) {
+    console.log("[clientCore] fallback to legacy ");
+    const fs = require("fs");
+    const data = fs.existsSync("")
+      ? JSON.parse(fs.readFileSync("", "utf8"))
+      : [];
+    return res.json(data);
+  }
+});
+
+function getOfficeWorkQueue() {
+  try {
+    const clients = clientCore.getClientMasterData() || [];
+
+    return clients.filter(c =>
+      c.lifecycle?.stage === "lead" ||
+      c.transcript?.status !== "none" ||
+      c.payments?.transcriptPaid === true ||
+      c.payments?.estimateReviewPaid === true
+    );
+  } catch (err) {
+    console.log("[queue] clientCore fallback error:", err.message);
+    return [];
+  }
+}
+
+function getClientMasterData() {
+  try {
+    const clients = clientCore.getClientMasterData() || [];
+    return clients;
+  } catch (err) {
+    console.log("[master] fallback error:", err.message);
+    return [];
+  }
+}
+
+
+function updateClientTranscript(leadId, update) {
+  try {
+    const client = clientCore.getOrCreateClient(leadId);
+
+    client.transcript = {
+      ...client.transcript,
+      ...update
+    };
+
+    clientCore.updateClient(leadId, client);
+
+    return client;
+  } catch (err) {
+    console.log("[transcript merge error]", err.message);
+  }
+}
 
 

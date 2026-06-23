@@ -160,6 +160,20 @@
       we must receive the proper authorization and verify the required client information.
     </div>
 
+    <div class="box" id="transcriptPaymentBox">
+      <h2>Complete Payment</h2>
+      <p style="font-size:16px;line-height:1.6;font-weight:800;color:#0f2c56;">
+        To continue with IRS Transcript Help, complete the one-time $150 service payment.
+      </p>
+
+      <div class="actions" style="margin-top:16px;">
+        <button id="payTranscriptBtn" class="btn primary" type="button">
+          Pay $150 for IRS Transcript Help
+        </button>
+      </div>
+
+      <div id="payTranscriptMsg" class="small"></div>
+    </div>
     <div class="box">
       <h2>What happens next</h2>
 
@@ -259,5 +273,63 @@
       </div>
     </div>
   </div>
+<script id="TRANSCRIPT-HELP-NEXT-STRIPE-PAYMENT">
+(function () {
+  const btn = document.getElementById("payTranscriptBtn");
+  const msg = document.getElementById("payTranscriptMsg");
+  if (!btn) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const leadId = params.get("leadId") || "";
+
+  if (!leadId) {
+    btn.disabled = true;
+    if (msg) msg.textContent = "Payment cannot start because the Lead ID is missing.";
+    return;
+  }
+
+  btn.addEventListener("click", async function () {
+    btn.disabled = true;
+    btn.textContent = "Opening secure Stripe checkout...";
+    if (msg) msg.textContent = "Please wait while we open the secure payment page.";
+
+    try {
+      const summaryRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const summaryData = await summaryRes.json();
+
+      if (!summaryRes.ok || !summaryData.ok || !summaryData.lead) {
+        throw new Error(summaryData.error || "Could not find this client record.");
+      }
+
+      const lead = summaryData.lead;
+      const contact = lead.contact || {};
+
+      const checkoutRes = await fetch("/api/create-transcript-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: leadId,
+          clientName: contact.name || "",
+          clientEmail: contact.email || ""
+        })
+      });
+
+      const checkoutData = await checkoutRes.json();
+
+      if (!checkoutRes.ok || !checkoutData.ok || !checkoutData.checkoutUrl) {
+        throw new Error(checkoutData.error || "Could not open Stripe checkout.");
+      }
+
+      window.location.href = checkoutData.checkoutUrl;
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "Pay $150 for IRS Transcript Help";
+      if (msg) msg.textContent = "Payment error: " + (err.message || "Could not open Stripe checkout.");
+      alert("Payment error: " + (err.message || "Could not open Stripe checkout."));
+    }
+  });
+})();
+</script>
 </body>
 </html>
+
