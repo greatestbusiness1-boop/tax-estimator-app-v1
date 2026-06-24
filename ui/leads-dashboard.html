@@ -6079,6 +6079,77 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 })();
 </script>
 
+<script id="WRR-SAFE-SCREEN-CLEANUP">
+(function () {
+  if (window.__wrrSafeScreenCleanup) return;
+  window.__wrrSafeScreenCleanup = true;
+
+  function cleanWrittenReviewCards() {
+    document.querySelectorAll(".lead-card").forEach(function (card) {
+      var text = (card.textContent || "").toLowerCase();
+
+      if (text.indexOf("written review") < 0) return;
+
+      var isPaidWrittenReview =
+        text.indexOf("written review - paid") >= 0 ||
+        text.indexOf("paid - written review needed") >= 0 ||
+        text.indexOf("paid / needs written review") >= 0;
+
+      if (!isPaidWrittenReview) return;
+
+      card.querySelectorAll("button").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+
+        if (
+          label === "No Payment Found Yet" ||
+          label === "Payment Confirmed - Prepare Review"
+        ) {
+          btn.style.display = "none";
+          btn.setAttribute("aria-hidden", "true");
+        }
+      });
+
+      var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+      var node;
+
+      while ((node = walker.nextNode())) {
+        var value = node.nodeValue || "";
+
+        if (value.indexOf("Check Stripe for payment.") >= 0) {
+          node.nodeValue = "";
+        }
+
+        if (value.indexOf("Payment Pending means the client clicked the Stripe button") >= 0) {
+          node.nodeValue = "Payment received. Review not emailed yet. Prepare the written review, open the email to the client, then mark completed after sending.";
+        }
+
+        if (value.trim() === "Prepare review, email customer, then mark completed.") {
+          node.nodeValue = "Payment received. Review not emailed yet. Prepare review, email client, then mark completed.";
+        }
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    cleanWrittenReviewCards();
+    setTimeout(cleanWrittenReviewCards, 300);
+    setTimeout(cleanWrittenReviewCards, 900);
+    setTimeout(cleanWrittenReviewCards, 1600);
+  });
+
+  var oldLoadLeads = window.loadLeads;
+  if (typeof oldLoadLeads === "function" && !oldLoadLeads.__wrrSafeWrapped) {
+    var wrapped = async function () {
+      var result = await oldLoadLeads.apply(this, arguments);
+      setTimeout(cleanWrittenReviewCards, 50);
+      setTimeout(cleanWrittenReviewCards, 500);
+      return result;
+    };
+    wrapped.__wrrSafeWrapped = true;
+    window.loadLeads = wrapped;
+  }
+})();
+</script>
 </body>
 
 </html>
@@ -6342,6 +6413,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
 
 
 
