@@ -1090,6 +1090,9 @@ app.get("/written-review-report/:leadId", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "written-review-report.html"));
 });
 
+app.get("/transcript-requests", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "transcript-requests.html"));
+});
 app.get("/-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "-requests.html")); });
 
 app.get("/leads-dashboard", (req, res) => {
@@ -1384,6 +1387,63 @@ app.post("/api/create-written-review-checkout", async (req, res) => {
   }
 });
 
+// =============================================================================
+// GET /api/debug/supabase-leads
+// Safe diagnostic: does not expose secret keys
+// =============================================================================
+
+app.get("/api/debug/supabase-leads", async (req, res) => {
+  try {
+    const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const hasAnonKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    let result = {
+      ok: false,
+      hasUrl,
+      hasAnonKey,
+      table: "leads"
+    };
+
+    if (!hasUrl || !hasAnonKey) {
+      return res.status(200).json({
+        ...result,
+        error: "Missing Supabase environment variable on this server."
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .limit(5);
+
+    if (error) {
+      return res.status(200).json({
+        ...result,
+        error: error.message || String(error),
+        code: error.code || null,
+        details: error.details || null,
+        hint: error.hint || null
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      hasUrl,
+      hasAnonKey,
+      table: "leads",
+      countReturned: Array.isArray(data) ? data.length : 0,
+      sampleLeadIds: Array.isArray(data)
+        ? data.map(row => row.leadId || row.leadid || row.lead_id || row.id || null)
+        : []
+    });
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      error: err.message || String(err)
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("=".repeat(54));
   console.log("  Greatest Business Solution LLC");
@@ -1464,6 +1524,9 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
 
 
 

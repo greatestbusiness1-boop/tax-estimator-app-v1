@@ -6254,6 +6254,20 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   }
 })();
 </script>
+<style id="LEAD-CENTER-SIMPLIFICATION-HIDE-GUIDES">
+  /*
+    Lead Center Simplification Phase 1:
+    Hide workflow guide panels from daily use.
+    Guide HTML stays in the file for safety, but it no longer takes up screen space.
+  */
+  #transcriptHelpGuidance,
+  #refundGuidance,
+  #balanceDueGuidance,
+  #strategyReviewGuidance,
+  #focusedTranscriptFileHeader {
+    display: none !important;
+  }
+</style>
 </body>
 
 </html>
@@ -6517,6 +6531,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
 
 
 
