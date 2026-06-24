@@ -5674,22 +5674,51 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     return "Client";
   }
 
-  function openEmailToClient(email, clientName, leadId){
+  function getEstimateResultLine(card){
+    var text = String((card && card.textContent) || "");
+
+    var dueMatch =
+      text.match(/Estimated\s+Total\s+Due:\s*(\$[\d,]+)/i) ||
+      text.match(/Total\s+Due:\s*(\$[\d,]+)/i) ||
+      text.match(/Combined\s+Due:\s*(\$[\d,]+)/i);
+
+    if (dueMatch && dueMatch[1]) {
+      return "Your estimate currently shows a possible balance due of " + dueMatch[1] + ". That does not mean the final return will stay the same, but it does mean the information should be reviewed carefully before filing.";
+    }
+
+    var refundMatch =
+      text.match(/Estimated\s+Total\s+Refund:\s*(\$[\d,]+)/i) ||
+      text.match(/Total\s+Refund:\s*(\$[\d,]+)/i) ||
+      text.match(/Combined\s+Refund:\s*(\$[\d,]+)/i);
+
+    if (refundMatch && refundMatch[1]) {
+      return "Your estimate currently shows a possible refund of " + refundMatch[1] + ". That amount may change after actual tax documents are reviewed.";
+    }
+
+    return "Your estimate result should be reviewed carefully before filing because final results may change after actual tax documents are reviewed.";
+  }
+
+  function openEmailToClient(email, clientName, leadId, estimateResultLine){
     if (!email){
       alert("Client email was not found on this card.");
       return;
     }
 
-    var subject = "Your Written Estimate Red Flag Review";
+    var subject = "Your Written Tax Estimate Red Flag Review";
 
     var body =
 "Hello " + (clientName || "Client") + ",\n\n" +
-"Thank you for your payment. Your Written Estimate Red Flag Review has been prepared based on the estimate information you submitted.\n\n" +
-"Here is your written review:\n\n" +
-"1. \n\n" +
-"2. \n\n" +
-"3. \n\n" +
-"Important reminder: This written review is based on the information entered into the estimate tool. It is not a filed tax return, full tax preparation, audit representation, or a guarantee of your final refund or balance due. Final results may change after reviewing actual tax documents.\n\n" +
+"Thank you for your payment for the WRITTEN TAX ESTIMATE RED FLAG REVIEW.\n\n" +
+"IMPORTANT REVIEW POINT:\n" +
+"I reviewed the information submitted through the tax estimate form. This written review is based on the numbers entered into the estimator and is designed to point out the main items that may affect your refund or balance due before relying on the estimate or filing.\n\n" +
+"WHAT YOUR ESTIMATE IS SHOWING:\n" +
+(estimateResultLine || "Your estimate result should be reviewed carefully before filing because final results may change after actual tax documents are reviewed.") + "\n\n" +
+"WHAT TO VERIFY BEFORE FILING:\n" +
+"Please verify your actual tax documents, withholding, filing status, dependents, credits, and any income that may not have been entered. Missing or incorrect information can change the final refund or balance due.\n\n" +
+"PLEASE NOTE:\n" +
+"This review is based only on the information submitted. It is not a filed tax return, full tax preparation, audit protection, IRS or state representation, legal advice, or a guarantee of the final refund or balance due. Final results may change after actual tax documents are reviewed.\n\n" +
+"NEXT STEP:\n" +
+"Please review the Written Estimate Red Flag Review. If you would like help reviewing your documents or preparing the return, please let me know.\n\n" +
 "Lead ID: " + (leadId || "") + "\n\n" +
 "Thank you,\n" +
 "Greatest Business Solution LLC";
@@ -5717,6 +5746,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
       var email = getEmail(text);
       var clientName = getClientName(card);
+      var estimateResultLine = getEstimateResultLine(card);
 
       var row = document.createElement("div");
       row.style.cssText = "margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";
@@ -5736,7 +5766,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       emailBtn.textContent = "Open Email to Client";
       emailBtn.style.cssText = "background:#0f766e;color:#ffffff;border:1px solid #0f766e;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";
       emailBtn.onclick = function(){
-        openEmailToClient(email, clientName, leadId);
+        openEmailToClient(email, clientName, leadId, estimateResultLine);
       };
 
       var note = document.createElement("span");
@@ -6150,6 +6180,80 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   }
 })();
 </script>
+<script id="WRR-EMAIL-STATUS-NOTICE">
+(function () {
+  if (window.__wrrEmailStatusNotice) return;
+  window.__wrrEmailStatusNotice = true;
+
+  function addEmailStatusNotice() {
+    document.querySelectorAll(".lead-card").forEach(function (card) {
+      var text = (card.textContent || "").toLowerCase();
+
+      var isWrittenReview =
+        text.indexOf("written review") >= 0 ||
+        text.indexOf("written red flag review") >= 0;
+
+      var isPaid =
+        text.indexOf("paid") >= 0 ||
+        text.indexOf("payment received") >= 0 ||
+        text.indexOf("payment verified") >= 0;
+
+      if (!isWrittenReview || !isPaid) return;
+      if (card.querySelector(".wrr-email-status-notice")) return;
+
+      var openEmailBtn = Array.from(card.querySelectorAll("button")).find(function (btn) {
+        return (btn.textContent || "").trim() === "Open Email to Client";
+      });
+
+      var reportBtn = Array.from(card.querySelectorAll("button")).find(function (btn) {
+        return (btn.textContent || "").trim() === "Prepare Written Review Report";
+      });
+
+      var anchorBtn = openEmailBtn || reportBtn;
+      if (!anchorBtn) return;
+
+      var notice = document.createElement("div");
+      notice.className = "wrr-email-status-notice";
+      notice.style.marginTop = "10px";
+      notice.style.border = "1px solid #f59e0b";
+      notice.style.background = "#fffbeb";
+      notice.style.color = "#78350f";
+      notice.style.borderRadius = "12px";
+      notice.style.padding = "10px 12px";
+      notice.style.fontSize = "12px";
+      notice.style.fontWeight = "900";
+      notice.style.lineHeight = "1.45";
+      notice.innerHTML =
+        '<div style="font-size:13px;font-weight:950;margin-bottom:3px;">Email Status: Not sent yet</div>' +
+        '<div>Use <b>Open Email to Client</b>, send the review, then click <b>Review Completed</b>.</div>';
+
+      var buttonArea = anchorBtn.closest("div");
+      if (buttonArea) {
+        buttonArea.insertAdjacentElement("afterend", notice);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    addEmailStatusNotice();
+    setTimeout(addEmailStatusNotice, 300);
+    setTimeout(addEmailStatusNotice, 900);
+    setTimeout(addEmailStatusNotice, 1600);
+  });
+
+  var oldLoadLeads = window.loadLeads;
+  if (typeof oldLoadLeads === "function" && !oldLoadLeads.__wrrEmailStatusWrapped) {
+    var wrapped = async function () {
+      var result = await oldLoadLeads.apply(this, arguments);
+      setTimeout(addEmailStatusNotice, 50);
+      setTimeout(addEmailStatusNotice, 500);
+      return result;
+    };
+    wrapped.__wrrEmailStatusWrapped = true;
+    window.loadLeads = wrapped;
+  }
+})();
+</script>
 </body>
 
 </html>
@@ -6413,6 +6517,10 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
 
 
 
