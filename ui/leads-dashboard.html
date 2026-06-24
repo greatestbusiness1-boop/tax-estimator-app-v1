@@ -5640,7 +5640,136 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 <script>(function(){function fixBackButton(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"");if(t.indexOf("Back to Written Review Requests Worklist")>=0){el.textContent="Back to Written Review Requests Worklist";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(fixBackButton,100);setTimeout(fixBackButton,500);});setInterval(fixBackButton,1000);})();</script>
 <!-- BACK-BUTTON-COPY-SUMMARY-LAUNCH-CLEAN -->
 <script>(function(){function cleanLaunchText(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"").trim();if(t.indexOf("Back to ")>=0&&t.indexOf("Worklist")>=0){var i=t.indexOf("Back to ");el.textContent=t.substring(i);}if(t==="Copy Summary Link"){el.style.display="none";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(cleanLaunchText,100);setTimeout(cleanLaunchText,500);});setInterval(cleanLaunchText,1000);})();</script>
-<script id="WRR-CLIENT-CARD-REPORT-BUTTON">(function(){function addWrittenReviewReportButtons(){document.querySelectorAll(".lead-card").forEach(function(card){if(card.querySelector(".written-review-report-btn"))return;var text=card.textContent||"";if(text.toLowerCase().indexOf("written review")<0)return;var match=text.match(/Lead ID:\s*(LEAD-[A-Z0-9-]+)/i);if(!match)return;var leadId=match[1];var row=document.createElement("div");row.style.cssText="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";var btn=document.createElement("button");btn.type="button";btn.className="written-review-report-btn";btn.textContent="Prepare Written Review Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";btn.onclick=function(){window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};var note=document.createElement("span");note.textContent="Open paid report page, review it, then Print / Save PDF.";note.style.cssText="font-size:12px;font-weight:800;color:#7c2d12;";row.appendChild(btn);row.appendChild(note);var buttons=Array.from(card.querySelectorAll("button"));var payBtn=buttons.find(function(b){return (b.textContent||"").indexOf("Payment Confirmed - Prepare Review")>=0;});var grid=payBtn?payBtn.closest("div"):null;if(grid){grid.insertAdjacentElement("afterend",row);}else{card.insertBefore(row,card.children[1]||null);}})}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWrittenReviewReportButtons,200);setTimeout(addWrittenReviewReportButtons,800);});setInterval(addWrittenReviewReportButtons,1500);})();</script><script id="WRR-WORKLIST-PREPARE-REPORT-BUTTON">(function(){function addWorklistPrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;var container=document.getElementById("leadsContainer");if(!container)return;Array.from(container.querySelectorAll("div")).forEach(function(row){if(row.querySelector(".wrr-worklist-prepare-btn"))return;var text=row.textContent||"";if(text.indexOf("LEAD-")<0)return;if(text.toLowerCase().indexOf("written review")<0&&text.toLowerCase().indexOf("payment pending")<0&&text.toLowerCase().indexOf("needs written review")<0)return;var openBtn=Array.from(row.querySelectorAll("button")).find(function(b){return (b.textContent||"").trim()==="Open";});if(!openBtn)return;var match=text.match(/LEAD-[A-Z0-9-]+/i);if(!match)return;var leadId=match[0];var btn=document.createElement("button");btn.type="button";btn.className="wrr-worklist-prepare-btn";btn.textContent="Prepare Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;";btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};openBtn.insertAdjacentElement("beforebegin",btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWorklistPrepareButtons,200);setTimeout(addWorklistPrepareButtons,800);});setInterval(addWorklistPrepareButtons,1500);})();</script><script id="WRR-MOVE-WORKLIST-PREPARE-UNDER-LEAD">(function(){function movePrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;document.querySelectorAll(".wrr-worklist-prepare-btn").forEach(function(btn){var row=btn.parentElement;if(!row)return;while(row&&row.id!=="leadsContainer"&&!(row.textContent||"").includes("LEAD-")){row=row.parentElement;}if(!row||row.id==="leadsContainer")return;var leadMatch=(row.textContent||"").match(/LEAD-[A-Z0-9-]+/i);if(!leadMatch)return;var clientCell=Array.from(row.children).find(function(el){return (el.textContent||"").includes(leadMatch[0]);});if(!clientCell)return;if(clientCell.querySelector(".wrr-worklist-prepare-btn"))return;btn.textContent="Prepare Report";btn.style.cssText="display:block;margin-top:8px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;box-shadow:none;width:max-content;max-width:100%;";clientCell.appendChild(btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(movePrepareButtons,200);setTimeout(movePrepareButtons,800);});setInterval(movePrepareButtons,1200);})();</script>
+<script id="WRR-CLIENT-CARD-REPORT-BUTTON">
+(function(){
+  function getEmail(text){
+    var match = String(text || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    return match ? match[0] : "";
+  }
+
+  function getLeadId(text){
+    var match = String(text || "").match(/Lead ID:\s*(LEAD-[A-Z0-9-]+)/i) || String(text || "").match(/LEAD-[A-Z0-9-]+/i);
+    return match ? (match[1] || match[0]) : "";
+  }
+
+  function getClientName(card){
+    var text = String(card.textContent || "");
+    var lines = text.split(/\n+/).map(function(line){ return line.trim(); }).filter(Boolean);
+
+    for (var i = 0; i < lines.length; i++){
+      var line = lines[i];
+
+      if (line.indexOf("@") >= 0) continue;
+      if (/Lead ID:/i.test(line)) continue;
+      if (/Submitted:/i.test(line)) continue;
+      if (/Written Review/i.test(line)) continue;
+      if (/Client CRM Summary/i.test(line)) continue;
+      if (/Payment:/i.test(line)) continue;
+      if (/Transcript:/i.test(line)) continue;
+      if (/Next Action:/i.test(line)) continue;
+
+      return line;
+    }
+
+    return "Client";
+  }
+
+  function openEmailToClient(email, clientName, leadId){
+    if (!email){
+      alert("Client email was not found on this card.");
+      return;
+    }
+
+    var subject = "Your Written Estimate Red Flag Review";
+
+    var body =
+"Hello " + (clientName || "Client") + ",\n\n" +
+"Thank you for your payment. Your Written Estimate Red Flag Review has been prepared based on the estimate information you submitted.\n\n" +
+"Here is your written review:\n\n" +
+"1. \n\n" +
+"2. \n\n" +
+"3. \n\n" +
+"Important reminder: This written review is based on the information entered into the estimate tool. It is not a filed tax return, full tax preparation, audit representation, or a guarantee of your final refund or balance due. Final results may change after reviewing actual tax documents.\n\n" +
+"Lead ID: " + (leadId || "") + "\n\n" +
+"Thank you,\n" +
+"Greatest Business Solution LLC";
+
+    var gmailUrl =
+      "https://mail.google.com/mail/?view=cm&fs=1" +
+      "&to=" + encodeURIComponent(email) +
+      "&su=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+
+    window.open(gmailUrl, "_blank");
+  }
+
+  function addWrittenReviewReportButtons(){
+    document.querySelectorAll(".lead-card").forEach(function(card){
+      if(card.querySelector(".written-review-report-btn")) return;
+
+      var text = card.textContent || "";
+      var lower = text.toLowerCase();
+
+      if(lower.indexOf("written review") < 0) return;
+
+      var leadId = getLeadId(text);
+      if(!leadId) return;
+
+      var email = getEmail(text);
+      var clientName = getClientName(card);
+
+      var row = document.createElement("div");
+      row.style.cssText = "margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "written-review-report-btn";
+      btn.textContent = "Prepare Written Review Report";
+      btn.style.cssText = "background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";
+      btn.onclick = function(){
+        window.open("/written-review-report/" + encodeURIComponent(leadId), "_blank");
+      };
+
+      var emailBtn = document.createElement("button");
+      emailBtn.type = "button";
+      emailBtn.className = "written-review-email-btn";
+      emailBtn.textContent = "Open Email to Client";
+      emailBtn.style.cssText = "background:#0f766e;color:#ffffff;border:1px solid #0f766e;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";
+      emailBtn.onclick = function(){
+        openEmailToClient(email, clientName, leadId);
+      };
+
+      var note = document.createElement("span");
+      note.textContent = "Prepare review, email customer, then mark completed.";
+      note.style.cssText = "font-size:12px;font-weight:800;color:#7c2d12;";
+
+      row.appendChild(btn);
+      row.appendChild(emailBtn);
+      row.appendChild(note);
+
+      var buttons = Array.from(card.querySelectorAll("button"));
+      var payBtn = buttons.find(function(b){
+        return (b.textContent || "").indexOf("Payment Confirmed - Prepare Review") >= 0;
+      });
+
+      var grid = payBtn ? payBtn.closest("div") : null;
+
+      if(grid){
+        grid.insertAdjacentElement("afterend", row);
+      } else {
+        card.insertBefore(row, card.children[1] || null);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(addWrittenReviewReportButtons, 200);
+    setTimeout(addWrittenReviewReportButtons, 800);
+  });
+
+  setInterval(addWrittenReviewReportButtons, 1500);
+})();
+</script><script id="WRR-WORKLIST-PREPARE-REPORT-BUTTON">(function(){function addWorklistPrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;var container=document.getElementById("leadsContainer");if(!container)return;Array.from(container.querySelectorAll("div")).forEach(function(row){if(row.querySelector(".wrr-worklist-prepare-btn"))return;var text=row.textContent||"";if(text.indexOf("LEAD-")<0)return;if(text.toLowerCase().indexOf("written review")<0&&text.toLowerCase().indexOf("payment pending")<0&&text.toLowerCase().indexOf("needs written review")<0)return;var openBtn=Array.from(row.querySelectorAll("button")).find(function(b){return (b.textContent||"").trim()==="Open";});if(!openBtn)return;var match=text.match(/LEAD-[A-Z0-9-]+/i);if(!match)return;var leadId=match[0];var btn=document.createElement("button");btn.type="button";btn.className="wrr-worklist-prepare-btn";btn.textContent="Prepare Report";btn.style.cssText="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;";btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.open("/written-review-report/"+encodeURIComponent(leadId),"_blank");};openBtn.insertAdjacentElement("beforebegin",btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(addWorklistPrepareButtons,200);setTimeout(addWorklistPrepareButtons,800);});setInterval(addWorklistPrepareButtons,1500);})();</script><script id="WRR-MOVE-WORKLIST-PREPARE-UNDER-LEAD">(function(){function movePrepareButtons(){var filter=document.getElementById("actionQueueFilter");if(!filter||filter.value!=="StrategyReview")return;document.querySelectorAll(".wrr-worklist-prepare-btn").forEach(function(btn){var row=btn.parentElement;if(!row)return;while(row&&row.id!=="leadsContainer"&&!(row.textContent||"").includes("LEAD-")){row=row.parentElement;}if(!row||row.id==="leadsContainer")return;var leadMatch=(row.textContent||"").match(/LEAD-[A-Z0-9-]+/i);if(!leadMatch)return;var clientCell=Array.from(row.children).find(function(el){return (el.textContent||"").includes(leadMatch[0]);});if(!clientCell)return;if(clientCell.querySelector(".wrr-worklist-prepare-btn"))return;btn.textContent="Prepare Report";btn.style.cssText="display:block;margin-top:8px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;box-shadow:none;width:max-content;max-width:100%;";clientCell.appendChild(btn);});}document.addEventListener("DOMContentLoaded",function(){setTimeout(movePrepareButtons,200);setTimeout(movePrepareButtons,800);});setInterval(movePrepareButtons,1200);})();</script>
 <script id="CLIENT-CRM-SUMMARY-PANEL">
 (function () {
   function esc(v) {
@@ -6213,6 +6342,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
 
 
 

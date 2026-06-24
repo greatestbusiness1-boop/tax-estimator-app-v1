@@ -1857,7 +1857,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.45px;">Written Estimate Red Flag Review - $29</div>
             <div style="font-size:26px;font-weight:950;color:#0f2c56;margin-top:5px;">Before payment, tell us what may affect your estimate</div>
             <div style="margin-top:8px;color:#334155;font-size:15px;line-height:1.55;font-weight:750;">
-              This helps us prepare a more useful written review. The review is limited to the estimate information you entered and the answers below. It is not full tax preparation or a document-by-document tax return review.
+              This helps us prepare a more useful written review. Your written review will be emailed to the email address you provided. No printer is needed. The review is limited to the estimate information you entered and the answers below. It is not full tax preparation or a document-by-document tax return review.
             </div>
           </div>
 
@@ -2012,6 +2012,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 })();
+
 
 
 
