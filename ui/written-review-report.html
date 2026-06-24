@@ -1,0 +1,911 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Written Estimate Red Flag Review</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #12233d;
+      margin: 0;
+      padding: 24px;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 12px 30px rgba(15, 44, 86, 0.12);
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      border-bottom: 3px solid #0f2c56;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f2c56;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    h1 {
+      margin: 8px 0 6px;
+      font-size: 30px;
+      color: #0f2c56;
+    }
+
+    .sub {
+      margin: 0;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .print-btn {
+      background: #0f2c56;
+      color: #ffffff;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .box {
+      border: 1px solid #dbe4f0;
+      border-radius: 14px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 950;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 18px;
+      font-weight: 950;
+      color: #0f2c56;
+    }
+
+    .section {
+      border: 1px solid #dbe4f0;
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 16px;
+      background: #ffffff;
+    }
+
+    .section h2 {
+      margin: 0 0 10px;
+      color: #0f2c56;
+      font-size: 20px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 22px;
+      line-height: 1.7;
+      color: #334155;
+      font-size: 15px;
+    }
+
+    p {
+      line-height: 1.65;
+      color: #334155;
+      font-size: 15px;
+    }
+
+    .notice {
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      color: #7c2d12;
+      border-radius: 14px;
+      padding: 14px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .error {
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+      border-radius: 14px;
+      padding: 16px;
+      font-weight: 900;
+      display: none;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .page {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: none;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top">
+      <div>
+        <div class="brand">Greatest Business Solution LLC</div>
+        <h1 id="title">Written Estimate Red Flag Review</h1>
+        <p class="sub" id="subtitle">Loading paid written review report...</p>
+      </div>
+
+      <button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <div id="errorBox" class="error"></div>
+
+    <div id="reportBody" style="display:none;">
+      <div class="grid">
+        <div class="box">
+          <div class="label">Client</div>
+          <div class="value" id="clientName">Client</div>
+        </div>
+        <div class="box">
+          <div class="label">Tax Year</div>
+          <div class="value" id="taxYear">Tax Year</div>
+        </div>
+        <div class="box">
+          <div class="label">Filing Status</div>
+          <div class="value" id="filingStatus">Filing Status</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="box">
+          <div class="label">Federal Estimate</div>
+          <div class="value" id="federalResult">$0</div>
+        </div>
+        <div class="box">
+          <div class="label">State Estimate</div>
+          <div class="value" id="stateResult">$0</div>
+        </div>
+        <div class="box">
+          <div class="label">Combined Estimate</div>
+          <div class="value" id="combinedResult">$0</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Estimate Submitted</h2>
+        <p id="submittedText"></p>
+      </div>
+
+      <div class="section">
+        <h2>Professional Review Notes</h2>
+        <ul id="reviewNotes"></ul>
+      </div>
+
+      <div class="section">
+        <h2>Items to Verify Before Filing</h2>
+        <ul id="verifyItems"></ul>
+      </div>
+
+      <div class="section">
+        <h2>What Could Change This Estimate</h2>
+        <ul id="changeItems"></ul>
+      </div>
+
+      <div class="section">
+        <h2>Recommended Next Step</h2>
+        <p id="nextStepText"></p>
+      </div>
+
+      <div class="section">
+        <h2>Important Disclaimer</h2>
+        <div class="notice">
+          This Written Estimate Red Flag Review is based only on the information entered into the estimator. It is not a filed tax return, full tax preparation, audit protection, IRS or state representation, legal advice, or a guarantee of the final refund or balance due. Final results may change after review of actual tax documents.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function fmtMoney(value) {
+      const num = Number(value || 0);
+      return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    }
+
+    function resultText(label, value) {
+      const num = Number(value || 0);
+      if (num > 0) return label + " Refund: " + fmtMoney(num);
+      if (num < 0) return label + " Due: " + fmtMoney(Math.abs(num));
+      return label + ": Break-even / no estimated amount";
+    }
+
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function renderList(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = items.map(function(item) {
+        return "<li>" + item + "</li>";
+      }).join("");
+    }
+
+    function cleanStatusText(text) {
+      return String(text || "").replace(/\s+/g, " ").trim();
+    }
+
+    async function loadReport() {
+      const pathParts = window.location.pathname.split("/").filter(Boolean);
+      const leadId = pathParts[pathParts.length - 1];
+
+      try {
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data && data.error ? data.error : "Estimate not found.");
+        }
+
+        const lead = data.lead || {};
+        const contact = lead.contact || {};
+        const summary = lead.estimateSummary || {};
+        const taxData = lead.taxData || {};
+
+        const federalNet = Number((summary.federal && summary.federal.net) ?? summary.federalNet ?? 0);
+        const stateNet = Number((summary.state && summary.state.net) ?? summary.stateNet ?? 0);
+        const combinedNet = Number((summary.combined && summary.combined.net) ?? summary.combinedNet ?? 0);
+
+        const taxYear = taxData.taxYear || summary.taxYear || "Not provided";
+        const filingStatus = taxData.filingStatus || taxData.status || "Not provided";
+        const state = taxData.state || taxData.stateOfResidence || taxData.residenceState || "Not provided";
+        const dependents = Number(taxData.dependents || taxData.children || taxData.qualifyingChildren || 0);
+        const w2Income = Number(taxData.w2Income || taxData.wages || taxData.income || 0);
+        const federalWithheld = Number(taxData.federalWithheld || taxData.federalWithholding || 0);
+        const stateWithheld = Number(taxData.stateWithheld || taxData.stateWithholding || 0);
+        const selfEmployment = Number(taxData.selfEmploymentIncome || taxData.selfEmployment || taxData.scheduleCIncome || 0);
+
+        setText("title", "Written Estimate Red Flag Review for " + (contact.name || "Client"));
+        setText("subtitle", "Prepared by Greatest Business Solution LLC. Paid written red-flag review based on the information submitted in the estimator and the client disclosures provided before payment.");
+        setText("clientName", contact.name || "Client");
+        setText("taxYear", String(taxYear));
+        setText("filingStatus", filingStatus);
+        setText("federalResult", resultText("Federal", federalNet));
+        setText("stateResult", resultText("State", stateNet));
+        setText("combinedResult", resultText("Total", combinedNet));
+
+        const submittedParts = [
+          "This written review was prepared from the tax estimate information submitted for tax year " + taxYear + ".",
+          "The estimate shows " + resultText("federal", federalNet).toLowerCase() + ", " + resultText("state", stateNet).toLowerCase() + ", and " + resultText("combined", combinedNet).toLowerCase() + "."
+        ];
+
+        if (w2Income) submittedParts.push("The information submitted included estimated W-2 wages of " + fmtMoney(w2Income) + ".");
+        if (federalWithheld) submittedParts.push("Federal withholding entered was " + fmtMoney(federalWithheld) + ".");
+        if (stateWithheld) submittedParts.push("State withholding entered was " + fmtMoney(stateWithheld) + ".");
+        if (dependents) submittedParts.push("The estimate included " + dependents + " dependent(s).");
+        if (state && state !== "Not provided") submittedParts.push("State of residence entered was " + state + ".");
+
+        setText("submittedText", submittedParts.join(" "));
+
+        const reviewNotes = [];
+
+        if (combinedNet > 0) {
+          reviewNotes.push("The estimate currently shows a possible refund. The refund appears to be affected by withholding, filing status, dependent information, and credits entered in the estimator.");
+        } else if (combinedNet < 0) {
+          reviewNotes.push("The estimate currently shows a possible balance due. This may indicate under-withholding, additional income, missing credits, self-employment tax, or information that still needs to be verified.");
+        } else {
+          reviewNotes.push("The estimate appears close to break-even. Small changes in income, withholding, credits, or deductions may move the final result to either a refund or balance due.");
+        }
+
+        if (dependents > 0) {
+          reviewNotes.push("Because dependents were included, dependent eligibility should be verified before filing. This includes relationship, residency, support, age, and whether anyone else may claim the same dependent.");
+        }
+
+        if (String(state).toUpperCase() === "TX" || String(state).toLowerCase().includes("texas")) {
+          reviewNotes.push("Texas does not have a broad individual state income tax, so the state portion of this estimate should not be treated the same as a regular state income tax estimate.");
+        } else if (state && state !== "Not provided") {
+          reviewNotes.push("The state estimate depends on state-specific rules, state withholding, residency, and the income entered.");
+        }
+
+        if (selfEmployment > 0) {
+          reviewNotes.push("Self-employment income was included. Business expenses, mileage, estimated payments, and self-employment tax can significantly change the final result.");
+        }
+
+        if (combinedNet > 5000) {
+          reviewNotes.push("The refund estimate is relatively large. After the actual return is prepared, it may be worth reviewing Form W-4 if the client wants more take-home pay during the year instead of waiting for a large refund.");
+        }
+
+        if (combinedNet < -1000) {
+          reviewNotes.push("The balance due estimate may require planning. The client should review withholding, estimated payments, and whether all available credits and deductions were included.");
+        }
+
+        renderList("reviewNotes", reviewNotes);
+
+        const verifyItems = [
+          "Actual W-2 Box 1 wages and Box 2 federal withholding.",
+          "State wages and state withholding from the actual W-2.",
+          "Correct filing status for the tax year.",
+          "All additional income, including 1099 income, unemployment, retirement, interest, dividends, gambling winnings, and marketplace insurance forms.",
+          "Dependent eligibility and whether another taxpayer may claim any dependent.",
+          "Any childcare, education, retirement contribution, business expense, mileage, or estimated payment information that was not entered."
+        ];
+
+        if (selfEmployment > 0) {
+          verifyItems.push("Business records for self-employment income and expenses.");
+        }
+
+        renderList("verifyItems", verifyItems);
+
+        const changeItems = [
+          "Final refund or balance due may change after actual tax documents are reviewed.",
+          "Additional income not entered can reduce a refund or increase a balance due.",
+          "Additional withholding, estimated payments, credits, or deductions may improve the result.",
+          "State-specific tax rules may change the state portion of the estimate.",
+          "Dependent, filing status, and credit eligibility issues can change the estimate significantly."
+        ];
+
+        renderList("changeItems", changeItems);
+
+        let nextStep = "";
+        if (combinedNet > 0) {
+          nextStep = "Recommended next step: Gather the actual tax documents and verify the dependent, income, and withholding information before filing. The estimate appears favorable, but it should be confirmed against the actual tax forms.";
+        } else if (combinedNet < 0) {
+          nextStep = "Recommended next step: Review the actual tax documents, confirm all withholding and credits, and consider a tax preparation or balance due review before filing. If the balance due remains, payment planning may be needed.";
+        } else {
+          nextStep = "Recommended next step: Confirm the actual documents before filing. Because this estimate is close to break-even, even small changes may affect the final result.";
+        }
+
+        setText("nextStepText", nextStep);
+
+        document.getElementById("reportBody").style.display = "block";
+      } catch (err) {
+        const errorBox = document.getElementById("errorBox");
+        errorBox.style.display = "block";
+        errorBox.textContent = err.message || "Could not load written review report.";
+        setText("subtitle", "Please return to the dashboard and confirm the lead ID.");
+      }
+    }
+
+    loadReport();
+  </script>
+<script id="WRR-POLISH-FILING-BOLD">(function(){function polish(){var fs=document.getElementById("filingStatus");if(fs){var v=(fs.textContent||"").trim().toLowerCase();if(v==="hoh"||v==="head of household"){fs.textContent="Head Of Household";}else if(v==="mfj"){fs.textContent="Married Filing Jointly";}else if(v==="mfs"){fs.textContent="Married Filing Separately";}}var p=document.getElementById("submittedText");if(p&&p.innerHTML){var h=p.innerHTML;h=h.replace(/federal refund:/gi,"<strong>Federal Refund:</strong>").replace(/state refund:/gi,"<strong>State Refund:</strong>").replace(/combined refund:/gi,"<strong>Combined Refund:</strong>").replace(/federal due:/gi,"<strong>Federal Due:</strong>").replace(/state due:/gi,"<strong>State Due:</strong>").replace(/combined due:/gi,"<strong>Combined Due:</strong>");p.innerHTML=h;}}document.addEventListener("DOMContentLoaded",function(){setTimeout(polish,200);setTimeout(polish,800);});setInterval(polish,1500);})();</script><script id="WRR-PAID-REVIEW-FINDINGS">(function(){function money(v){var n=Number(v||0);return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});}function addFindings(data){if(document.getElementById("paidReviewFindingsSection"))return;var lead=data.lead||{};var summary=lead.estimateSummary||{};var tax=lead.taxData||{};var fed=Number((summary.federal&&summary.federal.net)||summary.federalNet||0);var st=Number((summary.state&&summary.state.net)||summary.stateNet||0);var total=Number((summary.combined&&summary.combined.net)||summary.combinedNet||0);var wages=Number(tax.w2Income||tax.wages||tax.income||0);var fw=Number(tax.federalWithheld||tax.federalWithholding||0);var sw=Number(tax.stateWithheld||tax.stateWithholding||0);var deps=Number(tax.dependents||tax.children||tax.qualifyingChildren||0);var se=Number(tax.selfEmploymentIncome||tax.selfEmployment||tax.scheduleCIncome||0);var state=String(tax.state||tax.stateOfResidence||tax.residenceState||"").trim();var filing=String(tax.filingStatus||tax.status||"").trim();var findings=[];if(total>0){findings.push(["Main refund driver","This estimate shows a possible total refund of "+money(total)+". The refund appears to be driven by withholding, filing status, dependent or credit information, and the income entered. This should be verified against the actual tax documents before the client relies on the number."]);}else if(total<0){findings.push(["Main balance-due driver","This estimate shows a possible balance due of "+money(Math.abs(total))+". This may be caused by under-withholding, additional taxable income, self-employment tax, missing credits, or information that still needs to be verified."]);}else{findings.push(["Main result driver","This estimate is close to break-even. Small changes in income, withholding, credits, dependents, or filing status could change the final refund or balance due."]);}if(wages>0&&fw>0){findings.push(["Federal withholding observation","Federal withholding entered was "+money(fw)+" against estimated W-2 wages of "+money(wages)+". The actual W-2 Box 1 wages and Box 2 federal withholding should be checked before filing."]);}else{findings.push(["Federal withholding observation","The federal withholding information should be verified against the actual W-2 or income documents. Missing or incorrect withholding can materially change the estimate."]);}if(deps>0){findings.push(["Dependent and credit checkpoint","The estimate includes "+deps+" dependent(s). Before relying on the refund amount, confirm that each dependent qualifies and that no other taxpayer can claim the same dependent. Dependent eligibility can significantly change credits and the final result."]);}else{findings.push(["Dependent and credit checkpoint","No dependents appear to be included in this estimate. If the client has qualifying children or other dependents, the estimate may be missing credits that could change the result."]);}if(state.toLowerCase()==="tx"||state.toLowerCase().indexOf("texas")>=0){findings.push(["State review","Texas does not have a broad individual state income tax, so the state portion should not be reviewed the same way as a regular state income tax estimate."]);}else if(state){findings.push(["State review","The state estimate should be checked against state wages, state withholding, residency, and state-specific rules. State withholding entered was "+money(sw)+", and the estimated state result was "+(st>=0?"a refund of "+money(st):"a balance due of "+money(Math.abs(st)))+"."]);}else{findings.push(["State review","The state portion should be reviewed after confirming the correct state of residence and any state withholding shown on the actual tax forms."]);}if(se>0){findings.push(["Self-employment checkpoint","Self-employment income appears to be included. Business expenses, mileage, estimated payments, and self-employment tax can significantly change the final tax result."]);}else{findings.push(["Missing information risk","The client should confirm whether any income was not entered, including 1099 income, unemployment, retirement income, interest, dividends, gambling winnings, marketplace insurance forms, or other tax documents."]);}var html="<div class=\"section\" id=\"paidReviewFindingsSection\"><h2>Paid Review Findings</h2><div style=\"display:grid;grid-template-columns:1fr;gap:10px;\">"+findings.map(function(x){return "<div style=\"border:1px solid #dbe4f0;background:#f8fafc;border-radius:14px;padding:13px 14px;\"><div style=\"font-weight:950;color:#0f2c56;margin-bottom:5px;\">"+x[0]+"</div><div style=\"color:#334155;font-size:15px;line-height:1.6;\">"+x[1]+"</div></div>";}).join("")+"</div></div>";var submitted=document.getElementById("submittedText");var section=submitted?submitted.closest(".section"):null;if(section){section.insertAdjacentHTML("afterend",html);}}async function run(){try{var parts=window.location.pathname.split("/").filter(Boolean);var leadId=parts[parts.length-1];var res=await fetch("/api/estimate-summary/"+encodeURIComponent(leadId));var data=await res.json();if(res.ok&&data&&data.ok){addFindings(data);}}catch(e){console.warn("Paid findings skipped",e);}}document.addEventListener("DOMContentLoaded",function(){setTimeout(run,500);setTimeout(run,1200);});setInterval(run,2500);})();</script><script id="WRR-SAFE-VISUAL-UPGRADE-V2">(function(){function money(v){var n=Number(v||0);return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});}function cleanStatus(){var fs=document.getElementById("filingStatus");if(!fs)return;var v=(fs.textContent||"").trim().toLowerCase();if(v==="single")fs.textContent="Single";if(v==="hoh"||v==="head of household")fs.textContent="Head Of Household";if(v==="mfj")fs.textContent="Married Filing Jointly";if(v==="mfs")fs.textContent="Married Filing Separately";}async function upgrade(){cleanStatus();try{var parts=window.location.pathname.split("/").filter(Boolean);var leadId=parts[parts.length-1];var res=await fetch("/api/estimate-summary/"+encodeURIComponent(leadId));var data=await res.json();if(!res.ok||!data||!data.ok)return;var lead=data.lead||{};var summary=lead.estimateSummary||{};var tax=lead.taxData||{};var total=Number((summary.combined&&summary.combined.net)||summary.combinedNet||0);var fw=Number(tax.federalWithheld||tax.federalWithholding||0);var sw=Number(tax.stateWithheld||tax.stateWithholding||0);var deps=Number(tax.dependents||tax.children||tax.qualifyingChildren||0);var state=String(tax.state||tax.stateOfResidence||tax.residenceState||"").trim()||"state";var resultLabel=total>0?"Estimated Total Refund":total<0?"Estimated Balance Due":"Estimated Result";var resultValue=total===0?"Break-even":money(Math.abs(total));var driver=total>0?"Withholding, filing status, dependent or credit information":total<0?"Under-withholding, added income, missing credits, or self-employment tax":"Small changes may move the result";var priority=[];if(fw>0)priority.push("federal withholding");if(sw>0)priority.push(state+" withholding");if(deps>0)priority.push("dependent eligibility");priority.push("actual tax documents");var topGrid=document.querySelector("#reportBody .grid");if(topGrid&&!document.getElementById("paidReviewSnapshot")){topGrid.insertAdjacentHTML("afterend","<div id=\"paidReviewSnapshot\" style=\"border:2px solid #0f2c56;background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);border-radius:18px;padding:18px;margin:6px 0 18px;box-shadow:0 10px 22px rgba(15,44,86,.10);\"><div style=\"font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.45px;margin-bottom:10px;\">Paid Review Snapshot</div><div style=\"display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;\"><div style=\"background:#ffffff;border:1px solid #bfdbfe;border-radius:14px;padding:12px;\"><div style=\"font-size:11px;font-weight:950;color:#64748b;text-transform:uppercase;\">"+resultLabel+"</div><div style=\"font-size:22px;font-weight:950;color:"+(total<0?"#b91c1c":"#047857")+";margin-top:4px;\">"+resultValue+"</div></div><div style=\"background:#ffffff;border:1px solid #bfdbfe;border-radius:14px;padding:12px;\"><div style=\"font-size:11px;font-weight:950;color:#64748b;text-transform:uppercase;\">Primary Driver</div><div style=\"font-size:14px;font-weight:900;color:#0f2c56;margin-top:4px;line-height:1.35;\">"+driver+"</div></div><div style=\"background:#ffffff;border:1px solid #fed7aa;border-radius:14px;padding:12px;\"><div style=\"font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;\">Review Priority</div><div style=\"font-size:14px;font-weight:900;color:#7c2d12;margin-top:4px;line-height:1.35;\">Verify "+priority.join(", ")+"</div></div><div style=\"background:#ffffff;border:1px solid #bbf7d0;border-radius:14px;padding:12px;\"><div style=\"font-size:11px;font-weight:950;color:#047857;text-transform:uppercase;\">Next Step</div><div style=\"font-size:14px;font-weight:900;color:#065f46;margin-top:4px;line-height:1.35;\">Confirm documents before relying on the estimate.</div></div></div></div>");}var findings=document.getElementById("paidReviewFindingsSection");if(findings){findings.style.border="2px solid #bfdbfe";findings.style.background="linear-gradient(180deg,#eff6ff 0%,#ffffff 100%)";findings.style.boxShadow="0 10px 22px rgba(15,44,86,.08)";var grid=Array.from(findings.children).find(function(el){return el.children&&el.children.length>=3;});if(grid){Array.from(grid.children).forEach(function(card,i){card.style.borderLeft="7px solid "+(i===0?(total<0?"#dc2626":"#16a34a"):i===1?"#0f2c56":i===2?"#7c3aed":i===3?"#f59e0b":"#64748b");card.style.background="#ffffff";card.style.boxShadow="0 6px 14px rgba(15,44,86,.06)";var title=card.firstElementChild;if(title){var base=(title.dataset.baseTitle||title.textContent||"").replace(/^(Finding [0-9]+ - )+/,"");title.dataset.baseTitle=base;title.textContent="Finding "+(i+1)+" - "+base;title.style.fontSize="16px";title.style.fontWeight="950";title.style.color="#0f2c56";}});}}var next=document.getElementById("nextStepText");if(next){var sec=next.closest(".section");if(sec){sec.style.border="2px solid #047857";sec.style.background="linear-gradient(180deg,#ecfdf5 0%,#ffffff 100%)";sec.style.boxShadow="0 10px 22px rgba(4,120,87,.10)";}next.style.fontSize="16px";next.style.fontWeight="900";next.style.color="#065f46";}}catch(e){console.warn("safe visual upgrade skipped",e);}}document.addEventListener("DOMContentLoaded",function(){setTimeout(upgrade,700);setTimeout(upgrade,1600);});})();</script><script id="WRR-FINAL-FILING-STATUS-CAPITALIZATION">(function(){function fixStatus(){var fs=document.getElementById("filingStatus");if(!fs)return;var v=(fs.textContent||"").trim().toLowerCase();if(v==="single")fs.textContent="Single";if(v==="hoh"||v==="head of household")fs.textContent="Head Of Household";if(v==="mfj"||v==="married filing jointly")fs.textContent="Married Filing Jointly";if(v==="mfs"||v==="married filing separately")fs.textContent="Married Filing Separately";if(v==="qualifying surviving spouse"||v==="qualifying widow")fs.textContent="Qualifying Surviving Spouse";}document.addEventListener("DOMContentLoaded",function(){setTimeout(fixStatus,300);setTimeout(fixStatus,1000);setTimeout(fixStatus,1800);});setInterval(fixStatus,1500);})();</script><script id="WRR-PREPARER-REVIEW-REQUIRED">(function(){function leadId(){var p=window.location.pathname.split("/").filter(Boolean);return p[p.length-1]||"unknown";}function key(name){return "wrr-preparer-"+leadId()+"-"+name;}function field(label,id,placeholder){return "<div style=\"border:1px solid #cbd5e1;border-radius:14px;background:#ffffff;padding:12px;\"><div style=\"font-size:12px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.35px;margin-bottom:7px;\">"+label+"</div><textarea id=\""+id+"\" data-wrr-note=\"1\" data-key=\""+id+"\" placeholder=\""+placeholder+"\" style=\"width:100%;min-height:82px;box-sizing:border-box;border:1px solid #dbe4f0;border-radius:10px;padding:10px;font-size:14px;line-height:1.5;color:#0f172a;font-family:Arial,sans-serif;resize:vertical;\"></textarea></div>";}function addSection(){if(document.getElementById("preparerReviewRequiredSection"))return;var html="<div class=\"section\" id=\"preparerReviewRequiredSection\" style=\"border:3px solid #0f2c56;background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);box-shadow:0 12px 26px rgba(15,44,86,.12);\"><div style=\"display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px;\"><div><h2 style=\"margin:0;color:#0f2c56;font-size:22px;\">Preparer Review - Required Before Delivery</h2><div style=\"margin-top:6px;color:#334155;font-size:14px;font-weight:800;line-height:1.45;\">This section is what makes the $29 report a paid professional review. Complete these notes before saving or emailing the PDF.</div></div><div style=\"background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:950;white-space:nowrap;\">Manual Review Required</div></div><div style=\"display:grid;grid-template-columns:1fr;gap:10px;\">"+field("Preparer Review Summary","reviewSummary","Example: Based on the numbers entered, the main issue I noticed is...")+field("Main Issue Found","mainIssue","Example: The balance due appears to be driven by low federal withholding compared to wages entered.")+field("Items That Must Be Verified","verifyBeforeFiling","Example: Verify W-2 Box 1 wages, federal withholding, state withholding, dependent eligibility, and any missing tax forms.")+field("Recommended Action","recommendedAction","Example: Review actual documents before filing. If numbers are accurate, consider a W-4 review or tax preparation appointment.")+field("Delivery Notes","deliveryNotes","Example: Report prepared after payment review. PDF delivered by email on...")+"</div></div>";var findings=document.getElementById("paidReviewFindingsSection");if(findings){findings.insertAdjacentHTML("afterend",html);}else{var submitted=document.getElementById("submittedText");var sec=submitted?submitted.closest(".section"):null;if(sec)sec.insertAdjacentHTML("afterend",html);}document.querySelectorAll("[data-wrr-note]").forEach(function(el){var k=key(el.getAttribute("data-key"));el.value=localStorage.getItem(k)||"";el.addEventListener("input",function(){localStorage.setItem(k,el.value||"");});});}function printPolish(){var style=document.getElementById("wrr-preparer-print-style");if(style)return;style=document.createElement("style");style.id="wrr-preparer-print-style";style.textContent="@media print{textarea{border:0!important;background:#fff!important;min-height:70px!important;overflow:visible!important;} #preparerReviewRequiredSection{break-inside:avoid;page-break-inside:avoid;} }";document.head.appendChild(style);}document.addEventListener("DOMContentLoaded",function(){setTimeout(addSection,700);setTimeout(addSection,1600);printPolish();});})();</script></body>
+</html>
+
+
+
+
+
+
+
+<script id="WRR-OPTIONAL-FINAL-OFFICE-NOTE">
+(function(){
+  function leadId(){
+    var p=window.location.pathname.split("/").filter(Boolean);
+    return p[p.length-1] || "unknown";
+  }
+
+  function noteKey(){
+    return "wrr-final-office-note-" + leadId();
+  }
+
+  function removeRequiredPreparerReview(){
+    var old=document.getElementById("preparerReviewRequiredSection");
+    if(old) old.remove();
+  }
+
+  function addOptionalNote(){
+    removeRequiredPreparerReview();
+
+    if(document.getElementById("optionalFinalOfficeNoteSection")) return;
+
+    var html =
+      '<div class="section" id="optionalFinalOfficeNoteSection" style="border:2px solid #cbd5e1;background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);box-shadow:0 8px 18px rgba(15,23,42,.06);">' +
+        '<h2 style="margin:0 0 8px;color:#0f2c56;font-size:21px;">Optional Final Office Note</h2>' +
+        '<div style="color:#334155;font-size:14px;line-height:1.55;font-weight:800;margin-bottom:12px;">' +
+          'Use this only if you want to add a short office note before saving or emailing the PDF. The customer intake answers and automatic red-flag findings are the main paid review content.' +
+        '</div>' +
+        '<textarea id="optionalFinalOfficeNoteText" placeholder="Optional example: Based on the client disclosures, this estimate should not be relied on until the 1099-C and business income records are reviewed." style="width:100%;min-height:95px;box-sizing:border-box;border:2px solid #dbe4f0;border-radius:14px;padding:12px;font-size:15px;line-height:1.55;color:#0f172a;font-family:Arial,sans-serif;resize:vertical;"></textarea>' +
+      '</div>';
+
+    var next=document.getElementById("nextStepText");
+    var nextSection=next ? next.closest(".section") : null;
+
+    if(nextSection){
+      nextSection.insertAdjacentHTML("beforebegin", html);
+    } else {
+      var findings=document.getElementById("paidReviewFindingsSection");
+      if(findings) findings.insertAdjacentHTML("afterend", html);
+    }
+
+    var box=document.getElementById("optionalFinalOfficeNoteText");
+    if(box){
+      box.value=localStorage.getItem(noteKey()) || "";
+      box.addEventListener("input", function(){
+        localStorage.setItem(noteKey(), box.value || "");
+      });
+    }
+  }
+
+  function addPrintStyle(){
+    if(document.getElementById("wrr-optional-note-print-style")) return;
+    var st=document.createElement("style");
+    st.id="wrr-optional-note-print-style";
+    st.textContent='@media print{#optionalFinalOfficeNoteText{border:0!important;background:#fff!important;min-height:80px!important;overflow:visible!important;} #optionalFinalOfficeNoteSection{break-inside:avoid;page-break-inside:avoid;} #optionalFinalOfficeNoteText:placeholder-shown{display:none;} #optionalFinalOfficeNoteSection:has(#optionalFinalOfficeNoteText:placeholder-shown){display:none;}}';
+    document.head.appendChild(st);
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(addOptionalNote,700);
+    setTimeout(addOptionalNote,1600);
+    setTimeout(addOptionalNote,2600);
+    setInterval(removeRequiredPreparerReview,1200);
+    addPrintStyle();
+  });
+})();
+</script>
+
+
+<script id="WRR-AUTO-INTAKE-RED-FLAG-SUMMARY">
+(function(){
+  function esc(v){
+    return String(v || "").replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function getLeadId(){
+    var p=window.location.pathname.split("/").filter(Boolean);
+    return p[p.length-1] || "";
+  }
+
+  function extract(notes,label){
+    var text=String(notes || "");
+    var lines=text.split(/\r?\n/);
+    var found=[];
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i] || "";
+      if(line.indexOf(label)===0){
+        found.push(line.slice(label.length).trim());
+      }
+    }
+    return found.length ? found[found.length-1] : "";
+  }
+
+  function addFlag(flags,title,body,level){
+    flags.push({
+      title:title,
+      body:body,
+      level:level || "Review Needed"
+    });
+  }
+
+  function buildFlags(selected, comment){
+    var text=(String(selected || "") + " " + String(comment || "")).toLowerCase();
+    var flags=[];
+
+    if(text.indexOf("1099-nec") >= 0 || text.indexOf("1099-misc") >= 0 || text.indexOf("independent contractor") >= 0 || text.indexOf("gig") >= 0 || text.indexOf("business") >= 0 || text.indexOf("self-employment") >= 0 || text.indexOf("mileage") >= 0){
+      addFlag(flags,
+        "Business or independent contractor income disclosed",
+        "The client disclosed possible business, gig, or independent contractor income. The estimate may change after reviewing gross income, business expenses, mileage, supplies, insurance, phone, advertising, subcontractor costs, and self-employment tax.",
+        "High Impact"
+      );
+    }
+
+    if(text.indexOf("1099-c") >= 0 || text.indexOf("cancellation of debt") >= 0 || text.indexOf("cancelled debt") >= 0 || text.indexOf("canceled debt") >= 0){
+      addFlag(flags,
+        "Cancellation of debt issue disclosed",
+        "The client disclosed possible cancellation of debt. This may materially change the estimate and may require review of Form 1099-C, insolvency information, exclusions, or other facts before filing.",
+        "High Impact"
+      );
+    }
+
+    if(text.indexOf("mortgage") >= 0 || text.indexOf("property tax") >= 0 || text.indexOf("property taxes") >= 0 || text.indexOf("charitable") >= 0 || text.indexOf("donation") >= 0){
+      addFlag(flags,
+        "Possible itemized deduction information disclosed",
+        "The client disclosed possible mortgage interest, property taxes, or charitable deductions. These items may or may not change the result depending on whether itemized deductions exceed the standard deduction.",
+        "Review Needed"
+      );
+    }
+
+    if(text.indexOf("interest") >= 0 || text.indexOf("dividend") >= 0 || text.indexOf("stock") >= 0 || text.indexOf("crypto") >= 0 || text.indexOf("retirement") >= 0 || text.indexOf("unemployment") >= 0 || text.indexOf("social security") >= 0 || text.indexOf("gambling") >= 0){
+      addFlag(flags,
+        "Additional income may be missing",
+        "The client disclosed possible additional income such as interest, dividends, stock sales, crypto, retirement income, unemployment, Social Security, or gambling income. The estimate may change once those forms are reviewed.",
+        "Review Needed"
+      );
+    }
+
+    if(text.indexOf("1095-a") >= 0 || text.indexOf("marketplace") >= 0 || text.indexOf("health insurance") >= 0){
+      addFlag(flags,
+        "Marketplace health insurance disclosed",
+        "The client disclosed possible Marketplace health insurance. Form 1095-A and Premium Tax Credit reconciliation may significantly change the final refund or balance due.",
+        "High Impact"
+      );
+    }
+
+    if(text.indexOf("childcare") >= 0 || text.indexOf("education") >= 0 || text.indexOf("student loan") >= 0){
+      addFlag(flags,
+        "Potential credit or deduction information disclosed",
+        "The client disclosed possible childcare, education, or student loan interest information. These items should be reviewed because they may affect credits or deductions.",
+        "Review Needed"
+      );
+    }
+
+    if(text.indexOf("more than one state") >= 0 || text.indexOf("another state") >= 0 || text.indexOf("moved states") >= 0 || text.indexOf("worked in more than one state") >= 0){
+      addFlag(flags,
+        "Multi-state issue disclosed",
+        "The client disclosed possible multi-state income or residency issues. State tax results may change after reviewing residency dates, work locations, and state withholding.",
+        "Review Needed"
+      );
+    }
+
+    if(text.indexOf("irs") >= 0 || text.indexOf("state notice") >= 0 || text.indexOf("notice") >= 0 || text.indexOf("transcript") >= 0 || text.indexOf("prior-year") >= 0){
+      addFlag(flags,
+        "Notice, transcript, or prior-year issue disclosed",
+        "The client disclosed a possible IRS/state notice, transcript need, or prior-year tax issue. This is outside a simple estimate calculation and may require transcript help, tax resolution, or a separate review.",
+        "High Impact"
+      );
+    }
+
+    if(!flags.length && (selected || comment)){
+      addFlag(flags,
+        "Client disclosure reviewed",
+        "The client completed the paid review intake. No specific high-impact red flag was automatically identified from the selected items, but the estimate should still be verified against actual tax documents before filing.",
+        "Standard Review"
+      );
+    }
+
+    return flags;
+  }
+
+  async function addSummary(){
+    if(document.getElementById("autoIntakeRedFlagSummarySection")) return;
+
+    var leadId=getLeadId();
+    if(!leadId) return;
+
+    try{
+      var res=await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      var data=await res.json();
+      var lead=data && data.lead ? data.lead : {};
+      var notes=lead.notes || "";
+
+      var selected=extract(notes,"Paid Review Intake - Selected Items:");
+      var comment=extract(notes,"Paid Review Intake - Client Explanation:");
+
+      if(!selected && !comment) return;
+
+      var flags=buildFlags(selected,comment);
+
+      var cards=flags.map(function(f,i){
+        var color=f.level==="High Impact" ? "#dc2626" : (f.level==="Review Needed" ? "#f59e0b" : "#0f2c56");
+        return '<div style="border-left:7px solid '+color+';background:#ffffff;border-radius:14px;padding:13px 14px;box-shadow:0 6px 14px rgba(15,44,86,.06);">' +
+          '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">' +
+            '<div style="font-size:16px;font-weight:950;color:#0f2c56;">Red Flag '+(i+1)+' - '+esc(f.title)+'</div>' +
+            '<div style="font-size:11px;font-weight:950;color:'+color+';text-transform:uppercase;letter-spacing:.35px;">'+esc(f.level)+'</div>' +
+          '</div>' +
+          '<div style="margin-top:7px;color:#334155;font-size:14px;line-height:1.55;font-weight:750;">'+esc(f.body)+'</div>' +
+        '</div>';
+      }).join("");
+
+      var html=
+        '<div class="section" id="autoIntakeRedFlagSummarySection" style="border:3px solid #0f2c56;background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);box-shadow:0 12px 26px rgba(15,44,86,.12);">' +
+          '<h2 style="margin:0 0 8px;color:#0f2c56;font-size:22px;">Automatic Intake-Based Red Flag Summary</h2>' +
+          '<div style="color:#334155;font-size:14px;line-height:1.55;font-weight:800;margin-bottom:12px;">' +
+            'This section is automatically generated from the client disclosures collected before payment. It helps identify what may change the estimate or require a deeper review.' +
+          '</div>' +
+          '<div style="display:grid;gap:10px;">'+cards+'</div>' +
+        '</div>';
+
+      var intake=document.getElementById("clientPaidReviewIntakeSection");
+      if(intake){
+        intake.insertAdjacentHTML("afterend",html);
+      } else {
+        var findings=document.getElementById("paidReviewFindingsSection");
+        if(findings) findings.insertAdjacentHTML("beforebegin",html);
+      }
+    }catch(e){
+      console.warn("Automatic intake red flag summary not loaded",e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded",function(){
+    setTimeout(addSummary,1100);
+    setTimeout(addSummary,2200);
+  });
+})();
+</script>
+
+
+<script id="WRR-RED-FLAG-RELEVANCE-AND-SAVE-NOTE">
+(function(){
+  function getLeadId(){
+    var p=window.location.pathname.split("/").filter(Boolean);
+    return p[p.length-1] || "";
+  }
+
+  function removeDuplicateRedFlagSummaries(){
+    var sections=Array.from(document.querySelectorAll("#autoIntakeRedFlagSummarySection"));
+    if(sections.length <= 1) return;
+
+    sections.forEach(function(sec,idx){
+      if(idx > 0) sec.remove();
+    });
+  }
+
+  function applyRelevanceColors(){
+    var sections=Array.from(document.querySelectorAll("#autoIntakeRedFlagSummarySection"));
+    if(!sections.length) return;
+
+    var sec=sections[0];
+    sec.style.border="3px solid #0f2c56";
+    sec.style.background="linear-gradient(180deg,#eff6ff 0%,#ffffff 100%)";
+
+    var cards=Array.from(sec.querySelectorAll("div")).filter(function(el){
+      var t=(el.textContent || "");
+      return t.indexOf("Red Flag ") >= 0 && t.indexOf(" - ") >= 0 && el.style && el.style.borderLeft;
+    });
+
+    cards.forEach(function(card){
+      var text=(card.textContent || "").toLowerCase();
+
+      var color="#0f2c56";
+      var bg="#ffffff";
+      var label="STANDARD REVIEW";
+
+      if(text.indexOf("high impact") >= 0 || text.indexOf("cancellation of debt") >= 0 || text.indexOf("1099-c") >= 0 || text.indexOf("marketplace") >= 0 || text.indexOf("1095-a") >= 0 || text.indexOf("irs/state notice") >= 0 || text.indexOf("transcript") >= 0 || text.indexOf("prior-year") >= 0 || text.indexOf("business") >= 0 || text.indexOf("independent contractor") >= 0){
+        color="#dc2626";
+        bg="#fff1f2";
+        label="HIGH IMPACT";
+      } else if(text.indexOf("review needed") >= 0 || text.indexOf("mortgage") >= 0 || text.indexOf("property taxes") >= 0 || text.indexOf("additional income") >= 0 || text.indexOf("interest") >= 0 || text.indexOf("dividends") >= 0 || text.indexOf("stock") >= 0 || text.indexOf("crypto") >= 0 || text.indexOf("retirement") >= 0 || text.indexOf("unemployment") >= 0 || text.indexOf("multi-state") >= 0 || text.indexOf("childcare") >= 0 || text.indexOf("education") >= 0){
+        color="#f59e0b";
+        bg="#fffbeb";
+        label="REVIEW NEEDED";
+      }
+
+      card.style.borderLeft="9px solid " + color;
+      card.style.background=bg;
+      card.style.borderTop="1px solid " + color;
+      card.style.borderRight="1px solid " + color;
+      card.style.borderBottom="1px solid " + color;
+
+      var existing=card.querySelector(".redFlagRelevanceBadge");
+      if(!existing){
+        var badge=document.createElement("div");
+        badge.className="redFlagRelevanceBadge";
+        badge.style.cssText="display:inline-block;margin-top:8px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:950;letter-spacing:.35px;text-transform:uppercase;";
+        card.appendChild(badge);
+        existing=badge;
+      }
+
+      existing.textContent="Relevance: " + label;
+      existing.style.color=color;
+      existing.style.background="#ffffff";
+      existing.style.border="2px solid " + color;
+    });
+  }
+
+  function addSaveFinalOfficeNoteButton(){
+    var section=document.getElementById("optionalFinalOfficeNoteSection");
+    var box=document.getElementById("optionalFinalOfficeNoteText");
+
+    if(!section || !box) return;
+    if(document.getElementById("saveFinalOfficeNoteBtn")) return;
+
+    var wrap=document.createElement("div");
+    wrap.style.cssText="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;";
+
+    wrap.innerHTML =
+      '<button id="saveFinalOfficeNoteBtn" type="button" style="background:#0f2c56;color:#ffffff;border:2px solid #0f2c56;border-radius:12px;padding:10px 14px;font-weight:950;cursor:pointer;">Save Final Office Note</button>' +
+      '<span id="saveFinalOfficeNoteMsg" style="font-size:13px;font-weight:900;color:#047857;"></span>';
+
+    section.appendChild(wrap);
+
+    document.getElementById("saveFinalOfficeNoteBtn").addEventListener("click", async function(){
+      var leadId=getLeadId();
+      var msg=document.getElementById("saveFinalOfficeNoteMsg");
+      var note=String(box.value || "").trim();
+
+      if(!leadId){
+        alert("Lead ID was not found in the report link.");
+        return;
+      }
+
+      if(!note){
+        alert("Enter a final office note first, or leave it blank and do not save.");
+        return;
+      }
+
+      var btn=this;
+      btn.disabled=true;
+      btn.textContent="Saving...";
+
+      try{
+        var existingNotes="";
+
+        try{
+          var readRes=await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+          var readData=await readRes.json();
+          existingNotes=(readData && readData.lead && readData.lead.notes) ? readData.lead.notes : "";
+        }catch(readErr){
+          existingNotes="";
+        }
+
+        var stamp=new Date().toLocaleString();
+        var savedLine="[" + stamp + "] Final Office Note for Written Estimate Red Flag Review: " + note;
+        var notes=existingNotes ? existingNotes + "\n" + savedLine : savedLine;
+
+        var res=await fetch("/api/leads/" + encodeURIComponent(leadId), {
+          method:"PATCH",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ notes: notes })
+        });
+
+        if(!res.ok) throw new Error("Save failed");
+
+        if(msg){
+          msg.textContent="Final office note saved to the client record.";
+          setTimeout(function(){ msg.textContent=""; },3500);
+        }
+      }catch(e){
+        alert("Could not save the final office note. The note is still visible on this report screen.");
+      }finally{
+        btn.disabled=false;
+        btn.textContent="Save Final Office Note";
+      }
+    });
+  }
+
+  function run(){
+    removeDuplicateRedFlagSummaries();
+    applyRelevanceColors();
+    addSaveFinalOfficeNoteButton();
+  }
+
+  document.addEventListener("DOMContentLoaded",function(){
+    setTimeout(run,700);
+    setTimeout(run,1600);
+    setTimeout(run,2600);
+    setInterval(run,1800);
+  });
+})();
+</script>
+
+
+<script id="WRR-FINAL-OFFICE-NOTE-VISIBLE-SAVE">
+(function(){
+  function getLeadId(){
+    var p=window.location.pathname.split("/").filter(Boolean);
+    return p[p.length-1] || "";
+  }
+
+  function extractLatestFinalNote(notes){
+    var text=String(notes || "");
+    var marker="Final Office Note for Written Estimate Red Flag Review:";
+    var lines=text.split(/\r?\n/);
+    var found="";
+
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i] || "";
+      var idx=line.indexOf(marker);
+      if(idx >= 0){
+        found=line.slice(idx + marker.length).trim();
+      }
+    }
+
+    return found;
+  }
+
+  function ensureSavedNoteBox(){
+    var section=document.getElementById("optionalFinalOfficeNoteSection");
+    if(!section) return null;
+
+    var box=document.getElementById("savedFinalOfficeNoteBox");
+    if(box) return box;
+
+    box=document.createElement("div");
+    box.id="savedFinalOfficeNoteBox";
+    box.style.cssText="display:none;margin-top:12px;border:2px solid #047857;background:#ecfdf5;color:#064e3b;border-radius:14px;padding:12px;font-size:14px;line-height:1.55;font-weight:850;white-space:pre-wrap;";
+    section.appendChild(box);
+
+    return box;
+  }
+
+  async function loadSavedFinalNote(){
+    var leadId=getLeadId();
+    var noteBox=document.getElementById("optionalFinalOfficeNoteText");
+    var savedBox=ensureSavedNoteBox();
+
+    if(!leadId || !noteBox || !savedBox) return;
+
+    try{
+      var res=await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      var data=await res.json();
+      var notes=(data && data.lead && data.lead.notes) ? data.lead.notes : "";
+      var finalNote=extractLatestFinalNote(notes);
+
+      if(finalNote){
+        noteBox.value=finalNote;
+        savedBox.style.display="block";
+        savedBox.textContent="Saved Final Office Note in client record:\n" + finalNote;
+
+        var btn=document.getElementById("saveFinalOfficeNoteBtn");
+        if(btn){
+          btn.textContent="Save Updated Final Office Note";
+        }
+      }
+    }catch(e){
+      console.warn("Saved final office note could not be loaded",e);
+    }
+  }
+
+  function improveSaveMessage(){
+    var btn=document.getElementById("saveFinalOfficeNoteBtn");
+    var box=document.getElementById("optionalFinalOfficeNoteText");
+    var savedBox=ensureSavedNoteBox();
+
+    if(!btn || !box || !savedBox) return;
+    if(btn.dataset.visibleSaveAttached==="1") return;
+
+    btn.dataset.visibleSaveAttached="1";
+
+    btn.addEventListener("click",function(){
+      setTimeout(function(){
+        var note=String(box.value || "").trim();
+        if(note){
+          savedBox.style.display="block";
+          savedBox.textContent="Saved Final Office Note in client record:\n" + note;
+          btn.textContent="Save Updated Final Office Note";
+        }
+      },900);
+    });
+  }
+
+  function run(){
+    ensureSavedNoteBox();
+    improveSaveMessage();
+    loadSavedFinalNote();
+  }
+
+  document.addEventListener("DOMContentLoaded",function(){
+    setTimeout(run,900);
+    setTimeout(run,1800);
+    setTimeout(run,3000);
+  });
+})();
+</script>
+
