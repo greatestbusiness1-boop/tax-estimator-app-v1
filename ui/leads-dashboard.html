@@ -6268,6 +6268,47 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     display: none !important;
   }
 </style>
+<style id="LEAD-CENTER-SIMPLIFICATION-SIDEBAR">
+  /*
+    Lead Center Simplification Phase 2:
+    Hide extra sidebar destinations without deleting the filters or lead data.
+    Daily navigation should stay focused on the core work areas.
+  */
+
+  .dashboard-sidebar .sidebar-btn[data-view="Active"],
+  .dashboard-sidebar .sidebar-btn[data-view="Refund"],
+  .dashboard-sidebar .sidebar-btn[data-view="BalanceDue"],
+  .dashboard-sidebar .sidebar-btn[data-view="Follow-up Needed"],
+  .dashboard-sidebar .sidebar-btn[data-view="Booked"],
+  .dashboard-sidebar .sidebar-btn[data-view="Converted - Tax Client"],
+  .dashboard-sidebar .sidebar-btn[data-view="TranscriptWaitingPayment"],
+  .dashboard-sidebar .sidebar-btn[data-view="TranscriptWaitingAuthorization"],
+  .dashboard-sidebar .sidebar-btn[data-view="TranscriptNeedType"],
+  .dashboard-sidebar .sidebar-btn[data-view="TranscriptReadyToPull"],
+  .dashboard-sidebar .sidebar-btn[data-view="TranscriptErrors"],
+  .dashboard-sidebar .sidebar-btn[data-view="New"],
+  .dashboard-sidebar .sidebar-btn[data-view="Contacted"],
+  .dashboard-sidebar .sidebar-mini-stats {
+    display: none !important;
+  }
+</style>
+
+<script id="LEAD-CENTER-SIMPLIFICATION-SIDEBAR-LABELS">
+(function () {
+  function simplifySidebarLabels() {
+    document.querySelectorAll(".dashboard-sidebar .sidebar-section-label").forEach(function (label) {
+      var text = (label.textContent || "").trim().toLowerCase();
+      if (text === "workflow" || text === "quick counts") {
+        label.style.display = "none";
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", simplifySidebarLabels);
+  setTimeout(simplifySidebarLabels, 300);
+  setTimeout(simplifySidebarLabels, 900);
+})();
+</script>
 </body>
 
 </html>
@@ -6531,6 +6572,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
 
 
 
