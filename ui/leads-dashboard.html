@@ -3534,6 +3534,12 @@
                 String(lead.status || "").startsWith("Transcript Help -");
 
               const status = lead.status || "New";
+              const displayStatus =
+                status === "Written Review - Paid / Needs Written Review"
+                  ? "$29 Review Paid - Needs Review"
+                  : status === "Written Review - Completed"
+                    ? "$29 Review Completed"
+                    : status;
 
               const transcriptHelpStatusText =
                 status === "Transcript Help - Payment Pending"
@@ -4064,7 +4070,7 @@
 
                                     <div style="text-align:right;min-width:220px;">
                     <span class="badge ${priorityClass(lead.priority)}">${esc(lead.priority || "low")}</span>
-                    <span id="statusBadge-${esc(lead.leadId)}" class="badge status-badge">${esc(status)}</span>
+                    <span id="statusBadge-${esc(lead.leadId)}" class="badge status-badge">${esc(displayStatus)}</span>
 
                                         ${hasStrategyReviewRequest
                   ? `
@@ -4093,14 +4099,6 @@
                       `
                   : ""
                 }
-
-                    <div style="${status === "Follow-up Needed"
-                  ? "margin-top:6px;background:#fff7ed;border:2px solid #f97316;border-radius:10px;padding:7px 9px;color:#9a3412;font-size:11px;font-weight:900;line-height:1.25;text-align:left;box-shadow:0 0 0 2px rgba(249,115,22,0.14);"
-                  : "margin-top:6px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:7px 9px;color:#0f2c56;font-size:11px;font-weight:850;line-height:1.25;text-align:left;"
-                }">
-  Internal Status:<br>
-  <span id="internalStatus-${esc(lead.leadId)}" style="${status === "Follow-up Needed" ? "color:#9a3412;font-weight:950;" : "color:#334155;font-weight:900;"}">${esc(status)}</span>
-</div>
 
 ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   ? `
@@ -5650,8 +5648,14 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   }
 
   function getInternalStatus(card){
-    var statusEl = card.querySelector('[id^="internalStatus-"]');
-    return String((statusEl && statusEl.textContent) || "").trim();
+    var internalStatusEl = card.querySelector('[id^="internalStatus-"]');
+    var statusBadgeEl = card.querySelector('[id^="statusBadge-"]');
+
+    return String(
+      (internalStatusEl && internalStatusEl.textContent) ||
+      (statusBadgeEl && statusBadgeEl.textContent) ||
+      ""
+    ).trim();
   }
 
   function isPaidWrittenReviewCard(card){
@@ -5659,7 +5663,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
     return (
       status === "written review - paid / needs written review" ||
-      status === "written review - completed"
+      status === "$29 review paid - needs review" ||
+      status === "written review - completed" ||
+      status === "$29 review completed"
     );
   }
 
@@ -5906,8 +5912,12 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
   function getLeadIdFromCard(card) {
     const text = card.textContent || "";
-    const match = text.match(/LEAD-[A-Z0-9-]+|transcript-\d+/i);
-    return match ? match[0] : "";
+    const match =
+      text.match(/Lead ID:\s*(LEAD-\d+-[A-Z0-9]{5})/) ||
+      text.match(/\b(LEAD-\d+-[A-Z0-9]{5})\b/) ||
+      text.match(/transcript-\d+/i);
+
+    return match ? (match[1] || match[0]) : "";
   }
 
   function hasWrittenReviewAction(card) {
@@ -5949,8 +5959,21 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   }
 
   function getWrittenStatusFromData(lead, card) {
-    const status = String(lead.status || "").toLowerCase();
+    const rawStatus = String(lead.status || "");
+    const status = rawStatus.toLowerCase();
     const notes = String(lead.notes || "").toLowerCase();
+
+    if (status.includes("written review - paid")) {
+      return "Paid / Needs Written Review";
+    }
+
+    if (status.includes("written review - completed")) {
+      return "Completed";
+    }
+
+    if (status.includes("written review - payment pending")) {
+      return "Payment Pending";
+    }
 
     if (
       hasWrittenReviewAction(card) ||
@@ -6151,7 +6174,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         "reviewCompletedAt"
       ], "Not recorded");
 
-      const isWrittenReviewService = writtenStatus !== "None";
+      const isWrittenReviewService = writtenStatus !== "None" || String(leadStage || "").toLowerCase().includes("written review");
       const isTranscriptService = transcriptStatus !== "None";
 
       const isPaid =
@@ -6174,12 +6197,17 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         "No paid service selected yet";
 
       const serviceDecisionStatus =
-        isWrittenReviewService || isTranscriptService ? "Selected" : "Free estimate only";
+        isCompleted ? "Completed" :
+        isWrittenReviewService && isPaid ? "Paid / Needs Review" :
+        isWrittenReviewService ? "Selected / Awaiting Payment" :
+        isTranscriptService ? "Selected" :
+        "Free estimate only";
 
       const redFlagGeneratedStatus =
-        isWrittenReviewService && isPaid ? "Generated / Available" :
+        isCompleted ? "Completed" :
+        isWrittenReviewService && isPaid ? "Ready to Prepare" :
         isWrittenReviewService ? "Waiting on payment" :
-        "Not requested";
+        "Not selected";
 
       const redFlagEmailStatus =
         isCompleted ? "Sent / Completed" :
@@ -6196,8 +6224,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
       const writtenNeededText =
         isWrittenReviewService
-          ? "System should generate the Red Flag Review after payment. Next focus is email delivery and closeout."
-          : "No written review selected for this customer.";
+          ? "Prepare the Red Flag Review and email it to the customer."
+          : "No Red Flag Review selected for this customer.";
 
       const dailyWorkCloseout =
         isCompleted
@@ -6227,8 +6255,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
             <div style="font-size:12px;font-weight:950;color:#0066a6;">2. SERVICE DECISION</div>
             <div style="margin-top:8px;font-size:13px;font-weight:850;color:#334155;line-height:1.55;">
               <div><strong>Service:</strong> ${esc(serviceDecisionText)}</div>
-              <div><strong>Status:</strong> ${esc(serviceDecisionStatus)}</div>
-              <div><strong>Lead Stage:</strong> ${esc(leadStage)}</div>
             </div>
           </div>
 
@@ -6244,9 +6270,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         <div style="margin-top:10px;border:1px solid #dbe4f0;background:#ffffff;border-radius:14px;padding:12px;">
           <div style="font-size:12px;font-weight:950;color:#0066a6;">4. $29 RED FLAG REVIEW WORKFLOW</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px;font-size:13px;font-weight:850;color:#334155;line-height:1.5;">
-            <div><strong>Requested:</strong> ${isWrittenReviewService ? "Yes" : "No"}</div>
+            <div><strong>Selected:</strong> ${isWrittenReviewService ? "Yes" : "No"}</div>
             <div><strong>Payment:</strong> ${isWrittenReviewService ? esc(trackerPaymentStatus) : "Not required"}</div>
-            <div><strong>Review:</strong> ${esc(redFlagGeneratedStatus)}</div>
+            <div><strong>Report:</strong> ${esc(redFlagGeneratedStatus)}</div>
             <div><strong>Email:</strong> ${esc(redFlagEmailStatus)}</div>
             <div><strong>Completed Date:</strong> ${esc(completedDate)}</div>
           </div>
@@ -6951,6 +6977,14 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
+
 
 
 
