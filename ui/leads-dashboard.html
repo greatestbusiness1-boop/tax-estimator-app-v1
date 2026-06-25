@@ -6309,6 +6309,76 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   setTimeout(simplifySidebarLabels, 900);
 })();
 </script>
+<script id="OFFICE-WORK-QUEUE-FOCUS-MODE">
+(function () {
+  if (window.__officeWorkQueueFocusMode) return;
+  window.__officeWorkQueueFocusMode = true;
+
+  function isOfficeWorkQueueSelected() {
+    var actionFilter = document.getElementById("actionQueueFilter");
+    return actionFilter && actionFilter.value === "OfficeWorkQueue";
+  }
+
+  function applyOfficeWorkQueueFocusMode() {
+    var isOfficeQueue = isOfficeWorkQueueSelected();
+
+    var attentionQueue = document.getElementById("attentionQueue");
+    if (attentionQueue) {
+      attentionQueue.style.display = isOfficeQueue ? "none" : "";
+    }
+
+    var workspaceHeader = document.getElementById("workspaceHeader");
+    if (workspaceHeader) {
+      workspaceHeader.style.display = isOfficeQueue ? "none" : "";
+    }
+
+    var dailyWorkQueue = document.getElementById("dailyWorkQueue");
+    if (dailyWorkQueue) {
+      dailyWorkQueue.style.display = "none";
+      dailyWorkQueue.innerHTML = "";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    applyOfficeWorkQueueFocusMode();
+
+    var actionFilter = document.getElementById("actionQueueFilter");
+    if (actionFilter && !actionFilter.__officeQueueFocusBound) {
+      actionFilter.addEventListener("change", function () {
+        setTimeout(applyOfficeWorkQueueFocusMode, 50);
+        setTimeout(applyOfficeWorkQueueFocusMode, 400);
+      });
+      actionFilter.__officeQueueFocusBound = true;
+    }
+
+    setTimeout(applyOfficeWorkQueueFocusMode, 300);
+    setTimeout(applyOfficeWorkQueueFocusMode, 900);
+    setTimeout(applyOfficeWorkQueueFocusMode, 1600);
+  });
+
+  if (typeof loadLeads === "function" && !loadLeads.__officeQueueFocusWrapped) {
+    var originalLoadLeads = loadLeads;
+    loadLeads = async function () {
+      var result = await originalLoadLeads.apply(this, arguments);
+      setTimeout(applyOfficeWorkQueueFocusMode, 50);
+      setTimeout(applyOfficeWorkQueueFocusMode, 500);
+      return result;
+    };
+    loadLeads.__officeQueueFocusWrapped = true;
+  }
+})();
+</script>
+<style id="LEAD-CENTER-HIDE-LARGE-QUEUE-BOXES">
+  /*
+    Lead Center Simplification:
+    Hide the oversized queue summary boxes.
+    Customer-specific work details should live on the lead card / CRM summary,
+    not in large page-level boxes.
+  */
+  #attentionQueue {
+    display: none !important;
+  }
+</style>
 </body>
 
 </html>
@@ -6572,6 +6642,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
 
 
 
