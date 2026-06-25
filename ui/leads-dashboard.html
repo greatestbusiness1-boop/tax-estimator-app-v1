@@ -3435,8 +3435,11 @@
                       ? "Payment Pending"
                       : "Requested / Clicked - payment not confirmed yet";
 
-              const strategyReviewHtml = hasStrategyReviewRequest
-                ? `
+              const isPaidWrittenReviewLeadForDisplay =
+                leadStatusForStrategy === "Written Review - Paid / Needs Written Review" ||
+                leadStatusForStrategy === "Written Review - Completed";
+
+              const strategyReviewHtml = hasStrategyReviewRequest && !isPaidWrittenReviewLeadForDisplay ? `
                     <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;">
                     <strong style="color:#9a3412;">Written Review</strong><br>
                     <span style="color:#7c2d12;font-weight:800;">${esc(strategyReviewStatusText)}</span>
@@ -4678,15 +4681,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   
                       `
                   : ""
-                }
-                                       ${hasStrategyReviewRequest
-                  ? `
-                        <div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;color:#9a3412;font-size:13px;font-weight:800;line-height:1.35;text-align:left;">
-                          Written Review:<br>
-                          <span id="topStrategyReview-${esc(lead.leadId)}" style="color:#7c2d12;font-weight:900;">${esc(strategyReviewStatusText)}</span>
-                        </div>
-                      `
-                  : ""
                 } 
                   </div>
                 </div>
@@ -5642,6 +5636,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 <script>(function(){function cleanLaunchText(){document.querySelectorAll("button,a").forEach(function(el){var t=(el.textContent||"").trim();if(t.indexOf("Back to ")>=0&&t.indexOf("Worklist")>=0){var i=t.indexOf("Back to ");el.textContent=t.substring(i);}if(t==="Copy Summary Link"){el.style.display="none";}});}document.addEventListener("DOMContentLoaded",function(){setTimeout(cleanLaunchText,100);setTimeout(cleanLaunchText,500);});setInterval(cleanLaunchText,1000);})();</script>
 <script id="WRR-CLIENT-CARD-REPORT-BUTTON">
 (function(){
+  if (window.__wrrClientCardReportButtonStrict) return;
+  window.__wrrClientCardReportButtonStrict = true;
+
   function getEmail(text){
     var match = String(text || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
     return match ? match[0] : "";
@@ -5650,6 +5647,20 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   function getLeadId(text){
     var match = String(text || "").match(/Lead ID:\s*(LEAD-[A-Z0-9-]+)/i) || String(text || "").match(/LEAD-[A-Z0-9-]+/i);
     return match ? (match[1] || match[0]) : "";
+  }
+
+  function getInternalStatus(card){
+    var statusEl = card.querySelector('[id^="internalStatus-"]');
+    return String((statusEl && statusEl.textContent) || "").trim();
+  }
+
+  function isPaidWrittenReviewCard(card){
+    var status = getInternalStatus(card).toLowerCase();
+
+    return (
+      status === "written review - paid / needs written review" ||
+      status === "written review - completed"
+    );
   }
 
   function getClientName(card){
@@ -5663,10 +5674,13 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       if (/Lead ID:/i.test(line)) continue;
       if (/Submitted:/i.test(line)) continue;
       if (/Written Review/i.test(line)) continue;
-      if (/Client CRM Summary/i.test(line)) continue;
+      if (/Customer Work Tracker/i.test(line)) continue;
       if (/Payment:/i.test(line)) continue;
       if (/Transcript:/i.test(line)) continue;
       if (/Next Action:/i.test(line)) continue;
+      if (/Prepare Written Review Report/i.test(line)) continue;
+      if (/Open Email to Client/i.test(line)) continue;
+      if (/Review Completed/i.test(line)) continue;
 
       return line;
     }
@@ -5732,30 +5746,61 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     window.open(gmailUrl, "_blank");
   }
 
+  function hideOldPaidWrittenReviewLabel(card){
+    if (!isPaidWrittenReviewCard(card)) return;
+
+    Array.from(card.querySelectorAll("div")).forEach(function(div){
+      if (div.querySelector(".wrr-paid-review-actions")) return;
+      if (div.querySelector("input, select, textarea, button")) return;
+
+      var text = String(div.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+      if (
+        text === "written review paid written review" ||
+        text === "written review written review completed"
+      ) {
+        div.style.display = "none";
+        div.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
+  function removeWrongButtonsFromUnpaidCards(card){
+    if (isPaidWrittenReviewCard(card)) return;
+
+    card.querySelectorAll(".wrr-paid-review-actions").forEach(function(row){
+      row.remove();
+    });
+  }
+
   function addWrittenReviewReportButtons(){
     document.querySelectorAll(".lead-card").forEach(function(card){
-      if(card.querySelector(".written-review-report-btn")) return;
+      removeWrongButtonsFromUnpaidCards(card);
+
+      if(!isPaidWrittenReviewCard(card)) return;
 
       var text = card.textContent || "";
-      var lower = text.toLowerCase();
-
-      var isPaidWrittenReviewLead =
-        lower.indexOf("written review - paid") >= 0 ||
-        lower.indexOf("paid written review") >= 0 ||
-        lower.indexOf("paid / needs written review") >= 0 ||
-        (lower.indexOf("$29 written red flag review") >= 0 && lower.indexOf("paid / verified") >= 0);
-
-      if(!isPaidWrittenReviewLead) return;
-
       var leadId = getLeadId(text);
       if(!leadId) return;
+
+      var existingRow = card.querySelector(".wrr-paid-review-actions");
+      var leadTop = card.querySelector(".lead-top");
+
+      if (existingRow) {
+        if (leadTop && existingRow.previousElementSibling !== leadTop) {
+          leadTop.insertAdjacentElement("afterend", existingRow);
+        }
+        hideOldPaidWrittenReviewLabel(card);
+        return;
+      }
 
       var email = getEmail(text);
       var clientName = getClientName(card);
       var estimateResultLine = getEstimateResultLine(card);
 
       var row = document.createElement("div");
-      row.style.cssText = "margin-top:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;";
+      row.className = "wrr-paid-review-actions";
+      row.style.cssText = "margin:10px 0 12px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;";
 
       var btn = document.createElement("button");
       btn.type = "button";
@@ -5800,24 +5845,20 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       row.appendChild(emailBtn);
       row.appendChild(completedBtn);
 
-      var buttons = Array.from(card.querySelectorAll("button"));
-      var payBtn = buttons.find(function(b){
-        return (b.textContent || "").indexOf("Payment Confirmed - Prepare Review") >= 0;
-      });
-
-      var grid = payBtn ? payBtn.closest("div") : null;
-
-      if(grid){
-        grid.insertAdjacentElement("afterend", row);
+      if (leadTop) {
+        leadTop.insertAdjacentElement("afterend", row);
       } else {
         card.insertBefore(row, card.children[1] || null);
       }
+
+      hideOldPaidWrittenReviewLabel(card);
     });
   }
 
   document.addEventListener("DOMContentLoaded", function(){
     setTimeout(addWrittenReviewReportButtons, 200);
     setTimeout(addWrittenReviewReportButtons, 800);
+    setTimeout(addWrittenReviewReportButtons, 1400);
   });
 
   setInterval(addWrittenReviewReportButtons, 1500);
@@ -6608,6 +6649,45 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
+<script id="HIDE-LEFTOVER-PAID-WRITTEN-REVIEW-LABEL">
+(function () {
+  if (window.__hideLeftoverPaidWrittenReviewLabel) return;
+  window.__hideLeftoverPaidWrittenReviewLabel = true;
+
+  function hideLeftoverLabel() {
+    document.querySelectorAll("div").forEach(function (box) {
+      if (box.querySelector("button, input, select, textarea")) return;
+
+      var text = String(box.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+      if (
+        text === "written review paid written review" ||
+        text === "written review written review completed"
+      ) {
+        box.style.display = "none";
+        box.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    hideLeftoverLabel();
+    setTimeout(hideLeftoverLabel, 300);
+    setTimeout(hideLeftoverLabel, 900);
+    setTimeout(hideLeftoverLabel, 1500);
+  });
+
+  const observer = new MutationObserver(function () {
+    clearTimeout(window.__hideLeftoverPaidWrittenReviewLabelTimer);
+    window.__hideLeftoverPaidWrittenReviewLabelTimer = setTimeout(hideLeftoverLabel, 200);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 
 </html>
@@ -6871,6 +6951,13 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
 
 
 
