@@ -6608,81 +6608,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
-<script id="WRR-PAID-ONLY-VISUAL-CLEANUP">
-(function () {
-  if (window.__wrrPaidOnlyVisualCleanup) return;
-  window.__wrrPaidOnlyVisualCleanup = true;
-
-  function isPaidWrittenReviewCard(card) {
-    var text = (card.textContent || "").toLowerCase();
-    return (
-      text.indexOf("written review - paid") >= 0 ||
-      text.indexOf("paid written review") >= 0 ||
-      text.indexOf("paid / needs written review") >= 0 ||
-      (text.indexOf("$29 written red flag review") >= 0 && text.indexOf("paid / verified") >= 0)
-    );
-  }
-
-  function cleanPaidWrittenReviewCards() {
-    document.querySelectorAll(".lead-card").forEach(function (card) {
-      if (!isPaidWrittenReviewCard(card)) return;
-
-      // Hide repeated Internal Status box near the top.
-      card.querySelectorAll('[id^="internalStatus-"]').forEach(function (span) {
-        var box = span.closest("div");
-        if (box) box.style.display = "none";
-      });
-
-      // Hide repeated Written Review status box near the top.
-      card.querySelectorAll('[id^="topStrategyReview-"]').forEach(function (span) {
-        var box = span.closest("div");
-        if (box) box.style.display = "none";
-      });
-
-      // In the lower old Written Review service box, keep only the 3 clean buttons.
-      var reportBtn = card.querySelector(".written-review-report-btn");
-      if (!reportBtn) return;
-
-      var buttonRow = reportBtn.parentElement;
-      if (!buttonRow) return;
-
-      var oldServiceBox = buttonRow.parentElement;
-      if (!oldServiceBox) return;
-
-      Array.from(oldServiceBox.childNodes).forEach(function (node) {
-        if (node === buttonRow) return;
-
-        if (node.nodeType === Node.TEXT_NODE) {
-          node.nodeValue = "";
-        }
-
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          node.style.display = "none";
-        }
-      });
-
-      oldServiceBox.style.border = "0";
-      oldServiceBox.style.background = "#ffffff";
-      oldServiceBox.style.padding = "8px 0";
-      oldServiceBox.style.marginTop = "10px";
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    cleanPaidWrittenReviewCards();
-    setTimeout(cleanPaidWrittenReviewCards, 300);
-    setTimeout(cleanPaidWrittenReviewCards, 900);
-    setTimeout(cleanPaidWrittenReviewCards, 1600);
-  });
-
-  var observer = new MutationObserver(function () {
-    clearTimeout(window.__wrrPaidOnlyVisualCleanupTimer);
-    window.__wrrPaidOnlyVisualCleanupTimer = setTimeout(cleanPaidWrittenReviewCards, 250);
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
 </body>
 
 </html>
@@ -6946,6 +6871,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
 
 
 
