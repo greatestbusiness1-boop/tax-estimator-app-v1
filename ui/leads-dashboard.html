@@ -3428,11 +3428,11 @@
 
               const strategyReviewStatusText =
                 leadStatusForStrategy === "Written Review - Paid / Needs Written Review"
-                  ? "Paid - written review needed"
+                  ? "Paid Written Review"
                   : leadStatusForStrategy === "Written Review - Completed"
-                    ? "Completed - written review finished"
+                    ? "Written Review Completed"
                     : leadStatusForStrategy === "Written Review - Payment Pending"
-                      ? "Payment pending - not confirmed yet"
+                      ? "Payment Pending"
                       : "Requested / Clicked - payment not confirmed yet";
 
               const strategyReviewHtml = hasStrategyReviewRequest
@@ -5426,11 +5426,11 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         if (topStrategyReviewEl) {
           const strategyStatusText =
             selectedStatus === "Written Review - Paid / Needs Written Review"
-              ? "Paid - written review needed"
+              ? "Paid Written Review"
               : selectedStatus === "Written Review - Completed"
-                ? "Completed - written review finished"
+                ? "Written Review Completed"
                 : selectedStatus === "Written Review - Payment Pending"
-                  ? "Payment pending - not confirmed yet"
+                  ? "Payment Pending"
                   : topStrategyReviewEl.textContent;
 
           topStrategyReviewEl.textContent = strategyStatusText;
@@ -5593,7 +5593,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       ["Requested / clicked", "Needs Stripe Check"],
       ["Client clicked Buy Written Review", "Check Stripe payment, then prepare review"],
       ["Paid / needs written review", "Payment confirmed - prepare written review"],
-      ["Completed - written review finished", "Review completed"],
+      ["Written Review Completed", "Review completed"],
       ["Payment Pending means the client clicked the Stripe button, but payment has not been verified yet. Click a status button, then click Save below to lock in the office status.", "Check Stripe for payment. If payment is confirmed, choose Payment Confirmed - Prepare Review. If no payment is found, leave it as Needs Stripe Check."]
     ];
 
@@ -5749,13 +5749,13 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       var estimateResultLine = getEstimateResultLine(card);
 
       var row = document.createElement("div");
-      row.style.cssText = "margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;";
+      row.style.cssText = "margin-top:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;";
 
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "written-review-report-btn";
       btn.textContent = "Prepare Written Review Report";
-      btn.style.cssText = "background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";
+      btn.style.cssText = "width:100%;min-height:42px;background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:10px 10px;font-size:13px;font-weight:950;box-shadow:none;text-align:center;";
       btn.onclick = function(){
         window.open("/written-review-report/" + encodeURIComponent(leadId), "_blank");
       };
@@ -5764,18 +5764,25 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       emailBtn.type = "button";
       emailBtn.className = "written-review-email-btn";
       emailBtn.textContent = "Open Email to Client";
-      emailBtn.style.cssText = "background:#0f766e;color:#ffffff;border:1px solid #0f766e;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:950;box-shadow:none;";
+      emailBtn.style.cssText = "width:100%;min-height:42px;background:#0f766e;color:#ffffff;border:1px solid #0f766e;border-radius:10px;padding:10px 10px;font-size:13px;font-weight:950;box-shadow:none;text-align:center;";
       emailBtn.onclick = function(){
         openEmailToClient(email, clientName, leadId, estimateResultLine);
       };
 
-      var note = document.createElement("span");
-      note.textContent = "Prepare review, email customer, then mark completed.";
-      note.style.cssText = "font-size:12px;font-weight:800;color:#7c2d12;";
+      var completedBtn = document.createElement("button");
+      completedBtn.type = "button";
+      completedBtn.className = "written-review-completed-btn";
+      completedBtn.textContent = "Review Completed";
+      completedBtn.style.cssText = "width:100%;min-height:42px;background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 10px;font-size:13px;font-weight:950;box-shadow:none;text-align:center;";
+      completedBtn.onclick = function(){
+        if (confirm("Mark this written review as completed? Only choose OK after the review email has been sent to the client.")) {
+          setLeadStatusChoice(leadId, "Written Review - Completed");
+        }
+      };
 
       row.appendChild(btn);
       row.appendChild(emailBtn);
-      row.appendChild(note);
+      row.appendChild(completedBtn);
 
       var buttons = Array.from(card.querySelectorAll("button"));
       var payBtn = buttons.find(function(b){
@@ -5993,29 +6000,225 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       panel.className = "client-crm-summary-panel";
       panel.style.cssText = "margin:12px 0 14px;padding:14px;border:2px solid #0f2c56;border-radius:14px;background:#f8fbff;box-shadow:0 6px 16px rgba(15,44,86,.08);";
 
+      const cardTextForTracker = String(card.textContent || "");
+
+      function getCardEstimateResultText() {
+        const dueMatch =
+          cardTextForTracker.match(/Estimated\s+Total\s+Due:\s*(\$[\d,]+)/i) ||
+          cardTextForTracker.match(/Total\s+Due:\s*(\$[\d,]+)/i) ||
+          cardTextForTracker.match(/Combined\s+Due:\s*(\$[\d,]+)/i);
+
+        if (dueMatch && dueMatch[1]) return "Balance Due: " + dueMatch[1];
+
+        const refundMatch =
+          cardTextForTracker.match(/Estimated\s+Total\s+Refund:\s*(\$[\d,]+)/i) ||
+          cardTextForTracker.match(/Total\s+Refund:\s*(\$[\d,]+)/i) ||
+          cardTextForTracker.match(/Combined\s+Refund:\s*(\$[\d,]+)/i);
+
+        if (refundMatch && refundMatch[1]) return "Refund: " + refundMatch[1];
+
+        return "";
+      }
+
+      const cardEstimateResultText = getCardEstimateResultText();
+      const estimateResultText =
+        cardEstimateResultText ||
+        (combined !== "" && Number.isFinite(Number(combined)) ? money(combined) : "Review estimate");
+      const serviceText =
+        writtenStatus !== "None" ? "Written Tax Estimate Red Flag Review" :
+        transcriptStatus !== "None" ? "IRS Transcript Request" :
+        "Free Tax Estimate Lead";
+
+      const missingVerifyText =
+        writtenStatus !== "None"
+          ? "Verify actual tax documents, withholding, filing status, dependents, credits, and any missing income before relying on the estimate."
+          : transcriptStatus !== "None"
+            ? "Confirm payment, authorization, transcript type, tax years, and client explanation before pulling transcripts."
+            : "Review estimate result and decide whether follow-up is needed.";
+
+      const closeoutText =
+        writtenStatus !== "None"
+          ? "After the written review is emailed, mark Review Completed so it leaves daily work."
+          : transcriptStatus !== "None"
+            ? "After transcript work is fulfilled, mark completed so it moves out of daily work."
+            : "When no follow-up is needed, close or convert the lead so completed work does not stay in daily view.";
+
+      let submittedDate = pick(lead, [
+        "submittedAt",
+        "createdAt",
+        "created_at",
+        "dateSubmitted",
+        "submitted",
+        "estimate.submittedAt",
+        "estimate.createdAt",
+        "estimateSummary.submittedAt",
+        "estimateSummary.createdAt"
+      ], "Not recorded");
+
+      if (submittedDate === "Not recorded") {
+        const submittedMatch = cardTextForTracker.match(/Submitted:\s*([^\n]+)/i);
+        if (submittedMatch && submittedMatch[1]) {
+          const raw = submittedMatch[1].trim();
+          const d = new Date(raw);
+          if (!isNaN(d.getTime())) {
+            const datePart =
+              String(d.getMonth() + 1).padStart(2,"0") + "/" +
+              String(d.getDate()).padStart(2,"0") + "/" +
+              d.getFullYear();
+
+            const timePart = d.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit"
+            });
+
+            submittedDate = datePart + " at " + timePart;
+          } else {
+            submittedDate = raw;
+          }
+        }
+      }
+
+      const paidDate = pick(lead, [
+        "payments.reviewPaidAt",
+        "payments.paidAt",
+        "writtenReview.paidAt",
+        "paidAt",
+        "paymentDate",
+        "stripe.paidAt"
+      ], "Not recorded");
+
+      const completedDate = pick(lead, [
+        "writtenReview.completedAt",
+        "completedAt",
+        "closedAt",
+        "reviewCompletedAt"
+      ], "Not recorded");
+
+      const isWrittenReviewService = writtenStatus !== "None";
+      const isTranscriptService = transcriptStatus !== "None";
+
+      const isPaid =
+        String(paymentStatus || "").toLowerCase().includes("paid") ||
+        String(leadStage || "").toLowerCase().includes("paid") ||
+        String(writtenStatus || "").toLowerCase().includes("paid");
+
+      const trackerPaymentStatus = isPaid ? "Paid / Verified" : paymentStatus;
+      const trackerPaidDate =
+        isPaid && paidDate === "Not recorded" ? "Verified by Stripe / app status" : paidDate;
+
+      const isCompleted =
+        String(leadStage || "").toLowerCase().includes("completed") ||
+        String(writtenStatus || "").toLowerCase().includes("completed") ||
+        String(latestAction || "").toLowerCase().includes("completed");
+
+      const serviceDecisionText =
+        isWrittenReviewService ? "$29 Written Red Flag Review" :
+        isTranscriptService ? "$150 Transcript Service" :
+        "No paid service selected yet";
+
+      const serviceDecisionStatus =
+        isWrittenReviewService || isTranscriptService ? "Selected" : "Free estimate only";
+
+      const redFlagGeneratedStatus =
+        isWrittenReviewService && isPaid ? "Generated / Available" :
+        isWrittenReviewService ? "Waiting on payment" :
+        "Not requested";
+
+      const redFlagEmailStatus =
+        isCompleted ? "Sent / Completed" :
+        isWrittenReviewService && isPaid ? "Not sent yet" :
+        "Not required";
+
+      const transcriptWorkflowStatus =
+        isTranscriptService ? esc(transcriptStatus) : "Not requested";
+
+      const transcriptNeededText =
+        isTranscriptService
+          ? "Track payment, authorization, transcript type, tax years, client explanation, pulled date, received date, delivery date, and completion."
+          : "No transcript service selected for this customer.";
+
+      const writtenNeededText =
+        isWrittenReviewService
+          ? "System should generate the Red Flag Review after payment. Next focus is email delivery and closeout."
+          : "No written review selected for this customer.";
+
+      const dailyWorkCloseout =
+        isCompleted
+          ? "Completed. Keep searchable in All Leads / Closed Leads."
+          : "When fulfilled, mark completed so this customer moves out of daily work.";
+
       panel.innerHTML = `
-        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
-          <div style="font-size:16px;font-weight:950;color:#0f2c56;">Client CRM Summary</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <div>
+            <div style="font-size:17px;font-weight:950;color:#0f2c56;">Customer Work Tracker</div>
+            <div style="font-size:12px;font-weight:850;color:#64748b;margin-top:2px;">Same workflow idea as Transcript Requests: status, dates, missing items, and closeout.</div>
+          </div>
           <div style="font-size:12px;font-weight:900;color:#475569;">${esc(leadId)}</div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;">
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">LEAD STAGE</div><div style="font-weight:900;">${esc(leadStage)}</div></div>
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">TAX YEAR</div><div style="font-weight:900;">${esc(taxYear)}</div></div>
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">ESTIMATE RESULT</div><div style="font-weight:900;">${combined !== "" ? esc(money(combined)) : "Review"}</div></div>
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">PAYMENT</div><div style="font-weight:900;">${esc(paymentStatus)}</div></div>
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">TRANSCRIPT</div><div style="font-weight:900;">${esc(transcriptStatus)}</div></div>
-          <div><div style="font-size:11px;font-weight:950;color:#0066a6;">WRITTEN REVIEW</div><div style="font-weight:900;">${esc(writtenStatus)}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;">
+          <div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:12px;">
+            <div style="font-size:12px;font-weight:950;color:#1d4ed8;">1. ESTIMATE SUBMITTED</div>
+            <div style="margin-top:8px;font-size:13px;font-weight:850;color:#1e3a8a;line-height:1.55;">
+              <div><strong>Tax Year:</strong> ${esc(taxYear)}</div>
+              <div><strong>Result:</strong> ${esc(estimateResultText)}</div>
+              <div><strong>Submitted:</strong> ${esc(submittedDate)}</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #dbe4f0;background:#ffffff;border-radius:14px;padding:12px;">
+            <div style="font-size:12px;font-weight:950;color:#0066a6;">2. SERVICE DECISION</div>
+            <div style="margin-top:8px;font-size:13px;font-weight:850;color:#334155;line-height:1.55;">
+              <div><strong>Service:</strong> ${esc(serviceDecisionText)}</div>
+              <div><strong>Status:</strong> ${esc(serviceDecisionStatus)}</div>
+              <div><strong>Lead Stage:</strong> ${esc(leadStage)}</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid ${isPaid ? "#bbf7d0" : "#fed7aa"};background:${isPaid ? "#f0fdf4" : "#fff7ed"};border-radius:14px;padding:12px;">
+            <div style="font-size:12px;font-weight:950;color:${isPaid ? "#047857" : "#9a3412"};">3. PAYMENT</div>
+            <div style="margin-top:8px;font-size:13px;font-weight:850;color:${isPaid ? "#065f46" : "#7c2d12"};line-height:1.55;">
+              <div><strong>Status:</strong> ${esc(trackerPaymentStatus)}</div>
+              <div><strong>Paid Date:</strong> ${esc(trackerPaidDate)}</div>
+            </div>
+          </div>
         </div>
 
-        <div style="margin-top:12px;padding:10px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;">
-          <div style="font-size:11px;font-weight:950;color:#9a3412;">NEXT ACTION</div>
-          <div style="font-size:15px;font-weight:950;color:#7c2d12;">${esc(nextAction)}</div>
+        <div style="margin-top:10px;border:1px solid #dbe4f0;background:#ffffff;border-radius:14px;padding:12px;">
+          <div style="font-size:12px;font-weight:950;color:#0066a6;">4. $29 RED FLAG REVIEW WORKFLOW</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px;font-size:13px;font-weight:850;color:#334155;line-height:1.5;">
+            <div><strong>Requested:</strong> ${isWrittenReviewService ? "Yes" : "No"}</div>
+            <div><strong>Payment:</strong> ${isWrittenReviewService ? esc(trackerPaymentStatus) : "Not required"}</div>
+            <div><strong>Review:</strong> ${esc(redFlagGeneratedStatus)}</div>
+            <div><strong>Email:</strong> ${esc(redFlagEmailStatus)}</div>
+            <div><strong>Completed Date:</strong> ${esc(completedDate)}</div>
+          </div>
+          <div style="margin-top:8px;font-size:12px;font-weight:800;color:#64748b;line-height:1.45;">${esc(writtenNeededText)}</div>
         </div>
 
-        <div style="margin-top:8px;font-size:12px;font-weight:800;color:#475569;">
-          <strong>Last Action:</strong> ${esc(latestAction)}
+        <div style="margin-top:10px;border:1px solid #e9d5ff;background:#faf5ff;border-radius:14px;padding:12px;">
+          <div style="font-size:12px;font-weight:950;color:#7e22ce;">5. $150 TRANSCRIPT WORKFLOW</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px;font-size:13px;font-weight:850;color:#581c87;line-height:1.5;">
+            <div><strong>Requested:</strong> ${isTranscriptService ? "Yes" : "No"}</div>
+            <div><strong>Status:</strong> ${transcriptWorkflowStatus}</div>
+            <div><strong>Payment:</strong> ${isTranscriptService ? esc(paymentStatus) : "Not required"}</div>
+            <div><strong>Authorization:</strong> ${isTranscriptService ? "Track in Transcript Requests" : "Not required"}</div>
+            <div><strong>Transcript Type / Years:</strong> ${isTranscriptService ? "Track in Transcript Requests" : "Not required"}</div>
+          </div>
+          <div style="margin-top:8px;font-size:12px;font-weight:800;color:#6b21a8;line-height:1.45;">${esc(transcriptNeededText)}</div>
         </div>
+
+        <div style="margin-top:10px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:12px;">
+          <div style="font-size:12px;font-weight:950;color:#1d4ed8;">6. MISSING / NEEDED</div>
+          <div style="font-size:13px;font-weight:850;color:#1e3a8a;line-height:1.45;margin-top:4px;">${esc(missingVerifyText)}</div>
+        </div>
+
+        <div style="margin-top:10px;border:1px solid #d1fae5;background:#ecfdf5;border-radius:14px;padding:12px;">
+          <div style="font-size:12px;font-weight:950;color:#047857;">7. CLOSEOUT</div>
+          <div style="font-size:13px;font-weight:850;color:#065f46;line-height:1.45;margin-top:4px;">${esc(dailyWorkCloseout)}</div>
+        </div>
+
+
       `;
 
       const top = card.querySelector(".lead-top");
@@ -6060,6 +6263,34 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     if (value) value.textContent = newValue;
   }
 
+  function getCrmGrid(panel) {
+    const grids = Array.from(panel.querySelectorAll("div"));
+    return grids.find(el => {
+      const style = el.getAttribute("style") || "";
+      return style.includes("grid-template-columns") && el.textContent.includes("LEAD STAGE");
+    });
+  }
+
+  function addOrSetCrmValue(panel, labelText, newValue) {
+    const existingLabels = Array.from(panel.querySelectorAll("div"));
+    const existing = existingLabels.find(el => (el.textContent || "").trim().toUpperCase() === labelText.toUpperCase());
+
+    if (existing) {
+      setCrmValue(panel, labelText, newValue);
+      return;
+    }
+
+    const grid = getCrmGrid(panel);
+    if (!grid) return;
+
+    const box = document.createElement("div");
+    box.innerHTML =
+      '<div style="font-size:11px;font-weight:950;color:#0066a6;">' + labelText.toUpperCase() + '</div>' +
+      '<div style="font-weight:900;">' + newValue + '</div>';
+
+    grid.appendChild(box);
+  }
+
   function setNextAction(panel, newValue) {
     const labels = Array.from(panel.querySelectorAll("div"));
     const label = labels.find(el => (el.textContent || "").trim().toUpperCase() === "NEXT ACTION");
@@ -6079,17 +6310,37 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
       const hasWrittenReview =
         card.querySelector(".written-review-report-btn") ||
+        card.querySelector(".written-review-email-btn") ||
         cardText.includes("prepare written review report") ||
-        cardText.includes("open paid report page") ||
-        cardText.includes("written review report");
+        cardText.includes("written tax estimate red flag review") ||
+        cardText.includes("written review report") ||
+        cardText.includes("written review");
 
       if (!hasWrittenReview) return;
 
       const panel = card.querySelector(".client-crm-summary-panel");
       if (!panel) return;
 
-      setCrmValue(panel, "WRITTEN REVIEW", "Needs written review");
-      setNextAction(panel, "Prepare written review");
+      const looksPaid =
+        cardText.includes("paid / verified") ||
+        cardText.includes("paid - written review") ||
+        cardText.includes("payment received") ||
+        cardText.includes("payment verified") ||
+        cardText.includes("written review - paid") ||
+        cardText.includes("needs written review");
+
+      const looksCompleted =
+        cardText.includes("written review - completed") ||
+        cardText.includes("review sent") ||
+        cardText.includes("emailed to client");
+
+      if (looksPaid) {
+        setCrmValue(panel, "PAYMENT", "Paid / Verified");
+      }
+
+      addOrSetCrmValue(panel, "EMAIL", looksCompleted ? "Sent / Completed" : "Not sent yet");
+      setCrmValue(panel, "WRITTEN REVIEW", looksCompleted ? "Completed" : "Needs written review");
+      setNextAction(panel, looksCompleted ? "No action needed - review completed" : "Prepare written review and email client");
     });
   }
 
@@ -6132,7 +6383,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
         if (
           label === "No Payment Found Yet" ||
-          label === "Payment Confirmed - Prepare Review"
+          label === "Payment Confirmed - Prepare Review" ||
+          (label === "Review Completed" && !btn.classList.contains("written-review-completed-btn"))
         ) {
           btn.style.display = "none";
           btn.setAttribute("aria-hidden", "true");
@@ -6150,11 +6402,11 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         }
 
         if (value.indexOf("Payment Pending means the client clicked the Stripe button") >= 0) {
-          node.nodeValue = "Payment received. Review not emailed yet. Prepare the written review, open the email to the client, then mark completed after sending.";
+          node.nodeValue = "";
         }
 
         if (value.trim() === "Prepare review, email customer, then mark completed.") {
-          node.nodeValue = "Payment received. Review not emailed yet. Prepare review, email client, then mark completed.";
+          node.nodeValue = "";
         }
       }
     });
@@ -6176,80 +6428,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       return result;
     };
     wrapped.__wrrSafeWrapped = true;
-    window.loadLeads = wrapped;
-  }
-})();
-</script>
-<script id="WRR-EMAIL-STATUS-NOTICE">
-(function () {
-  if (window.__wrrEmailStatusNotice) return;
-  window.__wrrEmailStatusNotice = true;
-
-  function addEmailStatusNotice() {
-    document.querySelectorAll(".lead-card").forEach(function (card) {
-      var text = (card.textContent || "").toLowerCase();
-
-      var isWrittenReview =
-        text.indexOf("written review") >= 0 ||
-        text.indexOf("written red flag review") >= 0;
-
-      var isPaid =
-        text.indexOf("paid") >= 0 ||
-        text.indexOf("payment received") >= 0 ||
-        text.indexOf("payment verified") >= 0;
-
-      if (!isWrittenReview || !isPaid) return;
-      if (card.querySelector(".wrr-email-status-notice")) return;
-
-      var openEmailBtn = Array.from(card.querySelectorAll("button")).find(function (btn) {
-        return (btn.textContent || "").trim() === "Open Email to Client";
-      });
-
-      var reportBtn = Array.from(card.querySelectorAll("button")).find(function (btn) {
-        return (btn.textContent || "").trim() === "Prepare Written Review Report";
-      });
-
-      var anchorBtn = openEmailBtn || reportBtn;
-      if (!anchorBtn) return;
-
-      var notice = document.createElement("div");
-      notice.className = "wrr-email-status-notice";
-      notice.style.marginTop = "10px";
-      notice.style.border = "1px solid #f59e0b";
-      notice.style.background = "#fffbeb";
-      notice.style.color = "#78350f";
-      notice.style.borderRadius = "12px";
-      notice.style.padding = "10px 12px";
-      notice.style.fontSize = "12px";
-      notice.style.fontWeight = "900";
-      notice.style.lineHeight = "1.45";
-      notice.innerHTML =
-        '<div style="font-size:13px;font-weight:950;margin-bottom:3px;">Email Status: Not sent yet</div>' +
-        '<div>Use <b>Open Email to Client</b>, send the review, then click <b>Review Completed</b>.</div>';
-
-      var buttonArea = anchorBtn.closest("div");
-      if (buttonArea) {
-        buttonArea.insertAdjacentElement("afterend", notice);
-      }
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    addEmailStatusNotice();
-    setTimeout(addEmailStatusNotice, 300);
-    setTimeout(addEmailStatusNotice, 900);
-    setTimeout(addEmailStatusNotice, 1600);
-  });
-
-  var oldLoadLeads = window.loadLeads;
-  if (typeof oldLoadLeads === "function" && !oldLoadLeads.__wrrEmailStatusWrapped) {
-    var wrapped = async function () {
-      var result = await oldLoadLeads.apply(this, arguments);
-      setTimeout(addEmailStatusNotice, 50);
-      setTimeout(addEmailStatusNotice, 500);
-      return result;
-    };
-    wrapped.__wrrEmailStatusWrapped = true;
     window.loadLeads = wrapped;
   }
 })();
@@ -6379,6 +6557,101 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     display: none !important;
   }
 </style>
+<script id="WRR-CLEAN-REPEATED-WRITTEN-REVIEW-BOX">
+(function () {
+  if (window.__wrrCleanRepeatedWrittenReviewBox) return;
+  window.__wrrCleanRepeatedWrittenReviewBox = true;
+
+  function cleanRepeatedWrittenReviewBox() {
+    document.querySelectorAll(".lead-card").forEach(function (card) {
+      const cardText = (card.textContent || "").toLowerCase();
+      if (cardText.indexOf("written review") < 0) return;
+
+      // Hide the small repeated top Written Review status box.
+      card.querySelectorAll('[id^="topStrategyReview-"]').forEach(function (span) {
+        const box = span.closest("div");
+        if (box) box.style.display = "none";
+      });
+
+      const reportBtn = card.querySelector(".written-review-report-btn");
+      if (!reportBtn) return;
+
+      const buttonRow = reportBtn.parentElement;
+      if (!buttonRow) return;
+
+      const outerBox = buttonRow.parentElement;
+      if (!outerBox) return;
+
+      // Keep only the clean East-to-West button row in the old Written Review service box.
+      Array.from(outerBox.childNodes).forEach(function (node) {
+        if (node === buttonRow) return;
+
+        if (node.nodeType === Node.TEXT_NODE) {
+          node.nodeValue = "";
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          node.style.display = "none";
+        }
+      });
+
+      outerBox.style.padding = "10px";
+      outerBox.style.background = "#ffffff";
+      outerBox.style.border = "0";
+      outerBox.style.marginTop = "10px";
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    cleanRepeatedWrittenReviewBox();
+    setTimeout(cleanRepeatedWrittenReviewBox, 300);
+    setTimeout(cleanRepeatedWrittenReviewBox, 900);
+    setTimeout(cleanRepeatedWrittenReviewBox, 1600);
+  });
+
+  const observer = new MutationObserver(function () {
+    clearTimeout(window.__wrrCleanRepeatedTimer);
+    window.__wrrCleanRepeatedTimer = setTimeout(cleanRepeatedWrittenReviewBox, 250);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<script id="REMOVE-RAW-SUBMITTED-TOP-LINE">
+(function () {
+  if (window.__removeRawSubmittedTopLine) return;
+  window.__removeRawSubmittedTopLine = true;
+
+  function removeRawSubmittedText() {
+    document.querySelectorAll(".lead-card").forEach(function (card) {
+      var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+      var node;
+
+      while ((node = walker.nextNode())) {
+        var text = node.nodeValue || "";
+
+        if (/Submitted:\s*\d{4}-\d{2}-\d{2}T/i.test(text)) {
+          node.nodeValue = text.replace(/Submitted:\s*\d{4}-\d{2}-\d{2}T[^\s<]*/i, "").trim();
+        }
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    removeRawSubmittedText();
+    setTimeout(removeRawSubmittedText, 300);
+    setTimeout(removeRawSubmittedText, 900);
+    setTimeout(removeRawSubmittedText, 1600);
+  });
+
+  const observer = new MutationObserver(function () {
+    clearTimeout(window.__removeRawSubmittedTopLineTimer);
+    window.__removeRawSubmittedTopLineTimer = setTimeout(removeRawSubmittedText, 250);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 
 </html>
@@ -6642,6 +6915,20 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
