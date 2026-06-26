@@ -1818,13 +1818,19 @@
               "Transcript Help - Paid / Needs Review"
             ];
 
+            const isCompletedWork =
+              status.startsWith("Closed -") ||
+              status === "Written Review - Completed" ||
+              status === "Transcript Help - Completed" ||
+              status === "Converted - Tax Client";
+
             const statusMatches =
               selectedFilter === "All"
-                ? true
+                ? !isCompletedWork
                 : selectedFilter === "Active"
                   ? activeStatuses.includes(status)
                   : selectedFilter === "Closed"
-                    ? status.startsWith("Closed -")
+                    ? isCompletedWork
                     : status === selectedFilter;
 
             const yearMatches =
@@ -1872,9 +1878,11 @@
                   : selectedActionQueue === "BalanceDue"
                     ? combinedNet < 0
                     : selectedActionQueue === "StrategyReview"
-                      ? searchableText.includes("buy written review") ||
-                      searchableText.includes("get written $29 Written Review") ||
-                      status.startsWith("Written Review -")
+                      ? (
+                        searchableText.includes("buy written review") ||
+                        searchableText.includes("get written $29 Written Review") ||
+                        status.startsWith("Written Review -")
+                      ) && status !== "Written Review - Completed"
                       : selectedActionQueue === "TranscriptHelp"
                         ? Boolean(lead?.transcriptRequest?.requested) ||
                         searchableText.includes("requested irs transcript help") ||
@@ -5663,9 +5671,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
     return (
       status === "written review - paid / needs written review" ||
-      status === "$29 review paid - needs review" ||
-      status === "written review - completed" ||
-      status === "$29 review completed"
+      status === "$29 review paid - needs review"
     );
   }
 
@@ -5832,18 +5838,45 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       completedBtn.textContent = "Review Completed";
       completedBtn.style.cssText = "width:100%;min-height:42px;background:#047857;color:#ffffff;border:1px solid #065f46;border-radius:10px;padding:10px 10px;font-size:13px;font-weight:950;box-shadow:none;text-align:center;";
       completedBtn.onclick = function(){
-        if (confirm("Mark this written review as completed? Only choose OK after the review email has been sent to the client.")) {
-          setLeadStatusChoice(leadId, "Written Review - Completed");
+        if (confirm("Mark this written review as completed? Only choose OK after the Red Flag Review has been prepared and the email has been sent to the client.")) {
+          var completedAt = new Date().toISOString();
+          var completedStamp = new Date().toLocaleString();
 
-          setTimeout(function(){
-            if (typeof saveLead === "function") {
-              saveLead(leadId).then(function(){
-                setTimeout(function(){
-                  if (typeof loadLeads === "function") loadLeads();
-                }, 500);
-              });
+          completedBtn.disabled = true;
+          completedBtn.textContent = "Saving Completed...";
+
+          fetch("/api/leads/" + encodeURIComponent(leadId), {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              status: "Written Review - Completed",
+              notes: "[Written Review Completed] Red Flag Review prepared and email manually marked sent on " + completedStamp + ".",
+              Request: {
+                writtenReviewReportStatus: "Completed",
+                writtenReviewEmailStatus: "Marked sent",
+                writtenReviewCompletedAt: completedAt
+              }
+            })
+          })
+          .then(function(res){
+            if (!res.ok) throw new Error("Could not mark review completed.");
+            return res.json().catch(function(){ return { ok: true }; });
+          })
+          .then(function(){
+            alert("Written Review marked completed. It will remain in All Leads and move to Closed Leads.");
+
+            if (typeof loadLeads === "function") {
+              loadLeads();
+            } else {
+              window.location.reload();
             }
-          }, 100);
+          })
+          .catch(function(err){
+            console.error(err);
+            completedBtn.disabled = false;
+            completedBtn.textContent = "Review Completed";
+            alert("Could not mark review completed. Check the console or try again.");
+          });
         }
       };
 
@@ -6168,6 +6201,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       ], "Not recorded");
 
       const completedDate = pick(lead, [
+        "Request.writtenReviewCompletedAt",
+        "Request.reviewCompletedAt",
         "writtenReview.completedAt",
         "completedAt",
         "closedAt",
@@ -6180,7 +6215,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       const isPaid =
         String(paymentStatus || "").toLowerCase().includes("paid") ||
         String(leadStage || "").toLowerCase().includes("paid") ||
-        String(writtenStatus || "").toLowerCase().includes("paid");
+        String(writtenStatus || "").toLowerCase().includes("paid") ||
+        String(leadStage || "").toLowerCase().includes("written review - completed") ||
+        String(writtenStatus || "").toLowerCase().includes("completed");
 
       const trackerPaymentStatus = isPaid ? "Paid / Verified" : paymentStatus;
       const trackerPaidDate =
@@ -6714,6 +6751,201 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
+<script id="COMPACT-CLOSED-LEADS-LIST">
+(function(){
+  if (window.__compactClosedLeadsList) return;
+  window.__compactClosedLeadsList = true;
+
+  function escText(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function getLeadTime(lead) {
+    var raw =
+      lead?.createdAt ||
+      lead?.submittedAt ||
+      lead?.timestamp ||
+      lead?.estimateSummary?.submittedAt ||
+      lead?.Request?.writtenReviewCompletedAt ||
+      lead?.completedAt ||
+      "";
+    var d = new Date(raw);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
+  function isClosedLead(lead) {
+    var status = String(lead?.status || "");
+    return (
+      status.startsWith("Closed -") ||
+      status === "Written Review - Completed" ||
+      status === "Transcript Help - Completed" ||
+      status === "Converted - Tax Client"
+    );
+  }
+
+  function serviceLabel(lead) {
+    var status = String(lead?.status || "");
+    var text = [
+      lead?.notes,
+      lead?.estimateSummary?.totalLine,
+      lead?.transcriptRequest?.serviceName
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    if (status === "Written Review - Completed") return "$29 Review Completed";
+    if (status === "Transcript Help - Completed") return "Transcript Help Completed";
+    if (status === "Converted - Tax Client") return "Converted Tax Client";
+    if (status.startsWith("Closed -")) return status.replace("Closed -", "Closed - ");
+
+    if (text.includes("written review") || text.includes("red flag")) return "$29 Review";
+    if (text.includes("transcript")) return "Transcript Help";
+
+    return "Closed Lead";
+  }
+
+  function estimateText(lead) {
+    return (
+      lead?.estimateSummary?.totalLine ||
+      lead?.estimateSummary?.federalLine ||
+      "Estimate details available"
+    );
+  }
+
+  function renderCompactClosedLeads() {
+    var container = document.getElementById("leadsContainer");
+    var leadFilter = document.getElementById("leadFilter");
+    var actionFilter = document.getElementById("actionQueueFilter");
+    var searchInput = document.getElementById("leadSearch");
+
+    if (!container || !leadFilter || !actionFilter) return;
+
+    var selectedFilter = leadFilter.value || "All";
+    var selectedAction = actionFilter.value || "All";
+
+    if (selectedFilter !== "Closed" || selectedAction !== "All") return;
+
+    fetch("/api/leads")
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        var leads = Array.isArray(data) ? data : (Array.isArray(data.leads) ? data.leads : []);
+        var searchText = String((searchInput && searchInput.value) || "").toLowerCase().trim();
+
+        var closed = leads
+          .filter(isClosedLead)
+          .filter(function(lead){
+            if (!searchText) return true;
+
+            var searchable = [
+              lead?.leadId,
+              lead?.contact?.name,
+              lead?.contact?.email,
+              lead?.contact?.phone,
+              lead?.status,
+              lead?.notes,
+              lead?.estimateSummary?.totalLine,
+              lead?.estimateSummary?.federalLine,
+              lead?.estimateSummary?.stateLine
+            ].filter(Boolean).join(" ").toLowerCase();
+
+            return searchable.includes(searchText);
+          })
+          .sort(function(a,b){
+            return getLeadTime(b) - getLeadTime(a);
+          });
+
+        var rows = closed.map(function(lead){
+          var leadId = String(lead?.leadId || "");
+          var name = lead?.contact?.name || "Unknown Lead";
+          var email = lead?.contact?.email || "No email";
+
+          return `
+            <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+              <div style="font-weight:950;color:#0f2c56;min-width:0;">
+                ${escText(name)}
+                <div style="font-size:12px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escText(email)}</div>
+                <div style="font-size:11px;color:#64748b;font-weight:750;">${escText(leadId)}</div>
+              </div>
+
+              <div style="font-weight:950;color:#047857;">
+                ${escText(serviceLabel(lead))}
+              </div>
+
+              <div style="font-weight:950;color:#047857;">
+                Closed
+              </div>
+
+              <div style="font-weight:850;color:#334155;">
+                ${escText(estimateText(lead))}
+              </div>
+
+              <button
+                type="button"
+                onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '${escText(leadId)}', focusLeadId: '${escText(leadId)}', returnAction: 'Closed' })"
+                style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;white-space:nowrap;"
+              >
+                Open
+              </button>
+            </div>
+          `;
+        }).join("");
+
+        container.innerHTML = `
+          <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+              <div>
+                <div style="font-size:21px;font-weight:950;color:#0f2c56;">
+                  Closed Leads
+                </div>
+                <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                  Completed or closed work. Use Open only when you need to review the full record.
+                </div>
+              </div>
+
+              <div style="font-size:13px;color:#047857;font-weight:950;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:999px;padding:7px 11px;">
+                ${closed.length} closed item${closed.length === 1 ? "" : "s"}
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#065f46;text-transform:uppercase;letter-spacing:.35px;">
+              <div>Client</div>
+              <div>Service</div>
+              <div>Status</div>
+              <div>Estimate</div>
+              <div>Action</div>
+            </div>
+
+            ${rows || `<div style="padding:14px 0;color:#64748b;font-weight:850;">No closed leads found.</div>`}
+          </div>
+        `;
+      })
+      .catch(function(){
+        container.innerHTML = `<div class="empty">Could not load compact closed leads.</div>`;
+      });
+  }
+
+  function wrapLoadLeadsForClosed() {
+    if (typeof loadLeads !== "function") return;
+    if (loadLeads.__compactClosedLeadsWrapped) return;
+
+    var original = loadLeads;
+    loadLeads = async function(){
+      var result = await original.apply(this, arguments);
+      setTimeout(renderCompactClosedLeads, 150);
+      return result;
+    };
+
+    loadLeads.__compactClosedLeadsWrapped = true;
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    wrapLoadLeadsForClosed();
+    setTimeout(renderCompactClosedLeads, 700);
+    setTimeout(renderCompactClosedLeads, 1500);
+  });
+})();
+</script>
 </body>
 
 </html>
@@ -6977,6 +7209,16 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
+
+
+
 
 
 
