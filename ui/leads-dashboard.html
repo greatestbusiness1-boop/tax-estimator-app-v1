@@ -6751,33 +6751,125 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
-<script id="COMPACT-CLOSED-LEADS-LIST">
+<script id="SIMPLE-CLOSED-LEADS-BACK-BUTTON">
+(function () {
+  if (window.__simpleClosedLeadsBackButtonFixedAction) return;
+  window.__simpleClosedLeadsBackButtonFixedAction = true;
+
+  function addClosedBackButton() {
+    var container = document.getElementById("leadsContainer");
+    if (!container) return;
+
+    if (document.getElementById("simpleClosedBackButton")) return;
+
+    var cards = container.querySelectorAll(".lead-card");
+    if (cards.length !== 1) return;
+
+    var cardText = String(cards[0].textContent || "").toLowerCase();
+
+    var isClosedCard =
+      cardText.indexOf("$29 review completed") >= 0 ||
+      cardText.indexOf("written review completed") >= 0 ||
+      cardText.indexOf("written review - completed") >= 0;
+
+    if (!isClosedCard) return;
+
+    var btn = document.createElement("button");
+    btn.id = "simpleClosedBackButton";
+    btn.type = "button";
+    btn.textContent = "Back to Closed Leads";
+    btn.style.cssText = "margin:0 0 12px 0;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;";
+
+    btn.onclick = function () {
+      try { focusedLeadId = ""; } catch(e) {}
+      try { focusedReturnAction = ""; } catch(e) {}
+
+      var leadFilter = document.getElementById("leadFilter");
+      var actionFilter = document.getElementById("actionQueueFilter");
+      var searchInput = document.getElementById("leadSearch");
+
+      if (leadFilter) leadFilter.value = "Closed";
+      if (actionFilter) actionFilter.value = "All";
+      if (searchInput) searchInput.value = "";
+
+      if (typeof updateActiveSidebarButton === "function") updateActiveSidebarButton("Closed");
+      if (typeof updateWorkspaceHeader === "function") updateWorkspaceHeader("Closed");
+      if (typeof updateWorkspaceGuidance === "function") updateWorkspaceGuidance("Closed");
+
+      if (typeof loadLeads === "function") {
+        setTimeout(function () {
+          loadLeads();
+        }, 50);
+      }
+    };
+
+    container.insertBefore(btn, container.firstChild);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    addClosedBackButton();
+    setTimeout(addClosedBackButton, 300);
+    setTimeout(addClosedBackButton, 900);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(addClosedBackButton, 300);
+    setTimeout(addClosedBackButton, 900);
+  });
+})();
+</script>
+<script id="STABLE-CLOSED-LEADS-WORKLIST">
 (function(){
-  if (window.__compactClosedLeadsList) return;
-  window.__compactClosedLeadsList = true;
+  if(window.__stableClosedLeadsWorklistInstalled) return;
+  window.__stableClosedLeadsWorklistInstalled = true;
 
-  function escText(value) {
-    return String(value || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
+  function esc(v){
+    return String(v || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
   }
 
-  function getLeadTime(lead) {
-    var raw =
-      lead?.createdAt ||
-      lead?.submittedAt ||
-      lead?.timestamp ||
-      lead?.estimateSummary?.submittedAt ||
-      lead?.Request?.writtenReviewCompletedAt ||
-      lead?.completedAt ||
-      "";
-    var d = new Date(raw);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
+  function getFocusedLeadIdSafe(){
+    try { return String(focusedLeadId || ""); } catch(e) { return ""; }
   }
 
-  function isClosedLead(lead) {
-    var status = String(lead?.status || "");
+  function getLeadTime(lead){
+    var request = lead.Request || lead.request || {};
+    var values = [
+      request.writtenReviewCompletedAt,
+      request.reviewCompletedAt,
+      lead.reviewCompletedAt,
+      lead.completedAt,
+      lead.closedAt,
+      lead.updatedAt,
+      lead.submittedAt,
+      lead.createdAt,
+      lead.timestamp
+    ];
+
+    for(var i=0;i<values.length;i++){
+      if(!values[i]) continue;
+      var t = Date.parse(String(values[i]));
+      if(Number.isFinite(t)) return t;
+    }
+
+    var m = String(lead && lead.leadId || "").match(/LEAD-(\d+)/i);
+    if(m) return Number(m[1]);
+
+    return 0;
+  }
+
+  function combinedNet(lead){
+    return Number(
+      (lead && lead.estimateSummary && lead.estimateSummary.combined && lead.estimateSummary.combined.net) ??
+      (lead && lead.estimateSummary && lead.estimateSummary.combinedNet) ??
+      0
+    );
+  }
+
+  function isClosedLead(lead){
+    var status = String(lead && lead.status || "");
     return (
       status.startsWith("Closed -") ||
       status === "Written Review - Completed" ||
@@ -6786,164 +6878,194 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     );
   }
 
-  function serviceLabel(lead) {
-    var status = String(lead?.status || "");
-    var text = [
-      lead?.notes,
-      lead?.estimateSummary?.totalLine,
-      lead?.transcriptRequest?.serviceName
-    ].filter(Boolean).join(" ").toLowerCase();
+  function serviceLabel(lead){
+    var status = String(lead && lead.status || "");
 
-    if (status === "Written Review - Completed") return "$29 Review Completed";
-    if (status === "Transcript Help - Completed") return "Transcript Help Completed";
-    if (status === "Converted - Tax Client") return "Converted Tax Client";
-    if (status.startsWith("Closed -")) return status.replace("Closed -", "Closed - ");
-
-    if (text.includes("written review") || text.includes("red flag")) return "$29 Review";
-    if (text.includes("transcript")) return "Transcript Help";
+    if(status === "Written Review - Completed") return "$29 Review Completed";
+    if(status === "Transcript Help - Completed") return "Transcript Help Completed";
+    if(status === "Converted - Tax Client") return "Converted Tax Client";
+    if(status.startsWith("Closed -")) return status.replace("Closed -", "Closed - ");
 
     return "Closed Lead";
   }
 
-  function estimateText(lead) {
-    return (
-      lead?.estimateSummary?.totalLine ||
-      lead?.estimateSummary?.federalLine ||
-      "Estimate details available"
-    );
+  function estimateText(lead){
+    var summary = lead.estimateSummary || {};
+    return summary.totalLine || summary.federalLine || summary.stateLine || "Estimate details available";
   }
 
-  function renderCompactClosedLeads() {
-    var container = document.getElementById("leadsContainer");
+  async function renderStableClosedLeadsWorklist(){
     var leadFilter = document.getElementById("leadFilter");
     var actionFilter = document.getElementById("actionQueueFilter");
     var searchInput = document.getElementById("leadSearch");
+    var container = document.getElementById("leadsContainer");
 
-    if (!container || !leadFilter || !actionFilter) return;
+    if(!leadFilter || !actionFilter || !searchInput || !container) return;
 
-    var selectedFilter = leadFilter.value || "All";
-    var selectedAction = actionFilter.value || "All";
+    var selectedFilter = leadFilter.value || "";
+    var selectedAction = actionFilter.value || "";
+    var searchValue = String(searchInput.value || "").trim();
+    var focused = getFocusedLeadIdSafe();
 
-    if (selectedFilter !== "Closed" || selectedAction !== "All") return;
+    // Only show the compact list when user is actually sitting on Closed Leads list.
+    // If a specific closed lead is open, leave the full card alone.
+    if(selectedFilter !== "Closed") return;
+    if(selectedAction !== "All") return;
+    if(focused) return;
+    if(/^LEAD-\d+-[A-Z0-9]+$/i.test(searchValue)) return;
 
-    fetch("/api/leads")
-      .then(function(res){ return res.json(); })
-      .then(function(data){
-        var leads = Array.isArray(data) ? data : (Array.isArray(data.leads) ? data.leads : []);
-        var searchText = String((searchInput && searchInput.value) || "").toLowerCase().trim();
+    try{
+      var res = await fetch("/api/leads");
+      var data = await res.json();
+      var leads = Array.isArray(data) ? data : (Array.isArray(data.leads) ? data.leads : []);
 
-        var closed = leads
-          .filter(isClosedLead)
-          .filter(function(lead){
-            if (!searchText) return true;
+      var searchText = searchValue.toLowerCase();
 
-            var searchable = [
-              lead?.leadId,
-              lead?.contact?.name,
-              lead?.contact?.email,
-              lead?.contact?.phone,
-              lead?.status,
-              lead?.notes,
-              lead?.estimateSummary?.totalLine,
-              lead?.estimateSummary?.federalLine,
-              lead?.estimateSummary?.stateLine
-            ].filter(Boolean).join(" ").toLowerCase();
+      var closed = leads
+        .filter(isClosedLead)
+        .filter(function(lead){
+          if(!searchText) return true;
 
-            return searchable.includes(searchText);
-          })
-          .sort(function(a,b){
-            return getLeadTime(b) - getLeadTime(a);
-          });
+          var searchable = [
+            lead && lead.leadId,
+            lead && lead.contact && lead.contact.name,
+            lead && lead.contact && lead.contact.email,
+            lead && lead.contact && lead.contact.phone,
+            lead && lead.status,
+            lead && lead.notes,
+            lead && lead.estimateSummary && lead.estimateSummary.totalLine,
+            lead && lead.estimateSummary && lead.estimateSummary.federalLine,
+            lead && lead.estimateSummary && lead.estimateSummary.stateLine
+          ].filter(Boolean).join(" ").toLowerCase();
 
-        var rows = closed.map(function(lead){
-          var leadId = String(lead?.leadId || "");
-          var name = lead?.contact?.name || "Unknown Lead";
-          var email = lead?.contact?.email || "No email";
+          return searchable.includes(searchText);
+        })
+        .sort(function(a,b){
+          return getLeadTime(b) - getLeadTime(a);
+        });
 
-          return `
-            <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
-              <div style="font-weight:950;color:#0f2c56;min-width:0;">
-                ${escText(name)}
-                <div style="font-size:12px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escText(email)}</div>
-                <div style="font-size:11px;color:#64748b;font-weight:750;">${escText(leadId)}</div>
-              </div>
+      var rows = closed.map(function(lead){
+        var leadId = String(lead.leadId || "");
+        var name = lead.contact && lead.contact.name || "Unknown Lead";
+        var email = lead.contact && lead.contact.email || "No email";
 
-              <div style="font-weight:950;color:#047857;">
-                ${escText(serviceLabel(lead))}
-              </div>
-
-              <div style="font-weight:950;color:#047857;">
-                Closed
-              </div>
-
-              <div style="font-weight:850;color:#334155;">
-                ${escText(estimateText(lead))}
-              </div>
-
-              <button
-                type="button"
-                onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '${escText(leadId)}', focusLeadId: '${escText(leadId)}', returnAction: 'Closed' })"
-                style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;white-space:nowrap;"
-              >
-                Open
-              </button>
-            </div>
-          `;
-        }).join("");
-
-        container.innerHTML = `
-          <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-              <div>
-                <div style="font-size:21px;font-weight:950;color:#0f2c56;">
-                  Closed Leads
-                </div>
-                <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
-                  Completed or closed work. Use Open only when you need to review the full record.
-                </div>
-              </div>
-
-              <div style="font-size:13px;color:#047857;font-weight:950;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:999px;padding:7px 11px;">
-                ${closed.length} closed item${closed.length === 1 ? "" : "s"}
-              </div>
+        return `
+          <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+            <div style="font-weight:950;color:#0f2c56;min-width:0;">
+              ${esc(name)}
+              <div style="font-size:12px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(email)}</div>
+              <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(leadId)}</div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#065f46;text-transform:uppercase;letter-spacing:.35px;">
-              <div>Client</div>
-              <div>Service</div>
-              <div>Status</div>
-              <div>Estimate</div>
-              <div>Action</div>
+            <div style="font-weight:950;color:#047857;">
+              ${esc(serviceLabel(lead))}
             </div>
 
-            ${rows || `<div style="padding:14px 0;color:#64748b;font-weight:850;">No closed leads found.</div>`}
+            <div style="font-weight:950;color:#047857;">
+              Closed
+            </div>
+
+            <div style="font-weight:850;color:#334155;">
+              ${esc(estimateText(lead))}
+            </div>
+
+            <button
+              type="button"
+              onclick="setDashboardFilters({ status: 'Closed', action: 'All', search: '${esc(leadId)}', focusLeadId: '${esc(leadId)}', returnAction: 'Closed' })"
+              style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;white-space:nowrap;"
+            >
+              Open
+            </button>
           </div>
         `;
-      })
-      .catch(function(){
-        container.innerHTML = `<div class="empty">Could not load compact closed leads.</div>`;
-      });
+      }).join("");
+
+      container.innerHTML = `
+        <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+            <div>
+              <div style="font-size:21px;font-weight:950;color:#0f2c56;">
+                Closed Leads
+              </div>
+              <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                Completed or closed work. Use Open only when you need to review the full record.
+              </div>
+            </div>
+
+            <div style="font-size:13px;color:#047857;font-weight:950;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:999px;padding:7px 11px;">
+              ${closed.length} closed item${closed.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.35fr 1fr .75fr 1fr auto;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#065f46;text-transform:uppercase;letter-spacing:.35px;">
+            <div>Client</div>
+            <div>Service</div>
+            <div>Status</div>
+            <div>Estimate</div>
+            <div>Action</div>
+          </div>
+
+          ${rows || `<div style="padding:14px 0;color:#64748b;font-weight:850;">No closed leads found.</div>`}
+        </div>
+      `;
+    }catch(e){
+      container.innerHTML = `<div class="empty">Could not load Closed Leads worklist.</div>`;
+    }
   }
 
-  function wrapLoadLeadsForClosed() {
-    if (typeof loadLeads !== "function") return;
-    if (loadLeads.__compactClosedLeadsWrapped) return;
+  function wrapLoadLeads(){
+    if(typeof loadLeads !== "function") return;
+    if(loadLeads.__stableClosedLeadsWorklistWrapped) return;
 
     var original = loadLeads;
     loadLeads = async function(){
       var result = await original.apply(this, arguments);
-      setTimeout(renderCompactClosedLeads, 150);
+      setTimeout(renderStableClosedLeadsWorklist, 150);
       return result;
     };
 
-    loadLeads.__compactClosedLeadsWrapped = true;
+    loadLeads.__stableClosedLeadsWorklistWrapped = true;
   }
 
-  document.addEventListener("DOMContentLoaded", function(){
-    wrapLoadLeadsForClosed();
-    setTimeout(renderCompactClosedLeads, 700);
-    setTimeout(renderCompactClosedLeads, 1500);
+  document.addEventListener("DOMContentLoaded",function(){
+    wrapLoadLeads();
+    setTimeout(renderStableClosedLeadsWorklist,800);
+    setTimeout(renderStableClosedLeadsWorklist,1800);
   });
+})();
+</script>
+<script id="SAFE-HIDE-BACK-TO-PREVIOUS-WORKSPACE">
+(function () {
+  if (window.__safeHideBackToPreviousWorkspace) return;
+  window.__safeHideBackToPreviousWorkspace = true;
+
+  function hideBadPreviousWorkspaceButton() {
+    document.querySelectorAll("button, a").forEach(function (el) {
+      var text = String(el.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+      if (text === "back to previous workspace" || text.includes("back to previous workspace")) {
+        el.style.display = "none";
+        el.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    hideBadPreviousWorkspaceButton();
+    setTimeout(hideBadPreviousWorkspaceButton, 300);
+    setTimeout(hideBadPreviousWorkspaceButton, 900);
+    setTimeout(hideBadPreviousWorkspaceButton, 1500);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(hideBadPreviousWorkspaceButton, 300);
+    setTimeout(hideBadPreviousWorkspaceButton, 900);
+  });
+
+  setInterval(hideBadPreviousWorkspaceButton, 1000);
 })();
 </script>
 </body>
@@ -7209,6 +7331,13 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
+
+
+
 
 
 
