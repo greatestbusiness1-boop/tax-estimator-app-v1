@@ -7068,6 +7068,307 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   setInterval(hideBadPreviousWorkspaceButton, 1000);
 })();
 </script>
+<script id="STABLE-ALL-LEADS-WORKLIST">
+(function () {
+  if (window.__stableAllLeadsWorklistInstalled) return;
+  window.__stableAllLeadsWorklistInstalled = true;
+
+  function esc(v) {
+    return String(v || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function getFocusedLeadIdSafe() {
+    try { return String(focusedLeadId || ""); } catch (e) { return ""; }
+  }
+
+  function getLeadTime(lead) {
+    var request = lead.Request || lead.request || {};
+    var values = [
+      lead.updatedAt,
+      request.writtenReviewPaidAt,
+      request.reviewCompletedAt,
+      lead.submittedAt,
+      lead.createdAt,
+      lead.timestamp
+    ];
+
+    for (var i = 0; i < values.length; i++) {
+      if (!values[i]) continue;
+      var t = Date.parse(String(values[i]));
+      if (Number.isFinite(t)) return t;
+    }
+
+    var m = String(lead && lead.leadId || "").match(/LEAD-(\d+)/i);
+    if (m) return Number(m[1]);
+
+    return 0;
+  }
+
+  function combinedNet(lead) {
+    return Number(
+      (lead && lead.estimateSummary && lead.estimateSummary.combined && lead.estimateSummary.combined.net) ??
+      (lead && lead.estimateSummary && lead.estimateSummary.combinedNet) ??
+      0
+    );
+  }
+
+  function isClosedLead(lead) {
+    var status = String(lead && lead.status || "");
+    return (
+      status.startsWith("Closed -") ||
+      status === "Written Review - Completed" ||
+      status === "Transcript Help - Completed" ||
+      status === "Converted - Tax Client"
+    );
+  }
+
+  function serviceLabel(lead) {
+    var status = String(lead && lead.status || "");
+    var request = lead.Request || lead.request || {};
+
+    if (status.includes("Written Review") || request.writtenReviewRequested || request.writtenReviewPaid) {
+      return "$29 Written Review";
+    }
+
+    if (status.includes("Transcript") || request.transcriptHelpRequested || request.transcriptRequested) {
+      return "Transcript Help";
+    }
+
+    var net = combinedNet(lead);
+    if (net > 0) return "Refund Lead";
+    if (net < 0) return "Balance Due Lead";
+    return "Tax Estimate Lead";
+  }
+
+  function estimateText(lead) {
+    var summary = lead.estimateSummary || {};
+    var net = combinedNet(lead);
+
+    if (summary.totalLine) return summary.totalLine;
+    if (summary.federalLine || summary.stateLine) {
+      return [summary.federalLine, summary.stateLine].filter(Boolean).join(" / ");
+    }
+
+    if (net > 0) return "Possible refund: $" + Math.abs(net).toLocaleString();
+    if (net < 0) return "Possible balance due: $" + Math.abs(net).toLocaleString();
+    return "Estimate details available";
+  }
+
+  function nextStepLabel(lead) {
+    var status = String(lead && lead.status || "New");
+
+    if (status.includes("Paid") && status.includes("Written")) return "Prepare review";
+    if (status.includes("Written Review")) return "Review request";
+    if (status.includes("Transcript")) return "Work transcript request";
+    if (status === "Follow-up Needed") return "Follow up";
+    if (status === "Booked") return "Appointment booked";
+    if (status === "Contacted") return "Waiting on client";
+    if (status === "New") return "New estimate lead";
+
+    var net = combinedNet(lead);
+    if (net > 0) return "Follow up to file";
+    if (net < 0) return "Offer balance due review";
+    return "Review lead";
+  }
+
+  async function renderStableAllLeadsWorklist() {
+    var leadFilter = document.getElementById("leadFilter");
+    var actionFilter = document.getElementById("actionQueueFilter");
+    var searchInput = document.getElementById("leadSearch");
+    var container = document.getElementById("leadsContainer");
+
+    if (!leadFilter || !actionFilter || !searchInput || !container) return;
+
+    var selectedFilter = leadFilter.value || "";
+    var selectedAction = actionFilter.value || "";
+    var searchValue = String(searchInput.value || "").trim();
+    var focused = getFocusedLeadIdSafe();
+
+    // Only replace the main All Leads list.
+    // Leave specific opened client cards alone.
+    if (selectedFilter !== "All") return;
+    if (selectedAction !== "All") return;
+    if (focused) return;
+    if (/^LEAD-\d+-[A-Z0-9]+$/i.test(searchValue)) return;
+
+    try {
+      var res = await fetch("/api/leads");
+      var data = await res.json();
+      var leads = Array.isArray(data) ? data : (Array.isArray(data.leads) ? data.leads : []);
+
+      var searchText = searchValue.toLowerCase();
+
+      var openLeads = leads
+        .filter(function (lead) { return !isClosedLead(lead); })
+        .filter(function (lead) {
+          if (!searchText) return true;
+
+          var searchable = [
+            lead && lead.leadId,
+            lead && lead.contact && lead.contact.name,
+            lead && lead.contact && lead.contact.email,
+            lead && lead.contact && lead.contact.phone,
+            lead && lead.status,
+            serviceLabel(lead),
+            estimateText(lead)
+          ].filter(Boolean).join(" ").toLowerCase();
+
+          return searchable.includes(searchText);
+        })
+        .sort(function (a, b) {
+          return getLeadTime(b) - getLeadTime(a);
+        });
+
+      var rows = openLeads.map(function (lead) {
+        var leadId = String(lead.leadId || "");
+        var name = lead.contact && lead.contact.name || "Unknown Lead";
+        var email = lead.contact && lead.contact.email || "No email";
+        var status = String(lead.status || "New");
+
+        return `
+          <div style="display:grid;grid-template-columns:1.35fr 1fr .9fr 1fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;">
+            <div style="font-weight:950;color:#0f2c56;min-width:0;">
+              ${esc(name)}
+              <div style="font-size:12px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(email)}</div>
+              <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(leadId)}</div>
+            </div>
+
+            <div style="font-weight:950;color:#047857;">
+              ${esc(serviceLabel(lead))}
+            </div>
+
+            <div style="font-weight:900;color:#334155;">
+              ${esc(status)}
+            </div>
+
+            <div style="font-weight:850;color:#334155;">
+              ${esc(estimateText(lead))}
+              <div style="font-size:12px;color:#64748b;font-weight:750;margin-top:3px;">${esc(nextStepLabel(lead))}</div>
+            </div>
+
+            <button
+              type="button"
+              onclick="setDashboardFilters({ status: 'All', action: 'All', search: '${esc(leadId)}', focusLeadId: '${esc(leadId)}', returnAction: 'All' })"
+              style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;white-space:nowrap;"
+            >
+              Open
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+            <div>
+              <div style="font-size:21px;font-weight:950;color:#0f2c56;">
+                All Leads
+              </div>
+              <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                Compact lead worklist. Use Open only when you need the full customer record.
+              </div>
+            </div>
+
+            <div style="font-size:13px;color:#0f2c56;font-weight:950;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:7px 11px;">
+              ${openLeads.length} open lead${openLeads.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.35fr 1fr .9fr 1fr auto;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.35px;">
+            <div>Client</div>
+            <div>Service</div>
+            <div>Status</div>
+            <div>Estimate / Next Step</div>
+            <div>Action</div>
+          </div>
+
+          ${rows || `<div style="padding:14px 0;color:#64748b;font-weight:850;">No open leads found.</div>`}
+        </div>
+      `;
+    } catch (e) {
+      container.innerHTML = `<div class="empty">Could not load All Leads worklist.</div>`;
+    }
+  }
+
+  function addAllLeadsBackButton() {
+    var leadFilter = document.getElementById("leadFilter");
+    var actionFilter = document.getElementById("actionQueueFilter");
+    var container = document.getElementById("leadsContainer");
+
+    if (!leadFilter || !actionFilter || !container) return;
+    if (leadFilter.value !== "All") return;
+    if (actionFilter.value !== "All") return;
+
+    if (document.getElementById("simpleAllLeadsBackButton")) return;
+
+    var cards = container.querySelectorAll(".lead-card");
+    if (cards.length !== 1) return;
+
+    var btn = document.createElement("button");
+    btn.id = "simpleAllLeadsBackButton";
+    btn.type = "button";
+    btn.textContent = "Back to All Leads";
+    btn.style.cssText = "margin:0 0 12px 0;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;";
+
+    btn.onclick = function () {
+      try { focusedLeadId = ""; } catch (e) {}
+      try { focusedReturnAction = ""; } catch (e) {}
+
+      var leadFilter = document.getElementById("leadFilter");
+      var actionFilter = document.getElementById("actionQueueFilter");
+      var searchInput = document.getElementById("leadSearch");
+
+      if (leadFilter) leadFilter.value = "All";
+      if (actionFilter) actionFilter.value = "All";
+      if (searchInput) searchInput.value = "";
+
+      if (typeof updateActiveSidebarButton === "function") updateActiveSidebarButton("All");
+      if (typeof updateWorkspaceHeader === "function") updateWorkspaceHeader("All");
+      if (typeof updateWorkspaceGuidance === "function") updateWorkspaceGuidance("All");
+
+      if (typeof loadLeads === "function") {
+        setTimeout(function () {
+          loadLeads();
+        }, 50);
+      }
+    };
+
+    container.insertBefore(btn, container.firstChild);
+  }
+
+  function wrapLoadLeads() {
+    if (typeof loadLeads !== "function") return;
+    if (loadLeads.__stableAllLeadsWorklistWrapped) return;
+
+    var original = loadLeads;
+    loadLeads = async function () {
+      var result = await original.apply(this, arguments);
+      setTimeout(renderStableAllLeadsWorklist, 150);
+      setTimeout(addAllLeadsBackButton, 250);
+      return result;
+    };
+
+    loadLeads.__stableAllLeadsWorklistWrapped = true;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    wrapLoadLeads();
+    setTimeout(renderStableAllLeadsWorklist, 800);
+    setTimeout(addAllLeadsBackButton, 1000);
+    setTimeout(renderStableAllLeadsWorklist, 1800);
+    setTimeout(addAllLeadsBackButton, 2000);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(addAllLeadsBackButton, 300);
+    setTimeout(addAllLeadsBackButton, 900);
+  });
+})();
+</script>
 </body>
 
 </html>
@@ -7331,6 +7632,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
 
 
 
