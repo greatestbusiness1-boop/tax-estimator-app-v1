@@ -6826,12 +6826,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
     if (selectedFilter !== "Closed" || selectedAction !== "All") return;
 
-    var searchValue = String((searchInput && searchInput.value) || "").trim();
-
-    // If a specific closed lead is being opened by Lead ID, let the normal full card render.
-    // Otherwise the compact Closed Leads list replaces the card again.
-    if (/^LEAD-\d+-[A-Z0-9]+$/i.test(searchValue)) return;
-
     fetch("/api/leads")
       .then(function(res){ return res.json(); })
       .then(function(data){
@@ -6950,31 +6944,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     setTimeout(renderCompactClosedLeads, 700);
     setTimeout(renderCompactClosedLeads, 1500);
   });
-})();
-</script>
-<script id="FORCE-CLEAN-BACK-BUTTON-TEXT">
-(function () {
-  if (window.__forceCleanBackButtonText) return;
-  window.__forceCleanBackButtonText = true;
-
-  function cleanBackButtons() {
-    document.querySelectorAll("button, a").forEach(function (el) {
-      var text = String(el.textContent || "");
-
-      if (text.toLowerCase().includes("back to previous workspace")) {
-        el.textContent = "Back to Previous Workspace";
-      }
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    cleanBackButtons();
-    setTimeout(cleanBackButtons, 300);
-    setTimeout(cleanBackButtons, 900);
-    setTimeout(cleanBackButtons, 1500);
-  });
-
-  setInterval(cleanBackButtons, 1000);
 })();
 </script>
 </body>
@@ -7240,10 +7209,6 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
-
-
-
-
 
 
 
