@@ -3,636 +3,980 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Written Estimate Red Flag Review</title>
+  <title>Tax Intelligence Report | Written Estimate Red Flag Review</title>
   <style>
+    :root {
+      --ink:#111827;
+      --muted:#4b5563;
+      --navy:#071d3a;
+      --blue:#0f4c81;
+      --gold:#f59e0b;
+      --red:#b91c1c;
+      --orange:#c2410c;
+      --green:#047857;
+      --purple:#5b21b6;
+      --paper:#ffffff;
+      --soft:#f3f6fb;
+      --line:#d7deea;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      color: #12233d;
       margin: 0;
-      padding: 24px;
-    }
-
-    .page {
-      max-width: 960px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 18px;
       padding: 28px;
-      box-shadow: 0 12px 30px rgba(15, 44, 86, 0.12);
+      background: #dfe7f3;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
     }
 
-    .top {
+    .toolbar {
+      max-width: 980px;
+      margin: 0 auto 14px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 900;
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .report {
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--paper);
+      box-shadow: 0 18px 50px rgba(7, 29, 58, .18);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .cover {
+      background: linear-gradient(135deg, #071d3a 0%, #0f4c81 55%, #0b2d53 100%);
+      color: #fff;
+      padding: 34px;
+      position: relative;
+    }
+
+    .cover:after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      top: -120px;
+      width: 320px;
+      height: 320px;
+      border-radius: 999px;
+      background: rgba(245,158,11,.22);
+    }
+
+    .brand-row {
       display: flex;
       justify-content: space-between;
-      gap: 18px;
       align-items: flex-start;
-      border-bottom: 3px solid #0f2c56;
-      padding-bottom: 18px;
-      margin-bottom: 22px;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
     }
 
     .brand {
-      font-size: 14px;
-      font-weight: 900;
-      color: #0f2c56;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .8px;
       text-transform: uppercase;
-      letter-spacing: .4px;
+      color: #fbbf24;
     }
 
     h1 {
-      margin: 8px 0 6px;
-      font-size: 30px;
-      color: #0f2c56;
+      margin: 12px 0 10px;
+      font-size: 42px;
+      line-height: 1.05;
+      max-width: 720px;
     }
 
-    .sub {
+    .subtitle {
       margin: 0;
-      color: #475569;
-      font-size: 14px;
-      line-height: 1.5;
+      max-width: 760px;
+      color: #dbeafe;
+      font-size: 16px;
+      line-height: 1.55;
       font-weight: 700;
     }
 
-    .print-btn {
-      background: #0f2c56;
-      color: #ffffff;
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 16px;
-      font-weight: 950;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .box {
-      border: 1px solid #dbe4f0;
-      border-radius: 14px;
+    .prepared-box {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 16px;
       padding: 14px;
+      min-width: 240px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mini-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: #bfdbfe;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .mini-value {
+      font-size: 15px;
+      font-weight: 950;
+      color: #fff;
+    }
+
+    .content { padding: 28px 34px 34px; }
+
+    .loading, .error {
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      font-weight: 900;
       background: #f8fafc;
     }
 
-    .label {
-      font-size: 11px;
-      font-weight: 950;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      margin-bottom: 5px;
-    }
-
-    .value {
-      font-size: 18px;
-      font-weight: 950;
-      color: #0f2c56;
-    }
+    .error { display:none; border-color:#fecaca; background:#fef2f2; color:#991b1b; }
 
     .section {
-      border: 1px solid #dbe4f0;
-      border-radius: 16px;
-      padding: 18px;
-      margin-top: 16px;
-      background: #ffffff;
-    }
-
-    .section h2 {
-      margin: 0 0 10px;
-      color: #0f2c56;
-      font-size: 20px;
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 22px;
-      line-height: 1.7;
-      color: #334155;
-      font-size: 15px;
-    }
-
-    p {
-      line-height: 1.65;
-      color: #334155;
-      font-size: 15px;
-    }
-
-    .notice {
-      border: 1px solid #fed7aa;
-      background: #fff7ed;
-      color: #7c2d12;
-      border-radius: 14px;
-      padding: 14px;
-      font-weight: 800;
-      line-height: 1.6;
-    }
-
-    .error {
-      border: 1px solid #fecaca;
-      background: #fef2f2;
-      color: #991b1b;
-      border-radius: 14px;
-      padding: 16px;
-      font-weight: 900;
-      display: none;
-    }
-
-    @media print {
-      body {
-        background: #ffffff;
-        padding: 0;
-      }
-
-      .page {
-        box-shadow: none;
-        border-radius: 0;
-        max-width: none;
-      }
-
-      .no-print {
-        display: none !important;
-      }
-    }
-  
-    /* PDF-PRINT-FORMAT-FIX-START */
-    .section,
-    .box,
-    .notice,
-    .grid {
+      margin-top: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      overflow: hidden;
       break-inside: avoid;
       page-break-inside: avoid;
     }
 
-    .section h2 {
-      break-after: avoid;
-      page-break-after: avoid;
+    .section-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
     }
 
-    @page {
-      size: Letter;
-      margin: 0.55in;
+    .section-title {
+      margin: 0;
+      color: var(--navy);
+      font-size: 22px;
+      line-height: 1.2;
     }
+
+    .section-kicker {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .section-body { padding: 18px; }
+
+    .summary-grid, .driver-grid, .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .driver-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .roadmap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .metric, .driver-card, .strategy-card, .roadmap-card {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #f8fafc;
+      padding: 14px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .metric .value, .driver-card .value {
+      font-size: 21px;
+      color: var(--navy);
+      font-weight: 950;
+      margin-top: 5px;
+    }
+
+    .driver-card p, .strategy-card p, .roadmap-card p, .section-body p, li {
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+
+    .badge.red { background:#fee2e2; color:#991b1b; }
+    .badge.orange { background:#ffedd5; color:#9a3412; }
+    .badge.green { background:#dcfce7; color:#166534; }
+    .badge.purple { background:#ede9fe; color:#5b21b6; }
+    .badge.blue { background:#dbeafe; color:#1e3a8a; }
+    .badge.gold { background:#fef3c7; color:#92400e; }
+
+    .alerts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .alert-card {
+      border-radius: 16px;
+      padding: 15px;
+      border: 2px solid var(--line);
+      background: #fff;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .alert-card h3 { margin: 10px 0 6px; font-size: 17px; color: var(--navy); }
+    .alert-card p { margin: 0; }
+    .alert-card.critical { border-color:#fecaca; background:#fff7f7; }
+    .alert-card.warning { border-color:#fed7aa; background:#fff7ed; }
+    .alert-card.confirmed { border-color:#bbf7d0; background:#f0fdf4; }
+    .alert-card.opportunity { border-color:#ddd6fe; background:#faf5ff; }
+
+    .wake {
+      background: linear-gradient(180deg, #fff7f7 0%, #fff 100%);
+      border: 2px solid #fecaca;
+    }
+
+    .wake .section-header { background:#b91c1c; color:#fff; border-bottom: 0; }
+    .wake .section-title, .wake .section-kicker { color:#fff; }
+
+    .wake-statement {
+      border-left: 7px solid var(--red);
+      padding: 14px 16px;
+      background: #fef2f2;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 950;
+      color: #7f1d1d;
+      line-height: 1.4;
+    }
+
+    .bar-row { margin: 13px 0; }
+    .bar-top { display:flex; justify-content:space-between; gap:12px; font-weight:950; color: var(--navy); margin-bottom: 5px; }
+    .bar-track { height: 18px; border-radius: 999px; background:#e5e7eb; overflow:hidden; border:1px solid #d1d5db; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #047857); border-radius:999px; }
+
+    .compare {
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .compare-panel {
+      border-radius: 18px;
+      padding: 18px;
+      border: 2px solid var(--line);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .compare-panel.broke { background:#fff7ed; border-color:#fed7aa; }
+    .compare-panel.wealth { background:#ecfdf5; border-color:#bbf7d0; }
+    .compare-panel h3 { margin: 0 0 10px; font-size: 20px; color: var(--navy); }
+    .compare-panel ul { margin:0; padding-left: 20px; }
+
+    .strategy-list {
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .strategy-card {
+      display:grid;
+      grid-template-columns: 54px 1fr;
+      gap: 14px;
+      background:#fff;
+    }
+
+    .number {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--navy);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:950;
+      font-size:18px;
+    }
+
+    .strategy-card h3, .roadmap-card h3 { margin: 0 0 6px; color:var(--navy); font-size:18px; }
+    .strategy-card p, .roadmap-card p { margin: 0 0 10px; }
+    .strategy-card p:last-child {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .referral {
+      background:#f8fafc;
+      border: 2px solid #bfdbfe;
+    }
+
+    .referral-link {
+      display:block;
+      margin: 10px 0;
+      word-break: break-all;
+      color:#0f4c81;
+      font-weight:950;
+    }
+
+    .fine-print {
+      font-size: 12px !important;
+      color: #475569 !important;
+      line-height: 1.5 !important;
+    }
+
+    .cta-panel {
+      border: 2px solid #bfdbfe;
+      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+    }
+
+    .cta-box {
+      border-radius: 18px;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+    }
+
+    .cta-box h3 {
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-size: 22px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 11px 15px;
+      font-weight: 950;
+      font-size: 13px;
+      border: 2px solid var(--navy);
+      color: #ffffff;
+      background: var(--navy);
+    }
+
+    .cta-button.secondary {
+      background: #ffffff;
+      color: var(--navy);
+    }
+
+    @media (max-width: 820px) {
+      body { padding: 12px; }
+      .brand-row, .summary-grid, .driver-grid, .roadmap-grid, .alerts, .compare { grid-template-columns: 1fr; display:grid; }
+      .prepared-box { min-width: 0; }
+      h1 { font-size: 32px; }
+      .content, .cover { padding: 22px; }
+    }
+
+    @page { size: Letter; margin: .55in; }
 
     @media print {
-      html,
-      body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #ffffff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      body {
-        font-size: 11pt !important;
-        line-height: 1.35 !important;
-      }
-
-      .page {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        background: #ffffff !important;
-      }
-
-      .top {
-        border-bottom: 2px solid #0f2c56 !important;
-        padding-bottom: 10px !important;
-        margin-bottom: 12px !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      h1 {
-        font-size: 22pt !important;
-        margin: 4px 0 4px !important;
-      }
-
-      .sub {
-        font-size: 9.5pt !important;
-        line-height: 1.35 !important;
-      }
-
-      .brand {
-        font-size: 9.5pt !important;
-      }
-
-      .grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 7px !important;
-        margin-bottom: 9px !important;
-      }
-
-      .box {
-        padding: 8px !important;
-        border-radius: 8px !important;
-        background: #f8fafc !important;
-      }
-
-      .label {
-        font-size: 7.5pt !important;
-        margin-bottom: 3px !important;
-      }
-
-      .value {
-        font-size: 10.5pt !important;
-      }
-
-      .section {
-        margin-top: 10px !important;
-        padding: 11px !important;
-        border-radius: 9px !important;
-        background: #ffffff !important;
-      }
-
-      .section h2 {
-        font-size: 14pt !important;
-        margin: 0 0 7px !important;
-      }
-
-      p {
-        font-size: 9.5pt !important;
-        line-height: 1.42 !important;
-        margin: 5px 0 !important;
-      }
-
-      ul {
-        font-size: 9.5pt !important;
-        line-height: 1.42 !important;
-        padding-left: 16px !important;
-      }
-
-      li {
-        margin-bottom: 3px !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      .notice {
-        padding: 9px !important;
-        border-radius: 9px !important;
-        font-size: 9pt !important;
-        line-height: 1.35 !important;
-      }
-
-      .no-print,
-      .print-btn,
-      button {
-        display: none !important;
-      }
-
-      a {
-        color: #0f2c56 !important;
-        text-decoration: underline !important;
-      }
+      html, body { background:#fff !important; margin:0 !important; padding:0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .toolbar, button, .no-print { display:none !important; }
+      .report { max-width:none !important; box-shadow:none !important; border-radius:0 !important; }
+      .cover { border-radius:0 !important; padding: 24px !important; }
+      .content { padding: 18px 0 0 !important; }
+      h1 { font-size: 30pt !important; }
+      .section { margin-top: 14px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      .section-title { font-size: 17pt !important; }
+      .summary-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      .driver-grid, .alerts, .compare, .roadmap-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .metric .value, .driver-card .value { font-size: 14pt !important; }
+      p, li, .driver-card p, .strategy-card p, .roadmap-card p { font-size: 9.5pt !important; line-height: 1.35 !important; }
+      .strategy-card { grid-template-columns: 42px 1fr !important; }
+      .number { width:34px !important; height:34px !important; border-radius:9px !important; font-size:13pt !important; }
+      a { color:#0f4c81 !important; }
     }
-    /* PDF-PRINT-FORMAT-FIX-END */
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="top">
-      <div>
-        <div class="brand">Greatest Business Solution LLC</div>
-        <h1 id="title">Written Estimate Red Flag Review</h1>
-        <p class="sub" id="subtitle">Loading paid written review report...</p>
-      </div>
-
-      <button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
-    </div>
-
-    <div id="errorBox" class="error"></div>
-
-    <div id="reportBody" style="display:none;">
-      <div class="grid">
-        <div class="box">
-          <div class="label">Client</div>
-          <div class="value" id="clientName">Client</div>
-        </div>
-        <div class="box">
-          <div class="label">Tax Year</div>
-          <div class="value" id="taxYear">Tax Year</div>
-        </div>
-        <div class="box">
-          <div class="label">Filing Status</div>
-          <div class="value" id="filingStatus">Filing Status</div>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div class="box">
-          <div class="label">Federal Estimate</div>
-          <div class="value" id="federalResult">$0</div>
-        </div>
-        <div class="box">
-          <div class="label">State Estimate</div>
-          <div class="value" id="stateResult">$0</div>
-        </div>
-        <div class="box">
-          <div class="label">Combined Estimate</div>
-          <div class="value" id="combinedResult">$0</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>Estimate Submitted</h2>
-        <p id="submittedText"></p>
-      </div>
-      <div class="section" id="keyDriversSection" style="background:#f8fbff;border:1px solid #dbe4f0;border-radius:18px;padding:18px;margin-top:16px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <div style="width:28px;height:28px;border-radius:999px;background:#ecfdf5;color:#047857;display:flex;align-items:center;justify-content:center;font-weight:950;">✓</div>
-          <div>
-            <h2 style="margin:0;color:#0f2c56;font-size:18px;">Key Drivers of This Estimate</h2>
-            <p style="margin:2px 0 0;color:#64748b;font-size:12px;font-weight:800;">The main factors that shaped your result</p>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">Standard Deduction</div>
-              <div class="value" id="keyStandardDeduction" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              You reduced your taxable income using the standard deduction for your filing status. This is the simplest and most common deduction method.
-            </p>
-          </div>
-
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">Taxable Income</div>
-              <div class="value" id="keyTaxableIncome" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              After your deduction, this is the income subject to federal income tax. Your tax is calculated on this amount, not your full earnings.
-            </p>
-          </div>
-
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">Marginal Tax Rate</div>
-              <div class="value" id="keyMarginalRate" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              Your highest tax bracket. This rate only applies to the portion of your income that falls within that bracket — lower income is taxed at lower rates.
-            </p>
-          </div>
-
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">Child Tax Credit</div>
-              <div class="value" id="keyChildTaxCredit" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              Based on dependents entered, you may qualify for child-related credits. Credit eligibility should be verified before filing.
-            </p>
-          </div>
-
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">Federal Tax Withheld</div>
-              <div class="value" id="keyFederalWithheld" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              Your employer sent this amount to the IRS on your behalf throughout the year. This is compared to your estimated tax liability to determine whether you get a refund or owe a balance.
-            </p>
-          </div>
-
-          <div class="box">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div class="label">State Tax</div>
-              <div class="value" id="keyStateTax" style="font-size:14px;">Not available</div>
-            </div>
-            <p style="margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.45;font-weight:700;">
-              Based on your income and state tax structure, your estimated state tax is shown here. State taxes and deductions vary significantly from federal rules.
-            </p>
-          </div>
-        </div>
-      </div>
-<div class="section">
-        <h2>Professional Review Notes</h2>
-        <ul id="reviewNotes"></ul>
-      </div>
-
-      <div class="section">
-        <h2>Items to Verify Before Filing</h2>
-        <ul id="verifyItems"></ul>
-      </div>
-
-      <div class="section">
-        <h2>What Could Change This Estimate</h2>
-        <ul id="changeItems"></ul>
-      </div>
-
-      <div class="section">
-        <h2>Recommended Next Step</h2>
-        <p id="nextStepText"></p>
-      </div>
-
-      <div class="section">
-        <h2>Important Disclaimer</h2>
-        <div class="notice">
-          This Written Estimate Red Flag Review is based only on the information entered into the estimator. It is not a filed tax return, full tax preparation, audit protection, IRS or state representation, legal advice, or a guarantee of the final refund or balance due. Final results may change after review of actual tax documents.
-        </div>
-      </div>
-    </div>
+  <div class="toolbar no-print">
+    <button onclick="window.print()">Print / Save PDF</button>
   </div>
 
+  <main class="report">
+    <section class="cover">
+      <div class="brand-row">
+        <div>
+          <div class="brand">Greatest Business Solution LLC</div>
+          <h1>Tax Intelligence Report</h1>
+          <p class="subtitle">A paid Written Estimate Red Flag Review designed to show what the numbers are saying, what must be verified, and where a taxpayer may have planning opportunities.</p>
+        </div>
+        <div class="prepared-box">
+          <div class="mini-label">Prepared for</div>
+          <div class="mini-value" id="coverClient">Loading...</div>
+          <div style="height:10px"></div>
+          <div class="mini-label">Tax Year</div>
+          <div class="mini-value" id="coverYear">Loading...</div>
+          <div style="height:10px"></div>
+          <div class="mini-label">Report Type</div>
+          <div class="mini-value">Written Estimate Red Flag Review</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content">
+      <div id="loadingBox" class="loading">Loading paid written report...</div>
+      <div id="errorBox" class="error"></div>
+
+      <div id="reportBody" style="display:none;">
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Snapshot of the Estimate</h2>
+              <div class="section-kicker">The big-picture numbers before the deeper review.</div>
+            </div>
+            <span class="badge blue" id="snapshotBadge">Estimate Review</span>
+          </div>
+          <div class="section-body">
+            <div class="summary-grid">
+              <div class="metric"><div class="mini-label">Client</div><div class="value" id="clientName">Client</div></div>
+              <div class="metric"><div class="mini-label">Filing Status</div><div class="value" id="filingStatus">Not provided</div></div>
+              <div class="metric"><div class="mini-label">State</div><div class="value" id="stateName">Not provided</div></div>
+              <div class="metric"><div class="mini-label">Federal Result</div><div class="value" id="federalResult">$0</div></div>
+              <div class="metric"><div class="mini-label">State Result</div><div class="value" id="stateResult">$0</div></div>
+              <div class="metric"><div class="mini-label">Combined Result</div><div class="value" id="combinedResult">$0</div></div>
+            </div>
+            <p id="submittedText"></p>
+          </div>
+        </section>
+
+        <section class="section cta-panel">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title" id="reportModeTitle">Your Next Step With Greatest Business Solution LLC</h2>
+              <div class="section-kicker">This paid review is not the end of the conversation. It is the starting point for action.</div>
+            </div>
+            <span class="badge blue">Next Step</span>
+          </div>
+          <div class="section-body">
+            <div class="cta-box">
+              <h3 id="ctaHeadline">Need help turning this review into a filing plan?</h3>
+              <p id="reportModeText">Greatest Business Solution LLC can help review your tax situation, prepare your return, or assist with transcript-related issues if income documents or IRS records need to be checked.</p>
+              <p><strong>Available help:</strong> tax return preparation, estimate review, refund planning, balance-due review, IRS transcript help, missing W-2 or 1099 review, and filing-readiness questions.</p>
+              <div class="cta-buttons">
+                <a class="cta-button" id="taxPrepLink" href="mailto:greatestbusiness1@gmail.com?subject=Tax%20Prep%20Help%20Request">Request Tax Prep Help</a>
+                <a class="cta-button secondary" id="transcriptHelpLink" href="mailto:greatestbusiness1@gmail.com?subject=IRS%20Transcript%20Help%20Request">Get IRS Transcript Help</a>
+                <a class="cta-button secondary" id="calendarLink" href="mailto:greatestbusiness1@gmail.com?subject=Schedule%20Written%20Review%20Call">Schedule Review Call</a>
+              </div>
+              <p class="fine-print">Scheduling button currently opens an email request. When your final calendar link is ready, this button can be changed to your live booking calendar.</p>
+            </div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Key Drivers of This Estimate</h2>
+              <div class="section-kicker">No wasted space. These are the items driving the tax result.</div>
+            </div>
+            <span class="badge green">Numbers Matter</span>
+          </div>
+          <div class="section-body">
+            <div class="driver-grid">
+              <div class="driver-card"><div class="mini-label">Standard Deduction</div><div class="value" id="keyStandardDeduction">Verify filing status</div><p id="stdNote">This reduces taxable income before federal tax is calculated.</p></div>
+              <div class="driver-card"><div class="mini-label">Taxable Income</div><div class="value" id="keyTaxableIncome">Verify income</div><p>Tax is calculated on taxable income, not simply gross wages.</p></div>
+              <div class="driver-card"><div class="mini-label">Marginal Tax Rate</div><div class="value" id="keyMarginalRate">Verify income</div><p>This is the bracket for the next dollar of ordinary taxable income. It is not the same as the effective tax rate.</p></div>
+              <div class="driver-card"><div class="mini-label">Child Tax Credit</div><div class="value" id="keyChildTaxCredit">Verify dependents</div><p>Dependent eligibility must be checked before filing. Relationship, age, residency, support, and duplicate-claim issues matter.</p></div>
+              <div class="driver-card"><div class="mini-label">Federal Withheld</div><div class="value" id="keyFederalWithheld">Verify W-2 Box 2</div><p>Federal withholding is compared against estimated tax liability. Actual W-2 Box 2 controls.</p></div>
+              <div class="driver-card"><div class="mini-label">State Tax</div><div class="value" id="keyStateTax">Verify state documents</div><p>State rules vary. State wages, withholding, residency, and credits must be verified.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Red Flag Alerts Identified</h2>
+              <div class="section-kicker">Critical issues, warnings, confirmations, and opportunities.</div>
+            </div>
+            <span class="badge red">Review Before Filing</span>
+          </div>
+          <div class="section-body">
+            <div class="alerts" id="alertCards"></div>
+          </div>
+        </section>
+
+        <section class="section wake">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title" id="wakeTitle">Wake-Up Call: Refund Money Can Disappear Fast</h2>
+              <div class="section-kicker">This is where the report stops being plain tax paperwork.</div>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="wake-statement" id="wakeStatement">Getting a big refund feels good. The math says otherwise.</div>
+            <p id="wakeText">The TV, shoes, trip, or car down payment disappears. Car payments and high-interest debt destroy progress. Inflation punishes money sitting still. A refund can either disappear in 30 days or become part of a bigger plan.</p>
+            <div id="barChart"></div>
+            <p class="fine-print" id="barFinePrint">Educational illustration only: assumes $1,000 invested each year at an 8% annual return assumption. Investments are not guaranteed, can lose value, and actual results may be higher or lower.</p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Wealth Builders Comparison</h2>
+              <div class="section-kicker">Same refund. Different behavior. Different future.</div>
+            </div>
+            <span class="badge gold">Mindset Shift</span>
+          </div>
+          <div class="section-body">
+            <div class="compare">
+              <div class="compare-panel broke">
+                <h3>People Who Stay Broke</h3>
+                <ul>
+                  <li>Spend refund within 30 days.</li>
+                  <li>Buy things that lose value.</li>
+                  <li>Carry no emergency fund.</li>
+                  <li>Pay maximum legal taxes without asking questions.</li>
+                  <li>Invest nothing for children or retirement.</li>
+                  <li>Own liabilities first: car payments, credit cards, loans.</li>
+                  <li>Ask where to invest after the money is gone.</li>
+                </ul>
+              </div>
+              <div class="compare-panel wealth">
+                <h3>People Who Build Wealth</h3>
+                <ul>
+                  <li>Redirect part of refund before spending starts.</li>
+                  <li>Maintain 3 to 6 months of emergency savings.</li>
+                  <li>Use legal tax strategies and better records.</li>
+                  <li>Open savings or investment accounts for children.</li>
+                  <li>Build multiple income streams.</li>
+                  <li>Own assets: business, retirement accounts, index funds, real estate.</li>
+                  <li>Automate savings on payday and spend what remains.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Insider Wealth Playbook</h2>
+              <div class="section-kicker">Strategies to discuss, verify, document, and use legally when they apply.</div>
+            </div>
+            <span class="badge purple">Planning Ideas</span>
+          </div>
+          <div class="section-body">
+            <div class="strategy-list" id="strategyList"></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Investment Roadmap</h2>
+              <div class="section-kicker">Beginner to advanced order of operations.</div>
+            </div>
+            <span class="badge green">Build First</span>
+          </div>
+          <div class="section-body">
+            <div class="roadmap-grid" id="roadmapGrid"></div>
+          </div>
+        </section>
+
+        <section class="section referral">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Optional STASH Referral Resource</h2>
+              <div class="section-kicker">Resource only  -  not individualized investment advice.</div>
+            </div>
+            <span class="badge blue">Optional</span>
+          </div>
+          <div class="section-body">
+            <p>For clients who want to explore beginner-friendly investing tools, this optional referral link may be used:</p>
+            <a class="referral-link" href="https://get.stash.com/rr/30c5cr90f30c011226-55JTKDQT" target="_blank" rel="noopener">https://get.stash.com/rr/30c5cr90f30c011226-55JTKDQT</a>
+            <p class="fine-print">Disclosure: If you use this referral link, you may receive a promotional offer from STASH. Greatest Business Solution LLC / Cedric Easley may also receive a referral benefit. This is not individualized investment advice.</p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Required Caution</h2>
+              <div class="section-kicker">Read before acting on any item in this report.</div>
+            </div>
+            <span class="badge orange">Important</span>
+          </div>
+          <div class="section-body">
+            <p class="fine-print">This report is for educational purposes only. It is not financial, legal, or tax advice. Verify eligibility before implementing any strategy. Consult a licensed CPA, tax attorney, financial advisor, or licensed professional where applicable. Investment returns are not guaranteed and investments can lose value. The final tax result may change after actual tax documents are reviewed.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
   <script>
-    function fmtMoney(value) {
-      const num = Number(value || 0);
-      return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    const STANDARD_DEDUCTION = {
+      "2025": { single:15750, mfs:15750, mfj:31500, qss:31500, hoh:23625 },
+      "2026": { single:16100, mfs:16100, mfj:32200, qss:32200, hoh:24150 }
+    };
+
+    const BRACKETS_2025 = {
+      single:[[0,.10],[11925,.12],[48475,.22],[103350,.24],[197300,.32],[250525,.35],[626350,.37]],
+      mfs:[[0,.10],[11925,.12],[48475,.22],[103350,.24],[197300,.32],[250525,.35],[375800,.37]],
+      mfj:[[0,.10],[23850,.12],[96950,.22],[206700,.24],[394600,.32],[501050,.35],[751600,.37]],
+      qss:[[0,.10],[23850,.12],[96950,.22],[206700,.24],[394600,.32],[501050,.35],[751600,.37]],
+      hoh:[[0,.10],[17000,.12],[64850,.22],[103350,.24],[197300,.32],[250500,.35],[626350,.37]]
+    };
+
+    const BRACKETS_2026 = {
+      single:[[0,.10],[12400,.12],[50400,.22],[105700,.24],[201775,.32],[256225,.35],[640600,.37]],
+      mfs:[[0,.10],[12400,.12],[50400,.22],[105700,.24],[201775,.32],[256225,.35],[384350,.37]],
+      mfj:[[0,.10],[24800,.12],[100800,.22],[211400,.24],[403550,.32],[512450,.35],[768700,.37]],
+      qss:[[0,.10],[24800,.12],[100800,.22],[211400,.24],[403550,.32],[512450,.35],[768700,.37]],
+      hoh:[[0,.10],[17700,.12],[67250,.22],[105700,.24],[201775,.32],[256200,.35],[640600,.37]]
+    };
+
+    function $(id){ return document.getElementById(id); }
+    function txt(id, value){ const el=$(id); if(el) el.textContent = value; }
+    function money(value){ const n=Number(value); if(!Number.isFinite(n)) return null; return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}); }
+    function numberValue(){ for (const v of arguments) { const n=Number(v); if(Number.isFinite(n) && Math.abs(n) > 0) return n; } return 0; }
+    function strValue(){ for (const v of arguments) { if(v !== undefined && v !== null && String(v).trim() !== "") return String(v).trim(); } return ""; }
+    function result(label, value){ const n=Number(value||0); if(n>0) return label + " Refund: " + money(n); if(n<0) return label + " Due: " + money(Math.abs(n)); return label + ": Break-even"; }
+    function normalizeStatus(status){ const s=String(status||"").toLowerCase(); if(s.includes("head")) return "hoh"; if(s.includes("joint") || s === "mfj" || s.includes("married filing jointly")) return "mfj"; if(s.includes("separate") || s === "mfs") return "mfs"; if(s.includes("widow") || s.includes("surviv")) return "qss"; return "single"; }
+    function statusLabel(key){ return {single:"Single", mfs:"Married Filing Separately", mfj:"Married Filing Jointly", qss:"Qualifying Surviving Spouse", hoh:"Head of Household"}[key] || "Not provided"; }
+    function marginalRate(taxable, year, statusKey){ const tables = String(year)==="2026" ? BRACKETS_2026 : BRACKETS_2025; const table = tables[statusKey] || tables.single; let rate = .10; for (const row of table){ if(taxable >= row[0]) rate = row[1]; } return Math.round(rate*100) + "%"; }
+    function escapeHtml(s){ return String(s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+    function buildAlerts(ctx){
+      const alerts=[];
+      if(ctx.combinedNet < -500 || ctx.fedWithheld === 0){
+        alerts.push({type:"critical", badge:"CRITICAL", title:"Withholding or balance-due gap needs attention", text: ctx.combinedNet < 0 ? "The estimate shows a balance due. Confirm W-2 Box 2, estimated payments, side income, and credits before filing." : "Federal withholding was not clearly available. Verify W-2 Box 2 before relying on the refund or balance due number."});
+      } else {
+        alerts.push({type:"confirmed", badge:"CONFIRMED", title:"Federal withholding was entered or estimated", text:"The report found withholding information or enough estimate data to build a useful review. Actual W-2 Box 2 still controls."});
+      }
+      if(ctx.dependents > 0){
+        alerts.push({type:"warning", badge:"WARNING", title:"Dependent and child-credit review required", text:"Dependents can change the estimate significantly. Verify relationship, residency, age, support, and whether anyone else can claim the same child."});
+      } else {
+        alerts.push({type:"opportunity", badge:"OPPORTUNITY", title:"Credit review may still be worthwhile", text:"Even when no dependent is entered, education, retirement, energy, business, and payment-related items may affect the final return."});
+      }
+      if(ctx.combinedNet > 3000){
+        alerts.push({type:"warning", badge:"WARNING", title:"Large refund control issue", text:"A large refund may feel good, but it can also mean too much money was held during the year. Consider a W-4 review after filing."});
+      } else if(ctx.combinedNet > 0){
+        alerts.push({type:"confirmed", badge:"CONFIRMED", title:"Refund position shown", text:"The estimate currently shows a refund position. Verify actual documents before treating it as final."});
+      } else {
+        alerts.push({type:"opportunity", badge:"OPPORTUNITY", title:"Planning can reduce future surprises", text:"Balance-due and break-even results are a chance to review withholding, estimated payments, income changes, and deductions before next filing season."});
+      }
+      if(ctx.selfEmployment > 0){
+        alerts.push({type:"opportunity", badge:"OPPORTUNITY", title:"Side hustle equals business deduction review", text:"Real, profit-motivated, documented activity may create legal deduction opportunities. This does not mean creating a fake business."});
+      } else {
+        alerts.push({type:"opportunity", badge:"OPPORTUNITY", title:"Side income and business activity check", text:"If there is any gig work, 1099 income, mileage, software, bank fees, payment fees, or lead costs, those records should be reviewed."});
+      }
+      return alerts;
     }
 
-    function resultText(label, value) {
-      const num = Number(value || 0);
-      if (num > 0) return label + " Refund: " + fmtMoney(num);
-      if (num < 0) return label + " Due: " + fmtMoney(Math.abs(num));
-      return label + ": Break-even / no estimated amount";
+    function renderAlerts(alerts){
+      $("alertCards").innerHTML = alerts.map(a => `<div class="alert-card ${a.type}"><span class="badge ${a.type==='critical'?'red':a.type==='warning'?'orange':a.type==='confirmed'?'green':'purple'}">${a.badge}</span><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.text)}</p></div>`).join("");
     }
 
-    function setText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = text;
+    function renderBars(mode, combinedNet){
+      let values;
+      let fineText;
+
+      if (mode === "balance") {
+        values = [
+          {label:"1. Verify W-2 Box 2 federal withholding", amount:"Immediate", pct:100},
+          {label:"2. Review 1099 / business / side-hustle income", amount:"High priority", pct:88},
+          {label:"3. Check dependents, credits, and filing status", amount:"Must verify", pct:76},
+          {label:"4. Build W-4 or estimated tax correction plan", amount:"Next year protection", pct:64}
+        ];
+
+        fineText = "Balance due action plan: this section is not an investment illustration. It is a filing-readiness checklist to help identify why the client may owe, what must be verified, and what should be corrected before the next tax year creates the same problem again.";
+      } else if (mode === "breakEven") {
+        values = [
+          {label:"1. Verify all income forms are included", amount:"Required", pct:100},
+          {label:"2. Confirm federal and state withholding", amount:"Required", pct:88},
+          {label:"3. Review credits and dependents", amount:"Important", pct:76},
+          {label:"4. Build next-year planning target", amount:"Planning step", pct:64}
+        ];
+
+        fineText = "Break-even action plan: being close to zero does not mean the return is complete. The taxpayer should still verify income, withholding, credits, dependents, and state information before filing.";
+      } else {
+        values = [
+          {label:"5 years", amount:money(6336), pct:5.2},
+          {label:"10 years", amount:money(15645), pct:12.8},
+          {label:"20 years", amount:money(49423), pct:40.4},
+          {label:"30 years", amount:money(122346), pct:100}
+        ];
+
+        fineText = "Educational illustration only: assumes $1,000 invested each year at an 8% annual return assumption. Investments are not guaranteed, can lose value, and actual results may be higher or lower.";
+      }
+
+      $("barChart").innerHTML = values.map(v => `
+        <div class="bar-row">
+          <div class="bar-top">
+            <span>${v.label}</span>
+            <span>${v.amount}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${v.pct}%"></div>
+          </div>
+        </div>
+      `).join("");
+
+      const fine = $("barFinePrint");
+      if (fine) fine.textContent = fineText;
+    }
+    function renderStrategies(){
+      const strategies = [
+        {
+          title: "Side Hustle = Business. Business = Deduction Review.",
+          bestFor: "Gig workers, freelancers, DoorDash drivers, hair stylists, lawn care, eBay sellers, tax preparers, cleaners, notaries, process servers, consultants, and anyone paid outside a regular W-2 job.",
+          body: "A side hustle is not just extra money. If it is real, profit-motivated, and documented, it may need to be reported as business income and reviewed for legal deductions. That can include supplies, business phone use, advertising, payment fees, software, postage, uniforms, tools, licensing, training, professional fees, and other ordinary and necessary expenses. The key is documentation. The IRS does not reward guesses. A taxpayer should keep receipts, bank records, mileage logs, invoices, payment app reports, and notes showing what the money was spent for.",
+          caution: "Do not create a fake business just to write off personal spending. The activity must be real, profit-motivated, documented, and reported correctly."
+        },
+        {
+          title: "The Augusta Rule - Renting Your Home for Short Business Use",
+          bestFor: "Business owners who may use their home for short meetings, planning sessions, board meetings, training days, or business events.",
+          body: "Under Internal Revenue Code Section 280A(g), a taxpayer who rents a dwelling unit for fewer than 15 days during the year may be able to exclude that rental income from taxable income. In plain English, this is the strategy people often call the Augusta Rule. A business owner may have the business rent the home for legitimate business meetings or events and pay a reasonable fair-market rental rate. The business may claim the rental cost if it is ordinary, necessary, properly documented, and actually connected to the business. The homeowner may not have to report the rental income if the rental period stays under the allowed limit.",
+          caution: "This is not automatic. The rental must be real, the rate must be reasonable, the meeting must have a business purpose, and records should include an agenda, minutes, attendees, date, business reason, invoice, proof of payment, and comparable local rental rates. This should be reviewed by a qualified tax professional before use."
+        },
+        {
+          title: "Solo 401(k) - Retirement Planning for Self-Employed Taxpayers",
+          bestFor: "Self-employed taxpayers, owner-only businesses, 1099 workers, and small business owners with no full-time employees other than a spouse.",
+          body: "A Solo 401(k) can be powerful because the owner may contribute as both the employee and the employer, subject to annual limits and eligibility rules. This can help a self-employed person build retirement money while possibly reducing taxable income through pre-tax contributions. Some plans also allow Roth contributions, which do not reduce current taxable income but may grow tax-free if all rules are met. This strategy can be especially useful when a taxpayer has profitable self-employment income and wants to move from simply earning money to keeping and investing money.",
+          caution: "Contribution limits, deadlines, plan setup rules, employee status, spouse participation, and earned income calculations matter. A taxpayer should verify eligibility and coordinate with a tax professional, financial advisor, or plan provider before opening or funding a Solo 401(k)."
+        },
+        {
+          title: "Mileage and Vehicle Tracking",
+          bestFor: "Drivers, delivery workers, mobile notaries, cleaners, contractors, rideshare drivers, real estate workers, and business owners who use a vehicle.",
+          body: "Vehicle deductions can be valuable, but weak records can destroy the deduction. A strong mileage record should show the date, starting point, destination, business purpose, and miles driven. A taxpayer should separate business miles from commuting and personal miles. The taxpayer may need to compare the standard mileage method with actual expenses such as gas, repairs, insurance, registration, depreciation, lease payments, and maintenance. The best answer depends on the vehicle, business use percentage, records, and long-term plan.",
+          caution: "Do not guess mileage at tax time. Recreated numbers without support are weak. Use a mileage app, written log, calendar records, invoices, customer addresses, and service records to support the deduction."
+        },
+        {
+          title: "Home Office Review",
+          bestFor: "Self-employed taxpayers and business owners who use a specific area of the home for administrative work, client work, scheduling, bookkeeping, storage, or business management.",
+          body: "A home office can create a deduction when a specific space is used regularly and exclusively for business. This does not mean sitting at the kitchen table sometimes. The taxpayer should be able to identify the business area, measure it, and explain how it is used. Possible related expenses may include part of rent, mortgage interest, utilities, renters insurance, repairs, internet, security, and other home costs depending on the method used and facts. The simplified method may be easier, but the actual expense method may produce a larger deduction when records are strong.",
+          caution: "The exclusive-use rule matters. Personal use can damage the deduction. Home office treatment should be reviewed carefully, especially for employees, mixed-use spaces, and homeowners concerned about future sale rules."
+        },
+        {
+          title: "Hire Your Children - Only With Real Work and Documentation",
+          bestFor: "Family businesses where children can perform legitimate age-appropriate work such as filing, cleaning, social media support, packaging, scanning, shredding, basic admin, modeling for ads, or helping at events.",
+          body: "A business may be able to pay a child for real work if the pay is reasonable and the work is properly documented. This can shift money from the parent to the child, teach work habits, and help fund savings, education, or possibly a Roth IRA if the child has eligible earned income. Good records should show the child's job duties, dates worked, hours, pay rate, payments, and proof the work actually benefited the business.",
+          caution: "Do not pay children for fake work. Do not pay adult-level wages for child-level tasks. Keep timesheets, job descriptions, payment records, and proof of the business purpose. Payroll tax rules can vary based on business structure, so verify before using this strategy."
+        },
+        {
+          title: "Tax-Loss Harvesting",
+          bestFor: "Taxpayers with taxable brokerage accounts, stocks, ETFs, crypto records, or investments that declined in value.",
+          body: "Tax-loss harvesting means selling an investment at a loss to offset capital gains and possibly reduce taxable income within the annual limits. This can be useful when a taxpayer has winning investments, sold property, sold stocks, or wants to clean up a portfolio before year-end. The goal is not to lose money on purpose. The goal is to use losses that already exist in a smart way instead of ignoring them.",
+          caution: "Wash-sale rules, replacement investments, holding periods, capital gain types, carryforward losses, and crypto rules must be reviewed. This should be coordinated with a qualified tax or financial professional before trades are made."
+        },
+        {
+          title: "Real Estate Depreciation",
+          bestFor: "Rental property owners, Airbnb hosts, small landlords, and taxpayers considering real estate as a long-term wealth strategy.",
+          body: "Rental real estate can create income, appreciation, leverage, and tax deductions. Depreciation is one of the major tax features because the owner may deduct part of the building cost over time even while the property may be increasing in value. Other possible deductions include mortgage interest, repairs, insurance, property taxes, management fees, supplies, travel, advertising, utilities, and professional fees. Strong rental records can turn a messy property into a clear business file.",
+          caution: "Depreciation is not free money. Basis, land allocation, personal use, passive activity limits, short-term rental rules, material participation, repairs versus improvements, and depreciation recapture must be reviewed before making decisions."
+        },
+        {
+          title: "Banking, Payment Fees, Software, Lead Costs, and Admin Costs",
+          bestFor: "Any taxpayer with a real business, side hustle, online store, service business, rental activity, or contractor income.",
+          body: "Many taxpayers miss small deductions because they do not look at the boring records. Merchant fees, Stripe fees, PayPal fees, bank fees, business software, bookkeeping apps, tax software, website costs, domain names, advertising, lead services, office supplies, postage, printing, continuing education, license fees, and professional subscriptions can add up. These costs may not look exciting, but they can lower taxable business profit when they are ordinary, necessary, and documented.",
+          caution: "Personal expenses should not be mixed into the business. Use a separate business bank account when possible and keep a clean record trail."
+        }
+      ];
+
+      $("strategyList").innerHTML = strategies.map((s,i)=>`
+        <div class="strategy-card">
+          <div class="number">${i+1}</div>
+          <div>
+            <h3>${escapeHtml(s.title)}</h3>
+            <p><strong>Used by:</strong> ${escapeHtml(s.bestFor)}</p>
+            <p>${escapeHtml(s.body)}</p>
+            <p><strong>Important caution:</strong> ${escapeHtml(s.caution)}</p>
+          </div>
+        </div>
+      `).join("");
     }
 
-    function renderList(id, items) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML = items.map(function(item) {
-        return "<li>" + item + "</li>";
-      }).join("");
+    function renderRoadmap(){
+      const steps = [
+        {
+          title: "1. Emergency Fund in a High-Yield Savings Account",
+          body: "Before investing, a taxpayer should usually build cash protection. A practical goal is one month of basic expenses first, then three to six months over time. This money is not for vacations or shopping. It is for job loss, car repairs, medical bills, insurance deductibles, and family emergencies. A high-yield savings account may pay more than a regular bank account while keeping the money available."
+        },
+        {
+          title: "2. Roth IRA / Long-Term Retirement Investing",
+          body: "A Roth IRA can help a taxpayer build long-term money with after-tax contributions. The money does not create an immediate tax deduction, but qualified withdrawals may be tax-free if rules are met. This can be powerful for younger workers, lower-income years, and taxpayers who want tax-free retirement income later. Eligibility, income limits, contribution limits, and earned-income rules must be verified."
+        },
+        {
+          title: "3. 529 Plan / Child Savings Strategy",
+          body: "Parents and grandparents can use a 529 plan or child savings strategy to create a head start for education and future needs. Some states may offer state tax benefits. Even small automatic monthly contributions can matter over many years. The taxpayer should compare 529 plans, custodial accounts, savings accounts, and other options before choosing."
+        },
+        {
+          title: "4. Index Funds / Broad Market Investing",
+          body: "Broad-market index funds allow a taxpayer to own small pieces of many companies instead of betting everything on one stock. This can reduce single-company risk, but it does not remove market risk. The long-term plan should focus on consistency, low costs, diversification, and not panicking when markets go down."
+        },
+        {
+          title: "5. Business Ownership / Side Hustle Growth",
+          body: "A real business can create income, tax planning opportunities, skill growth, and control. The goal is not just deductions. The goal is profit. A taxpayer should track revenue, expenses, mileage, software, payment fees, advertising, customer records, and business bank activity. A side hustle with records can become an asset. A side hustle with no records becomes a tax-season problem."
+        },
+        {
+          title: "6. Real Estate",
+          body: "Real estate can build wealth through cash flow, appreciation, debt paydown, and depreciation. It can also create repairs, vacancies, insurance problems, tenant issues, financing risk, and tax complexity. A taxpayer should understand the numbers before buying: mortgage payment, taxes, insurance, repairs, reserves, rent, vacancy, and cash flow."
+        },
+        {
+          title: "7. HSA if Eligible",
+          body: "A Health Savings Account can be powerful when paired with an eligible high-deductible health plan. Contributions may be deductible, growth may be tax-free, and qualified medical withdrawals may be tax-free. This can make the HSA useful for both medical planning and long-term savings. Eligibility must be confirmed every year."
+        },
+        {
+          title: "8. Insurance-Based Planning With a Licensed Professional",
+          body: "Life insurance, disability coverage, long-term care planning, annuities, and cash-value insurance are not one-size-fits-all products. They can help in the right situation and hurt in the wrong situation. A taxpayer should review income, dependents, debt, business risk, estate goals, and budget with a properly licensed professional before buying."
+        }
+      ];
+
+      $("roadmapGrid").innerHTML = steps.map(s=>`
+        <div class="roadmap-card">
+          <h3>${escapeHtml(s.title)}</h3>
+          <p>${escapeHtml(s.body)}</p>
+        </div>
+      `).join("");
     }
-
-    function cleanStatusText(text) {
-      return String(text || "").replace(/\s+/g, " ").trim();
-    }
-
-    async function loadReport() {
-      const pathParts = window.location.pathname.split("/").filter(Boolean);
-      const leadId = pathParts[pathParts.length - 1];
-
+    async function loadReport(){
+      const leadId = window.location.pathname.split("/").filter(Boolean).pop();
       try {
         const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
         const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          throw new Error(data && data.error ? data.error : "Estimate not found.");
-        }
+        if(!res.ok || !data.ok) throw new Error((data && data.error) || "Estimate not found.");
 
         const lead = data.lead || {};
         const contact = lead.contact || {};
         const summary = lead.estimateSummary || {};
         const taxData = lead.taxData || {};
+        const fed = summary.federal || {};
+        const st = summary.state || {};
 
-        const federalNet = Number((summary.federal && summary.federal.net) ?? summary.federalNet ?? 0);
-        const stateNet = Number((summary.state && summary.state.net) ?? summary.stateNet ?? 0);
-        const combinedNet = Number((summary.combined && summary.combined.net) ?? summary.combinedNet ?? 0);
+        const name = strValue(contact.name, [contact.firstName, contact.lastName].filter(Boolean).join(" "), "Client");
+        const year = strValue(taxData.taxYear, summary.taxYear, "2025");
+        const statusKey = normalizeStatus(strValue(taxData.filingStatus, taxData.status, summary.filingStatus, "single"));
+        const state = strValue(taxData.state, taxData.stateOfResidence, taxData.residenceState, "Not provided");
+        const wages = numberValue(taxData.w2Income, taxData.wages, taxData.income, taxData.totalIncome, summary.wages, summary.income);
+        const fedWithheld = numberValue(taxData.federalWithheld, taxData.federalWithholding, taxData.w2FederalWithheld, fed.federalWithheld, fed.withheld);
+        const stateWithheld = numberValue(taxData.stateWithheld, taxData.stateWithholding, taxData.w2StateWithheld, st.stateWithheld, st.withheld);
+        const dependents = numberValue(taxData.dependents, taxData.children, taxData.qualifyingChildren, taxData.childDependents);
+        const selfEmployment = numberValue(taxData.selfEmploymentIncome, taxData.selfEmployment, taxData.scheduleCIncome, taxData.businessIncome);
 
-        const taxYear = taxData.taxYear || summary.taxYear || "Not provided";
-        const filingStatus = taxData.filingStatus || taxData.status || "Not provided";
-        const state = taxData.state || taxData.stateOfResidence || taxData.residenceState || "Not provided";
-        const dependents = Number(taxData.dependents || taxData.children || taxData.qualifyingChildren || 0);
-        const w2Income = Number(taxData.w2Income || taxData.wages || taxData.income || 0);
-        const federalWithheld = Number(taxData.federalWithheld || taxData.federalWithholding || 0);
-        const stateWithheld = Number(taxData.stateWithheld || taxData.stateWithholding || 0);
-        const selfEmployment = Number(taxData.selfEmploymentIncome || taxData.selfEmployment || taxData.scheduleCIncome || 0);
+        const federalNet = Number((fed && fed.net) ?? summary.federalNet ?? summary.federalRefund ?? 0);
+        const stateNet = Number((st && st.net) ?? summary.stateNet ?? summary.stateRefund ?? 0);
+        const combinedNet = Number((summary.combined && summary.combined.net) ?? summary.combinedNet ?? (federalNet + stateNet) ?? 0);
 
-        setText("title", "Written Estimate Red Flag Review for " + (contact.name || "Client"));
-        setText("subtitle", "Prepared by Greatest Business Solution LLC. Paid written red-flag review based on the information submitted in the estimator and the client disclosures provided before payment.");
-        setText("clientName", contact.name || "Client");
-        setText("taxYear", String(taxYear));
-        setText("filingStatus", filingStatus);
-        setText("federalResult", resultText("Federal", federalNet));
-        setText("stateResult", resultText("State", stateNet));
-        setText("combinedResult", resultText("Total", combinedNet));
+        const stdFromEngine = Number(fed.standardDeduction);
+        const stdFallback = (STANDARD_DEDUCTION[String(year)] || STANDARD_DEDUCTION["2025"])[statusKey] || STANDARD_DEDUCTION["2025"].single;
+        const standardDeduction = Number.isFinite(stdFromEngine) && stdFromEngine > 0 ? stdFromEngine : stdFallback;
+        const taxableFromEngine = Number(fed.taxableIncome);
+        const taxableIncome = Number.isFinite(taxableFromEngine) && taxableFromEngine >= 0 ? taxableFromEngine : Math.max(0, wages + selfEmployment - standardDeduction);
+        const ctcFromEngine = Number(fed.childTaxCredit);
+        const childTaxCredit = Number.isFinite(ctcFromEngine) && ctcFromEngine > 0 ? ctcFromEngine : (dependents > 0 ? dependents * 2000 : 0);
+        const stateTax = numberValue(st.stateTax, st.tax, taxData.stateTax, Math.max(0, stateWithheld - stateNet));
 
-        const submittedParts = [
-          "This written review was prepared from the tax estimate information submitted for tax year " + taxYear + ".",
-          "The estimate shows " + resultText("federal", federalNet).toLowerCase() + ", " + resultText("state", stateNet).toLowerCase() + ", and " + resultText("combined", combinedNet).toLowerCase() + "."
-        ];
+        txt("coverClient", name); txt("coverYear", year); txt("clientName", name); txt("filingStatus", statusLabel(statusKey)); txt("stateName", state);
+        txt("federalResult", result("Federal", federalNet)); txt("stateResult", result("State", stateNet)); txt("combinedResult", result("Combined", combinedNet));
+        txt("snapshotBadge", combinedNet < 0 ? "Balance Due Review" : combinedNet > 0 ? "Refund Review" : "Break-Even Review");
 
-        if (w2Income) submittedParts.push("The information submitted included estimated W-2 wages of " + fmtMoney(w2Income) + ".");
-        if (federalWithheld) submittedParts.push("Federal withholding entered was " + fmtMoney(federalWithheld) + ".");
-        if (stateWithheld) submittedParts.push("State withholding entered was " + fmtMoney(stateWithheld) + ".");
-        if (dependents) submittedParts.push("The estimate included " + dependents + " dependent(s).");
-        if (state && state !== "Not provided") submittedParts.push("State of residence entered was " + state + ".");
+        const isBalanceDue = combinedNet < 0;
+        const isRefund = combinedNet > 0;
 
-        setText("submittedText", submittedParts.join(" "));        const federalDetail = summary.federal || {};
-        const stateDetail = summary.state || {};
-
-        function fmtMaybeMoney(value) {
-          const n = Number(value);
-          if (!Number.isFinite(n)) return "Not available";
-          return fmtMoney(n);
-        }
-
-        function fmtMaybePercent(value) {
-          const n = Number(value);
-          if (!Number.isFinite(n)) return "Not available";
-          const pct = Math.abs(n) <= 1 ? n * 100 : n;
-          return pct.toFixed(1).replace(".0", "") + "%";
-        }
-
-        setText("keyStandardDeduction", fmtMaybeMoney(federalDetail.standardDeduction));
-        setText("keyTaxableIncome", fmtMaybeMoney(federalDetail.taxableIncome));
-        setText("keyMarginalRate", fmtMaybePercent(federalDetail.marginalRate));
-        setText("keyChildTaxCredit", fmtMaybeMoney(federalDetail.childTaxCredit));
-        setText("keyFederalWithheld", fmtMaybeMoney(federalWithheld || federalDetail.federalWithheld));
-        setText("keyStateTax", fmtMaybeMoney(stateDetail.stateTax));
-const reviewNotes = [];
-
-        if (combinedNet > 0) {
-          reviewNotes.push("The estimate currently shows a possible refund. The refund appears to be affected by withholding, filing status, dependent information, and credits entered in the estimator.");
-        } else if (combinedNet < 0) {
-          reviewNotes.push("The estimate currently shows a possible balance due. This may indicate under-withholding, additional income, missing credits, self-employment tax, or information that still needs to be verified.");
+        if (isBalanceDue) {
+          txt("reportModeTitle", "Balance Due Recovery + Tax Damage Control Report");
+          txt("ctaHeadline", "You may owe money. The next step is damage control before filing.");
+          txt("reportModeText", "This report is focused on why a balance may be showing, what must be verified, whether withholding or estimated payments need correction, and whether credits, dependents, income forms, or transcript records should be reviewed before the return is filed.");
+          txt("wakeTitle", "Wake-Up Call: Balance Due Problems Can Get Worse If Ignored");
+          txt("wakeStatement", "Owing money is not just a number. It is a warning sign that withholding, side income, credits, or records may need review.");
+          txt("wakeText", "A balance due client needs a different plan than a refund client. The priority is to verify W-2 Box 2, review 1099 or business income, check dependent and credit eligibility, consider estimated payments, and avoid penalties or surprises next year.");
+        } else if (isRefund) {
+          txt("reportModeTitle", "Refund Control + Wealth Builder Report");
+          txt("ctaHeadline", "You may be getting money back. The next step is deciding what that refund should do.");
+          txt("reportModeText", "This report is focused on refund control, withholding review, missed planning opportunities, business or side-hustle deductions, and ways the taxpayer may turn refund money into emergency savings, retirement savings, child savings, or long-term wealth-building action.");
+          txt("wakeTitle", "Wake-Up Call: Refund Money Can Disappear Fast");
+          txt("wakeStatement", "Getting a big refund feels good. The math says otherwise.");
+          txt("wakeText", "The TV, shoes, trip, or car down payment disappears. Car payments and high-interest debt destroy progress. Inflation punishes money sitting still. A refund can either disappear in 30 days or become part of a bigger plan.");
         } else {
-          reviewNotes.push("The estimate appears close to break-even. Small changes in income, withholding, credits, or deductions may move the final result to either a refund or balance due.");
+          txt("reportModeTitle", "Break-Even Review + Planning Check Report");
+          txt("ctaHeadline", "You are close to break-even. The next step is making sure the estimate is correct.");
+          txt("reportModeText", "This report is focused on verifying the documents, checking withholding, reviewing credits, and making sure the taxpayer is not missing a planning opportunity before filing.");
+          txt("wakeTitle", "Wake-Up Call: A Break-Even Estimate Still Needs Verification");
+          txt("wakeStatement", "Close to zero does not mean there is nothing to review.");
+          txt("wakeText", "A break-even estimate can still be wrong if income, withholding, dependents, credits, or state information are missing. The goal is to verify the return before filing and build a better plan for the next tax year.");
         }
 
-        if (dependents > 0) {
-          reviewNotes.push("Because dependents were included, dependent eligibility should be verified before filing. This includes relationship, residency, support, age, and whether anyone else may claim the same dependent.");
-        }
+        const parts = [`This report reviewed the saved estimate for tax year ${year}.`, `The current estimated result is ${result("federal", federalNet).toLowerCase()}, ${result("state", stateNet).toLowerCase()}, and ${result("combined", combinedNet).toLowerCase()}.`];
+        if(wages) parts.push(`Estimated wage/income input found: ${money(wages)}.`);
+        if(fedWithheld) parts.push(`Federal withholding input found: ${money(fedWithheld)}.`); else parts.push(`Federal withholding was not clearly available, so the client must verify W-2 Box 2.`);
+        if(dependents) parts.push(`${dependents} dependent(s) were included and must be verified.`);
+        txt("submittedText", parts.join(" "));
 
-        if (String(state).toUpperCase() === "TX" || String(state).toLowerCase().includes("texas")) {
-          reviewNotes.push("Texas does not have a broad individual state income tax, so the state portion of this estimate should not be treated the same as a regular state income tax estimate.");
-        } else if (state && state !== "Not provided") {
-          reviewNotes.push("The state estimate depends on state-specific rules, state withholding, residency, and the income entered.");
-        }
+        txt("keyStandardDeduction", money(standardDeduction));
+        txt("stdNote", Number.isFinite(stdFromEngine) && stdFromEngine > 0 ? "Pulled from the saved estimate details." : "Fallback based on tax year and filing status. Verify against final IRS rules and client documents.");
+        txt("keyTaxableIncome", money(taxableIncome));
+        txt("keyMarginalRate", marginalRate(taxableIncome, year, statusKey));
+        txt("keyChildTaxCredit", dependents > 0 ? money(childTaxCredit) + " estimate" : "No dependents entered");
+        txt("keyFederalWithheld", fedWithheld ? money(fedWithheld) : "Verify W-2 Box 2");
+        txt("keyStateTax", stateTax ? money(stateTax) : "Verify state documents");
 
-        if (selfEmployment > 0) {
-          reviewNotes.push("Self-employment income was included. Business expenses, mileage, estimated payments, and self-employment tax can significantly change the final result.");
-        }
+        renderAlerts(buildAlerts({combinedNet, fedWithheld, dependents, selfEmployment}));
+        const reportMode = combinedNet < 0 ? "balance" : combinedNet > 0 ? "refund" : "breakEven";
 
-        if (combinedNet > 5000) {
-          reviewNotes.push("The refund estimate is relatively large. After the actual return is prepared, it may be worth reviewing Form W-4 if the client wants more take-home pay during the year instead of waiting for a large refund.");
-        }
-
-        if (combinedNet < -1000) {
-          reviewNotes.push("The balance due estimate may require planning. The client should review withholding, estimated payments, and whether all available credits and deductions were included.");
-        }
-
-        renderList("reviewNotes", reviewNotes);
-
-        const verifyItems = [
-          "Actual W-2 Box 1 wages and Box 2 federal withholding.",
-          "State wages and state withholding from the actual W-2.",
-          "Correct filing status for the tax year.",
-          "All additional income, including 1099 income, unemployment, retirement, interest, dividends, gambling winnings, and marketplace insurance forms.",
-          "Dependent eligibility and whether another taxpayer may claim any dependent.",
-          "Any childcare, education, retirement contribution, business expense, mileage, or estimated payment information that was not entered."
-        ];
-
-        if (selfEmployment > 0) {
-          verifyItems.push("Business records for self-employment income and expenses.");
-        }
-
-        renderList("verifyItems", verifyItems);
-
-        const changeItems = [
-          "Final refund or balance due may change after actual tax documents are reviewed.",
-          "Additional income not entered can reduce a refund or increase a balance due.",
-          "Additional withholding, estimated payments, credits, or deductions may improve the result.",
-          "State-specific tax rules may change the state portion of the estimate.",
-          "Dependent, filing status, and credit eligibility issues can change the estimate significantly."
-        ];
-
-        renderList("changeItems", changeItems);
-
-        let nextStep = "";
-        if (combinedNet > 0) {
-          nextStep = "Recommended next step: Gather the actual tax documents and verify the dependent, income, and withholding information before filing. The estimate appears favorable, but it should be confirmed against the actual tax forms.";
-        } else if (combinedNet < 0) {
-          nextStep = "Recommended next step: Review the actual tax documents, confirm all withholding and credits, and consider a tax preparation or balance due review before filing. If the balance due remains, payment planning may be needed.";
+        if (reportMode === "balance") {
+          txt("wakeTitle", "Wake-Up Call: Balance Due Problems Need Damage Control");
+          txt("wakeStatement", "Owing money is not just a bad result. It is a warning sign that something needs to be checked before filing.");
+          txt("wakeText", "A balance due estimate may be caused by low withholding, missing W-4 adjustments, self-employment income, 1099 income, missing credits, dependent issues, or state tax problems. This client does not need a refund-spending lecture. This client needs a document review, withholding review, payment-plan awareness, and a correction plan for the next tax year.");
+        } else if (reportMode === "breakEven") {
+          txt("wakeTitle", "Wake-Up Call: Break-Even Still Needs Verification");
+          txt("wakeStatement", "Close to zero can look safe, but the estimate still needs to be checked.");
+          txt("wakeText", "A break-even estimate can change quickly if one W-2, 1099, dependent, credit, state entry, or withholding number is wrong. The goal is to verify the documents before filing and build a cleaner plan for next year.");
         } else {
-          nextStep = "Recommended next step: Confirm the actual documents before filing. Because this estimate is close to break-even, even small changes may affect the final result.";
+          txt("wakeTitle", "Wake-Up Call: Refund Money Can Disappear Fast");
+          txt("wakeStatement", "Getting a big refund feels good. The math says otherwise.");
+          txt("wakeText", "The TV, shoes, trip, or car down payment disappears. Car payments and high-interest debt destroy progress. Inflation punishes money sitting still. A refund can either disappear in 30 days or become part of a bigger plan.");
         }
 
-        setText("nextStepText", nextStep);
+        renderBars(reportMode, combinedNet); renderStrategies(); renderRoadmap();
 
-        document.getElementById("reportBody").style.display = "block";
-      } catch (err) {
-        const errorBox = document.getElementById("errorBox");
-        errorBox.style.display = "block";
-        errorBox.textContent = err.message || "Could not load written review report.";
-        setText("subtitle", "Please return to the dashboard and confirm the lead ID.");
+        $("loadingBox").style.display = "none";
+        $("reportBody").style.display = "block";
+      } catch(err) {
+        $("loadingBox").style.display = "none";
+        $("errorBox").style.display = "block";
+        $("errorBox").textContent = err.message || "Could not load written review report.";
       }
     }
-
     loadReport();
   </script>
 </body>
 </html>
-
-
 
 
 
