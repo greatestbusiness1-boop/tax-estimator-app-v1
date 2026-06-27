@@ -160,20 +160,31 @@ function buildEstimateDisplay(estimateSummary = {}) {
 function mapRowToLead(row) {
   const estimate = row.estimate || {};
 
+  const normalizedLeadId =
+    row.leadId ||
+    row.leadid ||
+    row.lead_id ||
+    row.id ||
+    estimate.leadId ||
+    estimate.leadid ||
+    estimate.lead_id ||
+    estimate.id ||
+    "";
+
   return {
-    leadId: row.leadId || estimate.leadId || "",
-    timestamp: estimate.timestamp || row.created_at || "",
-    priority: estimate.priority || "medium",
-    status: estimate.status || "New",
-    notes: estimate.notes || "",
-    contact: estimate.contact || {
+    leadId: normalizedLeadId,
+    timestamp: estimate.timestamp || row.timestamp || row.created_at || row.createdAt || "",
+    priority: estimate.priority || row.priority || "medium",
+    status: estimate.status || row.status || "New",
+    notes: estimate.notes || row.notes || "",
+    contact: estimate.contact || row.contact || {
       name: row.name || "",
       email: row.email || "",
       phone: row.phone || ""
     },
-    taxData: estimate.taxData || null,
-    estimateSummary: estimate.estimateSummary || {},
-    Request: estimate.Request || row.Request || null
+    taxData: estimate.taxData || row.taxData || row.tax_data || null,
+    estimateSummary: estimate.estimateSummary || row.estimateSummary || row.estimate_summary || {},
+    Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
 }
 
@@ -744,11 +755,21 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
 
   const findLeadById = (leadList) => {
     return (leadList || []).find((lead) => {
+      const estimate = lead?.estimate || {};
+
       const possibleIds = [
         lead?.leadId,
+        lead?.leadid,
+        lead?.lead_id,
         lead?.id,
         lead?.estimateId,
-        lead?.lead_id
+        lead?.estimate_id,
+        estimate?.leadId,
+        estimate?.leadid,
+        estimate?.lead_id,
+        estimate?.id,
+        estimate?.estimateId,
+        estimate?.estimate_id
       ];
 
       return possibleIds.some((id) => String(id || "").trim() === cleanId);
@@ -1524,6 +1545,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
