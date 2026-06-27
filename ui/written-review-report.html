@@ -158,6 +158,143 @@
         display: none !important;
       }
     }
+  
+    /* PDF-PRINT-FORMAT-FIX-START */
+    .section,
+    .box,
+    .notice,
+    .grid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .section h2 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    @page {
+      size: Letter;
+      margin: 0.55in;
+    }
+
+    @media print {
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        font-size: 11pt !important;
+        line-height: 1.35 !important;
+      }
+
+      .page {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+      }
+
+      .top {
+        border-bottom: 2px solid #0f2c56 !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 12px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      h1 {
+        font-size: 22pt !important;
+        margin: 4px 0 4px !important;
+      }
+
+      .sub {
+        font-size: 9.5pt !important;
+        line-height: 1.35 !important;
+      }
+
+      .brand {
+        font-size: 9.5pt !important;
+      }
+
+      .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+        margin-bottom: 9px !important;
+      }
+
+      .box {
+        padding: 8px !important;
+        border-radius: 8px !important;
+        background: #f8fafc !important;
+      }
+
+      .label {
+        font-size: 7.5pt !important;
+        margin-bottom: 3px !important;
+      }
+
+      .value {
+        font-size: 10.5pt !important;
+      }
+
+      .section {
+        margin-top: 10px !important;
+        padding: 11px !important;
+        border-radius: 9px !important;
+        background: #ffffff !important;
+      }
+
+      .section h2 {
+        font-size: 14pt !important;
+        margin: 0 0 7px !important;
+      }
+
+      p {
+        font-size: 9.5pt !important;
+        line-height: 1.42 !important;
+        margin: 5px 0 !important;
+      }
+
+      ul {
+        font-size: 9.5pt !important;
+        line-height: 1.42 !important;
+        padding-left: 16px !important;
+      }
+
+      li {
+        margin-bottom: 3px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .notice {
+        padding: 9px !important;
+        border-radius: 9px !important;
+        font-size: 9pt !important;
+        line-height: 1.35 !important;
+      }
+
+      .no-print,
+      .print-btn,
+      button {
+        display: none !important;
+      }
+
+      a {
+        color: #0f2c56 !important;
+        text-decoration: underline !important;
+      }
+    }
+    /* PDF-PRINT-FORMAT-FIX-END */
   </style>
 </head>
 <body>
@@ -494,6 +631,7 @@ const reviewNotes = [];
   </script>
 </body>
 </html>
+
 
 
 
