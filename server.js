@@ -1028,6 +1028,20 @@ app.patch("/api/leads/:leadId", async (req, res) => {
   }
 });
 
+
+// =============================================================================
+// GET /tax-prep-request/:leadId
+// =============================================================================
+app.get("/tax-prep-request/:leadId", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "tax-prep-request.html"));
+});
+
+// =============================================================================
+// GET /transcript-help-request/:leadId
+// =============================================================================
+app.get("/transcript-help-request/:leadId", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "transcript-help-request.html"));
+});
 // =============================================================================
 // GET /leads-dashboard
 // =============================================================================
@@ -1147,11 +1161,47 @@ app.get("/api/leads", async (req, res) => {
       throw error;
     }
 
-    const leads = (data || []).map(mapRowToLead);
+    const supabaseLeads = (data || []).map(mapRowToLead);
+    const localLeads = readLeads();
+
+    const mergedById = new Map();
+
+    supabaseLeads.forEach((lead) => {
+      const id = String(lead?.leadId || "");
+      if (id) mergedById.set(id, lead);
+    });
+
+    localLeads.forEach((localLead) => {
+      const id = String(localLead?.leadId || localLead?.id || localLead?.estimateId || localLead?.lead_id || "");
+      if (!id) return;
+
+      const existing = mergedById.get(id);
+
+      if (existing) {
+        mergedById.set(id, {
+          ...existing,
+          ...localLead,
+          contact: {
+            ...(existing.contact || {}),
+            ...(localLead.contact || {})
+          },
+          taxData: localLead.taxData || existing.taxData,
+          estimateSummary: localLead.estimateSummary || existing.estimateSummary,
+          Request: {
+            ...(existing.Request || existing.request || {}),
+            ...(localLead.Request || localLead.request || {})
+          }
+        });
+      } else {
+        mergedById.set(id, localLead);
+      }
+    });
+
+    const leads = Array.from(mergedById.values());
 
     return res.status(200).json({
       ok: true,
-      source: "supabase",
+      source: "supabase+local",
       count: leads.length,
       leads
     });
@@ -1545,6 +1595,10 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
+
 
 
 

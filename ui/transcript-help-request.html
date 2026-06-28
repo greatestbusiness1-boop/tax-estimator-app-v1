@@ -1,0 +1,373 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IRS Transcript Help Request</title>
+  <style>
+    :root {
+      --navy:#0f2c56;
+      --purple:#312e81;
+      --green:#047857;
+      --line:#ddd6fe;
+      --soft:#f5f3ff;
+      --text:#0f172a;
+      --muted:#475569;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#f8fafc;
+      color:var(--text);
+      line-height:1.45;
+    }
+
+    .wrap {
+      max-width:900px;
+      margin:0 auto;
+      padding:28px 18px 48px;
+    }
+
+    .hero {
+      background:linear-gradient(135deg,#312e81,#6d28d9);
+      color:#ffffff;
+      border-radius:22px;
+      padding:28px;
+      box-shadow:0 18px 40px rgba(49,46,129,.20);
+    }
+
+    .hero h1 {
+      margin:0 0 8px;
+      font-size:34px;
+      line-height:1.1;
+    }
+
+    .hero p {
+      margin:0;
+      font-size:16px;
+      color:#ede9fe;
+      font-weight:700;
+    }
+
+    .card {
+      background:#ffffff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:22px;
+      margin-top:18px;
+      box-shadow:0 14px 30px rgba(15,23,42,.08);
+    }
+
+    .notice {
+      background:#f5f3ff;
+      border:1px solid #ddd6fe;
+      color:#312e81;
+      font-weight:800;
+      border-radius:16px;
+      padding:14px 16px;
+      margin-top:18px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    label {
+      display:block;
+      font-size:13px;
+      font-weight:900;
+      color:var(--purple);
+      margin:0 0 6px;
+    }
+
+    input, select, textarea {
+      width:100%;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      padding:12px;
+      font-size:15px;
+      font-family:inherit;
+      color:var(--text);
+      background:#ffffff;
+    }
+
+    textarea {
+      min-height:120px;
+      resize:vertical;
+    }
+
+    .full { grid-column:1 / -1; }
+
+    .checks {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .check {
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      font-size:14px;
+      font-weight:800;
+      color:#334155;
+    }
+
+    .check input {
+      width:auto;
+      margin-top:3px;
+    }
+
+    .button-row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    button, .btn {
+      border:0;
+      border-radius:999px;
+      padding:13px 18px;
+      font-size:14px;
+      font-weight:950;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .primary {
+      background:var(--purple);
+      color:#ffffff;
+    }
+
+    .secondary {
+      background:#ffffff;
+      color:var(--purple);
+      border:2px solid var(--purple);
+    }
+
+    .status {
+      display:none;
+      margin-top:16px;
+      border-radius:16px;
+      padding:14px 16px;
+      font-weight:850;
+    }
+
+    .success {
+      background:#ecfdf5;
+      border:1px solid #bbf7d0;
+      color:#047857;
+    }
+
+    .error {
+      background:#fff1f2;
+      border:1px solid #fecdd3;
+      color:#991b1b;
+    }
+
+    .fine {
+      font-size:12px;
+      color:var(--muted);
+      margin-top:12px;
+      font-weight:700;
+    }
+
+    @media (max-width:720px) {
+      .grid, .checks { grid-template-columns:1fr; }
+      .hero h1 { font-size:28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>IRS Transcript Help Request</h1>
+      <p>Greatest Business Solution LLC — request help with missing tax documents or IRS transcript-related issues.</p>
+    </section>
+
+    <div class="notice">
+      This request starts the office follow-up process. IRS transcripts generally require identity verification and signed authorization before records can be accessed.
+    </div>
+
+    <section class="card">
+      <form id="requestForm">
+        <div class="grid">
+          <div>
+            <label for="name">Full name</label>
+            <input id="name" name="name" autocomplete="name" required />
+          </div>
+
+          <div>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div>
+            <label for="phone">Best phone number</label>
+            <input id="phone" name="phone" autocomplete="tel" />
+          </div>
+
+          <div>
+            <label for="taxYears">Tax year or years needed</label>
+            <input id="taxYears" name="taxYears" placeholder="Example: 2023, 2024, 2025" />
+          </div>
+
+          <div class="full">
+            <label>Type of transcript or document help needed</label>
+            <div class="checks">
+              <label class="check"><input type="checkbox" value="W-2 or 1099 missing" /> W-2 or 1099 missing</label>
+              <label class="check"><input type="checkbox" value="Wage and Income Transcript" /> Wage and Income Transcript</label>
+              <label class="check"><input type="checkbox" value="Account Transcript" /> Account Transcript</label>
+              <label class="check"><input type="checkbox" value="Return Transcript" /> Return Transcript</label>
+              <label class="check"><input type="checkbox" value="Proof of Non-Filing" /> Proof of Non-Filing</label>
+              <label class="check"><input type="checkbox" value="IRS notice or balance issue" /> IRS notice or balance issue</label>
+            </div>
+          </div>
+
+          <div>
+            <label for="bestTime">Best time to contact you</label>
+            <input id="bestTime" name="bestTime" placeholder="Morning, afternoon, evening, or specific time" />
+          </div>
+
+          <div>
+            <label for="urgency">How urgent is this?</label>
+            <select id="urgency" name="urgency">
+              <option value="">Select one</option>
+              <option>I need this as soon as possible</option>
+              <option>I need this before filing</option>
+              <option>I received an IRS or state notice</option>
+              <option>I am planning ahead</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+
+          <div class="full">
+            <label for="message">What do you need help with?</label>
+            <textarea id="message" name="message" placeholder="Briefly explain what is missing, what notice you received, or what tax year needs review."></textarea>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="primary" type="submit">Submit Transcript Help Request</button>
+          <a class="btn secondary" id="backToReport" href="#">Back to Written Review</a>
+        </div>
+
+        <div id="successBox" class="status success">
+          Your transcript help request was saved. Greatest Business Solution LLC will follow up.
+        </div>
+
+        <div id="errorBox" class="status error">
+          Could not save this request. Please try again or contact the office directly.
+        </div>
+
+        <p class="fine">
+          Educational and administrative request only. Transcript access may require signed authorization, identity verification, and additional service steps.
+        </p>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const leadId = window.location.pathname.split("/").filter(Boolean).pop();
+
+    function setValue(id, value) {
+      if ($(id) && value) $(id).value = value;
+    }
+
+    function show(id) {
+      $(id).style.display = "block";
+    }
+
+    function hide(id) {
+      $(id).style.display = "none";
+    }
+
+    async function loadLead() {
+      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId);
+
+      try {
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) return;
+
+        const lead = data.lead || {};
+        const contact = lead.contact || {};
+        const taxData = lead.taxData || {};
+        const summary = lead.estimateSummary || {};
+
+        setValue("name", contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" "));
+        setValue("email", contact.email);
+        setValue("phone", contact.phone);
+        setValue("taxYears", taxData.taxYear || summary.taxYear);
+      } catch (err) {
+        console.warn("Could not prefill request form", err);
+      }
+    }
+
+    function selectedTranscriptTypes() {
+      return Array.from(document.querySelectorAll('.checks input[type="checkbox"]:checked')).map(function(cb) {
+        return cb.value;
+      });
+    }
+
+    $("requestForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      hide("successBox");
+      hide("errorBox");
+
+      const now = new Date().toISOString();
+
+      const payload = {
+        Request: {
+          writtenReviewTranscriptHelpRequestedAt: now,
+          writtenReviewNextStep: "Transcript Help Requested",
+          writtenReviewTranscriptHelpRequest: {
+            submittedAt: now,
+            name: $("name").value.trim(),
+            email: $("email").value.trim(),
+            phone: $("phone").value.trim(),
+            taxYears: $("taxYears").value.trim(),
+            transcriptTypes: selectedTranscriptTypes(),
+            bestTime: $("bestTime").value.trim(),
+            urgency: $("urgency").value,
+            message: $("message").value.trim()
+          }
+        }
+      };
+
+      try {
+        const res = await fetch("/api/leads/" + encodeURIComponent(leadId), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Save failed.");
+
+        show("successBox");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error(err);
+        show("errorBox");
+      }
+    });
+
+    loadLead();
+  </script>
+</body>
+</html>

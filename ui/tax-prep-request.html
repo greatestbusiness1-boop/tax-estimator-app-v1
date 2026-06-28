@@ -1,0 +1,348 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Prep Help Request</title>
+  <style>
+    :root {
+      --navy:#0f2c56;
+      --blue:#2563eb;
+      --green:#047857;
+      --line:#dbeafe;
+      --soft:#eff6ff;
+      --text:#0f172a;
+      --muted:#475569;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#f8fafc;
+      color:var(--text);
+      line-height:1.45;
+    }
+
+    .wrap {
+      max-width:900px;
+      margin:0 auto;
+      padding:28px 18px 48px;
+    }
+
+    .hero {
+      background:linear-gradient(135deg,#0f2c56,#1d4ed8);
+      color:#ffffff;
+      border-radius:22px;
+      padding:28px;
+      box-shadow:0 18px 40px rgba(15,44,86,.20);
+    }
+
+    .hero h1 {
+      margin:0 0 8px;
+      font-size:34px;
+      line-height:1.1;
+    }
+
+    .hero p {
+      margin:0;
+      font-size:16px;
+      color:#dbeafe;
+      font-weight:700;
+    }
+
+    .card {
+      background:#ffffff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:22px;
+      margin-top:18px;
+      box-shadow:0 14px 30px rgba(15,23,42,.08);
+    }
+
+    .notice {
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a3412;
+      font-weight:800;
+      border-radius:16px;
+      padding:14px 16px;
+      margin-top:18px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    label {
+      display:block;
+      font-size:13px;
+      font-weight:900;
+      color:var(--navy);
+      margin:0 0 6px;
+    }
+
+    input, select, textarea {
+      width:100%;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      padding:12px;
+      font-size:15px;
+      font-family:inherit;
+      color:var(--text);
+      background:#ffffff;
+    }
+
+    textarea {
+      min-height:120px;
+      resize:vertical;
+    }
+
+    .full { grid-column:1 / -1; }
+
+    .button-row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    button, .btn {
+      border:0;
+      border-radius:999px;
+      padding:13px 18px;
+      font-size:14px;
+      font-weight:950;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .primary {
+      background:var(--navy);
+      color:#ffffff;
+    }
+
+    .secondary {
+      background:#ffffff;
+      color:var(--navy);
+      border:2px solid var(--navy);
+    }
+
+    .status {
+      display:none;
+      margin-top:16px;
+      border-radius:16px;
+      padding:14px 16px;
+      font-weight:850;
+    }
+
+    .success {
+      background:#ecfdf5;
+      border:1px solid #bbf7d0;
+      color:#047857;
+    }
+
+    .error {
+      background:#fff1f2;
+      border:1px solid #fecdd3;
+      color:#991b1b;
+    }
+
+    .fine {
+      font-size:12px;
+      color:var(--muted);
+      margin-top:12px;
+      font-weight:700;
+    }
+
+    @media (max-width:720px) {
+      .grid { grid-template-columns:1fr; }
+      .hero h1 { font-size:28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Tax Prep Help Request</h1>
+      <p>Greatest Business Solution LLC — request help after your paid Written Estimate Red Flag Review.</p>
+    </section>
+
+    <div class="notice">
+      This request lets the office know you may want help preparing your tax return or reviewing your filing situation. It does not file your return by itself.
+    </div>
+
+    <section class="card">
+      <form id="requestForm">
+        <div class="grid">
+          <div>
+            <label for="name">Full name</label>
+            <input id="name" name="name" autocomplete="name" required />
+          </div>
+
+          <div>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div>
+            <label for="phone">Best phone number</label>
+            <input id="phone" name="phone" autocomplete="tel" />
+          </div>
+
+          <div>
+            <label for="taxYear">Tax year</label>
+            <input id="taxYear" name="taxYear" placeholder="2025" />
+          </div>
+
+          <div>
+            <label for="resultType">Estimate result</label>
+            <select id="resultType" name="resultType">
+              <option value="">Select one</option>
+              <option>Refund expected</option>
+              <option>Balance due expected</option>
+              <option>Close to break-even</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="bestTime">Best time to contact you</label>
+            <input id="bestTime" name="bestTime" placeholder="Morning, afternoon, evening, or specific time" />
+          </div>
+
+          <div class="full">
+            <label for="filingNeed">What do you need help with?</label>
+            <select id="filingNeed" name="filingNeed">
+              <option value="">Select one</option>
+              <option>Prepare and file my tax return</option>
+              <option>Review my refund estimate before filing</option>
+              <option>Review why I may owe money</option>
+              <option>Review dependents or credits</option>
+              <option>Review self-employment / side hustle income</option>
+              <option>Not sure — I need someone to look at it</option>
+            </select>
+          </div>
+
+          <div class="full">
+            <label for="message">Questions or concerns</label>
+            <textarea id="message" name="message" placeholder="Briefly explain what you want reviewed or what help you need."></textarea>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="primary" type="submit">Submit Tax Prep Help Request</button>
+          <a class="btn secondary" id="backToReport" href="#">Back to Written Review</a>
+        </div>
+
+        <div id="successBox" class="status success">
+          Your tax prep help request was saved. Greatest Business Solution LLC will follow up.
+        </div>
+
+        <div id="errorBox" class="status error">
+          Could not save this request. Please try again or contact the office directly.
+        </div>
+
+        <p class="fine">
+          Educational and administrative request only. This does not create a filed tax return, legal representation, or financial advice.
+        </p>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const leadId = window.location.pathname.split("/").filter(Boolean).pop();
+
+    function setValue(id, value) {
+      if ($(id) && value) $(id).value = value;
+    }
+
+    function show(id) {
+      $(id).style.display = "block";
+    }
+
+    function hide(id) {
+      $(id).style.display = "none";
+    }
+
+    async function loadLead() {
+      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId);
+
+      try {
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) return;
+
+        const lead = data.lead || {};
+        const contact = lead.contact || {};
+        const taxData = lead.taxData || {};
+        const summary = lead.estimateSummary || {};
+        const combinedNet = Number((summary.combined && summary.combined.net) ?? summary.combinedNet ?? 0);
+
+        setValue("name", contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" "));
+        setValue("email", contact.email);
+        setValue("phone", contact.phone);
+        setValue("taxYear", taxData.taxYear || summary.taxYear);
+
+        if (combinedNet > 0) $("resultType").value = "Refund expected";
+        if (combinedNet < 0) $("resultType").value = "Balance due expected";
+        if (combinedNet === 0) $("resultType").value = "Close to break-even";
+      } catch (err) {
+        console.warn("Could not prefill request form", err);
+      }
+    }
+
+    $("requestForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      hide("successBox");
+      hide("errorBox");
+
+      const now = new Date().toISOString();
+
+      const payload = {
+        Request: {
+          writtenReviewTaxPrepHelpRequestedAt: now,
+          writtenReviewNextStep: "Tax Prep Help Requested",
+          writtenReviewTaxPrepHelpRequest: {
+            submittedAt: now,
+            name: $("name").value.trim(),
+            email: $("email").value.trim(),
+            phone: $("phone").value.trim(),
+            taxYear: $("taxYear").value.trim(),
+            resultType: $("resultType").value,
+            bestTime: $("bestTime").value.trim(),
+            filingNeed: $("filingNeed").value,
+            message: $("message").value.trim()
+          }
+        }
+      };
+
+      try {
+        const res = await fetch("/api/leads/" + encodeURIComponent(leadId), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Save failed.");
+
+        show("successBox");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error(err);
+        show("errorBox");
+      }
+    });
+
+    loadLead();
+  </script>
+</body>
+</html>
