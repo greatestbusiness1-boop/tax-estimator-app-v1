@@ -3446,6 +3446,7 @@
               const isPaidWrittenReviewLeadForDisplay =
                 leadStatusForStrategy === "Written Review - Paid / Needs Written Review" ||
                 leadStatusForStrategy === "Written Review - Completed";
+              const writtenReviewNextStepHtml = "";
 
               const strategyReviewHtml = hasStrategyReviewRequest && !isPaidWrittenReviewLeadForDisplay ? `
                     <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.5;font-size:14px;">
@@ -4691,7 +4692,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
                   </div>
                 </div>
 
-                ${selectedActionQueue === "StrategyReview" ? strategyReviewHtml : ""}
+                ${selectedActionQueue === "StrategyReview" ? strategyReviewHtml + writtenReviewNextStepHtml : ""}
 
 <details style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin:10px 0;">
   <summary style="cursor:pointer;font-size:15px;font-weight:950;color:#334155;">
@@ -4749,7 +4750,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 
                 ${taxEstimateDetailsHtml}
 
-                ${selectedActionQueue === "StrategyReview" ? "" : strategyReviewHtml}
+                ${selectedActionQueue === "StrategyReview" ? "" : strategyReviewHtml + writtenReviewNextStepHtml}
 
                 ${activityHtml}
 
@@ -7658,6 +7659,484 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+<script id="WRR-NEXT-STEP-TRACKER-SAVE">
+(function(){
+  if (window.__wrrNextStepTrackerSaveInstalled) return;
+  window.__wrrNextStepTrackerSaveInstalled = true;
+
+  window.markWrittenReviewNextStep = function(leadId, stepType){
+    if (!leadId) {
+      alert("Missing lead ID. Cannot save written review next step.");
+      return;
+    }
+
+    var now = new Date().toISOString();
+    var label = "";
+    var requestUpdate = {};
+
+    if (stepType === "taxPrep") {
+      label = "Tax Prep Help Requested";
+      requestUpdate.writtenReviewTaxPrepHelpRequestedAt = now;
+      requestUpdate.writtenReviewNextStep = "Tax Prep Help Requested";
+    } else if (stepType === "transcript") {
+      label = "Transcript Help Requested";
+      requestUpdate.writtenReviewTranscriptHelpRequestedAt = now;
+      requestUpdate.writtenReviewNextStep = "Transcript Help Requested";
+    } else if (stepType === "calendar") {
+      label = "Calendar Scheduled";
+      requestUpdate.writtenReviewCalendarScheduledAt = now;
+      requestUpdate.writtenReviewNextStep = "Calendar Scheduled";
+    } else {
+      alert("Unknown written review next step.");
+      return;
+    }
+
+    fetch("/api/leads/" + encodeURIComponent(leadId), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        Request: requestUpdate
+      })
+    })
+    .then(function(res){
+      if (!res.ok) throw new Error("Could not save written review next step.");
+      return res.json().catch(function(){ return { ok: true }; });
+    })
+    .then(function(){
+      alert(label + " saved to the client record.");
+
+      if (typeof loadLeads === "function") {
+        loadLeads();
+      } else {
+        window.location.reload();
+      }
+    })
+    .catch(function(err){
+      console.error(err);
+      alert("Could not save the written review next step. Check the console or try again.");
+    });
+  };
+})();
+</script>
+<script id="GBS-WR-NEXTSTEP-QUEUES">
+(function () {
+  if (window.__gbsWrittenReviewNextStepQueuesInstalled) return;
+  window.__gbsWrittenReviewNextStepQueuesInstalled = true;
+
+  function esc(v) {
+    return String(v || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function getRequest(lead) {
+    return lead.Request || lead.request || {};
+  }
+
+  function getCombinedText(lead) {
+    var line = lead && lead.estimateSummary && lead.estimateSummary.totalLine;
+    if (line) return line;
+
+    var net = Number(
+      lead?.estimateSummary?.combined?.net ??
+      lead?.estimateSummary?.combinedNet ??
+      0
+    );
+
+    if (net > 0) return "Estimated Refund: $" + Math.abs(net).toLocaleString();
+    if (net < 0) return "Estimated Total Due: $" + Math.abs(net).toLocaleString();
+    return "Review estimate";
+  }
+
+  function getTimeValue(lead, field) {
+    var request = getRequest(lead);
+    return request[field] || "";
+  }
+
+  function formatDate(v) {
+    if (!v) return "Not marked";
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleString();
+  }
+
+  function updateTopLabels(title, subtitle) {
+    var header = document.getElementById("workspaceHeader");
+    if (header) {
+      header.style.display = "";
+      header.innerHTML = `
+        <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:950;color:#0f2c56;">${esc(title)}</div>
+          <div style="font-size:13px;font-weight:750;color:#334155;margin-top:3px;">${esc(subtitle)}</div>
+        </div>
+      `;
+    }
+
+    var activeLine = document.getElementById("activeFiltersLine");
+    if (activeLine) {
+      activeLine.textContent = "Showing: " + title;
+    }
+  }
+
+  function setActiveQueueButton(viewName) {
+    document.querySelectorAll(".dashboard-sidebar .sidebar-btn").forEach(function(btn) {
+      btn.classList.remove("active");
+    });
+
+    var btn = document.querySelector('.dashboard-sidebar .sidebar-btn[data-view="' + viewName + '"]');
+    if (btn) btn.classList.add("active");
+  }
+
+  function clientButtons(lead) {
+    var id = esc(lead.leadId || "");
+    return `
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button type="button"
+          onclick="setDashboardFilters({ status: 'All', action: 'All', search: '${id}' })"
+          style="background:#ffffff;color:#0f2c56;border:1px solid #0f2c56;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;">
+          Open Client
+        </button>
+
+        <button type="button"
+          onclick="window.open('/written-review-report/${id}', '_blank')"
+          style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;">
+          Report
+        </button>
+      </div>
+    `;
+  }
+
+  function renderQueueRows(leads, queueType) {
+    var rows = leads.map(function(lead) {
+      var request = getRequest(lead);
+      var dateLabel = "";
+
+      if (queueType === "TaxPrepRequested") {
+        dateLabel = formatDate(request.writtenReviewTaxPrepHelpRequestedAt);
+      } else if (queueType === "TranscriptHelpRequested") {
+        dateLabel = formatDate(request.writtenReviewTranscriptHelpRequestedAt);
+      } else if (queueType === "CalendarScheduled") {
+        dateLabel = formatDate(request.writtenReviewCalendarScheduledAt);
+      } else if (queueType === "ClosedCalendar") {
+        dateLabel = formatDate(request.writtenReviewCalendarClosedAt);
+      }
+
+      var calendarCloseButton = "";
+
+      if (queueType === "CalendarScheduled") {
+        calendarCloseButton = `
+          <button type="button"
+            onclick="markWrittenReviewCalendarClosed('${esc(lead.leadId)}')"
+            style="background:#047857;color:#ffffff;border:1px solid #047857;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;">
+            Mark Calendar Closed
+          </button>
+        `;
+      }
+
+      return `
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:12px 0;font-size:13px;">
+          <div style="font-weight:950;color:#0f2c56;">
+            ${esc(lead?.contact?.name || "Unknown Lead")}
+            <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId || "")}</div>
+          </div>
+
+          <div style="font-weight:850;color:#334155;">
+            ${esc(lead.status || "New")}
+          </div>
+
+          <div style="font-weight:850;color:#334155;">
+            ${esc(getCombinedText(lead))}
+          </div>
+
+          <div style="font-weight:850;color:#334155;">
+            ${esc(dateLabel)}
+          </div>
+
+          <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+            ${calendarCloseButton}
+            ${clientButtons(lead)}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return rows;
+  }
+
+  function filterQueue(leads, queueType) {
+    return leads.filter(function(lead) {
+      var request = getRequest(lead);
+
+      if (queueType === "TaxPrepRequested") {
+        return Boolean(request.writtenReviewTaxPrepHelpRequestedAt);
+      }
+
+      if (queueType === "TranscriptHelpRequested") {
+        return Boolean(request.writtenReviewTranscriptHelpRequestedAt);
+      }
+
+      if (queueType === "CalendarScheduled") {
+        return Boolean(request.writtenReviewCalendarScheduledAt) && !request.writtenReviewCalendarClosedAt;
+      }
+
+      if (queueType === "ClosedCalendar") {
+        return Boolean(request.writtenReviewCalendarClosedAt);
+      }
+
+      return false;
+    });
+  }
+
+  window.renderWrittenReviewNextStepQueue = async function(queueType) {
+    var container = document.getElementById("leadsContainer");
+    if (!container) {
+      alert("Could not find dashboard lead container.");
+      return;
+    }
+
+    var titles = {
+      TaxPrepRequested: "Tax Prep Requested",
+      TranscriptHelpRequested: "Transcript Help Requested",
+      CalendarScheduled: "Calendar Scheduled",
+      ClosedCalendar: "Closed Calendar"
+    };
+
+    var subtitles = {
+      TaxPrepRequested: "Clients who clicked or requested tax preparation help from the paid written review report.",
+      TranscriptHelpRequested: "Clients who requested IRS transcript or missing document help from the paid written review report.",
+      CalendarScheduled: "Clients who scheduled or were marked as scheduled for a review call.",
+      ClosedCalendar: "Calendar items that were marked closed after follow-up."
+    };
+
+    setActiveQueueButton(queueType);
+    updateTopLabels(titles[queueType] || "Next-Step Queue", subtitles[queueType] || "");
+
+    container.innerHTML = `
+      <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:16px;padding:18px;">
+        <div style="font-weight:950;color:#0f2c56;font-size:20px;">Loading ${esc(titles[queueType] || "queue")}...</div>
+      </div>
+    `;
+
+    try {
+      var res = await fetch("/api/leads");
+      var data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error("Could not load leads.");
+      }
+
+      var leads = (data.leads || []).slice().sort(function(a, b) {
+        var aId = String(a.leadId || "").match(/LEAD-(\d+)/i);
+        var bId = String(b.leadId || "").match(/LEAD-(\d+)/i);
+        return Number(bId ? bId[1] : 0) - Number(aId ? aId[1] : 0);
+      });
+
+      var queueLeads = filterQueue(leads, queueType);
+      var rows = renderQueueRows(queueLeads, queueType);
+
+      container.innerHTML = `
+        <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:16px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <div>
+              <div style="font-weight:950;color:#0f2c56;font-size:22px;">${esc(titles[queueType] || "Next-Step Queue")}</div>
+              <div style="font-weight:750;color:#334155;font-size:13px;margin-top:3px;">${esc(subtitles[queueType] || "")}</div>
+            </div>
+            <span style="background:#eff6ff;border:1px solid #bfdbfe;color:#0f2c56;border-radius:999px;padding:8px 12px;font-weight:950;font-size:12px;">
+              ${queueLeads.length} item${queueLeads.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.35px;">
+            <div>Client</div>
+            <div>Status</div>
+            <div>Estimate</div>
+            <div>Marked Date</div>
+            <div>Action</div>
+          </div>
+
+          ${rows || `<div style="padding:16px 0;color:#64748b;font-weight:850;">No records found in this queue.</div>`}
+        </div>
+      `;
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = `
+        <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:16px;padding:18px;color:#991b1b;font-weight:950;">
+          Could not load this queue. Try refreshing the dashboard.
+        </div>
+      `;
+    }
+  };
+
+  window.markWrittenReviewNextStep = function(leadId, stepType){
+    if (!leadId) {
+      alert("Missing lead ID. Cannot save written review next step.");
+      return;
+    }
+
+    var now = new Date().toISOString();
+    var label = "";
+    var requestUpdate = {};
+
+    if (stepType === "taxPrep") {
+      label = "Tax Prep Help Requested";
+      requestUpdate.writtenReviewTaxPrepHelpRequestedAt = now;
+      requestUpdate.writtenReviewNextStep = "Tax Prep Help Requested";
+    } else if (stepType === "transcript") {
+      label = "Transcript Help Requested";
+      requestUpdate.writtenReviewTranscriptHelpRequestedAt = now;
+      requestUpdate.writtenReviewNextStep = "Transcript Help Requested";
+    } else if (stepType === "calendar") {
+      label = "Calendar Scheduled";
+      requestUpdate.writtenReviewCalendarScheduledAt = now;
+      requestUpdate.writtenReviewNextStep = "Calendar Scheduled";
+    } else {
+      alert("Unknown written review next step.");
+      return;
+    }
+
+    fetch("/api/leads/" + encodeURIComponent(leadId), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ Request: requestUpdate })
+    })
+    .then(function(res){
+      if (!res.ok) throw new Error("Could not save written review next step.");
+      return res.json().catch(function(){ return { ok: true }; });
+    })
+    .then(function(){
+      alert(label + " saved to the client record.");
+      window.location.reload();
+    })
+    .catch(function(err){
+      console.error(err);
+      alert("Could not save the written review next step. Try again before relying on this status.");
+    });
+  };
+
+  window.markWrittenReviewCalendarClosed = function(leadId) {
+    if (!leadId) {
+      alert("Missing lead ID. Cannot close calendar item.");
+      return;
+    }
+
+    if (!confirm("Mark this calendar follow-up as closed?")) return;
+
+    fetch("/api/leads/" + encodeURIComponent(leadId), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        Request: {
+          writtenReviewCalendarClosedAt: new Date().toISOString(),
+          writtenReviewNextStep: "Calendar Closed"
+        }
+      })
+    })
+    .then(function(res){
+      if (!res.ok) throw new Error("Could not close calendar item.");
+      return res.json().catch(function(){ return { ok: true }; });
+    })
+    .then(function(){
+      alert("Calendar follow-up marked closed.");
+      renderWrittenReviewNextStepQueue("CalendarScheduled");
+    })
+    .catch(function(err){
+      console.error(err);
+      alert("Could not close the calendar item. Try again.");
+    });
+  };
+
+  function makeSidebarButton(id, label, viewName, onClick, afterEl) {
+    if (document.getElementById(id)) return document.getElementById(id);
+    if (!afterEl || !afterEl.parentNode) return null;
+
+    var btn = document.createElement("button");
+    btn.id = id;
+    btn.type = "button";
+    btn.className = "sidebar-btn";
+    btn.setAttribute("data-view", viewName);
+    btn.textContent = label;
+    btn.onclick = onClick;
+
+    afterEl.parentNode.insertBefore(btn, afterEl.nextSibling);
+    return btn;
+  }
+
+  function addCalendarAndNextStepSidebar() {
+    var sidebar = document.querySelector(".dashboard-sidebar");
+    if (!sidebar) return;
+
+    var writtenReviewBtn = sidebar.querySelector('.sidebar-btn[data-view="StrategyReview"]');
+    var transcriptBtn = sidebar.querySelector('.sidebar-btn[data-view="TranscriptHelp"]');
+
+    if (writtenReviewBtn) {
+      makeSidebarButton(
+        "gbsTaxPrepRequestedSidebarBtn",
+        "Tax Prep Requested",
+        "TaxPrepRequested",
+        function(){ renderWrittenReviewNextStepQueue("TaxPrepRequested"); },
+        writtenReviewBtn
+      );
+    }
+
+    var taxPrepBtn = document.getElementById("gbsTaxPrepRequestedSidebarBtn") || writtenReviewBtn;
+
+    if (!document.getElementById("gbsCalendarSidebarLabel") && taxPrepBtn && taxPrepBtn.parentNode) {
+      var label = document.createElement("div");
+      label.id = "gbsCalendarSidebarLabel";
+      label.className = "sidebar-section-label";
+      label.textContent = "CALENDAR";
+      label.style.marginTop = "22px";
+      label.style.borderTop = "2px solid rgba(96,165,250,.70)";
+      label.style.paddingTop = "14px";
+      label.style.color = "#bfdbfe";
+      taxPrepBtn.parentNode.insertBefore(label, taxPrepBtn.nextSibling);
+    }
+
+    var calendarLabel = document.getElementById("gbsCalendarSidebarLabel");
+
+    var scheduledBtn = makeSidebarButton(
+      "gbsCalendarScheduledSidebarBtn",
+      "Calendar Scheduled",
+      "CalendarScheduled",
+      function(){ renderWrittenReviewNextStepQueue("CalendarScheduled"); },
+      calendarLabel
+    );
+
+    makeSidebarButton(
+      "gbsClosedCalendarSidebarBtn",
+      "Closed Calendar",
+      "ClosedCalendar",
+      function(){ renderWrittenReviewNextStepQueue("ClosedCalendar"); },
+      scheduledBtn || calendarLabel
+    );
+
+    if (transcriptBtn) {
+      makeSidebarButton(
+        "gbsTranscriptHelpRequestedSidebarBtn",
+        "Transcript Help Requested",
+        "TranscriptHelpRequested",
+        function(){ renderWrittenReviewNextStepQueue("TranscriptHelpRequested"); },
+        transcriptBtn
+      );
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    addCalendarAndNextStepSidebar();
+    setTimeout(addCalendarAndNextStepSidebar, 300);
+    setTimeout(addCalendarAndNextStepSidebar, 900);
+    setTimeout(addCalendarAndNextStepSidebar, 1500);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(addCalendarAndNextStepSidebar, 250);
+    setTimeout(addCalendarAndNextStepSidebar, 800);
+  });
+})();
+</script>
 </body>
 
 </html>
@@ -7921,6 +8400,10 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
+
 
 
 
