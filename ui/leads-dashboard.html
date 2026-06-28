@@ -660,7 +660,7 @@
 
     <button class="sidebar-btn" data-view="TranscriptHelp"
       onclick="window.location.href='/transcript-requests'">
-      Transcript Requests <span id="sidebarTranscriptHelpCount"
+      New Transcript Requests <span id="sidebarTranscriptHelpCount"
         style="float:right;background:#38bdf8;color:#0f172a;border-radius:999px;padding:2px 8px;font-weight:950;">0</span>
     </button>
 
@@ -844,7 +844,7 @@
         <div class="summary" onclick="focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' }); setTimeout(function(){ focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} loadLeads(); },150);"
           title="Click to view Transcript Help leads"
           style="background:linear-gradient(180deg,#ffffff 0%,#ecfeff 100%);border:2px solid #38bdf8;cursor:pointer;box-shadow:0 0 0 3px rgba(56,189,248,0.16);">
-          <strong style="color:#0369a1;">Transcript Requests</strong><br>
+          <strong style="color:#0369a1;">New Transcript Requests</strong><br>
           <span id="queueTranscriptHelp" style="color:#0369a1;">0</span>
         </div>
 
@@ -883,7 +883,7 @@
       style="display:none;background:#ecfeff;border:1px solid #67e8f9;border-radius:18px;padding:12px 14px;margin-bottom:12px;box-shadow:0 10px 24px rgba(15,44,86,0.06);">
       <details>
         <summary style="cursor:pointer;font-size:16px;font-weight:950;color:#0369a1;">
-          IRS Transcript Requests Workflow Guide
+          IRS New Transcript Requests Workflow Guide
         </summary>
 
 
@@ -1553,7 +1553,7 @@
             description: "These leads are connected to the $29 Written Tax Estimate Review workflow. Use this view to manage written review requests, payment status, review preparation, and completed reviews."
           },
           TranscriptHelp: {
-            title: "Transcript Requests Workspace",
+            title: "New Transcript Requests Workspace",
             description: "Work only transcript requests here: payment, authorization, transcript type, pull status, delivery, follow-up, and errors."
           },
           "Follow-up Needed": {
@@ -1760,7 +1760,7 @@
             Refund: "Refund Leads - Follow Up to File",
             BalanceDue: "Balance Due Leads - Schedule Review",
             StrategyReview: "Written Review Requests",
-            TranscriptHelp: "Transcript Requests",
+            TranscriptHelp: "New Transcript Requests",
             ReviewNeeded: "Review Needed"
           };
 
@@ -1786,7 +1786,7 @@
           if (activeFiltersLine) {
             if (selectedActionQueue === "TranscriptHelp") {
               activeFiltersLine.textContent =
-                `Showing: Transcript Requests | ` +
+                `Showing: New Transcript Requests | ` +
                 `Tax Year: ${selectedTaxYear === "All" ? "All Years" : selectedTaxYear} | ` +
                 `Transcript Work Queue: ${actionQueueLabels[selectedActionQueue] || selectedActionQueue}` +
                 `${searchText ? ` | Search: ${searchText}` : ""}`;
@@ -1954,7 +1954,7 @@
                     onclick="focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} setDashboardFilters({ status: 'All', action: 'TranscriptHelp', search: '', focusLeadId: '', returnAction: '' }); setTimeout(function(){ focusedLeadId=''; focusedReturnAction=''; selectedTranscriptStage=''; if(document.getElementById('leadSearch')){document.getElementById('leadSearch').value='';} loadLeads(); },150);"
                     style="background:#92400e;color:#ffffff;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                   >
-                    Back to Transcript Requests
+                    Back to New Transcript Requests
                   </button>
                 </div>
 
@@ -1976,7 +1976,7 @@
           };
 
           if (selectedActionQueue === "TranscriptHelp") {
-            setTopStatLabel("statTotalLabel", "Transcript Requests");
+            setTopStatLabel("statTotalLabel", "New Transcript Requests");
             setTopStatLabel("statNewLabel", "Waiting Payment");
             setTopStatLabel("statContactedLabel", "Waiting Authorization");
             setTopStatLabel("statBookedLabel", "Ready to Pull");
@@ -2151,7 +2151,7 @@
             setQueueLabel("queueRefundLeads", "New Refund Leads");
             setQueueLabel("queueBalanceDue", "Balance Due Reviews");
             setQueueLabel("queueFollowUp", "Follow-Up Needed");
-            setQueueLabel("queueTranscriptHelp", "Transcript Requests");
+            setQueueLabel("queueTranscriptHelp", "New Transcript Requests");
             setQueueLabel("queueBooked", "Booked Consultations");
 
             document.getElementById("queueRefundLeads").textContent =
@@ -3208,7 +3208,7 @@
                               ? "Deliver to Client"
                               : "Mark Completed";
 
-              const handled = isOfficeQueueHandled(lead.leadId, "Transcript Requests Worklist");
+              const handled = isOfficeQueueHandled(lead.leadId, "New Transcript Requests Worklist");
 
               const paymentText =
                 statusText === "Transcript Help - Payment Pending"
@@ -3254,7 +3254,7 @@
 
                                     <button
                     type="button"
-                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Transcript Requests Worklist')"
+                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'New Transcript Requests Worklist')"
                     style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
                   >
                     ${handled ? "- Handled" : "Mark Done"}
@@ -3276,7 +3276,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
                   <div>
                     <div style="font-size:20px;font-weight:950;color:#0369a1;">
-                      Transcript Requests Worklist
+                      New Transcript Requests Worklist
                     </div>
                     <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
                       Transcript service requests only. Click Open to work a client request.
@@ -4059,7 +4059,7 @@
                       onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      â† Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
+                      â† Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "New Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
                     </button>
                   `
                   : ""
@@ -6274,7 +6274,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
           <div>
             <div style="font-size:17px;font-weight:950;color:#0f2c56;">Customer Work Tracker</div>
-            <div style="font-size:12px;font-weight:850;color:#64748b;margin-top:2px;">Same workflow idea as Transcript Requests: status, dates, missing items, and closeout.</div>
+            <div style="font-size:12px;font-weight:850;color:#64748b;margin-top:2px;">Same workflow idea as New Transcript Requests: status, dates, missing items, and closeout.</div>
           </div>
           <div style="font-size:12px;font-weight:900;color:#475569;">${esc(leadId)}</div>
         </div>
@@ -6323,8 +6323,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
             <div><strong>Requested:</strong> ${isTranscriptService ? "Yes" : "No"}</div>
             <div><strong>Status:</strong> ${transcriptWorkflowStatus}</div>
             <div><strong>Payment:</strong> ${isTranscriptService ? esc(paymentStatus) : "Not required"}</div>
-            <div><strong>Authorization:</strong> ${isTranscriptService ? "Track in Transcript Requests" : "Not required"}</div>
-            <div><strong>Transcript Type / Years:</strong> ${isTranscriptService ? "Track in Transcript Requests" : "Not required"}</div>
+            <div><strong>Authorization:</strong> ${isTranscriptService ? "Track in New Transcript Requests" : "Not required"}</div>
+            <div><strong>Transcript Type / Years:</strong> ${isTranscriptService ? "Track in New Transcript Requests" : "Not required"}</div>
           </div>
           <div style="margin-top:8px;font-size:12px;font-weight:800;color:#6b21a8;line-height:1.45;">${esc(transcriptNeededText)}</div>
         </div>
@@ -7398,7 +7398,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     var transcriptBtn = sidebar.querySelector('.sidebar-btn[data-view="TranscriptHelp"]');
     if (!transcriptBtn) return;
 
-    // Insert TRANSCRIPTS section label before Transcript Requests.
+    // Insert TRANSCRIPTS section label before New Transcript Requests.
     if (!document.getElementById("safeTranscriptsSidebarLabel")) {
       var label = document.createElement("div");
       label.id = "safeTranscriptsSidebarLabel";
@@ -7412,7 +7412,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       transcriptBtn.parentNode.insertBefore(label, transcriptBtn);
     }
 
-    // Add Closed Transcripts button after Transcript Requests.
+    // Add Closed Transcripts button after New Transcript Requests.
     if (!document.getElementById("safeClosedTranscriptsSidebarBtn")) {
       var btn = document.createElement("button");
       btn.id = "safeClosedTranscriptsSidebarBtn";
@@ -7679,9 +7679,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       requestUpdate.writtenReviewTaxPrepHelpRequestedAt = now;
       requestUpdate.writtenReviewNextStep = "Tax Prep Help Requested";
     } else if (stepType === "transcript") {
-      label = "Transcript Help Requested";
+      label = "Transcript Leads from Written Review";
       requestUpdate.writtenReviewTranscriptHelpRequestedAt = now;
-      requestUpdate.writtenReviewNextStep = "Transcript Help Requested";
+      requestUpdate.writtenReviewNextStep = "Transcript Leads from Written Review";
     } else if (stepType === "calendar") {
       label = "Calendar Scheduled";
       requestUpdate.writtenReviewCalendarScheduledAt = now;
@@ -7898,8 +7898,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     }
 
     var titles = {
-      TaxPrepRequested: "Tax Prep Requested",
-      TranscriptHelpRequested: "Transcript Help Requested",
+      TaxPrepRequested: "Tax Prep Leads from Written Review",
+      TranscriptHelpRequested: "Transcript Leads from Written Review",
       CalendarScheduled: "Calendar Scheduled",
       ClosedCalendar: "Closed Calendar"
     };
@@ -7985,9 +7985,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
       requestUpdate.writtenReviewTaxPrepHelpRequestedAt = now;
       requestUpdate.writtenReviewNextStep = "Tax Prep Help Requested";
     } else if (stepType === "transcript") {
-      label = "Transcript Help Requested";
+      label = "Transcript Leads from Written Review";
       requestUpdate.writtenReviewTranscriptHelpRequestedAt = now;
-      requestUpdate.writtenReviewNextStep = "Transcript Help Requested";
+      requestUpdate.writtenReviewNextStep = "Transcript Leads from Written Review";
     } else if (stepType === "calendar") {
       label = "Calendar Scheduled";
       requestUpdate.writtenReviewCalendarScheduledAt = now;
@@ -8074,7 +8074,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     if (writtenReviewBtn) {
       makeSidebarButton(
         "gbsTaxPrepRequestedSidebarBtn",
-        "Tax Prep Requested",
+        "Tax Prep Leads from Written Review",
         "TaxPrepRequested",
         function(){ renderWrittenReviewNextStepQueue("TaxPrepRequested"); },
         writtenReviewBtn
@@ -8116,7 +8116,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
     if (transcriptBtn) {
       makeSidebarButton(
         "gbsTranscriptHelpRequestedSidebarBtn",
-        "Transcript Help Requested",
+        "Transcript Leads from Written Review",
         "TranscriptHelpRequested",
         function(){ renderWrittenReviewNextStepQueue("TranscriptHelpRequested"); },
         transcriptBtn
@@ -8400,6 +8400,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
 
 
 
