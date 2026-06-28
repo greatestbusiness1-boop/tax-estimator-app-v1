@@ -8137,6 +8137,395 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+<script id="GBS-LEAD-CONVERSION-SNAPSHOT">
+(function(){
+  if (window.__gbsLeadConversionSnapshotV2Installed) return;
+  window.__gbsLeadConversionSnapshotV2Installed = true;
+
+  function getRequest(lead){
+    return lead.Request || lead.request || {};
+  }
+
+  function getStatus(lead){
+    return String(lead?.status || "New");
+  }
+
+  function isClosedOrCompleted(lead){
+    const status = getStatus(lead);
+    return (
+      status.startsWith("Closed -") ||
+      status === "Closed" ||
+      status === "Written Review - Completed" ||
+      status === "Transcript Help - Completed" ||
+      status === "Converted - Tax Client"
+    );
+  }
+
+  function isNewUnworked(lead){
+    return getStatus(lead) === "New";
+  }
+
+  function hasWrittenReviewPaid(lead){
+    const status = getStatus(lead);
+    const notes = String(lead?.notes || "").toLowerCase();
+
+    return (
+      status === "Written Review - Paid / Needs Written Review" ||
+      status === "Written Review - Completed" ||
+      notes.includes("buy written review") ||
+      notes.includes("written estimate red flag review") ||
+      notes.includes("successful $29 payment")
+    );
+  }
+
+  function getCombinedNet(lead){
+    return Number(
+      lead?.estimateSummary?.combined?.net ??
+      lead?.estimateSummary?.combinedNet ??
+      0
+    );
+  }
+
+  function getLeadDate(lead){
+    const candidates = [
+      lead?.submittedAt,
+      lead?.createdAt,
+      lead?.created_at,
+      lead?.dateSubmitted,
+      lead?.submitted,
+      lead?.updatedAt,
+      lead?.lastUpdated,
+      lead?.estimateSummary?.submittedAt,
+      lead?.estimateSummary?.createdAt,
+      lead?.estimateSummary?.meta?.submittedAt,
+      lead?.estimateSummary?.meta?.createdAt
+    ];
+
+    for (const value of candidates) {
+      if (!value) continue;
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+
+    const idMatch = String(lead?.leadId || "").match(/LEAD-(\d{10,})/i);
+    if (idMatch && idMatch[1]) {
+      const n = Number(idMatch[1]);
+      const d = new Date(n);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+
+    return null;
+  }
+
+  function isSameLocalDay(a, b){
+    return (
+      a &&
+      b &&
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  function isWithinDays(date, days){
+    if (!date) return false;
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(start.getDate() - days);
+    return date >= start && date <= now;
+  }
+
+  function pct(part, total){
+    if (!total) return "0%";
+    return Math.round((Number(part || 0) / Number(total || 1)) * 100) + "%";
+  }
+
+  function card(label, value, note, color){
+    return `
+      <div style="background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);border:1px solid #dbeafe;border-left:6px solid ${color};border-radius:14px;padding:11px 12px;min-height:82px;">
+        <div style="font-size:11px;font-weight:950;color:#475569;text-transform:uppercase;letter-spacing:.35px;line-height:1.2;">${label}</div>
+        <div style="font-size:25px;font-weight:950;color:#0f2c56;margin-top:4px;line-height:1;">${value}</div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-top:6px;line-height:1.25;">${note}</div>
+      </div>
+    `;
+  }
+
+  function ensureSnapshotPanel(){
+    let panel = document.getElementById("leadConversionSnapshotPanel");
+    if (panel) return panel;
+
+    const mainStatsSticky = document.getElementById("mainStatsSticky");
+    const stickyControlPanel = document.getElementById("stickyControlPanel");
+
+    panel = document.createElement("div");
+    panel.id = "leadConversionSnapshotPanel";
+    panel.style.background = "#ffffff";
+    panel.style.border = "2px solid #bfdbfe";
+    panel.style.borderRadius = "16px";
+    panel.style.padding = "13px";
+    panel.style.margin = "0 0 10px";
+    panel.style.boxShadow = "0 10px 24px rgba(15,44,86,0.08)";
+    panel.style.position = "sticky";
+    panel.style.top = "0";
+    panel.style.zIndex = "75";
+
+    if (mainStatsSticky && mainStatsSticky.parentNode) {
+      mainStatsSticky.parentNode.insertBefore(panel, mainStatsSticky);
+    } else if (stickyControlPanel) {
+      stickyControlPanel.insertBefore(panel, stickyControlPanel.firstChild);
+    }
+
+    return panel;
+  }
+
+  function keepSnapshotAboveQuickCounts(){
+    const panel = document.getElementById("leadConversionSnapshotPanel");
+    const quickLabel = document.getElementById("gbsQuickCountsLabel");
+    const row = document.getElementById("mainStatsSticky");
+
+    if (panel && quickLabel && quickLabel.parentNode) {
+      quickLabel.parentNode.insertBefore(panel, quickLabel);
+    } else if (panel && row && row.parentNode) {
+      row.parentNode.insertBefore(panel, row);
+    }
+  }
+
+  function shrinkOldQuickCounts(){
+    const row = document.getElementById("mainStatsSticky");
+    if (!row) return;
+
+    row.style.position = "static";
+    row.style.top = "";
+    row.style.zIndex = "";
+    row.style.display = "grid";
+    row.style.gridTemplateColumns = "repeat(5, minmax(0, 1fr))";
+    row.style.gap = "6px";
+    row.style.marginBottom = "8px";
+    row.style.padding = "6px";
+    row.style.background = "#f8fafc";
+    row.style.border = "1px solid #e2e8f0";
+    row.style.borderRadius = "12px";
+    row.style.backdropFilter = "";
+    row.style.boxShadow = "none";
+
+    const totalLabel = document.getElementById("statTotalLabel");
+    const newLabel = document.getElementById("statNewLabel");
+    const contactedLabel = document.getElementById("statContactedLabel");
+    const bookedLabel = document.getElementById("statBookedLabel");
+    const closedLabel = document.getElementById("statClosedLabel");
+
+    if (totalLabel) totalLabel.textContent = "Visible Now";
+    if (newLabel) newLabel.textContent = "New / Unworked";
+    if (contactedLabel) contactedLabel.textContent = "Contacted";
+    if (bookedLabel) bookedLabel.textContent = "Booked";
+    if (closedLabel) closedLabel.textContent = "Closed";
+
+    row.querySelectorAll(".summary").forEach(function(box){
+      box.style.padding = "7px 8px";
+      box.style.margin = "0";
+      box.style.borderRadius = "10px";
+      box.style.minHeight = "0";
+      box.style.boxShadow = "none";
+      box.style.background = "#ffffff";
+      box.style.border = "1px solid #dbeafe";
+    });
+
+    row.querySelectorAll("strong").forEach(function(label){
+      label.style.fontSize = "10px";
+      label.style.lineHeight = "1.1";
+      label.style.color = "#475569";
+      label.style.textTransform = "uppercase";
+      label.style.letterSpacing = ".25px";
+    });
+
+    row.querySelectorAll("span").forEach(function(num){
+      num.style.fontSize = "17px";
+      num.style.fontWeight = "950";
+      num.style.color = "#0f2c56";
+    });
+
+    let quickLabel = document.getElementById("gbsQuickCountsLabel");
+    if (!quickLabel && row.parentNode) {
+      quickLabel = document.createElement("div");
+      quickLabel.id = "gbsQuickCountsLabel";
+      quickLabel.textContent = "Quick Counts";
+      quickLabel.style.fontSize = "11px";
+      quickLabel.style.fontWeight = "950";
+      quickLabel.style.color = "#64748b";
+      quickLabel.style.textTransform = "uppercase";
+      quickLabel.style.letterSpacing = ".4px";
+      quickLabel.style.margin = "0 0 4px 2px";
+      row.parentNode.insertBefore(quickLabel, row);
+    }
+
+    keepSnapshotAboveQuickCounts();
+  }
+
+  async function renderLeadConversionSnapshot(){
+    const panel = ensureSnapshotPanel();
+    if (!panel) return;
+
+    shrinkOldQuickCounts();
+
+    panel.style.display = "block";
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px;">
+        <div>
+          <div style="font-size:19px;font-weight:950;color:#0f2c56;">
+            Lead Conversion Snapshot
+          </div>
+          <div style="font-size:12px;font-weight:800;color:#475569;margin-top:3px;line-height:1.35;">
+            Free Estimate is the root. This stays visible so you can see whether free estimates are turning into paid work.
+          </div>
+        </div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:8px 12px;color:#0f2c56;font-size:12px;font-weight:950;">
+          Loading...
+        </div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch("/api/leads");
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error("Could not load leads.");
+
+      const leads = Array.isArray(data.leads) ? data.leads : [];
+      const activeLeads = leads.filter((lead) => !isClosedOrCompleted(lead));
+
+      const now = new Date();
+
+      const totalEstimateLeads = leads.length;
+      const activeLeadCount = activeLeads.length;
+      const newUnworked = activeLeads.filter(isNewUnworked).length;
+
+      const receivedToday = leads.filter((lead) => {
+        const d = getLeadDate(lead);
+        return d && isSameLocalDay(d, now);
+      }).length;
+
+      const received7Days = leads.filter((lead) => {
+        const d = getLeadDate(lead);
+        return d && isWithinDays(d, 7);
+      }).length;
+
+      const paidWrittenReviews = leads.filter(hasWrittenReviewPaid).length;
+
+      const taxPrepLeads = leads.filter((lead) => {
+        const request = getRequest(lead);
+        return Boolean(request.writtenReviewTaxPrepHelpRequestedAt);
+      }).length;
+
+      const transcriptLeads = leads.filter((lead) => {
+        const request = getRequest(lead);
+        return Boolean(request.writtenReviewTranscriptHelpRequestedAt);
+      }).length;
+
+      const calendarScheduled = leads.filter((lead) => {
+        const request = getRequest(lead);
+        return Boolean(request.writtenReviewCalendarScheduledAt) && !request.writtenReviewCalendarClosedAt;
+      }).length;
+
+      const completedReviews = leads.filter((lead) => {
+        return getStatus(lead) === "Written Review - Completed";
+      }).length;
+
+      const refundLeads = activeLeads.filter((lead) => getCombinedNet(lead) > 0).length;
+      const balanceDueLeads = activeLeads.filter((lead) => getCombinedNet(lead) < 0).length;
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px;">
+          <div>
+            <div style="font-size:19px;font-weight:950;color:#0f2c56;">
+              Lead Conversion Snapshot
+            </div>
+            <div style="font-size:12px;font-weight:800;color:#475569;margin-top:3px;line-height:1.35;">
+              Free Estimate is the root. This stays visible so you can see whether free estimates are turning into paid work.
+            </div>
+          </div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:8px 12px;color:#0f2c56;font-size:12px;font-weight:950;">
+            ${activeLeadCount} active lead${activeLeadCount === 1 ? "" : "s"}
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;">
+          ${card("Free Estimate Leads", totalEstimateLeads, "Root lead source", "#2563eb")}
+          ${card("New / Unworked", newUnworked, "Not contacted yet", "#f97316")}
+          ${card("Received Today", receivedToday, "New today", "#0284c7")}
+          ${card("Last 7 Days", received7Days, "Recent activity", "#0ea5e9")}
+          ${card("Paid Reviews", paidWrittenReviews, pct(paidWrittenReviews, totalEstimateLeads) + " conversion", "#dc2626")}
+          ${card("Tax Prep Leads", taxPrepLeads, "Follow-up service", "#047857")}
+          ${card("Transcript Leads", transcriptLeads, "Transcript opportunity", "#7c3aed")}
+          ${card("Calendar Scheduled", calendarScheduled, "Booked calls", "#0f172a")}
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px;">
+          <div style="background:#ecfdf5;border:1px solid #bbf7d0;border-radius:12px;padding:8px 10px;color:#065f46;font-size:12px;font-weight:950;">
+            Refund Leads: ${refundLeads}
+          </div>
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px 10px;color:#9a3412;font-size:12px;font-weight:950;">
+            Balance Due Leads: ${balanceDueLeads}
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;color:#475569;font-size:12px;font-weight:950;">
+            Completed Reviews: ${completedReviews}
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error(err);
+      panel.innerHTML = `
+        <div style="font-size:18px;font-weight:950;color:#0f2c56;margin-bottom:4px;">
+          Lead Conversion Snapshot
+        </div>
+        <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:14px;padding:12px;color:#991b1b;font-weight:950;">
+          Could not load conversion snapshot. Refresh the dashboard and try again.
+        </div>
+      `;
+    }
+  }
+
+  function installSnapshotRefresh(){
+    shrinkOldQuickCounts();
+    renderLeadConversionSnapshot();
+
+    ["actionQueueFilter", "leadFilter", "taxYearFilter", "leadSearch"].forEach(function(id){
+      const el = document.getElementById(id);
+      if (!el || el.__gbsSnapshotV2ListenerInstalled) return;
+      el.__gbsSnapshotV2ListenerInstalled = true;
+      el.addEventListener("change", function(){ setTimeout(renderLeadConversionSnapshot, 200); });
+      el.addEventListener("input", function(){ setTimeout(renderLeadConversionSnapshot, 300); });
+    });
+
+    if (typeof window.loadLeads === "function" && !window.__gbsSnapshotV2LoadLeadsWrapped) {
+      window.__gbsSnapshotV2LoadLeadsWrapped = true;
+      const originalLoadLeads = window.loadLeads;
+      window.loadLeads = async function(){
+        const result = await originalLoadLeads.apply(this, arguments);
+        setTimeout(renderLeadConversionSnapshot, 250);
+        return result;
+      };
+    }
+
+    if (typeof window.setDashboardFilters === "function" && !window.__gbsSnapshotV2SetFiltersWrapped) {
+      window.__gbsSnapshotV2SetFiltersWrapped = true;
+      const originalSetDashboardFilters = window.setDashboardFilters;
+      window.setDashboardFilters = function(){
+        const result = originalSetDashboardFilters.apply(this, arguments);
+        setTimeout(renderLeadConversionSnapshot, 250);
+        return result;
+      };
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    installSnapshotRefresh();
+    setTimeout(installSnapshotRefresh, 500);
+    setTimeout(renderLeadConversionSnapshot, 1000);
+  });
+
+  setTimeout(installSnapshotRefresh, 500);
+  setTimeout(renderLeadConversionSnapshot, 1200);
+})();
+</script>
 </body>
 
 </html>
@@ -8400,6 +8789,9 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
   });
 })();
 </script>
+
+
+
 
 
 
