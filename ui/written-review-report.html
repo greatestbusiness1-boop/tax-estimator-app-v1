@@ -330,6 +330,160 @@
       border-top: 1px solid #e5e7eb;
     }
 
+    .tax-strategy-section {
+      border: 2px solid #0f2c56;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+
+    .tax-strategy-section .section-header {
+      background: linear-gradient(135deg, #0f2c56 0%, #1e3a8a 100%);
+      color: #fff;
+      border-bottom: 0;
+    }
+
+    .tax-strategy-section .section-title,
+    .tax-strategy-section .section-kicker {
+      color: #fff;
+    }
+
+    .worksheet-intro {
+      border-left: 7px solid #dc2626;
+      background: #fff7f7;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-weight: 850;
+      color: #7f1d1d;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .worksheet-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .worksheet-card {
+      border: 1px solid #dbeafe;
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 14px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .worksheet-card h3 {
+      margin: 0 0 8px;
+      color: #0f2c56;
+      font-size: 17px;
+    }
+
+    .worksheet-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .worksheet-card li {
+      margin-bottom: 5px;
+    }
+
+    .worksheet-note {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .worksheet-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .worksheet-info {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 11px;
+    }
+
+    .worksheet-info .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #64748b;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .worksheet-info .value {
+      color: #0f2c56;
+      font-weight: 950;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .strategy-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .strategy-result-card {
+      border-radius: 15px;
+      padding: 13px;
+      border: 2px solid #e2e8f0;
+      background: #ffffff;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .strategy-result-card h3 {
+      margin: 0 0 6px;
+      color: #0f2c56;
+      font-size: 16px;
+    }
+
+    .strategy-result-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #334155;
+      font-weight: 750;
+    }
+
+    .strategy-result-card.critical { border-color:#fecaca; background:#fff7f7; }
+    .strategy-result-card.warning { border-color:#fed7aa; background:#fff7ed; }
+    .strategy-result-card.confirmed { border-color:#bbf7d0; background:#f0fdf4; }
+    .strategy-result-card.opportunity { border-color:#ddd6fe; background:#faf5ff; }
+    .strategy-result-card.missing { border-color:#bfdbfe; background:#eff6ff; }
+    .strategy-result-card.next { border-color:#0f2c56; background:#f8fafc; }
+
+    .worksheet-check {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #94a3b8;
+      border-radius: 3px;
+      margin-right: 7px;
+      vertical-align: -2px;
+      background: #fff;
+    }
+
+    .worksheet-subtitle {
+      font-size: 12px;
+      color: #475569;
+      font-weight: 850;
+      margin: -3px 0 9px;
+      line-height: 1.4;
+    }
     .referral {
       background:#f8fafc;
       border: 2px solid #bfdbfe;
@@ -526,6 +680,47 @@
           </div>
           <div class="section-body">
             <div class="alerts" id="alertCards"></div>
+          </div>
+        </section>
+        <section class="section tax-strategy-section" id="clientTaxStrategyWorksheet">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Client Tax Strategy Worksheet</h2>
+              <div class="section-kicker">Paid-review-only worksheet for missing credits, document risks, filing concerns, and planning opportunities.</div>
+            </div>
+            <span class="badge gold">Paid Review Bonus</span>
+          </div>
+          <div class="section-body">
+            <div class="worksheet-intro">
+              Your paid Written Red Flag Review includes more than a printed estimate. This Client Tax Strategy Worksheet helps identify possible missing credits, deduction opportunities, filing status concerns, withholding problems, self-employment issues, IRS transcript needs, and next-year tax planning opportunities based on the information you provide.
+            </div>
+
+            <div class="worksheet-info-grid">
+              <div class="worksheet-info"><div class="label">Full Name</div><div class="value" id="strategyClientName">Client</div></div>
+              <div class="worksheet-info"><div class="label">Email</div><div class="value" id="strategyClientEmail">Not provided</div></div>
+              <div class="worksheet-info"><div class="label">Phone</div><div class="value" id="strategyClientPhone">Not provided</div></div>
+              <div class="worksheet-info"><div class="label">Tax Year</div><div class="value" id="strategyTaxYear">Tax year</div></div>
+              <div class="worksheet-info"><div class="label">Filing Status Selected</div><div class="value" id="strategyFilingStatus">Not provided</div></div>
+              <div class="worksheet-info"><div class="label">Filing Status Review</div><div class="value" id="strategyFilingReview">Review recommended</div></div>
+            </div>
+
+            <div class="worksheet-grid" id="strategyWorksheetCards"></div>
+
+            <div class="section" style="margin-top:14px;">
+              <div class="section-header">
+                <div>
+                  <h2 class="section-title" style="font-size:20px;">Tax Strategy Result Summary</h2>
+                  <div class="section-kicker">Plain-English summary based on the saved estimate and worksheet review categories.</div>
+                </div>
+                <span class="badge red">Strategy Review</span>
+              </div>
+              <div class="section-body">
+                <div class="strategy-results" id="strategyResultSummary"></div>
+                <p class="fine-print" style="margin-top:12px;">
+                  This worksheet supports the Written Red Flag Review. It is not a final tax return, does not replace professional tax preparation, and should not be treated as an official IRS form. Do not provide full SSNs in this worksheet unless secure storage has been added. Use last four digits only if identification is needed.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -865,6 +1060,257 @@
         </div>
       `).join("");
     }
+    function worksheetLine(text){
+      return `<li><span class="worksheet-check"></span>${escapeHtml(text)}</li>`;
+    }
+
+    function renderWorksheetCard(title, subtitle, items, note){
+      return `
+        <div class="worksheet-card">
+          <h3>${escapeHtml(title)}</h3>
+          <div class="worksheet-subtitle">${escapeHtml(subtitle)}</div>
+          <ul>${items.map(worksheetLine).join("")}</ul>
+          ${note ? `<div class="worksheet-note">${escapeHtml(note)}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function resultCard(type, title, body){
+      return `
+        <div class="strategy-result-card ${type}">
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(body)}</p>
+        </div>
+      `;
+    }
+
+    function renderClientTaxStrategyWorksheet(info){
+      if (!$("strategyWorksheetCards") || !$("strategyResultSummary")) {
+        console.warn("Client Tax Strategy Worksheet containers not found. Skipping worksheet render.");
+        return;
+      }
+
+      const isBusiness = Number(info.selfEmployment || 0) > 0;
+      const hasDependents = Number(info.dependents || 0) > 0;
+      const hasRefund = Number(info.combinedNet || 0) > 0;
+      const hasBalanceDue = Number(info.combinedNet || 0) < 0;
+      const withholdingMissing = !Number(info.fedWithheld || 0);
+
+      txt("strategyClientName", info.name || "Client");
+      txt("strategyClientEmail", info.email || "Not provided");
+      txt("strategyClientPhone", info.phone || "Not provided");
+      txt("strategyTaxYear", info.year || "Not provided");
+      txt("strategyFilingStatus", statusLabel(info.statusKey || "single"));
+
+      let filingReview = "Filing status appears reasonable based on the saved estimate.";
+      if ((info.statusKey || "") === "headOfHousehold" || (info.statusKey || "") === "hoh") {
+        filingReview = "Head of Household status should be verified with support, household, and dependent rules.";
+      } else if ((info.statusKey || "").includes("married")) {
+        filingReview = "Married filing status should be verified against spouse income, separation, and filing-choice facts.";
+      }
+      txt("strategyFilingReview", filingReview);
+
+      const cards = [
+        renderWorksheetCard(
+          "1. Taxpayer Information",
+          "Confirm the contact and filing details before making a tax strategy recommendation.",
+          [
+            "Full name",
+            "Email",
+            "Phone",
+            "Mailing address — optional unless tax preparation, transcript help, or mailing is requested",
+            "Tax year",
+            "Filing status selected",
+            "Whether filing status needs review",
+            "Last four digits only if identity confirmation is needed"
+          ],
+          "Do not collect full SSNs here unless secure storage has already been added."
+        ),
+        renderWorksheetCard(
+          "2. Filing Status Review",
+          "Simple questions that may affect refund, balance due, and dependent-related credits.",
+          [
+            "Are you single, married, separated, divorced, widowed, or supporting a household?",
+            "Did anyone else live with you during the year?",
+            "Did you pay more than half the cost of keeping up your home?",
+            "Are you unsure about Head of Household status?"
+          ],
+          filingReview
+        ),
+        renderWorksheetCard(
+          "3. Dependent Review",
+          "Each dependent should be reviewed for credit eligibility and support rules.",
+          [
+            "Name",
+            "Relationship",
+            "Age",
+            "Months lived with taxpayer",
+            "Student status",
+            "Whether the dependent had income",
+            "Whether childcare was paid for this dependent",
+            "Whether someone else may claim this dependent"
+          ],
+          hasDependents ? "Possible Child Tax Credit, Other Dependent Credit, Earned Income Credit impact, and dependent eligibility review." : "No dependents were clearly entered in the saved estimate. Ask if any dependent was left out."
+        ),
+        renderWorksheetCard(
+          "4. Income Checklist",
+          "Missing income documents can change the estimate and create IRS matching issues.",
+          [
+            "W-2 wages",
+            "1099-NEC income",
+            "1099-K income",
+            "Gig work income",
+            "Business income",
+            "Interest income",
+            "Dividend income",
+            "Stock or crypto sales",
+            "Retirement income",
+            "Social Security income",
+            "Unemployment income",
+            "Rental income",
+            "Gambling winnings",
+            "Other income"
+          ],
+          isBusiness ? "1099, gig, or business income appears possible and should be reviewed for self-employment tax." : "Confirm all income documents before filing."
+        ),
+        renderWorksheetCard(
+          "5. Deduction Review",
+          "This helps decide whether the standard deduction is likely or itemized/business review is needed.",
+          [
+            "Mortgage interest",
+            "Property taxes",
+            "Charitable contributions",
+            "Medical expenses",
+            "Student loan interest",
+            "IRA contributions",
+            "HSA contributions",
+            "Educator expenses",
+            "Business expenses",
+            "Mileage expenses",
+            "Home office expenses"
+          ],
+          isBusiness ? "Business deductions, mileage, and home office documentation should be reviewed." : "Standard deduction may be likely unless itemized deductions or above-the-line deductions are significant."
+        ),
+        renderWorksheetCard(
+          "6. Credit Review",
+          "Credits can materially change the refund or balance due result.",
+          [
+            "Child Tax Credit",
+            "Other Dependent Credit",
+            "Earned Income Credit",
+            "Child and Dependent Care Credit",
+            "Education credits",
+            "Energy credits",
+            "Saver's Credit",
+            "Premium Tax Credit / Marketplace insurance issue"
+          ],
+          hasDependents ? "Dependent-related credits should be verified before filing." : "Ask whether education, energy, retirement-saver, or Marketplace credits may apply."
+        ),
+        renderWorksheetCard(
+          "7. Health Insurance / Marketplace Review",
+          "Marketplace insurance can create a refund increase or repayment risk.",
+          [
+            "Did you or anyone on your return have Marketplace insurance?",
+            "Did you receive Form 1095-A?",
+            "Did your income change from what was reported to the Marketplace?"
+          ],
+          "If Marketplace coverage applies, Form 1095-A is required and Premium Tax Credit repayment/refund risk should be reviewed."
+        ),
+        renderWorksheetCard(
+          "8. Self-Employment / Business Review",
+          "Complete this section when 1099, gig, business, or self-employment income applies.",
+          [
+            "Type of work or business",
+            "Gross income",
+            "Estimated expenses",
+            "Mileage",
+            "Home office use",
+            "Business bank account",
+            "Estimated tax payments made",
+            "Whether records are organized",
+            "Whether bookkeeping help is needed"
+          ],
+          isBusiness ? "Self-employment tax may apply. Quarterly payments, deductions, mileage logs, and bookkeeping setup should be reviewed." : "Only complete this section if the client had 1099, gig, business, or self-employment income."
+        ),
+        renderWorksheetCard(
+          "9. IRS / Prior-Year Issues",
+          "IRS issues can change the best next step before filing.",
+          [
+            "Did you receive an IRS notice?",
+            "Are you missing W-2s or 1099s?",
+            "Did you file last year?",
+            "Do you owe back taxes?",
+            "Was your refund offset before?",
+            "Did you receive an identity verification letter?",
+            "Do you need IRS transcripts?"
+          ],
+          "Missing documents, prior-year issues, IRS notices, refund offsets, and identity verification letters may require transcript help or a separate review."
+        ),
+        renderWorksheetCard(
+          "10. Client Goal",
+          "The review should connect the numbers to what the client actually wants help with most.",
+          [
+            "Maximize my refund",
+            "Avoid owing next year",
+            "Understand why I owe",
+            "Confirm my credits and dependents",
+            "Review my business/self-employment taxes",
+            "Find missing W-2s or 1099s",
+            "Get help with IRS transcripts",
+            "Prepare and file my tax return",
+            "Improve bookkeeping or business records",
+            "Plan better for next year"
+          ],
+          hasBalanceDue ? "Likely goal: understand why I owe and avoid owing next year." : hasRefund ? "Likely goal: confirm credits, documents, and refund planning." : "Likely goal: verify the estimate and plan better for next year."
+        )
+      ];
+
+      $("strategyWorksheetCards").innerHTML = cards.join("");
+
+      const critical = hasBalanceDue
+        ? "Balance due result needs verification before filing. Review withholding, income documents, credits, and possible payment planning."
+        : withholdingMissing
+          ? "Federal withholding was not clearly available. Verify W-2 Box 2 or other withholding documents before relying on the estimate."
+          : "No critical red flag is confirmed from the saved estimate alone, but final documents must still be reviewed.";
+
+      const warning = isBusiness
+        ? "Self-employment or business income may create self-employment tax, estimated payment needs, and documentation issues."
+        : hasDependents
+          ? "Dependent and credit eligibility should be confirmed before filing."
+          : "Missing documents or unreported income could still change the estimate.";
+
+      const confirmed = hasRefund
+        ? "The saved estimate currently points to a refund position, subject to document verification."
+        : hasBalanceDue
+          ? "The saved estimate currently points to a balance due position, subject to document verification."
+          : "The saved estimate currently appears close to break-even, subject to document verification.";
+
+      const opportunity = isBusiness
+        ? "Review business expenses, mileage records, bookkeeping setup, and estimated payments. Entity or S-Corp planning may be a future discussion, not immediate advice."
+        : hasBalanceDue
+          ? "A W-4 or withholding review may help reduce the chance of the same balance due result next year."
+          : "Refund planning, retirement savings, HSA review, education credits, and dependent credits may create planning opportunities if eligible.";
+
+      const missingRisk = "Confirm all W-2s, 1099s, Marketplace Form 1095-A if applicable, dependent details, and IRS notices before filing.";
+
+      let nextStep = "Review missing documents before filing.";
+      if (isBusiness) nextStep = "Complete a self-employment tax review and organize business records before filing.";
+      else if (hasBalanceDue) nextStep = "Schedule a W-4 / withholding review and verify all income documents before filing.";
+      else if (withholdingMissing) nextStep = "Review missing withholding documents before filing.";
+      else if (hasDependents) nextStep = "Confirm credits and dependents before filing.";
+      else if (hasRefund) nextStep = "Book a tax preparation appointment or schedule a tax strategy follow-up.";
+
+      const exampleSummary = `Based on the worksheet review categories and saved estimate, the main tax strategy concerns appear to be ${hasBalanceDue ? "withholding accuracy, income verification, and balance-due prevention" : isBusiness ? "self-employment reporting, business expense documentation, and estimated payment planning" : hasDependents ? "dependent credit confirmation, missing document risk, and refund accuracy" : "document verification, withholding accuracy, and next-year planning"}. The next best step is to ${nextStep.toLowerCase()}`;
+
+      $("strategyResultSummary").innerHTML = [
+        resultCard("critical", "Critical Red Flags", critical),
+        resultCard("warning", "Warning Items", warning),
+        resultCard("confirmed", "Confirmed Items", confirmed),
+        resultCard("opportunity", "Money-Saving Opportunities", opportunity),
+        resultCard("missing", "Missing Document Risks", missingRisk),
+        resultCard("next", "Recommended Next Step", nextStep + " " + exampleSummary)
+      ].join("");
+    }
     async function loadReport(){
       const leadId = window.location.pathname.split("/").filter(Boolean).pop();
 
@@ -961,6 +1407,17 @@
         txt("keyStateTax", stateTax ? money(stateTax) : "Verify state documents");
 
         renderAlerts(buildAlerts({combinedNet, fedWithheld, dependents, selfEmployment}));
+        renderClientTaxStrategyWorksheet({
+          name,
+          email: strValue(contact.email, lead.email, ""),
+          phone: strValue(contact.phone, lead.phone, ""),
+          year,
+          statusKey,
+          combinedNet,
+          fedWithheld,
+          dependents,
+          selfEmployment
+        });
         const reportMode = combinedNet < 0 ? "balance" : combinedNet > 0 ? "refund" : "breakEven";
 
         if (reportMode === "balance") {
@@ -991,6 +1448,9 @@
   </script>
 </body>
 </html>
+
+
+
 
 
 
