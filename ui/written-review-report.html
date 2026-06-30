@@ -346,6 +346,42 @@
       color: #fff;
     }
 
+    .worksheet-action-row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 12px 0 14px;
+    }
+
+    .worksheet-action-button.completed {
+      background:#047857;
+      box-shadow:0 9px 18px rgba(4,120,87,.20);
+    }
+    .worksheet-action-button {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      border-radius:999px;
+      padding:11px 15px;
+      font-size:13px;
+      font-weight:950;
+      background:#dc2626;
+      color:#fff;
+      box-shadow:0 9px 18px rgba(220,38,38,.20);
+    }
+
+    .worksheet-action-note {
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      color:#0f2c56;
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:850;
+      line-height:1.4;
+      flex:1 1 260px;
+    }
     .worksheet-intro {
       border-left: 7px solid #dc2626;
       background: #fff7f7;
@@ -693,6 +729,13 @@
           <div class="section-body">
             <div class="worksheet-intro">
               Your paid Written Red Flag Review includes more than a printed estimate. This Client Tax Strategy Worksheet helps identify possible missing credits, deduction opportunities, filing status concerns, withholding problems, self-employment issues, IRS transcript needs, and next-year tax planning opportunities based on the information you provide.
+            </div>
+
+            <div class="worksheet-action-row">
+              <a class="worksheet-action-button" id="completeStrategyWorksheetLink" href="#">Complete Worksheet Online</a>
+              <div class="worksheet-action-note">
+                Client answers save to the paid review record. The free estimate stays simple and does not include this worksheet.
+              </div>
             </div>
 
             <div class="worksheet-info-grid">
@@ -1311,6 +1354,12 @@
         resultCard("next", "Recommended Next Step", nextStep + " " + exampleSummary)
       ].join("");
     }
+    function wireClientTaxStrategyWorksheetLink(){
+      const link = $("completeStrategyWorksheetLink");
+      if (!link) return;
+      const leadId = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
+      link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(leadId);
+    }
     async function loadReport(){
       const leadId = window.location.pathname.split("/").filter(Boolean).pop();
 
@@ -1446,8 +1495,77 @@
     }
     loadReport();
   </script>
+<script id="GBS-FIX-CLIENT-TAX-STRATEGY-WORKSHEET-LINK">
+(function(){
+  function fixWorksheetLink(){
+    var link = document.getElementById("completeStrategyWorksheetLink");
+    if (!link) return;
+
+    var parts = window.location.pathname.split("/").filter(Boolean);
+    var leadId = parts[parts.length - 1] || "";
+
+    if (!leadId) return;
+
+    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+    link.addEventListener("click", function(e){
+      if (!link.href || link.getAttribute("href") === "#") {
+        e.preventDefault();
+        window.location.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", fixWorksheetLink);
+  setTimeout(fixWorksheetLink, 300);
+  setTimeout(fixWorksheetLink, 900);
+})();
+</script>
+<script id="GBS-WORKSHEET-COMPLETED-BUTTON-STATUS">
+(function(){
+  async function updateWorksheetButtonStatus(){
+    var link = document.getElementById("completeStrategyWorksheetLink");
+    if (!link) return;
+
+    var parts = window.location.pathname.split("/").filter(Boolean);
+    var leadId = parts[parts.length - 1] || "";
+    if (!leadId) return;
+
+    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+
+    try {
+      var res = await fetch("/api/leads");
+      var data = await res.json();
+      var leads = data && Array.isArray(data.leads) ? data.leads : [];
+      var lead = leads.find(function(item){
+        return String(item.leadId || item.id || item.estimateId || "").trim() === String(decodeURIComponent(leadId)).trim();
+      });
+      var request = lead && (lead.Request || lead.request);
+
+      if (request && request.clientTaxStrategyWorksheetCompletedAt) {
+        link.textContent = "Worksheet Completed — View Locked Worksheet";
+        link.classList.add("completed");
+
+        var note = link.parentElement && link.parentElement.querySelector(".worksheet-action-note");
+        if (note) {
+          note.textContent = "Worksheet responses have been submitted and locked to prevent duplicate strategy records. Contact support if changes are needed.";
+        }
+      }
+    } catch (err) {
+      console.warn("Could not check worksheet completion status.", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", updateWorksheetButtonStatus);
+  setTimeout(updateWorksheetButtonStatus, 500);
+  setTimeout(updateWorksheetButtonStatus, 1200);
+})();
+</script>
 </body>
 </html>
+
+
+
+
 
 
 

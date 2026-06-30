@@ -1,0 +1,900 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Tax Strategy Worksheet</title>
+  <style>
+    :root {
+      --navy:#0f2c56;
+      --blue:#1d4ed8;
+      --red:#dc2626;
+      --yellow:#f59e0b;
+      --green:#047857;
+      --purple:#7c3aed;
+      --slate:#475569;
+      --light:#f8fafc;
+      --border:#dbeafe;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg,#eff6ff 0%,#f8fafc 40%,#ffffff 100%);
+      color:#0f172a;
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg,#0f2c56 0%,#1e3a8a 70%,#111827 100%);
+      color:#fff;
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow: 0 16px 36px rgba(15,44,86,.22);
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin:0 0 8px;
+      font-size: 34px;
+      line-height:1.08;
+    }
+
+    .hero p {
+      margin:0;
+      color:#dbeafe;
+      font-size: 15px;
+      line-height:1.5;
+      font-weight: 800;
+      max-width: 900px;
+    }
+
+    .notice {
+      border-left: 8px solid var(--red);
+      background:#fff7f7;
+      color:#7f1d1d;
+      border-radius:16px;
+      padding:14px 16px;
+      font-weight:850;
+      line-height:1.45;
+      margin-bottom:16px;
+    }
+
+    .client-strip {
+      display:grid;
+      grid-template-columns: repeat(5,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .client-box {
+      background:#fff;
+      border:1px solid #dbeafe;
+      border-radius:14px;
+      padding:12px;
+      box-shadow:0 8px 18px rgba(15,44,86,.06);
+    }
+
+    .client-box .label {
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.45px;
+      color:#64748b;
+      font-weight:950;
+      margin-bottom:5px;
+    }
+
+    .client-box .value {
+      font-size:14px;
+      color:var(--navy);
+      font-weight:950;
+      word-break:break-word;
+    }
+
+    .section {
+      background:#fff;
+      border:1px solid #dbeafe;
+      border-radius:18px;
+      margin-bottom:14px;
+      overflow:hidden;
+      box-shadow:0 10px 22px rgba(15,44,86,.06);
+    }
+
+    .section-head {
+      background:#f8fafc;
+      border-bottom:1px solid #e2e8f0;
+      padding:14px 16px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .section h2 {
+      margin:0;
+      color:var(--navy);
+      font-size:21px;
+    }
+
+    .section .hint {
+      margin:4px 0 0;
+      color:#64748b;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:11px;
+      font-weight:950;
+      white-space:nowrap;
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+
+    .body {
+      padding:16px;
+    }
+
+    .grid-2 {
+      display:grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .grid-3 {
+      display:grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+
+    label {
+      display:block;
+      font-size:12px;
+      color:#334155;
+      font-weight:950;
+      margin-bottom:5px;
+    }
+
+    input, select, textarea {
+      width:100%;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      padding:10px 11px;
+      font-size:14px;
+      font-weight:750;
+      color:#0f172a;
+      background:#fff;
+    }
+
+    textarea {
+      min-height:88px;
+      resize:vertical;
+      line-height:1.4;
+    }
+
+    .check-grid {
+      display:grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .check {
+      border:1px solid #e2e8f0;
+      border-radius:12px;
+      background:#f8fafc;
+      padding:9px 10px;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      font-size:13px;
+      font-weight:850;
+      color:#334155;
+      line-height:1.25;
+    }
+
+    .check input {
+      width:auto;
+      margin-top:1px;
+    }
+
+    .dependent-row {
+      border:1px solid #e2e8f0;
+      border-radius:14px;
+      padding:12px;
+      background:#f8fafc;
+      margin-bottom:10px;
+    }
+
+    .warning {
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a3412;
+      border-radius:14px;
+      padding:12px;
+      font-size:13px;
+      line-height:1.4;
+      font-weight:850;
+      margin-top:10px;
+    }
+
+    .actions {
+      position:sticky;
+      bottom:0;
+      background:rgba(255,255,255,.96);
+      border-top:1px solid #e2e8f0;
+      padding:14px 0;
+      margin-top:18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .action-inner {
+      max-width:1120px;
+      margin:0 auto;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      padding:0 16px;
+    }
+
+    .status {
+      font-weight:950;
+      color:#475569;
+      font-size:13px;
+    }
+
+    .btn {
+      border:0;
+      border-radius:999px;
+      padding:12px 18px;
+      font-size:14px;
+      font-weight:950;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+
+    .btn-primary {
+      background:#dc2626;
+      color:#fff;
+      box-shadow:0 10px 22px rgba(220,38,38,.25);
+    }
+
+    .btn-secondary {
+      background:#0f2c56;
+      color:#fff;
+    }
+
+    .btn-light {
+      background:#eff6ff;
+      color:#0f2c56;
+      border:1px solid #bfdbfe;
+    }
+
+    .success {
+      display:none;
+      background:#ecfdf5;
+      border:1px solid #bbf7d0;
+      color:#065f46;
+      border-radius:16px;
+      padding:14px;
+      font-weight:950;
+      margin-bottom:14px;
+    }
+
+    .error {
+      display:none;
+      background:#fff1f2;
+      border:1px solid #fecdd3;
+      color:#991b1b;
+      border-radius:16px;
+      padding:14px;
+      font-weight:950;
+      margin-bottom:14px;
+    }
+
+    @media (max-width: 900px) {
+      .client-strip, .grid-2, .grid-3, .check-grid {
+        grid-template-columns:1fr;
+      }
+      .hero h1 { font-size:27px; }
+      .action-inner {
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .btn { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Client Tax Strategy Worksheet</h1>
+      <p>
+        This paid-review worksheet helps identify possible missing credits, deduction opportunities, filing status concerns,
+        withholding problems, self-employment issues, IRS transcript needs, and next-year tax planning opportunities.
+      </p>
+    </section>
+
+    <div class="notice">
+      This worksheet supports your paid Written Red Flag Review. It is not an official IRS form, not a final tax return, and does not replace professional tax preparation. Do not enter full SSNs here. Use last four digits only if identity confirmation is needed.
+    </div>
+
+    <div class="success" id="successBox">
+      Worksheet saved. Your answers were added to your paid Written Red Flag Review record.
+    </div>
+    <div class="success" id="lockedBox" style="display:none;">
+      Worksheet already submitted. Your saved answers are attached to this paid Written Red Flag Review record. Contact support if changes are needed.
+    </div>
+    <div class="error" id="errorBox">
+      Could not save the worksheet. Please try again.
+    </div>
+
+    <div class="client-strip">
+      <div class="client-box"><div class="label">Client</div><div class="value" id="clientName">Loading...</div></div>
+      <div class="client-box"><div class="label">Email</div><div class="value" id="clientEmail">Loading...</div></div>
+      <div class="client-box"><div class="label">Phone</div><div class="value" id="clientPhone">Loading...</div></div>
+      <div class="client-box"><div class="label">Tax Year</div><div class="value" id="clientYear">Loading...</div></div>
+      <div class="client-box"><div class="label">Filing Status</div><div class="value" id="clientStatus">Loading...</div></div>
+    </div>
+
+    <form id="worksheetForm">
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>1. Taxpayer Information</h2>
+            <p class="hint">Confirm the basic information. Mailing address is optional unless tax prep, transcript help, or mailing is requested.</p>
+          </div>
+          <span class="badge">Basic Info</span>
+        </div>
+        <div class="body grid-2">
+          <div><label>Full name</label><input name="fullName" id="fullName" /></div>
+          <div><label>Email</label><input name="email" id="email" type="email" /></div>
+          <div><label>Phone</label><input name="phone" id="phone" /></div>
+          <div><label>Last four digits only, if needed</label><input name="lastFour" maxlength="4" placeholder="Optional" /></div>
+          <div><label>Mailing address</label><input name="mailingAddress" placeholder="Optional unless tax preparation, transcript help, or mailing is requested" /></div>
+          <div>
+            <label>Does your filing status need review?</label>
+            <select name="filingStatusNeedsReview">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>2. Filing Status Review</h2>
+            <p class="hint">These answers may affect Head of Household, married filing status, dependents, and credits.</p>
+          </div>
+          <span class="badge">Status</span>
+        </div>
+        <div class="body grid-2">
+          <div>
+            <label>Which best describes you during the tax year?</label>
+            <select name="lifeStatus">
+              <option value="">Select one</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Separated</option>
+              <option>Divorced</option>
+              <option>Widowed</option>
+              <option>Supporting a household</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Are you unsure about Head of Household status?</label>
+            <select name="unsureHeadOfHousehold">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Did anyone else live with you during the year?</label>
+            <select name="othersLivedWithYou">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Part of the year</option>
+            </select>
+          </div>
+          <div>
+            <label>Did you pay more than half the cost of keeping up your home?</label>
+            <select name="paidMoreThanHalfHome">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>3. Dependent Review</h2>
+            <p class="hint">Enter up to three dependents for this worksheet. More can be reviewed during tax preparation.</p>
+          </div>
+          <span class="badge">Dependents</span>
+        </div>
+        <div class="body">
+          <div id="dependentsArea"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>4. Income Checklist</h2>
+            <p class="hint">Select every income type that may apply. Missing income documents can change the result.</p>
+          </div>
+          <span class="badge">Income</span>
+        </div>
+        <div class="body check-grid" id="incomeChecks"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>5. Deduction Review</h2>
+            <p class="hint">These items may affect whether standard deduction, itemized deduction, or business deduction review is needed.</p>
+          </div>
+          <span class="badge">Deductions</span>
+        </div>
+        <div class="body check-grid" id="deductionChecks"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>6. Credit Review</h2>
+            <p class="hint">Credits can materially affect refund or balance due results.</p>
+          </div>
+          <span class="badge">Credits</span>
+        </div>
+        <div class="body check-grid" id="creditChecks"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>7. Health Insurance / Marketplace Review</h2>
+            <p class="hint">Marketplace coverage may require Form 1095-A and Premium Tax Credit review.</p>
+          </div>
+          <span class="badge">Marketplace</span>
+        </div>
+        <div class="body grid-3">
+          <div>
+            <label>Marketplace insurance?</label>
+            <select name="marketplaceInsurance">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Received Form 1095-A?</label>
+            <select name="received1095A">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Did income change from Marketplace estimate?</label>
+            <select name="marketplaceIncomeChanged">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="businessSection">
+        <div class="section-head">
+          <div>
+            <h2>8. Self-Employment / Business Review</h2>
+            <p class="hint">Complete this section if you had 1099, gig, business, or self-employment income.</p>
+          </div>
+          <span class="badge">Business</span>
+        </div>
+        <div class="body grid-2">
+          <div><label>Type of work or business</label><input name="businessType" /></div>
+          <div><label>Gross business / 1099 / gig income</label><input name="businessGrossIncome" placeholder="$0" /></div>
+          <div><label>Estimated expenses</label><input name="businessExpenses" placeholder="$0" /></div>
+          <div><label>Mileage</label><input name="businessMileage" placeholder="Miles, if any" /></div>
+          <div>
+            <label>Used part of home for business?</label>
+            <select name="homeOfficeUse">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Business bank account?</label>
+            <select name="businessBankAccount">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not yet</option>
+            </select>
+          </div>
+          <div>
+            <label>Estimated tax payments made?</label>
+            <select name="estimatedPaymentsMade">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Are records organized?</label>
+            <select name="recordsOrganized">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Somewhat</option>
+            </select>
+          </div>
+          <div>
+            <label>Bookkeeping help needed?</label>
+            <select name="bookkeepingHelpNeeded">
+              <option value="">Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Maybe</option>
+            </select>
+          </div>
+        </div>
+        <div class="body" style="padding-top:0;">
+          <div class="warning">
+            Entity or S-Corp review may be a future planning discussion. This worksheet does not give legal or tax election advice.
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>9. IRS / Prior-Year Issues</h2>
+            <p class="hint">These items may require transcript help, notice review, or prior-year follow-up.</p>
+          </div>
+          <span class="badge">IRS Issues</span>
+        </div>
+        <div class="body check-grid" id="irsChecks"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>10. Client Goal</h2>
+            <p class="hint">Select the main thing you want help with most.</p>
+          </div>
+          <span class="badge">Goal</span>
+        </div>
+        <div class="body">
+          <div class="check-grid" id="goalChecks"></div>
+          <div style="margin-top:12px;">
+            <label>Anything else you want us to know?</label>
+            <textarea name="clientComments" placeholder="Tell us what you are most concerned about or what you want reviewed."></textarea>
+          </div>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <div class="actions">
+    <div class="action-inner">
+      <div class="status" id="saveStatus">Complete what you can. You can submit even if some items do not apply.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn-light" id="backToReport" href="#">Back to Paid Review</a>
+        <button class="btn btn-primary" id="saveWorksheetBtn" type="submit" form="worksheetForm">Save Tax Strategy Worksheet</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const leadId = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
+
+    const $ = (id) => document.getElementById(id);
+    const val = (name) => document.querySelector(`[name="${name}"]`)?.value?.trim() || "";
+    const checkedValues = (group) => Array.from(document.querySelectorAll(`[data-group="${group}"]:checked`)).map(x => x.value);
+
+    function setText(id, value){ const el = $(id); if (el) el.textContent = value || "Not provided"; }
+    function setValue(name, value){ const el = document.querySelector(`[name="${name}"]`); if (el && value) el.value = value; }
+
+    function checkBox(group, value){
+      return `<label class="check"><input type="checkbox" data-group="${group}" value="${value}"><span>${value}</span></label>`;
+    }
+
+    function buildChecks(id, group, items){
+      $(id).innerHTML = items.map(item => checkBox(group, item)).join("");
+    }
+
+    function buildDependents(){
+      const area = $("dependentsArea");
+      let html = "";
+      for (let i = 1; i <= 3; i++) {
+        html += `
+          <div class="dependent-row">
+            <div style="font-weight:950;color:#0f2c56;margin-bottom:9px;">Dependent ${i}</div>
+            <div class="grid-3">
+              <div><label>Name</label><input name="dep${i}Name"></div>
+              <div><label>Relationship</label><input name="dep${i}Relationship"></div>
+              <div><label>Age</label><input name="dep${i}Age"></div>
+              <div><label>Months lived with taxpayer</label><input name="dep${i}Months"></div>
+              <div>
+                <label>Student status</label>
+                <select name="dep${i}Student"><option value="">Select</option><option>Yes</option><option>No</option><option>Not sure</option></select>
+              </div>
+              <div>
+                <label>Had income?</label>
+                <select name="dep${i}Income"><option value="">Select</option><option>Yes</option><option>No</option><option>Not sure</option></select>
+              </div>
+              <div>
+                <label>Childcare paid?</label>
+                <select name="dep${i}Childcare"><option value="">Select</option><option>Yes</option><option>No</option><option>Not sure</option></select>
+              </div>
+              <div>
+                <label>Could someone else claim?</label>
+                <select name="dep${i}OtherClaim"><option value="">Select</option><option>Yes</option><option>No</option><option>Not sure</option></select>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      area.innerHTML = html;
+    }
+
+    function collectDependents(){
+      const deps = [];
+      for (let i = 1; i <= 3; i++) {
+        const name = val(`dep${i}Name`);
+        const relationship = val(`dep${i}Relationship`);
+        const age = val(`dep${i}Age`);
+        const months = val(`dep${i}Months`);
+        const student = val(`dep${i}Student`);
+        const income = val(`dep${i}Income`);
+        const childcare = val(`dep${i}Childcare`);
+        const otherClaim = val(`dep${i}OtherClaim`);
+        if (name || relationship || age || months || student || income || childcare || otherClaim) {
+          deps.push({ name, relationship, age, months, student, income, childcare, otherClaim });
+        }
+      }
+      return deps;
+    }
+
+    function buildWorksheetPayload(){
+      const selectedGoals = checkedValues("goals");
+      return {
+        completedAt: new Date().toISOString(),
+        taxpayerInformation: {
+          fullName: val("fullName"),
+          email: val("email"),
+          phone: val("phone"),
+          lastFour: val("lastFour"),
+          mailingAddress: val("mailingAddress"),
+          filingStatusNeedsReview: val("filingStatusNeedsReview")
+        },
+        filingStatusReview: {
+          lifeStatus: val("lifeStatus"),
+          unsureHeadOfHousehold: val("unsureHeadOfHousehold"),
+          othersLivedWithYou: val("othersLivedWithYou"),
+          paidMoreThanHalfHome: val("paidMoreThanHalfHome")
+        },
+        dependents: collectDependents(),
+        incomeChecklist: checkedValues("income"),
+        deductionReview: checkedValues("deductions"),
+        creditReview: checkedValues("credits"),
+        marketplaceReview: {
+          marketplaceInsurance: val("marketplaceInsurance"),
+          received1095A: val("received1095A"),
+          marketplaceIncomeChanged: val("marketplaceIncomeChanged")
+        },
+        selfEmploymentBusinessReview: {
+          businessType: val("businessType"),
+          businessGrossIncome: val("businessGrossIncome"),
+          businessExpenses: val("businessExpenses"),
+          businessMileage: val("businessMileage"),
+          homeOfficeUse: val("homeOfficeUse"),
+          businessBankAccount: val("businessBankAccount"),
+          estimatedPaymentsMade: val("estimatedPaymentsMade"),
+          recordsOrganized: val("recordsOrganized"),
+          bookkeepingHelpNeeded: val("bookkeepingHelpNeeded")
+        },
+        irsPriorYearIssues: checkedValues("irs"),
+        clientGoal: selectedGoals[0] || "",
+        clientGoals: selectedGoals,
+        clientComments: val("clientComments")
+      };
+    }
+
+    function lockSubmittedWorksheet(){
+      const form = $("worksheetForm");
+      const saveBtn = $("saveWorksheetBtn");
+
+      if (form) {
+        form.querySelectorAll("input, select, textarea").forEach(function(el){
+          el.disabled = true;
+        });
+      }
+
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Worksheet Already Submitted";
+        saveBtn.style.background = "#64748b";
+        saveBtn.style.boxShadow = "none";
+        saveBtn.style.cursor = "not-allowed";
+      }
+
+      if ($("lockedBox")) $("lockedBox").style.display = "block";
+      if ($("saveStatus")) $("saveStatus").textContent = "Worksheet is locked after submission to prevent duplicate strategy records.";
+    }
+
+    async function getSavedWorksheetFromLeadList(){
+      try {
+        const res = await fetch("/api/leads");
+        const data = await res.json();
+        const leads = data && Array.isArray(data.leads) ? data.leads : [];
+        const lead = leads.find(function(item){
+          return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+        });
+        const request = lead && (lead.Request || lead.request);
+        return request && request.clientTaxStrategyWorksheet ? request.clientTaxStrategyWorksheet : null;
+      } catch (err) {
+        console.warn("Could not check saved worksheet from /api/leads.", err);
+        return null;
+      }
+    }
+    async function loadLead(){
+      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId);
+
+      const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error((data && data.error) || "Could not load client.");
+
+      const lead = data.lead || {};
+      const contact = lead.contact || {};
+      const taxData = lead.taxData || {};
+      const request = lead.Request || lead.request || {};
+      let saved = request.clientTaxStrategyWorksheet || null;
+
+      if (!saved) {
+        saved = await getSavedWorksheetFromLeadList();
+      }
+
+      const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "Client";
+      const email = contact.email || lead.email || "";
+      const phone = contact.phone || lead.phone || "";
+      const year = taxData.taxYear || lead.estimateSummary?.taxYear || "Not provided";
+      const status = taxData.filingStatus || taxData.status || lead.estimateSummary?.filingStatus || "Not provided";
+
+      setText("clientName", name);
+      setText("clientEmail", email);
+      setText("clientPhone", phone);
+      setText("clientYear", year);
+      setText("clientStatus", status);
+
+      setValue("fullName", saved?.taxpayerInformation?.fullName || name);
+      setValue("email", saved?.taxpayerInformation?.email || email);
+      setValue("phone", saved?.taxpayerInformation?.phone || phone);
+
+      if (saved) {
+        lockSubmittedWorksheet();
+      }
+    }
+
+    async function saveWorksheet(e){
+      e.preventDefault();
+      $("successBox").style.display = "none";
+      $("errorBox").style.display = "none";
+      $("saveStatus").textContent = "Saving worksheet...";
+
+      if ($("saveWorksheetBtn") && $("saveWorksheetBtn").disabled) {
+        $("saveStatus").textContent = "Worksheet already submitted. Contact support if changes are needed.";
+        return;
+      }
+
+      const payload = buildWorksheetPayload();
+
+      try {
+        const res = await fetch("/api/leads/" + encodeURIComponent(leadId), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            Request: {
+              clientTaxStrategyWorksheet: payload,
+              clientTaxStrategyWorksheetCompletedAt: payload.completedAt,
+              clientTaxStrategyWorksheetStatus: "Completed"
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error((data && data.error) || "Save failed.");
+
+        $("successBox").style.display = "block";
+        lockSubmittedWorksheet();
+        $("saveStatus").textContent = "Worksheet saved successfully and locked.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error(err);
+        $("errorBox").style.display = "block";
+        $("saveStatus").textContent = "Worksheet was not saved.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    buildDependents();
+
+    buildChecks("incomeChecks", "income", [
+      "W-2 wages", "1099-NEC income", "1099-K income", "Gig work income", "Business income", "Interest income",
+      "Dividend income", "Stock or crypto sales", "Retirement income", "Social Security income", "Unemployment income",
+      "Rental income", "Gambling winnings", "Other income"
+    ]);
+
+    buildChecks("deductionChecks", "deductions", [
+      "Mortgage interest", "Property taxes", "Charitable contributions", "Medical expenses", "Student loan interest",
+      "IRA contributions", "HSA contributions", "Educator expenses", "Business expenses", "Mileage expenses", "Home office expenses"
+    ]);
+
+    buildChecks("creditChecks", "credits", [
+      "Child Tax Credit", "Other Dependent Credit", "Earned Income Credit", "Child and Dependent Care Credit",
+      "Education credits", "Energy credits", "Saver's Credit", "Premium Tax Credit / Marketplace insurance issue"
+    ]);
+
+    buildChecks("irsChecks", "irs", [
+      "Received an IRS notice", "Missing W-2s or 1099s", "Did not file last year", "Owe back taxes",
+      "Refund was offset before", "Received identity verification letter", "Need IRS transcripts"
+    ]);
+
+    buildChecks("goalChecks", "goals", [
+      "Maximize my refund", "Avoid owing next year", "Understand why I owe", "Confirm my credits and dependents",
+      "Review my business/self-employment taxes", "Find missing W-2s or 1099s", "Get help with IRS transcripts",
+      "Prepare and file my tax return", "Improve bookkeeping or business records", "Plan better for next year"
+    ]);
+
+    $("worksheetForm").addEventListener("submit", saveWorksheet);
+
+    loadLead().catch((err) => {
+      console.error(err);
+      $("errorBox").textContent = "Could not load this worksheet. Please return to your paid review link and try again.";
+      $("errorBox").style.display = "block";
+      $("saveStatus").textContent = "Could not load worksheet.";
+    });
+  </script>
+</body>
+</html>
+
+

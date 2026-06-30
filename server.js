@@ -831,6 +831,18 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
       });
     }
 
+    if (!localLeads.length) {
+      localLeads = readLeads();
+    }
+
+    const localLeadForRequest = findLeadById(localLeads);
+    const mergedRequest =
+      foundLead.Request ||
+      foundLead.request ||
+      localLeadForRequest?.Request ||
+      localLeadForRequest?.request ||
+      null;
+
     return res.status(200).json({
       ok: true,
       source: foundSource,
@@ -842,7 +854,9 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
         notes: foundLead.notes || "",
         estimateSummary: foundLead.estimateSummary || null,
         taxData: foundLead.taxData || null,
-        contact: foundLead.contact || null
+        contact: foundLead.contact || null,
+        Request: mergedRequest,
+        request: mergedRequest
       }
     });
   } catch (err) {
@@ -1029,6 +1043,12 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 });
 
 
+// =============================================================================
+// GET /client-tax-strategy-worksheet/:leadId
+// =============================================================================
+app.get("/client-tax-strategy-worksheet/:leadId", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "client-tax-strategy-worksheet.html"));
+});
 // =============================================================================
 // GET /tax-prep-request/:leadId
 // =============================================================================
@@ -1595,6 +1615,8 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
 
 
 
