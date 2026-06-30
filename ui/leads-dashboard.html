@@ -2619,21 +2619,114 @@
           }
 
           if (selectedActionQueue === "StrategyReview" && !focusedLeadId) {
-            const strategyRows = visibleLeads.map((lead) => {
+            function getWrittenReviewAutopilot(lead) {
               const notesText = String(lead.notes || "").toLowerCase();
               const statusText = String(lead.status || "New");
+              const request = lead.Request || lead.request || {};
+              const worksheet = request.clientTaxStrategyWorksheet || null;
 
+              const worksheetCompleted = Boolean(
+                request.clientTaxStrategyWorksheetCompletedAt ||
+                worksheet ||
+                String(request.clientTaxStrategyWorksheetStatus || "").toLowerCase() === "completed"
+              );
+
+              const paymentConfirmed = Boolean(
+                statusText === "Written Review - Paid / Needs Written Review" ||
+                String(statusText).toLowerCase().includes("written review - paid") ||
+                String(statusText).toLowerCase().includes("payment confirmed") ||
+                notesText.includes("payment confirmed") ||
+                notesText.includes("payment succeeded") ||
+                notesText.includes("successful $29 payment")
+              );
+
+              const paymentPending = Boolean(
+                statusText === "Written Review - Payment Pending" ||
+                String(statusText).toLowerCase().includes("payment pending") ||
+                String(statusText).toLowerCase().includes("not verified")
+              );
+
+              const completed = Boolean(
+                statusText === "Written Review - Completed" ||
+                String(statusText).toLowerCase().includes("written review - completed") ||
+                request.writtenReviewCompletedAt ||
+                request.writtenReviewDeliveredAt
+              );
+
+              const concerns = [];
+
+              const irsIssues = Array.isArray(worksheet?.irsPriorYearIssues)
+                ? worksheet.irsPriorYearIssues
+                : [];
+
+              irsIssues.forEach(function(issue) {
+                if (issue) concerns.push(issue);
+              });
+
+              if (worksheet?.taxpayerInformation?.filingStatusNeedsReview === "Yes") {
+                concerns.push("Filing status needs review");
+              }
+
+              if (worksheet?.filingStatusReview?.unsureHeadOfHousehold === "Yes") {
+                concerns.push("Possible Head of Household issue");
+              }
+
+              if (
+                worksheet?.marketplaceReview?.marketplaceInsurance === "Yes" &&
+                worksheet?.marketplaceReview?.received1095A !== "Yes"
+              ) {
+                concerns.push("Marketplace / 1095-A issue");
+              }
+
+              if (
+                worksheet?.selfEmploymentBusinessReview?.businessType &&
+                !worksheet?.selfEmploymentBusinessReview?.businessExpenses
+              ) {
+                concerns.push("Business income needs expense review");
+              }
+
+              if (completed) {
+                return {
+                  status: "Completed",
+                  next: "No action needed",
+                  color: "#047857"
+                };
+              }
+
+              if (!paymentConfirmed || paymentPending) {
+                return {
+                  status: "Needs Payment",
+                  next: "No Cedric action until payment",
+                  color: "#9a3412"
+                };
+              }
+
+              if (paymentConfirmed && !worksheetCompleted) {
+                return {
+                  status: "Waiting on Worksheet",
+                  next: "System waiting for client worksheet",
+                  color: "#92400e"
+                };
+              }
+
+              if (paymentConfirmed && worksheetCompleted && concerns.length) {
+                return {
+                  status: "Cedric Review Needed",
+                  next: concerns.slice(0, 2).join("; "),
+                  color: "#b91c1c"
+                };
+              }
+
+              return {
+                status: "Ready to Auto Prepare",
+                next: "Payment + worksheet received",
+                color: "#0f766e"
+              };
+            }
+
+            const strategyRows = visibleLeads.map((lead) => {
               const handled = isOfficeQueueHandled(lead.leadId, "Written Review Requests Worklist");
-
-              const strategyStatusText =
-                statusText === "Written Review - Paid / Needs Written Review"
-                  ? "Paid / needs written review"
-                  : statusText === "Written Review - Completed"
-                    ? "Completed"
-                    : statusText === "Written Review - Payment Pending"
-                      ? "Payment pending / not verified"
-                      : "Requested / clicked";
-
+              const auto = getWrittenReviewAutopilot(lead);
               const combinedNet = getLeadCombinedNet(lead);
 
               const estimateText =
@@ -2643,55 +2736,51 @@
                     ? `${esc(lead?.estimateSummary?.totalLine || "Possible balance due")}`
                     : "Review estimate details";
 
-              const latestStrategyAction =
-                notesText.includes("buy written review")
-                  ? "Client clicked Buy Written Review"
-                  : notesText.includes("get written $29 Written Review")
-                    ? "Client requested $29 written Written Review"
-                    : "Written Review request";
-
               return `
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr 1.35fr;gap:10px;align-items:center;border-top:1px solid #e2e8f0;padding:12px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
                     <div style="font-size:11px;color:#64748b;font-weight:750;">${esc(lead.leadId)}</div>
                   </div>
 
-                  <div style="color:#334155;font-weight:850;">
-                    ${esc(strategyStatusText)}
+                  <div style="font-weight:950;color:${auto.color};line-height:1.3;">
+                    ${esc(auto.status)}
                   </div>
 
                   <div style="color:#334155;font-weight:850;">
                     ${estimateText}
                   </div>
 
-                  <div style="color:#334155;font-weight:850;">
-                    ${esc(latestStrategyAction)}
+                  <div style="color:#334155;font-weight:850;line-height:1.35;">
+                    ${esc(auto.next)}
                   </div>
 
-                  <button
-                    type="button"
-                    onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Written Review Requests Worklist')"
-                    style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:7px 10px;font-size:12px;font-weight:950;text-align:center;box-shadow:none;"
-                  >
-                    ${handled ? "- Handled" : "Mark Done"}
-                  </button>
+                  <div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap;">
+                    <button
+                      type="button"
+                      onclick="event.stopPropagation(); window.open('/written-review-report/${encodeURIComponent(lead.leadId)}','_blank')"
+                      style="background:#f97316;color:#111827;border:1px solid #c2410c;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;box-shadow:none;"
+                    >
+                      Prepare Report
+                    </button>
 
-                  <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;">
-  <button
-    type="button"
-    onclick="event.stopPropagation(); window.open('/written-review-report/${encodeURIComponent(lead.leadId)}','_blank')"
-    style="background:#f97316;color:#111827;border:1px solid #c2410c;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;box-shadow:none;"
-  >
-    Prepare Report
-  </button><button
-                    type="button"
-                    onclick="setDashboardFilters({ status: 'All', action: 'StrategyReview', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'StrategyReview' })"
-                    style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
-                  >
-                    Open
-                  </button></div>
+                    <button
+                      type="button"
+                      onclick="setDashboardFilters({ status: 'All', action: 'StrategyReview', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'StrategyReview' })"
+                      style="background:#0f2c56;color:#ffffff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:950;box-shadow:none;"
+                    >
+                      Open
+                    </button>
+
+                    <button
+                      type="button"
+                      onclick="toggleOfficeQueueHandled('${esc(lead.leadId)}', 'Written Review Requests Worklist')"
+                      style="background:${handled ? "#047857" : "#ffffff"};color:${handled ? "#ffffff" : "#0f2c56"};border:2px solid ${handled ? "#065f46" : "#0f2c56"};border-radius:10px;padding:8px 10px;font-size:12px;font-weight:950;box-shadow:none;"
+                    >
+                      ${handled ? "Done" : "Mark Done"}
+                    </button>
+                  </div>
                 </div>
               `;
             }).join("");
@@ -2704,30 +2793,28 @@
                       Written Review Requests Worklist
                     </div>
                     <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
-                      $29 written tax estimate review requests only. Click Open to work one review.
+                      $29 written tax estimate review requests only. Autopilot shows what needs action.
                     </div>
                   </div>
 
-                  <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 11px;">
-                    ${visibleLeads.length} Written Review${visibleLeads.length === 1 ? "" : "s"}
+                  <div style="font-size:13px;color:#9a3412;font-weight:950;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:8px 13px;">
+                    ${strategyRows ? visibleLeads.length : 0} Written Review${visibleLeads.length === 1 ? "" : "s"}
                   </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr auto auto;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr 1.35fr;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px;font-size:11px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">
                   <div>Client</div>
                   <div>Status</div>
                   <div>Estimate</div>
                   <div>Next Step</div>
-                  <div>Done</div>
-                  <div>Action</div>
+                  <div style="text-align:right;">Actions</div>
                 </div>
 
-                ${strategyRows || `<div style="padding:12px 0;color:#64748b;font-weight:800;">No Written Review requests found.</div>`}
+                ${strategyRows || `<div style="padding:14px;color:#64748b;font-weight:850;">No written review requests found.</div>`}
               </div>
             `;
             return;
           }
-
           if (selectedActionQueue === "TranscriptHelp" && !focusedLeadId) {
 
 
@@ -5699,6 +5786,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 </body>
 
 </html>
+
 
 
 
