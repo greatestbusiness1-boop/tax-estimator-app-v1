@@ -17,6 +17,7 @@ const supabase = createClient(
 );
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 const LEADS_FILE = path.join(__dirname, "leads.json");
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
@@ -594,7 +595,58 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "ui")));
+
+// =============================================================================
+// SEARCH ENGINE PROTECTION FOR PRIVATE / WORKFLOW PAGES
+// Keep public homepage indexable, but prevent admin/customer-specific pages
+// from appearing in Google search results.
+// =============================================================================
+
+app.use((req, res, next) => {
+  const path = String(req.path || "").toLowerCase();
+
+  const shouldNoIndex =
+    path === "/leads-dashboard" ||
+    path.startsWith("/leads-dashboard/") ||
+    path.startsWith("/written-review-report/") ||
+    path.startsWith("/client-tax-strategy-worksheet/") ||
+    path.startsWith("/api/") ||
+    path === "/stripe-thank-you";
+
+  if (shouldNoIndex) {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+  }
+
+  next();
+});
+
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.send(`User-agent: *
+Disallow: /leads-dashboard
+Disallow: /written-review-report/
+Disallow: /client-tax-strategy-worksheet/
+Disallow: /api/
+Disallow: /stripe-thank-you
+
+Allow: /
+`);
+});
+app.use(express.static(path.join(__dirname, "ui"), {
+  setHeaders: (res, filePath) => {
+    const lowerFilePath = String(filePath || "").toLowerCase();
+
+    const shouldNoIndexFile =
+      lowerFilePath.endsWith("leads-dashboard.html") ||
+      lowerFilePath.endsWith("written-review-report.html") ||
+      lowerFilePath.endsWith("client-tax-strategy-worksheet.html") ||
+      lowerFilePath.endsWith("stripe-thank-you.html");
+
+    if (shouldNoIndexFile) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    }
+  }
+}));
 
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -1047,6 +1099,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 // GET /client-tax-strategy-worksheet/:leadId
 // =============================================================================
 app.get("/client-tax-strategy-worksheet/:leadId", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "client-tax-strategy-worksheet.html"));
 });
 // =============================================================================
@@ -1142,6 +1195,7 @@ app.post("/api/create-transcript-checkout", async (req, res) => {
   }
 });
 app.get("/written-review-report/:leadId", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "written-review-report.html"));
 });
 
@@ -1151,6 +1205,7 @@ app.get("/transcript-requests", (req, res) => {
 app.get("/-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "-requests.html")); });
 
 app.get("/leads-dashboard", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "leads-dashboard.html"));
 });
 
@@ -1163,6 +1218,7 @@ app.get("/-thank-you", (req, res) => {
 // =============================================================================
 
 app.get("/stripe-thank-you", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "stripe-thank-you.html"));
 });
 
@@ -1627,6 +1683,10 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
+
 
 
 
