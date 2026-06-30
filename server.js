@@ -1172,6 +1172,9 @@ app.get("/stripe-thank-you", (req, res) => {
 
 app.get("/api/leads", async (req, res) => {
   try {
+    const includeLocal =
+      String(req.query.includeLocal || "").trim() === "1";
+
     const { data, error } = await supabase
       .from("leads")
       .select("*")
@@ -1182,8 +1185,17 @@ app.get("/api/leads", async (req, res) => {
     }
 
     const supabaseLeads = (data || []).map(mapRowToLead);
-    const localLeads = readLeads();
 
+    if (!includeLocal) {
+      return res.status(200).json({
+        ok: true,
+        source: "supabase",
+        count: supabaseLeads.length,
+        leads: supabaseLeads
+      });
+    }
+
+    const localLeads = readLeads();
     const mergedById = new Map();
 
     supabaseLeads.forEach((lead) => {
@@ -1226,13 +1238,13 @@ app.get("/api/leads", async (req, res) => {
       leads
     });
   } catch (err) {
-    console.error("Supabase load leads failed. Loading local  instead:", err.message || err);
+    console.error("Supabase load leads failed. Loading local instead:", err.message || err);
 
     const leads = readLeads();
 
     return res.status(200).json({
       ok: true,
-      source: "local",
+      source: "local-fallback",
       count: leads.length,
       leads
     });
@@ -1615,6 +1627,8 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
 
 
 
