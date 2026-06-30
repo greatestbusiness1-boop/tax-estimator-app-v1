@@ -1560,8 +1560,242 @@
   setTimeout(updateWorksheetButtonStatus, 1200);
 })();
 </script>
+<script id="GBS-PAID-REPORT-WORKSHEET-SUMMARY">
+(function(){
+  if (window.__gbsPaidReportWorksheetSummaryInstalled) return;
+  window.__gbsPaidReportWorksheetSummaryInstalled = true;
+
+  function esc(value){
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function normalize(value){
+    return String(value || "").trim();
+  }
+
+  function asList(value){
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (!value) return [];
+    return [String(value)];
+  }
+
+  function field(value, fallback){
+    const text = normalize(value);
+    return text || fallback || "Not provided";
+  }
+
+  function chips(items){
+    const list = asList(items);
+    if (!list.length) {
+      return '<div style="font-size:13px;font-weight:800;color:#64748b;">Not selected / not provided</div>';
+    }
+
+    return `
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;">
+        ${list.map(function(item){
+          return `<span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:900;">${esc(item)}</span>`;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function detailCard(title, bodyHtml, accent){
+    return `
+      <div style="border:1px solid #e2e8f0;border-left:6px solid ${accent || "#0f2c56"};background:#ffffff;border-radius:14px;padding:12px 13px;box-shadow:0 8px 20px rgba(15,44,86,.06);">
+        <div style="font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.35px;color:#475569;">${esc(title)}</div>
+        <div style="margin-top:7px;">${bodyHtml}</div>
+      </div>
+    `;
+  }
+
+  function getLeadId(){
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    return decodeURIComponent(parts[parts.length - 1] || "");
+  }
+
+  function getRequest(lead){
+    return lead && (lead.Request || lead.request) || {};
+  }
+
+  function buildDependentSummary(dependents){
+    const deps = Array.isArray(dependents) ? dependents : [];
+    if (!deps.length) return '<div style="font-size:13px;font-weight:800;color:#64748b;">No dependent details entered on worksheet.</div>';
+
+    return `
+      <div style="display:grid;gap:8px;">
+        ${deps.map(function(dep, index){
+          const parts = [
+            dep.name ? "Name: " + dep.name : "",
+            dep.relationship ? "Relationship: " + dep.relationship : "",
+            dep.age ? "Age: " + dep.age : "",
+            dep.months ? "Months in home: " + dep.months : "",
+            dep.student ? "Student: " + dep.student : "",
+            dep.childcare ? "Childcare: " + dep.childcare : "",
+            dep.otherClaim ? "Other person may claim: " + dep.otherClaim : ""
+          ].filter(Boolean);
+
+          return `
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;">
+              <div style="font-size:12px;font-weight:950;color:#0f172a;">Dependent ${index + 1}</div>
+              <div style="margin-top:4px;font-size:12px;font-weight:800;color:#475569;line-height:1.45;">${esc(parts.join(" | ") || "Details entered but incomplete.")}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function buildWorksheetSummaryHtml(ws, completedAt){
+    const taxpayer = ws.taxpayerInformation || {};
+    const filing = ws.filingStatusReview || {};
+    const market = ws.marketplaceReview || {};
+    const business = ws.selfEmploymentBusinessReview || {};
+
+    const submittedText = completedAt || ws.completedAt
+      ? new Date(completedAt || ws.completedAt).toLocaleString()
+      : "Saved worksheet found";
+
+    return `
+      <div id="paidReportWorksheetAnswerSummary"
+        style="margin:14px 0 16px;border:2px solid #bfdbfe;background:#f8fbff;border-radius:18px;padding:15px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:12px;font-weight:950;color:#1d4ed8;text-transform:uppercase;letter-spacing:.35px;">
+              Client-Submitted Worksheet Answers
+            </div>
+            <div style="font-size:21px;font-weight:950;color:#0f2c56;margin-top:3px;">
+              Client Strategy Worksheet Summary
+            </div>
+            <div style="font-size:12px;font-weight:850;color:#475569;margin-top:4px;line-height:1.4;">
+              These answers were submitted by the client and should be reviewed before preparing or finalizing the tax return.
+            </div>
+          </div>
+          <div style="background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:950;">
+            Submitted: ${esc(submittedText)}
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:14px;">
+          ${detailCard("Main Goal for Review", `<div style="font-size:15px;font-weight:950;color:#0f172a;">${esc(field(ws.clientGoal, "Not selected"))}</div>${chips(ws.clientGoals)}`, "#7c3aed")}
+
+          ${detailCard("Income Sources Reported", chips(ws.incomeChecklist), "#2563eb")}
+
+          ${detailCard("Deductions Client Believes May Apply", chips(ws.deductionReview), "#16a34a")}
+
+          ${detailCard("Credits Client Wants Reviewed", chips(ws.creditReview), "#ca8a04")}
+
+          ${detailCard("IRS / Prior-Year / Missing Document Issues", chips(ws.irsPriorYearIssues), "#dc2626")}
+
+          ${detailCard("Dependent Details", buildDependentSummary(ws.dependents), "#0f766e")}
+
+          ${detailCard("Filing Status Concerns", `
+            <div style="font-size:13px;font-weight:850;color:#475569;line-height:1.55;">
+              Filing status needs review: <strong>${esc(field(taxpayer.filingStatusNeedsReview, "Not provided"))}</strong><br>
+              Life status: <strong>${esc(field(filing.lifeStatus, "Not provided"))}</strong><br>
+              Unsure about Head of Household: <strong>${esc(field(filing.unsureHeadOfHousehold, "Not provided"))}</strong><br>
+              Others lived with client: <strong>${esc(field(filing.othersLivedWithYou, "Not provided"))}</strong><br>
+              Paid more than half home cost: <strong>${esc(field(filing.paidMoreThanHalfHome, "Not provided"))}</strong>
+            </div>
+          `, "#ea580c")}
+
+          ${detailCard("Marketplace / 1095-A Review", `
+            <div style="font-size:13px;font-weight:850;color:#475569;line-height:1.55;">
+              Marketplace insurance: <strong>${esc(field(market.marketplaceInsurance, "Not provided"))}</strong><br>
+              Received Form 1095-A: <strong>${esc(field(market.received1095A, "Not provided"))}</strong><br>
+              Income changed during year: <strong>${esc(field(market.marketplaceIncomeChanged, "Not provided"))}</strong>
+            </div>
+          `, "#0891b2")}
+
+          ${detailCard("Business / Self-Employment Review", `
+            <div style="font-size:13px;font-weight:850;color:#475569;line-height:1.55;">
+              Business type: <strong>${esc(field(business.businessType, "Not provided"))}</strong><br>
+              Gross income: <strong>${esc(field(business.businessGrossIncome, "Not provided"))}</strong><br>
+              Expenses: <strong>${esc(field(business.businessExpenses, "Not provided"))}</strong><br>
+              Mileage: <strong>${esc(field(business.businessMileage, "Not provided"))}</strong><br>
+              Home office: <strong>${esc(field(business.homeOfficeUse, "Not provided"))}</strong><br>
+              Bookkeeping help needed: <strong>${esc(field(business.bookkeepingHelpNeeded, "Not provided"))}</strong>
+            </div>
+          `, "#9333ea")}
+
+          ${detailCard("Client Comments", `
+            <div style="font-size:13px;font-weight:850;color:#334155;line-height:1.55;white-space:pre-wrap;">${esc(field(ws.clientComments, "No comments entered."))}</div>
+          `, "#0f2c56")}
+        </div>
+
+        <div style="margin-top:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:850;color:#9a3412;line-height:1.45;">
+          Review note: These are client-submitted answers, not verified tax documents. Use them to guide the written review, missing-document checklist, and tax preparation follow-up.
+        </div>
+      </div>
+    `;
+  }
+
+  function buildNotSubmittedHtml(){
+    return `
+      <div id="paidReportWorksheetAnswerSummary"
+        style="margin:14px 0 16px;border:2px solid #fed7aa;background:#fff7ed;border-radius:18px;padding:15px;">
+        <div style="font-size:12px;font-weight:950;color:#9a3412;text-transform:uppercase;letter-spacing:.35px;">Client-Submitted Worksheet Answers</div>
+        <div style="font-size:20px;font-weight:950;color:#9a3412;margin-top:3px;">Worksheet Not Completed Yet</div>
+        <div style="font-size:13px;font-weight:850;color:#7c2d12;margin-top:5px;line-height:1.45;">
+          The paid report can still be printed, but the client has not submitted their worksheet answers yet. The review will be stronger after the client completes the worksheet.
+        </div>
+      </div>
+    `;
+  }
+
+  async function renderPaidReportWorksheetSummary(){
+    const section = document.getElementById("clientTaxStrategyWorksheet");
+    if (!section) return;
+
+    const leadId = getLeadId();
+    if (!leadId) return;
+
+    const insertBefore =
+      section.querySelector("#strategyWorksheetCards") ||
+      section.querySelector(".worksheet-info-grid");
+
+    if (!insertBefore) return;
+
+    const existing = document.getElementById("paidReportWorksheetAnswerSummary");
+    if (existing) existing.remove();
+
+    try {
+      const res = await fetch("/api/leads");
+      const data = await res.json();
+      const leads = data && Array.isArray(data.leads) ? data.leads : [];
+      const lead = leads.find(function(item){
+        return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+      });
+
+      const request = getRequest(lead);
+      const worksheet = request.clientTaxStrategyWorksheet;
+      const completedAt = request.clientTaxStrategyWorksheetCompletedAt;
+
+      const html = worksheet
+        ? buildWorksheetSummaryHtml(worksheet, completedAt)
+        : buildNotSubmittedHtml();
+
+      insertBefore.insertAdjacentHTML("beforebegin", html);
+    } catch (err) {
+      console.warn("Could not render paid report worksheet answer summary.", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(renderPaidReportWorksheetSummary, 600);
+    setTimeout(renderPaidReportWorksheetSummary, 1400);
+  });
+
+  setTimeout(renderPaidReportWorksheetSummary, 2200);
+})();
+</script>
 </body>
 </html>
+
+
 
 
 

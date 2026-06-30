@@ -321,6 +321,59 @@
       .btn { width:100%; }
     }
   </style>
+<style id="GBS-LOCKED-SELECTED-ANSWER-BADGES">
+  /* Make saved/locked selected answers obvious without covering the answer text */
+  label:has(input[type="checkbox"]:disabled:checked) {
+    position: relative;
+    background: #dbeafe !important;
+    border-color: #0f2c56 !important;
+    box-shadow: inset 0 0 0 2px #0f2c56, 0 6px 14px rgba(15, 44, 86, .10) !important;
+    color: #071a33 !important;
+    font-weight: 950 !important;
+    padding-right: 112px !important;
+    min-height: 44px;
+  }
+
+  label:has(input[type="checkbox"]:disabled:checked)::after {
+    content: "✓ SELECTED";
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: #0f2c56;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: .35px;
+    white-space: nowrap;
+  }
+
+  label:has(input[type="checkbox"]:disabled:checked) input[type="checkbox"] {
+    opacity: 1 !important;
+    transform: scale(1.15);
+    accent-color: #0f2c56;
+  }
+
+  label:has(input[type="checkbox"]:disabled:not(:checked)) {
+    opacity: .72;
+  }
+
+  @media (max-width: 720px) {
+    label:has(input[type="checkbox"]:disabled:checked) {
+      padding-right: 14px !important;
+      padding-bottom: 32px !important;
+    }
+
+    label:has(input[type="checkbox"]:disabled:checked)::after {
+      top: auto;
+      right: 10px;
+      bottom: 7px;
+      transform: none;
+    }
+  }
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -740,6 +793,68 @@
       };
     }
 
+    function setCheckedGroup(group, values){
+      const selected = Array.isArray(values) ? values : [];
+      document.querySelectorAll(`input[type="checkbox"][data-group="${group}"]`).forEach(function(box){
+        box.checked = selected.includes(box.value);
+      });
+    }
+
+    function populateSavedWorksheet(saved){
+      if (!saved) return;
+
+      const taxpayer = saved.taxpayerInformation || {};
+      const filing = saved.filingStatusReview || {};
+      const market = saved.marketplaceReview || {};
+      const business = saved.selfEmploymentBusinessReview || {};
+
+      setValue("fullName", taxpayer.fullName || "");
+      setValue("email", taxpayer.email || "");
+      setValue("phone", taxpayer.phone || "");
+      setValue("lastFour", taxpayer.lastFour || "");
+      setValue("mailingAddress", taxpayer.mailingAddress || "");
+      setValue("filingStatusNeedsReview", taxpayer.filingStatusNeedsReview || "");
+
+      setValue("lifeStatus", filing.lifeStatus || "");
+      setValue("unsureHeadOfHousehold", filing.unsureHeadOfHousehold || "");
+      setValue("othersLivedWithYou", filing.othersLivedWithYou || "");
+      setValue("paidMoreThanHalfHome", filing.paidMoreThanHalfHome || "");
+
+      setValue("marketplaceInsurance", market.marketplaceInsurance || "");
+      setValue("received1095A", market.received1095A || "");
+      setValue("marketplaceIncomeChanged", market.marketplaceIncomeChanged || "");
+
+      setValue("businessType", business.businessType || "");
+      setValue("businessGrossIncome", business.businessGrossIncome || "");
+      setValue("businessExpenses", business.businessExpenses || "");
+      setValue("businessMileage", business.businessMileage || "");
+      setValue("homeOfficeUse", business.homeOfficeUse || "");
+      setValue("businessBankAccount", business.businessBankAccount || "");
+      setValue("estimatedPaymentsMade", business.estimatedPaymentsMade || "");
+      setValue("recordsOrganized", business.recordsOrganized || "");
+      setValue("bookkeepingHelpNeeded", business.bookkeepingHelpNeeded || "");
+
+      setCheckedGroup("income", saved.incomeChecklist || []);
+      setCheckedGroup("deductions", saved.deductionReview || []);
+      setCheckedGroup("credits", saved.creditReview || []);
+      setCheckedGroup("irs", saved.irsPriorYearIssues || []);
+      setCheckedGroup("goals", saved.clientGoals || (saved.clientGoal ? [saved.clientGoal] : []));
+
+      setValue("clientComments", saved.clientComments || "");
+
+      const deps = Array.isArray(saved.dependents) ? saved.dependents : [];
+      deps.slice(0, 3).forEach(function(dep, index){
+        const i = index + 1;
+        setValue(`dep${i}Name`, dep.name || "");
+        setValue(`dep${i}Relationship`, dep.relationship || "");
+        setValue(`dep${i}Age`, dep.age || "");
+        setValue(`dep${i}Months`, dep.months || "");
+        setValue(`dep${i}Student`, dep.student || "");
+        setValue(`dep${i}Income`, dep.income || "");
+        setValue(`dep${i}Childcare`, dep.childcare || "");
+        setValue(`dep${i}OtherClaim`, dep.otherClaim || "");
+      });
+    }
     function lockSubmittedWorksheet(){
       const form = $("worksheetForm");
       const saveBtn = $("saveWorksheetBtn");
@@ -811,6 +926,7 @@
       setValue("phone", saved?.taxpayerInformation?.phone || phone);
 
       if (saved) {
+        populateSavedWorksheet(saved);
         lockSubmittedWorksheet();
       }
     }
@@ -896,5 +1012,9 @@
   </script>
 </body>
 </html>
+
+
+
+
 
 
