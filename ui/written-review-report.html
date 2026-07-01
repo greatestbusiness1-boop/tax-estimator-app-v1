@@ -1792,8 +1792,62 @@
   setTimeout(renderPaidReportWorksheetSummary, 2200);
 })();
 </script>
+<script id="GBS-WRITTEN-REVIEW-REPORT-PREPARED-TRACKER">
+(function(){
+  if (window.__gbsWrittenReviewReportPreparedTrackerInstalled) return;
+  window.__gbsWrittenReviewReportPreparedTrackerInstalled = true;
+
+  function getLeadId(){
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    return decodeURIComponent(parts[parts.length - 1] || "");
+  }
+
+  async function markReportPrepared(){
+    const leadId = getLeadId();
+    if (!leadId) return;
+
+    try {
+      const res = await fetch("/api/leads");
+      const data = await res.json();
+      const leads = data && Array.isArray(data.leads) ? data.leads : [];
+      const lead = leads.find(function(item){
+        return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+      });
+
+      const request = lead && (lead.Request || lead.request) || {};
+
+      if (request.writtenReviewPreparedAt || request.writtenReviewReportOpenedAt) {
+        return;
+      }
+
+      const now = new Date().toISOString();
+
+      await fetch("/api/leads/" + encodeURIComponent(leadId), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          Request: {
+            writtenReviewReportOpenedAt: now,
+            writtenReviewPreparedAt: now,
+            writtenReviewPreparedStatus: "Prepared"
+          }
+        })
+      });
+    } catch (err) {
+      console.warn("Could not mark written review report as prepared.", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(markReportPrepared, 700);
+  });
+})();
+</script>
 </body>
 </html>
+
 
 
 

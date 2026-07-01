@@ -2653,6 +2653,12 @@
                 request.writtenReviewDeliveredAt
               );
 
+              const reportPrepared = Boolean(
+                request.writtenReviewPreparedAt ||
+                request.writtenReviewReportOpenedAt ||
+                String(request.writtenReviewPreparedStatus || "").toLowerCase() === "prepared"
+              );
+
               const concerns = [];
 
               const irsIssues = Array.isArray(worksheet?.irsPriorYearIssues)
@@ -2693,6 +2699,14 @@
                 };
               }
 
+              if (paymentConfirmed && worksheetCompleted && reportPrepared) {
+                return {
+                  status: "Ready to Deliver",
+                  next: "Report prepared — deliver to client",
+                  color: "#1d4ed8"
+                };
+              }
+
               if (!paymentConfirmed || paymentPending) {
                 return {
                   status: "Needs Payment",
@@ -2727,6 +2741,7 @@
             function getWrittenReviewPriority(auto, handled) {
               if (handled || auto.status === "Completed") return 90;
               if (auto.status === "Cedric Review Needed") return 10;
+              if (auto.status === "Ready to Deliver") return 15;
               if (auto.status === "Ready to Auto Prepare") return 20;
               if (auto.status === "Waiting on Worksheet") return 30;
               if (auto.status === "Needs Payment") return 40;
@@ -5811,6 +5826,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 </body>
 
 </html>
+
 
 
 
