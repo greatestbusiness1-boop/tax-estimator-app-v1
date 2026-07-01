@@ -27,11 +27,14 @@ const recentLeads = new Map();
 // EMAIL CONFIG
 // =============================================================================
 
+const EMAIL_USER = process.env.EMAIL_USER || "";
+const EMAIL_APP_PASSWORD = process.env.EMAIL_APP_PASSWORD || "";
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "greatestbusiness1@gmail.com",
-    pass: "mnqe aasn cenb tszu"
+    user: EMAIL_USER,
+    pass: EMAIL_APP_PASSWORD
   }
 });
 
