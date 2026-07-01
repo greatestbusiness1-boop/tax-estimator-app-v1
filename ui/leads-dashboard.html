@@ -1818,9 +1818,19 @@
               "Transcript Help - Paid / Needs Review"
             ];
 
+            const request = lead.Request || lead.request || {};
+
+            const isWrittenReviewCompleted = Boolean(
+              status === "Written Review - Completed" ||
+              request.writtenReviewCompletedAt ||
+              request.writtenReviewDeliveredAt ||
+              String(request.writtenReviewCompletedStatus || "").toLowerCase() === "completed" ||
+              String(request.writtenReviewDeliveryStatus || "").toLowerCase() === "delivered"
+            );
+
             const isCompletedWork =
               status.startsWith("Closed -") ||
-              status === "Written Review - Completed" ||
+              isWrittenReviewCompleted ||
               status === "Transcript Help - Completed" ||
               status === "Converted - Tax Client";
 
@@ -1828,7 +1838,7 @@
               selectedFilter === "All"
                 ? !isCompletedWork
                 : selectedFilter === "Active"
-                  ? activeStatuses.includes(status)
+                  ? activeStatuses.includes(status) && !isCompletedWork
                   : selectedFilter === "Closed"
                     ? isCompletedWork
                     : status === selectedFilter;
@@ -1881,8 +1891,9 @@
                       ? (
                         searchableText.includes("buy written review") ||
                         searchableText.includes("get written $29 Written Review") ||
-                        status.startsWith("Written Review -")
-                      ) && status !== "Written Review - Completed"
+                        status.startsWith("Written Review -") ||
+                        isWrittenReviewCompleted
+                      ) && (selectedFilter === "Closed" || !isWrittenReviewCompleted)
                       : selectedActionQueue === "TranscriptHelp"
                         ? Boolean(lead?.transcriptRequest?.requested) ||
                         searchableText.includes("requested irs transcript help") ||
