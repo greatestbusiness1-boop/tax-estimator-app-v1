@@ -2724,9 +2724,37 @@
               };
             }
 
-            const strategyRows = visibleLeads.map((lead) => {
-              const handled = isOfficeQueueHandled(lead.leadId, "Written Review Requests Worklist");
-              const auto = getWrittenReviewAutopilot(lead);
+            function getWrittenReviewPriority(auto, handled) {
+              if (handled || auto.status === "Completed") return 90;
+              if (auto.status === "Cedric Review Needed") return 10;
+              if (auto.status === "Ready to Auto Prepare") return 20;
+              if (auto.status === "Waiting on Worksheet") return 30;
+              if (auto.status === "Needs Payment") return 40;
+              return 50;
+            }
+
+            const sortedStrategyLeads = visibleLeads
+              .map((lead) => {
+                const handled = isOfficeQueueHandled(lead.leadId, "Written Review Requests Worklist");
+                const auto = getWrittenReviewAutopilot(lead);
+                return {
+                  lead,
+                  handled,
+                  auto,
+                  priority: getWrittenReviewPriority(auto, handled)
+                };
+              })
+              .sort((a, b) => {
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return String(b.lead?.createdAt || b.lead?.created_at || b.lead?.timestamp || "").localeCompare(
+                  String(a.lead?.createdAt || a.lead?.created_at || a.lead?.timestamp || "")
+                );
+              });
+
+            const strategyRows = sortedStrategyLeads.map((item) => {
+              const lead = item.lead;
+              const handled = item.handled;
+              const auto = item.auto;
               const combinedNet = getLeadCombinedNet(lead);
 
               const estimateText =
@@ -5783,6 +5811,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 </body>
 
 </html>
+
 
 
 
