@@ -2659,6 +2659,11 @@
                 String(request.writtenReviewPreparedStatus || "").toLowerCase() === "prepared"
               );
 
+              const deliveryEmailPrepared = Boolean(
+                request.writtenReviewDeliveryEmailPreparedAt ||
+                String(request.writtenReviewDeliveryEmailStatus || "").toLowerCase() === "prepared"
+              );
+
               const concerns = [];
 
               const irsIssues = Array.isArray(worksheet?.irsPriorYearIssues)
@@ -2696,6 +2701,14 @@
                   status: "Completed",
                   next: "No action needed",
                   color: "#047857"
+                };
+              }
+
+              if (paymentConfirmed && worksheetCompleted && reportPrepared && deliveryEmailPrepared) {
+                return {
+                  status: "Email Prepared — Awaiting Delivery",
+                  next: "Send/review prepared Gmail draft, then Mark Delivered",
+                  color: "#7c3aed"
                 };
               }
 
@@ -2742,6 +2755,7 @@
               if (handled || auto.status === "Completed") return 90;
               if (auto.status === "Cedric Review Needed") return 10;
               if (auto.status === "Ready to Deliver") return 15;
+              if (auto.status === "Email Prepared — Awaiting Delivery") return 16;
               if (auto.status === "Ready to Auto Prepare") return 20;
               if (auto.status === "Waiting on Worksheet") return 30;
               if (auto.status === "Needs Payment") return 40;
@@ -2899,7 +2913,7 @@
                   </div>
 
                   <div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap;">
-                    ${auto.status === "Ready to Deliver"
+                    ${["Ready to Deliver", "Email Prepared — Awaiting Delivery"].includes(auto.status)
                       ? `
                         <button
                           type="button"
@@ -5948,6 +5962,7 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 </body>
 
 </html>
+
 
 
 
