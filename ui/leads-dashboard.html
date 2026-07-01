@@ -3824,11 +3824,21 @@
                 String(lead.status || "").startsWith("Transcript Help -");
 
               const status = lead.status || "New";
+              const requestForWrittenReviewDisplay = lead.Request || lead.request || {};
+
+              const writtenReviewCompletedForDisplay = Boolean(
+                status === "Written Review - Completed" ||
+                requestForWrittenReviewDisplay.writtenReviewCompletedAt ||
+                requestForWrittenReviewDisplay.writtenReviewDeliveredAt ||
+                String(requestForWrittenReviewDisplay.writtenReviewCompletedStatus || "").toLowerCase() === "completed" ||
+                String(requestForWrittenReviewDisplay.writtenReviewDeliveryStatus || "").toLowerCase() === "delivered"
+              );
+
               const displayStatus =
-                status === "Written Review - Paid / Needs Written Review"
-                  ? "$29 Review Paid - Needs Review"
-                  : status === "Written Review - Completed"
-                    ? "$29 Review Completed"
+                writtenReviewCompletedForDisplay
+                  ? "$29 Review Delivered / Completed"
+                  : status === "Written Review - Paid / Needs Written Review"
+                    ? "$29 Review Paid - Needs Review"
                     : status;
 
               const transcriptHelpStatusText =
@@ -4366,6 +4376,15 @@
                   ? `
                         <span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;margin-top:6px;">
                           Written Review
+                        </span>
+                      `
+                  : ""
+                }
+
+                    ${writtenReviewCompletedForDisplay
+                  ? `
+                        <span class="badge" style="background:#dcfce7;color:#166534;border:1px solid #86efac;margin-top:6px;">
+                          Written Review Delivered / Completed
                         </span>
                       `
                   : ""
