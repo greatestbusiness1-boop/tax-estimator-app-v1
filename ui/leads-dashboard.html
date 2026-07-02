@@ -2254,7 +2254,7 @@
 
                 const handled = isOfficeQueueHandled(lead.leadId, taskType);
                 return `
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:8px 0;font-size:13px;${handled ? "background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:700;">${esc(lead?.contact?.email || "No email")}</div>
@@ -2371,7 +2371,7 @@
                       : "Follow up to file return";
 
               return `
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "background:#f8fafc;" : ""}">
                    <div style="font-weight:950;color:#0f2c56;min-width:0;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:11px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;">
@@ -2558,7 +2558,7 @@
                     : "Schedule review / explain balance due";
 
               return `
-                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.1fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -2906,7 +2906,7 @@
                     : "Review estimate details";
 
               return `
-                <div style="display:grid;grid-template-columns:minmax(230px,1.25fr) minmax(190px,.9fr) minmax(270px,1.25fr) minmax(250px,auto);gap:14px;align-items:center;border-top:1px solid #e2e8f0;padding:12px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:minmax(230px,1.25fr) minmax(190px,.9fr) minmax(270px,1.25fr) minmax(250px,auto);gap:14px;align-items:center;border-top:1px solid #e2e8f0;padding:12px 0;font-size:13px;${handled ? "background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -3503,7 +3503,7 @@
                         : "Need Payment";
 
               return `
-                <div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr .85fr .8fr .9fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "opacity:.55;background:#f8fafc;" : ""}">
+                <div style="display:grid;grid-template-columns:1.35fr 1.15fr .95fr .85fr .8fr .9fr auto auto;gap:8px;align-items:center;border-top:1px solid #e2e8f0;padding:10px 0;font-size:13px;${handled ? "background:#f8fafc;" : ""}">
                   <div style="font-weight:950;color:#0f2c56;">
                     ${esc(lead?.contact?.name || "Unknown Lead")}
                     <div style="font-size:12px;color:#475569;font-weight:750;">${esc(lead?.contact?.email || "No email")}</div>
@@ -6191,6 +6191,8 @@ ${hasTranscriptHelpRequest && selectedActionQueue === "TranscriptHelp"
 </body>
 
 </html>
+
+
 
 
 
