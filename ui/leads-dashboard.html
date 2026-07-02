@@ -3744,7 +3744,7 @@
 
                   <button
                     type="button"
-                    onclick="setDashboardFilters({ status: 'All', action: 'All', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'Closed' })"
+                    onclick="setDashboardFilters({ status: 'Closed', action: 'Closed', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'Closed' })"
                     style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;"
                   >
                     Open
@@ -4458,10 +4458,10 @@
                   ? `
                     <button
                       type="button"
-                      onclick="setDashboardFilters({ status: 'All', action: '${esc(focusedReturnAction || selectedActionQueue || "All")}', search: '' })"
+                      onclick="setDashboardFilters({ status: '${esc((focusedReturnAction || selectedActionQueue) === "Closed" ? "Closed" : "All")}', action: '${esc((focusedReturnAction || selectedActionQueue) === "Closed" ? "All" : (focusedReturnAction || selectedActionQueue || "All"))}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "New Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : "Previous Workspace")}
+                      Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "New Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : (focusedReturnAction || selectedActionQueue) === "Closed" ? "Closed Leads" : "Previous Workspace")}
                     </button>
                   `
                   : ""
