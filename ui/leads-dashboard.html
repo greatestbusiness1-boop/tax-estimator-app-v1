@@ -3674,6 +3674,94 @@
           }
 
 
+
+          if (selectedFilter === "All" && selectedActionQueue === "All" && !focusedLeadId) {
+            const allLeadRows = visibleLeads.map((lead) => {
+              const statusText = String(lead.status || "New");
+              const request = lead.Request || lead.request || {};
+              const notesText = String(lead.notes || "");
+              const combinedNet = getLeadCombinedNet(lead);
+
+              const estimateText =
+                lead?.estimateSummary?.totalLine ||
+                (combinedNet > 0
+                  ? `Estimated Total Refund: ${Math.abs(combinedNet).toLocaleString()}`
+                  : combinedNet < 0
+                    ? `Estimated Total Due: ${Math.abs(combinedNet).toLocaleString()}`
+                    : "Estimate needs review");
+
+              const latestAction =
+                request.writtenReviewPaymentStatus ||
+                request.writtenReviewDeliveryEmailStatus ||
+                lead?.transcriptRequest?.paymentStatus ||
+                lead?.transcriptRequest?.authorizationStatus ||
+                (notesText.includes("Client action from public estimate summary:")
+                  ? notesText.split("Client action from public estimate summary:").pop().split("\n")[0].trim()
+                  : "");
+
+              return `
+                <div style="display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1.4fr auto;gap:8px;align-items:center;border-top:1px solid #dbeafe;padding:10px 8px;font-size:13px;">
+                  <div style="font-weight:950;color:#0f2c56;min-width:0;">
+                    ${esc(lead?.contact?.name || "Unknown Lead")}
+                    <div style="font-size:11px;color:#475569;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;">
+                      ${esc(lead?.contact?.email || "No email")}
+                    </div>
+                  </div>
+
+                  <div style="color:#0f2c56;font-weight:950;">
+                    ${esc(statusText)}
+                  </div>
+
+                  <div style="color:#0f2c56;font-weight:900;">
+                    ${esc(estimateText)}
+                  </div>
+
+                  <div style="color:#475569;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;">
+                    ${esc(latestAction || "No action recorded")}
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="setDashboardFilters({ status: 'All', action: 'All', search: '${esc(lead.leadId)}', focusLeadId: '${esc(lead.leadId)}', returnAction: 'All' })"
+                    style="background:#0f2c56;color:#ffffff;border:1px solid #0f2c56;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:none;"
+                  >
+                    Open
+                  </button>
+                </div>
+              `;
+            }).join("");
+
+            container.innerHTML = `
+              <div style="background:#ffffff;border:1px solid #dbeafe;border-radius:16px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,0.05);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                  <div>
+                    <div style="font-size:20px;font-weight:950;color:#0f2c56;">
+                      All Leads
+                    </div>
+                    <div style="font-size:13px;color:#475569;font-weight:750;margin-top:2px;">
+                      All saved leads in one compact list. Use Open only when you need the full record.
+                    </div>
+                  </div>
+
+                  <div style="font-size:13px;color:#1d4ed8;font-weight:950;background:#eff6ff;border:1px solid #dbeafe;border-radius:999px;padding:7px 11px;">
+                    ${visibleLeads.length} lead${visibleLeads.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1.4fr auto;gap:8px;background:#eff6ff;border:1px solid #dbeafe;border-radius:10px;padding:8px;font-size:11px;font-weight:950;color:#1e3a8a;text-transform:uppercase;letter-spacing:.35px;">
+                  <div>Client</div>
+                  <div>Status</div>
+                  <div>Estimate</div>
+                  <div>Latest Action</div>
+                  <div style="text-align:right;">Action</div>
+                </div>
+
+                ${allLeadRows || `<div style="padding:14px 8px;color:#64748b;font-weight:850;">No leads found.</div>`}
+              </div>
+            `;
+            return;
+          }
+
           if (selectedFilter === "Closed" && !focusedLeadId) {
             const closedRows = visibleLeads.map((lead) => {
               const statusText = String(lead.status || "New");
@@ -4461,7 +4549,7 @@
                       onclick="setDashboardFilters({ status: '${esc((focusedReturnAction || selectedActionQueue) === "Closed" ? "Closed" : "All")}', action: '${esc((focusedReturnAction || selectedActionQueue) === "Closed" ? "All" : (focusedReturnAction || selectedActionQueue || "All"))}', search: '' })"
                       style="margin-bottom:10px;background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:950;box-shadow:none;"
                     >
-                      Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "New Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : (focusedReturnAction || selectedActionQueue) === "Closed" ? "Closed Leads" : "Previous Workspace")}
+                      Back to ${esc((focusedReturnAction || selectedActionQueue) === "OfficeWorkQueue" ? "Office Work Queue" : (focusedReturnAction || selectedActionQueue) === "TranscriptHelp" ? "New Transcript Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "StrategyReview" ? "Written Review Requests Worklist" : (focusedReturnAction || selectedActionQueue) === "BalanceDue" ? "Balance Due Reviews Worklist" : (focusedReturnAction || selectedActionQueue) === "Refund" ? "Refund Leads Worklist" : (focusedReturnAction || selectedActionQueue) === "Follow-up Needed" ? "Follow-Up Needed Worklist" : (focusedReturnAction || selectedActionQueue) === "Closed" ? "Closed Leads" : (focusedReturnAction || selectedActionQueue) === "All" ? "All Leads" : "Previous Workspace")}
                     </button>
                   `
                   : ""
