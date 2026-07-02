@@ -266,31 +266,124 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-function updateLeadStatus(newStatus){
-  if(!window.activeLead) return;
-
-  window.activeLead.status = newStatus;
-
-  document.getElementById("dpStatus").innerText =
-    "Status: " + newStatus;
-
-  alert("Status updated to: " + newStatus);
+function getActiveLeadId(lead){
+  return (
+    lead?.leadId ||
+    lead?.id ||
+    lead?.estimateId ||
+    lead?.lead_id ||
+    lead?.estimate?.leadId ||
+    ""
+  );
 }
 
-function addNotes(){
-  const note = prompt("Add internal note:");
-  if(!note) return;
-
-  if(!window.activeLead.notes){
-    window.activeLead.notes = [];
+async function saveActiveLeadChanges(changes){
+  if(!window.activeLead){
+    alert("Select a lead first.");
+    return null;
   }
 
-  window.activeLead.notes.push({
-    text: note,
-    time: new Date().toISOString()
+  const leadId = getActiveLeadId(window.activeLead);
+
+  if(!leadId){
+    alert("This lead does not have a usable Lead ID.");
+    return null;
+  }
+
+  const response = await fetch(
+    "/api/leads/" + encodeURIComponent(leadId),
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(changes)
+    }
+  );
+
+  const result = await response.json();
+
+  if(!response.ok || !result.ok){
+    throw new Error(result.error || "The lead could not be saved.");
+  }
+
+  const savedLead = result.lead || {
+    ...window.activeLead,
+    ...changes
+  };
+
+  const savedId = getActiveLeadId(savedLead);
+
+  const leadIndex = allLeads.findIndex(function(lead){
+    return getActiveLeadId(lead) === savedId;
   });
 
-  alert("Note added");
+  if(leadIndex >= 0){
+    allLeads[leadIndex] = savedLead;
+  }
+
+  window.activeLead = savedLead;
+
+  renderLeads();
+
+  return savedLead;
+}
+
+async function updateLeadStatus(newStatus){
+  try{
+    const savedLead = await saveActiveLeadChanges({
+      status: newStatus
+    });
+
+    if(!savedLead) return;
+
+    if(
+      newStatus.toLowerCase().includes("closed") ||
+      newStatus.toLowerCase().includes("completed")
+    ){
+      clearDetailPanel();
+    }else{
+      window.openPanel(savedLead);
+    }
+
+    alert("Status permanently saved as: " + newStatus);
+  }catch(error){
+    console.error(error);
+    alert("Status was not saved: " + error.message);
+  }
+}
+
+async function addNotes(){
+  const note = prompt("Add internal note:");
+  if(!note || !note.trim()) return;
+
+  const existingNotes =
+    typeof window.activeLead?.notes === "string"
+      ? window.activeLead.notes.trim()
+      : "";
+
+  const datedNote =
+    "[" + new Date().toISOString() + "] " + note.trim();
+
+  const updatedNotes =
+    existingNotes
+      ? existingNotes + "\n" + datedNote
+      : datedNote;
+
+  try{
+    const savedLead = await saveActiveLeadChanges({
+      notes: updatedNotes
+    });
+
+    if(!savedLead) return;
+
+    window.openPanel(savedLead);
+
+    alert("Internal note permanently saved.");
+  }catch(error){
+    console.error(error);
+    alert("Note was not saved: " + error.message);
+  }
 }
 
 function enhancePanelActions(){
@@ -379,6 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
