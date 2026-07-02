@@ -153,8 +153,26 @@ function getVisibleLeads(){
 
   if(currentView==="office"){
     return allLeads.filter(l => {
-      const s=(l.status||"").toLowerCase();
-      return !s.includes("closed") && !s.includes("completed");
+      const status = String(l.status || "").toLowerCase();
+
+      const isClosed =
+        status.includes("closed") ||
+        status.includes("completed");
+
+      const requiresAttention =
+        status.includes("needs written review") ||
+        status.includes("needs review") ||
+        status.includes("needs attention") ||
+        status.includes("action required") ||
+        status.includes("follow-up needed") ||
+        status.includes("missing information") ||
+        status.includes("report failed") ||
+        status.includes("email failed") ||
+        status.includes("delivery failed") ||
+        status.includes("overdue") ||
+        status.includes("error");
+
+      return !isClosed && requiresAttention;
     });
   }
 
@@ -269,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
 
 
