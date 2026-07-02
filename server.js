@@ -446,6 +446,15 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
     const existingWrittenReview = updated.writtenReview || {};
     const existingPayments = updated.payments || {};
 
+    const alreadyDelivered =
+      existingWrittenReview.deliveredAt ||
+      existingWrittenReview.completedAt ||
+      String(updated.status || "").toLowerCase().includes("closed");
+
+    if (alreadyDelivered) {
+      return updated;
+    }
+
     const paymentNote =
       "[" + nowDisplay + "] Stripe confirmed Written Estimate Red Flag Review payment." +
       (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
@@ -560,10 +569,32 @@ app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
       paymentIntentId: "LOCAL_SIMULATED_WRITTEN_REVIEW_PAYMENT"
     });
 
-    return res.json({
-      ok: result.ok,
-      source: result.source || null,
-      error: result.error || null,
+    if (!result.ok) {
+      return res.status(500).json({
+        ok: false,
+        paymentConfirmed: false,
+        error: result.error || "Could not mark Written Review paid.",
+        leadId
+      });
+    }
+
+    const localBaseUrl =
+      "http://" + String(req.headers.host || "localhost:3000");
+
+    const delivery =
+      await triggerAutomaticWrittenReviewDelivery(
+        leadId,
+        localBaseUrl
+      );
+
+    return res.status(delivery.ok ? 200 : 500).json({
+      ok: delivery.ok,
+      paymentConfirmed: true,
+      automaticDelivery: delivery.ok,
+      emailSent: delivery.emailSent === true,
+      closed: delivery.closed === true,
+      source: delivery.source || result.source || null,
+      error: delivery.error || null,
       leadId
     });
   } catch (err) {
@@ -833,6 +864,155 @@ Greatest Business Solution LLC`;
   }
 });
 // =============================================================================
+// AUTOMATIC WRITTEN REVIEW DELIVERY
+// Stripe payment confirmation calls the already-tested completed-review route.
+// Successful reviews email and close automatically.
+// Failed reviews stay open with an exact action-required status.
+// =============================================================================
+
+async function markWrittenReviewAutomationFailure(leadId, errorMessage) {
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+  const cleanError =
+    String(errorMessage || "Automatic delivery failed.").trim();
+
+  return updateLeadAfterStripePayment(
+    leadId,
+    function applyWrittenReviewFailure(record = {}) {
+      const updated = { ...record };
+      const existingReview = updated.writtenReview || {};
+
+      updated.writtenReview = {
+        ...existingReview,
+        status: "Delivery Failed / Action Required",
+        automationStatus: "Failed",
+        automationError: cleanError,
+        automationFailedAt: nowIso,
+        updatedAt: nowIso
+      };
+
+      updated.status =
+        "Written Review - Delivery Failed / Action Required";
+      updated.updatedAt = nowIso;
+
+      const failureNote =
+        "[" + nowDisplay + "] Automatic Written Review delivery failed. " +
+        cleanError;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes =
+        oldNotes
+          ? oldNotes + "\n" + failureNote
+          : failureNote;
+
+      return updated;
+    }
+  );
+}
+
+async function triggerAutomaticWrittenReviewDelivery(
+  leadId,
+  baseUrlOverride = ""
+) {
+  const cleanId = String(leadId || "").trim();
+
+  if (!cleanId) {
+    return {
+      ok: false,
+      error: "Missing lead ID for automatic delivery."
+    };
+  }
+
+  const baseUrl =
+    String(baseUrlOverride || APP_BASE_URL || "")
+      .trim()
+      .replace(/\/+$/, "");
+
+  if (!baseUrl) {
+    const error = "APP_BASE_URL is not configured.";
+    await markWrittenReviewAutomationFailure(cleanId, error);
+
+    return {
+      ok: false,
+      error
+    };
+  }
+
+  try {
+    const response = await fetch(
+      baseUrl +
+        "/api/written-review/" +
+        encodeURIComponent(cleanId) +
+        "/send-completed",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    let result = {};
+
+    try {
+      result = await response.json();
+    } catch {
+      result = {};
+    }
+
+    const alreadyCompleted =
+      response.status === 409 &&
+      String(result.error || "")
+        .toLowerCase()
+        .includes("already completed");
+
+    if (alreadyCompleted) {
+      return {
+        ok: true,
+        alreadyCompleted: true,
+        leadId: cleanId
+      };
+    }
+
+    if (!response.ok || !result.ok) {
+      const error =
+        result.error ||
+        "Automatic Written Review delivery request failed.";
+
+      await markWrittenReviewAutomationFailure(cleanId, error);
+
+      return {
+        ok: false,
+        error,
+        emailSent: result.emailSent === true,
+        leadId: cleanId
+      };
+    }
+
+    return {
+      ...result,
+      automatic: true
+    };
+  } catch (err) {
+    const error =
+      err && err.message
+        ? err.message
+        : "Automatic Written Review delivery failed.";
+
+    await markWrittenReviewAutomationFailure(cleanId, error);
+
+    return {
+      ok: false,
+      error,
+      leadId: cleanId
+    };
+  }
+}
+// =============================================================================
 // POST /api/stripe-webhook
 // =============================================================================
 
@@ -883,9 +1063,32 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         });
 
         if (!result.ok) {
-          console.error("[stripe webhook] Could not mark written review paid:", result.error || result);
+          console.error(
+            "[stripe webhook] Could not mark written review paid:",
+            result.error || result
+          );
         } else {
-          console.log("[stripe webhook] Written review marked paid:", leadId, result.source);
+          console.log(
+            "[stripe webhook] Written review marked paid:",
+            leadId,
+            result.source
+          );
+
+          const delivery =
+            await triggerAutomaticWrittenReviewDelivery(leadId);
+
+          if (!delivery.ok) {
+            console.error(
+              "[stripe webhook] Automatic Written Review delivery failed:",
+              leadId,
+              delivery.error || delivery
+            );
+          } else {
+            console.log(
+              "[stripe webhook] Written Review automatically emailed and closed:",
+              leadId
+            );
+          }
         }
       }
     }
@@ -1991,6 +2194,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
