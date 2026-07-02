@@ -527,6 +527,58 @@ app.get("/api/dev/simulate-transcript-paid", async (req, res) => {
     });
   }
 });
+
+// =============================================================================
+// LOCAL ONLY: Simulate $29 written review payment without Stripe charge
+// =============================================================================
+
+app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
+  try {
+    const host = String(req.headers.host || "").toLowerCase();
+    const isLocal =
+      host.includes("localhost") ||
+      host.includes("127.0.0.1");
+
+    if (!isLocal && process.env.ALLOW_PAYMENT_SIMULATION !== "true") {
+      return res.status(403).json({
+        ok: false,
+        error: "Payment simulation is disabled outside localhost."
+      });
+    }
+
+    const leadId = String(req.query.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing leadId."
+      });
+    }
+
+    const result = await applyWrittenReviewPaidUpdate(leadId, {
+      sessionId: "LOCAL_SIMULATED_WRITTEN_REVIEW_SESSION",
+      paymentIntentId: "LOCAL_SIMULATED_WRITTEN_REVIEW_PAYMENT"
+    });
+
+    return res.json({
+      ok: result.ok,
+      source: result.source || null,
+      error: result.error || null,
+      leadId
+    });
+  } catch (err) {
+    console.error(
+      "[written review payment simulation] Error:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "Local written review payment simulation failed."
+    });
+  }
+});
+
 // =============================================================================
 // POST /api/stripe-webhook
 // =============================================================================
@@ -1686,6 +1738,13 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
+
+
+
+
 
 
 
