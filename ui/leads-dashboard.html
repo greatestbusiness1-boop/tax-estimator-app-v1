@@ -141,7 +141,18 @@ let currentView = "office";
 
 function getVisibleLeads(){
   if(currentView==="written"){
-    return allLeads.filter(l => (l.status||"").toLowerCase().includes("written review"));
+    return allLeads.filter(l => {
+      const status = String(l.status || "").toLowerCase();
+
+      const isWrittenReview =
+        status.includes("written review");
+
+      const isFinished =
+        status.includes("closed") ||
+        status.includes("completed");
+
+      return isWrittenReview && !isFinished;
+    });
   }
 
   if(currentView==="closed"){
@@ -287,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
 
 

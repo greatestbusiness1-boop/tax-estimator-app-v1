@@ -580,6 +580,259 @@ app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
 });
 
 // =============================================================================
+// POST /api/written-review/:leadId/send-completed
+// Sends the completed review email, then closes the lead only after email success.
+// =============================================================================
+
+async function findWrittenReviewLeadForDelivery(leadId) {
+  const cleanId = String(leadId || "").trim();
+
+  function matchesLeadId(obj = {}) {
+    const estimate = obj.estimate || {};
+    const possibleIds = [
+      obj.leadId,
+      obj.leadid,
+      obj.lead_id,
+      obj.id,
+      obj.estimateId,
+      estimate.leadId,
+      estimate.leadid,
+      estimate.lead_id,
+      estimate.id,
+      estimate.estimateId
+    ];
+
+    return possibleIds.some(
+      (id) => String(id || "").trim() === cleanId
+    );
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(data)) {
+      const matchingRow = data.find(matchesLeadId);
+
+      if (matchingRow) {
+        return {
+          ok: true,
+          source: "supabase",
+          lead: matchingRow.estimate || matchingRow
+        };
+      }
+    }
+
+    if (error) {
+      console.error(
+        "[written review delivery] Supabase lookup error:",
+        error.message || error
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[written review delivery] Supabase lookup failed:",
+      err.message || err
+    );
+  }
+
+  const localLeads = readLeads();
+  const localLead = localLeads.find(matchesLeadId);
+
+  if (localLead) {
+    return {
+      ok: true,
+      source: "local",
+      lead: localLead
+    };
+  }
+
+  return {
+    ok: false,
+    error: "Lead not found."
+  };
+}
+
+app.post("/api/written-review/:leadId/send-completed", async (req, res) => {
+  try {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing lead ID."
+      });
+    }
+
+    const lookup = await findWrittenReviewLeadForDelivery(leadId);
+
+    if (!lookup.ok || !lookup.lead) {
+      return res.status(404).json({
+        ok: false,
+        error: lookup.error || "Lead not found."
+      });
+    }
+
+    const lead = lookup.lead;
+    const writtenReview = lead.writtenReview || {};
+
+    if (
+      writtenReview.deliveredAt ||
+      writtenReview.completedAt ||
+      String(lead.status || "").toLowerCase().includes("closed")
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error: "This Written Review is already completed or delivered."
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      return res.status(500).json({
+        ok: false,
+        error: "Gmail delivery is not configured."
+      });
+    }
+
+    const host = String(req.headers.host || "").toLowerCase();
+    const isLocal =
+      host.includes("localhost") ||
+      host.includes("127.0.0.1");
+
+    const useOfficeEmail =
+      isLocal &&
+      req.body &&
+      req.body.useOfficeEmail === true;
+
+    const clientEmail =
+      String(lead.contact?.email || "").trim();
+
+    const recipient =
+      useOfficeEmail
+        ? EMAIL_USER
+        : clientEmail;
+
+    if (!recipient) {
+      return res.status(400).json({
+        ok: false,
+        error: "The client does not have an email address."
+      });
+    }
+
+    const clientName =
+      String(lead.contact?.name || "Client").trim();
+
+    const baseUrl =
+      String(APP_BASE_URL || "").replace(/\/+$/, "");
+
+    const reportUrl =
+      baseUrl +
+      "/written-review-report/" +
+      encodeURIComponent(leadId);
+
+    const subject =
+      "Your Written Tax Estimate Red Flag Review Is Ready";
+
+    const body =
+`Hello ${clientName},
+
+Your Written Tax Estimate Red Flag Review has been completed.
+
+Open your completed review:
+${reportUrl}
+
+Please keep in mind that this review is based on the information entered into the tax estimator. It is not a filed tax return or a substitute for full tax preparation.
+
+Thank you,
+
+Greatest Business Solution LLC`;
+
+    const emailResult = await transporter.sendMail({
+      from: EMAIL_USER,
+      to: recipient,
+      subject,
+      text: body
+    });
+
+    const nowIso = new Date().toISOString();
+    const nowDisplay = new Date().toLocaleString();
+
+    const closeResult = await updateLeadAfterStripePayment(
+      leadId,
+      function applyWrittenReviewDelivery(record = {}) {
+        const updated = { ...record };
+        const existingReview = updated.writtenReview || {};
+
+        updated.writtenReview = {
+          ...existingReview,
+          status: "Completed / Delivered",
+          completedAt: nowIso,
+          deliveredAt: nowIso,
+          emailSentAt: nowIso,
+          deliveryMethod: "Email",
+          deliveryRecipient: recipient,
+          emailMessageId: emailResult.messageId || "",
+          updatedAt: nowIso
+        };
+
+        updated.status = "Closed - Written Review Completed";
+        updated.updatedAt = nowIso;
+
+        const deliveryNote =
+          "[" + nowDisplay + "] Written Review emailed and marked completed." +
+          " Recipient: " + recipient + ".";
+
+        const oldNotes =
+          typeof updated.notes === "string"
+            ? updated.notes.trim()
+            : "";
+
+        updated.notes =
+          oldNotes
+            ? oldNotes + "\n" + deliveryNote
+            : deliveryNote;
+
+        return updated;
+      }
+    );
+
+    if (!closeResult.ok) {
+      console.error(
+        "[written review delivery] Email sent but closeout failed:",
+        closeResult.error || closeResult
+      );
+
+      return res.status(500).json({
+        ok: false,
+        emailSent: true,
+        error:
+          "The email was sent, but the lead could not be moved to Closed Leads."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      emailSent: true,
+      closed: true,
+      recipient,
+      source: closeResult.source,
+      leadId
+    });
+  } catch (err) {
+    console.error(
+      "[written review delivery] Error:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "The completed Written Review could not be delivered."
+    });
+  }
+});
+// =============================================================================
 // POST /api/stripe-webhook
 // =============================================================================
 
@@ -1738,6 +1991,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
