@@ -501,11 +501,26 @@ app.get("/api/dev/simulate-transcript-paid", async (req, res) => {
       host.includes("localhost") ||
       host.includes("127.0.0.1");
 
-    if (!isLocal && process.env.ALLOW_PAYMENT_SIMULATION !== "true") {
-      return res.status(403).json({
-        ok: false,
-        error: "Payment simulation is disabled outside localhost."
-      });
+    if (!isLocal) {
+      const expectedKey =
+        String(process.env.LIVE_TEST_KEY || "").trim();
+
+      const suppliedKey =
+        String(req.get("x-live-test-key") || "").trim();
+
+      if (!expectedKey) {
+        return res.status(403).json({
+          ok: false,
+          error: "Protected live testing is not configured."
+        });
+      }
+
+      if (!suppliedKey || suppliedKey !== expectedKey) {
+        return res.status(403).json({
+          ok: false,
+          error: "Invalid protected live-test key."
+        });
+      }
     }
 
     const leadId = String(req.query.leadId || "").trim();
@@ -548,11 +563,26 @@ app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
       host.includes("localhost") ||
       host.includes("127.0.0.1");
 
-    if (!isLocal && process.env.ALLOW_PAYMENT_SIMULATION !== "true") {
-      return res.status(403).json({
-        ok: false,
-        error: "Payment simulation is disabled outside localhost."
-      });
+    if (!isLocal) {
+      const expectedKey =
+        String(process.env.LIVE_TEST_KEY || "").trim();
+
+      const suppliedKey =
+        String(req.get("x-live-test-key") || "").trim();
+
+      if (!expectedKey) {
+        return res.status(403).json({
+          ok: false,
+          error: "Protected live testing is not configured."
+        });
+      }
+
+      if (!suppliedKey || suppliedKey !== expectedKey) {
+        return res.status(403).json({
+          ok: false,
+          error: "Invalid protected live-test key."
+        });
+      }
     }
 
     const leadId = String(req.query.leadId || "").trim();
@@ -2194,6 +2224,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
