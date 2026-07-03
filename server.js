@@ -463,7 +463,7 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
     updated.writtenReview = {
       ...existingWrittenReview,
       requested: true,
-      status: "Paid / Needs Written Review",
+      status: "Paid / Waiting for Client Worksheet",
       paymentStatus: "Paid / Verified",
       paymentVerifiedAt: nowIso,
       paidAt: nowIso,
@@ -480,7 +480,7 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
     };
 
     updated.paymentStatus = "Paid / Verified";
-    updated.status = "Written Review - Paid / Needs Written Review";
+    updated.status = "Written Review - Waiting for Client Worksheet";
     updated.updatedAt = nowIso;
 
     const oldNotes = typeof updated.notes === "string" ? updated.notes.trim() : "";
@@ -611,20 +611,26 @@ app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
     const localBaseUrl =
       "http://" + String(req.headers.host || "localhost:3000");
 
-    const delivery =
-      await triggerAutomaticWrittenReviewDelivery(
+    const nextStep =
+      await triggerAutomaticWrittenReviewNextStep(
         leadId,
         localBaseUrl
       );
 
-    return res.status(delivery.ok ? 200 : 500).json({
-      ok: delivery.ok,
+    return res.status(nextStep.ok ? 200 : 500).json({
+      ok: nextStep.ok,
       paymentConfirmed: true,
-      automaticDelivery: delivery.ok,
-      emailSent: delivery.emailSent === true,
-      closed: delivery.closed === true,
-      source: delivery.source || result.source || null,
-      error: delivery.error || null,
+      worksheetInvitationSent:
+        nextStep.worksheetInvitationSent === true,
+      finalReviewDelivered:
+        nextStep.emailSent === true &&
+        nextStep.closed === true,
+      closed: nextStep.closed === true,
+      source:
+        nextStep.source ||
+        result.source ||
+        null,
+      error: nextStep.error || null,
       leadId
     });
   } catch (err) {
@@ -738,6 +744,24 @@ app.post("/api/written-review/:leadId/send-completed", async (req, res) => {
 
     const lead = lookup.lead;
     const writtenReview = lead.writtenReview || {};
+    const requestData =
+      lead.Request ||
+      lead.request ||
+      {};
+
+    const worksheetCompleted =
+      Boolean(requestData.clientTaxStrategyWorksheet) &&
+      (
+        requestData.clientTaxStrategyWorksheetStatus === "Completed" ||
+        Boolean(requestData.clientTaxStrategyWorksheetCompletedAt)
+      );
+
+    if (!worksheetCompleted) {
+      return res.status(409).json({
+        ok: false,
+        error: "The Client Tax Strategy Worksheet has not been completed."
+      });
+    }
 
     if (
       writtenReview.deliveredAt ||
@@ -839,6 +863,7 @@ Greatest Business Solution LLC`;
         };
 
         updated.status = "Closed - Written Review Completed";
+        updated.closedAt = nowIso;
         updated.updatedAt = nowIso;
 
         const deliveryNote =
@@ -893,6 +918,210 @@ Greatest Business Solution LLC`;
     });
   }
 });
+// =============================================================================
+// AUTOMATIC CLIENT WORKSHEET INVITATION
+// Payment sends the worksheet first. Final delivery waits for submission.
+// =============================================================================
+
+async function sendWrittenReviewWorksheetInvitation(
+  leadId,
+  baseUrlOverride = ""
+) {
+  const cleanId = String(leadId || "").trim();
+
+  if (!cleanId) {
+    return {
+      ok: false,
+      error: "Missing lead ID for worksheet invitation."
+    };
+  }
+
+  if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+    return {
+      ok: false,
+      error: "Gmail delivery is not configured."
+    };
+  }
+
+  const lookup =
+    await findWrittenReviewLeadForDelivery(cleanId);
+
+  if (!lookup.ok || !lookup.lead) {
+    return {
+      ok: false,
+      error: lookup.error || "Lead not found."
+    };
+  }
+
+  const lead = lookup.lead;
+  const review = lead.writtenReview || {};
+  const requestData =
+    lead.Request ||
+    lead.request ||
+    {};
+
+  const worksheetCompleted =
+    Boolean(requestData.clientTaxStrategyWorksheet) &&
+    (
+      requestData.clientTaxStrategyWorksheetStatus === "Completed" ||
+      Boolean(requestData.clientTaxStrategyWorksheetCompletedAt)
+    );
+
+  if (worksheetCompleted) {
+    return triggerAutomaticWrittenReviewDelivery(
+      cleanId,
+      baseUrlOverride
+    );
+  }
+
+  if (review.worksheetInvitationSentAt) {
+    return {
+      ok: true,
+      worksheetInvitationSent: true,
+      alreadySent: true,
+      leadId: cleanId
+    };
+  }
+
+  const clientEmail =
+    String(lead.contact?.email || "").trim();
+
+  if (!clientEmail) {
+    return {
+      ok: false,
+      error: "The client does not have an email address."
+    };
+  }
+
+  const clientName =
+    String(lead.contact?.name || "Client").trim();
+
+  const baseUrl =
+    String(baseUrlOverride || APP_BASE_URL || "")
+      .trim()
+      .replace(/\/+$/, "");
+
+  if (!baseUrl) {
+    return {
+      ok: false,
+      error: "APP_BASE_URL is not configured."
+    };
+  }
+
+  const worksheetUrl =
+    baseUrl +
+    "/client-tax-strategy-worksheet/" +
+    encodeURIComponent(cleanId);
+
+  const subject =
+    "Complete Your Tax Strategy Worksheet";
+
+  const body =
+`Hello ${clientName},
+
+Thank you for purchasing the Written Tax Estimate Red Flag Review.
+
+Before your complete review can be finalized, please complete your Client Tax Strategy Worksheet:
+
+${worksheetUrl}
+
+Your answers will be included in the tax-strategy portion of your completed review.
+
+After you submit the worksheet, the system will automatically finalize and email your complete Written Red Flag Review.
+
+Thank you,
+
+Greatest Business Solution LLC`;
+
+  const emailResult =
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: clientEmail,
+      subject,
+      text: body
+    });
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  const saveResult =
+    await updateLeadAfterStripePayment(
+      cleanId,
+      function applyWorksheetInvitation(record = {}) {
+        const updated = { ...record };
+        const existingReview =
+          updated.writtenReview || {};
+
+        updated.writtenReview = {
+          ...existingReview,
+          status: "Waiting for Client Worksheet",
+          worksheetInvitationSentAt: nowIso,
+          worksheetInvitationRecipient: clientEmail,
+          worksheetInvitationMessageId:
+            emailResult.messageId || "",
+          updatedAt: nowIso
+        };
+
+        updated.status =
+          "Written Review - Waiting for Client Worksheet";
+        updated.updatedAt = nowIso;
+
+        const note =
+          "[" + nowDisplay + "] Client Tax Strategy Worksheet invitation emailed to " +
+          clientEmail + ".";
+
+        const oldNotes =
+          typeof updated.notes === "string"
+            ? updated.notes.trim()
+            : "";
+
+        updated.notes =
+          oldNotes
+            ? oldNotes + "\n" + note
+            : note;
+
+        return updated;
+      }
+    );
+
+  if (!saveResult.ok) {
+    return {
+      ok: false,
+      emailSent: true,
+      error:
+        "Worksheet invitation was emailed, but its status could not be saved."
+    };
+  }
+
+  return {
+    ok: true,
+    worksheetInvitationSent: true,
+    recipient: clientEmail,
+    source: saveResult.source,
+    leadId: cleanId
+  };
+}
+
+async function triggerAutomaticWrittenReviewNextStep(
+  leadId,
+  baseUrlOverride = ""
+) {
+  const result =
+    await sendWrittenReviewWorksheetInvitation(
+      leadId,
+      baseUrlOverride
+    );
+
+  if (!result.ok) {
+    await markWrittenReviewAutomationFailure(
+      leadId,
+      result.error ||
+        "Automatic Written Review next step failed."
+    );
+  }
+
+  return result;
+}
 // =============================================================================
 // AUTOMATIC WRITTEN REVIEW DELIVERY
 // Stripe payment confirmation calls the already-tested completed-review route.
@@ -1104,18 +1333,23 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
             result.source
           );
 
-          const delivery =
-            await triggerAutomaticWrittenReviewDelivery(leadId);
+          const nextStep =
+            await triggerAutomaticWrittenReviewNextStep(leadId);
 
-          if (!delivery.ok) {
+          if (!nextStep.ok) {
             console.error(
-              "[stripe webhook] Automatic Written Review delivery failed:",
+              "[stripe webhook] Automatic Written Review next step failed:",
               leadId,
-              delivery.error || delivery
+              nextStep.error || nextStep
+            );
+          } else if (nextStep.closed) {
+            console.log(
+              "[stripe webhook] Completed Written Review automatically emailed and closed:",
+              leadId
             );
           } else {
             console.log(
-              "[stripe webhook] Written Review automatically emailed and closed:",
+              "[stripe webhook] Client Tax Strategy Worksheet invitation emailed:",
               leadId
             );
           }
@@ -1472,8 +1706,15 @@ app.get("/estimate/:leadId", (req, res) => {
 
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
-  const { status, notes, Request } = req.body;
+  const { status, notes, Request } = req.body || {};
   const cleanId = String(leadId || "").trim();
+
+  const worksheetWasSubmitted =
+    Request &&
+    typeof Request === "object" &&
+    !Array.isArray(Request) &&
+    Request.clientTaxStrategyWorksheetStatus === "Completed" &&
+    Boolean(Request.clientTaxStrategyWorksheet);
 
   const findMatchingRow = (rows) => {
     return (rows || []).find((row) => {
@@ -1490,7 +1731,9 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         estimate.id
       ];
 
-      return possibleIds.some((id) => String(id || "").trim() === cleanId);
+      return possibleIds.some(
+        (id) => String(id || "").trim() === cleanId
+      );
     });
   };
 
@@ -1505,7 +1748,11 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.notes = notes;
     }
 
-    if (Request && typeof Request === "object" && !Array.isArray(Request)) {
+    if (
+      Request &&
+      typeof Request === "object" &&
+      !Array.isArray(Request)
+    ) {
       updatedEstimate.Request = {
         ...(updatedEstimate.Request || {}),
         ...Request,
@@ -1517,7 +1764,6 @@ app.patch("/api/leads/:leadId", async (req, res) => {
   };
 
   try {
-    // First try Supabase using the same broad lookup style as the estimate summary route.
     try {
       const { data, error } = await supabase
         .from("leads")
@@ -1525,35 +1771,57 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("[PATCH /api/leads] Supabase lookup error:", error.message || error);
+        console.error(
+          "[PATCH /api/leads] Supabase lookup error:",
+          error.message || error
+        );
       }
 
       if (!error && Array.isArray(data)) {
         const matchingRow = findMatchingRow(data);
 
         if (matchingRow) {
-          const updatedEstimate = applyUpdateToEstimate(matchingRow.estimate || {});
+          const updatedEstimate =
+            applyUpdateToEstimate(matchingRow.estimate || {});
 
           let updateQuery = supabase
             .from("leads")
             .update({ estimate: updatedEstimate });
 
           if (matchingRow.leadId) {
-            updateQuery = updateQuery.eq("leadId", matchingRow.leadId);
+            updateQuery = updateQuery.eq(
+              "leadId",
+              matchingRow.leadId
+            );
           } else if (matchingRow.leadid) {
-            updateQuery = updateQuery.eq("leadid", matchingRow.leadid);
+            updateQuery = updateQuery.eq(
+              "leadid",
+              matchingRow.leadid
+            );
           } else if (matchingRow.lead_id) {
-            updateQuery = updateQuery.eq("lead_id", matchingRow.lead_id);
+            updateQuery = updateQuery.eq(
+              "lead_id",
+              matchingRow.lead_id
+            );
           } else if (matchingRow.id) {
-            updateQuery = updateQuery.eq("id", matchingRow.id);
+            updateQuery = updateQuery.eq(
+              "id",
+              matchingRow.id
+            );
           } else {
-            throw new Error("Matched Supabase row has no usable ID column.");
+            throw new Error(
+              "Matched Supabase row has no usable ID column."
+            );
           }
 
           const { error: updateError } = await updateQuery;
 
           if (updateError) {
-            console.error("[PATCH /api/leads] Supabase update error:", updateError.message || updateError);
+            console.error(
+              "[PATCH /api/leads] Supabase update error:",
+              updateError.message || updateError
+            );
+
             return res.status(500).json({
               ok: false,
               error: "Could not update lead."
@@ -1567,19 +1835,37 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
           recentLeads.set(updatedLead.leadId, updatedLead);
 
+          let automaticDelivery = null;
+
+          if (worksheetWasSubmitted) {
+            const localBaseUrl =
+              "http://" +
+              String(req.headers.host || "localhost:3000");
+
+            automaticDelivery =
+              await triggerAutomaticWrittenReviewDelivery(
+                cleanId,
+                localBaseUrl
+              );
+          }
+
           return res.status(200).json({
             ok: true,
             source: "supabase",
-            lead: updatedLead
+            lead: updatedLead,
+            automaticDelivery
           });
         }
       }
     } catch (supabaseErr) {
-      console.error("[PATCH /api/leads] Supabase update failed:", supabaseErr.message || supabaseErr);
+      console.error(
+        "[PATCH /api/leads] Supabase update failed:",
+        supabaseErr.message || supabaseErr
+      );
     }
 
-    // Fallback: update local  if the lead was found there.
     const localLeads = readLeads();
+
     const localIndex = localLeads.findIndex((lead) => {
       const possibleIds = [
         lead?.leadId,
@@ -1588,7 +1874,9 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         lead?.lead_id
       ];
 
-      return possibleIds.some((id) => String(id || "").trim() === cleanId);
+      return possibleIds.some(
+        (id) => String(id || "").trim() === cleanId
+      );
     });
 
     if (localIndex >= 0) {
@@ -1602,7 +1890,11 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         localLead.notes = notes;
       }
 
-      if (Request && typeof Request === "object" && !Array.isArray(Request)) {
+      if (
+        Request &&
+        typeof Request === "object" &&
+        !Array.isArray(Request)
+      ) {
         localLead.Request = {
           ...(localLead.Request || {}),
           ...Request,
@@ -1614,10 +1906,25 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       writeLeads(localLeads);
       recentLeads.set(localLead.leadId, localLead);
 
+      let automaticDelivery = null;
+
+      if (worksheetWasSubmitted) {
+        const localBaseUrl =
+          "http://" +
+          String(req.headers.host || "localhost:3000");
+
+        automaticDelivery =
+          await triggerAutomaticWrittenReviewDelivery(
+            cleanId,
+            localBaseUrl
+          );
+      }
+
       return res.status(200).json({
         ok: true,
         source: "local",
-        lead: localLead
+        lead: localLead,
+        automaticDelivery
       });
     }
 
@@ -1627,14 +1934,17 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       requestedLeadId: cleanId
     });
   } catch (err) {
-    console.error("[PATCH /api/leads] Unexpected error:", err);
+    console.error(
+      "[PATCH /api/leads] Unexpected error:",
+      err
+    );
+
     return res.status(500).json({
       ok: false,
       error: "Could not update lead."
     });
   }
 });
-
 
 // =============================================================================
 // GET /client-tax-strategy-worksheet/:leadId
@@ -2224,6 +2534,10 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
+
 
 
 
