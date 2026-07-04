@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Start My Tax Return</title>
+  <style>
+    :root {
+      --navy:#0f2f59;
+      --blue:#1f5f9f;
+      --gold:#c69a37;
+      --ink:#172033;
+      --muted:#657084;
+      --line:#d8e0ea;
+      --soft:#f5f8fb;
+      --success:#0f7a55;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      background:#eef3f8;
+      color:var(--ink);
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .wrap {
+      width:min(980px, calc(100% - 28px));
+      margin:24px auto 60px;
+    }
+    .card {
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 14px 40px rgba(15,47,89,.10);
+      overflow:hidden;
+    }
+    header {
+      display:flex;
+      align-items:center;
+      gap:20px;
+      padding:24px 28px;
+      background:var(--navy);
+      color:#fff;
+    }
+    header img {
+      width:210px;
+      max-height:80px;
+      object-fit:contain;
+      background:#fff;
+      border-radius:10px;
+      padding:8px;
+    }
+    header h1 { margin:0 0 6px; font-size:30px; }
+    header p { margin:0; color:#dbe8f5; line-height:1.5; }
+    form { padding:28px; }
+    .intro {
+      border-left:6px solid var(--gold);
+      background:#fff9eb;
+      padding:16px 18px;
+      border-radius:10px;
+      margin-bottom:24px;
+      line-height:1.5;
+    }
+    section {
+      border-top:1px solid var(--line);
+      padding-top:24px;
+      margin-top:24px;
+    }
+    section:first-of-type { border-top:0; margin-top:0; padding-top:0; }
+    h2 { margin:0 0 8px; color:var(--navy); font-size:21px; }
+    .hint { margin:0 0 16px; color:var(--muted); line-height:1.5; }
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+    .grid.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    label.field { display:block; font-weight:700; font-size:14px; }
+    input, select, textarea {
+      width:100%;
+      margin-top:7px;
+      padding:12px 13px;
+      border:1px solid #bfcbd8;
+      border-radius:9px;
+      font:inherit;
+      background:#fff;
+    }
+    textarea { min-height:110px; resize:vertical; }
+    .choices {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px 14px;
+    }
+    .choice {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:12px;
+      background:var(--soft);
+      font-weight:600;
+      line-height:1.35;
+    }
+    .choice input { width:auto; margin:2px 0 0; }
+    .subhead {
+      margin:20px 0 10px;
+      font-weight:800;
+      color:var(--navy);
+    }
+    .notice {
+      margin-top:18px;
+      background:#edf6ff;
+      border:1px solid #bfd9f3;
+      border-radius:10px;
+      padding:14px;
+      color:#234d72;
+      line-height:1.5;
+    }
+    button {
+      width:100%;
+      margin-top:26px;
+      border:0;
+      border-radius:12px;
+      padding:15px 18px;
+      font-size:17px;
+      font-weight:800;
+      color:#fff;
+      background:linear-gradient(135deg,var(--navy),var(--blue));
+      cursor:pointer;
+    }
+    button:disabled { opacity:.65; cursor:wait; }
+    #result {
+      display:none;
+      margin-top:22px;
+      border-radius:12px;
+      padding:18px;
+      line-height:1.55;
+    }
+    #result.success {
+      display:block;
+      border:1px solid #9fd6c4;
+      background:#effbf7;
+      color:#0b5c41;
+    }
+    #result.error {
+      display:block;
+      border:1px solid #efb6b6;
+      background:#fff3f3;
+      color:#8a1f1f;
+    }
+    .result-title { font-size:20px; font-weight:800; margin-bottom:8px; }
+    .actions { margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; }
+    .actions a {
+      display:inline-block;
+      padding:11px 14px;
+      border-radius:9px;
+      background:var(--navy);
+      color:#fff;
+      text-decoration:none;
+      font-weight:700;
+    }
+    @media(max-width:720px) {
+      header { align-items:flex-start; flex-direction:column; }
+      .grid,.grid.three,.choices { grid-template-columns:1fr; }
+      form { padding:20px; }
+      header h1 { font-size:26px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <header>
+        <img src="/logo.png" alt="Greatest Business Solution LLC" />
+        <div>
+          <h1>Start My Tax Return</h1>
+          <p>Tell us what you have. We will route you to the right tax-preparation service without treating every return as the same.</p>
+        </div>
+      </header>
+
+      <form id="intakeForm">
+        <div class="intro">
+          This is a planning and intake form—not a request to upload sensitive tax documents. Do not enter Social Security numbers, bank information, or full tax-document images here.
+        </div>
+
+        <section>
+          <h2>Your Contact Information</h2>
+          <div class="grid">
+            <label class="field">Full name
+              <input id="name" required autocomplete="name" />
+            </label>
+            <label class="field">Email
+              <input id="email" type="email" required autocomplete="email" />
+            </label>
+            <label class="field">Phone
+              <input id="phone" autocomplete="tel" placeholder="(555) 555-5555" />
+            </label>
+            <label class="field">Tax year
+              <select id="taxYear" required>
+                <option value="">Select</option>
+                <option>2025</option>
+                <option>2024</option>
+                <option>2023</option>
+                <option>2022</option>
+                <option>Prior years</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>What Do You Need Prepared?</h2>
+          <p class="hint">Choose everything that applies.</p>
+          <div class="choices" id="serviceTypes">
+            <label class="choice"><input type="checkbox" value="individual_federal_state" /> Federal and state individual return</label>
+            <label class="choice"><input type="checkbox" value="prior_year_return" /> Prior-year or multiple-year return</label>
+            <label class="choice"><input type="checkbox" value="multiple_states" /> Multi-state return</label>
+            <label class="choice"><input type="checkbox" value="business_return" /> Business or entity return</label>
+            <label class="choice"><input type="checkbox" value="partnership_return" /> Partnership return</label>
+            <label class="choice"><input type="checkbox" value="s_corporation_return" /> S corporation return</label>
+            <label class="choice"><input type="checkbox" value="c_corporation_return" /> C corporation return</label>
+            <label class="choice"><input type="checkbox" value="nonprofit_return" /> Nonprofit return</label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Income and Tax Situations</h2>
+          <p class="hint">Choose all sources and situations that may appear on the return.</p>
+          <div class="choices" id="incomeTypes">
+            <label class="choice"><input type="checkbox" value="w2_income" /> W-2 wages</label>
+            <label class="choice"><input type="checkbox" value="1099_nec" /> 1099-NEC contractor income</label>
+            <label class="choice"><input type="checkbox" value="1099_k" /> 1099-K platform or payment income</label>
+            <label class="choice"><input type="checkbox" value="gig_platform" /> Uber, Lyft, DoorDash, Instacart, or other gig work</label>
+            <label class="choice"><input type="checkbox" value="creator_income" /> TikTok, YouTube, Twitch, influencer, or creator income</label>
+            <label class="choice"><input type="checkbox" value="self_employment" /> Freelance, consulting, or other self-employment</label>
+            <label class="choice"><input type="checkbox" value="minister_clergy" /> Minister, clergy, speaker, or housing allowance</label>
+            <label class="choice"><input type="checkbox" value="stocks_bonds_investments" /> Stocks, bonds, mutual funds, or investment sales</label>
+            <label class="choice"><input type="checkbox" value="interest_dividends" /> Interest or dividend income</label>
+            <label class="choice"><input type="checkbox" value="foreign_tax" /> Foreign tax, foreign income, or foreign accounts</label>
+            <label class="choice"><input type="checkbox" value="estimated_tax_payments" /> Federal or state estimated-tax payments</label>
+            <label class="choice"><input type="checkbox" value="rental_income" /> Rental property income or expenses</label>
+            <label class="choice"><input type="checkbox" value="k1_income" /> Schedule K-1 income</label>
+            <label class="choice"><input type="checkbox" value="retirement_income" /> Pension, IRA, or Social Security income</label>
+            <label class="choice"><input type="checkbox" value="cryptocurrency" /> Cryptocurrency activity</label>
+            <label class="choice"><input type="checkbox" value="other_income" /> Other income not listed</label>
+          </div>
+
+          <div class="grid three" style="margin-top:18px;">
+            <label class="field">Approximate number of income documents
+              <input id="documentCount" type="number" min="0" max="200" value="1" />
+            </label>
+            <label class="field">Number of states involved
+              <input id="stateCount" type="number" min="1" max="50" value="1" />
+            </label>
+            <label class="field">Primary state
+              <input id="primaryState" maxlength="2" placeholder="AZ" />
+            </label>
+          </div>
+
+          <div class="notice">
+            Have many forms? Enter the approximate count. A customer with 13 separate 1099s should enter 13; the system will route the request as a higher-complexity return without forcing every document to be typed here.
+          </div>
+        </section>
+
+        <section>
+          <h2>Filing Details</h2>
+          <div class="grid">
+            <label class="field">Filing status
+              <select id="filingStatus">
+                <option value="">Not sure / select later</option>
+                <option value="single">Single</option>
+                <option value="married_filing_jointly">Married Filing Jointly</option>
+                <option value="married_filing_separately">Married Filing Separately</option>
+                <option value="head_of_household">Head of Household</option>
+                <option value="qualifying_surviving_spouse">Qualifying Surviving Spouse</option>
+              </select>
+            </label>
+            <label class="field">Bookkeeping condition
+              <select id="bookkeepingStatus">
+                <option value="">Not applicable / not sure</option>
+                <option value="organized">Organized and ready</option>
+                <option value="some_cleanup">Needs some cleanup</option>
+                <option value="major_cleanup">Needs major cleanup</option>
+                <option value="no_records">I do not have organized records</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field" style="margin-top:16px;">Anything else we should know?
+            <textarea id="comments" placeholder="Examples: 13 separate 1099s, minister housing allowance, stock sales, foreign taxes, estimated payments, multiple businesses, missing documents, or prior-year issues."></textarea>
+          </label>
+        </section>
+
+        <button id="submitButton" type="submit">Submit My Tax Preparation Request</button>
+        <div id="result" aria-live="polite"></div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const bookingUrl = "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+    const params = new URLSearchParams(window.location.search);
+    const sourceLeadId = params.get("leadId") || "";
+
+    function checkedValues(containerId) {
+      return Array.from(
+        document.querySelectorAll(`#${containerId} input:checked`)
+      ).map((input) => input.value);
+    }
+
+    async function prefillFromEstimate() {
+      if (!sourceLeadId) return;
+
+      try {
+        const response = await fetch(
+          `/api/estimate-summary/${encodeURIComponent(sourceLeadId)}`
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const lead = data.lead || {};
+        const contact = lead.contact || {};
+        const taxData = lead.taxData || {};
+
+        document.getElementById("name").value = contact.name || "";
+        document.getElementById("email").value = contact.email || "";
+        document.getElementById("phone").value =
+          contact.phone && contact.phone !== "Not provided"
+            ? contact.phone
+            : "";
+        document.getElementById("taxYear").value =
+          String(taxData.taxYear || "");
+        document.getElementById("filingStatus").value =
+          String(taxData.filingStatus || "").toLowerCase();
+        document.getElementById("primaryState").value =
+          String(taxData.stateCode || "").toUpperCase();
+      } catch (error) {
+        console.warn("Could not prefill tax-return intake:", error);
+      }
+    }
+
+    document.getElementById("intakeForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const resultBox = document.getElementById("result");
+      const button = document.getElementById("submitButton");
+      const serviceTypes = checkedValues("serviceTypes");
+      const incomeTypes = checkedValues("incomeTypes");
+
+      resultBox.className = "";
+      resultBox.style.display = "none";
+
+      if (serviceTypes.length === 0 || incomeTypes.length === 0) {
+        resultBox.className = "error";
+        resultBox.innerHTML =
+          "<div class='result-title'>Please complete the highlighted sections.</div>" +
+          "Select at least one service and at least one income or tax situation.";
+        return;
+      }
+
+      const payload = {
+        sourceLeadId,
+        contact: {
+          name: document.getElementById("name").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          phone: document.getElementById("phone").value.trim()
+        },
+        intake: {
+          taxYear: document.getElementById("taxYear").value,
+          serviceTypes,
+          incomeTypes,
+          documentCount: document.getElementById("documentCount").value,
+          stateCount: document.getElementById("stateCount").value,
+          primaryState: document.getElementById("primaryState").value.trim().toUpperCase(),
+          filingStatus: document.getElementById("filingStatus").value,
+          bookkeepingStatus: document.getElementById("bookkeepingStatus").value,
+          comments: document.getElementById("comments").value.trim()
+        }
+      };
+
+      button.disabled = true;
+      button.textContent = "Saving Your Request...";
+
+      try {
+        const response = await fetch("/api/tax-preparation-intake", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            (data.errors && data.errors.join(" ")) ||
+            data.error ||
+            "Could not save your request."
+          );
+        }
+
+        const reviewMessage = data.needsProfessionalReview
+          ? "Your information includes items that need professional review before pricing or scheduling."
+          : "Your request is ready for the next step.";
+
+        resultBox.className = "success";
+        resultBox.innerHTML =
+          `<div class="result-title">Your request was received.</div>` +
+          `<strong>Recommended service:</strong> ${data.recommendedLane}<br>` +
+          `${reviewMessage}<br>` +
+          `<strong>Reference:</strong> ${data.leadId}` +
+          `<div class="actions">` +
+          `<a href="${bookingUrl}" target="_blank" rel="noopener">Schedule a 15-Minute Appointment</a>` +
+          `</div>`;
+
+        document.getElementById("intakeForm").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } catch (error) {
+        resultBox.className = "error";
+        resultBox.innerHTML =
+          `<div class="result-title">We could not save your request.</div>` +
+          `${error.message}`;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Submit My Tax Preparation Request";
+      }
+    });
+
+    prefillFromEstimate();
+  </script>
+</body>
+</html>

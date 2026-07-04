@@ -91,6 +91,81 @@
       border: 1px solid #ef4444;
       color: #b91c1c;
     }
+
+
+    .taxprep-filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .taxprep-filter-btn {
+      border: 1px solid #b9c8d9;
+      background: white;
+      color: #17324d;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .taxprep-filter-btn.active {
+      background: #17324d;
+      color: white;
+      border-color: #17324d;
+    }
+
+    .taxprep-table-wrap {
+      background: white;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .taxprep-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    .taxprep-table th,
+    .taxprep-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e5eaf0;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    .taxprep-table th {
+      background: #eef3f8;
+      color: #17324d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .taxprep-open-btn {
+      border: 0;
+      border-radius: 6px;
+      background: #28588c;
+      color: white;
+      padding: 7px 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef3f8;
+      color: #17324d;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
   </style>
 </head>
 
@@ -101,6 +176,7 @@
     <button class="sidebar-btn active" data-view="office">Office Work Queue</button>
     <button class="sidebar-btn" data-view="all">All Leads</button>
     <button class="sidebar-btn" data-view="written">Written Review Requests</button>
+    <button class="sidebar-btn" data-view="taxprep">Tax Preparation Requests</button>
     <button class="sidebar-btn" data-view="closed">Closed Leads</button>
     <button class="sidebar-btn" onclick="window.location.href='/transcript-requests'">New Transcript Requests</button>
   </aside>
@@ -108,6 +184,18 @@
   <main class="main">
     <h1 id="viewTitle">Office Work Queue</h1>
     <div id="leadCount"> </div>
+
+    <div id="taxPrepFilters" class="taxprep-filters">
+      <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Tax Preparation</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="new">New Intakes</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="simple">Simple Individual</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="gig">Gig / Self-Employed</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="complex">Investment & Complex</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="business">Business / Entity</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="review">Needs Review</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="completed">Completed</button>
+    </div>
+
     <div id="leadList"></div>
   </main>
 
@@ -126,11 +214,22 @@
   display: none;
   z-index: 9999;
 ">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <button
+      type="button"
+      onclick="clearDetailPanel()"
+      style="border:1px solid #cbd5e1;background:#f8fafc;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;"
+    >
+      Close
+    </button>
+  </div>
   <h2 id="dpName">Lead Details</h2>
   <div id="dpEmail"></div>
   <div id="dpStatus"></div>
   <div id="dpTaxYear"></div>
   <div id="dpRefund"></div>
+  <div id="dpEntered"></div>
+  <div id="dpClosed"></div>
 </div>
 
 
@@ -138,8 +237,89 @@
 <script>
 let allLeads = [];
 let currentView = "office";
+let currentTaxPrepFilter = "all";
+
+function formatLeadDate(value){
+  if(!value) return "";
+
+  const date = new Date(value);
+
+  if(Number.isNaN(date.getTime())){
+    return "";
+  }
+
+  return date.toLocaleString();
+}
+
+function getLeadEnteredAt(lead){
+  return (
+    lead.timestamp ||
+    lead.createdAt ||
+    lead.created_at ||
+    ""
+  );
+}
+
+function getLeadClosedAt(lead){
+  return (
+    lead.closedAt ||
+    lead.writtenReview?.deliveredAt ||
+    lead.writtenReview?.completedAt ||
+    (
+      String(lead.status || "").toLowerCase().includes("closed")
+        ? lead.updatedAt
+        : ""
+    ) ||
+    ""
+  );
+}
+
+function isTaxPreparationLead(lead){
+  return Boolean(lead && lead.taxPreparationIntake) ||
+    String(lead?.leadId || "").startsWith("TAXPREP-") ||
+    String(lead?.status || "").toLowerCase().includes("tax preparation intake");
+}
+
+function getTaxPrepLane(lead){
+  return String(lead?.taxPreparationIntake?.recommendedLane || "").trim();
+}
+
+function getTaxPrepDocumentCount(lead){
+  const value = Number(lead?.taxPreparationIntake?.documentCount || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function getTaxPrepStateDisplay(lead){
+  const intake = lead?.taxPreparationIntake || {};
+  const stateCount = Number(intake.stateCount || 1);
+  const state = intake.primaryState || lead?.taxData?.stateCode || "";
+  return stateCount > 1
+    ? `${state || "Multi-state"} + ${stateCount - 1} more`
+    : (state || "Not provided");
+}
+
+function matchesTaxPrepFilter(lead){
+  const status = String(lead?.status || "").toLowerCase();
+  const lane = getTaxPrepLane(lead).toLowerCase();
+
+  if(currentTaxPrepFilter === "new") return status.includes("ready to schedule");
+  if(currentTaxPrepFilter === "simple") return lane.includes("simple individual");
+  if(currentTaxPrepFilter === "gig") return lane.includes("gig worker") || lane.includes("self-employed");
+  if(currentTaxPrepFilter === "complex") return lane.includes("investment") || lane.includes("complex");
+  if(currentTaxPrepFilter === "business") return lane.includes("business") || lane.includes("entity");
+  if(currentTaxPrepFilter === "review") return status.includes("needs review") || Boolean(lead?.taxPreparationIntake?.needsProfessionalReview);
+  if(currentTaxPrepFilter === "completed") return status.includes("completed") || status.includes("closed");
+  return true;
+}
 
 function getVisibleLeads(){
+  if(currentView==="taxprep"){
+    return allLeads
+      .filter(isTaxPreparationLead)
+      .filter(matchesTaxPrepFilter)
+      .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
+  }
+
   if(currentView==="written"){
     return allLeads.filter(l => {
       const status = String(l.status || "").toLowerCase();
@@ -198,26 +378,105 @@ function openPanel(lead){
   document.getElementById("dpEmail").innerText = lead.contact?.email || "No Email";
   document.getElementById("dpStatus").innerText = "Status: " + (lead.status||"New");
   document.getElementById("dpTaxYear").innerText = "Tax Year: " + (lead.taxData?.taxYear || "");
-  document.getElementById("dpRefund").innerText =
-    "Refund: $" + (lead.estimateSummary?.combined?.refundAmount || 0);
+  const intake = lead.taxPreparationIntake || null;
+
+  document.getElementById("dpRefund").innerText = intake
+    ? "Recommended Service: " + (intake.recommendedLane || "Not assigned")
+    : "Refund: $" + (lead.estimateSummary?.combined?.refundAmount || 0);
+
+  if(intake){
+    document.getElementById("dpTaxYear").innerText =
+      "Tax Year: " + (intake.taxYear || lead.taxData?.taxYear || "");
+  }
+
+  const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+  const closedAt = formatLeadDate(getLeadClosedAt(lead));
+
+  document.getElementById("dpEntered").innerText =
+    enteredAt ? "Entered: " + enteredAt : "";
+
+  document.getElementById("dpClosed").innerText =
+    closedAt ? "Closed: " + closedAt : "";
 }
 
 function renderLeads(){
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
+  const count=document.getElementById("leadCount");
+
+  count.innerText = visible.length + (visible.length === 1 ? " lead" : " leads");
 
   if(!visible.length){
-    list.innerHTML="<div>No leads found</div>";
+    list.innerHTML="<div class='empty'>No leads found</div>";
     return;
   }
 
-  list.innerHTML = visible.map((l)=>`
-    <div class="lead-card" onclick='openPanel(${JSON.stringify(l)})'>
-      <b>${l.contact?.name||"No Name"}</b><br/>
-      ${l.contact?.email||""}<br/>
-      Status: ${l.status||"New"}
-    </div>
-  `).join("");
+  if(currentView === "taxprep"){
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Recommended Service</th>
+              <th>Tax Year</th>
+              <th>Documents</th>
+              <th>State</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const intake = lead.taxPreparationIntake || {};
+              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+              return `
+                <tr>
+                  <td><strong>${lead.contact?.name || "No Name"}</strong><br>${lead.contact?.email || ""}</td>
+                  <td>${intake.recommendedLane || "Not assigned"}</td>
+                  <td>${intake.taxYear || lead.taxData?.taxYear || ""}</td>
+                  <td>${getTaxPrepDocumentCount(lead)}</td>
+                  <td>${getTaxPrepStateDisplay(lead)}</td>
+                  <td>${enteredAt}</td>
+                  <td><span class="status-pill">${lead.status || "New"}</span></td>
+                  <td>
+                    <button class="taxprep-open-btn" onclick="openTaxPrepLead(${index})">
+                      ${String(lead.status || "").toLowerCase().includes("needs review") ||
+                        String(lead.status || "").toLowerCase().includes("new")
+                          ? "Review Intake"
+                          : "Open"}
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleTaxPrepLeads = visible;
+    return;
+  }
+
+  list.innerHTML = visible.map((l)=>{
+    const enteredAt = formatLeadDate(getLeadEnteredAt(l));
+    const closedAt = formatLeadDate(getLeadClosedAt(l));
+
+    return `
+      <div class="lead-card" onclick='openPanel(${JSON.stringify(l)})'>
+        <b>${l.contact?.name||"No Name"}</b><br/>
+        ${l.contact?.email||""}<br/>
+        Status: ${l.status||"New"}<br/>
+        ${enteredAt ? `Entered: ${enteredAt}` : ""}
+        ${closedAt ? `<br/>Closed: ${closedAt}` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function openTaxPrepLead(index){
+  const lead = (window.visibleTaxPrepLeads || [])[index];
+  if(lead) openPanel(lead);
 }
 
 async function loadLeads(){
@@ -252,11 +511,17 @@ document.addEventListener("DOMContentLoaded", () => {
         office: "Office Work Queue",
         all: "All Leads",
         written: "Written Review Requests",
+        taxprep: "Tax Preparation Requests",
         closed: "Closed Leads"
       };
 
       document.getElementById("viewTitle").innerText =
         titles[currentView] || "Leads";
+
+      const taxPrepFilters = document.getElementById("taxPrepFilters");
+      if(taxPrepFilters){
+        taxPrepFilters.style.display = currentView === "taxprep" ? "flex" : "none";
+      }
 
       renderLeads();
     });
@@ -271,7 +536,15 @@ function clearDetailPanel(){
     panel.style.display = "none";
   }
 
-  const fields = ["dpName","dpEmail","dpStatus","dpTaxYear","dpRefund"];
+  const fields = [
+    "dpName",
+    "dpEmail",
+    "dpStatus",
+    "dpTaxYear",
+    "dpRefund",
+    "dpEntered",
+    "dpClosed"
+  ];
   fields.forEach(id => {
     const el = document.getElementById(id);
     if(el) el.innerText = "";
@@ -296,8 +569,27 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".taxprep-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".taxprep-filter-btn")
+        .forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTaxPrepFilter = btn.dataset.taxprepFilter || "all";
+      if(typeof clearDetailPanel === "function"){
+        clearDetailPanel();
+      }
+      renderLeads();
+    });
+  });
+});
+</script>
+
 </body>
 </html>
+
+
 
 
 

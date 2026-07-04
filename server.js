@@ -5,6 +5,7 @@ const clientCore = require("./server/clientCore");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
+const PDFDocument = require("pdfkit");
 const { estimate } = require("./taxEstimator");
 
 require("dotenv").config();
@@ -73,7 +74,8 @@ async function appendLead(lead) {
       notes: lead.notes,
       contact: lead.contact,
       taxData: lead.taxData,
-      estimateSummary: lead.estimateSummary
+      estimateSummary: lead.estimateSummary,
+      taxPreparationIntake: lead.taxPreparationIntake || null
     },
     taxYear: lead.taxData?.taxYear || null,
     filingYear: lead.taxData?.filingYear || null
@@ -161,6 +163,610 @@ function buildEstimateDisplay(estimateSummary = {}) {
   };
 }
 
+function buildFreeEstimatePdfBuffer(lead = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "LETTER",
+        margins: {
+          top: 42,
+          bottom: 42,
+          left: 48,
+          right: 48
+        },
+        info: {
+          Title: "Free Tax Estimate",
+          Author: "Greatest Business Solution LLC",
+          Subject: "Free Tax Estimate Summary"
+        }
+      });
+
+      const chunks = [];
+
+      doc.on("data", (chunk) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
+
+      const contact = lead.contact || {};
+      const taxData = lead.taxData || {};
+      const estimateSummary = lead.estimateSummary || {};
+      const estimateDisplay =
+        buildEstimateDisplay(estimateSummary);
+
+      const federal =
+        estimateSummary.federal || {};
+
+      const state =
+        estimateSummary.state || {};
+
+      const taxYear =
+        taxData.taxYear ||
+        estimateSummary.taxYear ||
+        "Not provided";
+
+      const rawFilingStatus =
+        String(
+          taxData.filingStatus ||
+          estimateSummary.filingStatus ||
+          "Not provided"
+        )
+          .trim()
+          .toLowerCase();
+
+      const filingStatusMap = {
+        single: "Single",
+        married_filing_jointly:
+          "Married Filing Jointly",
+        marriedfilingjointly:
+          "Married Filing Jointly",
+        mfj:
+          "Married Filing Jointly",
+        married_filing_separately:
+          "Married Filing Separately",
+        marriedfilingseparately:
+          "Married Filing Separately",
+        mfs:
+          "Married Filing Separately",
+        head_of_household:
+          "Head of Household",
+        headofhousehold:
+          "Head of Household",
+        hoh:
+          "Head of Household",
+        qualifying_surviving_spouse:
+          "Qualifying Surviving Spouse",
+        qss:
+          "Qualifying Surviving Spouse"
+      };
+
+      const filingStatus =
+        filingStatusMap[rawFilingStatus] ||
+        rawFilingStatus
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (letter) =>
+            letter.toUpperCase()
+          );
+
+      const formatMoney = (value) =>
+        "$" +
+        Math.round(Number(value || 0))
+          .toLocaleString("en-US");
+
+      const logoPath =
+        path.join(
+          __dirname,
+          "ui",
+          "logo.png"
+        );
+
+      const baseUrl =
+        String(APP_BASE_URL || "")
+          .trim()
+          .replace(/\/+$/, "");
+
+      const summaryUrl =
+        baseUrl +
+        "/estimate/" +
+        encodeURIComponent(lead.leadId || "");
+
+      const bookingUrl =
+        "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+
+      const taxReturnIntakeUrl =
+        baseUrl +
+        "/start-my-tax-return?leadId=" +
+        encodeURIComponent(lead.leadId || "");
+
+      const contactEmail =
+        "alerts@taxestimatereview.com";
+
+      const addLabelValue = (label, value) => {
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(10)
+          .fillColor("#1f2937")
+          .text(label, {
+            continued: true
+          });
+
+        doc
+          .font("Helvetica")
+          .fillColor("#111827")
+          .text(" " + String(value || "Not provided"));
+      };
+
+      if (fs.existsSync(logoPath)) {
+        doc.image(
+          logoPath,
+          48,
+          34,
+          {
+            fit: [230, 90],
+            align: "left"
+          }
+        );
+      }
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(20)
+        .fillColor("#0f2f59")
+        .text(
+          "FREE TAX ESTIMATE",
+          290,
+          48,
+          {
+            width: 270,
+            align: "right"
+          }
+        );
+
+      doc
+        .font("Helvetica")
+        .fontSize(10)
+        .fillColor("#6b7280")
+        .text(
+          "Prepared for your records",
+          290,
+          76,
+          {
+            width: 270,
+            align: "right"
+          }
+        );
+
+      doc.y = 128;
+
+      doc
+        .strokeColor("#c69a37")
+        .lineWidth(2)
+        .moveTo(48, doc.y)
+        .lineTo(564, doc.y)
+        .stroke();
+
+      doc.moveDown(1);
+
+      addLabelValue(
+        "Prepared for:",
+        contact.name || "Client"
+      );
+
+      addLabelValue(
+        "Tax year:",
+        taxYear
+      );
+
+      addLabelValue(
+        "Filing status:",
+        filingStatus
+      );
+
+      addLabelValue(
+        "Reference number:",
+        lead.leadId || "Not available"
+      );
+
+      doc.moveDown(0.8);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(15)
+        .fillColor("#0f2f59")
+        .text("Estimated Results");
+
+      doc.moveDown(0.45);
+
+      const resultRows = [
+        {
+          label: "Federal",
+          value:
+            estimateDisplay.federalLine ||
+            "Federal: $0"
+        },
+        {
+          label: "State",
+          value:
+            estimateDisplay.stateLine ||
+            "State: $0"
+        },
+        {
+          label: "Combined",
+          value:
+            estimateDisplay.totalLine ||
+            "Estimated break-even"
+        }
+      ];
+
+      resultRows.forEach((row, index) => {
+        const y = doc.y;
+
+        doc
+          .roundedRect(48, y, 516, 44, 6)
+          .fillAndStroke(
+            index === 2
+              ? "#eaf1f7"
+              : "#f8fafc",
+            index === 2
+              ? "#9fb5cb"
+              : "#d5dce4"
+          );
+
+        doc
+          .fillColor("#111827")
+          .font("Helvetica-Bold")
+          .fontSize(11)
+          .text(
+            row.label,
+            62,
+            y + 10,
+            {
+              width: 110
+            }
+          );
+
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(12)
+          .text(
+            row.value,
+            180,
+            y + 10,
+            {
+              width: 365,
+              align: "right"
+            }
+          );
+
+        doc.y = y + 54;
+      });
+
+      doc.moveDown(0.3);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(15)
+        .fillColor("#0f2f59")
+        .text("Information Used");
+
+      doc.moveDown(0.45);
+
+      const informationUsed = [];
+
+      const addMoneyIfPositive = (
+        label,
+        value
+      ) => {
+        const amount = Number(value || 0);
+
+        if (amount !== 0) {
+          informationUsed.push([
+            label,
+            formatMoney(amount)
+          ]);
+        }
+      };
+
+      addMoneyIfPositive(
+        "W-2 wages",
+        taxData.w2Income
+      );
+
+      addMoneyIfPositive(
+        "Self-employment income",
+        taxData.selfEmploymentIncome
+      );
+
+      addMoneyIfPositive(
+        "Federal withholding",
+        taxData.federalWithheld ??
+          federal.federalWithheld
+      );
+
+      addMoneyIfPositive(
+        "State withholding",
+        taxData.stateWithheld ??
+          state.stateWithheld
+      );
+
+      const dependents =
+        Number(
+          taxData.numberOfDependents || 0
+        );
+
+      if (dependents > 0) {
+        informationUsed.push([
+          "Dependents entered",
+          dependents
+        ]);
+      }
+
+      if (informationUsed.length === 0) {
+        informationUsed.push([
+          "Tax information entered",
+          "See your online estimate for details"
+        ]);
+      }
+
+      informationUsed.forEach(
+        ([label, value]) => {
+          doc
+            .font("Helvetica")
+            .fontSize(10)
+            .fillColor("#111827")
+            .text(
+              "• " + label + ": " + value,
+              {
+                indent: 8,
+                paragraphGap: 2
+              }
+            );
+        }
+      );
+
+      doc.addPage();
+
+      if (fs.existsSync(logoPath)) {
+        doc.image(
+          logoPath,
+          48,
+          34,
+          {
+            fit: [205, 80]
+          }
+        );
+      }
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(18)
+        .fillColor("#0f2f59")
+        .text(
+          "YOUR NEXT STEPS",
+          290,
+          48,
+          {
+            width: 270,
+            align: "right"
+          }
+        );
+
+      doc.y = 126;
+
+      doc
+        .strokeColor("#c69a37")
+        .lineWidth(2)
+        .moveTo(48, doc.y)
+        .lineTo(564, doc.y)
+        .stroke();
+
+      doc.moveDown(1);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(15)
+        .fillColor("#0f2f59")
+        .text(
+          "Do More Than Keep an Estimate"
+        );
+
+      doc.moveDown(0.45);
+
+      doc
+        .font("Helvetica")
+        .fontSize(10.5)
+        .fillColor("#111827")
+        .text(
+          "Your estimate gives you a useful starting point. The next step is deciding whether you need tax preparation, a deeper review, or help planning before filing."
+        );
+
+      doc.moveDown(0.8);
+
+      const drawActionBox = (
+        title,
+        description,
+        linkText,
+        linkUrl
+      ) => {
+        const y = doc.y;
+
+        doc
+          .roundedRect(
+            48,
+            y,
+            516,
+            86,
+            7
+          )
+          .fillAndStroke(
+            "#f8fafc",
+            "#d5dce4"
+          );
+
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(12)
+          .fillColor("#0f2f59")
+          .text(
+            title,
+            62,
+            y + 12,
+            {
+              width: 480
+            }
+          );
+
+        doc
+          .font("Helvetica")
+          .fontSize(9.5)
+          .fillColor("#374151")
+          .text(
+            description,
+            62,
+            y + 32,
+            {
+              width: 475
+            }
+          );
+
+        doc
+          .font("Helvetica-Bold")
+          .fontSize(9.5)
+          .fillColor("#1d4ed8")
+          .text(
+            linkText,
+            62,
+            y + 63,
+            {
+              width: 475,
+              link: linkUrl,
+              underline: true
+            }
+          );
+
+        doc.y = y + 98;
+      };
+
+      drawActionBox(
+        "Start My Tax Return",
+        "Tell us about your income, tax documents, states, investments, gig work, business activity, and filing needs so we can recommend the right preparation service.",
+        "Start My Tax Return",
+        taxReturnIntakeUrl
+      );
+
+      drawActionBox(
+        "Want a Deeper Review?",
+        "The Written Tax Estimate Red Flag Review looks for missing credits, filing concerns, withholding problems, and planning opportunities.",
+        "Return to your online estimate and review the paid option",
+        summaryUrl
+      );
+
+      drawActionBox(
+        "Prefer to Talk First?",
+        "Schedule a short tax-estimate review appointment before deciding what service you need.",
+        "Schedule a 15-minute appointment",
+        bookingUrl
+      );
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(12)
+        .fillColor("#0f2f59")
+        .text("Reopen Your Online Estimate");
+
+      doc.moveDown(0.25);
+
+      doc
+        .font("Helvetica")
+        .fontSize(9.5)
+        .fillColor("#1d4ed8")
+        .text(
+          summaryUrl,
+          {
+            link: summaryUrl,
+            underline: true
+          }
+        );
+
+      doc.moveDown(0.8);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(12)
+        .fillColor("#0f2f59")
+        .text("Important Information");
+
+      doc.moveDown(0.25);
+
+      doc
+        .font("Helvetica")
+        .fontSize(9.3)
+        .fillColor("#374151")
+        .text(
+          "This document is an estimate based only on the information entered into the online estimator. It is not a filed tax return, a guarantee of a refund, or a substitute for complete tax preparation."
+        );
+
+      doc.moveDown(0.45);
+
+      doc.text(
+        "Your actual federal and state results may change after all income documents, deductions, credits, prior-year information, and tax records are reviewed."
+      );
+
+      doc.moveDown(0.8);
+
+      doc
+        .font("Helvetica")
+        .fontSize(8.5)
+        .fillColor("#6b7280")
+        .text(
+          "Reference: " +
+          String(
+            lead.leadId ||
+            "Not available"
+          )
+        );
+
+      doc.text(
+        "Generated: " +
+        new Date().toLocaleString(
+          "en-US"
+        )
+      );
+
+      doc.moveDown(0.65);
+
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(9.5)
+        .fillColor("#0f2f59")
+        .text(
+          "Greatest Business Solution LLC",
+          {
+            align: "center"
+          }
+        );
+
+      doc
+        .font("Helvetica")
+        .fontSize(8.5)
+        .fillColor("#6b7280")
+        .text(
+          contactEmail,
+          {
+            align: "center",
+            link:
+              "mailto:" +
+              contactEmail,
+            underline: true
+          }
+        );
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 function mapRowToLead(row) {
   const estimate = row.estimate || {};
 
@@ -188,6 +794,11 @@ function mapRowToLead(row) {
     },
     taxData: estimate.taxData || row.taxData || row.tax_data || null,
     estimateSummary: estimate.estimateSummary || row.estimateSummary || row.estimate_summary || {},
+    taxPreparationIntake:
+      estimate.taxPreparationIntake ||
+      row.taxPreparationIntake ||
+      row.tax_preparation_intake ||
+      null,
     Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
 }
@@ -229,7 +840,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-ðŸ‘‰ Schedule your 15-minute tax review now:
+Ã°Å¸â€˜â€° Schedule your 15-minute tax review now:
 ${bookingLink}
 
 Thank you,
@@ -252,7 +863,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-ðŸ‘‰ Schedule your 15-minute tax review:
+Ã°Å¸â€˜â€° Schedule your 15-minute tax review:
 ${bookingLink}
 
 Thank you,
@@ -1433,19 +2044,6 @@ app.use((req, res, next) => {
 // =============================================================================
 
 app.post("/api/estimate", (req, res) => {
-  try {
-    const leadId = result?.leadId || result?.id || req.body?.leadId;
-
-    if (leadId) {
-      clientCore.getOrCreateClient(leadId, {
-        name: (req.body?.firstName || "") + " " + (req.body?.lastName || ""),
-        email: req.body?.email || ""
-      });
-    }
-  } catch (err) {
-    console.log("[clientCore] mirror failed:", err.message);
-  }
-
   if (!req.body || typeof req.body !== "object") {
     return res.status(400).json({
       ok: false,
@@ -1482,7 +2080,16 @@ app.post("/api/estimate", (req, res) => {
 // =============================================================================
 
 app.post("/api/lead", async (req, res) => {
-  const { name, email, phone, priority, taxData, estimateSummary, status, notes } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    priority,
+    taxData,
+    estimateSummary,
+    status,
+    notes
+  } = req.body || {};
 
   const errors = [];
 
@@ -1500,7 +2107,9 @@ app.post("/api/lead", async (req, res) => {
     return res.status(400).json({ ok: false, errors });
   }
 
-  const leadId = `LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  const leadId =
+    `LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+
   const formattedPhone = formatPhoneNumber(phone);
 
   const lead = {
@@ -1518,36 +2127,33 @@ app.post("/api/lead", async (req, res) => {
     estimateSummary: estimateSummary || {}
   };
 
-  // ðŸ”¥ Build summary lines for dashboard
   if (lead.estimateSummary) {
     const e = lead.estimateSummary;
-
     const federal = e.federal?.net || 0;
     const state = e.state?.net || 0;
-    const combined = (federal + state);
+    const combined = federal + state;
 
     lead.estimateSummary.federalLine =
       federal > 0
         ? `Federal Refund: $${Math.round(federal).toLocaleString()}`
         : federal < 0
           ? `Federal Due: $${Math.abs(Math.round(federal)).toLocaleString()}`
-          : `Federal: $0`;
+          : "Federal: $0";
 
     lead.estimateSummary.stateLine =
       state > 0
         ? `State Refund: $${Math.round(state).toLocaleString()}`
         : state < 0
           ? `State Due: $${Math.abs(Math.round(state)).toLocaleString()}`
-          : `State: $0`;
+          : "State: $0";
 
     lead.estimateSummary.totalLine =
       combined > 0
         ? `Estimated Total Refund: $${Math.round(combined).toLocaleString()}`
         : combined < 0
           ? `Estimated Total Due: $${Math.abs(Math.round(combined)).toLocaleString()}`
-          : `Break-even`;
+          : "Break-even";
   }
-
 
   let savedLead;
 
@@ -1563,13 +2169,376 @@ app.post("/api/lead", async (req, res) => {
   }
 
   console.log("Lead saved successfully:", savedLead.leadId);
-  console.log("Email sending skipped on live deploy for now.");
+
+  let emailSent = false;
+  let emailError = "";
+
+  try {
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      throw new Error("Email delivery is not configured.");
+    }
+
+    const baseUrl = String(APP_BASE_URL || "").trim().replace(/\/+$/, "");
+
+    if (!baseUrl) {
+      throw new Error("APP_BASE_URL is not configured.");
+    }
+
+    const estimateDisplay = buildEstimateDisplay(savedLead.estimateSummary || {});
+    const summaryUrl = `${baseUrl}/estimate/${encodeURIComponent(savedLead.leadId)}`;
+    const pdfBuffer = await buildFreeEstimatePdfBuffer(savedLead);
+
+    const safeClientName =
+      String(savedLead.contact?.name || "Client")
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "Client";
+
+    const emailResult = await transporter.sendMail({
+      from: EMAIL_USER,
+      to: savedLead.contact.email,
+      subject: "Your Free Tax Estimate Is Ready",
+      text:
+`Hello ${savedLead.contact?.name || "Client"},
+
+Thank you for completing your free tax estimate.
+
+Your Free Tax Estimate PDF is attached.
+
+Estimate summary:
+- ${estimateDisplay.totalLine}
+- ${estimateDisplay.federalLine}
+- ${estimateDisplay.stateLine}
+
+You may reopen your online estimate here:
+${summaryUrl}
+
+Reference number:
+${savedLead.leadId}
+
+This is an estimate based on the information entered. It is not a filed tax return or a guarantee of your final tax result.
+
+Thank you,
+
+Greatest Business Solution LLC`,
+      attachments: [
+        {
+          filename: `Free-Tax-Estimate-${safeClientName}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf"
+        }
+      ]
+    });
+
+    emailSent = true;
+    const deliveredAt = new Date().toISOString();
+
+    await updateLeadAfterStripePayment(
+      savedLead.leadId,
+      function recordFreeEstimateDelivery(record = {}) {
+        return {
+          ...record,
+          freeEstimateDelivery: {
+            status: "Emailed",
+            deliveredAt,
+            recipient: savedLead.contact.email,
+            messageId: emailResult.messageId || ""
+          },
+          updatedAt: deliveredAt
+        };
+      }
+    );
+
+    console.log(
+      "Free estimate PDF emailed:",
+      savedLead.leadId,
+      savedLead.contact.email
+    );
+  } catch (error) {
+    emailError =
+      error && error.message
+        ? error.message
+        : "Free estimate email failed.";
+
+    console.error(
+      "[free estimate email] Delivery failed:",
+      savedLead.leadId,
+      emailError
+    );
+
+    const failedAt = new Date().toISOString();
+
+    await updateLeadAfterStripePayment(
+      savedLead.leadId,
+      function recordFreeEstimateFailure(record = {}) {
+        const oldNotes =
+          typeof record.notes === "string"
+            ? record.notes.trim()
+            : "";
+
+        const failureNote =
+          `[${new Date().toLocaleString()}] Free Estimate PDF email failed: ${emailError}`;
+
+        return {
+          ...record,
+          status: "Free Estimate - Email Failed / Action Required",
+          notes: oldNotes ? `${oldNotes}\n${failureNote}` : failureNote,
+          freeEstimateDelivery: {
+            status: "Failed",
+            failedAt,
+            recipient: savedLead.contact?.email || "",
+            error: emailError
+          },
+          updatedAt: failedAt
+        };
+      }
+    );
+  }
 
   return res.status(201).json({
     ok: true,
     leadId: savedLead.leadId,
-    message: "Your request has been received. A tax professional will contact you within 1 business day."
+    emailSent,
+    emailError: emailSent ? null : emailError,
+    message: emailSent
+      ? "Your free estimate was saved and emailed as a PDF."
+      : "Your estimate was saved, but the email could not be delivered."
   });
+});
+
+// =============================================================================
+// POST /api/tax-preparation-intake
+// =============================================================================
+
+app.post("/api/tax-preparation-intake", async (req, res) => {
+  const body = req.body || {};
+  const contact = body.contact || {};
+  const intake = body.intake || {};
+  const errors = [];
+
+  const name = String(contact.name || "").trim();
+  const email = String(contact.email || "").trim();
+  const phone = formatPhoneNumber(contact.phone || "");
+
+  if (!name) {
+    errors.push("Full name is required.");
+  }
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  const serviceTypes = Array.isArray(intake.serviceTypes)
+    ? intake.serviceTypes.filter(Boolean)
+    : [];
+
+  const incomeTypes = Array.isArray(intake.incomeTypes)
+    ? intake.incomeTypes.filter(Boolean)
+    : [];
+
+  if (serviceTypes.length === 0) {
+    errors.push("Select at least one tax service needed.");
+  }
+
+  if (incomeTypes.length === 0) {
+    errors.push("Select at least one income or tax situation.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const documentCount = Math.max(
+    0,
+    Number.parseInt(intake.documentCount, 10) || 0
+  );
+
+  const stateCount = Math.max(
+    1,
+    Number.parseInt(intake.stateCount, 10) || 1
+  );
+
+  const complexSignals = [
+    "stocks_bonds_investments",
+    "foreign_tax",
+    "rental_income",
+    "k1_income",
+    "cryptocurrency",
+    "minister_clergy",
+    "multiple_states",
+    "estimated_tax_payments"
+  ];
+
+  const businessSignals = [
+    "business_return",
+    "partnership_return",
+    "s_corporation_return",
+    "c_corporation_return",
+    "nonprofit_return"
+  ];
+
+  const gigSignals = [
+    "1099_nec",
+    "1099_k",
+    "gig_platform",
+    "creator_income",
+    "self_employment",
+    "delivery_driver",
+    "rideshare_driver"
+  ];
+
+  const hasBusiness =
+    serviceTypes.some((item) => businessSignals.includes(item)) ||
+    incomeTypes.some((item) => businessSignals.includes(item));
+
+  const hasComplex =
+    documentCount > 10 ||
+    stateCount > 1 ||
+    incomeTypes.some((item) => complexSignals.includes(item));
+
+  const hasGig =
+    incomeTypes.some((item) => gigSignals.includes(item));
+
+  let recommendedLane = "Simple Individual Return";
+  let status = "Tax Preparation Intake - Ready to Schedule";
+  let needsProfessionalReview = false;
+
+  if (hasBusiness) {
+    recommendedLane = "Business or Entity Return";
+    status = "Tax Preparation Intake - Needs Review";
+    needsProfessionalReview = true;
+  } else if (hasComplex) {
+    recommendedLane = "Investment & Complex Individual Return";
+    status = "Tax Preparation Intake - Needs Review";
+    needsProfessionalReview = true;
+  } else if (hasGig) {
+    recommendedLane = "Gig Worker / Self-Employed Return";
+  }
+
+  const leadId =
+    "TAXPREP-" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).slice(2, 7).toUpperCase();
+
+  const submittedAt = new Date().toISOString();
+
+  const lead = {
+    leadId,
+    timestamp: submittedAt,
+    priority: needsProfessionalReview ? "high" : "medium",
+    status,
+    notes:
+      "Tax preparation intake submitted. Recommended lane: " +
+      recommendedLane +
+      ".",
+    contact: {
+      name,
+      email,
+      phone: phone || "Not provided"
+    },
+    taxData: {
+      taxYear: intake.taxYear || null,
+      filingStatus: intake.filingStatus || null,
+      stateCode: intake.primaryState || null
+    },
+    estimateSummary: {},
+    taxPreparationIntake: {
+      ...intake,
+      sourceLeadId: String(body.sourceLeadId || "").trim(),
+      submittedAt,
+      recommendedLane,
+      needsProfessionalReview
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(savedLead.leadId, savedLead);
+
+    let emailSent = false;
+    let emailError = "";
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error("Email delivery is not configured.");
+      }
+
+      const bookingUrl =
+        "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+
+      const nextStepText = needsProfessionalReview
+        ? "Your intake includes items that need a professional review before pricing or scheduling. We will review the information and contact you."
+        : "Your intake is ready for the next step. You may schedule a 15-minute appointment using the link below.";
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject: "We Received Your Tax Preparation Request",
+        text:
+`Hello ${name},
+
+We received your Start My Tax Return intake.
+
+Recommended service:
+${recommendedLane}
+
+${nextStepText}
+
+Schedule:
+${bookingUrl}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, or other sensitive records. Secure document-upload instructions will be provided separately when needed.
+
+Thank you,
+
+Greatest Business Solution LLC`
+      });
+
+      emailSent = true;
+    } catch (emailErr) {
+      emailError =
+        emailErr && emailErr.message
+          ? emailErr.message
+          : "Confirmation email failed.";
+
+      console.error(
+        "[tax preparation intake] Confirmation email failed:",
+        leadId,
+        emailError
+      );
+    }
+
+    return res.status(201).json({
+      ok: true,
+      leadId,
+      recommendedLane,
+      needsProfessionalReview,
+      status,
+      emailSent,
+      emailError: emailSent ? null : emailError
+    });
+  } catch (err) {
+    console.error(
+      "[tax preparation intake] Save failed:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: [
+        "Could not save your tax preparation request. Please try again."
+      ]
+    });
+  }
 });
 
 // =============================================================================
@@ -1698,6 +2667,10 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
 
 app.get("/estimate/:leadId", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "estimate-summary.html"));
+});
+
+app.get("/start-my-tax-return", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "start-my-tax-return.html"));
 });
 
 // =============================================================================
@@ -2534,6 +3507,10 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
+
+
+
 
 
 
