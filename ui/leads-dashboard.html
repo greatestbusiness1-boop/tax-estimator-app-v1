@@ -442,10 +442,10 @@ function renderLeads(){
                   <td><span class="status-pill">${lead.status || "New"}</span></td>
                   <td>
                     <button class="taxprep-open-btn" onclick="openTaxPrepLead(${index})">
-                      ${String(lead.status || "").toLowerCase().includes("needs review") ||
-                        String(lead.status || "").toLowerCase().includes("new")
-                          ? "Review Intake"
-                          : "Open"}
+                      ${String(lead.status || "").toLowerCase().includes("completed") ||
+                        String(lead.status || "").toLowerCase().includes("closed")
+                          ? "Open"
+                          : "Review Intake"}
                     </button>
                   </td>
                 </tr>`;
@@ -588,6 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
 
 
