@@ -544,7 +544,7 @@ function renderLeads(){
                   <td>
                     <button
                       class="contact-replied-btn"
-                      onclick="markContactReplied(${index})"
+                      onclick="markContactReplied(${index}, this)"
                       ${replied ? "disabled" : ""}
                     >
                       ${replied ? "Replied" : "Replied"}
@@ -623,12 +623,20 @@ function renderLeads(){
   }).join("");
 }
 
-async function markContactReplied(index){
+async function markContactReplied(index, button){
   const lead = (window.visibleWebsiteContactLeads || [])[index];
 
   if(!lead || !lead.leadId){
     alert("Contact request could not be identified.");
     return;
+  }
+
+  const originalText = button ? button.textContent : "Replied";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Updating...";
+    button.setAttribute("aria-busy", "true");
   }
 
   try{
@@ -662,9 +670,23 @@ async function markContactReplied(index){
       contactRequestRepliedAt: repliedAt
     };
 
+    if(button){
+      button.textContent = "Marked Replied";
+      button.removeAttribute("aria-busy");
+    }
+
     clearDetailPanel();
-    renderLeads();
+
+    setTimeout(() => {
+      renderLeads();
+    }, 450);
   }catch(error){
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+      button.removeAttribute("aria-busy");
+    }
+
     alert(error && error.message ? error.message : "The contact request could not be updated.");
   }
 }
