@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const express = require("express");
 const clientCore = require("./server/clientCore");
@@ -75,7 +75,8 @@ async function appendLead(lead) {
       contact: lead.contact,
       taxData: lead.taxData,
       estimateSummary: lead.estimateSummary,
-      taxPreparationIntake: lead.taxPreparationIntake || null
+      taxPreparationIntake: lead.taxPreparationIntake || null,
+      contactRequest: lead.contactRequest || null
     },
     taxYear: lead.taxData?.taxYear || null,
     filingYear: lead.taxData?.filingYear || null
@@ -745,17 +746,19 @@ function buildFreeEstimatePdfBuffer(lead = {}) {
           }
         );
 
+      const contactRequestUrl =
+        baseUrl +
+        "/contact?service=Tax%20Preparation";
+
       doc
         .font("Helvetica")
         .fontSize(8.5)
         .fillColor("#6b7280")
         .text(
-          contactEmail,
+          "Contact Greatest Business Solution LLC",
           {
             align: "center",
-            link:
-              "mailto:" +
-              contactEmail,
+            link: contactRequestUrl,
             underline: true
           }
         );
@@ -798,6 +801,11 @@ function mapRowToLead(row) {
       estimate.taxPreparationIntake ||
       row.taxPreparationIntake ||
       row.tax_preparation_intake ||
+      null,
+    contactRequest:
+      estimate.contactRequest ||
+      row.contactRequest ||
+      row.contact_request ||
       null,
     Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
@@ -2304,6 +2312,188 @@ Greatest Business Solution LLC`,
       ? "Your free estimate was saved and emailed as a PDF."
       : "Your estimate was saved, but the email could not be delivered."
   });
+});
+
+// =============================================================================
+// POST /api/contact-request
+// =============================================================================
+
+app.post("/api/contact-request", async (req, res) => {
+  const body = req.body || {};
+
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim();
+  const phone = formatPhoneNumber(body.phone || "");
+  const service = String(body.service || "General Question").trim();
+  const preferredContact = String(body.preferredContact || "Email").trim();
+  const message = String(body.message || "").trim();
+
+  const errors = [];
+
+  if (!name) {
+    errors.push("Full name is required.");
+  }
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  if (!message) {
+    errors.push("Please tell us how we can help.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const submittedAt = new Date().toISOString();
+  const leadId =
+    "CONTACT-" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).slice(2, 7).toUpperCase();
+
+  const lead = {
+    leadId,
+    timestamp: submittedAt,
+    priority: "medium",
+    status: "Contact Request - New",
+    notes:
+      "Contact request submitted for " +
+      service +
+      ". Preferred contact: " +
+      preferredContact +
+      ".",
+    contact: {
+      name,
+      email,
+      phone: phone || "Not provided"
+    },
+    taxData: {},
+    estimateSummary: {},
+    contactRequest: {
+      service,
+      preferredContact,
+      message,
+      submittedAt
+    },
+    Request: {
+      type: "Contact Request",
+      service,
+      preferredContact,
+      message
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(savedLead.leadId, savedLead);
+
+    let notificationSent = false;
+    let confirmationSent = false;
+    let emailError = "";
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error("Email delivery is not configured.");
+      }
+
+      const businessRecipient =
+        process.env.CONTACT_EMAIL ||
+        "greatestbusiness1@gmail.com";
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: businessRecipient,
+        replyTo: email,
+        subject: "New Contact Request - " + service,
+        text:
+`New contact request received.
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone || "Not provided"}
+Service: ${service}
+Preferred contact: ${preferredContact}
+
+Message:
+${message}
+
+Reference number:
+${leadId}`
+      });
+
+      notificationSent = true;
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject: "We Received Your Contact Request",
+        text:
+`Hello ${name},
+
+We received your request regarding:
+
+${service}
+
+Your message:
+${message}
+
+Preferred contact method:
+${preferredContact}
+
+Reference number:
+${leadId}
+
+We will review your request and follow up. Please do not email Social Security numbers, tax documents, bank information, or other sensitive records.
+
+Thank you,
+
+Greatest Business Solution LLC`
+      });
+
+      confirmationSent = true;
+    } catch (emailErr) {
+      emailError =
+        emailErr && emailErr.message
+          ? emailErr.message
+          : "Email delivery failed.";
+
+      console.error(
+        "[contact request] Email failed:",
+        leadId,
+        emailError
+      );
+    }
+
+    return res.status(201).json({
+      ok: true,
+      leadId,
+      notificationSent,
+      confirmationSent,
+      emailError:
+        notificationSent && confirmationSent
+          ? null
+          : emailError
+    });
+  } catch (err) {
+    console.error(
+      "[contact request] Save failed:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: [
+        "Could not save your contact request. Please try again."
+      ]
+    });
+  }
 });
 
 // =============================================================================

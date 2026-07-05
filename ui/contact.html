@@ -15,58 +15,210 @@
       line-height: 1.55;
     }
     .page {
-      max-width: 900px;
-      margin: 48px auto;
+      max-width: 820px;
+      margin: 42px auto;
       background: #fff;
       border: 1px solid #dbe4f0;
       border-radius: 14px;
-      padding: 36px;
+      padding: 34px;
       box-shadow: 0 12px 30px rgba(15, 47, 89, .08);
     }
     h1, h2 { color: #0f2f59; }
-    h1 { margin-top: 0; }
+    h1 { margin: 0 0 8px; }
     .brand { font-weight: 800; color: #0f2f59; margin-bottom: 10px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
-    .button {
+    .intro { margin-bottom: 24px; color: #475569; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 700; margin-bottom: 6px; color: #0f2f59; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+      font: inherit;
+      background: #fff;
+    }
+    textarea { min-height: 150px; resize: vertical; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+    button, .button {
       display: inline-block;
+      border: 0;
       background: #0f2f59;
       color: #fff;
       text-decoration: none;
       padding: 12px 18px;
       border-radius: 8px;
       font-weight: 700;
+      cursor: pointer;
     }
-    .button.secondary { background: #ffffff; color: #0f2f59; border: 1px solid #0f2f59; }
+    .button.secondary { background: #fff; color: #0f2f59; border: 1px solid #0f2f59; }
     .notice {
-      background: #f8fafc;
+      background: #fff8e8;
       border-left: 4px solid #c69a37;
       padding: 14px 16px;
-      margin: 20px 0;
+      margin: 22px 0;
     }
-    a { color: #1d4ed8; }
-    footer { margin-top: 32px; font-size: 14px; color: #64748b; }
-</style>
+    .message {
+      display: none;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 18px;
+      font-weight: 700;
+    }
+    .message.success { display: block; background: #e8f7ed; color: #14532d; border: 1px solid #86c89b; }
+    .message.error { display: block; background: #fff1f2; color: #9f1239; border: 1px solid #f3a5b5; }
+    footer { margin-top: 30px; font-size: 14px; color: #64748b; }
+    @media (max-width: 650px) {
+      .page { margin: 0; border-radius: 0; padding: 24px 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+    }
+  </style>
 </head>
 <body>
   <main class="page">
     <div class="brand">Greatest Business Solution LLC</div>
     <h1>Contact Us</h1>
-    <p>Choose the option that best matches what you need.</p>
+    <p class="intro">Send a contact request without opening an outside email program. We will receive the request in the Tax Lead Center and by email.</p>
 
-    <div class="actions">
-      <a class="button" href="/start-my-tax-return">Start My Tax Return</a>
-      <a class="button secondary" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule a 15-Minute Consultation</a>
-    </div>
+    <form id="contactForm">
+      <div class="grid">
+        <div>
+          <label for="name">Full name</label>
+          <input id="name" name="name" autocomplete="name" required>
+        </div>
 
-    <h2>Email</h2>
-    <p><a href="mailto:greatestbusiness1@gmail.com">greatestbusiness1@gmail.com</a></p>
+        <div>
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
 
-    <div class="notice">
-      Do not email Social Security numbers, tax documents, bank information, or other sensitive records. We will provide a secure method when documents are needed.
-    </div>
+        <div>
+          <label for="phone">Phone number</label>
+          <input id="phone" name="phone" autocomplete="tel" placeholder="(555) 555-5555">
+        </div>
 
-    <p><a href="/">Return to the Free Tax Estimator</a></p>
+        <div>
+          <label for="preferredContact">Preferred contact method</label>
+          <select id="preferredContact" name="preferredContact">
+            <option>Email</option>
+            <option>Phone</option>
+            <option>Text message</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="service">What do you need help with?</label>
+          <select id="service" name="service">
+            <option>Tax Preparation</option>
+            <option>Gig Worker / Self-Employed Return</option>
+            <option>Investment &amp; Complex Individual Return</option>
+            <option>Business or Entity Return</option>
+            <option>Written Red Flag Review</option>
+            <option>IRS Transcript Help</option>
+            <option>General Question</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="message">How can we help?</label>
+          <textarea id="message" name="message" required placeholder="Give us a brief description. Do not enter Social Security numbers or upload tax documents here."></textarea>
+        </div>
+      </div>
+
+      <div class="notice">
+        Do not enter Social Security numbers, bank information, tax document numbers, or other sensitive records. We will provide a secure method when documents are needed.
+      </div>
+
+      <div class="actions">
+        <button id="submitButton" type="submit">Send Contact Request</button>
+        <a class="button secondary" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule a 15-Minute Consultation</a>
+        <a class="button secondary" href="/">Return to Free Tax Estimator</a>
+      </div>
+
+      <div id="formMessage" class="message" role="status" aria-live="polite"></div>
+    </form>
+
     <footer>&copy; 2026 Greatest Business Solution LLC</footer>
   </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const serviceFromUrl = params.get("service");
+    const serviceSelect = document.getElementById("service");
+
+    if (serviceFromUrl) {
+      const matchingOption = Array.from(serviceSelect.options).find(
+        (option) => option.value.toLowerCase() === serviceFromUrl.toLowerCase()
+      );
+
+      if (matchingOption) {
+        serviceSelect.value = matchingOption.value;
+      }
+    }
+
+    document.getElementById("contactForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const submitButton = document.getElementById("submitButton");
+      const formMessage = document.getElementById("formMessage");
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+      formMessage.className = "message";
+      formMessage.textContent = "";
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        preferredContact: document.getElementById("preferredContact").value,
+        service: document.getElementById("service").value,
+        message: document.getElementById("message").value.trim()
+      };
+
+      try {
+        const response = await fetch("/api/contact-request", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.ok) {
+          const errors = Array.isArray(result.errors)
+            ? result.errors.join(" ")
+            : "The request could not be sent.";
+          throw new Error(errors);
+        }
+
+        formMessage.className = "message success";
+        formMessage.textContent =
+          "Your contact request was received. Reference: " +
+          result.leadId;
+
+        event.target.reset();
+
+        if (serviceFromUrl) {
+          const matchingOption = Array.from(serviceSelect.options).find(
+            (option) => option.value.toLowerCase() === serviceFromUrl.toLowerCase()
+          );
+          if (matchingOption) serviceSelect.value = matchingOption.value;
+        }
+      } catch (error) {
+        formMessage.className = "message error";
+        formMessage.textContent =
+          error && error.message
+            ? error.message
+            : "The request could not be sent. Please try again.";
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Send Contact Request";
+      }
+    });
+  </script>
 </body>
 </html>
