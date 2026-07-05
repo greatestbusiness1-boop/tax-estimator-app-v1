@@ -81,6 +81,7 @@
     <h1>Contact Us</h1>
     <p class="intro">Send a contact request without opening an outside email program. We will receive the request in the Tax Lead Center and by email.</p>
 
+
     <form id="contactForm">
       <div class="grid">
         <div>
@@ -146,6 +147,25 @@
     const params = new URLSearchParams(window.location.search);
     const serviceFromUrl = params.get("service");
     const serviceSelect = document.getElementById("service");
+    const phoneInput = document.getElementById("phone");
+
+    function formatPhoneInput(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+
+      if (digits.length <= 3) {
+        return digits;
+      }
+
+      if (digits.length <= 6) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+      }
+
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
+    phoneInput.addEventListener("input", () => {
+      phoneInput.value = formatPhoneInput(phoneInput.value);
+    });
 
     if (serviceFromUrl) {
       const matchingOption = Array.from(serviceSelect.options).find(

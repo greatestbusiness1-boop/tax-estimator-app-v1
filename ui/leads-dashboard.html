@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -100,6 +100,44 @@
       margin: 0 0 18px;
     }
 
+    .contact-filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .contact-filter-btn {
+      border: 1px solid #b9c8d9;
+      background: white;
+      color: #17324d;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .contact-filter-btn.active {
+      background: #17324d;
+      color: white;
+      border-color: #17324d;
+    }
+
+    .contact-replied-btn {
+      border: 0;
+      border-radius: 6px;
+      background: #28588c;
+      color: white;
+      padding: 7px 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .contact-replied-btn[disabled] {
+      background: #64748b;
+      cursor: default;
+    }
+
     .taxprep-filter-btn {
       border: 1px solid #b9c8d9;
       background: white;
@@ -177,6 +215,7 @@
     <button class="sidebar-btn" data-view="all">All Leads</button>
     <button class="sidebar-btn" data-view="written">Written Review Requests</button>
     <button class="sidebar-btn" data-view="taxprep">Tax Preparation Requests</button>
+    <button class="sidebar-btn" data-view="websitecontact">Website Contact Requests</button>
     <button class="sidebar-btn" data-view="closed">Closed Leads</button>
     <button class="sidebar-btn" onclick="window.location.href='/transcript-requests'">New Transcript Requests</button>
   </aside>
@@ -194,6 +233,12 @@
       <button class="taxprep-filter-btn" data-taxprep-filter="business">Business / Entity</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="review">Needs Review</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="completed">Completed</button>
+    </div>
+
+    <div id="contactFilters" class="contact-filters">
+      <button class="contact-filter-btn active" data-contact-filter="new">New Requests</button>
+      <button class="contact-filter-btn" data-contact-filter="all">All Website Contacts</button>
+      <button class="contact-filter-btn" data-contact-filter="replied">Replied</button>
     </div>
 
     <div id="leadList"></div>
@@ -238,6 +283,7 @@
 let allLeads = [];
 let currentView = "office";
 let currentTaxPrepFilter = "all";
+let currentContactFilter = "new";
 
 function formatLeadDate(value){
   if(!value) return "";
@@ -249,6 +295,17 @@ function formatLeadDate(value){
   }
 
   return date.toLocaleString();
+}
+
+function formatDashboardPhone(value){
+  const raw = String(value || "").trim();
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+
+  if(digits.length !== 10){
+    return raw || "Not provided";
+  }
+
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
 function getLeadEnteredAt(lead){
@@ -278,6 +335,30 @@ function isTaxPreparationLead(lead){
   return Boolean(lead && lead.taxPreparationIntake) ||
     String(lead?.leadId || "").startsWith("TAXPREP-") ||
     String(lead?.status || "").toLowerCase().includes("tax preparation intake");
+}
+
+function isWebsiteContactLead(lead){
+  return Boolean(lead && lead.contactRequest) ||
+    String(lead?.leadId || "").startsWith("CONTACT-") ||
+    String(lead?.status || "").toLowerCase().includes("contact request");
+}
+
+function getContactRepliedAt(lead){
+  return (
+    lead?.Request?.contactRequestRepliedAt ||
+    lead?.Request?.repliedAt ||
+    lead?.contactRequest?.repliedAt ||
+    ""
+  );
+}
+
+function matchesContactFilter(lead){
+  const status = String(lead?.status || "").toLowerCase();
+  const replied = status.includes("replied") || Boolean(getContactRepliedAt(lead));
+
+  if(currentContactFilter === "new") return !replied;
+  if(currentContactFilter === "replied") return replied;
+  return true;
 }
 
 function getTaxPrepLane(lead){
@@ -313,6 +394,13 @@ function matchesTaxPrepFilter(lead){
 }
 
 function getVisibleLeads(){
+  if(currentView==="websitecontact"){
+    return allLeads
+      .filter(isWebsiteContactLead)
+      .filter(matchesContactFilter)
+      .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
+  }
+
   if(currentView==="taxprep"){
     return allLeads
       .filter(isTaxPreparationLead)
@@ -379,10 +467,16 @@ function openPanel(lead){
   document.getElementById("dpStatus").innerText = "Status: " + (lead.status||"New");
   document.getElementById("dpTaxYear").innerText = "Tax Year: " + (lead.taxData?.taxYear || "");
   const intake = lead.taxPreparationIntake || null;
+  const contactRequest = lead.contactRequest || null;
 
-  document.getElementById("dpRefund").innerText = intake
-    ? "Recommended Service: " + (intake.recommendedLane || "Not assigned")
-    : "Refund: $" + (lead.estimateSummary?.combined?.refundAmount || 0);
+  document.getElementById("dpRefund").innerText = contactRequest
+    ? "Service: " + (contactRequest.service || "General Question") +
+      "\nPreferred Contact: " + (contactRequest.preferredContact || "Not provided") +
+      "\nPhone: " + (lead.contact?.phone || "Not provided") +
+      "\n\nMessage:\n" + (contactRequest.message || "")
+    : intake
+      ? "Recommended Service: " + (intake.recommendedLane || "Not assigned")
+      : "Refund: $" + (lead.estimateSummary?.combined?.refundAmount || 0);
 
   if(intake){
     document.getElementById("dpTaxYear").innerText =
@@ -408,6 +502,61 @@ function renderLeads(){
 
   if(!visible.length){
     list.innerHTML="<div class='empty'>No leads found</div>";
+    return;
+  }
+
+  if(currentView === "websitecontact"){
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Service Requested</th>
+              <th>Phone</th>
+              <th>Preferred Contact</th>
+              <th>Received</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const request = lead.contactRequest || {};
+              const receivedAt = formatLeadDate(getLeadEnteredAt(lead));
+              const repliedAt = formatLeadDate(getContactRepliedAt(lead));
+              const replied = String(lead.status || "").toLowerCase().includes("replied") || Boolean(repliedAt);
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || "No Name"}</strong><br>
+                    ${lead.contact?.email || ""}
+                  </td>
+                  <td>${request.service || "General Question"}</td>
+                  <td>${formatDashboardPhone(lead.contact?.phone)}</td>
+                  <td>${request.preferredContact || "Not provided"}</td>
+                  <td>${receivedAt}</td>
+                  <td>
+                    <span class="status-pill">${lead.status || "Contact Request - New"}</span>
+                    ${repliedAt ? `<br><small>Replied: ${repliedAt}</small>` : ""}
+                  </td>
+                  <td>
+                    <button
+                      class="contact-replied-btn"
+                      onclick="markContactReplied(${index})"
+                      ${replied ? "disabled" : ""}
+                    >
+                      ${replied ? "Replied" : "Replied"}
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleWebsiteContactLeads = visible;
     return;
   }
 
@@ -474,6 +623,52 @@ function renderLeads(){
   }).join("");
 }
 
+async function markContactReplied(index){
+  const lead = (window.visibleWebsiteContactLeads || [])[index];
+
+  if(!lead || !lead.leadId){
+    alert("Contact request could not be identified.");
+    return;
+  }
+
+  try{
+    const repliedAt = new Date().toISOString();
+
+    const response = await fetch(
+      "/api/leads/" + encodeURIComponent(lead.leadId),
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "Contact Request - Replied",
+          Request: {
+            contactRequestRepliedAt: repliedAt
+          }
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "The contact request could not be updated.");
+    }
+
+    lead.status = "Contact Request - Replied";
+    lead.Request = {
+      ...(lead.Request || {}),
+      contactRequestRepliedAt: repliedAt
+    };
+
+    clearDetailPanel();
+    renderLeads();
+  }catch(error){
+    alert(error && error.message ? error.message : "The contact request could not be updated.");
+  }
+}
+
 function openTaxPrepLead(index){
   const lead = (window.visibleTaxPrepLeads || [])[index];
   if(lead) openPanel(lead);
@@ -512,6 +707,7 @@ document.addEventListener("DOMContentLoaded", () => {
         all: "All Leads",
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
+        websitecontact: "Website Contact Requests",
         closed: "Closed Leads"
       };
 
@@ -521,6 +717,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const taxPrepFilters = document.getElementById("taxPrepFilters");
       if(taxPrepFilters){
         taxPrepFilters.style.display = currentView === "taxprep" ? "flex" : "none";
+      }
+
+      const contactFilters = document.getElementById("contactFilters");
+      if(contactFilters){
+        contactFilters.style.display = currentView === "websitecontact" ? "flex" : "none";
       }
 
       renderLeads();
@@ -580,6 +781,26 @@ document.addEventListener("DOMContentLoaded", () => {
       if(typeof clearDetailPanel === "function"){
         clearDetailPanel();
       }
+      renderLeads();
+    });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".contact-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".contact-filter-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+      currentContactFilter = btn.dataset.contactFilter || "new";
+
+      if(typeof clearDetailPanel === "function"){
+        clearDetailPanel();
+      }
+
       renderLeads();
     });
   });
