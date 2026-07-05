@@ -174,8 +174,8 @@
       <header>
         <img src="/logo.png" alt="Greatest Business Solution LLC" />
         <div>
-          <h1>Start My Tax Return</h1>
-          <p>Tell us what you have. We will route you to the right tax-preparation service without treating every return as the same.</p>
+          <h1 id="intakeTitle">Start My Tax Return</h1>
+          <p id="intakeSubtitle">Tell us what you have. We will route you to the right tax-preparation service without treating every return as the same.</p>
         </div>
       </header>
 
@@ -302,6 +302,39 @@
     const bookingUrl = "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
     const params = new URLSearchParams(window.location.search);
     const sourceLeadId = params.get("leadId") || "";
+    const requestedService = String(params.get("service") || "").toLowerCase();
+
+    const servicePresets = {
+      gig: {
+        title: "Gig Worker & Self-Employed Tax Return",
+        subtitle: "Tell us about your 1099, platform, creator, contractor, or self-employment income so we can route you to the right filing service.",
+        serviceTypes: ["individual_federal_state"],
+        incomeTypes: ["1099_nec", "1099_k", "gig_platform", "creator_income", "self_employment"]
+      },
+      investment: {
+        title: "Investment & Complex Individual Tax Return",
+        subtitle: "Tell us about investments, interest, dividends, foreign tax, estimated payments, rentals, K-1s, crypto, or other complex tax items.",
+        serviceTypes: ["individual_federal_state"],
+        incomeTypes: ["stocks_bonds_investments", "interest_dividends", "foreign_tax", "estimated_tax_payments", "rental_income", "k1_income", "cryptocurrency"]
+      },
+      business: {
+        title: "Business & Entity Tax Return",
+        subtitle: "Tell us which business or entity return you need and the related income situations so we can review the filing requirements.",
+        serviceTypes: ["business_return"],
+        incomeTypes: []
+      }
+    };
+
+    function applyServicePreset() {
+      const preset = servicePresets[requestedService];
+      if (!preset) return;
+
+      document.getElementById("intakeTitle").textContent = preset.title;
+      document.getElementById("intakeSubtitle").textContent = preset.subtitle;
+
+      // Keep the service-specific heading and guidance,
+      // but let the customer make every selection themselves.
+    }
 
     function checkedValues(containerId) {
       return Array.from(
@@ -429,6 +462,7 @@
       }
     });
 
+    applyServicePreset();
     prefillFromEstimate();
   </script>
 </body>

@@ -2673,6 +2673,18 @@ app.get("/start-my-tax-return", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "start-my-tax-return.html"));
 });
 
+app.get("/contact", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "contact.html"));
+});
+
+app.get("/privacy", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "privacy.html"));
+});
+
+app.get("/terms", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "terms.html"));
+});
+
 // =============================================================================
 // PATCH /api/leads/:leadId
 // =============================================================================
