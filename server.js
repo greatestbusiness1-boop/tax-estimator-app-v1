@@ -2763,7 +2763,7 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
   const hasGig =
     incomeTypes.some((item) => gigSignals.includes(item));
 
-  let recommendedLane = "Simple Individual Return";
+  let recommendedLane = "Individual Form 1040";
   let status = "Tax Preparation Intake - Ready to Schedule";
   let needsProfessionalReview = false;
 
@@ -3050,7 +3050,13 @@ app.get("/terms", (req, res) => {
 
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
-  const { status, notes, Request } = req.body || {};
+  const {
+    status,
+    notes,
+    Request,
+    completedAt,
+    closedAt
+  } = req.body || {};
   const cleanId = String(leadId || "").trim();
 
   const worksheetWasSubmitted =
@@ -3090,6 +3096,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
     if (typeof notes === "string") {
       updatedEstimate.notes = notes;
+    }
+
+    if (typeof completedAt === "string" && completedAt.trim()) {
+      updatedEstimate.completedAt = completedAt.trim();
+    }
+
+    if (typeof closedAt === "string" && closedAt.trim()) {
+      updatedEstimate.closedAt = closedAt.trim();
     }
 
     if (
@@ -3232,6 +3246,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof notes === "string") {
         localLead.notes = notes;
+      }
+
+      if (typeof completedAt === "string" && completedAt.trim()) {
+        localLead.completedAt = completedAt.trim();
+      }
+
+      if (typeof closedAt === "string" && closedAt.trim()) {
+        localLead.closedAt = closedAt.trim();
       }
 
       if (

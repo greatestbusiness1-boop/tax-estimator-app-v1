@@ -138,6 +138,13 @@
       cursor: default;
     }
 
+    .office-complete-btn {
+      background: #1f7a45;
+      margin-top: 6px;
+      display: block;
+      width: 100%;
+    }
+
     .taxprep-filter-btn {
       border: 1px solid #b9c8d9;
       background: white;
@@ -232,7 +239,9 @@
     }
 
   
-    .closed-filters {
+    .closed-filters,
+    .all-filters,
+    .taxprep-advanced-filters {
       display: none;
       flex-wrap: wrap;
       gap: 10px;
@@ -244,21 +253,29 @@
       border-radius: 10px;
     }
 
-    .closed-filter-field {
+    .closed-filter-field,
+    .all-filter-field,
+    .taxprep-advanced-field {
       display: flex;
       flex-direction: column;
       gap: 5px;
       min-width: 145px;
     }
 
-    .closed-filter-field label {
+    .closed-filter-field label,
+    .all-filter-field label,
+    .taxprep-advanced-field label {
       font-size: 12px;
       font-weight: 700;
       color: #334155;
     }
 
     .closed-filter-field select,
-    .closed-filter-field input {
+    .closed-filter-field input,
+    .all-filter-field select,
+    .all-filter-field input,
+    .taxprep-advanced-field select,
+    .taxprep-advanced-field input {
       border: 1px solid #cbd5e1;
       border-radius: 7px;
       padding: 9px 10px;
@@ -266,12 +283,16 @@
       background: #ffffff;
     }
 
-    .closed-filter-field.closed-search {
+    .closed-filter-field.closed-search,
+    .all-filter-field.all-search,
+    .taxprep-advanced-field.taxprep-advanced-search {
       min-width: 230px;
       flex: 1;
     }
 
-    .closed-summary {
+    .closed-summary,
+    .all-summary,
+    .taxprep-advanced-summary {
       width: 100%;
       font-weight: 700;
       color: #0f2f59;
@@ -311,7 +332,7 @@
     <div id="taxPrepFilters" class="taxprep-filters">
       <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Tax Preparation</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="new">New Intakes</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="simple">Simple Individual</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="simple">Individual Form 1040</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="gig">Gig / Self-Employed</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="complex">Investment & Complex</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="business">Business / Entity</button>
@@ -319,10 +340,131 @@
       <button class="taxprep-filter-btn" data-taxprep-filter="completed">Completed</button>
     </div>
 
+    <div id="taxPrepAdvancedFilters" class="taxprep-advanced-filters">
+      <div class="taxprep-advanced-field">
+        <label for="taxPrepMonthFilter">Month submitted</label>
+        <select id="taxPrepMonthFilter">
+          <option value="all">All months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+
+      <div class="taxprep-advanced-field">
+        <label for="taxPrepYearFilter">Year submitted</label>
+        <select id="taxPrepYearFilter">
+          <option value="all">All years</option>
+        </select>
+      </div>
+
+      <div class="taxprep-advanced-field">
+        <label for="taxPrepTaxYearFilter">Tax year</label>
+        <select id="taxPrepTaxYearFilter">
+          <option value="all">All tax years</option>
+        </select>
+      </div>
+
+      <div class="taxprep-advanced-field">
+        <label for="taxPrepLaneFilter">Service lane</label>
+        <select id="taxPrepLaneFilter">
+          <option value="all">All service lanes</option>
+        </select>
+      </div>
+
+      <div class="taxprep-advanced-field">
+        <label for="taxPrepStatusFilter">Status</label>
+        <select id="taxPrepStatusFilter">
+          <option value="all">All statuses</option>
+        </select>
+      </div>
+
+      <div class="taxprep-advanced-field taxprep-advanced-search">
+        <label for="taxPrepSearchFilter">Search client</label>
+        <input
+          id="taxPrepSearchFilter"
+          type="search"
+          placeholder="Name or email"
+          autocomplete="off"
+        >
+      </div>
+
+      <div id="taxPrepAdvancedSummary" class="taxprep-advanced-summary"></div>
+    </div>
+
     <div id="contactFilters" class="contact-filters">
       <button class="contact-filter-btn active" data-contact-filter="new">New Requests</button>
       <button class="contact-filter-btn" data-contact-filter="all">All Website Contacts</button>
       <button class="contact-filter-btn" data-contact-filter="replied">Replied</button>
+    </div>
+
+    <div id="allFilters" class="all-filters">
+      <div class="all-filter-field">
+        <label for="allMonthFilter">Month entered</label>
+        <select id="allMonthFilter">
+          <option value="all">All months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+
+      <div class="all-filter-field">
+        <label for="allYearFilter">Year entered</label>
+        <select id="allYearFilter">
+          <option value="all">All years</option>
+        </select>
+      </div>
+
+      <div class="all-filter-field">
+        <label for="allTypeFilter">Lead type / service</label>
+        <select id="allTypeFilter">
+          <option value="all">All lead types</option>
+          <option value="written-review">Written Review</option>
+          <option value="tax-preparation">Tax Preparation</option>
+          <option value="website-contact">Website Contact</option>
+          <option value="transcript">Transcript</option>
+          <option value="estimate">Free Estimate</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="all-filter-field">
+        <label for="allStatusFilter">Status</label>
+        <select id="allStatusFilter">
+          <option value="all">All statuses</option>
+        </select>
+      </div>
+
+      <div class="all-filter-field all-search">
+        <label for="allSearchFilter">Search client</label>
+        <input
+          id="allSearchFilter"
+          type="search"
+          placeholder="Name or email"
+          autocomplete="off"
+        >
+      </div>
+
+      <div id="allSummary" class="all-summary"></div>
     </div>
 
     <div id="closedFilters" class="closed-filters">
@@ -421,6 +563,19 @@ let currentView = "office";
 let currentTaxPrepFilter = "all";
 let currentContactFilter = "new";
 
+let currentTaxPrepMonth = "all";
+let currentTaxPrepYear = "all";
+let currentTaxPrepTaxYear = "all";
+let currentTaxPrepLane = "all";
+let currentTaxPrepStatus = "all";
+let currentTaxPrepSearch = "";
+
+let currentAllMonth = "all";
+let currentAllYear = "all";
+let currentAllType = "all";
+let currentAllStatus = "all";
+let currentAllSearch = "";
+
 const closedToday = new Date();
 let currentClosedMonth = String(closedToday.getMonth() + 1);
 let currentClosedYear = String(closedToday.getFullYear());
@@ -459,6 +614,213 @@ function getLeadEnteredAt(lead){
   );
 }
 
+function getAllLeadTypeKey(lead){
+  const status = String(lead?.status || "").toLowerCase();
+  const leadId = String(lead?.leadId || "").toLowerCase();
+
+  if(
+    status.includes("written review") ||
+    lead?.writtenReviewDeliveredAt ||
+    lead?.writtenReviewCompletedAt ||
+    lead?.writtenReview
+  ){
+    return "written-review";
+  }
+
+  if(
+    isTaxPreparationLead(lead) ||
+    status.includes("tax preparation")
+  ){
+    return "tax-preparation";
+  }
+
+  if(
+    isWebsiteContactLead(lead) ||
+    status.includes("contact request")
+  ){
+    return "website-contact";
+  }
+
+  if(
+    leadId.includes("transcript") ||
+    status.includes("transcript") ||
+    lead?.transcriptRequest
+  ){
+    return "transcript";
+  }
+
+  if(
+    lead?.estimateSummary ||
+    lead?.taxData ||
+    leadId.includes("lead-")
+  ){
+    return "estimate";
+  }
+
+  return "other";
+}
+
+function getAllLeadTypeLabel(lead){
+  const labels = {
+    "written-review": "Written Review",
+    "tax-preparation": "Tax Preparation",
+    "website-contact": "Website Contact",
+    "transcript": "Transcript",
+    "estimate": "Free Estimate",
+    "other": "Other"
+  };
+
+  return labels[getAllLeadTypeKey(lead)] || "Other";
+}
+
+function matchesAllLeadFilters(lead){
+  const enteredAt = getLeadEnteredAt(lead);
+  const enteredDate = enteredAt ? new Date(enteredAt) : null;
+  const validDate =
+    enteredDate &&
+    !Number.isNaN(enteredDate.getTime());
+
+  if(currentAllYear !== "all"){
+    if(
+      !validDate ||
+      String(enteredDate.getFullYear()) !== currentAllYear
+    ){
+      return false;
+    }
+  }
+
+  if(currentAllMonth !== "all"){
+    if(
+      !validDate ||
+      String(enteredDate.getMonth() + 1) !== currentAllMonth
+    ){
+      return false;
+    }
+  }
+
+  if(
+    currentAllType !== "all" &&
+    getAllLeadTypeKey(lead) !== currentAllType
+  ){
+    return false;
+  }
+
+  if(
+    currentAllStatus !== "all" &&
+    String(lead?.status || "New") !== currentAllStatus
+  ){
+    return false;
+  }
+
+  if(currentAllSearch){
+    const haystack = [
+      lead?.contact?.name,
+      lead?.contact?.email,
+      lead?.contact?.phone,
+      lead?.status,
+      getAllLeadTypeLabel(lead)
+    ].join(" ").toLowerCase();
+
+    if(!haystack.includes(currentAllSearch.toLowerCase())){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function populateAllLeadFilters(){
+  const yearSelect = document.getElementById("allYearFilter");
+  const statusSelect = document.getElementById("allStatusFilter");
+
+  if(yearSelect){
+    const years = new Set();
+
+    allLeads.forEach(lead => {
+      const enteredAt = getLeadEnteredAt(lead);
+      if(!enteredAt) return;
+
+      const date = new Date(enteredAt);
+      if(!Number.isNaN(date.getTime())){
+        years.add(date.getFullYear());
+      }
+    });
+
+    const sortedYears = Array.from(years).sort((a,b) => b - a);
+
+    yearSelect.innerHTML =
+      '<option value="all">All years</option>' +
+      sortedYears
+        .map(year => `<option value="${year}">${year}</option>`)
+        .join("");
+
+    yearSelect.value =
+      sortedYears.includes(Number(currentAllYear))
+        ? currentAllYear
+        : "all";
+
+    currentAllYear = yearSelect.value;
+  }
+
+  if(statusSelect){
+    const statuses = Array.from(
+      new Set(
+        allLeads
+          .map(lead => String(lead?.status || "New").trim())
+          .filter(Boolean)
+      )
+    ).sort((a,b) => a.localeCompare(b));
+
+    statusSelect.innerHTML =
+      '<option value="all">All statuses</option>' +
+      statuses
+        .map(status =>
+          `<option value="${status.replace(/"/g, "&quot;")}">${status}</option>`
+        )
+        .join("");
+
+    statusSelect.value =
+      statuses.includes(currentAllStatus)
+        ? currentAllStatus
+        : "all";
+
+    currentAllStatus = statusSelect.value;
+  }
+}
+
+function updateAllSummary(count){
+  const summary = document.getElementById("allSummary");
+  if(!summary) return;
+
+  const monthNames = [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+
+  const period =
+    currentAllMonth === "all" && currentAllYear === "all"
+      ? "all time"
+      : currentAllMonth === "all"
+        ? currentAllYear
+        : currentAllYear === "all"
+          ? monthNames[Number(currentAllMonth)]
+          : `${monthNames[Number(currentAllMonth)]} ${currentAllYear}`;
+
+  summary.textContent =
+    `Leads entered in ${period}: ${count} ${count === 1 ? "lead" : "leads"}`;
+}
+
 function getLeadClosedAt(lead){
   return (
     lead.writtenReviewDeliveredAt ||
@@ -467,6 +829,7 @@ function getLeadClosedAt(lead){
     lead.completedAt ||
     lead.contactRequest?.repliedAt ||
     lead.Request?.contactRequestRepliedAt ||
+    lead.Request?.officeWorkCompletedAt ||
     lead.writtenReview?.deliveredAt ||
     lead.writtenReview?.completedAt ||
     (
@@ -664,7 +1027,15 @@ function matchesContactFilter(lead){
 }
 
 function getTaxPrepLane(lead){
-  return String(lead?.taxPreparationIntake?.recommendedLane || "").trim();
+  const lane = String(
+    lead?.taxPreparationIntake?.recommendedLane || ""
+  ).trim();
+
+  if(lane === "Simple Individual Return"){
+    return "Individual Form 1040";
+  }
+
+  return lane;
 }
 
 function getTaxPrepDocumentCount(lead){
@@ -686,13 +1057,212 @@ function matchesTaxPrepFilter(lead){
   const lane = getTaxPrepLane(lead).toLowerCase();
 
   if(currentTaxPrepFilter === "new") return status.includes("ready to schedule");
-  if(currentTaxPrepFilter === "simple") return lane.includes("simple individual");
+  if(currentTaxPrepFilter === "simple") return lane.includes("individual form 1040") || lane.includes("simple individual");
   if(currentTaxPrepFilter === "gig") return lane.includes("gig worker") || lane.includes("self-employed");
   if(currentTaxPrepFilter === "complex") return lane.includes("investment") || lane.includes("complex");
   if(currentTaxPrepFilter === "business") return lane.includes("business") || lane.includes("entity");
   if(currentTaxPrepFilter === "review") return status.includes("needs review") || Boolean(lead?.taxPreparationIntake?.needsProfessionalReview);
   if(currentTaxPrepFilter === "completed") return status.includes("completed") || status.includes("closed");
   return true;
+}
+
+function getTaxPrepTaxYear(lead){
+  return String(
+    lead?.taxPreparationIntake?.taxYear ||
+    lead?.taxData?.taxYear ||
+    ""
+  ).trim();
+}
+
+function matchesTaxPrepAdvancedFilters(lead){
+  const enteredAt = getLeadEnteredAt(lead);
+  const enteredDate = enteredAt ? new Date(enteredAt) : null;
+  const validDate =
+    enteredDate &&
+    !Number.isNaN(enteredDate.getTime());
+
+  if(currentTaxPrepYear !== "all"){
+    if(
+      !validDate ||
+      String(enteredDate.getFullYear()) !== currentTaxPrepYear
+    ){
+      return false;
+    }
+  }
+
+  if(currentTaxPrepMonth !== "all"){
+    if(
+      !validDate ||
+      String(enteredDate.getMonth() + 1) !== currentTaxPrepMonth
+    ){
+      return false;
+    }
+  }
+
+  if(
+    currentTaxPrepTaxYear !== "all" &&
+    getTaxPrepTaxYear(lead) !== currentTaxPrepTaxYear
+  ){
+    return false;
+  }
+
+  if(
+    currentTaxPrepLane !== "all" &&
+    getTaxPrepLane(lead) !== currentTaxPrepLane
+  ){
+    return false;
+  }
+
+  if(
+    currentTaxPrepStatus !== "all" &&
+    String(lead?.status || "New") !== currentTaxPrepStatus
+  ){
+    return false;
+  }
+
+  if(currentTaxPrepSearch){
+    const haystack = [
+      lead?.contact?.name,
+      lead?.contact?.email,
+      lead?.contact?.phone,
+      getTaxPrepLane(lead),
+      getTaxPrepTaxYear(lead),
+      lead?.status
+    ].join(" ").toLowerCase();
+
+    if(!haystack.includes(currentTaxPrepSearch.toLowerCase())){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function populateTaxPrepAdvancedFilters(){
+  const yearSelect = document.getElementById("taxPrepYearFilter");
+  const taxYearSelect = document.getElementById("taxPrepTaxYearFilter");
+  const laneSelect = document.getElementById("taxPrepLaneFilter");
+  const statusSelect = document.getElementById("taxPrepStatusFilter");
+
+  const taxPrepLeads = allLeads.filter(isTaxPreparationLead);
+
+  if(yearSelect){
+    const years = new Set();
+
+    taxPrepLeads.forEach(lead => {
+      const enteredAt = getLeadEnteredAt(lead);
+      if(!enteredAt) return;
+
+      const date = new Date(enteredAt);
+      if(!Number.isNaN(date.getTime())){
+        years.add(date.getFullYear());
+      }
+    });
+
+    const sortedYears = Array.from(years).sort((a,b) => b - a);
+
+    yearSelect.innerHTML =
+      '<option value="all">All years</option>' +
+      sortedYears
+        .map(year => `<option value="${year}">${year}</option>`)
+        .join("");
+
+    yearSelect.value = sortedYears.includes(Number(currentTaxPrepYear))
+      ? currentTaxPrepYear
+      : "all";
+
+    currentTaxPrepYear = yearSelect.value;
+  }
+
+  if(taxYearSelect){
+    const taxYears = Array.from(
+      new Set(
+        taxPrepLeads
+          .map(getTaxPrepTaxYear)
+          .filter(Boolean)
+      )
+    ).sort((a,b) => Number(b) - Number(a));
+
+    taxYearSelect.innerHTML =
+      '<option value="all">All tax years</option>' +
+      taxYears
+        .map(year => `<option value="${year}">${year}</option>`)
+        .join("");
+
+    taxYearSelect.value = taxYears.includes(currentTaxPrepTaxYear)
+      ? currentTaxPrepTaxYear
+      : "all";
+
+    currentTaxPrepTaxYear = taxYearSelect.value;
+  }
+
+  if(laneSelect){
+    const standardLanes = [
+      "Individual Form 1040",
+      "Gig / Self-Employed Form 1040",
+      "Investment & Complex Form 1040",
+      "Business / Entity Return"
+    ];
+
+    const lanes = Array.from(
+      new Set([
+        ...standardLanes,
+        ...taxPrepLeads
+          .map(getTaxPrepLane)
+          .filter(Boolean)
+      ])
+    ).sort((a,b) => {
+      const aIndex = standardLanes.indexOf(a);
+      const bIndex = standardLanes.indexOf(b);
+
+      if(aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if(aIndex !== -1) return -1;
+      if(bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+
+    laneSelect.innerHTML =
+      '<option value="all">All service lanes</option>' +
+      lanes
+        .map(lane => `<option value="${lane}">${lane}</option>`)
+        .join("");
+
+    laneSelect.value = lanes.includes(currentTaxPrepLane)
+      ? currentTaxPrepLane
+      : "all";
+
+    currentTaxPrepLane = laneSelect.value;
+  }
+
+  if(statusSelect){
+    const statuses = Array.from(
+      new Set(
+        taxPrepLeads
+          .map(lead => String(lead?.status || "New"))
+          .filter(Boolean)
+      )
+    ).sort((a,b) => a.localeCompare(b));
+
+    statusSelect.innerHTML =
+      '<option value="all">All statuses</option>' +
+      statuses
+        .map(status => `<option value="${status}">${status}</option>`)
+        .join("");
+
+    statusSelect.value = statuses.includes(currentTaxPrepStatus)
+      ? currentTaxPrepStatus
+      : "all";
+
+    currentTaxPrepStatus = statusSelect.value;
+  }
+}
+
+function updateTaxPrepAdvancedSummary(count){
+  const summary = document.getElementById("taxPrepAdvancedSummary");
+  if(!summary) return;
+
+  summary.textContent =
+    `Tax Preparation Requests shown: ${count}`;
 }
 
 function getVisibleLeads(){
@@ -707,6 +1277,7 @@ function getVisibleLeads(){
     return allLeads
       .filter(isTaxPreparationLead)
       .filter(matchesTaxPrepFilter)
+      .filter(matchesTaxPrepAdvancedFilters)
       .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
   }
 
@@ -738,6 +1309,15 @@ function getVisibleLeads(){
       );
   }
 
+  if(currentView==="all"){
+    return allLeads
+      .filter(matchesAllLeadFilters)
+      .sort((a,b) =>
+        new Date(getLeadEnteredAt(b) || 0) -
+        new Date(getLeadEnteredAt(a) || 0)
+      );
+  }
+
   if(currentView==="office"){
     return allLeads.filter(l => {
       const status = String(l.status || "").toLowerCase();
@@ -764,6 +1344,29 @@ function getVisibleLeads(){
   }
 
   return allLeads;
+}
+
+function getOfficeServiceLabel(lead){
+  if(isTaxPreparationLead(lead)){
+    return getTaxPrepLane(lead) || "Tax Preparation";
+  }
+
+  return getAllLeadTypeLabel(lead);
+}
+
+function getOfficeCurrentStep(lead){
+  const status = String(lead?.status || "Needs Attention").trim();
+
+  return status
+    .replace(/^Tax Preparation Intake\s*-\s*/i, "")
+    .replace(/^Contact Request\s*-\s*/i, "")
+    .replace(/^Written Review\s*-\s*/i, "")
+    .replace(/^Needs\s+/i, "Review: ");
+}
+
+function openOfficeLead(index){
+  const lead = (window.visibleOfficeLeads || [])[index];
+  if(lead) openPanel(lead);
 }
 
 function openPanel(lead){
@@ -846,8 +1449,65 @@ function renderLeads(){
 
   count.innerText = visible.length + (visible.length === 1 ? " lead" : " leads");
 
+  if(currentView === "all"){
+    updateAllSummary(visible.length);
+  }
+
   if(!visible.length){
     list.innerHTML="<div class='empty'>No leads found</div>";
+    return;
+  }
+
+  if(currentView === "office"){
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Service</th>
+              <th>Current Step</th>
+              <th>Entered</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || "No Name"}</strong><br>
+                    ${lead.contact?.email || ""}
+                  </td>
+                  <td>${getOfficeServiceLabel(lead)}</td>
+                  <td>${getOfficeCurrentStep(lead)}</td>
+                  <td>${enteredAt || ""}</td>
+                  <td><span class="status-pill">${lead.status || "Needs Attention"}</span></td>
+                  <td>
+                    <button
+                      class="taxprep-open-btn"
+                      onclick="openOfficeLead(${index})"
+                    >
+                      Open
+                    </button>
+                    <button
+                      class="contact-replied-btn office-complete-btn"
+                      onclick="markOfficeWorkCompleted(${index}, this)"
+                      title="Mark ${lead.contact?.name || "this client"} completed"
+                    >
+                      Mark ${String(lead.contact?.name || "Client").split(" ")[0]} Completed
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleOfficeLeads = visible;
     return;
   }
 
@@ -1013,6 +1673,8 @@ function renderLeads(){
   }
 
   if(currentView === "taxprep"){
+    updateTaxPrepAdvancedSummary(visible.length);
+
     list.innerHTML = `
       <div class="taxprep-table-wrap">
         <table class="taxprep-table">
@@ -1073,6 +1735,104 @@ function renderLeads(){
       </div>
     `;
   }).join("");
+}
+
+async function markOfficeWorkCompleted(index, button){
+  const lead = (window.visibleOfficeLeads || [])[index];
+
+  if(!lead || !lead.leadId){
+    alert("Office work item could not be identified.");
+    return;
+  }
+
+  const clientName = String(
+    lead?.contact?.name || "this client"
+  ).trim();
+
+  const serviceName = String(
+    getOfficeServiceLabel(lead) || "office work"
+  ).trim();
+
+  const confirmed = window.confirm(
+    `Mark ${clientName}'s ${serviceName} completed and move the client to Closed Leads?`
+  );
+
+  if(!confirmed) return;
+
+  const originalText = button ? button.textContent : "Mark Completed";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Updating...";
+    button.setAttribute("aria-busy", "true");
+  }
+
+  try{
+    const completedAt = new Date().toISOString();
+
+    const response = await fetch(
+      "/api/leads/" + encodeURIComponent(lead.leadId),
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "Closed - Office Work Completed",
+          completedAt,
+          closedAt: completedAt,
+          Request: {
+            officeWorkCompletionStatus: "Completed",
+            officeWorkCompletedAt: completedAt,
+            officeWorkPreviousStatus: String(lead.status || "")
+          }
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(
+        result.error || "The office work item could not be completed."
+      );
+    }
+
+    if(button){
+      button.textContent = "Completed";
+      button.removeAttribute("aria-busy");
+    }
+
+    lead.status = "Closed - Office Work Completed";
+    lead.completedAt = completedAt;
+    lead.closedAt = completedAt;
+    lead.Request = {
+      ...(lead.Request || {}),
+      officeWorkCompletionStatus: "Completed",
+      officeWorkCompletedAt: completedAt
+    };
+
+    clearDetailPanel();
+
+    setTimeout(async () => {
+      await loadLeads();
+      alert(
+        `${clientName}'s ${serviceName} is completed and has moved to Closed Leads.`
+      );
+    }, 550);
+  }catch(error){
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+      button.removeAttribute("aria-busy");
+    }
+
+    alert(
+      error && error.message
+        ? error.message
+        : "The office work item could not be completed."
+    );
+  }
 }
 
 async function markWrittenReviewDelivered(index, button){
@@ -1233,6 +1993,8 @@ async function loadLeads(){
     const data=await res.json();
 
     allLeads = data.leads || [];
+    populateAllLeadFilters();
+    populateTaxPrepAdvancedFilters();
     populateClosedYearFilter();
     renderLeads();
 
@@ -1268,9 +2030,21 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("viewTitle").innerText =
         titles[currentView] || "Leads";
 
+      const allFilters = document.getElementById("allFilters");
+      if(allFilters){
+        allFilters.style.display = currentView === "all" ? "flex" : "none";
+      }
+
       const taxPrepFilters = document.getElementById("taxPrepFilters");
       if(taxPrepFilters){
         taxPrepFilters.style.display = currentView === "taxprep" ? "flex" : "none";
+      }
+
+      const taxPrepAdvancedFilters =
+        document.getElementById("taxPrepAdvancedFilters");
+      if(taxPrepAdvancedFilters){
+        taxPrepAdvancedFilters.style.display =
+          currentView === "taxprep" ? "flex" : "none";
       }
 
       const contactFilters = document.getElementById("contactFilters");
@@ -1348,6 +2122,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const month = document.getElementById("taxPrepMonthFilter");
+  const year = document.getElementById("taxPrepYearFilter");
+  const taxYear = document.getElementById("taxPrepTaxYearFilter");
+  const lane = document.getElementById("taxPrepLaneFilter");
+  const status = document.getElementById("taxPrepStatusFilter");
+  const search = document.getElementById("taxPrepSearchFilter");
+
+  if(month){
+    month.value = currentTaxPrepMonth;
+    month.addEventListener("change", () => {
+      currentTaxPrepMonth = month.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(year){
+    year.addEventListener("change", () => {
+      currentTaxPrepYear = year.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(taxYear){
+    taxYear.addEventListener("change", () => {
+      currentTaxPrepTaxYear = taxYear.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(lane){
+    lane.addEventListener("change", () => {
+      currentTaxPrepLane = lane.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(status){
+    status.addEventListener("change", () => {
+      currentTaxPrepStatus = status.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(search){
+    search.addEventListener("input", () => {
+      currentTaxPrepSearch = search.value.trim();
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".contact-filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".contact-filter-btn")
@@ -1366,6 +2200,57 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const month = document.getElementById("allMonthFilter");
+  const year = document.getElementById("allYearFilter");
+  const type = document.getElementById("allTypeFilter");
+  const status = document.getElementById("allStatusFilter");
+  const search = document.getElementById("allSearchFilter");
+
+  if(month){
+    month.value = currentAllMonth;
+    month.addEventListener("change", () => {
+      currentAllMonth = month.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(year){
+    year.addEventListener("change", () => {
+      currentAllYear = year.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(type){
+    type.addEventListener("change", () => {
+      currentAllType = type.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(status){
+    status.addEventListener("change", () => {
+      currentAllStatus = status.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(search){
+    search.addEventListener("input", () => {
+      currentAllSearch = search.value.trim();
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+});
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
