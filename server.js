@@ -807,6 +807,11 @@ function mapRowToLead(row) {
       row.contactRequest ||
       row.contact_request ||
       null,
+    calendarAppointment:
+      estimate.calendarAppointment ||
+      row.calendarAppointment ||
+      row.calendar_appointment ||
+      null,
     writtenReview:
       estimate.writtenReview ||
       row.writtenReview ||
@@ -2158,6 +2163,392 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+// =============================================================================
+// CALENDLY WEBHOOK
+// Stores invitee.created and invitee.canceled inside the existing lead record.
+// The webhook URL must include ?secret=<CALENDLY_WEBHOOK_SECRET>.
+// =============================================================================
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getCalendlyWebhookSecret(req) {
+  return String(
+    req.query?.secret ||
+    req.headers["x-calendly-webhook-secret"] ||
+    ""
+  ).trim();
+}
+
+function getCalendlyAppointmentFromPayload(body = {}) {
+  const payload = body.payload || {};
+  const eventType = String(body.event || "").trim();
+  const scheduledEvent = payload.scheduled_event || {};
+  const cancellation = payload.cancellation || {};
+
+  const inviteeEmail = normalizeEmail(payload.email);
+  const inviteeName = String(payload.name || "").trim();
+  const inviteeUri = String(payload.uri || "").trim();
+  const eventUri = String(
+    scheduledEvent.uri ||
+    payload.event ||
+    ""
+  ).trim();
+
+  const isCanceled = eventType === "invitee.canceled";
+
+  return {
+    provider: "Calendly",
+    webhookEvent: eventType,
+    status: isCanceled ? "Canceled" : "Scheduled",
+    inviteeName,
+    inviteeEmail,
+    inviteeUri,
+    eventUri,
+    eventName: String(scheduledEvent.name || "").trim(),
+    startTime: String(scheduledEvent.start_time || "").trim(),
+    endTime: String(scheduledEvent.end_time || "").trim(),
+    location:
+      scheduledEvent.location &&
+      typeof scheduledEvent.location === "object"
+        ? scheduledEvent.location
+        : null,
+    cancelUrl: String(payload.cancel_url || "").trim(),
+    rescheduleUrl: String(payload.reschedule_url || "").trim(),
+    canceledAt: isCanceled ? new Date().toISOString() : "",
+    cancellationReason: String(cancellation.reason || "").trim(),
+    canceledBy: String(cancellation.canceler_type || "").trim(),
+    rescheduled: Boolean(payload.rescheduled),
+    oldInviteeUri: String(payload.old_invitee || "").trim(),
+    newInviteeUri: String(payload.new_invitee || "").trim(),
+    receivedAt: new Date().toISOString()
+  };
+}
+
+function calendlyAppointmentMatches(existing = {}, incoming = {}) {
+  const existingInviteeUri = String(existing.inviteeUri || "").trim();
+  const incomingInviteeUri = String(incoming.inviteeUri || "").trim();
+  const existingEventUri = String(existing.eventUri || "").trim();
+  const incomingEventUri = String(incoming.eventUri || "").trim();
+
+  if (
+    existingInviteeUri &&
+    incomingInviteeUri &&
+    existingInviteeUri === incomingInviteeUri
+  ) {
+    return true;
+  }
+
+  if (
+    existingEventUri &&
+    incomingEventUri &&
+    existingEventUri === incomingEventUri
+  ) {
+    return true;
+  }
+
+  return (
+    normalizeEmail(existing.inviteeEmail) &&
+    normalizeEmail(existing.inviteeEmail) ===
+      normalizeEmail(incoming.inviteeEmail)
+  );
+}
+
+async function saveCalendlyAppointment(appointment) {
+  const email = normalizeEmail(appointment.inviteeEmail);
+
+  if (!email) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "Calendly payload did not include an invitee email."
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const matchingRow = (data || []).find((row) => {
+      const estimate = row.estimate || {};
+      const rowEmail = normalizeEmail(
+        estimate.contact?.email ||
+        row.email
+      );
+
+      const existingAppointment =
+        estimate.calendarAppointment || {};
+
+      return (
+        rowEmail === email ||
+        calendlyAppointmentMatches(
+          existingAppointment,
+          appointment
+        )
+      );
+    });
+
+    if (matchingRow) {
+      const estimate = matchingRow.estimate || {};
+      const updatedEstimate = {
+        ...estimate,
+        calendarAppointment: {
+          ...(estimate.calendarAppointment || {}),
+          ...appointment
+        },
+        updatedAt: new Date().toISOString()
+      };
+
+      let updateQuery = supabase
+        .from("leads")
+        .update({ estimate: updatedEstimate });
+
+      if (matchingRow.leadId) {
+        updateQuery = updateQuery.eq("leadId", matchingRow.leadId);
+      } else if (matchingRow.leadid) {
+        updateQuery = updateQuery.eq("leadid", matchingRow.leadid);
+      } else if (matchingRow.lead_id) {
+        updateQuery = updateQuery.eq("lead_id", matchingRow.lead_id);
+      } else {
+        updateQuery = updateQuery.eq("id", matchingRow.id);
+      }
+
+      const { error: updateError } = await updateQuery;
+      if (updateError) throw updateError;
+
+      const updatedLead = mapRowToLead({
+        ...matchingRow,
+        estimate: updatedEstimate
+      });
+
+      recentLeads.set(updatedLead.leadId, updatedLead);
+
+      return {
+        ok: true,
+        source: "supabase",
+        action: "updated",
+        leadId: updatedLead.leadId,
+        appointment: updatedLead.calendarAppointment
+      };
+    }
+
+    const leadId =
+      "LEAD-" +
+      Date.now() +
+      "-CAL";
+
+    const newLead = {
+      leadId,
+      timestamp: new Date().toISOString(),
+      priority: "medium",
+      status:
+        appointment.status === "Canceled"
+          ? "Calendar - Canceled"
+          : "Calendar - Scheduled",
+      notes: "Created automatically from Calendly.",
+      contact: {
+        name: appointment.inviteeName || "Calendly Client",
+        email,
+        phone: ""
+      },
+      taxData: null,
+      estimateSummary: {},
+      calendarAppointment: appointment
+    };
+
+    const row = {
+      leadId: newLead.leadId,
+      name: newLead.contact.name,
+      email: newLead.contact.email,
+      phone: "",
+      estimate: {
+        timestamp: newLead.timestamp,
+        priority: newLead.priority,
+        status: newLead.status,
+        notes: newLead.notes,
+        contact: newLead.contact,
+        taxData: null,
+        estimateSummary: {},
+        calendarAppointment: appointment
+      },
+      taxYear: null,
+      filingYear: null
+    };
+
+    const { error: insertError } = await supabase
+      .from("leads")
+      .insert([row]);
+
+    if (insertError) throw insertError;
+
+    recentLeads.set(leadId, newLead);
+
+    return {
+      ok: true,
+      source: "supabase",
+      action: "created",
+      leadId,
+      appointment
+    };
+  } catch (supabaseError) {
+    console.error(
+      "[Calendly webhook] Supabase save failed:",
+      supabaseError.message || supabaseError
+    );
+  }
+
+  const leads = readLeads();
+  let matchingIndex = leads.findIndex((lead) => {
+    const leadEmail = normalizeEmail(lead?.contact?.email);
+    return (
+      leadEmail === email ||
+      calendlyAppointmentMatches(
+        lead?.calendarAppointment || {},
+        appointment
+      )
+    );
+  });
+
+  if (matchingIndex >= 0) {
+    leads[matchingIndex] = {
+      ...leads[matchingIndex],
+      calendarAppointment: {
+        ...(leads[matchingIndex].calendarAppointment || {}),
+        ...appointment
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    writeLeads(leads);
+    recentLeads.set(
+      leads[matchingIndex].leadId,
+      leads[matchingIndex]
+    );
+
+    return {
+      ok: true,
+      source: "local",
+      action: "updated",
+      leadId: leads[matchingIndex].leadId,
+      appointment: leads[matchingIndex].calendarAppointment
+    };
+  }
+
+  const leadId =
+    "LEAD-" +
+    Date.now() +
+    "-CAL";
+
+  const newLead = {
+    leadId,
+    timestamp: new Date().toISOString(),
+    priority: "medium",
+    status:
+      appointment.status === "Canceled"
+        ? "Calendar - Canceled"
+        : "Calendar - Scheduled",
+    notes: "Created automatically from Calendly.",
+    contact: {
+      name: appointment.inviteeName || "Calendly Client",
+      email,
+      phone: ""
+    },
+    taxData: null,
+    estimateSummary: {},
+    calendarAppointment: appointment
+  };
+
+  leads.unshift(newLead);
+  writeLeads(leads);
+  recentLeads.set(leadId, newLead);
+
+  return {
+    ok: true,
+    source: "local",
+    action: "created",
+    leadId,
+    appointment
+  };
+}
+
+app.post("/api/calendly-webhook", async (req, res) => {
+  const configuredSecret = String(
+    process.env.CALENDLY_WEBHOOK_SECRET || ""
+  ).trim();
+
+  if (!configuredSecret) {
+    console.error(
+      "[Calendly webhook] CALENDLY_WEBHOOK_SECRET is not configured."
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "Calendly webhook secret is not configured."
+    });
+  }
+
+  const suppliedSecret = getCalendlyWebhookSecret(req);
+
+  if (!suppliedSecret || suppliedSecret !== configuredSecret) {
+    return res.status(401).json({
+      ok: false,
+      error: "Unauthorized Calendly webhook request."
+    });
+  }
+
+  const webhookEvent = String(req.body?.event || "").trim();
+
+  if (
+    webhookEvent !== "invitee.created" &&
+    webhookEvent !== "invitee.canceled"
+  ) {
+    return res.status(200).json({
+      ok: true,
+      ignored: true,
+      event: webhookEvent || "unknown"
+    });
+  }
+
+  try {
+    const appointment =
+      getCalendlyAppointmentFromPayload(req.body || {});
+
+    const result =
+      await saveCalendlyAppointment(appointment);
+
+    if (!result.ok) {
+      return res
+        .status(result.statusCode || 500)
+        .json(result);
+    }
+
+    console.log(
+      "[Calendly webhook]",
+      webhookEvent,
+      result.action,
+      result.leadId
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(
+      "[Calendly webhook] Processing failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "Calendly webhook processing failed."
+    });
+  }
+});
 
 // =============================================================================
 // SEARCH ENGINE PROTECTION FOR PRIVATE / WORKFLOW PAGES
