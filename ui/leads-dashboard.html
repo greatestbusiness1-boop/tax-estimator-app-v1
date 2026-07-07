@@ -204,6 +204,90 @@
       white-space: nowrap;
     }
 
+  
+    .written-action-btn {
+      border: 0;
+      border-radius: 6px;
+      background: #28588c;
+      color: #ffffff;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 118px;
+    }
+
+    .written-action-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .autopilot-complete {
+      color: #166534;
+      font-weight: 700;
+    }
+
+    .autopilot-ready {
+      color: #92400e;
+      font-weight: 700;
+    }
+
+  
+    .closed-filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+      margin: 14px 0 18px;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+    }
+
+    .closed-filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 145px;
+    }
+
+    .closed-filter-field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .closed-filter-field select,
+    .closed-filter-field input {
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      padding: 9px 10px;
+      font: inherit;
+      background: #ffffff;
+    }
+
+    .closed-filter-field.closed-search {
+      min-width: 230px;
+      flex: 1;
+    }
+
+    .closed-summary {
+      width: 100%;
+      font-weight: 700;
+      color: #0f2f59;
+      padding-top: 2px;
+    }
+
+    .closed-open-btn {
+      border: 0;
+      border-radius: 6px;
+      background: #28588c;
+      color: #ffffff;
+      padding: 8px 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 
@@ -239,6 +323,58 @@
       <button class="contact-filter-btn active" data-contact-filter="new">New Requests</button>
       <button class="contact-filter-btn" data-contact-filter="all">All Website Contacts</button>
       <button class="contact-filter-btn" data-contact-filter="replied">Replied</button>
+    </div>
+
+    <div id="closedFilters" class="closed-filters">
+      <div class="closed-filter-field">
+        <label for="closedMonthFilter">Month closed</label>
+        <select id="closedMonthFilter">
+          <option value="all">All months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+
+      <div class="closed-filter-field">
+        <label for="closedYearFilter">Year closed</label>
+        <select id="closedYearFilter">
+          <option value="all">All years</option>
+        </select>
+      </div>
+
+      <div class="closed-filter-field">
+        <label for="closedServiceFilter">Service</label>
+        <select id="closedServiceFilter">
+          <option value="all">All services</option>
+          <option value="written-review">Written Review</option>
+          <option value="tax-preparation">Tax Preparation</option>
+          <option value="website-contact">Website Contact</option>
+          <option value="transcript">Transcript</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="closed-filter-field closed-search">
+        <label for="closedSearchFilter">Search client</label>
+        <input
+          id="closedSearchFilter"
+          type="search"
+          placeholder="Name or email"
+          autocomplete="off"
+        >
+      </div>
+
+      <div id="closedSummary" class="closed-summary"></div>
     </div>
 
     <div id="leadList"></div>
@@ -285,6 +421,12 @@ let currentView = "office";
 let currentTaxPrepFilter = "all";
 let currentContactFilter = "new";
 
+const closedToday = new Date();
+let currentClosedMonth = String(closedToday.getMonth() + 1);
+let currentClosedYear = String(closedToday.getFullYear());
+let currentClosedService = "all";
+let currentClosedSearch = "";
+
 function formatLeadDate(value){
   if(!value) return "";
 
@@ -319,16 +461,176 @@ function getLeadEnteredAt(lead){
 
 function getLeadClosedAt(lead){
   return (
+    lead.writtenReviewDeliveredAt ||
+    lead.writtenReviewCompletedAt ||
     lead.closedAt ||
+    lead.completedAt ||
+    lead.contactRequest?.repliedAt ||
+    lead.Request?.contactRequestRepliedAt ||
     lead.writtenReview?.deliveredAt ||
     lead.writtenReview?.completedAt ||
     (
-      String(lead.status || "").toLowerCase().includes("closed")
+      String(lead.status || "").toLowerCase().includes("closed") ||
+      String(lead.status || "").toLowerCase().includes("completed")
         ? lead.updatedAt
         : ""
     ) ||
     ""
   );
+}
+
+function getClosedServiceKey(lead){
+  const status = String(lead?.status || "").toLowerCase();
+  const leadId = String(lead?.leadId || "").toLowerCase();
+
+  if(
+    status.includes("written review") ||
+    lead?.writtenReviewDeliveredAt ||
+    lead?.writtenReviewCompletedAt ||
+    lead?.writtenReview
+  ){
+    return "written-review";
+  }
+
+  if(
+    isTaxPreparationLead(lead) ||
+    status.includes("tax preparation")
+  ){
+    return "tax-preparation";
+  }
+
+  if(
+    isWebsiteContactLead(lead) ||
+    status.includes("contact request")
+  ){
+    return "website-contact";
+  }
+
+  if(
+    leadId.includes("transcript") ||
+    status.includes("transcript") ||
+    lead?.transcriptRequest
+  ){
+    return "transcript";
+  }
+
+  return "other";
+}
+
+function getClosedServiceLabel(lead){
+  const labels = {
+    "written-review": "Written Review",
+    "tax-preparation": "Tax Preparation",
+    "website-contact": "Website Contact",
+    "transcript": "Transcript",
+    "other": "Other"
+  };
+
+  return labels[getClosedServiceKey(lead)] || "Other";
+}
+
+function matchesClosedFilters(lead){
+  const closedAt = getLeadClosedAt(lead);
+  const date = closedAt ? new Date(closedAt) : null;
+  const validDate = date && !Number.isNaN(date.getTime());
+
+  if(currentClosedYear !== "all"){
+    if(!validDate || String(date.getFullYear()) !== currentClosedYear){
+      return false;
+    }
+  }
+
+  if(currentClosedMonth !== "all"){
+    if(!validDate || String(date.getMonth() + 1) !== currentClosedMonth){
+      return false;
+    }
+  }
+
+  if(
+    currentClosedService !== "all" &&
+    getClosedServiceKey(lead) !== currentClosedService
+  ){
+    return false;
+  }
+
+  if(currentClosedSearch){
+    const haystack = [
+      lead?.contact?.name,
+      lead?.contact?.email,
+      lead?.status,
+      getClosedServiceLabel(lead)
+    ].join(" ").toLowerCase();
+
+    if(!haystack.includes(currentClosedSearch.toLowerCase())){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function populateClosedYearFilter(){
+  const select = document.getElementById("closedYearFilter");
+  if(!select) return;
+
+  const years = new Set([new Date().getFullYear()]);
+
+  allLeads.forEach(lead => {
+    const closedAt = getLeadClosedAt(lead);
+    if(!closedAt) return;
+
+    const date = new Date(closedAt);
+    if(!Number.isNaN(date.getTime())){
+      years.add(date.getFullYear());
+    }
+  });
+
+  const sortedYears = Array.from(years).sort((a,b) => b - a);
+
+  select.innerHTML =
+    '<option value="all">All years</option>' +
+    sortedYears
+      .map(year => `<option value="${year}">${year}</option>`)
+      .join("");
+
+  select.value = sortedYears.includes(Number(currentClosedYear))
+    ? currentClosedYear
+    : "all";
+
+  currentClosedYear = select.value;
+}
+
+function updateClosedSummary(count){
+  const summary = document.getElementById("closedSummary");
+  if(!summary) return;
+
+  const monthNames = [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+
+  const period =
+    currentClosedMonth === "all" && currentClosedYear === "all"
+      ? "all time"
+      : currentClosedMonth === "all"
+        ? currentClosedYear
+        : currentClosedYear === "all"
+          ? monthNames[Number(currentClosedMonth)]
+          : `${monthNames[Number(currentClosedMonth)]} ${currentClosedYear}`;
+
+  summary.textContent =
+    `Closed in ${period}: ${count} ${count === 1 ? "lead" : "leads"}`;
 }
 
 function isTaxPreparationLead(lead){
@@ -424,10 +726,16 @@ function getVisibleLeads(){
   }
 
   if(currentView==="closed"){
-    return allLeads.filter(l => {
-      const s=(l.status||"").toLowerCase();
-      return s.includes("closed")||s.includes("completed");
-    });
+    return allLeads
+      .filter(l => {
+        const s=(l.status||"").toLowerCase();
+        return s.includes("closed")||s.includes("completed");
+      })
+      .filter(matchesClosedFilters)
+      .sort((a,b) =>
+        new Date(getLeadClosedAt(b) || 0) -
+        new Date(getLeadClosedAt(a) || 0)
+      );
   }
 
   if(currentView==="office"){
@@ -493,6 +801,44 @@ function openPanel(lead){
     closedAt ? "Closed: " + closedAt : "";
 }
 
+function getWrittenWorksheetCompleted(lead){
+  const request = lead?.Request || lead?.request || {};
+
+  return Boolean(request.clientTaxStrategyWorksheet) &&
+    (
+      request.clientTaxStrategyWorksheetStatus === "Completed" ||
+      Boolean(request.clientTaxStrategyWorksheetCompletedAt)
+    );
+}
+
+function getWrittenDeliveredAt(lead){
+  return (
+    lead?.writtenReviewDeliveredAt ||
+    lead?.writtenReviewCompletedAt ||
+    lead?.writtenReview?.deliveredAt ||
+    lead?.writtenReview?.completedAt ||
+    ""
+  );
+}
+
+function getWrittenAutopilotStatus(lead){
+  const status = String(lead?.status || "").toLowerCase();
+
+  if(
+    getWrittenDeliveredAt(lead) ||
+    status.includes("closed") ||
+    status.includes("completed")
+  ){
+    return "Completed / No action needed";
+  }
+
+  if(getWrittenWorksheetCompleted(lead)){
+    return "Ready to Deliver";
+  }
+
+  return "Waiting for Client Worksheet";
+}
+
 function renderLeads(){
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
@@ -502,6 +848,63 @@ function renderLeads(){
 
   if(!visible.length){
     list.innerHTML="<div class='empty'>No leads found</div>";
+    return;
+  }
+
+  if(currentView === "written"){
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Tax Year</th>
+              <th>Autopilot Status</th>
+              <th>Worksheet</th>
+              <th>Entered</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const worksheetCompleted = getWrittenWorksheetCompleted(lead);
+              const autopilotStatus = getWrittenAutopilotStatus(lead);
+              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+              const delivered = autopilotStatus === "Completed / No action needed";
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || "No Name"}</strong><br>
+                    ${lead.contact?.email || ""}
+                  </td>
+                  <td>${lead.taxData?.taxYear || ""}</td>
+                  <td class="${delivered ? "autopilot-complete" : "autopilot-ready"}">
+                    ${autopilotStatus}
+                  </td>
+                  <td>${worksheetCompleted ? "Completed" : "Waiting"}</td>
+                  <td>${enteredAt}</td>
+                  <td>
+                    ${
+                      worksheetCompleted
+                        ? `
+                          <button
+                            class="written-action-btn"
+                            onclick="markWrittenReviewDelivered(${index}, this)"
+                          >
+                            Mark Delivered
+                          </button>
+                        `
+                        : `<span class="status-pill">No action needed</span>`
+                    }
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleWrittenReviewLeads = visible;
     return;
   }
 
@@ -557,6 +960,55 @@ function renderLeads(){
       </div>`;
 
     window.visibleWebsiteContactLeads = visible;
+    return;
+  }
+
+  if(currentView === "closed"){
+    updateClosedSummary(visible.length);
+
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Service</th>
+              <th>Status</th>
+              <th>Closed Date</th>
+              <th>Original Entry</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const closedAt = formatLeadDate(getLeadClosedAt(lead));
+              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || "No Name"}</strong><br>
+                    ${lead.contact?.email || ""}
+                  </td>
+                  <td>${getClosedServiceLabel(lead)}</td>
+                  <td><span class="status-pill">${lead.status || "Completed"}</span></td>
+                  <td>${closedAt || "Date unavailable"}</td>
+                  <td>${enteredAt || ""}</td>
+                  <td>
+                    <button
+                      class="closed-open-btn"
+                      onclick="openClosedLead(${index})"
+                    >
+                      Open
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleClosedLeads = visible;
     return;
   }
 
@@ -621,6 +1073,80 @@ function renderLeads(){
       </div>
     `;
   }).join("");
+}
+
+async function markWrittenReviewDelivered(index, button){
+  const lead = (window.visibleWrittenReviewLeads || [])[index];
+
+  if(!lead || !lead.leadId){
+    alert("Written Review could not be identified.");
+    return;
+  }
+
+  const originalText = button ? button.textContent : "Mark Delivered";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Updating...";
+    button.setAttribute("aria-busy", "true");
+  }
+
+  try{
+    const response = await fetch(
+      "/api/written-review/" +
+        encodeURIComponent(lead.leadId) +
+        "/mark-delivered",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(
+        result.error ||
+        "The Written Review could not be marked delivered."
+      );
+    }
+
+    if(button){
+      button.textContent = "Marked Delivered";
+      button.removeAttribute("aria-busy");
+    }
+
+    const nowIso =
+      result.deliveredAt ||
+      new Date().toISOString();
+
+    lead.writtenReviewDeliveredAt = nowIso;
+    lead.writtenReviewDeliveryStatus = "Delivered";
+    lead.writtenReviewCompletedAt = nowIso;
+    lead.writtenReviewCompletedStatus = "Completed";
+    lead.status = "Closed - Written Review Completed";
+    lead.closedAt = nowIso;
+
+    clearDetailPanel();
+
+    setTimeout(async () => {
+      await loadLeads();
+    }, 550);
+  }catch(error){
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+      button.removeAttribute("aria-busy");
+    }
+
+    alert(
+      error && error.message
+        ? error.message
+        : "The Written Review could not be marked delivered."
+    );
+  }
 }
 
 async function markContactReplied(index, button){
@@ -696,12 +1222,18 @@ function openTaxPrepLead(index){
   if(lead) openPanel(lead);
 }
 
+function openClosedLead(index){
+  const lead = (window.visibleClosedLeads || [])[index];
+  if(lead) openPanel(lead);
+}
+
 async function loadLeads(){
   try{
     const res=await fetch("/api/leads");
     const data=await res.json();
 
     allLeads = data.leads || [];
+    populateClosedYearFilter();
     renderLeads();
 
   }catch(e){
@@ -744,6 +1276,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const contactFilters = document.getElementById("contactFilters");
       if(contactFilters){
         contactFilters.style.display = currentView === "websitecontact" ? "flex" : "none";
+      }
+
+      const closedFilters = document.getElementById("closedFilters");
+      if(closedFilters){
+        closedFilters.style.display = currentView === "closed" ? "flex" : "none";
       }
 
       renderLeads();
@@ -826,6 +1363,49 @@ document.addEventListener("DOMContentLoaded", () => {
       renderLeads();
     });
   });
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const month = document.getElementById("closedMonthFilter");
+  const year = document.getElementById("closedYearFilter");
+  const service = document.getElementById("closedServiceFilter");
+  const search = document.getElementById("closedSearchFilter");
+
+  if(month){
+    month.value = currentClosedMonth;
+    month.addEventListener("change", () => {
+      currentClosedMonth = month.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(year){
+    year.addEventListener("change", () => {
+      currentClosedYear = year.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(service){
+    service.addEventListener("change", () => {
+      currentClosedService = service.value || "all";
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
+
+  if(search){
+    search.addEventListener("input", () => {
+      currentClosedSearch = search.value.trim();
+      clearDetailPanel();
+      renderLeads();
+    });
+  }
 });
 </script>
 

@@ -807,6 +807,46 @@ function mapRowToLead(row) {
       row.contactRequest ||
       row.contact_request ||
       null,
+    writtenReview:
+      estimate.writtenReview ||
+      row.writtenReview ||
+      row.written_review ||
+      null,
+    writtenReviewDeliveredAt:
+      estimate.writtenReviewDeliveredAt ||
+      row.writtenReviewDeliveredAt ||
+      row.written_review_delivered_at ||
+      "",
+    writtenReviewDeliveryStatus:
+      estimate.writtenReviewDeliveryStatus ||
+      row.writtenReviewDeliveryStatus ||
+      row.written_review_delivery_status ||
+      "",
+    writtenReviewCompletedAt:
+      estimate.writtenReviewCompletedAt ||
+      row.writtenReviewCompletedAt ||
+      row.written_review_completed_at ||
+      "",
+    writtenReviewCompletedStatus:
+      estimate.writtenReviewCompletedStatus ||
+      row.writtenReviewCompletedStatus ||
+      row.written_review_completed_status ||
+      "",
+    closedAt:
+      estimate.closedAt ||
+      row.closedAt ||
+      row.closed_at ||
+      "",
+    completedAt:
+      estimate.completedAt ||
+      row.completedAt ||
+      row.completed_at ||
+      "",
+    updatedAt:
+      estimate.updatedAt ||
+      row.updatedAt ||
+      row.updated_at ||
+      "",
     Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
 }
@@ -1537,6 +1577,135 @@ Greatest Business Solution LLC`;
     });
   }
 });
+// =============================================================================
+// POST /api/written-review/:leadId/mark-delivered
+// Explicitly records delivery/completion and moves the lead to Closed Leads.
+// =============================================================================
+
+app.post("/api/written-review/:leadId/mark-delivered", async (req, res) => {
+  try {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing lead ID."
+      });
+    }
+
+    const lookup = await findWrittenReviewLeadForDelivery(leadId);
+
+    if (!lookup.ok || !lookup.lead) {
+      return res.status(404).json({
+        ok: false,
+        error: lookup.error || "Lead not found."
+      });
+    }
+
+    const lead = lookup.lead;
+    const requestData = lead.Request || lead.request || {};
+    const worksheetCompleted =
+      Boolean(requestData.clientTaxStrategyWorksheet) &&
+      (
+        requestData.clientTaxStrategyWorksheetStatus === "Completed" ||
+        Boolean(requestData.clientTaxStrategyWorksheetCompletedAt)
+      );
+
+    if (!worksheetCompleted) {
+      return res.status(409).json({
+        ok: false,
+        error: "The Client Tax Strategy Worksheet has not been completed."
+      });
+    }
+
+    const alreadyDelivered =
+      Boolean(lead.writtenReviewDeliveredAt) ||
+      Boolean(lead.writtenReviewCompletedAt) ||
+      Boolean(lead.writtenReview?.deliveredAt) ||
+      Boolean(lead.writtenReview?.completedAt) ||
+      String(lead.status || "").toLowerCase().includes("closed");
+
+    if (alreadyDelivered) {
+      return res.status(200).json({
+        ok: true,
+        alreadyDelivered: true,
+        leadId
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    const nowDisplay = new Date().toLocaleString();
+
+    const updateResult = await updateLeadAfterStripePayment(
+      leadId,
+      function applyWrittenReviewDelivered(record = {}) {
+        const updated = { ...record };
+        const existingReview = updated.writtenReview || {};
+
+        updated.writtenReviewDeliveredAt = nowIso;
+        updated.writtenReviewDeliveryStatus = "Delivered";
+        updated.writtenReviewCompletedAt = nowIso;
+        updated.writtenReviewCompletedStatus = "Completed";
+
+        updated.writtenReview = {
+          ...existingReview,
+          status: "Completed / No action needed",
+          deliveredAt: existingReview.deliveredAt || nowIso,
+          completedAt: existingReview.completedAt || nowIso,
+          deliveryStatus: "Delivered",
+          completedStatus: "Completed",
+          updatedAt: nowIso
+        };
+
+        updated.status = "Closed - Written Review Completed";
+        updated.closedAt = updated.closedAt || nowIso;
+        updated.updatedAt = nowIso;
+
+        const deliveryNote =
+          "[" + nowDisplay + "] Written Review marked delivered and completed.";
+
+        const oldNotes =
+          typeof updated.notes === "string"
+            ? updated.notes.trim()
+            : "";
+
+        updated.notes =
+          oldNotes
+            ? oldNotes + "\n" + deliveryNote
+            : deliveryNote;
+
+        return updated;
+      }
+    );
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error: updateResult.error || "The Written Review could not be marked delivered."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      delivered: true,
+      completed: true,
+      leadId,
+      deliveredAt: nowIso,
+      source: updateResult.source
+    });
+  } catch (err) {
+    console.error(
+      "[written review mark delivered] Error:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "The Written Review could not be marked delivered."
+    });
+  }
+});
+
 // =============================================================================
 // AUTOMATIC CLIENT WORKSHEET INVITATION
 // Payment sends the worksheet first. Final delivery waits for submission.
