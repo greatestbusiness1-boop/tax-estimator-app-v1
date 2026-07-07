@@ -1055,15 +1055,20 @@ function getTaxPrepStateDisplay(lead){
 function matchesTaxPrepFilter(lead){
   const status = String(lead?.status || "").toLowerCase();
   const lane = getTaxPrepLane(lead).toLowerCase();
+  const isCompleted =
+    status.includes("completed") ||
+    status.includes("closed");
 
   if(currentTaxPrepFilter === "new") return status.includes("ready to schedule");
-  if(currentTaxPrepFilter === "simple") return lane.includes("individual form 1040") || lane.includes("simple individual");
-  if(currentTaxPrepFilter === "gig") return lane.includes("gig worker") || lane.includes("self-employed");
-  if(currentTaxPrepFilter === "complex") return lane.includes("investment") || lane.includes("complex");
-  if(currentTaxPrepFilter === "business") return lane.includes("business") || lane.includes("entity");
-  if(currentTaxPrepFilter === "review") return status.includes("needs review") || Boolean(lead?.taxPreparationIntake?.needsProfessionalReview);
-  if(currentTaxPrepFilter === "completed") return status.includes("completed") || status.includes("closed");
-  return true;
+  if(currentTaxPrepFilter === "simple") return !isCompleted && (lane.includes("individual form 1040") || lane.includes("simple individual"));
+  if(currentTaxPrepFilter === "gig") return !isCompleted && (lane.includes("gig worker") || lane.includes("self-employed"));
+  if(currentTaxPrepFilter === "complex") return !isCompleted && (lane.includes("investment") || lane.includes("complex"));
+  if(currentTaxPrepFilter === "business") return !isCompleted && (lane.includes("business") || lane.includes("entity"));
+  if(currentTaxPrepFilter === "review") return !isCompleted && (status.includes("needs review") || Boolean(lead?.taxPreparationIntake?.needsProfessionalReview));
+  if(currentTaxPrepFilter === "completed") return isCompleted;
+
+  // "All Tax Preparation" is the active worklist.
+  return !isCompleted;
 }
 
 function getTaxPrepTaxYear(lead){
@@ -1707,7 +1712,7 @@ function renderLeads(){
                     <button class="taxprep-open-btn" onclick="openTaxPrepLead(${index})">
                       ${String(lead.status || "").toLowerCase().includes("completed") ||
                         String(lead.status || "").toLowerCase().includes("closed")
-                          ? "Open"
+                          ? "View Completed"
                           : "Review Intake"}
                     </button>
                   </td>
