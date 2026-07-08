@@ -76,7 +76,8 @@ async function appendLead(lead) {
       taxData: lead.taxData,
       estimateSummary: lead.estimateSummary,
       taxPreparationIntake: lead.taxPreparationIntake || null,
-      contactRequest: lead.contactRequest || null
+      contactRequest: lead.contactRequest || null,
+      calendarAppointment: lead.calendarAppointment || null
     },
     taxYear: lead.taxData?.taxYear || null,
     filingYear: lead.taxData?.filingYear || null
@@ -2872,6 +2873,291 @@ Greatest Business Solution LLC`,
       ? "Your free estimate was saved and emailed as a PDF."
       : "Your estimate was saved, but the email could not be delivered."
   });
+});
+
+
+// =============================================================================
+// POST /api/calendar-appointment
+// Creates a manual appointment without requiring Calendly.
+// =============================================================================
+
+app.post("/api/calendar-appointment", async (req, res) => {
+  const {
+    name,
+    email,
+    phone,
+    service,
+    startTime,
+    endTime,
+    durationMinutes,
+    meetingType,
+    meetingLink,
+    meetingAddress,
+    notes,
+    allowConflict
+  } = req.body || {};
+
+  const cleanName = String(name || "").trim();
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  const cleanPhone = formatPhoneNumber(phone || "");
+  const cleanService = String(service || "").trim();
+  const cleanMeetingType = String(meetingType || "Phone Call").trim();
+  const cleanMeetingLink = String(meetingLink || "").trim();
+  const cleanMeetingAddress = String(meetingAddress || "").trim();
+  const cleanNotes = String(notes || "").trim();
+  const parsedStart = new Date(startTime);
+  const parsedEnd = new Date(endTime);
+  const allowedMeetingTypes = [
+    "Phone Call",
+    "Google Meet",
+    "In Person",
+    "Other Online Meeting"
+  ];
+
+  const errors = [];
+
+  if (!cleanName) {
+    errors.push("Client name is required.");
+  }
+
+  if (!cleanEmail) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  if (!cleanService) {
+    errors.push("Service is required.");
+  }
+
+  if (!allowedMeetingTypes.includes(cleanMeetingType)) {
+    errors.push("Select a valid meeting type.");
+  }
+
+  if (!startTime || Number.isNaN(parsedStart.getTime())) {
+    errors.push("A valid appointment start date and time is required.");
+  }
+
+  if (!endTime || Number.isNaN(parsedEnd.getTime())) {
+    errors.push("A valid appointment end date and time is required.");
+  }
+
+  if (
+    !Number.isNaN(parsedStart.getTime()) &&
+    !Number.isNaN(parsedEnd.getTime()) &&
+    parsedEnd <= parsedStart
+  ) {
+    errors.push("Appointment end time must be after the start time.");
+  }
+
+  if (cleanMeetingType === "Phone Call") {
+    const phoneDigits = String(phone || "").replace(/\D/g, "");
+    if (phoneDigits.length !== 10) {
+      errors.push("A 10-digit U.S. phone number is required for a phone call.");
+    }
+  }
+
+  if (
+    cleanMeetingType === "Google Meet" ||
+    cleanMeetingType === "Other Online Meeting"
+  ) {
+    try {
+      const url = new URL(cleanMeetingLink);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("Invalid protocol");
+      }
+
+      if (
+        cleanMeetingType === "Google Meet" &&
+        (
+          url.protocol !== "https:" ||
+          url.hostname.toLowerCase() !== "meet.google.com"
+        )
+      ) {
+        errors.push(
+          "Google Meet requires a secure https://meet.google.com/... link."
+        );
+      }
+    } catch {
+      errors.push("Enter a valid online meeting link.");
+    }
+  }
+
+  if (cleanMeetingType === "In Person" && !cleanMeetingAddress) {
+    errors.push("Enter the in-person address or location.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const allCalendarLeads = [];
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*");
+
+    if (error) throw error;
+
+    (data || []).forEach((row) => {
+      const lead = mapRowToLead(row);
+      if (lead?.calendarAppointment) {
+        allCalendarLeads.push(lead);
+      }
+    });
+  } catch (error) {
+    console.error(
+      "[/api/calendar-appointment] Conflict check using Supabase failed:",
+      error.message || error
+    );
+
+    readLeads().forEach((lead) => {
+      if (lead?.calendarAppointment) {
+        allCalendarLeads.push(lead);
+      }
+    });
+  }
+
+  const conflicts = allCalendarLeads
+    .filter((lead) => {
+      const appointment = lead.calendarAppointment || {};
+      const status = String(
+        appointment.status || lead.status || ""
+      ).toLowerCase();
+
+      if (
+        status.includes("completed") ||
+        status.includes("canceled") ||
+        status.includes("cancelled") ||
+        status.includes("no-show") ||
+        status.includes("no show")
+      ) {
+        return false;
+      }
+
+      const existingStart = new Date(appointment.startTime);
+      const existingEnd = new Date(appointment.endTime);
+
+      if (
+        Number.isNaN(existingStart.getTime()) ||
+        Number.isNaN(existingEnd.getTime())
+      ) {
+        return false;
+      }
+
+      return (
+        parsedStart < existingEnd &&
+        parsedEnd > existingStart
+      );
+    })
+    .map((lead) => ({
+      leadId: lead.leadId,
+      clientName:
+        lead.contact?.name ||
+        lead.calendarAppointment?.inviteeName ||
+        "Client",
+      service:
+        lead.calendarAppointment?.eventName ||
+        "Calendar Appointment",
+      startTime: lead.calendarAppointment?.startTime,
+      endTime: lead.calendarAppointment?.endTime
+    }));
+
+  if (conflicts.length > 0 && allowConflict !== true) {
+    return res.status(409).json({
+      ok: false,
+      conflict: true,
+      message: "This appointment overlaps another scheduled appointment.",
+      conflicts
+    });
+  }
+
+  const leadId = `LEAD-${Date.now()}-MANUAL-CAL`;
+  const now = new Date().toISOString();
+
+  let location = {
+    type: cleanMeetingType
+  };
+
+  if (cleanMeetingType === "Phone Call") {
+    location.phone = cleanPhone;
+    location.display = `Phone Call — ${cleanPhone}`;
+  }
+
+  if (
+    cleanMeetingType === "Google Meet" ||
+    cleanMeetingType === "Other Online Meeting"
+  ) {
+    location.join_url = cleanMeetingLink;
+    location.display = cleanMeetingLink;
+  }
+
+  if (cleanMeetingType === "In Person") {
+    location.address = cleanMeetingAddress;
+    location.display = cleanMeetingAddress;
+  }
+
+  const lead = {
+    leadId,
+    timestamp: now,
+    priority: "medium",
+    status: "Calendar - Scheduled",
+    notes: cleanNotes,
+    contact: {
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone || "Not provided"
+    },
+    taxData: null,
+    estimateSummary: {},
+    calendarAppointment: {
+      provider: "Manual",
+      source: "Manual",
+      webhookEvent: "manual.created",
+      status: "Scheduled",
+      inviteeName: cleanName,
+      inviteeEmail: cleanEmail,
+      eventName: cleanService,
+      startTime: parsedStart.toISOString(),
+      endTime: parsedEnd.toISOString(),
+      durationMinutes:
+        Number(durationMinutes) ||
+        Math.round((parsedEnd - parsedStart) / 60000),
+      meetingType: cleanMeetingType,
+      location,
+      notes: cleanNotes,
+      timeZone: "America/Phoenix",
+      receivedAt: now,
+      createdAt: now
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(savedLead.leadId, savedLead);
+
+    return res.status(201).json({
+      ok: true,
+      action: "created",
+      leadId: savedLead.leadId,
+      lead: savedLead,
+      conflictOverrideUsed: conflicts.length > 0
+    });
+  } catch (error) {
+    console.error(
+      "[/api/calendar-appointment] Save failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: ["Could not save the appointment. Please try again."]
+    });
+  }
 });
 
 // =============================================================================

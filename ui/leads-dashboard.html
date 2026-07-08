@@ -754,22 +754,50 @@ function isClosedCalendarLead(lead){
 }
 
 function formatCalendarLocation(lead){
-  const location = lead?.calendarAppointment?.location;
+  const appointment = lead?.calendarAppointment || {};
+  const location = appointment.location;
+  const meetingType =
+    appointment.meetingType ||
+    location?.type ||
+    "";
 
   if(!location){
-    return "Not provided";
+    return meetingType || "Not provided";
   }
 
   if(typeof location === "string"){
     return location;
   }
 
+  if(meetingType === "Phone Call"){
+    return location.display ||
+      `Phone Call — ${formatUSPhone(
+        location.phone || lead?.contact?.phone || ""
+      )}`;
+  }
+
   return (
+    location.display ||
     location.join_url ||
+    location.address ||
     location.location ||
-    location.type ||
+    meetingType ||
     "Online"
   );
+}
+
+function formatUSPhone(value){
+  const digits = String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 10);
+
+  if(!digits) return "";
+  if(digits.length < 4) return `(${digits}`;
+  if(digits.length < 7){
+    return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+  }
+
+  return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
 }
 
 function getAllLeadTypeKey(lead){
@@ -1835,7 +1863,11 @@ function renderLeads(){
     updateAllSummary(visible.length);
   }
 
-  if(!visible.length){
+  if(
+    !visible.length &&
+    currentView !== "calendar" &&
+    currentView !== "calendarclosed"
+  ){
     list.innerHTML="<div class='empty'>No leads found</div>";
     return;
   }
@@ -1844,6 +1876,17 @@ function renderLeads(){
     const closedView = currentView === "calendarclosed";
 
     list.innerHTML = `
+      ${closedView ? "" : `
+        <div style="display:flex;justify-content:flex-end;margin:0 0 12px 0;">
+          <button
+            class="contact-replied-btn"
+            style="background:#2f855a;padding:10px 16px;"
+            onclick="openManualAppointmentForm()"
+          >
+            Add Appointment
+          </button>
+        </div>
+      `}
       <div class="taxprep-table-wrap">
         <table class="taxprep-table">
           <thead>
@@ -1863,7 +1906,12 @@ function renderLeads(){
                 <tr>
                   <td>
                     <strong>${lead.contact?.name || appointment.inviteeName || "No Name"}</strong><br>
-                    ${lead.contact?.email || appointment.inviteeEmail || ""}
+                    ${lead.contact?.email || appointment.inviteeEmail || ""}<br>
+                    ${formatUSPhone(
+                      lead.contact?.phone ||
+                      appointment.phone ||
+                      ""
+                    ) || ""}
                   </td>
                   <td>${getCalendarService(lead)}</td>
                   <td>${formatLeadDate(getCalendarStart(lead)) || "Date unavailable"}</td>
@@ -2240,6 +2288,655 @@ function renderLeads(){
       </div>
     `;
   }).join("");
+}
+
+
+function ensureManualAppointmentModal(){
+  let modal = document.getElementById("manualAppointmentModal");
+  if(modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "manualAppointmentModal";
+  modal.style.cssText = [
+    "display:none",
+    "position:fixed",
+    "inset:0",
+    "background:rgba(15,23,42,.58)",
+    "z-index:9999",
+    "align-items:center",
+    "justify-content:center",
+    "padding:18px"
+  ].join(";");
+
+  modal.innerHTML = `
+    <div style="
+      width:min(820px,97vw);
+      max-height:94vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 28px 80px rgba(15,23,42,.32);
+      padding:24px;
+    ">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px;">
+        <div>
+          <h2 style="margin:0;color:#12345b;">Add Appointment</h2>
+          <div style="margin-top:5px;color:#52627a;">
+            Schedule the client once. Calendar Scheduled and Office Work Queue will use this same record.
+          </div>
+        </div>
+        <button type="button" onclick="closeManualAppointmentForm()"
+          style="border:0;background:#e5e7eb;border-radius:9px;padding:9px 13px;cursor:pointer;">
+          Close
+        </button>
+      </div>
+
+      <form id="manualAppointmentForm">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px;margin-bottom:15px;">
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Existing client
+            <select id="manualApptClientLookup"
+              style="padding:11px;border:1px solid #93c5fd;border-radius:8px;background:#fff;">
+              <option value="">Clear selection / enter a new client</option>
+            </select>
+          </label>
+          <div style="font-size:12px;color:#52627a;margin-top:5px;">
+            Select a client to autofill their information. Choose “Clear selection” to remove it.
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Client name
+            <input id="manualApptName" required style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Email
+            <input id="manualApptEmail" type="email" required style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Phone
+            <input id="manualApptPhone" inputmode="tel" maxlength="14"
+              placeholder="(623) 570-3934"
+              style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Service
+            <select id="manualApptService" required style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              <option value="">Select service</option>
+              <option>Tax Estimate Review</option>
+              <option>Tax Preparation Consultation</option>
+              <option>Written Red Flag Review Consultation</option>
+              <option>IRS Transcript Consultation</option>
+              <option>Bookkeeping Consultation</option>
+              <option>General Tax Consultation</option>
+            </select>
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Start date and time
+            <input id="manualApptStart" type="datetime-local" required
+              style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+            <span style="font-size:12px;color:#52627a;">Arizona Time</span>
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Duration
+            <select id="manualApptDuration" style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">60 minutes</option>
+            </select>
+            <span id="manualApptEndPreview" style="font-size:12px;color:#52627a;"></span>
+          </label>
+
+          <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+            Meeting type
+            <select id="manualApptMeetingType" style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              <option>Phone Call</option>
+              <option>Google Meet</option>
+              <option>In Person</option>
+              <option>Other Online Meeting</option>
+            </select>
+          </label>
+
+          <div id="manualApptMeetingDetailWrap"></div>
+        </div>
+
+        <label style="display:flex;flex-direction:column;gap:6px;font-weight:700;margin-top:14px;">
+          Appointment notes
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="manualApptMicButton" type="button"
+              onclick="toggleManualAppointmentDictation()"
+              style="border:0;background:#12345b;color:white;border-radius:8px;padding:9px 13px;cursor:pointer;">
+              🎙 Start Dictation
+            </button>
+            <span id="manualApptMicStatus" style="font-size:13px;color:#52627a;">
+              Type or dictate your notes.
+            </span>
+          </div>
+          <textarea id="manualApptNotes" rows="5"
+            placeholder="Preparation notes, client concerns, documents to discuss, or follow-up items"
+            style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;resize:vertical;"></textarea>
+        </label>
+
+        <div id="manualApptConflict" style="display:none;margin-top:12px;padding:12px;border-radius:9px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;"></div>
+        <div id="manualApptError" style="display:none;margin-top:12px;padding:12px;border-radius:9px;background:#fee2e2;color:#991b1b;"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+          <button type="button" onclick="closeManualAppointmentForm()"
+            style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:10px 14px;cursor:pointer;">
+            Cancel
+          </button>
+          <button id="manualApptSaveButton" type="submit"
+            class="contact-replied-btn"
+            style="background:#2f855a;padding:10px 16px;">
+            Save Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const form = document.getElementById("manualAppointmentForm");
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    saveManualAppointment(false);
+  });
+
+  const phone = document.getElementById("manualApptPhone");
+  phone.addEventListener("input", () => {
+    phone.value = formatUSPhone(phone.value);
+    updateManualMeetingDetails();
+  });
+
+  document
+    .getElementById("manualApptMeetingType")
+    .addEventListener("change", () => {
+      updateManualMeetingDetails();
+
+      const saveButton =
+        document.getElementById("manualApptSaveButton");
+
+      if(saveButton){
+        saveButton.disabled = false;
+      }
+    });
+
+  document
+    .getElementById("manualApptStart")
+    .addEventListener("change", updateManualEndPreview);
+
+  document
+    .getElementById("manualApptDuration")
+    .addEventListener("change", updateManualEndPreview);
+
+  document
+    .getElementById("manualApptClientLookup")
+    .addEventListener("change", fillManualAppointmentClient);
+
+  return modal;
+}
+
+function populateManualAppointmentClients(){
+  const select = document.getElementById("manualApptClientLookup");
+  if(!select) return;
+
+  const unique = new Map();
+
+  (allLeads || []).forEach(lead => {
+    const email = String(lead?.contact?.email || "").trim().toLowerCase();
+    const name = String(lead?.contact?.name || "").trim();
+    if(!email || !name) return;
+
+    if(!unique.has(email)){
+      unique.set(email, {
+        name,
+        email,
+        phone: formatUSPhone(lead?.contact?.phone || "")
+      });
+    }
+  });
+
+  window.manualAppointmentClients = Array.from(unique.values())
+    .sort((a,b) => a.name.localeCompare(b.name));
+
+  select.innerHTML =
+    '<option value="">Clear selection / enter a new client</option>' +
+    window.manualAppointmentClients
+      .map((client, index) => `
+        <option value="${index}">
+          ${client.name} — ${client.email}${client.phone ? ` — ${client.phone}` : ""}
+        </option>
+      `)
+      .join("");
+
+  select.value = "";
+}
+
+function fillManualAppointmentClient(){
+  const select =
+    document.getElementById("manualApptClientLookup");
+
+  const selectedValue = String(select?.value || "").trim();
+
+  if(selectedValue === ""){
+    document.getElementById("manualApptName").value = "";
+    document.getElementById("manualApptEmail").value = "";
+    document.getElementById("manualApptPhone").value = "";
+    updateManualMeetingDetails();
+    return;
+  }
+
+  const index = Number(selectedValue);
+  const client = (window.manualAppointmentClients || [])[index];
+
+  if(!client) return;
+
+  document.getElementById("manualApptName").value = client.name;
+  document.getElementById("manualApptEmail").value = client.email;
+  document.getElementById("manualApptPhone").value = client.phone;
+  updateManualMeetingDetails();
+}
+
+function updateManualMeetingDetails(){
+  const type = document.getElementById("manualApptMeetingType")?.value;
+  const wrap = document.getElementById("manualApptMeetingDetailWrap");
+  if(!wrap) return;
+
+  if(type === "Phone Call"){
+    const phone = formatUSPhone(
+      document.getElementById("manualApptPhone")?.value || ""
+    );
+
+    wrap.innerHTML = `
+      <div style="padding:11px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:8px;">
+        <strong>Phone Call</strong><br>
+        <span style="font-size:13px;color:#52627a;">
+          ${phone || "Enter the client phone number above."}
+        </span>
+      </div>
+    `;
+    return;
+  }
+
+  if(type === "In Person"){
+    wrap.innerHTML = `
+      <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+        Address or location
+        <input id="manualApptMeetingAddress" required
+          placeholder="Street address, office, or meeting location"
+          style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+      </label>
+    `;
+    return;
+  }
+
+  const google = type === "Google Meet";
+  wrap.innerHTML = `
+    <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
+      ${google ? "Google Meet link" : "Online meeting link"}
+      <input id="manualApptMeetingLink" type="url" required
+        placeholder="${google ? "https://meet.google.com/..." : "https://..."}"
+        style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+      <span
+        id="manualApptMeetingLinkStatus"
+        style="display:none;font-size:12px;font-weight:700;"
+      ></span>
+    </label>
+  `;
+
+  const linkInput =
+    document.getElementById("manualApptMeetingLink");
+
+  if(linkInput){
+    linkInput.addEventListener("input", validateManualMeetingLink);
+    linkInput.addEventListener("blur", validateManualMeetingLink);
+  }
+}
+
+function validateManualMeetingLink(){
+  const meetingType =
+    document.getElementById("manualApptMeetingType")?.value || "";
+
+  const input =
+    document.getElementById("manualApptMeetingLink");
+
+  const status =
+    document.getElementById("manualApptMeetingLinkStatus");
+
+  const saveButton =
+    document.getElementById("manualApptSaveButton");
+
+  if(!input || !status) return true;
+
+  const value = String(input.value || "").trim();
+
+  if(!value){
+    status.style.display = "none";
+    input.style.borderColor = "#cbd5e1";
+
+    if(saveButton){
+      saveButton.disabled = false;
+    }
+
+    return false;
+  }
+
+  let valid = false;
+  let message = "";
+
+  try{
+    const url = new URL(value);
+
+    if(meetingType === "Google Meet"){
+      valid =
+        url.protocol === "https:" &&
+        url.hostname.toLowerCase() === "meet.google.com";
+
+      message = valid
+        ? "Valid Google Meet link."
+        : "Use a real link beginning with https://meet.google.com/.";
+    }else{
+      valid =
+        url.protocol === "http:" ||
+        url.protocol === "https:";
+
+      message = valid
+        ? "Valid online meeting link."
+        : "Enter a complete http:// or https:// link.";
+    }
+  }catch{
+    valid = false;
+    message =
+      meetingType === "Google Meet"
+        ? "Use a real link beginning with https://meet.google.com/."
+        : "Enter a complete http:// or https:// link.";
+  }
+
+  status.textContent = message;
+  status.style.display = "block";
+  status.style.color = valid ? "#166534" : "#b91c1c";
+  input.style.borderColor = valid ? "#16a34a" : "#dc2626";
+
+  if(saveButton){
+    saveButton.disabled = !valid;
+  }
+
+  return valid;
+}
+
+function updateManualEndPreview(){
+  const startValue =
+    document.getElementById("manualApptStart")?.value;
+
+  const duration = Number(
+    document.getElementById("manualApptDuration")?.value || 15
+  );
+
+  const preview =
+    document.getElementById("manualApptEndPreview");
+
+  if(!startValue || !preview) return;
+
+  const start = new Date(startValue);
+  const end = new Date(start.getTime() + duration * 60000);
+
+  preview.textContent =
+    `Ends ${end.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    })} Arizona Time`;
+}
+
+function openManualAppointmentForm(){
+  const modal = ensureManualAppointmentModal();
+  const form = document.getElementById("manualAppointmentForm");
+  const errorBox = document.getElementById("manualApptError");
+  const conflictBox = document.getElementById("manualApptConflict");
+
+  form.reset();
+  errorBox.style.display = "none";
+  conflictBox.style.display = "none";
+  populateManualAppointmentClients();
+
+  const start = new Date();
+  start.setMinutes(Math.ceil(start.getMinutes() / 15) * 15, 0, 0);
+  start.setHours(start.getHours() + 1);
+
+  const offset = start.getTimezoneOffset();
+  document.getElementById("manualApptStart").value =
+    new Date(start.getTime() - offset * 60000)
+      .toISOString()
+      .slice(0,16);
+
+  document.getElementById("manualApptDuration").value = "15";
+  document.getElementById("manualApptMeetingType").value = "Phone Call";
+
+  updateManualMeetingDetails();
+  updateManualEndPreview();
+  modal.style.display = "flex";
+}
+
+function closeManualAppointmentForm(){
+  stopManualAppointmentDictation();
+
+  const modal = document.getElementById("manualAppointmentModal");
+  if(modal) modal.style.display = "none";
+}
+
+async function saveManualAppointment(allowConflict){
+  const button = document.getElementById("manualApptSaveButton");
+  const errorBox = document.getElementById("manualApptError");
+  const conflictBox = document.getElementById("manualApptConflict");
+  const originalText = button.textContent;
+
+  errorBox.style.display = "none";
+  conflictBox.style.display = "none";
+  button.disabled = true;
+  button.textContent = "Checking Schedule...";
+
+  const startValue =
+    document.getElementById("manualApptStart").value;
+
+  const durationMinutes = Number(
+    document.getElementById("manualApptDuration").value || 15
+  );
+
+  const start = new Date(startValue);
+  const end = new Date(start.getTime() + durationMinutes * 60000);
+  const meetingType =
+    document.getElementById("manualApptMeetingType").value;
+
+  const meetingLink =
+    document.getElementById("manualApptMeetingLink")?.value.trim() || "";
+
+  if(
+    meetingType === "Google Meet" ||
+    meetingType === "Other Online Meeting"
+  ){
+    const validLink = validateManualMeetingLink();
+
+    if(!validLink){
+      errorBox.textContent =
+        meetingType === "Google Meet"
+          ? "Google Meet requires a real https://meet.google.com/... link."
+          : "Enter a valid online meeting link.";
+      errorBox.style.display = "block";
+      button.disabled = false;
+      button.textContent = originalText;
+      return;
+    }
+  }
+
+  const payload = {
+    name: document.getElementById("manualApptName").value.trim(),
+    email: document.getElementById("manualApptEmail").value.trim(),
+    phone: formatUSPhone(
+      document.getElementById("manualApptPhone").value
+    ),
+    service: document.getElementById("manualApptService").value,
+    startTime: start.toISOString(),
+    endTime: end.toISOString(),
+    durationMinutes,
+    meetingType,
+    meetingLink,
+    meetingAddress:
+      document.getElementById("manualApptMeetingAddress")?.value.trim() || "",
+    notes: document.getElementById("manualApptNotes").value.trim(),
+    allowConflict: Boolean(allowConflict)
+  };
+
+  try{
+    const response = await fetch("/api/calendar-appointment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if(!contentType.includes("application/json")){
+      throw new Error(
+        "The appointment server route is not loaded. Restart Node and try again."
+      );
+    }
+
+    const data = await response.json();
+
+    if(response.status === 409 && data.conflict){
+      const details = (data.conflicts || [])
+        .map(item =>
+          `${item.clientName} — ${new Date(item.startTime).toLocaleString()}`
+        )
+        .join("<br>");
+
+      conflictBox.innerHTML = `
+        <strong>Schedule conflict found.</strong><br>
+        ${details || data.message}<br><br>
+        <button type="button"
+          onclick="saveManualAppointment(true)"
+          style="border:0;background:#b45309;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;">
+          Save Anyway
+        </button>
+      `;
+      conflictBox.style.display = "block";
+      return;
+    }
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        Array.isArray(data.errors)
+          ? data.errors.join(" ")
+          : data.error || "Could not save appointment."
+      );
+    }
+
+    closeManualAppointmentForm();
+    await loadLeads();
+
+    alert(
+      `${data.lead?.contact?.name || "Client"} was added to Calendar Scheduled.`
+    );
+  }catch(error){
+    console.error(error);
+    errorBox.textContent =
+      error.message || "Could not save appointment.";
+    errorBox.style.display = "block";
+  }finally{
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
+function toggleManualAppointmentDictation(){
+  if(window.manualAppointmentRecognition){
+    stopManualAppointmentDictation();
+    return;
+  }
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  const status =
+    document.getElementById("manualApptMicStatus");
+
+  if(!SpeechRecognition){
+    status.textContent =
+      "Dictation is not supported in this browser. Typing remains available.";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  const notes = document.getElementById("manualApptNotes");
+  const original = notes.value.trim();
+  let finalTranscript = "";
+
+  recognition.onstart = () => {
+    window.manualAppointmentRecognition = recognition;
+    document.getElementById("manualApptMicButton").textContent =
+      "■ Stop Dictation";
+    status.textContent = "Listening… speak naturally.";
+  };
+
+  recognition.onresult = event => {
+    let interim = "";
+
+    for(let i = event.resultIndex; i < event.results.length; i++){
+      const transcript = event.results[i][0].transcript;
+
+      if(event.results[i].isFinal){
+        finalTranscript += transcript.trim() + " ";
+      }else{
+        interim += transcript;
+      }
+    }
+
+    notes.value = [
+      original,
+      finalTranscript.trim(),
+      interim.trim()
+    ].filter(Boolean).join(original ? " " : "");
+  };
+
+  recognition.onerror = event => {
+    status.textContent =
+      event.error === "not-allowed"
+        ? "Microphone permission was denied. Typing remains available."
+        : "Dictation stopped. You can continue typing.";
+  };
+
+  recognition.onend = () => {
+    window.manualAppointmentRecognition = null;
+    document.getElementById("manualApptMicButton").textContent =
+      "🎙 Start Dictation";
+    if(!status.textContent.includes("denied")){
+      status.textContent = "Dictation stopped. Edit the notes as needed.";
+    }
+  };
+
+  recognition.start();
+}
+
+function stopManualAppointmentDictation(){
+  if(window.manualAppointmentRecognition){
+    window.manualAppointmentRecognition.stop();
+    window.manualAppointmentRecognition = null;
+  }
 }
 
 function openCalendarLead(index, closedView){
