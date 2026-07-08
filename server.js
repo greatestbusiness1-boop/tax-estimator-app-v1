@@ -3445,6 +3445,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     status,
     notes,
     Request,
+    calendarAppointment,
     completedAt,
     closedAt
   } = req.body || {};
@@ -3505,6 +3506,18 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.Request = {
         ...(updatedEstimate.Request || {}),
         ...Request,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      calendarAppointment &&
+      typeof calendarAppointment === "object" &&
+      !Array.isArray(calendarAppointment)
+    ) {
+      updatedEstimate.calendarAppointment = {
+        ...(updatedEstimate.calendarAppointment || {}),
+        ...calendarAppointment,
         updatedAt: new Date().toISOString()
       };
     }
@@ -3645,6 +3658,18 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof closedAt === "string" && closedAt.trim()) {
         localLead.closedAt = closedAt.trim();
+      }
+
+      if (
+        calendarAppointment &&
+        typeof calendarAppointment === "object" &&
+        !Array.isArray(calendarAppointment)
+      ) {
+        localLead.calendarAppointment = {
+          ...(localLead.calendarAppointment || {}),
+          ...calendarAppointment,
+          updatedAt: new Date().toISOString()
+        };
       }
 
       if (

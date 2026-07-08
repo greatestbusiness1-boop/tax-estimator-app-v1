@@ -352,6 +352,11 @@
     <button class="sidebar-btn" data-view="closed">Closed Leads</button>
 
     <div class="sidebar-divider"></div>
+    <div class="sidebar-group">Calendar</div>
+    <button class="sidebar-btn" data-view="calendar">Calendar Scheduled</button>
+    <button class="sidebar-btn" data-view="calendarclosed">Closed Calendar</button>
+
+    <div class="sidebar-divider"></div>
     <div class="sidebar-group">Transcripts</div>
     <button class="sidebar-btn" onclick="window.location.href='/transcript-requests'">New Transcript Requests</button>
   </aside>
@@ -702,6 +707,68 @@ function getLeadEnteredAt(lead){
     lead.createdAt ||
     lead.created_at ||
     ""
+  );
+}
+
+function isCalendarLead(lead){
+  return Boolean(lead?.calendarAppointment);
+}
+
+function getCalendarStatus(lead){
+  const leadStatus = String(lead?.status || "").trim();
+
+  if(leadStatus.toLowerCase().startsWith("calendar -")){
+    return leadStatus.replace(/^calendar\s*-\s*/i, "").trim();
+  }
+
+  return String(
+    lead?.calendarAppointment?.status ||
+    leadStatus ||
+    ""
+  ).trim();
+}
+
+function getCalendarService(lead){
+  return String(
+    lead?.calendarAppointment?.eventName ||
+    "Calendar Appointment"
+  ).trim();
+}
+
+function getCalendarStart(lead){
+  return String(
+    lead?.calendarAppointment?.startTime ||
+    ""
+  ).trim();
+}
+
+function isClosedCalendarLead(lead){
+  const status = getCalendarStatus(lead).toLowerCase();
+  return (
+    status.includes("completed") ||
+    status.includes("no-show") ||
+    status.includes("no show") ||
+    status.includes("canceled") ||
+    status.includes("cancelled")
+  );
+}
+
+function formatCalendarLocation(lead){
+  const location = lead?.calendarAppointment?.location;
+
+  if(!location){
+    return "Not provided";
+  }
+
+  if(typeof location === "string"){
+    return location;
+  }
+
+  return (
+    location.join_url ||
+    location.location ||
+    location.type ||
+    "Online"
   );
 }
 
@@ -1581,6 +1648,36 @@ function getVisibleLeads(){
     });
   }
 
+  if(currentView==="calendar"){
+    return allLeads
+      .filter(isCalendarLead)
+      .filter(lead => !isClosedCalendarLead(lead))
+      .sort((a,b) =>
+        new Date(getCalendarStart(a) || 0) -
+        new Date(getCalendarStart(b) || 0)
+      );
+  }
+
+  if(currentView==="calendarclosed"){
+    return allLeads
+      .filter(isCalendarLead)
+      .filter(isClosedCalendarLead)
+      .sort((a,b) =>
+        new Date(
+          b?.calendarAppointment?.completedAt ||
+          b?.calendarAppointment?.canceledAt ||
+          getCalendarStart(b) ||
+          0
+        ) -
+        new Date(
+          a?.calendarAppointment?.completedAt ||
+          a?.calendarAppointment?.canceledAt ||
+          getCalendarStart(a) ||
+          0
+        )
+      );
+  }
+
   if(currentView==="closed"){
     return allLeads
       .filter(l => {
@@ -1740,6 +1837,75 @@ function renderLeads(){
 
   if(!visible.length){
     list.innerHTML="<div class='empty'>No leads found</div>";
+    return;
+  }
+
+  if(currentView === "calendar" || currentView === "calendarclosed"){
+    const closedView = currentView === "calendarclosed";
+
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Service</th>
+              <th>Appointment</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const appointment = lead.calendarAppointment || {};
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || appointment.inviteeName || "No Name"}</strong><br>
+                    ${lead.contact?.email || appointment.inviteeEmail || ""}
+                  </td>
+                  <td>${getCalendarService(lead)}</td>
+                  <td>${formatLeadDate(getCalendarStart(lead)) || "Date unavailable"}</td>
+                  <td>${formatCalendarLocation(lead)}</td>
+                  <td><span class="status-pill">${getCalendarStatus(lead) || "Scheduled"}</span></td>
+                  <td>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                      <button
+                        class="taxprep-open-btn"
+                        onclick="openCalendarLead(${index}, ${closedView})"
+                      >
+                        ${closedView ? "View Closed" : "Open"}
+                      </button>
+                      ${closedView ? "" : `
+                        <button
+                          class="contact-replied-btn"
+                          style="background:#2f855a;"
+                          onclick="markCalendarOutcome(${index}, 'Completed', this)"
+                        >
+                          Mark Completed
+                        </button>
+                        <button
+                          class="contact-replied-btn"
+                          style="background:#b45309;"
+                          onclick="markCalendarOutcome(${index}, 'No-Show', this)"
+                        >
+                          Mark No-Show
+                        </button>
+                      `}
+                    </div>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    if(closedView){
+      window.visibleClosedCalendarLeads = visible;
+    }else{
+      window.visibleCalendarLeads = visible;
+    }
     return;
   }
 
@@ -2076,6 +2242,105 @@ function renderLeads(){
   }).join("");
 }
 
+function openCalendarLead(index, closedView){
+  const source = closedView
+    ? (window.visibleClosedCalendarLeads || [])
+    : (window.visibleCalendarLeads || []);
+
+  const lead = source[index];
+
+  if(!lead){
+    alert("Calendar appointment could not be identified.");
+    return;
+  }
+
+  openPanel(lead);
+}
+
+async function markCalendarOutcome(index, outcome, button){
+  const lead = (window.visibleCalendarLeads || [])[index];
+
+  if(!lead){
+    alert("Calendar appointment could not be identified.");
+    return;
+  }
+
+  const clientName = String(
+    lead?.contact?.name ||
+    lead?.calendarAppointment?.inviteeName ||
+    "this client"
+  ).trim();
+
+  const serviceName = getCalendarService(lead);
+  const confirmed = window.confirm(
+    `Mark ${clientName}'s ${serviceName} as ${outcome}?`
+  );
+
+  if(!confirmed) return;
+
+  const originalText = button?.textContent || "";
+  if(button){
+    button.disabled = true;
+    button.textContent = "Updating...";
+  }
+
+  const now = new Date().toISOString();
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(lead.leadId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: `Calendar - ${outcome}`,
+          calendarAppointment: {
+            status: outcome,
+            completedAt: outcome === "Completed" ? now : "",
+            noShowAt: outcome === "No-Show" ? now : ""
+          },
+          completedAt: now,
+          closedAt: now
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || "Calendar update failed.");
+    }
+
+    lead.status = `Calendar - ${outcome}`;
+    lead.completedAt = now;
+    lead.closedAt = now;
+    lead.calendarAppointment = {
+      ...(lead.calendarAppointment || {}),
+      status: outcome,
+      completedAt: outcome === "Completed" ? now : "",
+      noShowAt: outcome === "No-Show" ? now : ""
+    };
+
+    clearDetailPanel();
+    renderLeads();
+    await loadLeads();
+
+    alert(
+      `${clientName}'s ${serviceName} was marked ${outcome} and moved to Closed Calendar.`
+    );
+  }catch(error){
+    console.error(error);
+    alert(error.message || "Could not update the calendar appointment.");
+
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
 function openAllLead(index){
   const lead = (window.visibleAllLeads || [])[index];
 
@@ -2375,6 +2640,8 @@ document.addEventListener("DOMContentLoaded", () => {
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
         websitecontact: "Website Contact Requests",
+        calendar: "Calendar Scheduled",
+        calendarclosed: "Closed Calendar",
         closed: "Closed Leads"
       };
 
