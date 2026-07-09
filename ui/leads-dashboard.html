@@ -211,6 +211,133 @@
       letter-spacing: .03em;
     }
 
+    .office-command-table-wrap {
+      overflow-x: hidden;
+    }
+
+    .office-command-table {
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .office-command-table th,
+    .office-command-table td {
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    .office-command-table th:nth-child(1),
+    .office-command-table td:nth-child(1) {
+      width: 11%;
+    }
+
+    .office-command-table th:nth-child(2),
+    .office-command-table td:nth-child(2) {
+      width: 23%;
+    }
+
+    .office-command-table th:nth-child(3),
+    .office-command-table td:nth-child(3) {
+      width: 36%;
+    }
+
+    .office-command-table th:nth-child(4),
+    .office-command-table td:nth-child(4) {
+      width: 21%;
+    }
+
+    .office-command-table th:nth-child(5),
+    .office-command-table td:nth-child(5) {
+      width: 9%;
+      text-align: center;
+    }
+
+    .office-command-client {
+      line-height: 1.35;
+    }
+
+    .office-command-client strong {
+      display: block;
+      color: #0f2f59;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .office-command-client-detail {
+      display: block;
+      color: #334155;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .office-command-service {
+      line-height: 1.35;
+    }
+
+    .office-command-service-label {
+      display: block;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .office-command-step {
+      display: block;
+      color: #17324d;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .office-command-next-label {
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-top: 3px;
+    }
+
+    .office-command-status {
+      display: block;
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .office-command-table .office-reason-line {
+      max-width: none;
+      margin-top: 5px;
+      line-height: 1.35;
+    }
+
+    .office-command-table .office-timeline {
+      min-width: 0;
+      line-height: 1.4;
+    }
+
+    .office-command-table .taxprep-open-btn {
+      width: 100%;
+      max-width: 92px;
+      white-space: normal;
+      line-height: 1.15;
+      padding: 8px 7px;
+    }
+
+    @media (max-width: 980px) {
+      .office-command-table-wrap {
+        overflow-x: auto;
+      }
+
+      .office-command-table {
+        min-width: 820px;
+      }
+    }
+
     .taxprep-open-btn {
       border: 0;
       border-radius: 6px;
@@ -336,6 +463,322 @@
       cursor: pointer;
     }
 
+
+    .office-command-center {
+      display: block;
+      margin: 18px 0 14px;
+    }
+
+    .office-command-hero {
+      background: linear-gradient(135deg, #0f2f59, #173b70);
+      color: #ffffff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 14px 34px rgba(15,47,89,.18);
+      margin-bottom: 12px;
+    }
+
+    .office-command-hero h2 {
+      margin: 0 0 5px;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+
+    .office-command-hero p {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 14px;
+    }
+
+    .office-command-stats {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .office-command-stat {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .office-command-stat strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .office-command-stat span {
+      display: block;
+      font-size: 12px;
+      color: #dbeafe;
+      margin-top: 5px;
+    }
+
+    .office-conversion-rate-card {
+      grid-column: auto;
+      max-width: none;
+      margin: 0;
+      text-align: left;
+      background: rgba(255,255,255,.12);
+    }
+
+    .office-conversion-rate-card strong {
+      font-size: 22px;
+    }
+
+    .office-command-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin: 10px 0 12px;
+      scrollbar-width: thin;
+    }
+
+    .office-command-tab {
+      border: 1px solid #b9c8d9;
+      background: #ffffff;
+      color: #17324d;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      flex: 0 0 auto;
+      font-size: 13px;
+    }
+
+    .office-command-tab.active {
+      background: #17324d;
+      color: #ffffff;
+      border-color: #17324d;
+    }
+
+    .office-priority-pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .office-priority-critical {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .office-priority-high {
+      background: #ffedd5;
+      color: #9a3412;
+    }
+
+    .office-priority-normal {
+      background: #dbeafe;
+      color: #1e3a8a;
+    }
+
+    .office-priority-waiting {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .office-next-action {
+      font-weight: 900;
+      color: #0f2f59;
+    }
+
+    .office-current-step {
+      color: #475569;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .office-reason-line {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.25;
+      max-width: 240px;
+    }
+
+    .office-reason-line strong {
+      color: #0f2f59;
+    }
+
+    .office-status-note {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .office-due-today {
+      font-weight: 900;
+      color: #166534;
+    }
+
+    .office-due-warning {
+      font-weight: 900;
+      color: #9a3412;
+    }
+
+    .office-due-overdue {
+      font-weight: 900;
+      color: #991b1b;
+    }
+
+    .office-timeline {
+      min-width: 178px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #475569;
+    }
+
+    .office-timeline-row {
+      margin-bottom: 2px;
+    }
+
+    .office-timeline-row strong {
+      color: #17324d;
+    }
+
+    .office-timeline-due {
+      color: #b45309;
+      font-weight: 800;
+    }
+
+    .office-timeline-overdue {
+      color: #b91c1c;
+      font-weight: 900;
+    }
+
+    .opportunity-timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .opportunity-timeline-item {
+      background: #ffffff;
+      border: 1px solid #dbe4f0;
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .opportunity-timeline-item span {
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .opportunity-timeline-item strong {
+      display: block;
+      color: #17324d;
+      margin-top: 3px;
+    }
+
+    .opportunity-history-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    .opportunity-history-list li {
+      margin-bottom: 7px;
+      color: #334155;
+    }
+
+    .opportunity-history-time {
+      display: block;
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 1px;
+    }
+
+    .office-hot-alert {
+      display: none;
+      margin-top: 12px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 800;
+    }
+
+    .opportunity-action-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .opportunity-action-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+      text-align: left;
+      background: #28588c;
+      color: #ffffff;
+    }
+
+    .opportunity-action-btn.secondary {
+      background: #17324d;
+    }
+
+    .opportunity-action-btn.warning {
+      background: #b45309;
+    }
+
+    .opportunity-action-btn.danger {
+      background: #991b1b;
+    }
+
+    .opportunity-detail-card {
+      background: #f8fafc;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    .office-empty {
+      background: #ffffff;
+      border: 1px solid #dbe4f0;
+      border-radius: 14px;
+      padding: 18px;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1250px) {
+      .office-command-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 920px) {
+      .office-command-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .office-command-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
   </style>
 </head>
 
@@ -362,8 +805,56 @@
   </aside>
 
   <main class="main">
-    <h1 id="viewTitle">Office Work Queue</h1>
+    <h1 id="viewTitle">Lead Conversion Command Center</h1>
     <div id="leadCount"> </div>
+
+    <div id="officeCommandCenter" class="office-command-center">
+      <div class="office-command-hero">
+        <h2>Lead Conversion Command Center</h2>
+        <p>Track the path from free estimate to paid work, tax prep, transcript help, and scheduled consultations.</p>
+        <div class="office-command-stats">
+          <div class="office-command-stat">
+            <strong id="officeNewTodayCount">0</strong>
+            <span>New Leads Today</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officeFreeEstimateCount">0</strong>
+            <span>Free Estimate Leads</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officePaidReviewCount">0</strong>
+            <span>Paid Written Reviews</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officeTaxPrepCount">0</strong>
+            <span>Tax Prep Requests</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officeTranscriptCount">0</strong>
+            <span>Transcript Requests</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officeScheduledConsultCount">0</strong>
+            <span>Scheduled Consults</span>
+          </div>
+          <div class="office-command-stat office-conversion-rate-card">
+            <strong id="officeConversionRate">0%</strong>
+            <span>Conversion Rate</span>
+          </div>
+        </div>
+        <div id="officeHotLeadAlert" class="office-hot-alert"></div>
+      </div>
+
+      <div class="office-command-tabs">
+        <button class="office-command-tab active" data-office-tab="new-today">New Today</button>
+        <button class="office-command-tab" data-office-tab="paid-work">Paid Work to Complete</button>
+        <button class="office-command-tab" data-office-tab="tax-prep">Tax Prep Requests</button>
+        <button class="office-command-tab" data-office-tab="transcripts">Transcript Requests</button>
+        <button class="office-command-tab" data-office-tab="scheduled-consults">Scheduled Consults</button>
+        <button class="office-command-tab" data-office-tab="follow-up">Conversion Opportunities</button>
+      </div>
+    </div>
+
 
     <div id="taxPrepFilters" class="taxprep-filters">
       <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Tax Preparation</button>
@@ -650,6 +1141,7 @@
 <script>
 let allLeads = [];
 let currentView = "office";
+let currentOfficeQueueTab = "new-today";
 let currentTaxPrepFilter = "all";
 let currentContactFilter = "new";
 
@@ -699,6 +1191,19 @@ function formatDashboardPhone(value){
   }
 
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+function escapeOfficeHtml(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function officeNl2br(value){
+  return escapeOfficeHtml(value).replace(/\n/g, "<br>");
 }
 
 function getLeadEnteredAt(lead){
@@ -1729,34 +2234,984 @@ function getVisibleLeads(){
   }
 
   if(currentView==="office"){
-    return allLeads.filter(l => {
-      const status = String(l.status || "").toLowerCase();
-
-      const isClosed =
-        status.includes("closed") ||
-        status.includes("completed");
-
-      const requiresAttention =
-        status.includes("needs written review") ||
-        status.includes("needs review") ||
-        status.includes("needs attention") ||
-        status.includes("action required") ||
-        status.includes("follow-up needed") ||
-        status.includes("missing information") ||
-        status.includes("report failed") ||
-        status.includes("email failed") ||
-        status.includes("delivery failed") ||
-        status.includes("overdue") ||
-        status.includes("error");
-
-      return !isClosed && requiresAttention;
-    });
+    return getOfficeWorkItems()
+      .filter(matchesOfficeQueueTab)
+      .sort(sortOfficeWorkItems);
   }
 
   return allLeads;
 }
 
+
+function isOfficeClosedStatus(status){
+  const text = String(status || "").toLowerCase();
+
+  return (
+    text.includes("closed") ||
+    text.includes("completed") ||
+    text.includes("delivered") ||
+    text.includes("no-show") ||
+    text.includes("no show") ||
+    text.includes("canceled") ||
+    text.includes("cancelled")
+  );
+}
+
+function officeText(value){
+  return String(value || "").toLowerCase();
+}
+
+function officeIncludesAny(value, words){
+  const text = officeText(value);
+  return words.some(word => text.includes(word));
+}
+
+function getOfficeAgeDays(lead){
+  const entered = new Date(getLeadEnteredAt(lead) || 0);
+  if(Number.isNaN(entered.getTime())) return 0;
+
+  return Math.max(
+    0,
+    Math.floor((Date.now() - entered.getTime()) / 86400000)
+  );
+}
+
+function isOfficeToday(dateValue){
+  const date = new Date(dateValue);
+  if(Number.isNaN(date.getTime())) return false;
+
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+}
+
+function getOfficeDueLabel(item){
+  if(item.bucket === "appointments" && item.dueAt){
+    const date = new Date(item.dueAt);
+    const time = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    });
+
+    if(isOfficeToday(item.dueAt)){
+      return `<span class="office-due-today">Today ${time}</span>`;
+    }
+
+    return date.toLocaleString([], {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  if(item.dueToday){
+    return `<span class="office-due-today">Due Today</span>`;
+  }
+
+  if(item.ageDays >= 3){
+    return `<span class="office-due-overdue">${item.ageDays} days old</span>`;
+  }
+
+  if(item.ageDays >= 1){
+    return `<span class="office-due-warning">${item.ageDays} day${item.ageDays === 1 ? "" : "s"} old</span>`;
+  }
+
+  return `<span class="office-due-today">Today</span>`;
+}
+
+function makeOfficeWorkItem(lead, overrides){
+  const ageDays = getOfficeAgeDays(lead);
+  const enteredAt = getLeadEnteredAt(lead);
+  const item = {
+    lead,
+    priority: "Normal",
+    bucket: "all-active",
+    workType: getAllLeadTypeLabel(lead),
+    currentStep: getOfficeCurrentStep(lead),
+    nextAction: "Review client record",
+    reason: "This record appears active and may need review.",
+    dueAt: enteredAt,
+    dueToday: false,
+    isNewRequest: false,
+    isWaitingClient: false,
+    isAppointment: false,
+    ageDays,
+    status: String(lead?.status || "New").trim() || "New",
+    ...overrides
+  };
+
+  item.priorityRank =
+    item.priority === "Critical" ? 1 :
+    item.priority === "High" ? 2 :
+    item.priority === "Waiting" ? 4 :
+    3;
+
+  return item;
+}
+
+function getOfficeAppointmentPriority(start){
+  if(!start) return "Normal";
+
+  const appointmentTime = new Date(start).getTime();
+  if(!appointmentTime || Number.isNaN(appointmentTime)) return "Normal";
+
+  if(
+    appointmentTime >= Date.now() &&
+    appointmentTime < Date.now() + (2 * 60 * 60 * 1000)
+  ){
+    return "Critical";
+  }
+
+  if(isOfficeToday(start)) return "High";
+
+  return "Normal";
+}
+
+
+function isConversionClosedLead(lead){
+  const status = String(lead?.status || "").toLowerCase();
+
+  return (
+    status.includes("closed") ||
+    status.includes("completed") ||
+    status.includes("delivered") ||
+    status.includes("no-show") ||
+    status.includes("no show") ||
+    status.includes("canceled") ||
+    status.includes("cancelled") ||
+    Boolean(lead?.completedAt || lead?.closedAt || lead?.Request?.officeWorkCompletedAt)
+  );
+}
+
+function getContactServiceText(lead){
+  return String(
+    lead?.contactRequest?.service ||
+    lead?.contactRequest?.message ||
+    ""
+  ).toLowerCase();
+}
+
+function isTaxPrepServiceRequest(lead){
+  const service = getContactServiceText(lead);
+
+  return (
+    isTaxPreparationLead(lead) ||
+    service.includes("tax preparation") ||
+    service.includes("tax prep") ||
+    service.includes("1040") ||
+    service.includes("individual") ||
+    service.includes("self-employed") ||
+    service.includes("gig") ||
+    service.includes("business return")
+  );
+}
+
+function isTranscriptServiceRequest(lead){
+  const service = getContactServiceText(lead);
+  const request = lead?.Request || {};
+
+  return (
+    getAllLeadTypeKey(lead) === "transcript" ||
+    service.includes("transcript") ||
+    service.includes("irs transcript") ||
+    Boolean(request.writtenReviewTranscriptHelpRequest)
+  );
+}
+
+function isWrittenReviewServiceRequest(lead){
+  const service = getContactServiceText(lead);
+
+  return (
+    getAllLeadTypeKey(lead) === "written-review" ||
+    service.includes("written") ||
+    service.includes("red flag")
+  );
+}
+
+function isFreeEstimateRootLead(lead){
+  return getAllLeadTypeKey(lead) === "estimate" && !isConversionClosedLead(lead);
+}
+
+function isLeadEnteredToday(lead){
+  return isOfficeToday(getLeadEnteredAt(lead));
+}
+
+function isPaidWrittenReviewLead(lead){
+  const lower = String(lead?.status || "").toLowerCase();
+  const written = lead?.writtenReview || {};
+  const request = lead?.Request || {};
+
+  const paid =
+    lower.includes("paid") ||
+    lower.includes("needs written review") ||
+    String(written.paymentStatus || "").toLowerCase().includes("paid") ||
+    Boolean(written.paidAt || written.paymentVerifiedAt);
+
+  const delivered =
+    getWrittenDeliveredAt(lead) ||
+    request.writtenReviewDeliveredAt ||
+    request.writtenReviewCompletedAt ||
+    String(request.writtenReviewDeliveryStatus || "").toLowerCase().includes("delivered");
+
+  return isWrittenReviewServiceRequest(lead) &&
+    paid &&
+    !delivered &&
+    !isConversionClosedLead(lead);
+}
+
+function isActiveTaxPrepRequest(lead){
+  return isTaxPrepServiceRequest(lead) && !isConversionClosedLead(lead);
+}
+
+function isActiveTranscriptRequest(lead){
+  return isTranscriptServiceRequest(lead) && !isConversionClosedLead(lead);
+}
+
+function isActiveScheduledConsult(lead){
+  return isCalendarLead(lead) && !isClosedCalendarLead(lead) && !isConversionClosedLead(lead);
+}
+
+function getLeadEstimateDirection(lead){
+  const combined = lead?.estimateSummary?.combined || {};
+  const refund = Number(
+    combined.refundAmount ||
+    combined.refund ||
+    combined.totalRefund ||
+    0
+  );
+  const due = Number(
+    combined.balanceDue ||
+    combined.amountDue ||
+    combined.taxDue ||
+    combined.dueAmount ||
+    0
+  );
+
+  if(due > 0) return "Balance Due Lead";
+  if(refund > 0) return "Refund Lead";
+  return "Free Estimate Lead";
+}
+
+function getConversionMetrics(){
+  const activeLeads = (allLeads || []).filter(lead => !isConversionClosedLead(lead));
+  const newToday = activeLeads.filter(isLeadEnteredToday);
+  const freeEstimates = activeLeads.filter(isFreeEstimateRootLead);
+  const paidReviews = activeLeads.filter(isPaidWrittenReviewLead);
+  const taxPrep = activeLeads.filter(isActiveTaxPrepRequest);
+  const transcripts = activeLeads.filter(isActiveTranscriptRequest);
+  const consults = activeLeads.filter(isActiveScheduledConsult);
+
+  const serviceConversions =
+    paidReviews.length +
+    taxPrep.length +
+    transcripts.length +
+    consults.length;
+
+  const conversionRate = freeEstimates.length
+    ? Math.round((serviceConversions / freeEstimates.length) * 100)
+    : 0;
+
+  return {
+    newToday,
+    freeEstimates,
+    paidReviews,
+    taxPrep,
+    transcripts,
+    consults,
+    conversionRate,
+    serviceConversions
+  };
+}
+
+function getConversionClientName(lead){
+  return String(
+    lead?.contact?.name ||
+    lead?.calendarAppointment?.inviteeName ||
+    lead?.contactRequest?.name ||
+    lead?.taxPreparationIntake?.name ||
+    "No Name"
+  ).trim();
+}
+
+function getConversionClientEmail(lead){
+  return String(
+    lead?.contact?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    lead?.contactRequest?.email ||
+    ""
+  ).trim();
+}
+
+function getConversionWorkType(lead){
+  if(isActiveScheduledConsult(lead)) return "Scheduled Consult";
+  if(isPaidWrittenReviewLead(lead)) return "Paid Written Review";
+  if(isTranscriptServiceRequest(lead)) return "Transcript Help";
+  if(isTaxPrepServiceRequest(lead)) return "Tax Preparation";
+  if(isWrittenReviewServiceRequest(lead)) return "Written Red Flag Review";
+  if(isFreeEstimateRootLead(lead)) return "Free Estimate Lead";
+  if(isWebsiteContactLead(lead)) return "Website Contact";
+  return getAllLeadTypeLabel(lead);
+}
+
+function makeConversionWorkItem(lead, overrides = {}){
+  const ageDays = getOfficeAgeDays(lead);
+
+  return {
+    lead,
+    stage: "New Lead",
+    stageRank: 5,
+    bucket: "new-today",
+    workType: getConversionWorkType(lead),
+    currentStep: getOfficeCurrentStep(lead),
+    nextAction: "Review client record",
+    reason: "Lead is available for conversion tracking.",
+    dueAt: getLeadEnteredAt(lead),
+    ageDays,
+    status: String(lead?.status || "New").trim() || "New",
+    ...overrides
+  };
+}
+
+function getFreeEstimateFollowUpAction(lead){
+  const direction = getLeadEstimateDirection(lead);
+
+  if(direction === "Balance Due Lead"){
+    return "Offer tax prep or strategy review";
+  }
+
+  if(direction === "Refund Lead"){
+    return "Offer filing help before they go elsewhere";
+  }
+
+  return "Watch for service conversion";
+}
+
+function getOpportunityRequestMeta(lead){
+  const request = lead?.Request;
+
+  return request &&
+    typeof request === "object" &&
+    !Array.isArray(request)
+      ? request
+      : {};
+}
+
+function getValidOfficeDate(value){
+  if(!value) return null;
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? null
+    : date;
+}
+
+function formatOfficeActionDate(value){
+  const date = getValidOfficeDate(value);
+
+  if(!date) return "Not recorded";
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function getOfficeElapsedLabel(value){
+  const date = getValidOfficeDate(value);
+
+  if(!date) return "Not recorded";
+
+  const diffMs = Date.now() - date.getTime();
+
+  if(diffMs < 0){
+    const futureMinutes = Math.ceil(Math.abs(diffMs) / 60000);
+
+    if(futureMinutes < 60){
+      return `In ${futureMinutes} minute${futureMinutes === 1 ? "" : "s"}`;
+    }
+
+    const futureHours = Math.ceil(futureMinutes / 60);
+
+    if(futureHours < 24){
+      return `In ${futureHours} hour${futureHours === 1 ? "" : "s"}`;
+    }
+
+    const futureDays = Math.ceil(futureHours / 24);
+    return `In ${futureDays} day${futureDays === 1 ? "" : "s"}`;
+  }
+
+  const minutes = Math.floor(diffMs / 60000);
+
+  if(minutes < 1) return "Just now";
+  if(minutes < 60){
+    return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if(hours < 24){
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function getOfficeStageAgeLabel(value){
+  const date = getValidOfficeDate(value);
+
+  if(!date) return "Not recorded";
+
+  const diffMs = Math.max(0, Date.now() - date.getTime());
+  const hours = Math.floor(diffMs / (60 * 60 * 1000));
+
+  if(hours < 1) return "Less than 1 hour";
+  if(hours < 24){
+    return `${hours} hour${hours === 1 ? "" : "s"}`;
+  }
+
+  const days = Math.floor(hours / 24);
+
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+function getOpportunityLastActionAt(lead){
+  const request = getOpportunityRequestMeta(lead);
+
+  return (
+    request.conversionLastActionAt ||
+    request.conversionEmailSentAt ||
+    request.conversionFollowUpSentAt ||
+    request.conversionContactedAt ||
+    ""
+  );
+}
+
+function getOpportunityWaitingSince(lead){
+  const request = getOpportunityRequestMeta(lead);
+
+  return (
+    request.conversionWaitingSince ||
+    request.conversionContactedAt ||
+    request.conversionEmailSentAt ||
+    request.conversionFollowUpSentAt ||
+    request.conversionLastActionAt ||
+    ""
+  );
+}
+
+function getOpportunityNextFollowUpAt(lead){
+  const request = getOpportunityRequestMeta(lead);
+
+  if(request.conversionNextFollowUpAt){
+    return request.conversionNextFollowUpAt;
+  }
+
+  const waitingSince = getValidOfficeDate(
+    getOpportunityWaitingSince(lead)
+  );
+
+  if(!waitingSince) return "";
+
+  const stage = String(
+    request.conversionOpportunityStage || ""
+  ).toLowerCase();
+
+  const waitDays = stage === "follow_up_sent"
+    ? 5
+    : 2;
+
+  return new Date(
+    waitingSince.getTime() +
+    waitDays * 24 * 60 * 60 * 1000
+  ).toISOString();
+}
+
+function isOpportunityFollowUpDue(lead){
+  const request = getOpportunityRequestMeta(lead);
+  const stage = String(
+    request.conversionOpportunityStage || ""
+  ).toLowerCase();
+
+  const waitingStages = [
+    "waiting_client",
+    "contacted",
+    "outreach_sent",
+    "calendar_link_sent",
+    "follow_up_sent"
+  ];
+
+  if(stage === "snoozed"){
+    const snoozedUntil = getValidOfficeDate(
+      request.conversionSnoozedUntil
+    );
+
+    return Boolean(
+      snoozedUntil &&
+      snoozedUntil.getTime() <= Date.now()
+    );
+  }
+
+  if(!waitingStages.includes(stage)){
+    return false;
+  }
+
+  const followUpAt = getValidOfficeDate(
+    getOpportunityNextFollowUpAt(lead)
+  );
+
+  return Boolean(
+    followUpAt &&
+    followUpAt.getTime() <= Date.now()
+  );
+}
+
+function getOpportunityHistory(lead){
+  const request = getOpportunityRequestMeta(lead);
+  const raw = Array.isArray(
+    request.conversionActivityHistory
+  )
+    ? request.conversionActivityHistory
+    : [];
+
+  const history = raw
+    .filter(entry => entry && (entry.action || entry.at))
+    .map(entry => ({
+      action: String(entry.action || "Opportunity updated"),
+      stage: String(entry.stage || ""),
+      at: String(entry.at || "")
+    }));
+
+  if(
+    !history.length &&
+    (
+      request.conversionLastAction ||
+      request.conversionLastActionAt
+    )
+  ){
+    history.push({
+      action: String(
+        request.conversionLastAction ||
+        "Opportunity updated"
+      ),
+      stage: "",
+      at: String(
+        request.conversionLastActionAt ||
+        ""
+      )
+    });
+  }
+
+  return history.sort((a,b) => {
+    const aTime = getValidOfficeDate(a.at)?.getTime() || 0;
+    const bTime = getValidOfficeDate(b.at)?.getTime() || 0;
+
+    return bTime - aTime;
+  });
+}
+
+function formatOpportunityTimelineHtml(lead){
+  const enteredAt = getLeadEnteredAt(lead);
+  const lastActionAt = getOpportunityLastActionAt(lead);
+  const waitingSince = getOpportunityWaitingSince(lead);
+  const nextFollowUpAt = getOpportunityNextFollowUpAt(lead);
+  const followUpDue = isOpportunityFollowUpDue(lead);
+
+  return `
+    <div class="office-timeline">
+      <div class="office-timeline-row">
+        <strong>Lead:</strong> ${getOfficeElapsedLabel(enteredAt)}
+      </div>
+      <div class="office-timeline-row">
+        <strong>Last action:</strong>
+        ${lastActionAt
+          ? getOfficeElapsedLabel(lastActionAt)
+          : "Not contacted yet"}
+      </div>
+      ${waitingSince ? `
+        <div class="office-timeline-row">
+          <strong>Stage age:</strong>
+          ${getOfficeStageAgeLabel(waitingSince)}
+        </div>
+      ` : ""}
+      ${nextFollowUpAt ? `
+        <div class="office-timeline-row ${followUpDue
+          ? "office-timeline-overdue"
+          : "office-timeline-due"}">
+          <strong>${followUpDue
+            ? "Follow-up:"
+            : "Next follow-up:"}</strong>
+          ${followUpDue
+            ? "Due now"
+            : formatOfficeActionDate(nextFollowUpAt)}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function formatOpportunityHistoryHtml(lead){
+  const history = getOpportunityHistory(lead);
+
+  if(!history.length){
+    return `
+      <div style="color:#64748b;">
+        No conversion actions have been recorded yet.
+      </div>
+    `;
+  }
+
+  return `
+    <ul class="opportunity-history-list">
+      ${history.slice(0,10).map(entry => `
+        <li>
+          <strong>${escapeOfficeHtml(entry.action)}</strong>
+          ${entry.stage
+            ? ` — ${escapeOfficeHtml(entry.stage)}`
+            : ""}
+          <span class="opportunity-history-time">
+            ${escapeOfficeHtml(
+              formatOfficeActionDate(entry.at)
+            )}
+          </span>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+function getConversionCommandItems(){
+  const items = [];
+
+  (allLeads || []).forEach(lead => {
+    if(isConversionClosedLead(lead)) return;
+
+    const status = String(lead?.status || "").trim();
+    const lower = status.toLowerCase();
+    const ageDays = getOfficeAgeDays(lead);
+    const enteredToday = isLeadEnteredToday(lead);
+
+    if(isActiveScheduledConsult(lead)){
+      const start = getCalendarStart(lead);
+      const service = getCalendarService(lead);
+      const meetingType =
+        lead?.calendarAppointment?.meetingType ||
+        lead?.calendarAppointment?.location?.type ||
+        "Appointment";
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: "Scheduled",
+        stageRank: 3,
+        bucket: "scheduled-consults",
+        workType: "Scheduled Consult",
+        currentStep: service,
+        nextAction: meetingType === "Phone Call"
+          ? "Prepare and call client"
+          : "Prepare for consultation",
+        reason: isOfficeToday(start)
+          ? "Consultation is scheduled for today."
+          : "Consultation is scheduled. Review the client record before the appointment.",
+        dueAt: start || getLeadEnteredAt(lead),
+        status: getCalendarStatus(lead) || "Scheduled"
+      }));
+
+      return;
+    }
+
+    if(isPaidWrittenReviewLead(lead)){
+      const autopilot = getWrittenAutopilotStatus(lead);
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: "Paid Work",
+        stageRank: 1,
+        bucket: "paid-work",
+        workType: "Paid Written Review",
+        currentStep: autopilot,
+        nextAction: "Prepare and deliver written review",
+        reason: "Client has paid for a written review. This is work to complete.",
+        status: status || "Written Review - Paid / Needs Written Review"
+      }));
+
+      return;
+    }
+
+    if(isActiveTranscriptRequest(lead)){
+      const waiting = officeIncludesAny(lower, [
+        "waiting",
+        "authorization",
+        "8821",
+        "signature",
+        "signed"
+      ]);
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: waiting ? "Waiting on Client" : "Hot Lead",
+        stageRank: waiting ? 6 : 2,
+        bucket: "transcripts",
+        workType: "Transcript Help",
+        currentStep: lead?.contactRequest?.service || status || "Transcript help requested",
+        nextAction: waiting
+          ? "Send authorization reminder"
+          : "Review transcript request",
+        reason: "Client requested IRS transcript help. This may require human handling.",
+        status: status || "Transcript Request"
+      }));
+
+      return;
+    }
+
+    if(isActiveTaxPrepRequest(lead)){
+      const lane =
+        getTaxPrepLane(lead) ||
+        lead?.contactRequest?.service ||
+        "Get My 1040 Tax Return Prepared";
+
+      const waiting = officeIncludesAny(lower, [
+        "waiting",
+        "missing",
+        "documents",
+        "pending client"
+      ]);
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: waiting ? "Waiting on Client" : "Hot Lead",
+        stageRank: waiting ? 6 : 2,
+        bucket: "tax-prep",
+        workType: "Tax Preparation",
+        currentStep: lane,
+        nextAction: waiting
+          ? "Follow up for documents"
+          : "Review tax prep request",
+        reason: "Client requested tax preparation help. This is one of the main conversion goals.",
+        status: status || "Tax Preparation Request"
+      }));
+
+      return;
+    }
+
+    if(isWebsiteContactLead(lead)){
+      const requestMeta = getOpportunityRequestMeta(lead);
+      const opportunityStage = String(
+        requestMeta.conversionOpportunityStage || ""
+      ).toLowerCase();
+
+      const snoozedUntil = requestMeta.conversionSnoozedUntil
+        ? new Date(requestMeta.conversionSnoozedUntil)
+        : null;
+
+      const replied =
+        lower.includes("replied") ||
+        Boolean(getContactRepliedAt(lead));
+
+      if(replied) return;
+
+      if(
+        opportunityStage === "snoozed" &&
+        snoozedUntil &&
+        !Number.isNaN(snoozedUntil.getTime()) &&
+        snoozedUntil > new Date()
+      ){
+        return;
+      }
+
+      const waitingStages = [
+        "waiting_client",
+        "outreach_sent",
+        "calendar_link_sent",
+        "contacted",
+        "follow_up_sent"
+      ];
+
+      const waiting =
+        waitingStages.includes(opportunityStage) ||
+        lower.includes("email sent") ||
+        lower.includes("link sent") ||
+        lower.includes("waiting on client") ||
+        lower.includes("contacted");
+
+      const followUpDue =
+        isOpportunityFollowUpDue(lead);
+
+      const waitingSince =
+        getOpportunityWaitingSince(lead);
+
+      const nextFollowUpAt =
+        getOpportunityNextFollowUpAt(lead);
+
+      if(followUpDue){
+        items.push(makeConversionWorkItem(lead, {
+          stage: "Follow-Up Due",
+          stageRank: 1,
+          bucket: "follow-up",
+          workType: "Website Contact",
+          currentStep:
+            lead?.contactRequest?.service ||
+            "Website inquiry",
+          nextAction:
+            "Send follow-up email or schedule consultation",
+          reason:
+            opportunityStage === "snoozed"
+              ? "The snooze period ended. This opportunity is ready for follow-up."
+              : `No client response since ${formatOfficeActionDate(waitingSince)}. Follow-up is due now.`,
+          dueAt:
+            nextFollowUpAt ||
+            waitingSince ||
+            getLeadEnteredAt(lead),
+          status:
+            status ||
+            "Contact Request - Follow-Up Due"
+        }));
+
+        return;
+      }
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: waiting
+          ? "Waiting on Client"
+          : "Hot Lead",
+        stageRank: waiting ? 6 : 2,
+        bucket: "follow-up",
+        workType: "Website Contact",
+        currentStep:
+          lead?.contactRequest?.service ||
+          "Website inquiry",
+        nextAction: waiting
+          ? (
+              nextFollowUpAt
+                ? `Wait for client response; review ${formatOfficeActionDate(nextFollowUpAt)}`
+                : "Watch for reply or schedule follow-up"
+            )
+          : "Open opportunity and send next-step outreach",
+        reason: waiting
+          ? "The lead has already been contacted. The stage and follow-up clock are now being tracked."
+          : "Website contact request is a conversion opportunity and needs next-step outreach.",
+        dueAt:
+          nextFollowUpAt ||
+          getLeadEnteredAt(lead),
+        status:
+          status ||
+          "Contact Request - New"
+      }));
+
+      return;
+    }
+
+    if(isFreeEstimateRootLead(lead)){
+      if(enteredToday){
+        items.push(makeConversionWorkItem(lead, {
+          stage: "New Lead",
+          stageRank: 5,
+          bucket: "new-today",
+          workType: "Free Estimate Lead",
+          currentStep: getLeadEstimateDirection(lead),
+          nextAction: "Monitor for service conversion",
+          reason: "New free estimate lead came in today and feeds the conversion snapshot.",
+          status: status || "New"
+        }));
+      }else{
+        items.push(makeConversionWorkItem(lead, {
+          stage: "Follow-Up",
+          stageRank: 5,
+          bucket: "follow-up",
+          workType: "Free Estimate Lead",
+          currentStep: getLeadEstimateDirection(lead),
+          nextAction: getFreeEstimateFollowUpAction(lead),
+          reason: `Free estimate lead is ${ageDays} day${ageDays === 1 ? "" : "s"} old without a recorded service conversion.`,
+          status: status || "New"
+        }));
+      }
+    }
+  });
+
+  return items;
+}
+
+function getOfficeWorkItems(){
+  return getConversionCommandItems();
+}
+
+function matchesOfficeQueueTab(item){
+  if(currentOfficeQueueTab === "new-today") return item.bucket === "new-today";
+  if(currentOfficeQueueTab === "paid-work") return item.bucket === "paid-work";
+  if(currentOfficeQueueTab === "tax-prep") return item.bucket === "tax-prep";
+  if(currentOfficeQueueTab === "transcripts") return item.bucket === "transcripts";
+  if(currentOfficeQueueTab === "scheduled-consults") return item.bucket === "scheduled-consults";
+  if(currentOfficeQueueTab === "follow-up") return item.bucket === "follow-up";
+
+  return item.bucket === "new-today";
+}
+
+function sortOfficeWorkItems(a,b){
+  if(a.stageRank !== b.stageRank){
+    return a.stageRank - b.stageRank;
+  }
+
+  const aTime = new Date(a.dueAt || 0).getTime() || 0;
+  const bTime = new Date(b.dueAt || 0).getTime() || 0;
+
+  if(
+    a.stage === "Follow-Up Due" &&
+    b.stage === "Follow-Up Due"
+  ){
+    return aTime - bTime;
+  }
+
+  return bTime - aTime;
+}
+
+function updateOfficeCommandSummary(){
+  const metrics = getConversionMetrics();
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = value;
+  };
+
+  setText("officeNewTodayCount", metrics.newToday.length);
+  setText("officeFreeEstimateCount", metrics.freeEstimates.length);
+  setText("officePaidReviewCount", metrics.paidReviews.length);
+  setText("officeTaxPrepCount", metrics.taxPrep.length);
+  setText("officeTranscriptCount", metrics.transcripts.length);
+  setText("officeScheduledConsultCount", metrics.consults.length);
+  setText("officeConversionRate", `${metrics.conversionRate}%`);
+
+  const hotAlert = document.getElementById("officeHotLeadAlert");
+  if(hotAlert){
+    const hotItems = getConversionCommandItems()
+      .filter(item => item.stage === "Hot Lead");
+
+    const followUpDueItems = getConversionCommandItems()
+      .filter(item => item.stage === "Follow-Up Due");
+
+    if(followUpDueItems.length){
+      const first = followUpDueItems[0];
+      hotAlert.style.display = "block";
+      hotAlert.innerHTML = `⏰ ${followUpDueItems.length} follow-up${followUpDueItems.length === 1 ? " is" : "s are"} due now. First: <strong>${escapeOfficeHtml(getConversionClientName(first.lead))}</strong> — ${escapeOfficeHtml(first.nextAction)}.`;
+    }else if(hotItems.length){
+      const first = hotItems[0];
+      hotAlert.style.display = "block";
+      hotAlert.innerHTML = `🔥 ${hotItems.length} hot lead${hotItems.length === 1 ? "" : "s"} need conversion follow-up. First: <strong>${escapeOfficeHtml(getConversionClientName(first.lead))}</strong> — ${escapeOfficeHtml(first.nextAction)}.`;
+    }else{
+      hotAlert.style.display = "none";
+      hotAlert.innerHTML = "";
+    }
+  }
+}
+
 function getOfficeServiceLabel(lead){
+  if(isCalendarLead(lead)){
+    return getCalendarService(lead);
+  }
+
   if(isTaxPreparationLead(lead)){
     return getTaxPrepLane(lead) || "Tax Preparation";
   }
@@ -1771,21 +3226,64 @@ function getOfficeCurrentStep(lead){
     .replace(/^Tax Preparation Intake\s*-\s*/i, "")
     .replace(/^Contact Request\s*-\s*/i, "")
     .replace(/^Written Review\s*-\s*/i, "")
+    .replace(/^Calendar\s*-\s*/i, "")
     .replace(/^Needs\s+/i, "Review: ");
 }
 
+function openOfficeWorkItem(index){
+  const item = (window.visibleOfficeWorkItems || [])[index];
+
+  if(!item?.lead){
+    alert("Conversion work item could not be identified.");
+    return;
+  }
+
+  openConversionOpportunityPanel(item);
+}
+
 function openOfficeLead(index){
-  const lead = (window.visibleOfficeLeads || [])[index];
-  if(lead) openPanel(lead);
+  openOfficeWorkItem(index);
 }
 
 function openPanel(lead){
   const panel=document.getElementById("detailPanel");
   panel.style.display="block";
 
-  document.getElementById("dpName").innerText = lead.contact?.name || "No Name";
-  document.getElementById("dpEmail").innerText = lead.contact?.email || "No Email";
+  const name = lead.contact?.name || lead.calendarAppointment?.inviteeName || "No Name";
+  const email = lead.contact?.email || lead.calendarAppointment?.inviteeEmail || "No Email";
+
+  document.getElementById("dpName").innerText = name;
+  document.getElementById("dpEmail").innerText = email;
   document.getElementById("dpStatus").innerText = "Status: " + (lead.status||"New");
+
+  if(isCalendarLead(lead)){
+    const appointment = lead.calendarAppointment || {};
+    const start = formatLeadDate(appointment.startTime);
+    const end = formatLeadDate(appointment.endTime);
+    const meetingType = appointment.meetingType || appointment.location?.type || "Appointment";
+    const location = formatCalendarLocation(lead);
+    const notes = appointment.notes || lead.notes || "No appointment notes recorded.";
+
+    document.getElementById("dpTaxYear").innerText = "";
+    document.getElementById("dpRefund").innerHTML = `
+      <div class="opportunity-detail-card">
+        <strong>Calendar Appointment</strong><br>
+        Service: ${escapeOfficeHtml(getCalendarService(lead))}<br>
+        Appointment: ${escapeOfficeHtml(start || "Not provided")} ${end ? "to " + escapeOfficeHtml(end) : ""}<br>
+        Meeting Type: ${escapeOfficeHtml(meetingType)}<br>
+        Location / Link: ${escapeOfficeHtml(location || "Not provided")}<br>
+        Phone: ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || ""))}<br>
+        <br><strong>Notes</strong><br>${officeNl2br(notes)}
+      </div>
+    `;
+
+    const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+    const closedAt = formatLeadDate(getLeadClosedAt(lead));
+    document.getElementById("dpEntered").innerText = enteredAt ? "Entered: " + enteredAt : "";
+    document.getElementById("dpClosed").innerText = closedAt ? "Closed: " + closedAt : "";
+    return;
+  }
+
   document.getElementById("dpTaxYear").innerText = "Tax Year: " + (lead.taxData?.taxYear || "");
   const intake = lead.taxPreparationIntake || null;
   const contactRequest = lead.contactRequest || null;
@@ -1812,6 +3310,566 @@ function openPanel(lead){
 
   document.getElementById("dpClosed").innerText =
     closedAt ? "Closed: " + closedAt : "";
+}
+
+function openConversionOpportunityPanel(item){
+  const lead = item.lead || {};
+  const panel=document.getElementById("detailPanel");
+  panel.style.display="block";
+  window.activeOpportunityItem = item;
+
+  const name = getConversionClientName(lead);
+  const email = getConversionClientEmail(lead);
+  const phone = formatDashboardPhone(
+    lead.contact?.phone || ""
+  );
+
+  const request = lead.contactRequest || {};
+  const requestMeta = getOpportunityRequestMeta(lead);
+  const lastActionAt = getOpportunityLastActionAt(lead);
+  const waitingSince = getOpportunityWaitingSince(lead);
+  const nextFollowUpAt = getOpportunityNextFollowUpAt(lead);
+  const followUpDue = isOpportunityFollowUpDue(lead);
+
+  document.getElementById("dpName").innerText = name;
+  document.getElementById("dpEmail").innerText =
+    email || "No Email";
+
+  document.getElementById("dpStatus").innerText =
+    "Stage: " + item.stage +
+    " | Status: " + (lead.status || "New");
+
+  document.getElementById("dpTaxYear").innerText =
+    "Lead Type: " + item.workType;
+
+  document.getElementById("dpRefund").innerHTML = `
+    <div class="opportunity-detail-card">
+      <strong>Why this is here</strong><br>
+      ${escapeOfficeHtml(
+        item.reason ||
+        "This lead may be worth converting into paid work."
+      )}
+    </div>
+
+    <div class="opportunity-detail-card">
+      <strong>Recommended Next Move</strong><br>
+      ${escapeOfficeHtml(
+        item.nextAction ||
+        "Review and follow up"
+      )}
+    </div>
+
+    <div class="opportunity-detail-card">
+      <strong>Opportunity Timeline</strong>
+
+      <div class="opportunity-timeline-grid">
+        <div class="opportunity-timeline-item">
+          <span>Lead Entered</span>
+          <strong>
+            ${escapeOfficeHtml(
+              formatOfficeActionDate(
+                getLeadEnteredAt(lead)
+              )
+            )}
+          </strong>
+        </div>
+
+        <div class="opportunity-timeline-item">
+          <span>Last Action</span>
+          <strong>
+            ${escapeOfficeHtml(
+              lastActionAt
+                ? formatOfficeActionDate(lastActionAt)
+                : "No action recorded yet"
+            )}
+          </strong>
+        </div>
+
+        <div class="opportunity-timeline-item">
+          <span>Current Stage Age</span>
+          <strong>
+            ${escapeOfficeHtml(
+              waitingSince
+                ? getOfficeStageAgeLabel(waitingSince)
+                : "Not started"
+            )}
+          </strong>
+        </div>
+
+        <div class="opportunity-timeline-item">
+          <span>
+            ${followUpDue
+              ? "Follow-Up Status"
+              : "Next Follow-Up"}
+          </span>
+          <strong style="${followUpDue
+            ? "color:#b91c1c;"
+            : ""}">
+            ${escapeOfficeHtml(
+              followUpDue
+                ? "Due now"
+                : (
+                    nextFollowUpAt
+                      ? formatOfficeActionDate(
+                          nextFollowUpAt
+                        )
+                      : "Not scheduled"
+                  )
+            )}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="opportunity-detail-card">
+      <strong>Client Request</strong><br>
+      Service:
+      ${escapeOfficeHtml(
+        request.service ||
+        item.currentStep ||
+        "Not provided"
+      )}<br>
+
+      Preferred Contact:
+      ${escapeOfficeHtml(
+        request.preferredContact ||
+        "Not provided"
+      )}<br>
+
+      Phone:
+      ${escapeOfficeHtml(
+        phone ||
+        "Not provided"
+      )}<br>
+
+      Current Opportunity Stage:
+      ${escapeOfficeHtml(
+        item.stage ||
+        requestMeta.conversionOpportunityStage ||
+        "Hot Lead / Not worked yet"
+      )}<br><br>
+
+      <strong>Message</strong><br>
+      ${officeNl2br(
+        request.message ||
+        lead.notes ||
+        "No message recorded."
+      )}
+    </div>
+
+    <div class="opportunity-detail-card">
+      <strong>Activity History</strong>
+      ${formatOpportunityHistoryHtml(lead)}
+    </div>
+
+    <div class="opportunity-action-grid">
+      <button
+        class="opportunity-action-btn"
+        onclick="runOpportunityAction('send-tax-prep-email')"
+      >
+        Send 1040 Tax Prep Help Email
+      </button>
+
+      <button
+        class="opportunity-action-btn"
+        onclick="runOpportunityAction('send-calendar-email')"
+      >
+        Send Calendar Scheduling Email
+      </button>
+
+      <button
+        class="opportunity-action-btn"
+        onclick="runOpportunityAction('send-follow-up-email')"
+      >
+        Send Follow-Up Email
+      </button>
+
+      <button
+        class="opportunity-action-btn secondary"
+        onclick="openManualAppointmentFromOpportunity()"
+      >
+        Open Calendar Appointment
+      </button>
+
+      <button
+        class="opportunity-action-btn secondary"
+        onclick="runOpportunityAction('mark-contacted')"
+      >
+        Mark Contacted
+      </button>
+
+      <button
+        class="opportunity-action-btn warning"
+        onclick="runOpportunityAction('snooze-follow-up')"
+      >
+        Snooze Follow-Up 7 Days
+      </button>
+
+      <button
+        class="opportunity-action-btn secondary"
+        onclick="runOpportunityAction('convert-tax-prep')"
+      >
+        Convert to Tax Prep Request
+      </button>
+
+      <button
+        class="opportunity-action-btn danger"
+        onclick="runOpportunityAction('close-opportunity')"
+      >
+        Close Opportunity
+      </button>
+    </div>
+  `;
+
+  document.getElementById("dpEntered").innerText =
+    "";
+
+  document.getElementById("dpClosed").innerText =
+    "";
+}
+
+async function runOpportunityAction(action){
+  const item = window.activeOpportunityItem;
+  const lead = item?.lead;
+
+  if(!lead?.leadId){
+    alert("Opportunity lead could not be identified.");
+    return;
+  }
+
+  const labels = {
+    "send-tax-prep-email":
+      "send the 1040 tax prep help email",
+    "send-calendar-email":
+      "send the calendar scheduling email",
+    "send-follow-up-email":
+      "send the follow-up email",
+    "mark-contacted":
+      "mark this opportunity contacted",
+    "snooze-follow-up":
+      "snooze this opportunity for 7 days",
+    "close-opportunity":
+      "close this opportunity",
+    "convert-tax-prep":
+      "convert this to a tax prep request"
+  };
+
+  const confirmed = window.confirm(
+    `Do you want to ${
+      labels[action] ||
+      "update this opportunity"
+    } for ${
+      getConversionClientName(lead)
+    }?`
+  );
+
+  if(!confirmed) return;
+
+  const now = new Date().toISOString();
+  const nextFollowUp48Hours =
+    new Date(
+      Date.now() +
+      48 * 60 * 60 * 1000
+    ).toISOString();
+
+  const existingHistory =
+    getOpportunityHistory(lead)
+      .slice()
+      .reverse()
+      .map(entry => ({
+        action: entry.action,
+        stage: entry.stage,
+        at: entry.at
+      }));
+
+  const appendHistory = (
+    actionLabel,
+    stageLabel
+  ) => {
+    return [
+      ...existingHistory,
+      {
+        action: actionLabel,
+        stage: stageLabel,
+        at: now
+      }
+    ].slice(-25);
+  };
+
+  const patchActions = {
+    "mark-contacted": {
+      status:
+        "Contact Request - Waiting on Client",
+
+      Request: {
+        conversionOpportunityStage:
+          "waiting_client",
+
+        conversionContactedAt:
+          now,
+
+        conversionWaitingSince:
+          now,
+
+        conversionStageChangedAt:
+          now,
+
+        conversionLastActionAt:
+          now,
+
+        conversionLastAction:
+          "Marked Contacted",
+
+        conversionNextFollowUpAt:
+          nextFollowUp48Hours,
+
+        conversionActivityHistory:
+          appendHistory(
+            "Marked Contacted",
+            "Waiting on Client"
+          )
+      },
+
+      successMessage:
+        `Stage changed to Waiting on Client. Next follow-up is due ${formatOfficeActionDate(nextFollowUp48Hours)}.`
+    },
+
+    "snooze-follow-up": {
+      status:
+        "Contact Request - Follow-Up Snoozed",
+
+      Request: {
+        conversionOpportunityStage:
+          "snoozed",
+
+        conversionSnoozedAt:
+          now,
+
+        conversionSnoozedUntil:
+          new Date(
+            Date.now() +
+            7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+
+        conversionStageChangedAt:
+          now,
+
+        conversionLastActionAt:
+          now,
+
+        conversionLastAction:
+          "Snoozed 7 Days",
+
+        conversionNextFollowUpAt:
+          new Date(
+            Date.now() +
+            7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+
+        conversionActivityHistory:
+          appendHistory(
+            "Snoozed 7 Days",
+            "Snoozed"
+          )
+      },
+
+      successMessage:
+        "Opportunity was snoozed for 7 days. It will return when the snooze period ends."
+    },
+
+    "close-opportunity": {
+      status:
+        "Closed - Opportunity Not Moving Forward",
+
+      completedAt:
+        now,
+
+      closedAt:
+        now,
+
+      Request: {
+        conversionOpportunityStage:
+          "closed",
+
+        conversionClosedAt:
+          now,
+
+        conversionStageChangedAt:
+          now,
+
+        conversionLastActionAt:
+          now,
+
+        conversionLastAction:
+          "Closed Opportunity",
+
+        conversionActivityHistory:
+          appendHistory(
+            "Closed Opportunity",
+            "Closed"
+          )
+      },
+
+      successMessage:
+        "Opportunity was closed and removed from active conversion work."
+    },
+
+    "convert-tax-prep": {
+      status:
+        "Tax Preparation Intake - Needs Review",
+
+      Request: {
+        conversionOpportunityStage:
+          "converted_tax_prep",
+
+        convertedToTaxPrepAt:
+          now,
+
+        conversionStageChangedAt:
+          now,
+
+        conversionLastActionAt:
+          now,
+
+        conversionLastAction:
+          "Converted to Tax Preparation Request",
+
+        requestedService:
+          "Get My 1040 Tax Return Prepared",
+
+        conversionActivityHistory:
+          appendHistory(
+            "Converted to Tax Preparation Request",
+            "Tax Prep Request"
+          )
+      },
+
+      successMessage:
+        "Lead was converted and moved to Tax Prep Requests."
+    }
+  };
+
+  try{
+    let response;
+
+    if(patchActions[action]){
+      const update = patchActions[action];
+
+      response = await fetch(
+        `/api/leads/${
+          encodeURIComponent(lead.leadId)
+        }`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            status:
+              update.status,
+
+            Request:
+              update.Request,
+
+            completedAt:
+              update.completedAt || "",
+
+            closedAt:
+              update.closedAt || ""
+          })
+        }
+      );
+    }else{
+      response = await fetch(
+        `/api/leads/${
+          encodeURIComponent(lead.leadId)
+        }/opportunity-action`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            action
+          })
+        }
+      );
+    }
+
+    const raw = await response.text();
+    let data = {};
+
+    try{
+      data = raw
+        ? JSON.parse(raw)
+        : {};
+    }catch{
+      throw new Error(
+        "The server returned a webpage instead of an API response. Restart Node from the Tax-Estimator folder and try again."
+      );
+    }
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error ||
+        (
+          Array.isArray(data.errors)
+            ? data.errors.join(" ")
+            : ""
+        ) ||
+        "Opportunity action failed."
+      );
+    }
+
+    const successMessage =
+      patchActions[action]?.successMessage ||
+      data.message ||
+      "Opportunity updated.";
+
+    alert(successMessage);
+
+    clearDetailPanel();
+    await loadLeads();
+
+  }catch(error){
+    console.error(
+      "[Opportunity Action]",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Opportunity action failed."
+    );
+  }
+}
+
+function openManualAppointmentFromOpportunity(){
+  const item = window.activeOpportunityItem;
+  const lead = item?.lead;
+
+  if(!lead){
+    alert("Opportunity lead could not be identified.");
+    return;
+  }
+
+  openManualAppointmentForm();
+
+  document.getElementById("manualApptName").value = getConversionClientName(lead);
+  document.getElementById("manualApptEmail").value = getConversionClientEmail(lead);
+  document.getElementById("manualApptPhone").value = formatUSPhone(lead.contact?.phone || "");
+
+  const serviceSelect = document.getElementById("manualApptService");
+  if(serviceSelect){
+    const desired = item.bucket === "tax-prep" || item.currentStep?.includes("Tax")
+      ? "Tax Preparation Consultation"
+      : "General Tax Consultation";
+    serviceSelect.value = desired;
+  }
+
+  updateManualMeetingDetails();
 }
 
 function getWrittenWorksheetCompleted(lead){
@@ -1861,110 +3919,23 @@ function renderLeads(){
 
   if(currentView === "all"){
     updateAllSummary(visible.length);
-  }
 
-  if(
-    !visible.length &&
-    currentView !== "calendar" &&
-    currentView !== "calendarclosed"
-  ){
-    list.innerHTML="<div class='empty'>No leads found</div>";
-    return;
-  }
-
-  if(currentView === "calendar" || currentView === "calendarclosed"){
-    const closedView = currentView === "calendarclosed";
-
-    list.innerHTML = `
-      ${closedView ? "" : `
-        <div style="display:flex;justify-content:flex-end;margin:0 0 12px 0;">
-          <button
-            class="contact-replied-btn"
-            style="background:#2f855a;padding:10px 16px;"
-            onclick="openManualAppointmentForm()"
-          >
-            Add Appointment
-          </button>
-        </div>
-      `}
-      <div class="taxprep-table-wrap">
-        <table class="taxprep-table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Service</th>
-              <th>Appointment</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${visible.map((lead, index) => {
-              const appointment = lead.calendarAppointment || {};
-              return `
-                <tr>
-                  <td>
-                    <strong>${lead.contact?.name || appointment.inviteeName || "No Name"}</strong><br>
-                    ${lead.contact?.email || appointment.inviteeEmail || ""}<br>
-                    ${formatUSPhone(
-                      lead.contact?.phone ||
-                      appointment.phone ||
-                      ""
-                    ) || ""}
-                  </td>
-                  <td>${getCalendarService(lead)}</td>
-                  <td>${formatLeadDate(getCalendarStart(lead)) || "Date unavailable"}</td>
-                  <td>${formatCalendarLocation(lead)}</td>
-                  <td><span class="status-pill">${getCalendarStatus(lead) || "Scheduled"}</span></td>
-                  <td>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                      <button
-                        class="taxprep-open-btn"
-                        onclick="openCalendarLead(${index}, ${closedView})"
-                      >
-                        ${closedView ? "View Closed" : "Open"}
-                      </button>
-                      ${closedView ? "" : `
-                        <button
-                          class="contact-replied-btn"
-                          style="background:#2f855a;"
-                          onclick="markCalendarOutcome(${index}, 'Completed', this)"
-                        >
-                          Mark Completed
-                        </button>
-                        <button
-                          class="contact-replied-btn"
-                          style="background:#b45309;"
-                          onclick="markCalendarOutcome(${index}, 'No-Show', this)"
-                        >
-                          Mark No-Show
-                        </button>
-                      `}
-                    </div>
-                  </td>
-                </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>`;
-
-    if(closedView){
-      window.visibleClosedCalendarLeads = visible;
-    }else{
-      window.visibleCalendarLeads = visible;
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="office-empty">
+          No leads match the current All Leads filters.
+        </div>`;
+      window.visibleAllLeads = [];
+      return;
     }
-    return;
-  }
 
-  if(currentView === "all"){
     list.innerHTML = `
       <div class="taxprep-table-wrap">
         <table class="taxprep-table">
           <thead>
             <tr>
               <th>Client</th>
-              <th>Service</th>
+              <th>Lead Type / Service</th>
               <th>Tax Year</th>
               <th>Entered</th>
               <th>Status</th>
@@ -1974,29 +3945,54 @@ function renderLeads(){
           </thead>
           <tbody>
             ${visible.map((lead, index) => {
-              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
-              const statusText = String(lead?.status || "New");
-              const completed =
-                statusText.toLowerCase().includes("completed") ||
-                statusText.toLowerCase().includes("closed");
+              const enteredAt = formatLeadDate(
+                getLeadEnteredAt(lead)
+              );
 
               return `
                 <tr>
                   <td>
                     <strong>${lead.contact?.name || "No Name"}</strong><br>
-                    ${lead.contact?.email || ""}
+                    ${lead.contact?.email || ""}<br>
+                    ${formatDashboardPhone(
+                      lead.contact?.phone
+                    ) || ""}
                   </td>
-                  <td>${getAllLeadTypeLabel(lead)}</td>
-                  <td>${getAllLeadTaxYear(lead) || "—"}</td>
-                  <td>${enteredAt || ""}</td>
-                  <td><span class="status-pill">${statusText}</span></td>
-                  <td>${getAllLeadLatestAction(lead)}</td>
+
+                  <td>
+                    ${getAllLeadTypeLabel(lead)}
+                  </td>
+
+                  <td>
+                    ${getAllLeadTaxYear(lead) || "—"}
+                  </td>
+
+                  <td>
+                    ${enteredAt || "Date unavailable"}
+                  </td>
+
+                  <td>
+                    <span class="status-pill">
+                      ${lead.status || "New"}
+                    </span>
+                  </td>
+
+                  <td>
+                    ${getAllLeadLatestAction(lead)}
+                  </td>
+
                   <td>
                     <button
                       class="taxprep-open-btn"
                       onclick="openAllLead(${index})"
                     >
-                      ${completed ? "View Completed" : "Open"}
+                      ${
+                        String(lead.status || "")
+                          .toLowerCase()
+                          .match(/closed|completed|delivered/)
+                          ? "View Completed"
+                          : "Open"
+                      }
                     </button>
                   </td>
                 </tr>`;
@@ -2010,46 +4006,102 @@ function renderLeads(){
   }
 
   if(currentView === "office"){
+    updateOfficeCommandSummary();
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="office-empty">
+          No records are currently in this conversion lane.
+        </div>`;
+      window.visibleOfficeWorkItems = [];
+      window.visibleOfficeLeads = [];
+      return;
+    }
+
     list.innerHTML = `
-      <div class="taxprep-table-wrap">
-        <table class="taxprep-table">
+      <div class="taxprep-table-wrap office-command-table-wrap">
+        <table class="taxprep-table office-command-table">
           <thead>
             <tr>
+              <th>Stage</th>
               <th>Client</th>
-              <th>Service</th>
-              <th>Current Step</th>
-              <th>Entered</th>
-              <th>Status</th>
+              <th>Service &amp; Next Move</th>
+              <th>Timeline</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            ${visible.map((lead, index) => {
-              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+            ${visible.map((item, index) => {
+              const lead = item.lead || {};
+              const stageClass =
+                item.stage === "Paid Work" ||
+                item.stage === "Follow-Up Due"
+                  ? "office-priority-critical" :
+                item.stage === "Hot Lead"
+                  ? "office-priority-high" :
+                item.stage === "Waiting on Client"
+                  ? "office-priority-waiting" :
+                "office-priority-normal";
 
               return `
                 <tr>
                   <td>
-                    <strong>${lead.contact?.name || "No Name"}</strong><br>
-                    ${lead.contact?.email || ""}
+                    <span class="office-priority-pill ${stageClass}">
+                      ${item.stage}
+                    </span>
                   </td>
-                  <td>${getOfficeServiceLabel(lead)}</td>
-                  <td>${getOfficeCurrentStep(lead)}</td>
-                  <td>${enteredAt || ""}</td>
-                  <td><span class="status-pill">${lead.status || "Needs Attention"}</span></td>
+
+                  <td>
+                    <div class="office-command-client">
+                      <strong>${getConversionClientName(lead)}</strong>
+                      <span class="office-command-client-detail">
+                        ${getConversionClientEmail(lead)}
+                      </span>
+                      <span class="office-command-client-detail">
+                        ${formatUSPhone(lead.contact?.phone || "") || ""}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="office-command-service">
+                      <span class="office-command-service-label">
+                        ${item.workType}
+                      </span>
+
+                      <span class="office-command-step">
+                        ${item.currentStep}
+                      </span>
+
+                      <span class="office-command-next-label">
+                        Recommended Next Move
+                      </span>
+
+                      <div class="office-next-action">
+                        ${item.nextAction}
+                      </div>
+
+                      <div class="office-reason-line">
+                        <strong>Why:</strong>
+                        ${item.reason || "Needs review."}
+                      </div>
+
+                      <span class="office-command-status">
+                        System status: ${item.status}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    ${formatOpportunityTimelineHtml(lead)}
+                  </td>
+
                   <td>
                     <button
                       class="taxprep-open-btn"
-                      onclick="openOfficeLead(${index})"
+                      onclick="openOfficeWorkItem(${index})"
                     >
-                      Open
-                    </button>
-                    <button
-                      class="contact-replied-btn office-complete-btn"
-                      onclick="markOfficeWorkCompleted(${index}, this)"
-                      title="Mark ${lead.contact?.name || "this client"} completed"
-                    >
-                      Mark ${String(lead.contact?.name || "Client").split(" ")[0]} Completed
+                      Work Lead
                     </button>
                   </td>
                 </tr>`;
@@ -2058,7 +4110,106 @@ function renderLeads(){
         </table>
       </div>`;
 
-    window.visibleOfficeLeads = visible;
+    window.visibleOfficeWorkItems = visible;
+    window.visibleOfficeLeads = visible.map(item => item.lead);
+    return;
+  }
+
+  if(currentView === "calendar" || currentView === "calendarclosed"){
+    const closedView = currentView === "calendarclosed";
+
+    if(!visible.length){
+      list.innerHTML = `
+        ${!closedView ? `
+          <div style="display:flex;justify-content:flex-end;margin:0 0 14px;">
+            <button
+              type="button"
+              onclick="openManualAppointmentForm()"
+              class="contact-replied-btn"
+              style="background:#2f855a;padding:10px 16px;"
+            >
+              Add Appointment
+            </button>
+          </div>
+        ` : ""}
+
+        <div class="office-empty">
+          ${currentView === "calendar"
+            ? "No active scheduled appointments. Use Add Appointment to schedule a client manually. Completed, no-show, and canceled appointments are under Closed Calendar."
+            : "No closed calendar appointments found."}
+        </div>`;
+      window.visibleCalendarLeads = [];
+      window.visibleClosedCalendarLeads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      ${!closedView ? `
+        <div style="display:flex;justify-content:flex-end;margin:0 0 14px;">
+          <button
+            type="button"
+            onclick="openManualAppointmentForm()"
+            class="contact-replied-btn"
+            style="background:#2f855a;padding:10px 16px;"
+          >
+            Add Appointment
+          </button>
+        </div>
+      ` : ""}
+
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Service</th>
+              <th>Appointment</th>
+              <th>Location / Link</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const appointment = lead.calendarAppointment || {};
+              const start = formatLeadDate(appointment.startTime);
+              const status = getCalendarStatus(lead) || "Scheduled";
+              return `
+                <tr>
+                  <td>
+                    <strong>${lead.contact?.name || appointment.inviteeName || "No Name"}</strong><br>
+                    ${lead.contact?.email || appointment.inviteeEmail || ""}<br>
+                    ${formatUSPhone(lead.contact?.phone || "") || ""}
+                  </td>
+                  <td>${getCalendarService(lead)}</td>
+                  <td>${start || "Not provided"}</td>
+                  <td>${formatCalendarLocation(lead)}</td>
+                  <td><span class="status-pill">${status}</span></td>
+                  <td>
+                    <button class="taxprep-open-btn" onclick="openCalendarLead(${index}, ${closedView})">
+                      ${closedView ? "View Closed" : "Open"}
+                    </button>
+                    ${!closedView ? `
+                      <button class="contact-replied-btn" style="background:#2f855a;margin-top:6px;display:block;" onclick="markCalendarOutcome(${index}, 'Completed', this)">
+                        Mark Completed
+                      </button>
+                      <button class="contact-replied-btn" style="background:#b45309;margin-top:6px;display:block;" onclick="markCalendarOutcome(${index}, 'No-Show', this)">
+                        Mark No-Show
+                      </button>
+                    ` : ""}
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    if(closedView){
+      window.visibleClosedCalendarLeads = visible;
+    }else{
+      window.visibleCalendarLeads = visible;
+    }
+
     return;
   }
 
@@ -3332,7 +5483,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentView = btn.dataset.view;
 
       const titles = {
-        office: "Office Work Queue",
+        office: "Lead Conversion Command Center",
         all: "All Leads",
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
@@ -3377,6 +5528,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const closedFilters = document.getElementById("closedFilters");
       if(closedFilters){
         closedFilters.style.display = currentView === "closed" ? "flex" : "none";
+      }
+
+      const officeCommandCenter = document.getElementById("officeCommandCenter");
+      if(officeCommandCenter){
+        officeCommandCenter.style.display = currentView === "office" ? "block" : "none";
       }
 
       renderLeads();
@@ -3424,6 +5580,27 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".office-command-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".office-command-tab")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+      currentOfficeQueueTab = btn.dataset.officeTab || "new-today";
+
+      if(typeof clearDetailPanel === "function"){
+        clearDetailPanel();
+      }
+
+      renderLeads();
+    });
+  });
+});
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {

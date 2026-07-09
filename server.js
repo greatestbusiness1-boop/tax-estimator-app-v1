@@ -3725,6 +3725,424 @@ app.get("/terms", (req, res) => {
 // PATCH /api/leads/:leadId
 // =============================================================================
 
+
+// =============================================================================
+// POST /api/leads/:leadId/opportunity-action
+// =============================================================================
+app.post("/api/leads/:leadId/opportunity-action", async (req, res) => {
+  const { leadId } = req.params;
+  const { action } = req.body || {};
+  const cleanId = String(leadId || "").trim();
+  const cleanAction = String(action || "").trim();
+  const now = new Date().toISOString();
+  const bookingUrl =
+    process.env.CALENDLY_URL ||
+    "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+  const taxPrepUrl =
+    (process.env.PUBLIC_SITE_URL || APP_BASE_URL || "https://www.taxestimatereview.com") +
+    "/start-my-tax-return";
+
+  if (!cleanId) {
+    return res.status(400).json({ ok: false, error: "Missing lead ID." });
+  }
+
+  const allowedActions = [
+    "send-tax-prep-email",
+    "send-calendar-email",
+    "send-follow-up-email",
+    "mark-contacted",
+    "snooze-follow-up",
+    "close-opportunity",
+    "convert-tax-prep"
+  ];
+
+  if (!allowedActions.includes(cleanAction)) {
+    return res.status(400).json({ ok: false, error: "Invalid opportunity action." });
+  }
+
+  const findLead = async () => {
+    const matchesLeadId = (obj = {}) => {
+      const estimate = obj.estimate || {};
+      const possibleIds = [
+        obj.leadId,
+        obj.leadid,
+        obj.lead_id,
+        obj.id,
+        estimate.leadId,
+        estimate.leadid,
+        estimate.lead_id,
+        estimate.id
+      ];
+
+      return possibleIds.some(
+        (id) => String(id || "").trim() === cleanId
+      );
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        const row = data.find(matchesLeadId);
+        if (row) {
+          return mapRowToLead(row);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[opportunity-action] Supabase lead lookup failed:",
+        error.message || error
+      );
+    }
+
+    return readLeads().find(matchesLeadId) || null;
+  };
+
+  const lead = await findLead();
+
+  if (!lead) {
+    return res.status(404).json({ ok: false, error: "Lead not found." });
+  }
+
+  const name = String(lead?.contact?.name || "Client").trim();
+  const email = String(lead?.contact?.email || "").trim();
+  const service = String(
+    lead?.contactRequest?.service ||
+    lead?.taxPreparationIntake?.recommendedLane ||
+    "tax help"
+  ).trim();
+  const message = String(lead?.contactRequest?.message || "").trim();
+
+  const currentRequest =
+    lead?.Request &&
+    typeof lead.Request === "object" &&
+    !Array.isArray(lead.Request)
+      ? lead.Request
+      : {};
+
+  const currentHistory =
+    Array.isArray(currentRequest.conversionActivityHistory)
+      ? currentRequest.conversionActivityHistory
+          .filter((entry) => entry && (entry.action || entry.at))
+          .slice(-24)
+      : [];
+
+  const followUp48Hours =
+    new Date(
+      Date.now() +
+      48 * 60 * 60 * 1000
+    ).toISOString();
+
+  const followUp5Days =
+    new Date(
+      Date.now() +
+      5 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+  const addHistoryEntry = (
+    actionLabel,
+    stageLabel
+  ) => {
+    return [
+      ...currentHistory,
+      {
+        action: actionLabel,
+        stage: stageLabel,
+        at: now
+      }
+    ].slice(-25);
+  };
+
+  let newStatus = "Contact Request - Outreach Sent";
+  let responseMessage = "Opportunity updated.";
+  let completedAt = "";
+  let closedAt = "";
+  let requestUpdate = {
+    conversionLastActionAt: now,
+    conversionLastAction: cleanAction,
+    conversionPreviousStatus: String(lead.status || "")
+  };
+
+  const sendClientEmail = async ({ subject, text }) => {
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      throw new Error("Email delivery is not configured on this server.");
+    }
+
+    if (!email) {
+      throw new Error("This lead does not have an email address.");
+    }
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject,
+      text
+    });
+  };
+
+  try {
+    if (cleanAction === "send-tax-prep-email") {
+      await sendClientEmail({
+        subject: "Next Step: Get Your 1040 Tax Return Prepared",
+        text:
+`Hello ${name},
+
+Thank you for reaching out to Greatest Business Solution LLC.
+
+Based on your request regarding ${service}, the next best step is to start your 1040 tax return preparation intake so we can review your filing situation properly.
+
+Start here:
+${taxPrepUrl}
+
+You can also schedule a short consultation if you want to talk through your situation first:
+${bookingUrl}
+
+Please do not email Social Security numbers, tax documents, bank information, or other sensitive records until we provide secure instructions.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+
+      newStatus = "Contact Request - 1040 Tax Prep Email Sent";
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "outreach_sent",
+        conversionLastAction: "1040 Tax Prep Email Sent",
+        conversionEmailType: "1040 Tax Prep",
+        conversionEmailSentAt: now,
+        conversionWaitingSince: now,
+        conversionStageChangedAt: now,
+        conversionNextFollowUpAt: followUp48Hours,
+        taxPrepUrl
+      };
+      responseMessage = "1040 tax prep help email was sent and the lead was moved to Outreach Sent.";
+    }
+
+    if (cleanAction === "send-calendar-email") {
+      await sendClientEmail({
+        subject: "Schedule Your Tax Consultation",
+        text:
+`Hello ${name},
+
+Thank you for reaching out to Greatest Business Solution LLC.
+
+Based on your request regarding ${service}, the next best step is to schedule a short consultation so we can understand your situation and recommend the right service.
+
+Schedule here:
+${bookingUrl}
+
+Original message or request:
+${message || "No message provided."}
+
+Please do not email Social Security numbers, tax documents, bank information, or other sensitive records until we provide secure instructions.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+
+      newStatus = "Contact Request - Calendar Link Sent";
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "calendar_link_sent",
+        conversionLastAction: "Calendar Scheduling Email Sent",
+        conversionEmailType: "Calendar Scheduling",
+        conversionEmailSentAt: now,
+        conversionWaitingSince: now,
+        conversionStageChangedAt: now,
+        conversionNextFollowUpAt: followUp48Hours,
+        bookingUrl
+      };
+      responseMessage = "Calendar scheduling email was sent and the lead is now waiting on the client to schedule.";
+    }
+
+    if (cleanAction === "send-follow-up-email") {
+      const priorFollowUpCount =
+        Number(currentRequest.conversionFollowUpCount || 0);
+
+      await sendClientEmail({
+        subject: "Following Up on Your Tax Help Request",
+        text:
+`Hello ${name},
+
+I wanted to follow up on your recent request regarding ${service}.
+
+If you would like to speak with us, you can schedule a short consultation here:
+${bookingUrl}
+
+If you are ready to have your 1040 tax return prepared, you can begin here:
+${taxPrepUrl}
+
+If you no longer need assistance, no action is required.
+
+Please do not email Social Security numbers, tax documents, bank information, or other sensitive records until we provide secure instructions.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+
+      newStatus =
+        "Contact Request - Follow-Up Email Sent";
+
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage:
+          "follow_up_sent",
+
+        conversionLastAction:
+          "Follow-Up Email Sent",
+
+        conversionFollowUpSentAt:
+          now,
+
+        conversionFollowUpCount:
+          priorFollowUpCount + 1,
+
+        conversionWaitingSince:
+          now,
+
+        conversionStageChangedAt:
+          now,
+
+        conversionNextFollowUpAt:
+          followUp5Days,
+
+        bookingUrl,
+        taxPrepUrl
+      };
+
+      responseMessage =
+        "Follow-up email was sent. The lead is waiting on the client, with the next review due in 5 days.";
+    }
+
+    if (cleanAction === "mark-contacted") {
+      newStatus = "Contact Request - Contacted";
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "waiting_client",
+        conversionContactedAt: now,
+        conversionWaitingSince: now,
+        conversionStageChangedAt: now,
+        conversionNextFollowUpAt: followUp48Hours,
+        conversionLastAction: "Marked Contacted"
+      };
+      responseMessage = "Lead was marked contacted.";
+    }
+
+    if (cleanAction === "snooze-follow-up") {
+      const snoozedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      newStatus = "Contact Request - Follow-Up Snoozed";
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "snoozed",
+        conversionSnoozedAt: now,
+        conversionSnoozedUntil: snoozedUntil,
+        conversionStageChangedAt: now,
+        conversionNextFollowUpAt: snoozedUntil,
+        conversionLastAction: "Snoozed 7 Days"
+      };
+      responseMessage = "Opportunity was snoozed for 7 days.";
+    }
+
+    if (cleanAction === "close-opportunity") {
+      newStatus = "Closed - Opportunity Not Moving Forward";
+      completedAt = now;
+      closedAt = now;
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "closed",
+        conversionClosedAt: now,
+        conversionStageChangedAt: now,
+        conversionLastAction: "Closed Opportunity"
+      };
+      responseMessage = "Opportunity was closed and removed from active conversion work.";
+    }
+
+    if (cleanAction === "convert-tax-prep") {
+      newStatus = "Tax Preparation Intake - Needs Review";
+      requestUpdate = {
+        ...requestUpdate,
+        conversionOpportunityStage: "converted_tax_prep",
+        convertedToTaxPrepAt: now,
+        conversionStageChangedAt: now,
+        conversionLastAction: "Converted to Tax Preparation Request",
+        requestedService: "Get My 1040 Tax Return Prepared"
+      };
+      responseMessage = "Lead was converted to a Tax Preparation Request.";
+    }
+
+    const stageLabels = {
+      outreach_sent: "Waiting on Client",
+      calendar_link_sent: "Waiting on Client",
+      follow_up_sent: "Waiting on Client",
+      waiting_client: "Waiting on Client",
+      snoozed: "Snoozed",
+      closed: "Closed",
+      converted_tax_prep: "Tax Prep Request"
+    };
+
+    requestUpdate = {
+      ...requestUpdate,
+      conversionStageChangedAt:
+        requestUpdate.conversionStageChangedAt || now,
+
+      conversionActivityHistory:
+        addHistoryEntry(
+          requestUpdate.conversionLastAction ||
+          "Opportunity Updated",
+
+          stageLabels[
+            requestUpdate.conversionOpportunityStage
+          ] ||
+          "Opportunity Updated"
+        )
+    };
+
+    const updateResult = await updateLeadAfterStripePayment(cleanId, (estimate = {}) => {
+      const updated = {
+        ...estimate,
+        status: newStatus,
+        Request: {
+          ...(estimate.Request || {}),
+          ...requestUpdate,
+          updatedAt: now
+        }
+      };
+
+      if (completedAt) updated.completedAt = completedAt;
+      if (closedAt) updated.closedAt = closedAt;
+
+      return updated;
+    });
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error: updateResult.error || "Could not update the lead after the opportunity action."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      action: cleanAction,
+      status: newStatus,
+      message: responseMessage
+    });
+  } catch (error) {
+    console.error(
+      "[opportunity-action] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: error.message || "Opportunity action failed."
+    });
+  }
+});
+
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
   const {
