@@ -4143,6 +4143,277 @@ Greatest Business Solution LLC`
   }
 });
 
+
+// =============================================================================
+// POST /api/leads/:leadId/send-google-review-request
+// Sends a review-request email only for completed services.
+// Records the send date and prevents accidental duplicates.
+// =============================================================================
+app.post("/api/leads/:leadId/send-google-review-request", async (req, res) => {
+  const cleanId = String(req.params.leadId || "").trim();
+  const force = req.body?.force === true;
+  const now = new Date().toISOString();
+
+  const googleReviewUrl =
+    process.env.GOOGLE_REVIEW_URL ||
+    "https://g.page/r/CYlHVe-ARG5VEAI/review";
+
+  if (!cleanId) {
+    return res.status(400).json({
+      ok: false,
+      error: "Missing lead ID."
+    });
+  }
+
+  const matchesLeadId = (obj = {}) => {
+    const estimate = obj.estimate || {};
+
+    const possibleIds = [
+      obj.leadId,
+      obj.leadid,
+      obj.lead_id,
+      obj.id,
+      obj.estimateId,
+      estimate.leadId,
+      estimate.leadid,
+      estimate.lead_id,
+      estimate.id,
+      estimate.estimateId
+    ];
+
+    return possibleIds.some(
+      (id) => String(id || "").trim() === cleanId
+    );
+  };
+
+  const findLead = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        const row = data.find(matchesLeadId);
+
+        if (row) {
+          return mapRowToLead(row);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[google-review-request] Supabase lookup failed:",
+        error.message || error
+      );
+    }
+
+    return readLeads().find(matchesLeadId) || null;
+  };
+
+  const lead = await findLead();
+
+  if (!lead) {
+    return res.status(404).json({
+      ok: false,
+      error: "Lead not found."
+    });
+  }
+
+  const name = String(
+    lead?.contact?.name ||
+    lead?.calendarAppointment?.inviteeName ||
+    "Client"
+  ).trim();
+
+  const email = String(
+    lead?.contact?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    ""
+  ).trim();
+
+  if (!email) {
+    return res.status(400).json({
+      ok: false,
+      error: "This completed client does not have an email address."
+    });
+  }
+
+  const status = String(lead?.status || "").toLowerCase();
+  const calendarStatus = String(
+    lead?.calendarAppointment?.status || ""
+  ).toLowerCase();
+
+  const isNoShowOrCanceled =
+    status.includes("no-show") ||
+    status.includes("no show") ||
+    status.includes("cancel") ||
+    calendarStatus.includes("no-show") ||
+    calendarStatus.includes("no show") ||
+    calendarStatus.includes("cancel");
+
+  const isClosedWithoutService =
+    status.includes("not moving forward") ||
+    status.includes("opportunity not moving forward");
+
+  const isCompletedService =
+    Boolean(
+      lead?.completedAt ||
+      lead?.closedAt ||
+      lead?.writtenReviewDeliveredAt ||
+      lead?.writtenReviewCompletedAt ||
+      lead?.writtenReview?.deliveredAt ||
+      lead?.writtenReview?.completedAt
+    ) ||
+    status.includes("completed") ||
+    status.includes("delivered") ||
+    calendarStatus === "completed";
+
+  if (
+    !isCompletedService ||
+    isNoShowOrCanceled ||
+    isClosedWithoutService
+  ) {
+    return res.status(400).json({
+      ok: false,
+      error:
+        "Google review requests are available only after a completed client service."
+    });
+  }
+
+  const requestMeta =
+    lead?.Request &&
+    typeof lead.Request === "object" &&
+    !Array.isArray(lead.Request)
+      ? lead.Request
+      : {};
+
+  const priorSentAt = String(
+    requestMeta.googleReviewRequestLastSentAt ||
+    requestMeta.googleReviewRequestSentAt ||
+    ""
+  ).trim();
+
+  if (priorSentAt && !force) {
+    return res.status(409).json({
+      ok: false,
+      alreadySent: true,
+      sentAt: priorSentAt,
+      error:
+        "A Google review request was already sent to this client."
+    });
+  }
+
+  if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+    return res.status(500).json({
+      ok: false,
+      error: "Email delivery is not configured on this server."
+    });
+  }
+
+  const firstName =
+    name.split(/\s+/).filter(Boolean)[0] || "there";
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject:
+        "Would You Share Your Experience with Greatest Business Solution LLC?",
+      text:
+`Hello ${firstName},
+
+Thank you for choosing Greatest Business Solution LLC.
+
+Would you be willing to share an honest Google review about your experience? Your feedback helps other individuals and small-business owners understand what to expect when they need tax or business assistance.
+
+Leave your review here:
+${googleReviewUrl}
+
+Please share only what you are comfortable making public. For your privacy, do not include Social Security numbers, tax documents, bank information, refund amounts, tax balances, or other sensitive financial details.
+
+Thank you again for allowing me to assist you.
+
+Cedric Easley | Tax Specialist
+Greatest Business Solution LLC`
+    });
+
+    const previousCount = Number(
+      requestMeta.googleReviewRequestCount || 0
+    );
+
+    const existingHistory =
+      Array.isArray(requestMeta.serviceActivityHistory)
+        ? requestMeta.serviceActivityHistory
+            .filter((entry) => entry && (entry.action || entry.at))
+            .slice(-24)
+        : [];
+
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        cleanId,
+        (estimate = {}) => ({
+          ...estimate,
+          Request: {
+            ...(estimate.Request || {}),
+            googleReviewRequestStatus: "Sent",
+            googleReviewRequestSentAt:
+              requestMeta.googleReviewRequestSentAt || now,
+            googleReviewRequestLastSentAt: now,
+            googleReviewRequestCount: previousCount + 1,
+            googleReviewUrl,
+            serviceActivityHistory: [
+              ...existingHistory,
+              {
+                action:
+                  previousCount > 0
+                    ? "Google Review Request Resent"
+                    : "Google Review Request Sent",
+                at: now
+              }
+            ].slice(-25),
+            updatedAt: now
+          }
+        })
+      );
+
+    if (!updateResult.ok) {
+      console.error(
+        "[google-review-request] Email sent but history update failed:",
+        updateResult.error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        emailSent: true,
+        error:
+          "The review email was sent, but the send history could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      sentAt: now,
+      reviewUrl: googleReviewUrl,
+      message:
+        previousCount > 0
+          ? "Google review request was resent and recorded."
+          : "Google review request was sent and recorded."
+    });
+  } catch (error) {
+    console.error(
+      "[google-review-request] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        error.message ||
+        "The Google review request could not be sent."
+    });
+  }
+});
+
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
   const {

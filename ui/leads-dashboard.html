@@ -463,6 +463,40 @@
       cursor: pointer;
     }
 
+    .google-review-btn {
+      border: 0;
+      border-radius: 6px;
+      background: #1f7a45;
+      color: #ffffff;
+      padding: 8px 10px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 6px;
+      width: 100%;
+      max-width: 150px;
+      line-height: 1.15;
+    }
+
+    .google-review-btn.resend {
+      background: #6b7280;
+      font-size: 11px;
+      padding: 6px 8px;
+    }
+
+    .google-review-btn[disabled] {
+      background: #64748b;
+      cursor: default;
+    }
+
+    .google-review-sent {
+      display: block;
+      margin-top: 5px;
+      color: #166534;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
 
     .office-command-center {
       display: block;
@@ -3245,6 +3279,237 @@ function openOfficeLead(index){
   openOfficeWorkItem(index);
 }
 
+function getGoogleReviewRequestSentAt(lead){
+  const request =
+    lead?.Request &&
+    typeof lead.Request === "object" &&
+    !Array.isArray(lead.Request)
+      ? lead.Request
+      : {};
+
+  return (
+    request.googleReviewRequestLastSentAt ||
+    request.googleReviewRequestSentAt ||
+    ""
+  );
+}
+
+function isGoogleReviewEligibleLead(lead){
+  if(!lead) return false;
+
+  const status = String(
+    lead.status || ""
+  ).toLowerCase();
+
+  const calendarStatus = String(
+    lead?.calendarAppointment?.status || ""
+  ).toLowerCase();
+
+  const disallowed =
+    status.includes("no-show") ||
+    status.includes("no show") ||
+    status.includes("cancel") ||
+    status.includes("not moving forward") ||
+    calendarStatus.includes("no-show") ||
+    calendarStatus.includes("no show") ||
+    calendarStatus.includes("cancel");
+
+  if(disallowed) return false;
+
+  return Boolean(
+    lead.completedAt ||
+    lead.closedAt ||
+    lead.writtenReviewDeliveredAt ||
+    lead.writtenReviewCompletedAt ||
+    lead?.writtenReview?.deliveredAt ||
+    lead?.writtenReview?.completedAt ||
+    status.includes("completed") ||
+    status.includes("delivered") ||
+    calendarStatus === "completed"
+  );
+}
+
+function getGoogleReviewActionHtml(lead, context, index){
+  if(!isGoogleReviewEligibleLead(lead)){
+    return "";
+  }
+
+  const email = String(
+    lead?.contact?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    ""
+  ).trim();
+
+  if(!email){
+    return `
+      <button
+        type="button"
+        class="google-review-btn"
+        disabled
+      >
+        No Email for Review
+      </button>
+    `;
+  }
+
+  const sentAt = getGoogleReviewRequestSentAt(lead);
+
+  if(sentAt){
+    return `
+      <span class="google-review-sent">
+        Review Request Sent<br>
+        ${formatLeadDate(sentAt)}
+      </span>
+
+      <button
+        type="button"
+        class="google-review-btn resend"
+        onclick="sendGoogleReviewRequest('${context}', ${index}, this, true)"
+      >
+        Resend Review Request
+      </button>
+    `;
+  }
+
+  return `
+    <button
+      type="button"
+      class="google-review-btn"
+      onclick="sendGoogleReviewRequest('${context}', ${index}, this, false)"
+    >
+      Send Review Request
+    </button>
+  `;
+}
+
+async function sendGoogleReviewRequest(
+  context,
+  index,
+  button,
+  force
+){
+  const source =
+    context === "calendar"
+      ? (window.visibleClosedCalendarLeads || [])
+      : (window.visibleClosedLeads || []);
+
+  const lead = source[index];
+
+  if(!lead?.leadId){
+    alert("Completed client could not be identified.");
+    return;
+  }
+
+  const name = String(
+    lead?.contact?.name ||
+    lead?.calendarAppointment?.inviteeName ||
+    "this client"
+  ).trim();
+
+  const email = String(
+    lead?.contact?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    ""
+  ).trim();
+
+  const sentAt =
+    getGoogleReviewRequestSentAt(lead);
+
+  const question = force
+    ? `A Google review request was already sent to ${name}${sentAt ? ` on ${formatLeadDate(sentAt)}` : ""}. Resend it to ${email}?`
+    : `Send a Google review request to ${name} at ${email}?`;
+
+  if(!window.confirm(question)){
+    return;
+  }
+
+  const originalText =
+    button?.textContent || "Send Review Request";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Sending...";
+  }
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(lead.leadId)}/send-google-review-request`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          force: Boolean(force)
+        })
+      }
+    );
+
+    const raw = await response.text();
+    let data = {};
+
+    try{
+      data = raw ? JSON.parse(raw) : {};
+    }catch{
+      throw new Error(
+        "The server returned a webpage instead of an API response. Restart Node from the Tax-Estimator folder and try again."
+      );
+    }
+
+    if(
+      response.status === 409 &&
+      data.alreadySent
+    ){
+      const resend = window.confirm(
+        `${data.error}\n\nSent: ${formatLeadDate(data.sentAt)}\n\nDo you want to resend it?`
+      );
+
+      if(resend){
+        if(button){
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+
+        return sendGoogleReviewRequest(
+          context,
+          index,
+          button,
+          true
+        );
+      }
+
+      return;
+    }
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error ||
+        "The Google review request could not be sent."
+      );
+    }
+
+    alert(data.message);
+
+    await loadLeads();
+
+  }catch(error){
+    console.error(
+      "[Google Review Request]",
+      error
+    );
+
+    alert(
+      error.message ||
+      "The Google review request could not be sent."
+    );
+
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
 function openPanel(lead){
   const panel=document.getElementById("detailPanel");
   panel.style.display="block";
@@ -4189,14 +4454,22 @@ function renderLeads(){
                     <button class="taxprep-open-btn" onclick="openCalendarLead(${index}, ${closedView})">
                       ${closedView ? "View Closed" : "Open"}
                     </button>
+
                     ${!closedView ? `
                       <button class="contact-replied-btn" style="background:#2f855a;margin-top:6px;display:block;" onclick="markCalendarOutcome(${index}, 'Completed', this)">
                         Mark Completed
                       </button>
+
                       <button class="contact-replied-btn" style="background:#b45309;margin-top:6px;display:block;" onclick="markCalendarOutcome(${index}, 'No-Show', this)">
                         Mark No-Show
                       </button>
-                    ` : ""}
+                    ` : `
+                      ${getGoogleReviewActionHtml(
+                        lead,
+                        "calendar",
+                        index
+                      )}
+                    `}
                   </td>
                 </tr>`;
             }).join("")}
@@ -4365,6 +4638,12 @@ function renderLeads(){
                     >
                       Open
                     </button>
+
+                    ${getGoogleReviewActionHtml(
+                      lead,
+                      "closed",
+                      index
+                    )}
                   </td>
                 </tr>`;
             }).join("")}
