@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const express = require("express");
 const clientCore = require("./server/clientCore");
@@ -516,7 +516,7 @@ function buildFreeEstimatePdfBuffer(lead = {}) {
             .fontSize(10)
             .fillColor("#111827")
             .text(
-              "• " + label + ": " + value,
+              "â€¢ " + label + ": " + value,
               {
                 indent: 8,
                 paragraphGap: 2
@@ -894,7 +894,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-Ã°Å¸â€˜â€° Schedule your 15-minute tax review now:
+ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Â° Schedule your 15-minute tax review now:
 ${bookingLink}
 
 Thank you,
@@ -917,7 +917,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-Ã°Å¸â€˜â€° Schedule your 15-minute tax review:
+ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Â° Schedule your 15-minute tax review:
 ${bookingLink}
 
 Thank you,
@@ -2260,6 +2260,9 @@ function calendlyAppointmentMatches(existing = {}, incoming = {}) {
 
 async function saveCalendlyAppointment(appointment) {
   const email = normalizeEmail(appointment.inviteeEmail);
+  const inviteeNameKey = String(
+    appointment.inviteeName || ""
+  ).trim().toLowerCase();
 
   if (!email) {
     return {
@@ -2269,6 +2272,78 @@ async function saveCalendlyAppointment(appointment) {
     };
   }
 
+  const getCalendarStatus = () =>
+    appointment.status === "Canceled"
+      ? "Calendar - Canceled"
+      : "Calendar - Scheduled";
+
+  const pickMatchingLead = (rows = [], getEstimate) => {
+    const candidates = rows.map((row) => {
+      const estimate = getEstimate(row) || {};
+      const existingAppointment =
+        estimate.calendarAppointment || {};
+
+      return {
+        row,
+        estimate,
+        existingAppointment,
+        rowEmail: normalizeEmail(
+          estimate.contact?.email ||
+          row.email
+        ),
+        rowName: String(
+          estimate.contact?.name ||
+          row.name ||
+          ""
+        ).trim().toLowerCase()
+      };
+    });
+
+    return (
+      candidates.find((candidate) => {
+        const existingInviteeUri = String(
+          candidate.existingAppointment.inviteeUri || ""
+        ).trim();
+
+        const incomingInviteeUri = String(
+          appointment.inviteeUri || ""
+        ).trim();
+
+        const existingEventUri = String(
+          candidate.existingAppointment.eventUri || ""
+        ).trim();
+
+        const incomingEventUri = String(
+          appointment.eventUri || ""
+        ).trim();
+
+        return (
+          (
+            existingInviteeUri &&
+            incomingInviteeUri &&
+            existingInviteeUri === incomingInviteeUri
+          ) ||
+          (
+            existingEventUri &&
+            incomingEventUri &&
+            existingEventUri === incomingEventUri
+          )
+        );
+      }) ||
+      candidates.find((candidate) => {
+        return (
+          candidate.rowEmail === email &&
+          inviteeNameKey &&
+          candidate.rowName === inviteeNameKey
+        );
+      }) ||
+      candidates.find((candidate) => {
+        return candidate.rowEmail === email;
+      }) ||
+      null
+    );
+  };
+
   try {
     const { data, error } = await supabase
       .from("leads")
@@ -2277,29 +2352,31 @@ async function saveCalendlyAppointment(appointment) {
 
     if (error) throw error;
 
-    const matchingRow = (data || []).find((row) => {
-      const estimate = row.estimate || {};
-      const rowEmail = normalizeEmail(
-        estimate.contact?.email ||
-        row.email
-      );
+    const matchingCandidate = pickMatchingLead(
+      data || [],
+      (row) => row.estimate || {}
+    );
 
-      const existingAppointment =
-        estimate.calendarAppointment || {};
-
-      return (
-        rowEmail === email ||
-        calendlyAppointmentMatches(
-          existingAppointment,
-          appointment
-        )
-      );
-    });
+    const matchingRow = matchingCandidate?.row || null;
 
     if (matchingRow) {
       const estimate = matchingRow.estimate || {};
       const updatedEstimate = {
         ...estimate,
+        status: getCalendarStatus(),
+        contact: {
+          ...(estimate.contact || {}),
+          name:
+            appointment.inviteeName ||
+            estimate.contact?.name ||
+            matchingRow.name ||
+            "Calendly Client",
+          email:
+            appointment.inviteeEmail ||
+            estimate.contact?.email ||
+            matchingRow.email ||
+            ""
+        },
         calendarAppointment: {
           ...(estimate.calendarAppointment || {}),
           ...appointment
@@ -2309,7 +2386,11 @@ async function saveCalendlyAppointment(appointment) {
 
       let updateQuery = supabase
         .from("leads")
-        .update({ estimate: updatedEstimate });
+        .update({
+          name: updatedEstimate.contact.name,
+          email: updatedEstimate.contact.email,
+          estimate: updatedEstimate
+        });
 
       if (matchingRow.leadId) {
         updateQuery = updateQuery.eq("leadId", matchingRow.leadId);
@@ -2326,6 +2407,8 @@ async function saveCalendlyAppointment(appointment) {
 
       const updatedLead = mapRowToLead({
         ...matchingRow,
+        name: updatedEstimate.contact.name,
+        email: updatedEstimate.contact.email,
         estimate: updatedEstimate
       });
 
@@ -2349,10 +2432,7 @@ async function saveCalendlyAppointment(appointment) {
       leadId,
       timestamp: new Date().toISOString(),
       priority: "medium",
-      status:
-        appointment.status === "Canceled"
-          ? "Calendar - Canceled"
-          : "Calendar - Scheduled",
+      status: getCalendarStatus(),
       notes: "Created automatically from Calendly.",
       contact: {
         name: appointment.inviteeName || "Calendly Client",
@@ -2406,20 +2486,30 @@ async function saveCalendlyAppointment(appointment) {
   }
 
   const leads = readLeads();
-  let matchingIndex = leads.findIndex((lead) => {
-    const leadEmail = normalizeEmail(lead?.contact?.email);
-    return (
-      leadEmail === email ||
-      calendlyAppointmentMatches(
-        lead?.calendarAppointment || {},
-        appointment
-      )
-    );
-  });
+  const matchingCandidate = pickMatchingLead(
+    leads,
+    (lead) => lead || {}
+  );
+
+  const matchingIndex = matchingCandidate
+    ? leads.indexOf(matchingCandidate.row)
+    : -1;
 
   if (matchingIndex >= 0) {
     leads[matchingIndex] = {
       ...leads[matchingIndex],
+      status: getCalendarStatus(),
+      contact: {
+        ...(leads[matchingIndex].contact || {}),
+        name:
+          appointment.inviteeName ||
+          leads[matchingIndex].contact?.name ||
+          "Calendly Client",
+        email:
+          appointment.inviteeEmail ||
+          leads[matchingIndex].contact?.email ||
+          ""
+      },
       calendarAppointment: {
         ...(leads[matchingIndex].calendarAppointment || {}),
         ...appointment
@@ -2451,10 +2541,7 @@ async function saveCalendlyAppointment(appointment) {
     leadId,
     timestamp: new Date().toISOString(),
     priority: "medium",
-    status:
-      appointment.status === "Canceled"
-        ? "Calendar - Canceled"
-        : "Calendar - Scheduled",
+    status: getCalendarStatus(),
     notes: "Created automatically from Calendly.",
     contact: {
       name: appointment.inviteeName || "Calendly Client",
@@ -3085,7 +3172,7 @@ app.post("/api/calendar-appointment", async (req, res) => {
 
   if (cleanMeetingType === "Phone Call") {
     location.phone = cleanPhone;
-    location.display = `Phone Call — ${cleanPhone}`;
+    location.display = `Phone Call â€” ${cleanPhone}`;
   }
 
   if (
@@ -5291,6 +5378,7 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
+
 
 
 
