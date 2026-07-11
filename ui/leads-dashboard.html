@@ -2507,7 +2507,7 @@ function isActiveTranscriptRequest(lead){
 }
 
 function isActiveScheduledConsult(lead){
-  return isCalendarLead(lead) && !isClosedCalendarLead(lead) && !isConversionClosedLead(lead);
+  return isCalendarLead(lead) && !isClosedCalendarLead(lead);
 }
 
 function getLeadEstimateDirection(lead){
