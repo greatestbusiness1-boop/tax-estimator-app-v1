@@ -2532,7 +2532,7 @@ function getLeadEstimateDirection(lead){
 }
 
 function getConversionMetrics(){
-  const activeLeads = (allLeads || []).filter(lead => !isConversionClosedLead(lead));
+  const activeLeads = (allLeads || []).filter(lead => !isConversionClosedLead(lead) || isActiveScheduledConsult(lead));
   const newToday = activeLeads.filter(isLeadEnteredToday);
   const freeEstimates = activeLeads.filter(isFreeEstimateRootLead);
   const paidReviews = activeLeads.filter(isPaidWrittenReviewLead);
@@ -2928,7 +2928,7 @@ function getConversionCommandItems(){
   const items = [];
 
   (allLeads || []).forEach(lead => {
-    if(isConversionClosedLead(lead)) return;
+    if(isConversionClosedLead(lead) && !isActiveScheduledConsult(lead)) return;
 
     const status = String(lead?.status || "").trim();
     const lower = status.toLowerCase();
