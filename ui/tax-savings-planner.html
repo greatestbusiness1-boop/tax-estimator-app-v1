@@ -21,12 +21,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Executive dashboard active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Health Score active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Executive dashboard active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Health Score active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -58,6 +58,18 @@
           </div>
         </div>
 
+        <div class="section-head" style="margin-top:26px"><div class="letter">H</div><h3>Tax Health Score™</h3></div>
+        <div class="health-grid">
+          <div class="health-ring" id="taxHealthScore">0 / 100</div>
+          <div>
+            <div class="attention-list" id="taxHealthAttention">
+              <div class="attention-item">Complete the Withholding Checkup.</div>
+              <div class="attention-item">Review the Tax Savings Finder.</div>
+            </div>
+            <p class="module-note" id="taxHealthSummary" style="margin-top:10px">Your score will improve as the planner identifies completed actions and unresolved risks.</p>
+          </div>
+        </div>
+
         <div class="section-head" style="margin-top:26px"><div class="letter">T</div><h3>Opportunity Timeline</h3></div>
         <div class="action-list">
           <div class="action-item">
@@ -81,6 +93,7 @@
         <div class="tape">
           <h3>Executive Summary</h3>
           <div class="row"><span>Tax Savings Score™</span><strong class="number" id="overviewScore">0 / 100</strong></div>
+          <div class="row"><span>Tax Health Score™</span><strong class="number" id="overviewHealthScore">0 / 100</strong></div>
           <div class="row"><span>Potential federal savings</span><strong class="money positive" id="overviewFederalSavings">$0</strong></div>
           <div class="row"><span>Potential state savings</span><strong class="money positive" id="overviewStateSavings">$0</strong></div>
           <div class="row"><span>Direct credits identified</span><strong class="money positive" id="overviewCredits">$0</strong></div>
@@ -426,6 +439,7 @@
     score: 0,
     actions: []
   };
+  let latestTaxHealthScore = 0;
 
   function numberValue(id) {
     const value = Number(document.getElementById(id)?.value || 0);
@@ -678,13 +692,113 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function updateTaxHealthScore() {
+    const summary = latestFinderSummary || {};
+    const attention = [];
+    let score = 35;
+
+    const withholdingResult = latestCombinedWithholdingResult;
+    const estimatedCombinedTax =
+      numberValue("whEstimatedTax") +
+      Number(latestStateResult?.stateTax || 0);
+    const targetBand = Math.max(100, estimatedCombinedTax * 0.02);
+
+    if (Math.abs(withholdingResult) <= targetBand) {
+      score += 25;
+      attention.push({
+        text: "Withholding appears close to the combined estimated tax.",
+        type: "good"
+      });
+    } else if (withholdingResult < 0) {
+      score += 5;
+      attention.push({
+        text: "Projected balance due: review federal and state withholding.",
+        type: "warn"
+      });
+    } else {
+      score += 15;
+      attention.push({
+        text: "Projected overwithholding: review whether cash flow can be improved.",
+        type: ""
+      });
+    }
+
+    const selectedCount = Number(summary.selectedCount || 0);
+    if (selectedCount >= 3) {
+      score += 20;
+      attention.push({
+        text: `${selectedCount} planning opportunities have been identified.`,
+        type: "good"
+      });
+    } else if (selectedCount > 0) {
+      score += 10;
+      attention.push({
+        text: "Continue reviewing available planning opportunities.",
+        type: ""
+      });
+    } else {
+      attention.push({
+        text: "Complete the Tax Savings Finder.",
+        type: "warn"
+      });
+    }
+
+    if (document.getElementById("findBooksOn")?.checked) {
+      score -= 10;
+      attention.push({
+        text: "Bookkeeping cleanup needs attention before tax preparation.",
+        type: "warn"
+      });
+    }
+
+    if (
+      document.getElementById("findTranscriptOn")?.checked ||
+      document.getElementById("findNoticeOn")?.checked
+    ) {
+      score -= 10;
+      attention.push({
+        text: "An IRS records or notice issue requires professional review.",
+        type: "warn"
+      });
+    }
+
+    if ((summary.combinedSavings || 0) > 0) {
+      score += 10;
+    }
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    latestTaxHealthScore = score;
+
+    const scoreElement = document.getElementById("taxHealthScore");
+    const list = document.getElementById("taxHealthAttention");
+    const summaryText = document.getElementById("taxHealthSummary");
+
+    scoreElement.textContent = `${score} / 100`;
+
+    list.innerHTML = attention.slice(0, 4).map(item => (
+      `<div class="attention-item ${item.type || ""}">${item.text}</div>`
+    )).join("");
+
+    if (score >= 85) {
+      summaryText.textContent = "Excellent tax health. Continue monitoring major income, withholding, and family changes.";
+    } else if (score >= 70) {
+      summaryText.textContent = "Good overall position with a few planning items to review.";
+    } else if (score >= 50) {
+      summaryText.textContent = "Moderate tax risk. Address the highlighted items before year-end or filing.";
+    } else {
+      summaryText.textContent = "Needs attention. Review withholding, records, and IRS-related issues with your tax professional.";
+    }
+  }
+
   function updatePlannerOverview() {
+    updateTaxHealthScore();
     const summary = latestFinderSummary;
     const actions = [...(summary.actions || [])].sort(
       (a, b) => b.estimatedBenefit - a.estimatedBenefit
     );
 
     document.getElementById("overviewScore").textContent = `${summary.score || 0} / 100`;
+    document.getElementById("overviewHealthScore").textContent = `${latestTaxHealthScore || 0} / 100`;
     setMoney("overviewFederalSavings", summary.federalSavings || 0);
     setMoney("overviewStateSavings", summary.stateSavings || 0);
     setMoney("overviewCredits", summary.directCredits || 0);
