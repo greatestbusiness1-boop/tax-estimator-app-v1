@@ -148,36 +148,36 @@ function leadTime(lead){
 }
 function pill(text,good){return `<span class="status ${good?'good':'need'}">${esc(text)}</span>`;}
 function pay(lead){
-  const tr=lead.transcriptRequest||{};
+  const tr=lead.transcriptRequest||lead.Request||{};
   const status=String(lead.status||"");
   const p=String(tr.paymentStatus||"").toLowerCase();
   if(status.includes("Paid")||p.includes("paid")||p.includes("verified")) return {text:"Paid / Verified",good:true};
   return {text:"Need Payment",good:false};
 }
 function auth(lead){
-  const tr=lead.transcriptRequest||{};
+  const tr=lead.transcriptRequest||lead.Request||{};
   const a=String(tr.authorizationStatus||"").toLowerCase();
   if(tr.authorizationReceivedDate||a.includes("received")||a.includes("signed")||a.includes("uploaded")) return {text:tr.authorizationReceivedDate?`8821 Received ${tr.authorizationReceivedDate}`:"8821 Received",good:true};
   if(a.includes("sent")) return {text:"8821 Sent",good:false};
   return {text:"Need 8821",good:false};
 }
 function pull(lead){
-  const tr=lead.transcriptRequest||{};
+  const tr=lead.transcriptRequest||lead.Request||{};
   if(tr.transcriptReceivedDate) return {text:`Received ${tr.transcriptReceivedDate}`,good:true};
   if(tr.transcriptPulledDate) return {text:`Pulled ${tr.transcriptPulledDate}`,good:true};
   return {text:"Not Pulled",good:false};
 }
 function deliv(lead){
-  const tr=lead.transcriptRequest||{};
+  const tr=lead.transcriptRequest||lead.Request||{};
   if(tr.deliveryDate) return {text:`Delivered ${tr.deliveryDate}`,good:true};
   if(tr.deliveryMethod) return {text:`Delivery: ${tr.deliveryMethod}`,good:false};
   return {text:"Not Delivered",good:false};
 }
 function getType(lead){return (lead.transcriptRequest||{}).transcriptType || "Need type";}
-function getYears(lead){const tr=lead.transcriptRequest||{};return tr.yearsNeeded||tr.taxYears||lead?.taxData?.taxYear||lead?.estimateSummary?.taxYear||lead?.estimateSummary?.meta?.taxYear||"Need years";}
-function getIssue(lead){const tr=lead.transcriptRequest||{};return tr.clientIssue||tr.clientComment||tr.clientExplanation||tr.issueType||"Review request";}
+function getYears(lead){const tr=lead.transcriptRequest||lead.Request||{};return tr.yearsNeeded||tr.taxYears||lead?.taxData?.taxYear||lead?.estimateSummary?.taxYear||lead?.estimateSummary?.meta?.taxYear||"Need years";}
+function getIssue(lead){const tr=lead.transcriptRequest||lead.Request||{};return tr.clientIssue||tr.clientComment||tr.clientExplanation||tr.issueType||"Review request";}
 function nextAction(lead){
-  const tr=lead.transcriptRequest||{};
+  const tr=lead.transcriptRequest||lead.Request||{};
   const p=pay(lead);
 
   const authText=String(tr.authorizationStatus||"").toLowerCase();
@@ -265,7 +265,7 @@ async function load(){
       <button class="btn secondary" onclick="backToTranscriptList()">Back to All Transcript Clients</button>
     </div>
   ` : "") + displayRows.map(lead=>{
-    const tr=lead.transcriptRequest||{};
+    const tr=lead.transcriptRequest||lead.Request||{};
     const p=pay(lead), a=auth(lead), pu=pull(lead), d=deliv(lead);
     const id=lead.leadId;
     return `<div class="row">
