@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const express = require("express");
 const clientCore = require("./server/clientCore");
@@ -4507,6 +4507,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     status,
     notes,
     Request,
+    transcriptRequest,
     calendarAppointment,
     completedAt,
     closedAt
@@ -4560,16 +4561,31 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.closedAt = closedAt.trim();
     }
 
-    if (
-      Request &&
-      typeof Request === "object" &&
-      !Array.isArray(Request)
-    ) {
-      updatedEstimate.Request = {
-        ...(updatedEstimate.Request || {}),
-        ...Request,
+    const incomingTranscriptRequest =
+      transcriptRequest &&
+      typeof transcriptRequest === "object" &&
+      !Array.isArray(transcriptRequest)
+        ? transcriptRequest
+        : Request &&
+          typeof Request === "object" &&
+          !Array.isArray(Request)
+          ? Request
+          : null;
+
+    if (incomingTranscriptRequest) {
+      const mergedTranscriptRequest = {
+        ...(updatedEstimate.transcriptRequest ||
+          updatedEstimate.Request ||
+          {}),
+        ...incomingTranscriptRequest,
         updatedAt: new Date().toISOString()
       };
+
+      updatedEstimate.transcriptRequest =
+        mergedTranscriptRequest;
+
+      updatedEstimate.Request =
+        mergedTranscriptRequest;
     }
 
     if (
@@ -4734,16 +4750,31 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         };
       }
 
-      if (
-        Request &&
-        typeof Request === "object" &&
-        !Array.isArray(Request)
-      ) {
-        localLead.Request = {
-          ...(localLead.Request || {}),
-          ...Request,
+      const incomingTranscriptRequest =
+        transcriptRequest &&
+        typeof transcriptRequest === "object" &&
+        !Array.isArray(transcriptRequest)
+          ? transcriptRequest
+          : Request &&
+            typeof Request === "object" &&
+            !Array.isArray(Request)
+            ? Request
+            : null;
+
+      if (incomingTranscriptRequest) {
+        const mergedTranscriptRequest = {
+          ...(localLead.transcriptRequest ||
+            localLead.Request ||
+            {}),
+          ...incomingTranscriptRequest,
           updatedAt: new Date().toISOString()
         };
+
+        localLead.transcriptRequest =
+          mergedTranscriptRequest;
+
+        localLead.Request =
+          mergedTranscriptRequest;
       }
 
       localLeads[localIndex] = localLead;
