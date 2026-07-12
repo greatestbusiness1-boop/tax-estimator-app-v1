@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Savings Planner™ | Greatest Business Solution LLC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--navy:#132A3D;--navy-deep:#0C1E2C;--cream:#F7F3E9;--paper:#FFFEFB;--line:#DDD3BC;--line-soft:#EAE2CD;--ink:#1E2A30;--ink-soft:#5B6670;--green:#1F6F52;--green-deep:#154F3A;--red:#AE3A34;--red-deep:#8A2D28;--gold:#B08A4E;--gold-soft:#E4D3AC}
+    *{box-sizing:border-box} body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,Arial,sans-serif} button,input,select{font:inherit}
+    .money,.number{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+    .masthead{background:var(--navy);color:white;border-bottom:4px solid var(--gold);padding:18px 24px}.masthead-inner{max-width:1180px;margin:auto;display:flex;justify-content:space-between;gap:24px;align-items:center}.brand{display:flex;align-items:center;gap:14px}.monogram{width:46px;height:46px;border-radius:50%;background:var(--gold);color:var(--navy-deep);display:grid;place-items:center;font-family:Fraunces,serif;font-size:28px;font-weight:700}.brand strong{font-family:Fraunces,serif;font-size:20px}.brand span,.tagline{display:block;color:#dbe4ea;font-size:12px}.tagline{text-align:right;max-width:390px}
+    main{max-width:1180px;margin:auto;padding:34px 22px 60px}.eyebrow{font-family:"IBM Plex Mono",monospace;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}h1,h2,h3{font-family:Fraunces,serif}h1{font-size:clamp(36px,6vw,62px);line-height:1;margin:8px 0 12px}.lead{max-width:800px;color:var(--ink-soft);font-size:17px;line-height:1.6}.client-strip{margin-top:20px;border:1px solid var(--line);background:var(--paper);padding:12px 16px;display:flex;flex-wrap:wrap;gap:14px 30px;font-size:13px}.client-strip strong{color:var(--navy)}
+    .tabs{display:flex;align-items:flex-end;gap:6px;margin-top:30px;border-bottom:1px solid var(--line);overflow-x:auto;padding-top:12px}.tab{clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);border:1px solid var(--line);border-bottom:0;background:#e7dfcc;color:var(--navy);padding:14px 18px;cursor:pointer;white-space:nowrap;position:relative}.tab.active{background:var(--paper);z-index:3;padding-top:18px;font-weight:700;border-top:3px solid var(--gold)}
+    .panel{display:none;background:var(--paper);border:1px solid var(--line);border-top:0;padding:26px}.panel.active{display:block}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}.form-card{border:1px solid var(--line);padding:20px;background:var(--paper)}.section-head{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft);padding-bottom:10px;margin:0 0 16px}.letter{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-weight:700}.section-head h3{margin:0;font-size:20px}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:var(--navy)}input,select{width:100%;border:1px solid var(--line);background:white;padding:11px 12px;color:var(--ink)}input:focus,select:focus,button:focus,a:focus{outline:3px solid var(--gold-soft);outline-offset:2px}
+    .ledger-wrap{background:var(--navy);padding:26px 20px;min-height:360px}.tape{position:relative;background:var(--paper);padding:30px 22px;margin:10px 0}.tape:before,.tape:after{content:"";position:absolute;left:0;width:100%;height:12px;background:linear-gradient(135deg,transparent 6px,var(--paper) 0) 0 0/12px 12px repeat-x}.tape:before{top:-12px}.tape:after{bottom:-12px;transform:rotate(180deg)}.tape h3{margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed var(--line)}.total{margin-top:8px;border-top:4px double var(--ink);border-bottom:0;font-weight:700;font-size:18px}.status{display:inline-block;margin-top:18px;padding:7px 10px;background:var(--gold-soft);color:var(--navy-deep);font-size:12px;font-weight:700}.module-note{color:var(--ink-soft);font-size:14px;line-height:1.55}.cta{display:inline-block;margin-top:16px;background:var(--navy);color:#fff;text-decoration:none;padding:11px 15px;font-weight:700}.finder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.finder-item{border:1px solid var(--line);padding:14px;background:#fff}.finder-item input{width:auto;margin-right:8px}.score{font-size:44px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
+    .disclaimer{margin-top:26px;border:1px solid var(--line);padding:18px;background:#f0eadb;color:var(--ink-soft);font-size:12px;line-height:1.6}footer{background:var(--navy-deep);color:#dce5ea;text-align:center;padding:20px;font-size:12px}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}.masthead-inner{align-items:flex-start;flex-direction:column}.tagline{text-align:left}.field-grid,.finder-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. Phase 1 planning framework.</div></div></header>
+<main>
+  <div class="eyebrow">Interactive Tax Planning Suite</div>
+  <h1>Tax Savings Planner™</h1>
+  <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Phase 1 framework installed</span></div>
+
+  <nav class="tabs" aria-label="Tax Savings Planner tools">
+    <button class="tab active" data-tab="withholding">01 Withholding Checkup</button>
+    <button class="tab" data-tab="quarterly">02 Quarterly Planner</button>
+    <button class="tab" data-tab="whatif">03 What-If Scenarios</button>
+    <button class="tab" data-tab="finder">04 Tax Savings Finder</button>
+    <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
+  </nav>
+
+  <section class="panel active" id="withholding"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">A</div><h3>Filing Information</h3></div><div class="field-grid"><div class="field"><label>Filing status</label><select id="filingStatus"><option>Single</option><option>Married Filing Jointly</option><option>Married Filing Separately</option><option>Head of Household</option></select></div><div class="field"><label>Pay frequency</label><select><option>Biweekly</option><option>Weekly</option><option>Semi-monthly</option><option>Monthly</option></select></div><div class="field"><label>Annual W-2 wages</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Projected federal withholding</label><input class="money" type="number" min="0" placeholder="$0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Withholding Checkup</h3><div class="row"><span>Taxable income</span><strong class="money">$0</strong></div><div class="row"><span>Estimated federal tax</span><strong class="money">$0</strong></div><div class="row"><span>Withholding on pace</span><strong class="money">$0</strong></div><div class="row total"><span>Projected result</span><strong class="money">$0</strong></div><span class="status">Calculator activation — Phase 2</span></div></div></div></section>
+
+  <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><div class="field-grid"><div class="field"><label>1099 / business income</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Business expenses</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Federal tax already withheld</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Estimated payments already made</label><input class="money" type="number" min="0" placeholder="$0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Payment Plan</h3><div class="row"><span>Net self-employment profit</span><strong class="money">$0</strong></div><div class="row"><span>Self-employment tax</span><strong class="money">$0</strong></div><div class="row"><span>Income tax estimate</span><strong class="money">$0</strong></div><div class="row total"><span>Total still owed</span><strong class="money">$0</strong></div><span class="status">Due-date calculator — Phase 2</span></div></div></div></section>
+
+  <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
+
+  <section class="panel" id="finder"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">F</div><h3>Tax Savings Finder</h3></div><p class="module-note">Select opportunities that may apply. The full version will estimate potential savings and move confirmed opportunities into your Tax Action Plan.</p><div class="finder-grid"><label class="finder-item"><input type="checkbox">Retirement contribution</label><label class="finder-item"><input type="checkbox">Health Savings Account</label><label class="finder-item"><input type="checkbox">Business mileage</label><label class="finder-item"><input type="checkbox">Home office</label><label class="finder-item"><input type="checkbox">Energy credits</label><label class="finder-item"><input type="checkbox">Education credits</label><label class="finder-item"><input type="checkbox">Entity / business planning</label><label class="finder-item"><input type="checkbox">Bookkeeping cleanup</label></div></div><div class="ledger-wrap"><div class="tape"><h3>Potential Opportunities</h3><div class="row"><span>Opportunities selected</span><strong class="number" id="opportunityCount">0</strong></div><div class="row"><span>Estimated potential savings</span><strong class="money">$0</strong></div><div class="row total"><span>Tax Savings Score™</span><strong class="number">— / 100</strong></div><span class="status">Savings calculations — Phase 3</span></div></div></div></section>
+
+  <section class="panel" id="action"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">P</div><h3>Your Personal Tax Action Plan</h3></div><p class="module-note">Recommendations from the four planning tools will appear here in priority order. Each item will show the estimated benefit, action required, and relevant service option.</p><a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Tax Planning Meeting</a></div><div class="ledger-wrap"><div class="tape"><h3>Action Plan Summary</h3><div class="row"><span>Priority actions</span><strong class="number">0</strong></div><div class="row"><span>Potential savings identified</span><strong class="money">$0</strong></div><div class="row total"><span>Plan status</span><strong>Not started</strong></div><span class="status">Action engine — Phase 3</span></div></div></div></section>
+
+  <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, state tax, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
+</main>
+<footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
+<script>
+  document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    button.classList.add('active');
+    document.getElementById(button.dataset.tab).classList.add('active');
+  }));
+  document.querySelectorAll('#finder input[type="checkbox"]').forEach(box=>box.addEventListener('change',()=>{
+    document.getElementById('opportunityCount').textContent=document.querySelectorAll('#finder input[type="checkbox"]:checked').length;
+  }));
+  document.querySelectorAll('input[type="range"]').forEach(slider=>slider.addEventListener('input',()=>{
+    const output=slider.nextElementSibling;
+    if(!output)return;
+    output.textContent=slider.max==='4'?slider.value:new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(slider.value));
+  }));
+  async function loadClientContext(){
+    const leadId=new URLSearchParams(location.search).get('leadId');
+    if(!leadId)return;
+    try{
+      const response=await fetch('/api/estimate-summary/'+encodeURIComponent(leadId));
+      const data=await response.json();
+      if(!response.ok||!data.ok)return;
+      const lead=data.lead||{};
+      const contact=lead.contact||{};
+      const taxData=lead.taxData||{};
+      document.getElementById('clientName').textContent=contact.name||lead.name||'Paid Review Client';
+      document.getElementById('taxYear').textContent=taxData.taxYear||lead.taxYear||lead.filingYear||'—';
+      const filing=taxData.filingStatus||'';
+      const select=document.getElementById('filingStatus');
+      if(filing&&select){const option=[...select.options].find(o=>o.text.toLowerCase()===String(filing).toLowerCase());if(option)select.value=option.value;}
+    }catch(error){console.warn('Planner client context could not be loaded.',error);}
+  }
+  loadClientContext();
+</script>
+</body>
+</html>

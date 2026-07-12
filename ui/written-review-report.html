@@ -681,6 +681,7 @@
                 <a class="cta-button" id="taxPrepLink" href="https://mail.google.com/mail/?view=cm&fs=1&to=alerts@taxestimatereview.com&su=Tax%20Prep%20Help%20Request&body=Hello%20Greatest%20Business%20Solution%20LLC,%0D%0A%0D%0AI%20reviewed%20my%20paid%20Written%20Estimate%20Red%20Flag%20Review%20and%20I%20would%20like%20help%20with%20tax%20preparation.%0D%0A%0D%0AMy%20name:%20%0D%0A%0D%0ATax%20year:%20%0D%0A%0D%0ARefund%20or%20balance%20due:%20%0D%0A%0D%0ABest%20phone%20number:%20%0D%0A%0D%0ABest%20time%20to%20contact%20me:%20%0D%0A%0D%0AQuestions%20or%20concerns:%20%0D%0A" target="_blank" rel="noopener" target="_blank" rel="noopener" target="_blank" rel="noopener">Request Tax Prep Help</a>
                 <a class="cta-button secondary" id="transcriptHelpLink" href="https://mail.google.com/mail/?view=cm&fs=1&to=alerts@taxestimatereview.com&su=IRS%20Transcript%20Help%20Request&body=Hello%20Greatest%20Business%20Solution%20LLC,%0D%0A%0D%0AI%20reviewed%20my%20paid%20Written%20Estimate%20Red%20Flag%20Review%20and%20I%20would%20like%20help%20with%20IRS%20transcripts%20or%20missing%20tax%20documents.%0D%0A%0D%0AMy%20name:%20%0D%0A%0D%0ATax%20year%20or%20years%20needed:%20%0D%0A%0D%0AType%20of%20help%20needed:%20W-2,%201099,%20Wage%20and%20Income,%20Account%20Transcript,%20Return%20Transcript,%20or%20other%0D%0A%0D%0ABest%20phone%20number:%20%0D%0A%0D%0ABest%20time%20to%20contact%20me:%20%0D%0A%0D%0AWhat%20I%20need%20help%20with:%20%0D%0A" target="_blank" rel="noopener" target="_blank" rel="noopener" target="_blank" rel="noopener">Get IRS Transcript Help</a>
                 <a class="cta-button secondary" id="calendarLink" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Review Call</a>
+                <a class="cta-button" id="taxSavingsPlannerLink" href="/tax-savings-planner.html">Open Tax Savings Planner™</a>
               </div>
               <p class="fine-print">Tax Prep Help and IRS Transcript Help open secure request pages that save back to the Lead Center. Schedule Review Call opens the live Calendly booking page for a 15-minute tax estimate review call.</p>
             </div>
@@ -1375,6 +1376,12 @@
         transcriptHelpLink.href = "/transcript-help-request/" + encodeURIComponent(leadId);
         transcriptHelpLink.removeAttribute("target");
         transcriptHelpLink.removeAttribute("rel");
+      }
+
+      const taxSavingsPlannerLink = document.getElementById("taxSavingsPlannerLink");
+      if (taxSavingsPlannerLink) {
+        taxSavingsPlannerLink.href =
+          "/tax-savings-planner.html?leadId=" + encodeURIComponent(leadId);
       }
       try {
         const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
