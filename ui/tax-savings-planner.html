@@ -15,18 +15,18 @@
     main{max-width:1180px;margin:auto;padding:34px 22px 60px}.eyebrow{font-family:"IBM Plex Mono",monospace;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}h1,h2,h3{font-family:Fraunces,serif}h1{font-size:clamp(36px,6vw,62px);line-height:1;margin:8px 0 12px}.lead{max-width:800px;color:var(--ink-soft);font-size:17px;line-height:1.6}.client-strip{margin-top:20px;border:1px solid var(--line);background:var(--paper);padding:12px 16px;display:flex;flex-wrap:wrap;gap:14px 30px;font-size:13px}.client-strip strong{color:var(--navy)}
     .tabs{display:flex;align-items:flex-end;gap:6px;margin-top:30px;border-bottom:1px solid var(--line);overflow-x:auto;padding-top:12px}.tab{clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);border:1px solid var(--line);border-bottom:0;background:#e7dfcc;color:var(--navy);padding:14px 18px;cursor:pointer;white-space:nowrap;position:relative}.tab.active{background:var(--paper);z-index:3;padding-top:18px;font-weight:700;border-top:3px solid var(--gold)}
     .panel{display:none;background:var(--paper);border:1px solid var(--line);border-top:0;padding:26px}.panel.active{display:block}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}.form-card{border:1px solid var(--line);padding:20px;background:var(--paper)}.section-head{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft);padding-bottom:10px;margin:0 0 16px}.letter{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-weight:700}.section-head h3{margin:0;font-size:20px}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:var(--navy)}input,select{width:100%;border:1px solid var(--line);background:white;padding:11px 12px;color:var(--ink)}input:focus,select:focus,button:focus,a:focus{outline:3px solid var(--gold-soft);outline-offset:2px}
-    .ledger-wrap{background:var(--navy);padding:26px 20px;min-height:360px}.tape{position:relative;background:var(--paper);padding:30px 22px;margin:10px 0}.tape:before,.tape:after{content:"";position:absolute;left:0;width:100%;height:12px;background:linear-gradient(135deg,transparent 6px,var(--paper) 0) 0 0/12px 12px repeat-x}.tape:before{top:-12px}.tape:after{bottom:-12px;transform:rotate(180deg)}.tape h3{margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed var(--line)}.total{margin-top:8px;border-top:4px double var(--ink);border-bottom:0;font-weight:700;font-size:18px}.status{display:inline-block;margin-top:18px;padding:7px 10px;background:var(--gold-soft);color:var(--navy-deep);font-size:12px;font-weight:700}.module-note{color:var(--ink-soft);font-size:14px;line-height:1.55}.cta{display:inline-block;margin-top:16px;background:var(--navy);color:#fff;text-decoration:none;padding:11px 15px;font-weight:700}.finder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.finder-item{border:1px solid var(--line);padding:14px;background:#fff}.finder-item input{width:auto;margin-right:8px}.score{font-size:44px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
+    .ledger-wrap{background:var(--navy);padding:26px 20px;min-height:360px}.tape{position:relative;background:var(--paper);padding:30px 22px;margin:10px 0}.tape:before,.tape:after{content:"";position:absolute;left:0;width:100%;height:12px;background:linear-gradient(135deg,transparent 6px,var(--paper) 0) 0 0/12px 12px repeat-x}.tape:before{top:-12px}.tape:after{bottom:-12px;transform:rotate(180deg)}.tape h3{margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed var(--line)}.total{margin-top:8px;border-top:4px double var(--ink);border-bottom:0;font-weight:700;font-size:18px}.status{display:inline-block;margin-top:18px;padding:7px 10px;background:var(--gold-soft);color:var(--navy-deep);font-size:12px;font-weight:700}.positive{color:var(--green)!important}.negative{color:var(--red)!important}.status.good{background:#dcefe6;color:var(--green-deep)}.status.warn{background:#f5dedb;color:var(--red-deep)}.module-note{color:var(--ink-soft);font-size:14px;line-height:1.55}.cta{display:inline-block;margin-top:16px;background:var(--navy);color:#fff;text-decoration:none;padding:11px 15px;font-weight:700}.finder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.finder-item{border:1px solid var(--line);padding:14px;background:#fff}.finder-item input{width:auto;margin-right:8px}.score{font-size:44px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
     .disclaimer{margin-top:26px;border:1px solid var(--line);padding:18px;background:#f0eadb;color:var(--ink-soft);font-size:12px;line-height:1.6}footer{background:var(--navy-deep);color:#dce5ea;text-align:center;padding:20px;font-size:12px}
     @media(max-width:880px){.grid{grid-template-columns:1fr}.masthead-inner{align-items:flex-start;flex-direction:column}.tagline{text-align:left}.field-grid,.finder-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. Phase 1 planning framework.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal figures · Withholding Checkup active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Phase 1 framework installed</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Withholding Checkup active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="withholding">01 Withholding Checkup</button>
@@ -36,7 +36,93 @@
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
   </nav>
 
-  <section class="panel active" id="withholding"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">A</div><h3>Filing Information</h3></div><div class="field-grid"><div class="field"><label>Filing status</label><select id="filingStatus"><option>Single</option><option>Married Filing Jointly</option><option>Married Filing Separately</option><option>Head of Household</option></select></div><div class="field"><label>Pay frequency</label><select><option>Biweekly</option><option>Weekly</option><option>Semi-monthly</option><option>Monthly</option></select></div><div class="field"><label>Annual W-2 wages</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Projected federal withholding</label><input class="money" type="number" min="0" placeholder="$0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Withholding Checkup</h3><div class="row"><span>Taxable income</span><strong class="money">$0</strong></div><div class="row"><span>Estimated federal tax</span><strong class="money">$0</strong></div><div class="row"><span>Withholding on pace</span><strong class="money">$0</strong></div><div class="row total"><span>Projected result</span><strong class="money">$0</strong></div><span class="status">Calculator activation — Phase 2</span></div></div></div></section>
+  <section class="panel active" id="withholding">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">A</div><h3>Filing Information</h3></div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="whFilingStatus">Filing status</label>
+            <select id="whFilingStatus">
+              <option value="single">Single</option>
+              <option value="mfj">Married Filing Jointly</option>
+              <option value="mfs">Married Filing Separately</option>
+              <option value="hoh">Head of Household</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="whPayFrequency">Pay frequency</label>
+            <select id="whPayFrequency">
+              <option value="52">Weekly</option>
+              <option value="26" selected>Biweekly</option>
+              <option value="24">Semi-monthly</option>
+              <option value="12">Monthly</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="whChildren">Qualifying children under 17</label>
+            <input id="whChildren" class="number" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="whOtherDependents">Other dependents</label>
+            <input id="whOtherDependents" class="number" type="number" min="0" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">B</div><h3>Income &amp; Deductions</h3></div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="whWages">Annual W-2 wages</label>
+            <input id="whWages" class="money" type="number" min="0" step="100" value="0">
+          </div>
+          <div class="field">
+            <label for="whOtherIncome">Other taxable income</label>
+            <input id="whOtherIncome" class="money" type="number" min="0" step="100" value="0">
+          </div>
+          <div class="field full">
+            <label>Deduction method</label>
+            <div style="display:flex;gap:18px;flex-wrap:wrap;padding:9px 0">
+              <label style="font-weight:600"><input type="radio" name="whDeductionMethod" value="standard" checked style="width:auto;margin-right:7px">Standard deduction</label>
+              <label style="font-weight:600"><input type="radio" name="whDeductionMethod" value="itemized" style="width:auto;margin-right:7px">Itemized deductions</label>
+            </div>
+          </div>
+          <div class="field full" id="whItemizedField" hidden>
+            <label for="whItemized">Estimated itemized deductions</label>
+            <input id="whItemized" class="money" type="number" min="0" step="100" value="0">
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">C</div><h3>Current Withholding</h3></div>
+        <div class="field-grid">
+          <div class="field full">
+            <label for="whWithholding">Projected annual federal tax withheld</label>
+            <input id="whWithholding" class="money" type="number" min="0" step="100" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Withholding Checkup</h3>
+          <div class="row"><span>Gross taxable income</span><strong class="money" id="whGrossIncome">$0</strong></div>
+          <div class="row"><span>Deduction used</span><strong class="money" id="whDeductionUsed">$0</strong></div>
+          <div class="row"><span>Taxable income</span><strong class="money" id="whTaxableIncome">$0</strong></div>
+          <div class="row"><span>Federal tax before credits</span><strong class="money" id="whTaxBeforeCredits">$0</strong></div>
+          <div class="row"><span>Child / dependent credits</span><strong class="money" id="whCredits">-$0</strong></div>
+          <div class="row"><span>Estimated federal tax</span><strong class="money" id="whEstimatedTax">$0</strong></div>
+          <div class="row"><span>Withholding on pace</span><strong class="money" id="whWithholdingPace">$0</strong></div>
+          <div class="row total"><span id="whResultLabel">Projected result</span><strong class="money" id="whProjectedResult">$0</strong></div>
+          <span class="status" id="whStatus">Enter your current-year figures</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>W-4 Adjustment</h3>
+          <p class="module-note" id="whAdjustmentText">Enter your wages and withholding to receive a per-paycheck recommendation.</p>
+          <div class="row total"><span>Suggested adjustment</span><strong class="money" id="whPerPaycheck">$0</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><div class="field-grid"><div class="field"><label>1099 / business income</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Business expenses</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Federal tax already withheld</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Estimated payments already made</label><input class="money" type="number" min="0" placeholder="$0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Payment Plan</h3><div class="row"><span>Net self-employment profit</span><strong class="money">$0</strong></div><div class="row"><span>Self-employment tax</span><strong class="money">$0</strong></div><div class="row"><span>Income tax estimate</span><strong class="money">$0</strong></div><div class="row total"><span>Total still owed</span><strong class="money">$0</strong></div><span class="status">Due-date calculator — Phase 2</span></div></div></div></section>
 
@@ -50,37 +136,220 @@
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
 <script>
-  document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    button.classList.add('active');
-    document.getElementById(button.dataset.tab).classList.add('active');
-  }));
-  document.querySelectorAll('#finder input[type="checkbox"]').forEach(box=>box.addEventListener('change',()=>{
-    document.getElementById('opportunityCount').textContent=document.querySelectorAll('#finder input[type="checkbox"]:checked').length;
-  }));
-  document.querySelectorAll('input[type="range"]').forEach(slider=>slider.addEventListener('input',()=>{
-    const output=slider.nextElementSibling;
-    if(!output)return;
-    output.textContent=slider.max==='4'?slider.value:new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(slider.value));
-  }));
-  async function loadClientContext(){
-    const leadId=new URLSearchParams(location.search).get('leadId');
-    if(!leadId)return;
-    try{
-      const response=await fetch('/api/estimate-summary/'+encodeURIComponent(leadId));
-      const data=await response.json();
-      if(!response.ok||!data.ok)return;
-      const lead=data.lead||{};
-      const contact=lead.contact||{};
-      const taxData=lead.taxData||{};
-      document.getElementById('clientName').textContent=contact.name||lead.name||'Paid Review Client';
-      document.getElementById('taxYear').textContent=taxData.taxYear||lead.taxYear||lead.filingYear||'—';
-      const filing=taxData.filingStatus||'';
-      const select=document.getElementById('filingStatus');
-      if(filing&&select){const option=[...select.options].find(o=>o.text.toLowerCase()===String(filing).toLowerCase());if(option)select.value=option.value;}
-    }catch(error){console.warn('Planner client context could not be loaded.',error);}
+  const TAX_2026 = {
+    standardDeduction: {
+      single: 16100,
+      mfj: 32200,
+      mfs: 16100,
+      hoh: 24150
+    },
+    brackets: {
+      single: [
+        [12400, 0.10], [50400, 0.12], [105700, 0.22],
+        [201775, 0.24], [256225, 0.32], [640600, 0.35],
+        [Infinity, 0.37]
+      ],
+      mfj: [
+        [24800, 0.10], [100800, 0.12], [211400, 0.22],
+        [403550, 0.24], [512450, 0.32], [768700, 0.35],
+        [Infinity, 0.37]
+      ],
+      mfs: [
+        [12400, 0.10], [50400, 0.12], [105700, 0.22],
+        [201775, 0.24], [256225, 0.32], [384350, 0.35],
+        [Infinity, 0.37]
+      ],
+      hoh: [
+        [17700, 0.10], [67450, 0.12], [105700, 0.22],
+        [201775, 0.24], [256200, 0.32], [640600, 0.35],
+        [Infinity, 0.37]
+      ]
+    },
+    childCredit: 2200,
+    otherDependentCredit: 500
+  };
+
+  const money = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  });
+
+  function numberValue(id) {
+    const value = Number(document.getElementById(id)?.value || 0);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
+
+  function calculateOrdinaryTax(taxableIncome, filingStatus) {
+    const brackets = TAX_2026.brackets[filingStatus] || TAX_2026.brackets.single;
+    let tax = 0;
+    let previousLimit = 0;
+
+    for (const [upperLimit, rate] of brackets) {
+      if (taxableIncome <= previousLimit) break;
+      const amountInBracket = Math.min(taxableIncome, upperLimit) - previousLimit;
+      tax += Math.max(0, amountInBracket) * rate;
+      previousLimit = upperLimit;
+    }
+
+    return Math.max(0, tax);
+  }
+
+  function setMoney(id, value, className = "") {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = money.format(Math.round(value || 0));
+    element.classList.remove("positive", "negative");
+    if (className) element.classList.add(className);
+  }
+
+  function updateWithholdingCheckup() {
+    const filingStatus = document.getElementById("whFilingStatus").value;
+    const payPeriods = Number(document.getElementById("whPayFrequency").value || 26);
+    const wages = numberValue("whWages");
+    const otherIncome = numberValue("whOtherIncome");
+    const withholding = numberValue("whWithholding");
+    const children = Math.floor(numberValue("whChildren"));
+    const otherDependents = Math.floor(numberValue("whOtherDependents"));
+    const method = document.querySelector('input[name="whDeductionMethod"]:checked')?.value || "standard";
+    const itemized = numberValue("whItemized");
+    const standard = TAX_2026.standardDeduction[filingStatus];
+    const deduction = method === "itemized" ? itemized : standard;
+    const grossIncome = wages + otherIncome;
+    const taxableIncome = Math.max(0, grossIncome - deduction);
+    const taxBeforeCredits = calculateOrdinaryTax(taxableIncome, filingStatus);
+    const credits = (children * TAX_2026.childCredit) + (otherDependents * TAX_2026.otherDependentCredit);
+    const estimatedTax = Math.max(0, taxBeforeCredits - credits);
+    const difference = withholding - estimatedTax;
+    const perPaycheck = payPeriods > 0 ? Math.abs(difference) / payPeriods : 0;
+
+    setMoney("whGrossIncome", grossIncome);
+    setMoney("whDeductionUsed", deduction);
+    setMoney("whTaxableIncome", taxableIncome);
+    setMoney("whTaxBeforeCredits", taxBeforeCredits);
+    document.getElementById("whCredits").textContent = `-${money.format(Math.round(credits))}`;
+    setMoney("whEstimatedTax", estimatedTax);
+    setMoney("whWithholdingPace", withholding);
+
+    const resultLabel = document.getElementById("whResultLabel");
+    const status = document.getElementById("whStatus");
+    const adjustment = document.getElementById("whAdjustmentText");
+    const result = document.getElementById("whProjectedResult");
+
+    result.classList.remove("positive", "negative");
+    status.classList.remove("good", "warn");
+
+    const targetBand = Math.max(100, estimatedTax * 0.02);
+
+    if (Math.abs(difference) <= targetBand) {
+      resultLabel.textContent = "Projected result";
+      setMoney("whProjectedResult", difference);
+      status.textContent = "On Target";
+      status.classList.add("good");
+      setMoney("whPerPaycheck", 0);
+      adjustment.textContent = "Your projected withholding is close to the estimated federal tax. Recheck after a major income, dependent, or deduction change.";
+    } else if (difference > 0) {
+      resultLabel.textContent = "Projected Refund";
+      setMoney("whProjectedResult", difference, "positive");
+      status.textContent = "Overwithheld";
+      status.classList.add("good");
+      setMoney("whPerPaycheck", perPaycheck, "positive");
+      adjustment.textContent = `You are currently on pace to overwithhold. To move closer to break-even, consider reducing federal withholding by about ${money.format(Math.round(perPaycheck))} per paycheck after reviewing a new Form W-4.`;
+    } else {
+      resultLabel.textContent = "Projected Balance Due";
+      setMoney("whProjectedResult", Math.abs(difference), "negative");
+      status.textContent = "Underwithheld";
+      status.classList.add("warn");
+      setMoney("whPerPaycheck", perPaycheck, "negative");
+      adjustment.textContent = `Increase federal withholding by about ${money.format(Math.round(perPaycheck))} per paycheck. This amount may be entered as additional withholding on Line 4(c) of Form W-4.`;
+    }
+  }
+
+  document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+    button.classList.add("active");
+    document.getElementById(button.dataset.tab).classList.add("active");
+  }));
+
+  document.querySelectorAll("#finder input[type='checkbox']").forEach(box => box.addEventListener("change", () => {
+    document.getElementById("opportunityCount").textContent =
+      document.querySelectorAll("#finder input[type='checkbox']:checked").length;
+  }));
+
+  document.querySelectorAll("input[type='range']").forEach(slider => slider.addEventListener("input", () => {
+    const output = slider.nextElementSibling;
+    if (!output) return;
+    output.textContent = slider.max === "4"
+      ? slider.value
+      : money.format(Number(slider.value));
+  }));
+
+  document.querySelectorAll(
+    "#withholding input, #withholding select"
+  ).forEach(control => control.addEventListener("input", updateWithholdingCheckup));
+
+  document.querySelectorAll('input[name="whDeductionMethod"]').forEach(control => {
+    control.addEventListener("change", () => {
+      const itemizedSelected =
+        document.querySelector('input[name="whDeductionMethod"]:checked')?.value === "itemized";
+      document.getElementById("whItemizedField").hidden = !itemizedSelected;
+      updateWithholdingCheckup();
+    });
+  });
+
+  async function loadClientContext() {
+    const leadId = new URLSearchParams(location.search).get("leadId");
+    if (!leadId) return;
+
+    try {
+      const response = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const data = await response.json();
+      if (!response.ok || !data.ok) return;
+
+      const lead = data.lead || {};
+      const contact = lead.contact || {};
+      const taxData = lead.taxData || {};
+
+      document.getElementById("clientName").textContent =
+        contact.name || lead.name || "Paid Review Client";
+
+      document.getElementById("taxYear").textContent =
+        taxData.taxYear || lead.taxYear || lead.filingYear || "—";
+
+      const filingMap = {
+        "single": "single",
+        "married filing jointly": "mfj",
+        "married filing separately": "mfs",
+        "head of household": "hoh"
+      };
+
+      const filing = String(taxData.filingStatus || "").trim().toLowerCase();
+      if (filingMap[filing]) {
+        document.getElementById("whFilingStatus").value = filingMap[filing];
+      }
+
+      const wages =
+        taxData.wages ||
+        taxData.w2Wages ||
+        taxData.totalWages ||
+        0;
+
+      const withholding =
+        taxData.federalWithholding ||
+        taxData.federalTaxWithheld ||
+        0;
+
+      if (Number(wages) > 0) document.getElementById("whWages").value = Number(wages);
+      if (Number(withholding) > 0) document.getElementById("whWithholding").value = Number(withholding);
+
+      updateWithholdingCheckup();
+    } catch (error) {
+      console.warn("Planner client context could not be loaded.", error);
+    }
+  }
+
+  updateWithholdingCheckup();
   loadClientContext();
 </script>
 </body>
