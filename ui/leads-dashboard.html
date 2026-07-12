@@ -3333,6 +3333,19 @@ function openOfficeWorkItem(index){
     return;
   }
 
+  if(isTranscriptServiceRequest(item.lead)){
+    const leadId = String(item.lead.leadId || "").trim();
+
+    if(!leadId){
+      alert("Transcript client could not be identified.");
+      return;
+    }
+
+    window.location.href =
+      `/transcript-requests?leadId=${encodeURIComponent(leadId)}`;
+    return;
+  }
+
   openConversionOpportunityPanel(item);
 }
 
@@ -4427,7 +4440,7 @@ function renderLeads(){
                       class="taxprep-open-btn"
                       onclick="openOfficeWorkItem(${index})"
                     >
-                      Work Lead
+                      Open Work
                     </button>
                   </td>
                 </tr>`;

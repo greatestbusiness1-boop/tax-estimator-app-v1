@@ -88,16 +88,38 @@
 
 <script>
 let showCompleted=false;
-let focusedTranscriptLeadId="";
+
+const requestedTranscriptLeadId =
+  new URLSearchParams(window.location.search).get("leadId");
+
+let focusedTranscriptLeadId =
+  requestedTranscriptLeadId
+    ? String(requestedTranscriptLeadId)
+    : "";
+
+function updateTranscriptClientUrl(id){
+  const url = new URL(window.location.href);
+
+  if(id){
+    url.searchParams.set("leadId", String(id));
+  }else{
+    url.searchParams.delete("leadId");
+  }
+
+  window.history.replaceState({}, "", url);
+}
 
 function toggleCompleted(){
   showCompleted=!showCompleted;
   focusedTranscriptLeadId="";
+  updateTranscriptClientUrl("");
   load();
 }
 
 function focusTranscriptClient(id){
   focusedTranscriptLeadId=String(id||"");
+  updateTranscriptClientUrl(focusedTranscriptLeadId);
+
   load().then(()=>{
     const d=document.getElementById(`edit-${focusedTranscriptLeadId}`);
     if(d){
@@ -109,6 +131,7 @@ function focusTranscriptClient(id){
 
 function backToTranscriptList(){
   focusedTranscriptLeadId="";
+  updateTranscriptClientUrl("");
   load();
 }
 function esc(v){return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
@@ -239,7 +262,7 @@ async function load(){
         Focused Client Mode: showing only the selected transcript client.
         <div style="font-size:12px;color:#92400e;margin-top:3px;">Use this mode when editing one client so the rest of the list does not distract you.</div>
       </div>
-      <button class="btn secondary" onclick="backToTranscriptList()">Back to Transcript Requests</button>
+      <button class="btn secondary" onclick="backToTranscriptList()">Back to All Transcript Clients</button>
     </div>
   ` : "") + displayRows.map(lead=>{
     const tr=lead.transcriptRequest||{};
