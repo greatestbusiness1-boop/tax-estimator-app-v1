@@ -881,7 +881,7 @@
 
       <div class="office-command-tabs">
         <button class="office-command-tab active" data-office-tab="new-today">New Today</button>
-        <button class="office-command-tab" data-office-tab="paid-work">Paid Work to Complete</button>
+        <button class="office-command-tab" data-office-tab="paid-work">Revenue Work Queue</button>
         <button class="office-command-tab" data-office-tab="tax-prep">Tax Prep Requests</button>
         <button class="office-command-tab" data-office-tab="transcripts">Transcript Requests</button>
         <button class="office-command-tab" data-office-tab="scheduled-consults">Scheduled Consults</button>
@@ -2498,6 +2498,43 @@ function isPaidWrittenReviewLead(lead){
     !isConversionClosedLead(lead);
 }
 
+function isPaidTranscriptLead(lead){
+  const lower = String(lead?.status || "").toLowerCase();
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
+  const paymentStatus = String(
+    transcript.paymentStatus ||
+    ""
+  ).toLowerCase();
+
+  const paid =
+    lower.includes("transcript help - paid") ||
+    paymentStatus.includes("paid") ||
+    Boolean(
+      transcript.paidAt ||
+      transcript.paymentVerifiedAt
+    );
+
+  const completed =
+    Boolean(
+      transcript.completedAt ||
+      transcript.closedAt ||
+      transcript.deliveryDate
+    ) ||
+    lower.includes("completed") ||
+    lower.includes("closed");
+
+  return (
+    isTranscriptServiceRequest(lead) &&
+    paid &&
+    !completed &&
+    !isConversionClosedLead(lead)
+  );
+}
+
 function isActiveTaxPrepRequest(lead){
   return isTaxPrepServiceRequest(lead) && !isConversionClosedLead(lead);
 }
@@ -2974,6 +3011,30 @@ function getConversionCommandItems(){
         nextAction: "Prepare and deliver written review",
         reason: "Client has paid for a written review. This is work to complete.",
         status: status || "Written Review - Paid / Needs Written Review"
+      }));
+
+      return;
+    }
+
+    if(isPaidTranscriptLead(lead)){
+      const transcript =
+        lead?.transcriptRequest ||
+        lead?.Request ||
+        {};
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: "Paid Work",
+        stageRank: 1,
+        bucket: "paid-work",
+        workType: "Paid Transcript Request",
+        currentStep:
+          transcript.authorizationStatus ||
+          transcript.paymentStatus ||
+          status ||
+          "Paid / Needs Review",
+        nextAction: "Review and complete transcript request",
+        reason: "Client has paid for IRS transcript help. This is revenue work to complete.",
+        status: status || "Transcript Help - Paid / Needs Review"
       }));
 
       return;
