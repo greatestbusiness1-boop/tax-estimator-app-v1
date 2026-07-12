@@ -21,12 +21,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal figures · Withholding Checkup active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Savings Finder active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Withholding Checkup active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Savings Finder active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="withholding">01 Withholding Checkup</button>
@@ -173,9 +173,133 @@
 
   <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
 
-  <section class="panel" id="finder"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">F</div><h3>Tax Savings Finder</h3></div><p class="module-note">Select opportunities that may apply. The full version will estimate potential savings and move confirmed opportunities into your Tax Action Plan.</p><div class="finder-grid"><label class="finder-item"><input type="checkbox">Retirement contribution</label><label class="finder-item"><input type="checkbox">Health Savings Account</label><label class="finder-item"><input type="checkbox">Business mileage</label><label class="finder-item"><input type="checkbox">Home office</label><label class="finder-item"><input type="checkbox">Energy credits</label><label class="finder-item"><input type="checkbox">Education credits</label><label class="finder-item"><input type="checkbox">Entity / business planning</label><label class="finder-item"><input type="checkbox">Bookkeeping cleanup</label></div></div><div class="ledger-wrap"><div class="tape"><h3>Potential Opportunities</h3><div class="row"><span>Opportunities selected</span><strong class="number" id="opportunityCount">0</strong></div><div class="row"><span>Estimated potential savings</span><strong class="money">$0</strong></div><div class="row total"><span>Tax Savings Score™</span><strong class="number">— / 100</strong></div><span class="status">Savings calculations — Phase 3</span></div></div></div></section>
+  <section class="panel" id="finder">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">F</div><h3>Tax Savings Finder</h3></div>
+        <p class="module-note">Select opportunities that may apply, then enter the amount you are considering. The planner estimates the potential federal and state benefit and sends selected items to your Tax Action Plan.</p>
 
-  <section class="panel" id="action"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">P</div><h3>Your Personal Tax Action Plan</h3></div><p class="module-note">Recommendations from the four planning tools will appear here in priority order. Each item will show the estimated benefit, action required, and relevant service option.</p><a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Tax Planning Meeting</a></div><div class="ledger-wrap"><div class="tape"><h3>Action Plan Summary</h3><div class="row"><span>Priority actions</span><strong class="number">0</strong></div><div class="row"><span>Potential savings identified</span><strong class="money">$0</strong></div><div class="row total"><span>Plan status</span><strong>Not started</strong></div><span class="status">Action engine — Phase 3</span></div></div></div></section>
+        <div class="finder-grid">
+          <div class="finder-item">
+            <label class="finder-title"><input id="findRetirementOn" type="checkbox">Deductible retirement contribution</label>
+            <div class="finder-detail">
+              <label for="findRetirementAmount">Amount being considered</label>
+              <input id="findRetirementAmount" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Traditional IRA, SEP IRA, SIMPLE IRA, or deductible employer-plan contribution. Eligibility and limits vary.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findHsaOn" type="checkbox">Health Savings Account contribution</label>
+            <div class="finder-detail">
+              <label for="findHsaAmount">Potential deductible contribution</label>
+              <input id="findHsaAmount" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Requires HSA eligibility and is subject to annual contribution limits.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findMileageOn" type="checkbox">Business mileage / vehicle records</label>
+            <div class="finder-detail">
+              <label for="findMileageDeduction">Estimated additional deduction</label>
+              <input id="findMileageDeduction" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Use the estimated deductible amount from qualified business mileage or actual vehicle expenses.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findHomeOfficeOn" type="checkbox">Qualified home office</label>
+            <div class="finder-detail">
+              <label for="findHomeOfficeDeduction">Estimated deduction</label>
+              <input id="findHomeOfficeDeduction" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Generally requires regular and exclusive business use and other eligibility rules.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findEnergyOn" type="checkbox">Residential energy improvements</label>
+            <div class="finder-detail">
+              <label for="findEnergyCredit">Estimated available credit</label>
+              <input id="findEnergyCredit" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Examples may include qualifying solar, HVAC, insulation, windows, doors, or other eligible improvements.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findEducationOn" type="checkbox">Education credit opportunity</label>
+            <div class="finder-detail">
+              <label for="findEducationCredit">Estimated available credit</label>
+              <input id="findEducationCredit" class="money" type="number" min="0" step="100" value="0">
+              <span class="finder-hint">Eligibility depends on the student, expenses, enrollment, prior claims, and income limits.</span>
+            </div>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findEntityOn" type="checkbox">Entity / business tax review</label>
+            <span class="finder-hint">Flag a review of business structure, payroll, reasonable compensation, and planning opportunities.</span>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findBooksOn" type="checkbox">Bookkeeping cleanup</label>
+            <span class="finder-hint">Flag missing records, uncategorized expenses, mileage, owner draws, payroll, or year-end cleanup.</span>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findTranscriptOn" type="checkbox">IRS transcript recovery</label>
+            <span class="finder-hint">Use when tax records, W-2s, 1099s, prior returns, balances, or filing history must be verified.</span>
+          </div>
+
+          <div class="finder-item">
+            <label class="finder-title"><input id="findNoticeOn" type="checkbox">IRS notice review</label>
+            <span class="finder-hint">Flag an IRS notice, collection letter, balance discrepancy, penalty, or response deadline for professional review.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Potential Opportunities</h3>
+          <div class="row"><span>Opportunities selected</span><strong class="number" id="opportunityCount">0</strong></div>
+          <div class="row"><span>Deduction-based opportunities</span><strong class="money" id="finderDeductions">$0</strong></div>
+          <div class="row"><span>Estimated federal savings</span><strong class="money positive" id="finderFederalSavings">$0</strong></div>
+          <div class="row"><span>Estimated state savings</span><strong class="money positive" id="finderStateSavings">$0</strong></div>
+          <div class="row"><span>Estimated direct credits</span><strong class="money positive" id="finderCredits">$0</strong></div>
+          <div class="row total"><span>Combined potential savings</span><strong class="money positive" id="finderCombinedSavings">$0</strong></div>
+          <div style="margin-top:18px;text-align:center">
+            <div class="score-ring" id="finderScore">0</div>
+            <div class="module-note" style="margin-top:8px">Tax Savings Score™</div>
+          </div>
+          <span class="status" id="finderStatus">Select opportunities to begin</span>
+        </div>
+        <div class="tape" style="margin-top:34px">
+          <h3>Important</h3>
+          <p class="module-note">These are planning opportunities, not guaranteed savings. Final eligibility, limits, documentation, phase-outs, and timing must be reviewed before acting.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="action">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">P</div><h3>Your Personal Tax Action Plan</h3></div>
+        <p class="module-note">Selected Tax Savings Finder opportunities appear here in priority order. Confirm eligibility and documentation before making a financial or tax decision.</p>
+        <div class="action-list" id="actionPlanList">
+          <div class="action-item"><strong>No actions selected yet</strong><span>Complete the Tax Savings Finder to create your planning checklist.</span></div>
+        </div>
+        <a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Tax Planning Meeting</a>
+      </div>
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Action Plan Summary</h3>
+          <div class="row"><span>Priority actions</span><strong class="number" id="actionCount">0</strong></div>
+          <div class="row"><span>Potential savings identified</span><strong class="money positive" id="actionSavings">$0</strong></div>
+          <div class="row total"><span>Plan status</span><strong id="actionStatus">Not started</strong></div>
+          <span class="status" id="actionBadge">Complete the Finder</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
@@ -248,6 +372,18 @@
     }
 
     return Math.max(0, tax);
+  }
+
+  function getMarginalFederalRate(taxableIncome, filingStatus) {
+    const brackets = TAX_2026.brackets[filingStatus] || TAX_2026.brackets.single;
+    let previousLimit = 0;
+
+    for (const [upperLimit, rate] of brackets) {
+      if (taxableIncome <= upperLimit) return rate;
+      previousLimit = upperLimit;
+    }
+
+    return 0.37;
   }
 
   function setMoney(id, value, className = "") {
@@ -429,6 +565,8 @@
 
     const targetBand = Math.max(100, estimatedTax * 0.02);
 
+    updateTaxSavingsFinder();
+
     if (Math.abs(combinedDifference) <= targetBand) {
       resultLabel.textContent = "Combined projected result";
       setMoney("whProjectedResult", combinedDifference);
@@ -453,6 +591,133 @@
     }
   }
 
+  const finderDefinitions = [
+    { on: "findRetirementOn", amount: "findRetirementAmount", type: "deduction", title: "Review deductible retirement contribution", detail: "Confirm eligibility, contribution limit, deadline, and whether the contribution is deductible." },
+    { on: "findHsaOn", amount: "findHsaAmount", type: "deduction", title: "Review HSA contribution", detail: "Confirm HSA eligibility, coverage type, annual limit, and contribution deadline." },
+    { on: "findMileageOn", amount: "findMileageDeduction", type: "deduction", title: "Document business vehicle deduction", detail: "Complete mileage records or actual-expense support before claiming the deduction." },
+    { on: "findHomeOfficeOn", amount: "findHomeOfficeDeduction", type: "deduction", title: "Review home-office eligibility", detail: "Confirm regular and exclusive use, business purpose, and the correct deduction method." },
+    { on: "findEnergyOn", amount: "findEnergyCredit", type: "credit", title: "Verify residential energy credit", detail: "Collect invoices, manufacturer certifications, installation dates, and qualified-property details." },
+    { on: "findEducationOn", amount: "findEducationCredit", type: "credit", title: "Verify education credit", detail: "Review Form 1098-T, paid expenses, student eligibility, prior credit claims, and income limits." },
+    { on: "findEntityOn", type: "review", title: "Schedule entity and business tax review", detail: "Review business structure, payroll, owner compensation, retirement plans, and tax-planning opportunities." },
+    { on: "findBooksOn", type: "review", title: "Complete bookkeeping cleanup", detail: "Reconcile accounts and identify missing or misclassified business expenses before tax preparation." },
+    { on: "findTranscriptOn", type: "service", title: "Start IRS transcript recovery", detail: "Confirm missing records, filing history, balances, and transcript types needed." },
+    { on: "findNoticeOn", type: "service", title: "Review IRS notice", detail: "Identify the notice number, tax period, response deadline, disputed amount, and required documents." }
+  ];
+
+  function getFinderTaxContext() {
+    const filingStatus = document.getElementById("whFilingStatus").value;
+    const wages = numberValue("whWages");
+    const otherIncome = numberValue("whOtherIncome");
+    const method = document.querySelector('input[name="whDeductionMethod"]:checked')?.value || "standard";
+    const deduction = method === "itemized"
+      ? numberValue("whItemized")
+      : TAX_2026.standardDeduction[filingStatus];
+    const taxableIncome = Math.max(0, wages + otherIncome - deduction);
+    const federalRate = getMarginalFederalRate(taxableIncome, filingStatus);
+    const stateRate = latestStateResult.canEstimate && (wages + otherIncome) > 0
+      ? Math.min(0.15, Math.max(0, latestStateResult.stateTax / (wages + otherIncome)))
+      : 0;
+
+    return { federalRate, stateRate };
+  }
+
+  function updateTaxSavingsFinder() {
+    const { federalRate, stateRate } = getFinderTaxContext();
+    let selectedCount = 0;
+    let deductionTotal = 0;
+    let directCredits = 0;
+    let federalSavings = 0;
+    let stateSavings = 0;
+    const actions = [];
+
+    finderDefinitions.forEach(definition => {
+      const selected = document.getElementById(definition.on)?.checked;
+      if (!selected) return;
+
+      selectedCount += 1;
+      const amount = definition.amount ? numberValue(definition.amount) : 0;
+      let estimatedBenefit = 0;
+
+      if (definition.type === "deduction") {
+        deductionTotal += amount;
+        const federalBenefit = amount * federalRate;
+        const stateBenefit = amount * stateRate;
+        federalSavings += federalBenefit;
+        stateSavings += stateBenefit;
+        estimatedBenefit = federalBenefit + stateBenefit;
+      } else if (definition.type === "credit") {
+        directCredits += amount;
+        federalSavings += amount;
+        estimatedBenefit = amount;
+      }
+
+      actions.push({
+        title: definition.title,
+        detail: definition.detail,
+        estimatedBenefit
+      });
+    });
+
+    const combinedSavings = federalSavings + stateSavings;
+    const score = Math.min(
+      100,
+      Math.round(
+        (selectedCount * 8) +
+        Math.min(35, combinedSavings / 100) +
+        (deductionTotal > 0 ? 10 : 0) +
+        (directCredits > 0 ? 10 : 0)
+      )
+    );
+
+    document.getElementById("opportunityCount").textContent = selectedCount;
+    setMoney("finderDeductions", deductionTotal);
+    setMoney("finderFederalSavings", federalSavings);
+    setMoney("finderStateSavings", stateSavings);
+    setMoney("finderCredits", directCredits);
+    setMoney("finderCombinedSavings", combinedSavings);
+    document.getElementById("finderScore").textContent = score;
+
+    const finderStatus = document.getElementById("finderStatus");
+    finderStatus.classList.remove("good", "warn");
+
+    if (selectedCount === 0) {
+      finderStatus.textContent = "Select opportunities to begin";
+    } else if (combinedSavings > 0) {
+      finderStatus.textContent = "Potential savings identified";
+      finderStatus.classList.add("good");
+    } else {
+      finderStatus.textContent = "Professional review opportunities identified";
+    }
+
+    updateTaxActionPlan(actions, combinedSavings);
+  }
+
+  function updateTaxActionPlan(actions, combinedSavings) {
+    const list = document.getElementById("actionPlanList");
+    const sortedActions = [...actions].sort(
+      (a, b) => b.estimatedBenefit - a.estimatedBenefit
+    );
+
+    if (!sortedActions.length) {
+      list.innerHTML = '<div class="action-item"><strong>No actions selected yet</strong><span>Complete the Tax Savings Finder to create your planning checklist.</span></div>';
+    } else {
+      list.innerHTML = sortedActions.map((action, index) => {
+        const benefit = action.estimatedBenefit > 0
+          ? ` Estimated potential benefit: ${money.format(Math.round(action.estimatedBenefit))}.`
+          : "";
+
+        return `<div class="action-item"><strong>Priority ${index + 1}: ${action.title}</strong><span>${action.detail}${benefit}</span></div>`;
+      }).join("");
+    }
+
+    document.getElementById("actionCount").textContent = sortedActions.length;
+    setMoney("actionSavings", combinedSavings);
+    document.getElementById("actionStatus").textContent =
+      sortedActions.length ? "Planning review ready" : "Not started";
+    document.getElementById("actionBadge").textContent =
+      sortedActions.length ? "Review with your tax professional" : "Complete the Finder";
+  }
+
   document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
@@ -460,10 +725,10 @@
     document.getElementById(button.dataset.tab).classList.add("active");
   }));
 
-  document.querySelectorAll("#finder input[type='checkbox']").forEach(box => box.addEventListener("change", () => {
-    document.getElementById("opportunityCount").textContent =
-      document.querySelectorAll("#finder input[type='checkbox']:checked").length;
-  }));
+  document.querySelectorAll("#finder input").forEach(control => {
+    control.addEventListener("input", updateTaxSavingsFinder);
+    control.addEventListener("change", updateTaxSavingsFinder);
+  });
 
   document.querySelectorAll("input[type='range']").forEach(slider => slider.addEventListener("input", () => {
     const output = slider.nextElementSibling;
@@ -557,6 +822,7 @@
   }
 
   updateWithholdingCheckup();
+  updateTaxSavingsFinder();
   scheduleStateEstimate();
   loadClientContext();
 </script>
