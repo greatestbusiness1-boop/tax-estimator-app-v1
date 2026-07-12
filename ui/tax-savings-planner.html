@@ -21,22 +21,84 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Savings Finder active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Executive dashboard active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Savings Finder active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Executive dashboard active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
-    <button class="tab active" data-tab="withholding">01 Withholding Checkup</button>
+    <button class="tab active" data-tab="overview">00 Overview</button>
+    <button class="tab" data-tab="withholding">01 Withholding Checkup</button>
     <button class="tab" data-tab="quarterly">02 Quarterly Planner</button>
     <button class="tab" data-tab="whatif">03 What-If Scenarios</button>
     <button class="tab" data-tab="finder">04 Tax Savings Finder</button>
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
   </nav>
 
-  <section class="panel active" id="withholding">
+  <section class="panel active" id="overview">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">O</div><h3>Tax Savings Dashboard</h3></div>
+        <p class="module-note">This page summarizes the results from your Withholding Checkup and Tax Savings Finder. Complete those sections to create a personalized planning snapshot.</p>
+
+        <div class="action-list" style="margin-top:20px">
+          <div class="action-item">
+            <strong>Top Priority</strong>
+            <span id="overviewPriorityOne">Complete the Withholding Checkup.</span>
+          </div>
+          <div class="action-item">
+            <strong>Second Priority</strong>
+            <span id="overviewPriorityTwo">Review the Tax Savings Finder.</span>
+          </div>
+          <div class="action-item">
+            <strong>Third Priority</strong>
+            <span id="overviewPriorityThree">Build your Tax Action Plan.</span>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:26px"><div class="letter">T</div><h3>Opportunity Timeline</h3></div>
+        <div class="action-list">
+          <div class="action-item">
+            <strong>Now</strong>
+            <span id="timelineNow">Enter current wages, withholding, and state information.</span>
+          </div>
+          <div class="action-item">
+            <strong>Before Year-End</strong>
+            <span id="timelineYearEnd">Review retirement, HSA, business, and credit opportunities.</span>
+          </div>
+          <div class="action-item">
+            <strong>Before Filing</strong>
+            <span id="timelineFiling">Confirm documentation and review the plan with your tax professional.</span>
+          </div>
+        </div>
+
+        <a class="cta" href="#" id="overviewStartButton">Start Withholding Checkup</a>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Executive Summary</h3>
+          <div class="row"><span>Tax Savings Score™</span><strong class="number" id="overviewScore">0 / 100</strong></div>
+          <div class="row"><span>Potential federal savings</span><strong class="money positive" id="overviewFederalSavings">$0</strong></div>
+          <div class="row"><span>Potential state savings</span><strong class="money positive" id="overviewStateSavings">$0</strong></div>
+          <div class="row"><span>Direct credits identified</span><strong class="money positive" id="overviewCredits">$0</strong></div>
+          <div class="row"><span id="overviewWithholdingLabel">Combined withholding result</span><strong class="money" id="overviewWithholdingResult">$0</strong></div>
+          <div class="row total"><span>Combined potential savings</span><strong class="money positive" id="overviewCombinedSavings">$0</strong></div>
+          <span class="status" id="overviewStatus">Complete the planner to build your summary</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>Recommended Next Step</h3>
+          <p class="module-note" id="overviewRecommendation">Start with the Withholding Checkup, then complete the Tax Savings Finder.</p>
+          <a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Tax Planning Meeting</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="withholding">
     <div class="grid">
       <div class="form-card">
         <div class="section-head"><div class="letter">A</div><h3>Filing Information</h3></div>
@@ -353,6 +415,17 @@
   };
   let stateRequestTimer = null;
   let stateRequestSequence = 0;
+  let latestCombinedWithholdingResult = 0;
+  let latestFinderSummary = {
+    selectedCount: 0,
+    deductionTotal: 0,
+    directCredits: 0,
+    federalSavings: 0,
+    stateSavings: 0,
+    combinedSavings: 0,
+    score: 0,
+    actions: []
+  };
 
   function numberValue(id) {
     const value = Number(document.getElementById(id)?.value || 0);
@@ -518,6 +591,7 @@
       ? latestStateResult.stateNet
       : 0;
     const combinedDifference = federalDifference + stateDifference;
+    latestCombinedWithholdingResult = combinedDifference;
     const perPaycheck = payPeriods > 0 ? Math.abs(combinedDifference) / payPeriods : 0;
 
     setMoney("whGrossIncome", grossIncome);
@@ -566,6 +640,7 @@
     const targetBand = Math.max(100, estimatedTax * 0.02);
 
     updateTaxSavingsFinder();
+    updatePlannerOverview();
 
     if (Math.abs(combinedDifference) <= targetBand) {
       resultLabel.textContent = "Combined projected result";
@@ -589,6 +664,85 @@
       setMoney("whPerPaycheck", perPaycheck, "negative");
       adjustment.textContent = `Increase total withholding by about ${money.format(Math.round(perPaycheck))} per paycheck. This amount may be entered as additional withholding on Line 4(c) of Form W-4.`;
     }
+  }
+
+  function activatePlannerTab(tabId) {
+    document.querySelectorAll(".tab").forEach(button => {
+      button.classList.toggle("active", button.dataset.tab === tabId);
+    });
+
+    document.querySelectorAll(".panel").forEach(panel => {
+      panel.classList.toggle("active", panel.id === tabId);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updatePlannerOverview() {
+    const summary = latestFinderSummary;
+    const actions = [...(summary.actions || [])].sort(
+      (a, b) => b.estimatedBenefit - a.estimatedBenefit
+    );
+
+    document.getElementById("overviewScore").textContent = `${summary.score || 0} / 100`;
+    setMoney("overviewFederalSavings", summary.federalSavings || 0);
+    setMoney("overviewStateSavings", summary.stateSavings || 0);
+    setMoney("overviewCredits", summary.directCredits || 0);
+    setMoney("overviewCombinedSavings", summary.combinedSavings || 0);
+
+    const withholdingLabel = document.getElementById("overviewWithholdingLabel");
+    if (latestCombinedWithholdingResult >= 0) {
+      withholdingLabel.textContent = "Combined projected refund";
+      setMoney("overviewWithholdingResult", latestCombinedWithholdingResult, "positive");
+    } else {
+      withholdingLabel.textContent = "Combined projected balance due";
+      setMoney("overviewWithholdingResult", Math.abs(latestCombinedWithholdingResult), "negative");
+    }
+
+    const defaults = [
+      "Complete the Withholding Checkup.",
+      "Review the Tax Savings Finder.",
+      "Build your Tax Action Plan."
+    ];
+
+    document.getElementById("overviewPriorityOne").textContent =
+      actions[0]?.title || defaults[0];
+    document.getElementById("overviewPriorityTwo").textContent =
+      actions[1]?.title || defaults[1];
+    document.getElementById("overviewPriorityThree").textContent =
+      actions[2]?.title || defaults[2];
+
+    const status = document.getElementById("overviewStatus");
+    status.classList.remove("good", "warn");
+
+    if ((summary.selectedCount || 0) === 0) {
+      status.textContent = "Complete the planner to build your summary";
+      document.getElementById("overviewRecommendation").textContent =
+        "Start with the Withholding Checkup, then complete the Tax Savings Finder.";
+    } else if ((summary.combinedSavings || 0) > 0) {
+      status.textContent = "Planning opportunities identified";
+      status.classList.add("good");
+      document.getElementById("overviewRecommendation").textContent =
+        `Review the ${summary.selectedCount} selected opportunities and confirm eligibility, documentation, and deadlines with your tax professional.`;
+    } else {
+      status.textContent = "Professional review recommended";
+      document.getElementById("overviewRecommendation").textContent =
+        "The selected items may require professional review even when a dollar estimate is not yet available.";
+    }
+
+    if (latestCombinedWithholdingResult < 0) {
+      document.getElementById("timelineNow").textContent =
+        "Review withholding now and consider increasing federal or state withholding.";
+    } else {
+      document.getElementById("timelineNow").textContent =
+        "Confirm current withholding and keep monitoring after major income or family changes.";
+    }
+
+    document.getElementById("timelineYearEnd").textContent =
+      actions[0]?.detail || "Review retirement, HSA, business, and credit opportunities before year-end.";
+
+    document.getElementById("timelineFiling").textContent =
+      "Collect support documents and review the final strategy before filing.";
   }
 
   const finderDefinitions = [
@@ -689,7 +843,19 @@
       finderStatus.textContent = "Professional review opportunities identified";
     }
 
+    latestFinderSummary = {
+      selectedCount,
+      deductionTotal,
+      directCredits,
+      federalSavings,
+      stateSavings,
+      combinedSavings,
+      score,
+      actions
+    };
+
     updateTaxActionPlan(actions, combinedSavings);
+    updatePlannerOverview();
   }
 
   function updateTaxActionPlan(actions, combinedSavings) {
@@ -719,11 +885,13 @@
   }
 
   document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
-    button.classList.add("active");
-    document.getElementById(button.dataset.tab).classList.add("active");
+    activatePlannerTab(button.dataset.tab);
   }));
+
+  document.getElementById("overviewStartButton").addEventListener("click", event => {
+    event.preventDefault();
+    activatePlannerTab("withholding");
+  });
 
   document.querySelectorAll("#finder input").forEach(control => {
     control.addEventListener("input", updateTaxSavingsFinder);
@@ -823,6 +991,7 @@
 
   updateWithholdingCheckup();
   updateTaxSavingsFinder();
+  updatePlannerOverview();
   scheduleStateEstimate();
   loadClientContext();
 </script>
