@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Transcript Requests Tracker</title>
+  <title>IRS Transcript Work Center</title>
   <style>
     body{margin:0;font-family:Arial,sans-serif;background:#f6f8fc;color:#0f172a;}
     .wrap{max-width:1180px;margin:0 auto;padding:18px;}
@@ -36,33 +36,10 @@
   <div class="wrap">
     <div class="top">
       <div>
-        <h1>Transcript Requests Tracker</h1>
+        <h1>IRS Transcript Work Center</h1>
         <div class="sub">Manage IRS transcript help requests: payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery.</div>
       </div>
       <button class="btn secondary" onclick="window.location.href='/leads-dashboard'">Back to Tax Lead Center</button>
-    </div>
-
-    <div id="officeProcedurePanel" class="panel" style="margin-bottom:14px;position:sticky;top:0;z-index:50;border:2px solid #0f2c56;box-shadow:0 12px 28px rgba(15,44,86,.16);">
-      <details>
-        <summary style="cursor:pointer;font-size:18px;font-weight:950;color:#0f2c56;">
-          Office Procedure Before Pulling IRS Transcripts
-        </summary>
-
-        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
-          <div class="mini"><strong>1. Verify Payment</strong>Confirm Stripe payment before doing transcript work. Then mark Payment Status as Paid / Verified.</div>
-          <div class="mini"><strong>2. Send Form 8821</strong>Payment does not authorize transcript access. Send or request the signed IRS authorization.</div>
-          <div class="mini"><strong>3. Receive Signed 8821</strong>Mark Form 8821 Status as 8821 Signed / Received and enter the received date.</div>
-          <div class="mini"><strong>4. Verify Identity</strong>Confirm required identity information before accessing IRS records. Enter the identity verified date.</div>
-          <div class="mini"><strong>5. Confirm Transcript Type and Years</strong>Confirm what records are needed: Wage and Income, Account, Return, Record of Account, or other records.</div>
-          <div class="mini"><strong>6. Pull in PitBullTax</strong>Only pull once payment, authorization, identity, transcript type, and tax years are complete.</div>
-          <div class="mini"><strong>7. Review and Deliver</strong>Enter pull date, received date, delivery method, delivery date, and final notes.</div>
-          <div class="mini"><strong>8. Complete the Request</strong>Once delivered, the request moves out of open work and into Completed Transcript Requests.</div>
-        </div>
-
-        <div class="notice" style="margin-top:12px;">
-          Automation plan: Stripe payment verification first, then authorization follow-up, then PitBullTax monitoring alerts, then client alert emails. Human review stays required before explaining IRS activity to the client.
-        </div>
-      </details>
     </div>
 
     <div class="panel">
@@ -83,6 +60,29 @@
       </div>
 
       <div id="rows"></div>
+    </div>
+
+    <div id="officeProcedurePanel" class="panel" style="margin-top:14px;border:2px solid #0f2c56;box-shadow:0 12px 28px rgba(15,44,86,.16);">
+      <details>
+        <summary style="cursor:pointer;font-size:18px;font-weight:950;color:#0f2c56;">
+          Office Procedure Before Pulling IRS Transcripts
+        </summary>
+
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+          <div class="mini"><strong>1. Verify Payment</strong>Confirm Stripe payment before doing transcript work. Then mark Payment Status as Paid / Verified.</div>
+          <div class="mini"><strong>2. Send Form 8821</strong>Payment does not authorize transcript access. Send or request the signed IRS authorization.</div>
+          <div class="mini"><strong>3. Receive Signed 8821</strong>Mark Form 8821 Status as 8821 Signed / Received and enter the received date.</div>
+          <div class="mini"><strong>4. Verify Identity</strong>Confirm required identity information before accessing IRS records. Enter the identity verified date.</div>
+          <div class="mini"><strong>5. Confirm Transcript Type and Years</strong>Confirm what records are needed: Wage and Income, Account, Return, Record of Account, or other records.</div>
+          <div class="mini"><strong>6. Pull in PitBullTax</strong>Only pull once payment, authorization, identity, transcript type, and tax years are complete.</div>
+          <div class="mini"><strong>7. Review and Deliver</strong>Enter pull date, received date, delivery method, delivery date, and final notes.</div>
+          <div class="mini"><strong>8. Complete the Request</strong>Once delivered, the request moves out of open work and into Completed Transcript Requests.</div>
+        </div>
+
+        <div class="notice" style="margin-top:12px;">
+          Automation plan: Stripe payment verification first, then authorization follow-up, then PitBullTax monitoring alerts, then client alert emails. Human review stays required before explaining IRS activity to the client.
+        </div>
+      </details>
     </div>
   </div>
 
