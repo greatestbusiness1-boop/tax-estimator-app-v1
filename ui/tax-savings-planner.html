@@ -39,12 +39,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Advisor Guidance active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.0 active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Advisor Guidance active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.0 active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -417,6 +417,7 @@
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
+<script src="/recommendation-engine.js"></script>
 <script>
   const TAX_2026 = {
     standardDeduction: {
@@ -477,6 +478,18 @@
     score: 0,
     actions: []
   };
+  let latestRecommendationResult = {
+    recommendations: [],
+    actionPlan: [],
+    primaryRecommendation: null,
+    servicePaths: []
+  };
+  const recommendationEngine = window.TaxRecommendationEngine;
+
+  if (!recommendationEngine) {
+    throw new Error("Tax Recommendation Engine failed to load.");
+  }
+
   let latestTaxHealthScore = 0;
   const plannerLeadId =
     new URLSearchParams(window.location.search).get("leadId") || "general";
@@ -835,8 +848,8 @@
   function updatePlannerOverview() {
     updateTaxHealthScore();
     const summary = latestFinderSummary;
-    const actions = [...(summary.actions || [])].sort(
-      (a, b) => b.estimatedBenefit - a.estimatedBenefit
+    const actions = recommendationEngine.sortActions(
+      latestRecommendationResult.recommendations || summary.actions || []
     );
 
     document.getElementById("overviewScore").textContent = `${summary.score || 0} / 100`;
@@ -901,17 +914,17 @@
       "Collect support documents and review the final strategy before filing.";
   }
 
-  const finderDefinitions = [
-    { on: "findRetirementOn", amount: "findRetirementAmount", type: "deduction", title: "Review deductible retirement contribution", detail: "Confirm eligibility, contribution limit, deadline, and whether the contribution is deductible." },
-    { on: "findHsaOn", amount: "findHsaAmount", type: "deduction", title: "Review HSA contribution", detail: "Confirm HSA eligibility, coverage type, annual limit, and contribution deadline." },
-    { on: "findMileageOn", amount: "findMileageDeduction", type: "deduction", title: "Document business vehicle deduction", detail: "Complete mileage records or actual-expense support before claiming the deduction." },
-    { on: "findHomeOfficeOn", amount: "findHomeOfficeDeduction", type: "deduction", title: "Review home-office eligibility", detail: "Confirm regular and exclusive use, business purpose, and the correct deduction method." },
-    { on: "findEnergyOn", amount: "findEnergyCredit", type: "credit", title: "Verify residential energy credit", detail: "Collect invoices, manufacturer certifications, installation dates, and qualified-property details." },
-    { on: "findEducationOn", amount: "findEducationCredit", type: "credit", title: "Verify education credit", detail: "Review Form 1098-T, paid expenses, student eligibility, prior credit claims, and income limits." },
-    { on: "findEntityOn", type: "review", title: "Schedule entity and business tax review", detail: "Review business structure, payroll, owner compensation, retirement plans, and tax-planning opportunities." },
-    { on: "findBooksOn", type: "review", title: "Complete bookkeeping cleanup", detail: "Reconcile accounts and identify missing or misclassified business expenses before tax preparation." },
-    { on: "findTranscriptOn", type: "service", title: "Start IRS transcript recovery", detail: "Confirm missing records, filing history, balances, and transcript types needed." },
-    { on: "findNoticeOn", type: "service", title: "Review IRS notice", detail: "Identify the notice number, tax period, response deadline, disputed amount, and required documents." }
+  const finderControlMap = [
+    { key: "retirement", on: "findRetirementOn", amount: "findRetirementAmount" },
+    { key: "hsa", on: "findHsaOn", amount: "findHsaAmount" },
+    { key: "mileage", on: "findMileageOn", amount: "findMileageDeduction" },
+    { key: "homeOffice", on: "findHomeOfficeOn", amount: "findHomeOfficeDeduction" },
+    { key: "energy", on: "findEnergyOn", amount: "findEnergyCredit" },
+    { key: "education", on: "findEducationOn", amount: "findEducationCredit" },
+    { key: "entity", on: "findEntityOn" },
+    { key: "bookkeeping", on: "findBooksOn" },
+    { key: "transcript", on: "findTranscriptOn" },
+    { key: "notice", on: "findNoticeOn" }
   ];
 
   function getFinderTaxContext() {
@@ -931,166 +944,86 @@
     return { federalRate, stateRate };
   }
 
+  function buildFinderSelections() {
+    return finderControlMap.reduce((selections, control) => {
+      selections[control.key] = {
+        selected: Boolean(document.getElementById(control.on)?.checked),
+        amount: control.amount ? numberValue(control.amount) : 0
+      };
+      return selections;
+    }, {});
+  }
+
   function updateTaxSavingsFinder() {
     const { federalRate, stateRate } = getFinderTaxContext();
-    let selectedCount = 0;
-    let deductionTotal = 0;
-    let directCredits = 0;
-    let federalSavings = 0;
-    let stateSavings = 0;
-    const actions = [];
+    const estimatedCombinedTax =
+      numberValue("whEstimatedTax") +
+      Number(latestStateResult?.stateTax || 0);
 
-    finderDefinitions.forEach(definition => {
-      const selected = document.getElementById(definition.on)?.checked;
-      if (!selected) return;
-
-      selectedCount += 1;
-      const amount = definition.amount ? numberValue(definition.amount) : 0;
-      let estimatedBenefit = 0;
-
-      if (definition.type === "deduction") {
-        deductionTotal += amount;
-        const federalBenefit = amount * federalRate;
-        const stateBenefit = amount * stateRate;
-        federalSavings += federalBenefit;
-        stateSavings += stateBenefit;
-        estimatedBenefit = federalBenefit + stateBenefit;
-      } else if (definition.type === "credit") {
-        directCredits += amount;
-        federalSavings += amount;
-        estimatedBenefit = amount;
-      }
-
-      actions.push({
-        title: definition.title,
-        detail: definition.detail,
-        estimatedBenefit
-      });
+    latestRecommendationResult = recommendationEngine.evaluate({
+      federalRate,
+      stateRate,
+      selections: buildFinderSelections(),
+      combinedWithholdingResult: latestCombinedWithholdingResult,
+      withholdingTargetBand: Math.max(100, estimatedCombinedTax * 0.02),
+      hasWithholdingData:
+        numberValue("whWages") +
+        numberValue("whOtherIncome") +
+        numberValue("whWithholding") +
+        numberValue("whStateWithholding") > 0,
+      payPeriods: Number(document.getElementById("whPayFrequency")?.value || 26),
+      maxRecommendations: 4
     });
 
-    const combinedSavings = federalSavings + stateSavings;
-    const score = Math.min(
-      100,
-      Math.round(
-        (selectedCount * 8) +
-        Math.min(35, combinedSavings / 100) +
-        (deductionTotal > 0 ? 10 : 0) +
-        (directCredits > 0 ? 10 : 0)
-      )
-    );
+    latestFinderSummary = latestRecommendationResult.opportunitySummary;
 
-    document.getElementById("opportunityCount").textContent = selectedCount;
-    setMoney("finderDeductions", deductionTotal);
-    setMoney("finderFederalSavings", federalSavings);
-    setMoney("finderStateSavings", stateSavings);
-    setMoney("finderCredits", directCredits);
-    setMoney("finderCombinedSavings", combinedSavings);
-    document.getElementById("finderScore").textContent = score;
+    document.getElementById("opportunityCount").textContent =
+      latestFinderSummary.selectedCount;
+    setMoney("finderDeductions", latestFinderSummary.deductionTotal);
+    setMoney("finderFederalSavings", latestFinderSummary.federalSavings);
+    setMoney("finderStateSavings", latestFinderSummary.stateSavings);
+    setMoney("finderCredits", latestFinderSummary.directCredits);
+    setMoney("finderCombinedSavings", latestFinderSummary.combinedSavings);
+    document.getElementById("finderScore").textContent = latestFinderSummary.score;
 
     const finderStatus = document.getElementById("finderStatus");
     finderStatus.classList.remove("good", "warn");
 
-    if (selectedCount === 0) {
+    if (latestFinderSummary.selectedCount === 0) {
       finderStatus.textContent = "Select opportunities to begin";
-    } else if (combinedSavings > 0) {
+    } else if (latestFinderSummary.combinedSavings > 0) {
       finderStatus.textContent = "Potential savings identified";
       finderStatus.classList.add("good");
     } else {
       finderStatus.textContent = "Professional review opportunities identified";
     }
 
-    latestFinderSummary = {
-      selectedCount,
-      deductionTotal,
-      directCredits,
-      federalSavings,
-      stateSavings,
-      combinedSavings,
-      score,
-      actions
-    };
-
-    updateTaxActionPlan(actions, combinedSavings);
+    updateTaxActionPlan(
+      latestRecommendationResult.actionPlan,
+      latestFinderSummary.combinedSavings,
+      latestRecommendationResult.recommendations
+    );
     updatePlannerOverview();
   }
 
-  function buildAdvisorGuidance(actions) {
-    const guidance = [];
-    const combinedResult = Number(latestCombinedWithholdingResult || 0);
-
-    if (combinedResult < -100) {
-      const payPeriods = Number(
-        document.getElementById("whPayFrequency")?.value || 26
-      );
-      const adjustment = payPeriods > 0
-        ? Math.abs(combinedResult) / payPeriods
-        : Math.abs(combinedResult);
-
-      guidance.push({
-        title: "Adjust withholding",
-        detail:
-          `The current projection shows a combined balance due. Review federal and state withholding and consider increasing total withholding by about ${money.format(Math.round(adjustment))} per paycheck.`,
-        impact: "Priority: High"
-      });
-    } else if (combinedResult > 1000) {
-      guidance.push({
-        title: "Review overwithholding",
-        detail:
-          "The current projection shows a sizable combined refund. Consider whether reducing withholding could improve monthly cash flow without creating an underpayment risk.",
-        impact: "Priority: Medium"
-      });
-    } else {
-      guidance.push({
-        title: "Maintain withholding review",
-        detail:
-          "Current withholding appears reasonably close to the combined estimated tax. Recheck after major income, family, or deduction changes.",
-        impact: "Priority: Monitor"
-      });
-    }
-
-    [...(actions || [])]
-      .sort((a, b) => b.estimatedBenefit - a.estimatedBenefit)
-      .slice(0, 2)
-      .forEach((action, index) => {
-        guidance.push({
-          title: action.title,
-          detail: action.detail,
-          impact:
-            action.estimatedBenefit > 0
-              ? `Potential benefit: ${money.format(Math.round(action.estimatedBenefit))}`
-              : `Priority: ${index === 0 ? "High" : "Review"}`
-        });
-      });
-
-    if (document.getElementById("findTranscriptOn")?.checked) {
-      guidance.push({
-        title: "Resolve missing IRS records",
-        detail:
-          "Confirm the tax years and transcript types needed before tax preparation or resolution work begins.",
-        impact: "Service path: IRS Transcript Recovery"
-      });
-    }
-
-    if (document.getElementById("findNoticeOn")?.checked) {
-      guidance.push({
-        title: "Review IRS notice deadline",
-        detail:
-          "Identify the notice number, tax period, response deadline, and documents needed before responding.",
-        impact: "Priority: Urgent"
-      });
-    }
-
-    return guidance.slice(0, 4);
-  }
-
-  function renderAdvisorGuidance(actions) {
+  function renderAdvisorGuidance(recommendations) {
     const container = document.getElementById("advisorGuidance");
     if (!container) return;
 
-    const guidance = buildAdvisorGuidance(actions);
+    const guidance = recommendationEngine.sortActions(recommendations || []).slice(0, 4);
+
+    if (!guidance.length) {
+      container.innerHTML = `
+        <div class="advisor-card">
+          <strong>Complete the planner</strong>
+          <span>Enter withholding information and select Tax Savings Finder opportunities to generate grounded recommendations.</span>
+        </div>
+      `;
+      return;
+    }
 
     container.innerHTML = guidance.map(item => `
-      <div class="advisor-card">
+      <div class="advisor-card" data-recommendation-id="${item.id}">
         <strong>${item.title}</strong>
         <span>${item.detail}</span>
         ${item.impact ? `<div class="advisor-impact">${item.impact}</div>` : ""}
@@ -1129,11 +1062,9 @@
     status.textContent = "Notes cleared.";
   }
 
-  function updateTaxActionPlan(actions, combinedSavings) {
+  function updateTaxActionPlan(actions, combinedSavings, recommendations = []) {
     const list = document.getElementById("actionPlanList");
-    const sortedActions = [...actions].sort(
-      (a, b) => b.estimatedBenefit - a.estimatedBenefit
-    );
+    const sortedActions = recommendationEngine.sortActions(actions || []);
 
     if (!sortedActions.length) {
       list.innerHTML = '<div class="action-item"><strong>No actions selected yet</strong><span>Complete the Tax Savings Finder to create your planning checklist.</span></div>';
@@ -1154,7 +1085,7 @@
     document.getElementById("actionBadge").textContent =
       sortedActions.length ? "Review with your tax professional" : "Complete the Finder";
 
-    renderAdvisorGuidance(sortedActions);
+    renderAdvisorGuidance(recommendations);
   }
 
   document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
