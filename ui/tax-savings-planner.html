@@ -18,15 +18,33 @@
     .ledger-wrap{background:var(--navy);padding:26px 20px;min-height:360px}.tape{position:relative;background:var(--paper);padding:30px 22px;margin:10px 0}.tape:before,.tape:after{content:"";position:absolute;left:0;width:100%;height:12px;background:linear-gradient(135deg,transparent 6px,var(--paper) 0) 0 0/12px 12px repeat-x}.tape:before{top:-12px}.tape:after{bottom:-12px;transform:rotate(180deg)}.tape h3{margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed var(--line)}.total{margin-top:8px;border-top:4px double var(--ink);border-bottom:0;font-weight:700;font-size:18px}.status{display:inline-block;margin-top:18px;padding:7px 10px;background:var(--gold-soft);color:var(--navy-deep);font-size:12px;font-weight:700}.positive{color:var(--green)!important}.negative{color:var(--red)!important}.status.good{background:#dcefe6;color:var(--green-deep)}.status.warn{background:#f5dedb;color:var(--red-deep)}.module-note{color:var(--ink-soft);font-size:14px;line-height:1.55}.engine-note{margin-top:12px;color:#dbe4ea;font-size:11px;line-height:1.45}.engine-error{margin-top:12px;padding:9px 10px;background:#f5dedb;color:var(--red-deep);font-size:12px;font-weight:700}.cta{display:inline-block;margin-top:16px;background:var(--navy);color:#fff;text-decoration:none;padding:11px 15px;font-weight:700}.finder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.finder-item{border:1px solid var(--line);padding:14px;background:#fff}.finder-item input{width:auto;margin-right:8px}.score{font-size:44px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
     .disclaimer{margin-top:26px;border:1px solid var(--line);padding:18px;background:#f0eadb;color:var(--ink-soft);font-size:12px;line-height:1.6}footer{background:var(--navy-deep);color:#dce5ea;text-align:center;padding:20px;font-size:12px}
     @media(max-width:880px){.grid{grid-template-columns:1fr}.masthead-inner{align-items:flex-start;flex-direction:column}.tagline{text-align:left}.field-grid,.finder-grid{grid-template-columns:1fr}}
+  
+    .advisor-grid{display:grid;gap:12px;margin-top:16px}
+    .advisor-card{border:1px solid var(--line-soft);background:#fff;padding:14px}
+    .advisor-card strong{display:block;color:var(--navy);margin-bottom:5px}
+    .advisor-card span{display:block;color:var(--ink-soft);font-size:13px;line-height:1.5}
+    .advisor-impact{margin-top:7px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
+    .notes-box{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);padding:12px;background:#fff;color:var(--ink)}
+    .note-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .note-actions button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
+    .note-actions button.secondary{background:#fff;color:var(--navy)}
+    .note-status{margin-top:8px;font-size:12px;color:var(--ink-soft)}
+    @media print{
+      .tabs,.note-actions,.cta{display:none!important}
+      .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
+      body{background:#fff}
+      main{max-width:none;padding:0}
+    }
+
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Health Score active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Tax Advisor Guidance active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Health Score active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Tax Advisor Guidance active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -359,6 +377,26 @@
       <div class="form-card">
         <div class="section-head"><div class="letter">P</div><h3>Your Personal Tax Action Plan</h3></div>
         <p class="module-note">Selected Tax Savings Finder opportunities appear here in priority order. Confirm eligibility and documentation before making a financial or tax decision.</p>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">A</div><h3>Tax Advisor Guidance</h3></div>
+        <div class="advisor-grid" id="advisorGuidance">
+          <div class="advisor-card">
+            <strong>Complete the planner</strong>
+            <span>Enter withholding information and select Tax Savings Finder opportunities to generate grounded recommendations.</span>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">N</div><h3>Professional Notes</h3></div>
+        <p class="module-note">Use this area for planning notes, questions, documents to request, or items to discuss with the client. Notes are saved in this browser for this planner record.</p>
+        <textarea id="professionalNotes" class="notes-box" placeholder="Example: Verify HSA eligibility. Request mileage log. Discuss SEP IRA before year-end."></textarea>
+        <div class="note-actions">
+          <button type="button" id="saveProfessionalNotes">Save Notes</button>
+          <button type="button" class="secondary" id="clearProfessionalNotes">Clear Notes</button>
+          <button type="button" class="secondary" id="printPlanningSummary">Print / Save Planning Summary</button>
+        </div>
+        <div class="note-status" id="professionalNotesStatus">No notes saved yet.</div>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">P</div><h3>Priority Action List</h3></div>
         <div class="action-list" id="actionPlanList">
           <div class="action-item"><strong>No actions selected yet</strong><span>Complete the Tax Savings Finder to create your planning checklist.</span></div>
         </div>
@@ -440,6 +478,10 @@
     actions: []
   };
   let latestTaxHealthScore = 0;
+  const plannerLeadId =
+    new URLSearchParams(window.location.search).get("leadId") || "general";
+  const professionalNotesKey =
+    `taxSavingsPlannerNotes:${plannerLeadId}`;
 
   function numberValue(id) {
     const value = Number(document.getElementById(id)?.value || 0);
@@ -972,6 +1014,121 @@
     updatePlannerOverview();
   }
 
+  function buildAdvisorGuidance(actions) {
+    const guidance = [];
+    const combinedResult = Number(latestCombinedWithholdingResult || 0);
+
+    if (combinedResult < -100) {
+      const payPeriods = Number(
+        document.getElementById("whPayFrequency")?.value || 26
+      );
+      const adjustment = payPeriods > 0
+        ? Math.abs(combinedResult) / payPeriods
+        : Math.abs(combinedResult);
+
+      guidance.push({
+        title: "Adjust withholding",
+        detail:
+          `The current projection shows a combined balance due. Review federal and state withholding and consider increasing total withholding by about ${money.format(Math.round(adjustment))} per paycheck.`,
+        impact: "Priority: High"
+      });
+    } else if (combinedResult > 1000) {
+      guidance.push({
+        title: "Review overwithholding",
+        detail:
+          "The current projection shows a sizable combined refund. Consider whether reducing withholding could improve monthly cash flow without creating an underpayment risk.",
+        impact: "Priority: Medium"
+      });
+    } else {
+      guidance.push({
+        title: "Maintain withholding review",
+        detail:
+          "Current withholding appears reasonably close to the combined estimated tax. Recheck after major income, family, or deduction changes.",
+        impact: "Priority: Monitor"
+      });
+    }
+
+    [...(actions || [])]
+      .sort((a, b) => b.estimatedBenefit - a.estimatedBenefit)
+      .slice(0, 2)
+      .forEach((action, index) => {
+        guidance.push({
+          title: action.title,
+          detail: action.detail,
+          impact:
+            action.estimatedBenefit > 0
+              ? `Potential benefit: ${money.format(Math.round(action.estimatedBenefit))}`
+              : `Priority: ${index === 0 ? "High" : "Review"}`
+        });
+      });
+
+    if (document.getElementById("findTranscriptOn")?.checked) {
+      guidance.push({
+        title: "Resolve missing IRS records",
+        detail:
+          "Confirm the tax years and transcript types needed before tax preparation or resolution work begins.",
+        impact: "Service path: IRS Transcript Recovery"
+      });
+    }
+
+    if (document.getElementById("findNoticeOn")?.checked) {
+      guidance.push({
+        title: "Review IRS notice deadline",
+        detail:
+          "Identify the notice number, tax period, response deadline, and documents needed before responding.",
+        impact: "Priority: Urgent"
+      });
+    }
+
+    return guidance.slice(0, 4);
+  }
+
+  function renderAdvisorGuidance(actions) {
+    const container = document.getElementById("advisorGuidance");
+    if (!container) return;
+
+    const guidance = buildAdvisorGuidance(actions);
+
+    container.innerHTML = guidance.map(item => `
+      <div class="advisor-card">
+        <strong>${item.title}</strong>
+        <span>${item.detail}</span>
+        ${item.impact ? `<div class="advisor-impact">${item.impact}</div>` : ""}
+      </div>
+    `).join("");
+  }
+
+  function loadProfessionalNotes() {
+    const field = document.getElementById("professionalNotes");
+    const status = document.getElementById("professionalNotesStatus");
+    if (!field || !status) return;
+
+    const saved = window.localStorage.getItem(professionalNotesKey) || "";
+    field.value = saved;
+    status.textContent = saved
+      ? "Saved notes loaded for this planner record."
+      : "No notes saved yet.";
+  }
+
+  function saveProfessionalNotes() {
+    const field = document.getElementById("professionalNotes");
+    const status = document.getElementById("professionalNotesStatus");
+    if (!field || !status) return;
+
+    window.localStorage.setItem(professionalNotesKey, field.value || "");
+    status.textContent = `Notes saved ${new Date().toLocaleString()}.`;
+  }
+
+  function clearProfessionalNotes() {
+    const field = document.getElementById("professionalNotes");
+    const status = document.getElementById("professionalNotesStatus");
+    if (!field || !status) return;
+
+    field.value = "";
+    window.localStorage.removeItem(professionalNotesKey);
+    status.textContent = "Notes cleared.";
+  }
+
   function updateTaxActionPlan(actions, combinedSavings) {
     const list = document.getElementById("actionPlanList");
     const sortedActions = [...actions].sort(
@@ -996,6 +1153,8 @@
       sortedActions.length ? "Planning review ready" : "Not started";
     document.getElementById("actionBadge").textContent =
       sortedActions.length ? "Review with your tax professional" : "Complete the Finder";
+
+    renderAdvisorGuidance(sortedActions);
   }
 
   document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
@@ -1011,6 +1170,10 @@
     control.addEventListener("input", updateTaxSavingsFinder);
     control.addEventListener("change", updateTaxSavingsFinder);
   });
+
+  document.getElementById("saveProfessionalNotes").addEventListener("click", saveProfessionalNotes);
+  document.getElementById("clearProfessionalNotes").addEventListener("click", clearProfessionalNotes);
+  document.getElementById("printPlanningSummary").addEventListener("click", () => window.print());
 
   document.querySelectorAll("input[type='range']").forEach(slider => slider.addEventListener("input", () => {
     const output = slider.nextElementSibling;
@@ -1106,6 +1269,7 @@
   updateWithholdingCheckup();
   updateTaxSavingsFinder();
   updatePlannerOverview();
+  loadProfessionalNotes();
   scheduleStateEstimate();
   loadClientContext();
 </script>
