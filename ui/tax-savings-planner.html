@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -66,7 +66,37 @@
     .scorecard-notes textarea{width:100%;min-height:78px;resize:vertical;border:1px solid var(--line);padding:10px;background:#fff;color:var(--ink)}
     .scorecard-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
     .script-box{border-left:4px solid var(--gold);padding-left:12px;color:var(--ink-soft);font-size:14px;line-height:1.6}
-    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid{grid-template-columns:1fr}.scorecard-card-head{flex-direction:column}.priority-pill{white-space:normal}}
+    .signal-section{border:1px solid var(--line);background:#fff;padding:16px;margin-top:14px}
+    .signal-section:first-of-type{margin-top:0}
+    .signal-section h4{font-family:Fraunces,serif;color:var(--navy);font-size:18px;margin:0 0 6px}
+    .signal-section p{margin:0 0 14px;color:var(--ink-soft);font-size:13px;line-height:1.5}
+    .signal-toggle{display:flex;align-items:flex-start;gap:9px;padding:10px 0}
+    .signal-toggle input{width:auto;margin-top:2px}
+    .alert-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 8px}
+    .alert-toolbar button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
+    .alert-save-status{font-size:12px;color:var(--ink-soft);margin-bottom:16px}
+    .smart-alert-list{display:grid;gap:14px}
+    .smart-alert-card{border:1px solid var(--line);border-left:7px solid var(--gold);background:#fff;padding:16px}
+    .smart-alert-card[data-tone="savings"]{border-left-color:var(--green)}
+    .smart-alert-card[data-tone="exposure"]{border-left-color:var(--red)}
+    .smart-alert-card[data-tone="risk"]{border-left-color:var(--red-deep);background:#fffaf9}
+    .smart-alert-card[data-tone="documentation"]{border-left-color:#6f7890}
+    .smart-alert-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .smart-alert-head h4{font-family:Fraunces,serif;color:var(--navy);font-size:19px;line-height:1.3;margin:6px 0 0}
+    .alert-type-pill{display:inline-block;padding:5px 8px;border:1px solid var(--line);background:#f0eadb;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:700;text-transform:uppercase}
+    .alert-type-pill.savings{background:#dcefe6;color:var(--green-deep);border-color:#b9ddcd}
+    .alert-type-pill.exposure,.alert-type-pill.risk{background:#f5dedb;color:var(--red-deep);border-color:#e8bcb7}
+    .alert-type-pill.documentation{background:#e7e9ef;color:#485066;border-color:#c9cedb}
+    .smart-alert-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .smart-alert-detail{margin:14px 0;color:var(--ink-soft);font-size:14px;line-height:1.55}
+    .smart-alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .smart-alert-step{border-top:1px solid var(--line-soft);padding-top:10px}
+    .smart-alert-step strong{display:block;color:var(--navy);font-size:13px;margin-bottom:5px}
+    .smart-alert-step p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
+    .smart-alert-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:12px}
+    .smart-alert-footer strong{color:var(--navy)}
+    .smart-alert-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
+    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head{flex-direction:column}.priority-pill{white-space:normal}}
     @media print{
       .tabs,.note-actions,.cta{display:none!important}
       .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
@@ -77,12 +107,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.0 active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.1 + Smart Alerts active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
-  <p class="lead">Your estimate showed a snapshot. These six planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.0 active</span></div>
+  <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.1 + Smart Alerts active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -92,6 +122,7 @@
     <button class="tab" data-tab="finder">04 Tax Savings Finder</button>
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
     <button class="tab" data-tab="scorecard">06 Opportunity Scorecard</button>
+    <button class="tab" data-tab="smartAlerts">07 Client Tax Profile</button>
   </nav>
 
   <section class="panel active" id="overview">
@@ -492,6 +523,180 @@
     </div>
   </section>
 
+  <section class="panel" id="smartAlerts">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">C</div><h3>Client Tax Profile</h3></div>
+        <p class="module-note">Record the client’s additional tax information—including charitable giving, investments, retirement and Social Security income, estimated tax payments, IRS payment arrangements, and business activity. The Recommendation Engine uses this profile to create Smart Alerts, separate possible tax savings from tax exposure and risk, and feed the Tax Action Plan and Opportunity Scorecard.</p>
+
+        <div class="signal-section">
+          <h4>Charitable Giving</h4>
+          <p>Record the contribution amounts and whether supporting records are ready. The contribution amount is not the same as the tax savings.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="alertCharitableCash">Cash contributions</label>
+              <input id="alertCharitableCash" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertCharitableNoncash">Noncash contributions</label>
+              <input id="alertCharitableNoncash" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field full">
+              <label for="alertCharitableDocs">Contribution documentation</label>
+              <select id="alertCharitableDocs">
+                <option value="unknown">Not reviewed yet</option>
+                <option value="complete">Complete</option>
+                <option value="review">Needs review</option>
+                <option value="missing">Missing or incomplete</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-section">
+          <h4>Capital Gains, Losses, Dividends &amp; Distributions</h4>
+          <p>Use year-to-date brokerage information or known tax documents. Final tax treatment still requires the complete return picture.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="alertShortTermGains">Short-term capital gains</label>
+              <input id="alertShortTermGains" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertLongTermGains">Long-term capital gains</label>
+              <input id="alertLongTermGains" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertCapitalLosses">Capital losses</label>
+              <input id="alertCapitalLosses" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertDividends">Dividends / investment distributions</label>
+              <input id="alertDividends" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field full">
+              <label for="alertInvestmentDocs">Investment tax documents and basis</label>
+              <select id="alertInvestmentDocs">
+                <option value="unknown">Not reviewed yet</option>
+                <option value="complete">Complete</option>
+                <option value="review">Needs review</option>
+                <option value="missing">Missing or incomplete</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-section">
+          <h4>Retirement &amp; Social Security</h4>
+          <p>Record gross retirement distributions, federal withholding shown on the retirement forms, and Social Security benefits.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="alertRetirementDistributions">1099-R gross distributions</label>
+              <input id="alertRetirementDistributions" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertRetirementWithholding">Federal withholding from 1099-R</label>
+              <input id="alertRetirementWithholding" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertSocialSecurity">SSA-1099 benefits</label>
+              <input id="alertSocialSecurity" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertRetirementDocs">Retirement / Social Security documents</label>
+              <select id="alertRetirementDocs">
+                <option value="unknown">Not reviewed yet</option>
+                <option value="complete">Complete</option>
+                <option value="review">Needs review</option>
+                <option value="missing">Missing or incomplete</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-section">
+          <h4>Estimated Taxes &amp; IRS Installment Agreement</h4>
+          <p>Track payments already made and identify clients whose IRS payment arrangement needs protection or review.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="alertFederalEstimated">Federal estimated taxes paid</label>
+              <input id="alertFederalEstimated" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="alertStateEstimated">State estimated taxes paid</label>
+              <input id="alertStateEstimated" class="money" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field full">
+              <label class="signal-toggle"><input id="alertInstallmentOn" type="checkbox"><span>Client currently has an IRS installment agreement</span></label>
+            </div>
+            <div class="field full">
+              <label for="alertInstallmentStatus">Installment agreement status</label>
+              <select id="alertInstallmentStatus">
+                <option value="unknown">Not confirmed</option>
+                <option value="current">Current and payments are being made</option>
+                <option value="needs-review">Needs review / possible compliance issue</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-section">
+          <h4>Small-Business Activity</h4>
+          <p>Flag business or self-employment activity now. Smart Alerts identifies the immediate owner-review needs; a detailed Business Tax Intelligence™ assessment remains a separate service.</p>
+          <div class="field-grid">
+            <div class="field full">
+              <label class="signal-toggle"><input id="alertBusinessOn" type="checkbox"><span>Client owns a business or has self-employment income</span></label>
+            </div>
+            <div class="field">
+              <label for="alertBusinessProfit">Estimated net business profit</label>
+              <input id="alertBusinessProfit" class="money" type="number" min="0" step="500" value="0">
+            </div>
+            <div class="field">
+              <label for="alertBusinessBooksStatus">Business books</label>
+              <select id="alertBusinessBooksStatus">
+                <option value="unknown">Status not confirmed</option>
+                <option value="current">Current and reconciled</option>
+                <option value="cleanup">Needs cleanup</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-toolbar">
+          <button type="button" id="copySmartAlertSummary">Copy Smart Alert Summary</button>
+        </div>
+        <div class="alert-save-status" id="smartAlertSaveStatus">Client Tax Profile inputs save automatically in this browser for this planner record.</div>
+
+        <div class="section-head" style="margin-top:24px"><div class="letter">!</div><h3>Active Client Alerts</h3></div>
+        <div class="smart-alert-list" id="smartAlertList">
+          <div class="smart-alert-empty">Enter client tax signals above to create Smart Alerts.</div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Smart Alert Summary</h3>
+          <div class="row"><span>Active alerts</span><strong class="number" id="smartAlertTotal">0</strong></div>
+          <div class="row"><span>Potential tax savings</span><strong class="number" id="smartAlertSavings">0</strong></div>
+          <div class="row"><span>Potential tax exposure</span><strong class="number" id="smartAlertExposure">0</strong></div>
+          <div class="row"><span>Risk / required action</span><strong class="number" id="smartAlertRisk">0</strong></div>
+          <div class="row"><span>Documentation / verification</span><strong class="number" id="smartAlertDocumentation">0</strong></div>
+          <div class="row total"><span>Urgent / high priority</span><strong class="number" id="smartAlertPriorityCount">0</strong></div>
+          <span class="status" id="smartAlertStatus">No active alerts</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>What the Categories Mean</h3>
+          <div class="action-list">
+            <div class="action-item"><strong>Potential Tax Savings</strong><span>A possible deduction, credit, loss strategy, or planning opportunity that still requires verification.</span></div>
+            <div class="action-item"><strong>Potential Tax Exposure</strong><span>Income or activity that may create additional federal or state tax and should be projected before filing.</span></div>
+            <div class="action-item"><strong>Risk Reduction / Required Action</strong><span>An IRS, payment-plan, bookkeeping, or compliance issue that requires a specific next step.</span></div>
+            <div class="action-item"><strong>Documentation / Verification</strong><span>Records that should be collected and reviewed before a conclusion is presented as final.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
@@ -559,6 +764,17 @@
   let latestRecommendationResult = {
     recommendations: [],
     actionPlan: [],
+    smartAlerts: {
+      alerts: [],
+      totalCount: 0,
+      savingsCount: 0,
+      exposureCount: 0,
+      riskCount: 0,
+      documentationCount: 0,
+      urgentCount: 0,
+      highCount: 0,
+      status: "No active alerts"
+    },
     scorecard: null,
     primaryRecommendation: null,
     servicePaths: []
@@ -623,7 +839,7 @@
     const controls = {};
 
     document.querySelectorAll(
-      "#withholding input, #withholding select, #finder input, #finder select"
+      "#withholding input, #withholding select, #finder input, #finder select, #smartAlerts input, #smartAlerts select"
     ).forEach(control => {
       if (control.type === "radio") {
         if (control.checked && control.name) {
@@ -1022,6 +1238,21 @@
       score += 10;
     }
 
+    const smartAlertSummary = latestRecommendationResult.smartAlerts || {};
+    if ((smartAlertSummary.urgentCount || 0) > 0) {
+      score -= 20;
+      attention.push({
+        text: `${smartAlertSummary.urgentCount} urgent Smart Alert${smartAlertSummary.urgentCount === 1 ? "" : "s"} require immediate review.`,
+        type: "warn"
+      });
+    } else if ((smartAlertSummary.highCount || 0) > 0) {
+      score -= 10;
+      attention.push({
+        text: `${smartAlertSummary.highCount} high-priority Smart Alert${smartAlertSummary.highCount === 1 ? "" : "s"} need professional review.`,
+        type: "warn"
+      });
+    }
+
     score = Math.max(0, Math.min(100, Math.round(score)));
     latestTaxHealthScore = score;
 
@@ -1155,6 +1386,30 @@
     }, {});
   }
 
+  function buildSmartAlertSignals() {
+    return {
+      charitableCash: numberValue("alertCharitableCash"),
+      charitableNoncash: numberValue("alertCharitableNoncash"),
+      charitableDocs: document.getElementById("alertCharitableDocs")?.value || "unknown",
+      shortTermGains: numberValue("alertShortTermGains"),
+      longTermGains: numberValue("alertLongTermGains"),
+      capitalLosses: numberValue("alertCapitalLosses"),
+      dividendsDistributions: numberValue("alertDividends"),
+      investmentDocs: document.getElementById("alertInvestmentDocs")?.value || "unknown",
+      retirementDistributions: numberValue("alertRetirementDistributions"),
+      retirementWithholding: numberValue("alertRetirementWithholding"),
+      socialSecurityBenefits: numberValue("alertSocialSecurity"),
+      retirementDocs: document.getElementById("alertRetirementDocs")?.value || "unknown",
+      federalEstimatedPayments: numberValue("alertFederalEstimated"),
+      stateEstimatedPayments: numberValue("alertStateEstimated"),
+      hasInstallmentAgreement: Boolean(document.getElementById("alertInstallmentOn")?.checked),
+      installmentStatus: document.getElementById("alertInstallmentStatus")?.value || "unknown",
+      hasBusinessActivity: Boolean(document.getElementById("alertBusinessOn")?.checked),
+      businessNetProfit: numberValue("alertBusinessProfit"),
+      businessBooksStatus: document.getElementById("alertBusinessBooksStatus")?.value || "unknown"
+    };
+  }
+
   function updateTaxSavingsFinder() {
     const { federalRate, stateRate } = getFinderTaxContext();
     const estimatedCombinedTax =
@@ -1173,7 +1428,10 @@
         numberValue("whWithholding") +
         numberValue("whStateWithholding") > 0,
       payPeriods: Number(document.getElementById("whPayFrequency")?.value || 26),
-      maxRecommendations: 20,
+      wages: numberValue("whWages"),
+      otherIncome: numberValue("whOtherIncome"),
+      smartAlertSignals: buildSmartAlertSignals(),
+      maxRecommendations: 40,
       scorecardRecords: opportunityScorecardRecords
     });
 
@@ -1201,12 +1459,126 @@
     }
 
     updateTaxActionPlan(
-      latestRecommendationResult.actionPlan,
+      latestRecommendationResult.recommendations,
       latestFinderSummary.combinedSavings,
       latestRecommendationResult.recommendations
     );
     renderOpportunityScorecard(latestRecommendationResult.recommendations);
+    renderSmartAlerts(latestRecommendationResult.smartAlerts);
     updatePlannerOverview();
+  }
+
+  function renderSmartAlerts(smartAlertResult) {
+    const summary = smartAlertResult || {
+      alerts: [],
+      totalCount: 0,
+      savingsCount: 0,
+      exposureCount: 0,
+      riskCount: 0,
+      documentationCount: 0,
+      urgentCount: 0,
+      highCount: 0,
+      status: "No active alerts"
+    };
+    const container = document.getElementById("smartAlertList");
+    if (!container) return;
+
+    document.getElementById("smartAlertTotal").textContent = summary.totalCount || 0;
+    document.getElementById("smartAlertSavings").textContent = summary.savingsCount || 0;
+    document.getElementById("smartAlertExposure").textContent = summary.exposureCount || 0;
+    document.getElementById("smartAlertRisk").textContent = summary.riskCount || 0;
+    document.getElementById("smartAlertDocumentation").textContent = summary.documentationCount || 0;
+    document.getElementById("smartAlertPriorityCount").textContent =
+      Number(summary.urgentCount || 0) + Number(summary.highCount || 0);
+
+    const status = document.getElementById("smartAlertStatus");
+    status.textContent = summary.status || "No active alerts";
+    status.classList.remove("good", "warn");
+    if ((summary.urgentCount || 0) > 0 || (summary.highCount || 0) > 0) {
+      status.classList.add("warn");
+    } else if ((summary.totalCount || 0) > 0) {
+      status.classList.add("good");
+    }
+
+    const alerts = Array.isArray(summary.alerts) ? summary.alerts : [];
+    if (!alerts.length) {
+      container.innerHTML = '<div class="smart-alert-empty">No Smart Alerts are active. Enter client tax signals above to identify opportunities, exposure, risk, and documentation needs.</div>';
+      return;
+    }
+
+    container.innerHTML = alerts.map((alert) => {
+      const priority = String(alert.priority || "review");
+      const typeTone = String(alert.alertTone || "documentation");
+      const flaggedAmount = Number(alert.flaggedAmount || 0);
+
+      return `
+        <article class="smart-alert-card" data-tone="${escapeHtml(typeTone)}">
+          <div class="smart-alert-head">
+            <div>
+              <div class="smart-alert-meta">
+                <span class="alert-type-pill ${escapeHtml(typeTone)}">${escapeHtml(alert.alertTypeLabel || "Smart Alert")}</span>
+                <span class="priority-pill ${escapeHtml(priority)}">${escapeHtml(priority === "urgent" ? "Urgent" : priority === "high" ? "High" : priority === "medium" ? "Medium" : priority === "monitor" ? "Monitor" : "Review")}</span>
+              </div>
+              <h4>${escapeHtml(alert.title)}</h4>
+            </div>
+          </div>
+
+          <p class="smart-alert-detail">${escapeHtml(alert.detail)}</p>
+
+          <div class="smart-alert-grid">
+            <div class="smart-alert-step">
+              <strong>What I need from the client</strong>
+              <p>${escapeHtml(alert.clientAction || "Confirm the facts and provide supporting information.")}</p>
+            </div>
+            <div class="smart-alert-step">
+              <strong>Professional review</strong>
+              <p>${escapeHtml(alert.professionalAction || "Verify the facts, documentation, timing, and tax treatment before recommending action.")}</p>
+            </div>
+          </div>
+
+          <div class="smart-alert-footer">
+            <span><strong>Service path:</strong> ${escapeHtml(alert.servicePath || "Tax Planning Meeting")}</span>
+            ${flaggedAmount > 0 ? `<span><strong>Amount flagged:</strong> ${money.format(Math.round(flaggedAmount))}</span>` : ""}
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function buildSmartAlertSummaryText() {
+    const result = latestRecommendationResult.smartAlerts || { alerts: [] };
+    const clientName = document.getElementById("clientName")?.textContent || "Client";
+    const taxYear = document.getElementById("taxYear")?.textContent || "—";
+    const alerts = Array.isArray(result.alerts) ? result.alerts : [];
+    const lines = [
+      "TAX SAVINGS PLANNER™ — SMART ALERT SUMMARY",
+      `Client: ${clientName}`,
+      `Tax year: ${taxYear}`,
+      "",
+      "Smart Alerts identify possible tax savings, possible tax exposure, required action, and documentation needs. They are review signals, not final tax conclusions.",
+      ""
+    ];
+
+    alerts.forEach((alert, index) => {
+      lines.push(`${index + 1}. ${alert.title}`);
+      lines.push(`Category: ${alert.alertTypeLabel}`);
+      lines.push(`Priority: ${String(alert.priority || "review").toUpperCase()}`);
+      lines.push(`Why this was flagged: ${alert.detail}`);
+      lines.push(`What I need from the client: ${alert.clientAction}`);
+      lines.push(`Professional review: ${alert.professionalAction}`);
+      if (Number(alert.flaggedAmount || 0) > 0) {
+        lines.push(`Amount flagged for review: ${money.format(Math.round(alert.flaggedAmount))}`);
+      }
+      lines.push("");
+    });
+
+    if (!alerts.length) {
+      lines.push("No Smart Alerts are currently active.");
+      lines.push("");
+    }
+
+    lines.push("Next step: Review the active alerts, verify supporting information, and document the professional conclusion in the Client Opportunity Scorecard.");
+    return lines.join("\\n");
   }
 
   function renderAdvisorGuidance(recommendations) {
@@ -1476,7 +1848,7 @@
     return lines.join("\n");
   }
 
-  async function copyPlannerText(text, successMessage) {
+  async function copyPlannerText(text, successMessage, statusId = "scorecardSaveStatus") {
     try {
       await navigator.clipboard.writeText(text);
     } catch (error) {
@@ -1491,7 +1863,7 @@
       helper.remove();
     }
 
-    const status = document.getElementById("scorecardSaveStatus");
+    const status = document.getElementById(statusId);
     if (status) status.textContent = successMessage;
   }
 
@@ -1541,6 +1913,17 @@
     });
   });
 
+  document.querySelectorAll("#smartAlerts input, #smartAlerts select").forEach(control => {
+    control.addEventListener("input", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+    control.addEventListener("change", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+  });
+
   document.getElementById("opportunityScorecardList").addEventListener("change", event => {
     const control = event.target.closest(
       "[data-scorecard-stage], [data-scorecard-benefit]"
@@ -1554,6 +1937,14 @@
     const control = event.target.closest("[data-scorecard-notes]");
     if (!control) return;
     updateScorecardRecordFromControl(control);
+  });
+
+  document.getElementById("copySmartAlertSummary").addEventListener("click", () => {
+    copyPlannerText(
+      buildSmartAlertSummaryText(),
+      "Smart Alert Summary copied.",
+      "smartAlertSaveStatus"
+    );
   });
 
   document.getElementById("copyClientOpportunitySummary").addEventListener("click", () => {
