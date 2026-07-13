@@ -13,7 +13,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = "1.0.0";
+  const VERSION = "1.2.0";
 
   const PRIORITY_RANK = Object.freeze({
     urgent: 0,
@@ -188,6 +188,29 @@
   const DEFINITION_MAP = new Map(
     OPPORTUNITY_DEFINITIONS.map((definition) => [definition.key, definition])
   );
+
+  const SMART_ALERT_TYPE_DEFINITIONS = Object.freeze({
+    "tax-savings": Object.freeze({
+      key: "tax-savings",
+      label: "Potential Tax Savings",
+      tone: "savings"
+    }),
+    "tax-exposure": Object.freeze({
+      key: "tax-exposure",
+      label: "Potential Tax Exposure",
+      tone: "exposure"
+    }),
+    "risk-action": Object.freeze({
+      key: "risk-action",
+      label: "Risk Reduction / Required Action",
+      tone: "risk"
+    }),
+    "documentation": Object.freeze({
+      key: "documentation",
+      label: "Documentation / Verification",
+      tone: "documentation"
+    })
+  });
 
   function numberOrZero(value) {
     const number = Number(value);
@@ -410,6 +433,409 @@
     };
   }
 
+  function normalizeReviewStatus(value, allowed, fallback = "unknown") {
+    const normalized = String(value || "").trim().toLowerCase();
+    return allowed.includes(normalized) ? normalized : fallback;
+  }
+
+  function createSmartAlert({
+    id,
+    alertType,
+    title,
+    detail,
+    clientAction,
+    professionalAction,
+    priority = "review",
+    servicePath = "Tax Planning Meeting",
+    flaggedAmount = 0,
+    sourceField = ""
+  }) {
+    const type = SMART_ALERT_TYPE_DEFINITIONS[alertType] ||
+      SMART_ALERT_TYPE_DEFINITIONS.documentation;
+
+    return {
+      id,
+      source: "smart-alerts",
+      sourceField,
+      category: alertType,
+      alertType: type.key,
+      alertTypeLabel: type.label,
+      alertTone: type.tone,
+      title,
+      detail,
+      clientAction,
+      professionalAction,
+      estimatedBenefit: 0,
+      flaggedAmount: Math.round(numberOrZero(flaggedAmount)),
+      priority,
+      priorityRank: priorityRank(priority),
+      impact: type.label,
+      servicePath
+    };
+  }
+
+  function buildSmartAlerts(input = {}) {
+    const signals = input?.signals && typeof input.signals === "object"
+      ? input.signals
+      : input;
+    const context = input?.context && typeof input.context === "object"
+      ? input.context
+      : {};
+
+    const cashCharity = numberOrZero(signals.charitableCash);
+    const noncashCharity = numberOrZero(signals.charitableNoncash);
+    const charitableTotal = cashCharity + noncashCharity;
+    const charitableDocs = normalizeReviewStatus(
+      signals.charitableDocs,
+      ["complete", "review", "missing", "unknown"]
+    );
+
+    const shortTermGains = numberOrZero(signals.shortTermGains);
+    const longTermGains = numberOrZero(signals.longTermGains);
+    const capitalLosses = numberOrZero(signals.capitalLosses);
+    const dividends = numberOrZero(signals.dividendsDistributions);
+    const investmentTotal = shortTermGains + longTermGains + dividends;
+    const investmentDocs = normalizeReviewStatus(
+      signals.investmentDocs,
+      ["complete", "review", "missing", "unknown"]
+    );
+
+    const retirementDistributions = numberOrZero(signals.retirementDistributions);
+    const retirementWithholding = numberOrZero(signals.retirementWithholding);
+    const socialSecurityBenefits = numberOrZero(signals.socialSecurityBenefits);
+    const retirementDocs = normalizeReviewStatus(
+      signals.retirementDocs,
+      ["complete", "review", "missing", "unknown"]
+    );
+
+    const federalEstimatedPayments = numberOrZero(signals.federalEstimatedPayments);
+    const stateEstimatedPayments = numberOrZero(signals.stateEstimatedPayments);
+    const totalEstimatedPayments = federalEstimatedPayments + stateEstimatedPayments;
+    const hasInstallmentAgreement = Boolean(signals.hasInstallmentAgreement);
+    const installmentStatus = normalizeReviewStatus(
+      signals.installmentStatus,
+      ["current", "needs-review", "unknown"]
+    );
+
+    const hasBusinessActivity = Boolean(signals.hasBusinessActivity);
+    const businessNetProfit = numberOrZero(signals.businessNetProfit);
+    const businessBooksStatus = normalizeReviewStatus(
+      signals.businessBooksStatus,
+      ["current", "cleanup", "unknown"]
+    );
+
+    const projectedResult = signedNumberOrZero(context.combinedWithholdingResult);
+    const wages = numberOrZero(context.wages);
+    const otherIncome = numberOrZero(context.otherIncome);
+    const alerts = [];
+
+    if (charitableTotal > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-charitable-strategy",
+        alertType: "tax-savings",
+        title: "Review charitable contribution strategy",
+        detail: `${money(charitableTotal)} of charitable giving was entered. Confirm qualified recipients, contribution dates, itemized-deduction treatment, and whether the contributions create an actual tax benefit.`,
+        clientAction: "Provide contribution receipts, written acknowledgments, proof of payment, and a description of any noncash property donated.",
+        professionalAction: "Verify deductibility and substantiation, compare total itemized deductions with the standard deduction, and explain that the contribution amount is not the same as the tax savings.",
+        priority: charitableTotal >= 10000 ? "high" : "medium",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: charitableTotal,
+        sourceField: "charitable"
+      }));
+
+      if (charitableDocs !== "complete") {
+        alerts.push(createSmartAlert({
+          id: "smart-charitable-documentation",
+          alertType: "documentation",
+          title: "Complete charitable contribution documentation",
+          detail: noncashCharity > 0
+            ? "Noncash charitable contributions were entered and the documentation status is not complete. Receipts, descriptions, valuation support, and any additional required records should be reviewed before filing."
+            : "Charitable contributions were entered and the documentation status is not complete. Contribution receipts and written acknowledgments should be collected before filing.",
+          clientAction: "Gather all charitable receipts, acknowledgment letters, proof of payment, and noncash contribution records.",
+          professionalAction: "Review the records for completeness and determine whether any additional substantiation or reporting is required.",
+          priority: charitableDocs === "missing" ? "high" : "review",
+          servicePath: "Written Red Flag Review",
+          flaggedAmount: charitableTotal,
+          sourceField: "charitable-docs"
+        }));
+      }
+    }
+
+    if (shortTermGains > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-short-term-capital-gain",
+        alertType: "tax-exposure",
+        title: "Review short-term capital gain exposure",
+        detail: `${money(shortTermGains)} of short-term capital gains was entered. Short-term gains should be reviewed with the client's ordinary income, withholding, losses, and estimated payments before projecting the final tax result.`,
+        clientAction: "Provide brokerage gain/loss reports and confirm whether any additional sales are expected before year-end.",
+        professionalAction: "Review holding periods, basis, wash-sale information, available capital losses, and the effect on the federal and state projection.",
+        priority: shortTermGains >= 10000 ? "high" : "medium",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: shortTermGains,
+        sourceField: "short-term-gains"
+      }));
+    }
+
+    if (longTermGains > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-long-term-capital-gain",
+        alertType: "tax-exposure",
+        title: "Review long-term capital gain exposure",
+        detail: `${money(longTermGains)} of long-term capital gains was entered. The final tax effect depends on the client's complete taxable income, filing status, other investment income, and state treatment.`,
+        clientAction: "Provide brokerage gain/loss reports and identify any planned sales or large distributions still expected this year.",
+        professionalAction: "Review basis, holding periods, available losses, total taxable income, and the effect on the federal and state projection.",
+        priority: longTermGains >= 25000 ? "high" : "medium",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: longTermGains,
+        sourceField: "long-term-gains"
+      }));
+    }
+
+    if (dividends > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-dividend-distribution-review",
+        alertType: "tax-exposure",
+        title: "Review dividends and investment distributions",
+        detail: `${money(dividends)} of dividends or investment distributions was entered. Qualified dividends, ordinary dividends, capital-gain distributions, and other distributions may receive different tax treatment.`,
+        clientAction: "Provide the year-end Forms 1099-DIV and brokerage statements, plus any year-to-date distribution reports.",
+        professionalAction: "Separate the income by tax character, confirm basis adjustments where applicable, and include the income in the withholding or estimated-payment review.",
+        priority: dividends >= 10000 ? "high" : "medium",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: dividends,
+        sourceField: "dividends"
+      }));
+    }
+
+    if (capitalLosses > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-capital-loss-coordination",
+        alertType: "tax-savings",
+        title: "Review capital losses with gains and carryovers",
+        detail: `${money(capitalLosses)} of capital losses was entered. Losses should be coordinated with current gains, prior-year carryovers, basis records, and wash-sale information before estimating a tax benefit.`,
+        clientAction: "Provide brokerage gain/loss reports and the prior-year return so capital-loss carryovers can be verified.",
+        professionalAction: "Verify realized losses, wash-sale adjustments, prior-year carryovers, and how the losses coordinate with current-year gains.",
+        priority: shortTermGains + longTermGains > 0 ? "medium" : "review",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: capitalLosses,
+        sourceField: "capital-losses"
+      }));
+    }
+
+    if (investmentTotal + capitalLosses > 0 && investmentDocs !== "complete") {
+      alerts.push(createSmartAlert({
+        id: "smart-investment-documentation",
+        alertType: "documentation",
+        title: "Verify investment tax documents and basis",
+        detail: "Investment activity was entered, but the document status is not complete. Brokerage statements, Forms 1099, cost basis, and prior-year carryovers should be reviewed before the result is treated as final.",
+        clientAction: "Provide all brokerage tax documents, year-end statements, corrected forms, and the prior-year return.",
+        professionalAction: "Reconcile the tax forms to the gain/loss detail, verify basis and carryovers, and identify missing or corrected documents.",
+        priority: investmentDocs === "missing" ? "high" : "review",
+        servicePath: "Written Red Flag Review",
+        flaggedAmount: investmentTotal + capitalLosses,
+        sourceField: "investment-docs"
+      }));
+    }
+
+    if (retirementDistributions > 0) {
+      const noWithholding = retirementWithholding <= 0;
+      alerts.push(createSmartAlert({
+        id: "smart-1099r-review",
+        alertType: "tax-exposure",
+        title: "Review 1099-R taxability and withholding",
+        detail: `${money(retirementDistributions)} of retirement distributions and ${money(retirementWithholding)} of federal withholding were entered. The taxable amount, distribution code, rollover treatment, and withholding should be verified before projecting the final tax result.`,
+        clientAction: "Provide every Form 1099-R, retirement account statement, and any rollover or distribution documentation.",
+        professionalAction: "Review the taxable amount, distribution code, basis, rollover treatment, withholding, and any state-specific treatment.",
+        priority: noWithholding ? "high" : "medium",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: retirementDistributions,
+        sourceField: "retirement-distributions"
+      }));
+    }
+
+    if (socialSecurityBenefits > 0) {
+      const relatedIncome = wages + otherIncome + investmentTotal + retirementDistributions;
+      alerts.push(createSmartAlert({
+        id: "smart-social-security-taxability",
+        alertType: "tax-exposure",
+        title: "Review Social Security taxability with other income",
+        detail: `${money(socialSecurityBenefits)} of Social Security benefits was entered. The taxable portion must be reviewed together with wages, retirement distributions, investment income, business income, and other household income.`,
+        clientAction: "Provide every Form SSA-1099 and information for all other household income expected for the year.",
+        professionalAction: "Review the benefits with the client's complete income picture and determine whether withholding or estimated-payment changes should be considered.",
+        priority: relatedIncome > 0 ? "medium" : "review",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: socialSecurityBenefits,
+        sourceField: "social-security"
+      }));
+    }
+
+    if (
+      retirementDistributions + socialSecurityBenefits > 0 &&
+      retirementDocs !== "complete"
+    ) {
+      alerts.push(createSmartAlert({
+        id: "smart-retirement-documentation",
+        alertType: "documentation",
+        title: "Collect retirement and Social Security tax documents",
+        detail: "Retirement or Social Security income was entered, but the tax-document status is not complete. All Forms 1099-R, SSA-1099, and related statements should be reviewed.",
+        clientAction: "Provide all Forms 1099-R, SSA-1099, retirement statements, and rollover records.",
+        professionalAction: "Reconcile the forms to the amounts entered and identify any missing, corrected, or state-specific information.",
+        priority: retirementDocs === "missing" ? "high" : "review",
+        servicePath: "Written Red Flag Review",
+        flaggedAmount: retirementDistributions + socialSecurityBenefits,
+        sourceField: "retirement-docs"
+      }));
+    }
+
+    if (totalEstimatedPayments > 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-estimated-payment-verification",
+        alertType: "documentation",
+        title: "Verify federal and state estimated-tax payments",
+        detail: `${money(federalEstimatedPayments)} of federal and ${money(stateEstimatedPayments)} of state estimated-tax payments were entered. Payment dates, amounts, tax year, and proof of payment should be verified before the return is filed.`,
+        clientAction: "Provide payment confirmations, bank records, vouchers, or tax-agency account transcripts showing the date and amount of each payment.",
+        professionalAction: "Reconcile each payment to the correct tax year and agency and confirm that all payments are included in the projection and return.",
+        priority: "medium",
+        servicePath: "Tax Preparation",
+        flaggedAmount: totalEstimatedPayments,
+        sourceField: "estimated-payments"
+      }));
+    }
+
+    if (projectedResult < 0) {
+      alerts.push(createSmartAlert({
+        id: "smart-estimated-payment-need",
+        alertType: "tax-exposure",
+        title: totalEstimatedPayments > 0
+          ? "Reconcile projected balance with estimated payments"
+          : "Review estimated-tax payment need",
+        detail: totalEstimatedPayments > 0
+          ? "The current withholding projection shows a balance due and estimated payments were entered. Confirm that the payments are included correctly and determine whether additional payment or withholding action is needed."
+          : "The current withholding projection shows a balance due and no estimated payments were entered. Review whether an estimated payment or withholding adjustment should be considered.",
+        clientAction: "Provide current income records, withholding details, and proof of any estimated payments already made.",
+        professionalAction: "Recalculate the projection using verified payments and determine the appropriate next payment or withholding action.",
+        priority: "high",
+        servicePath: "Tax Planning Meeting",
+        flaggedAmount: Math.abs(projectedResult),
+        sourceField: "projected-balance"
+      }));
+    }
+
+    if (hasInstallmentAgreement) {
+      const needsReview = installmentStatus !== "current";
+      alerts.push(createSmartAlert({
+        id: "smart-installment-agreement",
+        alertType: "risk-action",
+        title: needsReview
+          ? "Review IRS installment agreement status"
+          : "Protect IRS installment agreement compliance",
+        detail: needsReview
+          ? "An IRS installment agreement was identified, but the current status is not confirmed. Payment compliance, filing compliance, and any new balance-due exposure should be reviewed promptly."
+          : "An active IRS installment agreement was identified. Current payments, filing compliance, and the risk of creating a new unpaid balance should be monitored.",
+        clientAction: "Provide the agreement notice, recent payment history, current IRS notices, and confirmation that required returns have been filed.",
+        professionalAction: "Verify the agreement status, payment compliance, filing compliance, and whether the current-year projection could create a new balance.",
+        priority: needsReview ? "urgent" : "high",
+        servicePath: "IRS Resolution Review",
+        sourceField: "installment-agreement"
+      }));
+    }
+
+    if (hasBusinessActivity) {
+      alerts.push(createSmartAlert({
+        id: "smart-business-owner-review",
+        alertType: "risk-action",
+        title: "Complete a small-business owner tax review",
+        detail: businessNetProfit > 0
+          ? `${money(businessNetProfit)} of estimated net business profit was entered. Business income, expenses, records, entity structure, estimated taxes, retirement opportunities, and owner compensation should be reviewed together.`
+          : "Business or self-employment activity was identified. Business income, expenses, records, entity structure, estimated taxes, retirement opportunities, and owner compensation should be reviewed together.",
+        clientAction: "Provide year-to-date profit and loss reports, bank and credit-card statements, mileage records, payroll information, entity documents, and estimated-payment records.",
+        professionalAction: "Review the books, tax classification, owner activity, estimated-tax exposure, retirement-plan opportunities, and any business deductions requiring documentation.",
+        priority: "high",
+        servicePath: "Small-Business Tax Planning",
+        flaggedAmount: businessNetProfit,
+        sourceField: "business-activity"
+      }));
+
+      if (businessNetProfit > 0 && totalEstimatedPayments <= 0) {
+        alerts.push(createSmartAlert({
+          id: "smart-business-estimated-tax",
+          alertType: "tax-exposure",
+          title: "Review business estimated-tax exposure",
+          detail: `${money(businessNetProfit)} of estimated net business profit was entered and no federal or state estimated payments were entered. The current-year payment need should be reviewed before year-end or the next payment deadline.`,
+          clientAction: "Provide current profit and loss reports, household income, withholding, and any tax payments already made.",
+          professionalAction: "Estimate the federal and state tax exposure, coordinate it with household withholding, and determine the next payment or withholding action.",
+          priority: "high",
+          servicePath: "Small-Business Tax Planning",
+          flaggedAmount: businessNetProfit,
+          sourceField: "business-estimated-tax"
+        }));
+      }
+
+      if (businessBooksStatus === "cleanup") {
+        alerts.push(createSmartAlert({
+          id: "smart-business-books-cleanup",
+          alertType: "risk-action",
+          title: "Complete business bookkeeping cleanup",
+          detail: "The business books were marked as needing cleanup. Tax planning and return preparation may be unreliable until accounts are reconciled and missing or misclassified transactions are corrected.",
+          clientAction: "Provide all business bank and credit-card statements and identify missing, personal, duplicate, or uncategorized transactions.",
+          professionalAction: "Reconcile the accounts, correct classifications, document owner activity, and identify missing deductions before relying on the profit figure.",
+          priority: "high",
+          servicePath: "Bookkeeping Cleanup",
+          flaggedAmount: businessNetProfit,
+          sourceField: "business-books"
+        }));
+      } else if (businessBooksStatus === "unknown") {
+        alerts.push(createSmartAlert({
+          id: "smart-business-books-verification",
+          alertType: "documentation",
+          title: "Confirm whether business books are current",
+          detail: "Business activity was identified, but the bookkeeping status is unknown. The reliability of the profit figure and available deductions should be verified.",
+          clientAction: "Provide the current profit and loss report, balance sheet if available, and all business bank and credit-card statements.",
+          professionalAction: "Confirm whether the books are reconciled and complete before using the business profit for planning or return preparation.",
+          priority: "review",
+          servicePath: "Bookkeeping Review",
+          flaggedAmount: businessNetProfit,
+          sourceField: "business-books"
+        }));
+      }
+    }
+
+    const sortedAlerts = sortActions(alerts);
+    const counts = {
+      "tax-savings": 0,
+      "tax-exposure": 0,
+      "risk-action": 0,
+      "documentation": 0
+    };
+
+    sortedAlerts.forEach((alert) => {
+      if (Object.prototype.hasOwnProperty.call(counts, alert.alertType)) {
+        counts[alert.alertType] += 1;
+      }
+    });
+
+    const urgentCount = sortedAlerts.filter((alert) => alert.priority === "urgent").length;
+    const highCount = sortedAlerts.filter((alert) => alert.priority === "high").length;
+    const highestPriority = sortedAlerts[0]?.priority || "monitor";
+
+    let status = "No active alerts";
+    if (sortedAlerts.length) status = "Smart Alerts ready for review";
+    if (highCount > 0) status = "High-priority review needed";
+    if (urgentCount > 0) status = "Urgent client action required";
+
+    return {
+      alerts: sortedAlerts,
+      totalCount: sortedAlerts.length,
+      savingsCount: counts["tax-savings"],
+      exposureCount: counts["tax-exposure"],
+      riskCount: counts["risk-action"],
+      documentationCount: counts.documentation,
+      urgentCount,
+      highCount,
+      highestPriority,
+      status
+    };
+  }
+
   function actionToRecommendation(action) {
     return {
       id: action.id,
@@ -428,11 +854,18 @@
     };
   }
 
-  function buildRecommendations(input, opportunitySummary) {
+  function buildRecommendations(input, opportunitySummary, smartAlertResult = null) {
     const maximum = Math.max(1, Math.round(numberOrZero(input?.maxRecommendations) || 4));
     const withholdingRecommendation = buildWithholdingRecommendation(input);
     const opportunityRecommendations = (opportunitySummary?.actions || []).map(actionToRecommendation);
-    const recommendations = [withholdingRecommendation, ...opportunityRecommendations];
+    const smartAlertRecommendations = Array.isArray(smartAlertResult?.alerts)
+      ? smartAlertResult.alerts
+      : [];
+    const recommendations = [
+      withholdingRecommendation,
+      ...opportunityRecommendations,
+      ...smartAlertRecommendations
+    ];
 
     const deduplicated = [];
     const seen = new Set();
@@ -592,12 +1025,477 @@
     };
   }
 
+  function getScorecardItem(scorecard, recommendationId) {
+    return (scorecard?.items || []).find(
+      (item) => String(item.id || "") === String(recommendationId || "")
+    ) || null;
+  }
+
+  function isScorecardItemResolved(scorecard, recommendationId) {
+    const item = getScorecardItem(scorecard, recommendationId);
+    return Boolean(
+      item &&
+      (item.stage === "completed" || item.stage === "not-applicable")
+    );
+  }
+
+  function immediateActionConsequence(recommendation) {
+    const id = String(recommendation?.id || "");
+
+    if (id === "opportunity-notice") {
+      return "Waiting may reduce the time available to respond, increase penalties or interest, or allow IRS collection or adjustment activity to continue.";
+    }
+
+    if (id === "smart-installment-agreement") {
+      return "A missed payment, unfiled return, or new unpaid balance can place the agreement at risk and may restart collection activity.";
+    }
+
+    if (id === "opportunity-transcript") {
+      return "Missing IRS records can delay filing, prevent accurate return preparation, or leave an unresolved balance or filing issue undiscovered.";
+    }
+
+    return "Delaying this item may increase tax exposure, penalties, interest, missed deadlines, or the cost of correcting the issue later.";
+  }
+
+  function immediateActionTiming(recommendation) {
+    const id = String(recommendation?.id || "");
+
+    if (id === "opportunity-notice") {
+      return "Today — upload every page before the response deadline is missed.";
+    }
+
+    if (id === "smart-installment-agreement") {
+      return "Today — confirm the next payment date and current compliance status.";
+    }
+
+    if (id === "opportunity-transcript") {
+      return "As soon as possible — begin the record-recovery process before filing work continues.";
+    }
+
+    return "Act now — complete the requested step before the next tax deadline or appointment.";
+  }
+
+  function buildImmediateAction(recommendations, scorecard) {
+    const unresolvedUrgent = sortActions(recommendations || []).filter(
+      (recommendation) =>
+        recommendation.priority === "urgent" &&
+        !isScorecardItemResolved(scorecard, recommendation.id)
+    );
+
+    const primary = unresolvedUrgent[0] || null;
+
+    if (!primary) {
+      return {
+        active: false,
+        count: 0,
+        title: "",
+        whyUrgent: "",
+        consequence: "",
+        nextAction: "",
+        professionalAction: "",
+        timing: "",
+        servicePath: ""
+      };
+    }
+
+    return {
+      active: true,
+      count: unresolvedUrgent.length,
+      recommendationId: primary.id,
+      title: primary.title,
+      whyUrgent: primary.detail,
+      consequence: immediateActionConsequence(primary),
+      nextAction: primary.clientAction,
+      professionalAction: primary.professionalAction,
+      timing: immediateActionTiming(primary),
+      servicePath: primary.servicePath || "Urgent Tax Review"
+    };
+  }
+
+  function healthCategory(key, label, score, maximum, summary) {
+    return {
+      key,
+      label,
+      score: Math.max(0, Math.min(maximum, Math.round(score))),
+      maximum,
+      summary
+    };
+  }
+
+  function buildTaxHealthProgress(
+    input,
+    opportunitySummary,
+    smartAlerts,
+    scorecard
+  ) {
+    const hasWithholdingData = input?.hasWithholdingData !== false;
+    const combinedResult = signedNumberOrZero(input?.combinedWithholdingResult);
+    const targetBand = Math.max(
+      100,
+      numberOrZero(input?.withholdingTargetBand) || 100
+    );
+    const alerts = Array.isArray(smartAlerts?.alerts)
+      ? smartAlerts.alerts
+      : [];
+    const scorecardItems = Array.isArray(scorecard?.items)
+      ? scorecard.items
+      : [];
+    const isStarted = Boolean(
+      hasWithholdingData ||
+      numberOrZero(opportunitySummary?.selectedCount) > 0 ||
+      alerts.length > 0 ||
+      scorecardItems.length > 1
+    );
+
+    const strengths = [];
+    const nextActions = [];
+    const blockers = [];
+    const categories = [];
+
+    let withholdingScore = 0;
+    if (!hasWithholdingData) {
+      nextActions.push({
+        id: "health-complete-withholding",
+        title: "Complete the Withholding Checkup",
+        detail: "Enter current wages, other income, federal and state withholding, and filing information.",
+        points: 30,
+        priority: "high",
+        category: "Withholding & payment readiness"
+      });
+    } else if (Math.abs(combinedResult) <= targetBand) {
+      withholdingScore = 30;
+      strengths.push("Withholding is currently close to the combined estimated tax.");
+    } else if (combinedResult > targetBand) {
+      withholdingScore = 22;
+      strengths.push("Current withholding information is complete and usable for planning.");
+      nextActions.push({
+        id: "health-review-overwithholding",
+        title: "Review projected overwithholding",
+        detail: "Confirm whether improving current cash flow is more important than receiving a larger refund.",
+        points: 8,
+        priority: "medium",
+        category: "Withholding & payment readiness"
+      });
+    } else {
+      withholdingScore = 12;
+      nextActions.push({
+        id: "health-address-balance",
+        title: "Address the projected balance due",
+        detail: "Review additional withholding or estimated payments using verified current-year information.",
+        points: 18,
+        priority: "high",
+        category: "Withholding & payment readiness"
+      });
+    }
+
+    categories.push(healthCategory(
+      "withholding",
+      "Withholding & payment readiness",
+      withholdingScore,
+      30,
+      withholdingScore === 30
+        ? "Projection is currently aligned."
+        : "Additional review can improve payment readiness."
+    ));
+
+    const applicableItems = scorecardItems.filter(
+      (item) => item.stage !== "not-applicable" &&
+        item.id !== "withholding-complete-checkup"
+    );
+    let reviewScore = 0;
+
+    if (applicableItems.length) {
+      reviewScore = Math.round(
+        applicableItems.reduce(
+          (total, item) => total + numberOrZero(item.stageWeight),
+          0
+        ) / applicableItems.length * 0.30
+      );
+
+      const verifiedCount = applicableItems.filter(
+        (item) => item.stage === "verified" || item.stage === "completed"
+      ).length;
+
+      if (verifiedCount > 0) {
+        strengths.push(
+          `${verifiedCount} planning item${verifiedCount === 1 ? " has" : "s have"} been verified or completed.`
+        );
+      }
+
+      const unresolved = applicableItems.filter(
+        (item) =>
+          item.stage !== "verified" &&
+          item.stage !== "completed"
+      );
+
+      if (unresolved.length) {
+        nextActions.push({
+          id: "health-advance-scorecard",
+          title: "Advance unresolved Scorecard findings",
+          detail: "Verify eligibility, collect missing information, and document the professional conclusion for the highest-priority items.",
+          points: Math.max(1, 30 - reviewScore),
+          priority: unresolved.some((item) => item.priority === "urgent")
+            ? "urgent"
+            : "medium",
+          category: "Professional review readiness"
+        });
+      }
+    } else {
+      nextActions.push({
+        id: "health-create-scorecard",
+        title: "Create the Client Opportunity Scorecard",
+        detail: "Complete the Tax Savings Finder and Client Tax Profile so findings can move from potential to verified or completed.",
+        points: 30,
+        priority: "medium",
+        category: "Professional review readiness"
+      });
+    }
+
+    categories.push(healthCategory(
+      "review",
+      "Professional review readiness",
+      reviewScore,
+      30,
+      applicableItems.length
+        ? `${Math.round(numberOrZero(scorecard?.readinessScore))}% of the identified findings are review-ready.`
+        : "No review-ready findings have been documented yet."
+    ));
+
+    const unresolvedAlerts = alerts.filter(
+      (alert) => !isScorecardItemResolved(scorecard, alert.id)
+    );
+    const documentationAlerts = unresolvedAlerts.filter(
+      (alert) => alert.alertType === "documentation"
+    );
+    const bookkeepingAlerts = unresolvedAlerts.filter(
+      (alert) =>
+        alert.id === "smart-business-books-cleanup" ||
+        alert.id === "opportunity-bookkeeping"
+    );
+
+    let documentationScore = isStarted ? 20 : 0;
+    documentationScore -= Math.min(15, documentationAlerts.length * 5);
+    documentationScore -= bookkeepingAlerts.length ? 5 : 0;
+    documentationScore = Math.max(0, documentationScore);
+
+    if (isStarted && documentationScore === 20) {
+      strengths.push("No unresolved documentation alert is currently reducing the score.");
+    }
+
+    documentationAlerts.slice(0, 3).forEach((alert) => {
+      nextActions.push({
+        id: `health-doc-${alert.id}`,
+        title: alert.title,
+        detail: alert.clientAction,
+        points: 5,
+        priority: alert.priority || "review",
+        category: "Documentation & record readiness"
+      });
+    });
+
+    if (bookkeepingAlerts.length) {
+      nextActions.push({
+        id: "health-books-cleanup",
+        title: "Complete the bookkeeping cleanup",
+        detail: "Reconcile accounts and correct missing or misclassified transactions before relying on business profit.",
+        points: 5,
+        priority: "high",
+        category: "Documentation & record readiness"
+      });
+    }
+
+    categories.push(healthCategory(
+      "documentation",
+      "Documentation & record readiness",
+      documentationScore,
+      20,
+      documentationScore === 20
+        ? "No unresolved documentation reduction is active."
+        : "Missing or unverified records are holding back points."
+    ));
+
+    const unresolvedScorecardRiskItems = scorecardItems.filter(
+      (item) =>
+        item.stage !== "completed" &&
+        item.stage !== "not-applicable" &&
+        (
+          item.priority === "urgent" ||
+          (
+            item.priority === "high" &&
+            (
+              item.category === "risk-reduction" ||
+              item.category === "risk-action" ||
+              item.category === "tax-exposure" ||
+              item.category === "cash-flow-and-risk" ||
+              item.source === "smart-alerts"
+            )
+          )
+        )
+    );
+    const urgentRiskItems = [
+      ...unresolvedAlerts.filter((alert) => alert.priority === "urgent"),
+      ...unresolvedScorecardRiskItems.filter((item) => item.priority === "urgent")
+    ].filter(
+      (item, index, items) =>
+        items.findIndex((candidate) => candidate.id === item.id) === index
+    );
+    const highRiskItems = [
+      ...unresolvedAlerts.filter(
+        (alert) =>
+          alert.priority === "high" &&
+          (
+            alert.alertType === "risk-action" ||
+            alert.alertType === "tax-exposure"
+          )
+      ),
+      ...unresolvedScorecardRiskItems.filter((item) => item.priority === "high")
+    ].filter(
+      (item, index, items) =>
+        items.findIndex((candidate) => candidate.id === item.id) === index
+    );
+
+    let riskScore = isStarted ? 20 : 0;
+    riskScore -= Math.min(20, urgentRiskItems.length * 10);
+    riskScore -= Math.min(12, highRiskItems.length * 4);
+    riskScore = Math.max(0, riskScore);
+
+    if (isStarted && riskScore === 20) {
+      strengths.push("No unresolved urgent or high-priority risk is currently reducing the score.");
+    }
+
+    urgentRiskItems.forEach((item) => {
+      blockers.push({
+        id: item.id,
+        title: item.title,
+        detail: item.clientAction,
+        points: 10,
+        priority: "urgent"
+      });
+    });
+
+    highRiskItems.slice(0, 3).forEach((item) => {
+      blockers.push({
+        id: item.id,
+        title: item.title,
+        detail: item.clientAction,
+        points: 4,
+        priority: "high"
+      });
+    });
+
+    categories.push(healthCategory(
+      "risk",
+      "Risk & deadline control",
+      riskScore,
+      20,
+      riskScore === 20
+        ? "No unresolved urgent or high-priority risk reduction is active."
+        : "Urgent or high-priority items require action."
+    ));
+
+    const score = Math.max(
+      0,
+      Math.min(
+        100,
+        categories.reduce((total, category) => total + category.score, 0)
+      )
+    );
+
+    const externalPendingIds = new Set([
+      "opportunity-notice",
+      "opportunity-transcript",
+      "smart-installment-agreement"
+    ]);
+    const externalPending = scorecardItems.filter(
+      (item) =>
+        externalPendingIds.has(item.id) &&
+        item.stage !== "completed" &&
+        item.stage !== "not-applicable"
+    );
+    const attainableReduction = Math.min(15, externalPending.length * 5);
+    const attainableScore = Math.max(score, 100 - attainableReduction);
+
+    externalPending.forEach((item) => {
+      blockers.push({
+        id: `pending-${item.id}`,
+        title: `${item.title}: outside confirmation still pending`,
+        detail: "The final points remain pending until the required IRS record, notice review, or agreement confirmation is received and documented.",
+        points: 5,
+        priority: "review"
+      });
+    });
+
+    const milestoneOptions = [60, 70, 80, 90, 95, 100];
+    let nextMilestone = milestoneOptions.find(
+      (milestone) => milestone > score && milestone <= attainableScore
+    );
+
+    if (!nextMilestone) {
+      nextMilestone = attainableScore > score
+        ? attainableScore
+        : Math.min(100, Math.max(score, attainableScore));
+    }
+
+    const sortedNextActions = [...nextActions].sort((a, b) => {
+      const priorityDifference = priorityRank(a.priority) - priorityRank(b.priority);
+      if (priorityDifference !== 0) return priorityDifference;
+      return numberOrZero(b.points) - numberOrZero(a.points);
+    });
+
+    let status = "Not started";
+    if (isStarted) status = "Needs attention";
+    if (score >= 50) status = "Building tax readiness";
+    if (score >= 70) status = "Good progress";
+    if (score >= 85) status = "Strong tax readiness";
+    if (score >= 95) status = "Excellent tax readiness";
+    if (score === 100) status = "Tax plan fully documented";
+
+    return {
+      isStarted,
+      score,
+      maximumScore: 100,
+      attainableScore,
+      remainingPoints: Math.max(0, 100 - score),
+      pointsAvailableNow: Math.max(0, attainableScore - score),
+      nextMilestone,
+      pointsToNextMilestone: Math.max(0, nextMilestone - score),
+      status,
+      categories,
+      strengths: strengths.slice(0, 5),
+      nextActions: sortedNextActions.slice(0, 6),
+      blockers: blockers.slice(0, 6),
+      externalPendingCount: externalPending.length
+    };
+  }
+
   function evaluate(input = {}) {
     const opportunitySummary = calculateOpportunitySummary(input);
-    const recommendations = buildRecommendations(input, opportunitySummary);
+    const smartAlerts = buildSmartAlerts({
+      signals: input?.smartAlertSignals || {},
+      context: {
+        combinedWithholdingResult: input?.combinedWithholdingResult,
+        wages: input?.wages,
+        otherIncome: input?.otherIncome
+      }
+    });
+    const recommendations = buildRecommendations(
+      input,
+      opportunitySummary,
+      smartAlerts
+    );
     const scorecard = buildOpportunityScorecard(
       recommendations,
       input?.scorecardRecords || {}
+    );
+    const immediateAction = buildImmediateAction(
+      recommendations,
+      scorecard
+    );
+    const taxHealthProgress = buildTaxHealthProgress(
+      input,
+      opportunitySummary,
+      smartAlerts,
+      scorecard
     );
     const servicePaths = [...new Set(
       recommendations
@@ -609,9 +1507,12 @@
       engine: "Tax Recommendation Engine",
       version: VERSION,
       opportunitySummary,
-      actionPlan: opportunitySummary.actions,
+      smartAlerts,
+      actionPlan: recommendations,
       recommendations,
       scorecard,
+      immediateAction,
+      taxHealthProgress,
       primaryRecommendation: recommendations[0] || null,
       servicePaths
     };
@@ -632,7 +1533,10 @@
     calculateOpportunitySummary,
     buildRecommendations,
     buildWithholdingRecommendation,
+    buildSmartAlerts,
     buildOpportunityScorecard,
+    buildImmediateAction,
+    buildTaxHealthProgress,
     buildClientExplanation,
     getOpportunityDefinitions,
     getDefinition,

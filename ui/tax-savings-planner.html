@@ -96,7 +96,52 @@
     .smart-alert-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:12px}
     .smart-alert-footer strong{color:var(--navy)}
     .smart-alert-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
-    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head{flex-direction:column}.priority-pill{white-space:normal}}
+    .immediate-action-banner{margin:20px 0 0;border:4px solid #6f1713;background:linear-gradient(135deg,#a91f19,#7d1713);color:#fff;box-shadow:0 8px 22px rgba(111,23,19,.24)}
+    .immediate-action-banner[hidden]{display:none}
+    .immediate-action-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.28)}
+    .immediate-action-kicker{display:inline-block;background:#fff;color:#8a1d18;padding:6px 10px;font-family:"IBM Plex Mono",monospace;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+    .immediate-action-banner h2{margin:10px 0 0;color:#fff;font-size:clamp(26px,4vw,38px);line-height:1.08}
+    .immediate-action-count{min-width:90px;text-align:center;border:2px solid rgba(255,255,255,.65);padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-weight:800}
+    .immediate-action-count strong{display:block;font-size:28px;line-height:1}
+    .immediate-action-count span{display:block;margin-top:4px;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+    .immediate-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+    .immediate-action-detail{padding:17px 20px;border-right:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22)}
+    .immediate-action-detail:nth-child(2n){border-right:0}
+    .immediate-action-detail strong{display:block;color:#fff4bc;text-transform:uppercase;font-size:11px;letter-spacing:.08em;margin-bottom:7px}
+    .immediate-action-detail p{margin:0;color:#fff;font-size:14px;line-height:1.55}
+    .immediate-action-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;padding:16px 20px;background:rgba(70,6,4,.28)}
+    .immediate-action-timing{font-weight:800;font-size:15px}
+    .immediate-action-cta{display:inline-block;background:#fff;color:#7d1713;text-decoration:none;padding:11px 15px;font-weight:800;border:2px solid #fff}
+    .health-progress-card{margin-top:20px;border:1px solid var(--line);background:#fbf8f0;padding:18px}
+    .health-progress-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .health-metric{border:1px solid var(--line-soft);background:#fff;padding:12px}
+    .health-metric span{display:block;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .health-metric strong{display:block;margin-top:6px;color:var(--navy);font-family:"IBM Plex Mono",monospace;font-size:20px}
+    .health-metric strong.positive-change{color:var(--green)}
+    .health-metric strong.negative-change{color:var(--red)}
+    .health-progress-track{height:18px;border:1px solid var(--line);background:#e9e1d0;margin:16px 0 7px;position:relative;overflow:hidden}
+    .health-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#b08a4e,#1f6f52);transition:width .25s ease}
+    .health-progress-caption{display:flex;justify-content:space-between;gap:12px;color:var(--ink-soft);font-size:12px}
+    .health-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+    .health-category{border-top:4px solid var(--gold);background:#fff;padding:12px;border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+    .health-category strong{display:block;color:var(--navy);font-size:13px;line-height:1.35}
+    .health-category .health-category-score{display:block;margin:7px 0 5px;font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:800}
+    .health-category p{margin:0;color:var(--ink-soft);font-size:12px;line-height:1.45}
+    .health-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+    .health-detail-box{border:1px solid var(--line);background:#fff;padding:14px}
+    .health-detail-box h4{margin:0 0 10px;color:var(--navy);font-family:Fraunces,serif;font-size:17px}
+    .health-detail-list{display:grid;gap:8px}
+    .health-detail-item{border-left:4px solid var(--gold);padding:8px 0 8px 10px;color:var(--ink-soft);font-size:12px;line-height:1.45}
+    .health-detail-item.good{border-left-color:var(--green)}
+    .health-detail-item.warn{border-left-color:var(--red)}
+    .health-detail-item strong{display:block;color:var(--navy);font-size:12px;margin-bottom:2px}
+    .health-history{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+    .health-history h4{margin:0 0 9px;color:var(--navy);font-family:Fraunces,serif;font-size:17px}
+    .health-history-list{display:flex;gap:8px;flex-wrap:wrap}
+    .health-history-chip{border:1px solid var(--line);background:#fff;padding:8px 10px;font-size:11px;color:var(--ink-soft)}
+    .health-history-chip strong{display:block;color:var(--navy);font-family:"IBM Plex Mono",monospace;font-size:14px}
+    @media(max-width:900px){.health-progress-top,.health-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.health-detail-grid{grid-template-columns:1fr}.immediate-action-grid{grid-template-columns:1fr}.immediate-action-detail,.immediate-action-detail:nth-child(2n){border-right:0}}
+    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head,.immediate-action-top{flex-direction:column}.priority-pill{white-space:normal}.health-progress-top,.health-category-grid{grid-template-columns:1fr}.immediate-action-count{min-width:0;width:100%;text-align:left}.immediate-action-count strong,.immediate-action-count span{display:inline}.immediate-action-count span{margin-left:7px}}
     @media print{
       .tabs,.note-actions,.cta{display:none!important}
       .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
@@ -107,12 +152,44 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.1 + Smart Alerts active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.2 + Smart Alerts active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.1 + Smart Alerts active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.2 + Smart Alerts active</span></div>
+
+  <section class="immediate-action-banner" id="immediateActionBanner" aria-live="assertive" hidden>
+    <div class="immediate-action-top">
+      <div>
+        <span class="immediate-action-kicker">Immediate Action Required</span>
+        <h2 id="immediateActionTitle">Urgent tax action needs your attention.</h2>
+      </div>
+      <div class="immediate-action-count"><strong id="immediateActionCount">1</strong><span id="immediateActionCountLabel">urgent item</span></div>
+    </div>
+    <div class="immediate-action-grid">
+      <div class="immediate-action-detail">
+        <strong>Why this is urgent</strong>
+        <p id="immediateActionWhy">An urgent tax issue requires prompt review.</p>
+      </div>
+      <div class="immediate-action-detail">
+        <strong>What may happen if ignored</strong>
+        <p id="immediateActionConsequence">Delaying may increase tax exposure, penalties, interest, or missed-deadline risk.</p>
+      </div>
+      <div class="immediate-action-detail">
+        <strong>What you must do now</strong>
+        <p id="immediateActionNext">Provide the requested information immediately.</p>
+      </div>
+      <div class="immediate-action-detail">
+        <strong>What your tax professional will review</strong>
+        <p id="immediateActionProfessional">The issue, deadline, records, and appropriate next step will be reviewed.</p>
+      </div>
+    </div>
+    <div class="immediate-action-footer">
+      <div class="immediate-action-timing" id="immediateActionTiming">Act now.</div>
+      <a class="immediate-action-cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Urgent Tax Review</a>
+    </div>
+  </section>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -154,7 +231,71 @@
               <div class="attention-item">Complete the Withholding Checkup.</div>
               <div class="attention-item">Review the Tax Savings Finder.</div>
             </div>
-            <p class="module-note" id="taxHealthSummary" style="margin-top:10px">Your score will improve as the planner identifies completed actions and unresolved risks.</p>
+            <p class="module-note" id="taxHealthSummary" style="margin-top:10px">Your score will improve as verified actions are completed and unresolved risks are reduced.</p>
+          </div>
+        </div>
+
+        <div class="health-progress-card">
+          <div class="health-progress-top">
+            <div class="health-metric">
+              <span>Previous score</span>
+              <strong id="taxHealthPrevious">—</strong>
+            </div>
+            <div class="health-metric">
+              <span>Change</span>
+              <strong id="taxHealthChange">Starting point</strong>
+            </div>
+            <div class="health-metric">
+              <span>Current attainable score</span>
+              <strong id="taxHealthAttainable">100 / 100</strong>
+            </div>
+            <div class="health-metric">
+              <span>Next milestone</span>
+              <strong id="taxHealthMilestone">60 / 100</strong>
+            </div>
+          </div>
+
+          <div class="health-progress-track" aria-label="Tax Health Score progress">
+            <div class="health-progress-fill" id="taxHealthProgressFill"></div>
+          </div>
+          <div class="health-progress-caption">
+            <span id="taxHealthProgressLabel">Complete the Planner to establish a starting score.</span>
+            <span id="taxHealthPointsAvailable">100 points remain</span>
+          </div>
+
+          <div class="health-category-grid" id="taxHealthCategories">
+            <div class="health-category"><strong>Withholding &amp; payment readiness</strong><span class="health-category-score">0 / 30</span><p>Complete the Withholding Checkup.</p></div>
+            <div class="health-category"><strong>Professional review readiness</strong><span class="health-category-score">0 / 30</span><p>Move findings from potential to verified.</p></div>
+            <div class="health-category"><strong>Documentation &amp; record readiness</strong><span class="health-category-score">0 / 20</span><p>Verify supporting records.</p></div>
+            <div class="health-category"><strong>Risk &amp; deadline control</strong><span class="health-category-score">0 / 20</span><p>Resolve urgent and high-priority risks.</p></div>
+          </div>
+
+          <div class="health-detail-grid">
+            <div class="health-detail-box">
+              <h4>What Improved / Supports Your Score</h4>
+              <div class="health-detail-list" id="taxHealthImprovedList">
+                <div class="health-detail-item good">This will show completed actions and stronger readiness areas.</div>
+              </div>
+            </div>
+            <div class="health-detail-box">
+              <h4>Path to the Next Score</h4>
+              <div class="health-detail-list" id="taxHealthNextList">
+                <div class="health-detail-item">Complete the Planner to create the next action list.</div>
+              </div>
+            </div>
+            <div class="health-detail-box">
+              <h4>What Is Holding Back Points</h4>
+              <div class="health-detail-list" id="taxHealthBlockerList">
+                <div class="health-detail-item">Unresolved risks and outside confirmations will appear here.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="health-history">
+            <h4>Score History</h4>
+            <div class="health-history-list" id="taxHealthHistory">
+              <div class="health-history-chip"><strong>—</strong>Starting score not recorded yet</div>
+            </div>
           </div>
         </div>
 
@@ -776,6 +917,20 @@
       status: "No active alerts"
     },
     scorecard: null,
+    immediateAction: {
+      active: false,
+      count: 0
+    },
+    taxHealthProgress: {
+      isStarted: false,
+      score: 0,
+      attainableScore: 100,
+      nextMilestone: 60,
+      categories: [],
+      strengths: [],
+      nextActions: [],
+      blockers: []
+    },
     primaryRecommendation: null,
     servicePaths: []
   };
@@ -796,6 +951,8 @@
     `taxSavingsPlannerNotes:${plannerLeadId}`;
   const opportunityScorecardKey =
     `taxSavingsPlannerOpportunityScorecard:${plannerLeadId}`;
+  const taxHealthHistoryKey =
+    `taxSavingsPlannerTaxHealthHistory:${plannerLeadId}`;
   const opportunityStages = recommendationEngine.getOpportunityStages();
   const potentialBenefitClientScript =
     "The Planner identified a possible opportunity based on the information currently available. The amount shown is a preliminary estimate, not a guaranteed tax savings amount. I need to confirm eligibility, review the supporting information, and verify the tax treatment before recommending that you take action.";
@@ -1164,120 +1321,327 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function loadTaxHealthHistory() {
+    try {
+      const history = JSON.parse(
+        window.localStorage.getItem(taxHealthHistoryKey) || "[]"
+      );
+      return Array.isArray(history) ? history.slice(-12) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveTaxHealthHistory(history) {
+    try {
+      window.localStorage.setItem(
+        taxHealthHistoryKey,
+        JSON.stringify(history.slice(-12))
+      );
+    } catch (error) {
+      console.warn("Tax Health Score history could not be saved.", error);
+    }
+  }
+
+  function categoryScoreMap(progress) {
+    return (progress?.categories || []).reduce((map, category) => {
+      map[category.key] = Number(category.score || 0);
+      return map;
+    }, {});
+  }
+
+  function recordTaxHealthSnapshot(progress) {
+    const history = loadTaxHealthHistory();
+
+    if (!progress?.isStarted) {
+      return {
+        history,
+        previous: history.length > 1 ? history[history.length - 2] : null,
+        current: history[history.length - 1] || null,
+        change: 0,
+        categoryImprovements: []
+      };
+    }
+
+    const snapshot = {
+      score: Number(progress.score || 0),
+      attainableScore: Number(progress.attainableScore || 100),
+      categories: categoryScoreMap(progress),
+      recordedAt: new Date().toISOString()
+    };
+    const last = history[history.length - 1] || null;
+    const sameScore = last && last.score === snapshot.score;
+    const sameAttainable = last &&
+      last.attainableScore === snapshot.attainableScore;
+    const sameCategories = last &&
+      JSON.stringify(last.categories || {}) ===
+      JSON.stringify(snapshot.categories || {});
+
+    if (!last || !sameScore || !sameAttainable || !sameCategories) {
+      history.push(snapshot);
+      saveTaxHealthHistory(history);
+    }
+
+    const current = history[history.length - 1] || snapshot;
+    const previous = history.length > 1
+      ? history[history.length - 2]
+      : null;
+    const categoryLabels = {
+      withholding: "Withholding & payment readiness",
+      review: "Professional review readiness",
+      documentation: "Documentation & record readiness",
+      risk: "Risk & deadline control"
+    };
+    const categoryImprovements = [];
+
+    if (previous) {
+      Object.entries(current.categories || {}).forEach(([key, value]) => {
+        const prior = Number(previous.categories?.[key] || 0);
+        const difference = Number(value || 0) - prior;
+        if (difference > 0) {
+          categoryImprovements.push(
+            `${categoryLabels[key] || key}: +${difference} point${difference === 1 ? "" : "s"}`
+          );
+        }
+      });
+    }
+
+    return {
+      history,
+      previous,
+      current,
+      change: previous ? current.score - previous.score : 0,
+      categoryImprovements
+    };
+  }
+
+  function renderImmediateAction(immediateAction) {
+    const banner = document.getElementById("immediateActionBanner");
+    if (!banner) return;
+
+    const action = immediateAction || {};
+    banner.hidden = !action.active;
+
+    if (!action.active) return;
+
+    document.getElementById("immediateActionTitle").textContent =
+      action.title || "Urgent tax action needs your attention.";
+    const actionCount = Number(action.count || 1);
+    document.getElementById("immediateActionCount").textContent = actionCount;
+    document.getElementById("immediateActionCountLabel").textContent =
+      actionCount === 1 ? "urgent item" : "urgent items";
+    document.getElementById("immediateActionWhy").textContent =
+      action.whyUrgent || "An urgent tax issue requires prompt review.";
+    document.getElementById("immediateActionConsequence").textContent =
+      action.consequence || "Delaying may increase tax exposure or missed-deadline risk.";
+    document.getElementById("immediateActionNext").textContent =
+      action.nextAction || "Provide the requested information immediately.";
+    document.getElementById("immediateActionProfessional").textContent =
+      action.professionalAction || "The issue and appropriate next step will be reviewed.";
+    document.getElementById("immediateActionTiming").textContent =
+      action.timing || "Act now.";
+  }
+
+  function renderHealthDetailList(containerId, items, tone, emptyText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!items.length) {
+      container.innerHTML =
+        `<div class="health-detail-item ${tone || ""}">${escapeHtml(emptyText)}</div>`;
+      return;
+    }
+
+    container.innerHTML = items.map(item => {
+      if (typeof item === "string") {
+        return `<div class="health-detail-item ${tone || ""}">${escapeHtml(item)}</div>`;
+      }
+
+      const points = Number(item.points || 0);
+      const pointsText = points > 0
+        ? `<strong>${escapeHtml(item.title)} — up to ${points} point${points === 1 ? "" : "s"}</strong>`
+        : `<strong>${escapeHtml(item.title)}</strong>`;
+
+      return `
+        <div class="health-detail-item ${tone || ""}">
+          ${pointsText}
+          ${escapeHtml(item.detail || "")}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderTaxHealthHistory(progress) {
+    const tracking = recordTaxHealthSnapshot(progress);
+    const previousElement = document.getElementById("taxHealthPrevious");
+    const changeElement = document.getElementById("taxHealthChange");
+    const historyElement = document.getElementById("taxHealthHistory");
+
+    if (tracking.previous) {
+      previousElement.textContent = `${tracking.previous.score} / 100`;
+      const change = tracking.change;
+      changeElement.textContent = `${change >= 0 ? "+" : ""}${change} points`;
+      changeElement.classList.toggle("positive-change", change > 0);
+      changeElement.classList.toggle("negative-change", change < 0);
+    } else {
+      previousElement.textContent = progress?.isStarted
+        ? "Starting score"
+        : "—";
+      changeElement.textContent = progress?.isStarted
+        ? "Baseline recorded"
+        : "Starting point";
+      changeElement.classList.remove("positive-change", "negative-change");
+    }
+
+    const improvementItems = tracking.categoryImprovements.length
+      ? tracking.categoryImprovements
+      : (progress?.strengths || []);
+
+    renderHealthDetailList(
+      "taxHealthImprovedList",
+      improvementItems,
+      "good",
+      progress?.isStarted
+        ? "This is the starting score. Future verified actions will be compared here."
+        : "Complete the Planner to establish the starting score."
+    );
+
+    if (!tracking.history.length) {
+      historyElement.innerHTML =
+        '<div class="health-history-chip"><strong>—</strong>Starting score not recorded yet</div>';
+      return;
+    }
+
+    historyElement.innerHTML = tracking.history.slice(-6).reverse().map(item => {
+      const date = new Date(item.recordedAt);
+      const label = Number.isNaN(date.getTime())
+        ? "Saved checkpoint"
+        : date.toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+          });
+
+      return `
+        <div class="health-history-chip">
+          <strong>${Number(item.score || 0)} / 100</strong>
+          ${escapeHtml(label)}
+        </div>
+      `;
+    }).join("");
+  }
+
   function updateTaxHealthScore() {
-    const summary = latestFinderSummary || {};
-    const attention = [];
-    let score = 35;
-
-    const withholdingResult = latestCombinedWithholdingResult;
-    const estimatedCombinedTax =
-      numberValue("whEstimatedTax") +
-      Number(latestStateResult?.stateTax || 0);
-    const targetBand = Math.max(100, estimatedCombinedTax * 0.02);
-
-    if (Math.abs(withholdingResult) <= targetBand) {
-      score += 25;
-      attention.push({
-        text: "Withholding appears close to the combined estimated tax.",
-        type: "good"
-      });
-    } else if (withholdingResult < 0) {
-      score += 5;
-      attention.push({
-        text: "Projected balance due: review federal and state withholding.",
-        type: "warn"
-      });
-    } else {
-      score += 15;
-      attention.push({
-        text: "Projected overwithholding: review whether cash flow can be improved.",
-        type: ""
-      });
-    }
-
-    const selectedCount = Number(summary.selectedCount || 0);
-    if (selectedCount >= 3) {
-      score += 20;
-      attention.push({
-        text: `${selectedCount} planning opportunities have been identified.`,
-        type: "good"
-      });
-    } else if (selectedCount > 0) {
-      score += 10;
-      attention.push({
-        text: "Continue reviewing available planning opportunities.",
-        type: ""
-      });
-    } else {
-      attention.push({
-        text: "Complete the Tax Savings Finder.",
-        type: "warn"
-      });
-    }
-
-    if (document.getElementById("findBooksOn")?.checked) {
-      score -= 10;
-      attention.push({
-        text: "Bookkeeping cleanup needs attention before tax preparation.",
-        type: "warn"
-      });
-    }
-
-    if (
-      document.getElementById("findTranscriptOn")?.checked ||
-      document.getElementById("findNoticeOn")?.checked
-    ) {
-      score -= 10;
-      attention.push({
-        text: "An IRS records or notice issue requires professional review.",
-        type: "warn"
-      });
-    }
-
-    if ((summary.combinedSavings || 0) > 0) {
-      score += 10;
-    }
-
-    const smartAlertSummary = latestRecommendationResult.smartAlerts || {};
-    if ((smartAlertSummary.urgentCount || 0) > 0) {
-      score -= 20;
-      attention.push({
-        text: `${smartAlertSummary.urgentCount} urgent Smart Alert${smartAlertSummary.urgentCount === 1 ? "" : "s"} require immediate review.`,
-        type: "warn"
-      });
-    } else if ((smartAlertSummary.highCount || 0) > 0) {
-      score -= 10;
-      attention.push({
-        text: `${smartAlertSummary.highCount} high-priority Smart Alert${smartAlertSummary.highCount === 1 ? "" : "s"} need professional review.`,
-        type: "warn"
-      });
-    }
-
-    score = Math.max(0, Math.min(100, Math.round(score)));
+    const progress = latestRecommendationResult.taxHealthProgress || {
+      isStarted: false,
+      score: 0,
+      attainableScore: 100,
+      nextMilestone: 60,
+      pointsToNextMilestone: 60,
+      pointsAvailableNow: 100,
+      status: "Not started",
+      categories: [],
+      strengths: [],
+      nextActions: [],
+      blockers: []
+    };
+    const score = Number(progress.score || 0);
     latestTaxHealthScore = score;
 
     const scoreElement = document.getElementById("taxHealthScore");
     const list = document.getElementById("taxHealthAttention");
     const summaryText = document.getElementById("taxHealthSummary");
+    const attainableElement = document.getElementById("taxHealthAttainable");
+    const milestoneElement = document.getElementById("taxHealthMilestone");
+    const fillElement = document.getElementById("taxHealthProgressFill");
+    const progressLabel = document.getElementById("taxHealthProgressLabel");
+    const pointsAvailable = document.getElementById("taxHealthPointsAvailable");
+    const categoryContainer = document.getElementById("taxHealthCategories");
 
     scoreElement.textContent = `${score} / 100`;
+    attainableElement.textContent =
+      `${Number(progress.attainableScore || 100)} / 100`;
+    milestoneElement.textContent =
+      `${Number(progress.nextMilestone || 100)} / 100`;
+    fillElement.style.width = `${Math.max(0, Math.min(100, score))}%`;
 
-    list.innerHTML = attention.slice(0, 4).map(item => (
-      `<div class="attention-item ${item.type || ""}">${item.text}</div>`
-    )).join("");
-
-    if (score >= 85) {
-      summaryText.textContent = "Excellent tax health. Continue monitoring major income, withholding, and family changes.";
-    } else if (score >= 70) {
-      summaryText.textContent = "Good overall position with a few planning items to review.";
-    } else if (score >= 50) {
-      summaryText.textContent = "Moderate tax risk. Address the highlighted items before year-end or filing.";
+    if (!progress.isStarted) {
+      progressLabel.textContent =
+        "Complete the Planner to establish a starting score.";
+    } else if (Number(progress.pointsToNextMilestone || 0) > 0) {
+      progressLabel.textContent =
+        `${Number(progress.pointsToNextMilestone)} point${Number(progress.pointsToNextMilestone) === 1 ? "" : "s"} to the next milestone.`;
+    } else if (score < 100) {
+      progressLabel.textContent =
+        "The current attainable score has been reached while outside confirmation is pending.";
     } else {
-      summaryText.textContent = "Needs attention. Review withholding, records, and IRS-related issues with your tax professional.";
+      progressLabel.textContent =
+        "All available Tax Health Score points are currently documented.";
     }
+
+    pointsAvailable.textContent = score >= 100
+      ? "No points remain"
+      : `${Number(progress.pointsAvailableNow || 0)} point${Number(progress.pointsAvailableNow || 0) === 1 ? "" : "s"} currently available`;
+
+    const attentionItems = [
+      ...(progress.blockers || []).slice(0, 2).map(item => ({
+        text: item.title,
+        type: "warn"
+      })),
+      ...(progress.nextActions || []).slice(0, 3).map(item => ({
+        text: item.title,
+        type: item.priority === "urgent" || item.priority === "high"
+          ? "warn"
+          : ""
+      })),
+      ...(progress.strengths || []).slice(0, 2).map(text => ({
+        text,
+        type: "good"
+      }))
+    ].slice(0, 4);
+
+    list.innerHTML = attentionItems.length
+      ? attentionItems.map(item => (
+          `<div class="attention-item ${item.type || ""}">${escapeHtml(item.text)}</div>`
+        )).join("")
+      : '<div class="attention-item">Complete the Planner to create a Tax Health Score.</div>';
+
+    summaryText.textContent = progress.isStarted
+      ? `${progress.status}. The score rewards verified information, completed actions, documentation, and reduced risk—not the type of income a client receives or whether tax is owed.`
+      : "Complete the Planner to establish a starting score and a clear path toward 100.";
+
+    categoryContainer.innerHTML = (progress.categories || []).map(category => `
+      <div class="health-category">
+        <strong>${escapeHtml(category.label)}</strong>
+        <span class="health-category-score">${Number(category.score || 0)} / ${Number(category.maximum || 0)}</span>
+        <p>${escapeHtml(category.summary || "")}</p>
+      </div>
+    `).join("");
+
+    renderHealthDetailList(
+      "taxHealthNextList",
+      progress.nextActions || [],
+      "",
+      score >= 100
+        ? "No additional score action is currently required."
+        : "Complete the Planner to create the next score actions."
+    );
+
+    renderHealthDetailList(
+      "taxHealthBlockerList",
+      progress.blockers || [],
+      "warn",
+      Number(progress.attainableScore || 100) < 100
+        ? "Outside confirmation is pending."
+        : "No outside confirmation is currently holding back the final points."
+    );
+
+    renderTaxHealthHistory(progress);
   }
 
   function updatePlannerOverview() {
+    renderImmediateAction(latestRecommendationResult.immediateAction);
     updateTaxHealthScore();
     const summary = latestFinderSummary;
     const actions = recommendationEngine.sortActions(
@@ -1930,7 +2294,7 @@
     );
     if (!control) return;
     updateScorecardRecordFromControl(control);
-    renderOpportunityScorecard(latestRecommendationResult.recommendations || []);
+    updateTaxSavingsFinder();
   });
 
   document.getElementById("opportunityScorecardList").addEventListener("input", event => {
