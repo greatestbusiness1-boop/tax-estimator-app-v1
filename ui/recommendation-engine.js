@@ -13,7 +13,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = "1.2.0";
+  const VERSION = "1.3.1";
 
   const PRIORITY_RANK = Object.freeze({
     urgent: 0,
@@ -1468,6 +1468,358 @@
     };
   }
 
+  const YEAR_END_CHECKLIST_STATUS_DEFINITIONS = Object.freeze([
+    Object.freeze({ key: "not-started", label: "Not Started", progress: 0, tone: "open" }),
+    Object.freeze({ key: "in-progress", label: "In Progress", progress: 35, tone: "progress" }),
+    Object.freeze({ key: "waiting-client", label: "Waiting on Client", progress: 45, tone: "waiting" }),
+    Object.freeze({ key: "ready-review", label: "Ready for Review", progress: 75, tone: "ready" }),
+    Object.freeze({ key: "completed", label: "Completed", progress: 100, tone: "completed" }),
+    Object.freeze({ key: "not-applicable", label: "Not Applicable", progress: 100, tone: "closed" })
+  ]);
+
+  const YEAR_END_CHECKLIST_STATUS_MAP = new Map(
+    YEAR_END_CHECKLIST_STATUS_DEFINITIONS.map((status) => [status.key, status])
+  );
+
+  const YEAR_END_TIMING_DEFINITIONS = Object.freeze([
+    Object.freeze({ key: "act-now", label: "Act Now", order: 0 }),
+    Object.freeze({ key: "next-payment", label: "Before the Next Tax Payment or Payroll Deadline", order: 1 }),
+    Object.freeze({ key: "before-year-end", label: "Before Year-End", order: 2 }),
+    Object.freeze({ key: "before-filing", label: "Before Filing", order: 3 }),
+    Object.freeze({ key: "final-review", label: "Final Review & Ongoing Follow-Through", order: 4 })
+  ]);
+
+  const YEAR_END_TIMING_MAP = new Map(
+    YEAR_END_TIMING_DEFINITIONS.map((timing) => [timing.key, timing])
+  );
+
+  function getYearEndChecklistStatuses() {
+    return YEAR_END_CHECKLIST_STATUS_DEFINITIONS.map((status) => ({ ...status }));
+  }
+
+  function checklistTimingForRecommendation(recommendation) {
+    const id = String(recommendation?.id || "");
+    const priority = String(recommendation?.priority || "review");
+
+    if (priority === "urgent") return "act-now";
+
+    if (
+      id.includes("installment") ||
+      id.includes("notice") ||
+      id.includes("transcript")
+    ) {
+      return "act-now";
+    }
+
+    if (
+      id.includes("withholding") ||
+      id.includes("estimated-tax") ||
+      id.includes("estimated-payment")
+    ) {
+      return "next-payment";
+    }
+
+    if (
+      id.includes("charitable") ||
+      id.includes("capital-gain") ||
+      id.includes("capital-loss") ||
+      id.includes("investment") ||
+      id.includes("business-books") ||
+      id.includes("business-estimated") ||
+      id.includes("entity") ||
+      id.includes("retirement") ||
+      id.includes("hsa") ||
+      id.includes("mileage") ||
+      id.includes("homeOffice") ||
+      id.includes("home-office") ||
+      id.includes("bookkeeping")
+    ) {
+      return "before-year-end";
+    }
+
+    if (
+      id.includes("1099-r") ||
+      id.includes("social-security") ||
+      id.includes("retirement-doc") ||
+      id.includes("investment-doc") ||
+      id.includes("education") ||
+      id.includes("energy")
+    ) {
+      return "before-filing";
+    }
+
+    return "before-filing";
+  }
+
+  function checklistOwnerForRecommendation(recommendation) {
+    const id = String(recommendation?.id || "");
+
+    if (
+      id.includes("notice") ||
+      id.includes("transcript") ||
+      id.includes("installment") ||
+      id.includes("entity") ||
+      id.includes("estimated-tax") ||
+      id.includes("withholding")
+    ) {
+      return "Client + Tax Professional";
+    }
+
+    if (recommendation?.clientAction && recommendation?.professionalAction) {
+      return "Client + Tax Professional";
+    }
+
+    if (recommendation?.professionalAction) return "Tax Professional";
+    return "Client";
+  }
+
+  function normalizeYearEndChecklistRecords(items, records) {
+    const source = records && typeof records === "object" ? records : {};
+
+    return items.reduce((normalized, item) => {
+      const record = source[item.id] && typeof source[item.id] === "object"
+        ? source[item.id]
+        : {};
+      const requestedStatus = String(record.status || "");
+      const status = YEAR_END_CHECKLIST_STATUS_MAP.has(requestedStatus)
+        ? requestedStatus
+        : "";
+
+      normalized[item.id] = {
+        status,
+        targetDate: String(record.targetDate || "").slice(0, 10),
+        notes: String(record.notes || "").slice(0, 3000)
+      };
+
+      return normalized;
+    }, {});
+  }
+
+  function checklistStatusFromScorecard(scorecard, recommendationId) {
+    const scorecardItem = getScorecardItem(scorecard, recommendationId);
+    const stage = String(scorecardItem?.stage || "");
+
+    if (stage === "completed") return "completed";
+    if (stage === "not-applicable") return "not-applicable";
+    if (stage === "verified") return "ready-review";
+    if (stage === "client-action") return "waiting-client";
+    if (stage === "under-review") return "in-progress";
+    return "not-started";
+  }
+
+  function resolveYearEndChecklistStatus(savedStatus, scorecardStatus) {
+    const saved = YEAR_END_CHECKLIST_STATUS_MAP.has(String(savedStatus || ""))
+      ? String(savedStatus)
+      : "";
+    const derived = YEAR_END_CHECKLIST_STATUS_MAP.has(String(scorecardStatus || ""))
+      ? String(scorecardStatus)
+      : "not-started";
+
+    // The Opportunity Scorecard is the source of truth for a linked
+    // recommendation's professional conclusion. Terminal conclusions must
+    // immediately synchronize to the Year-End Planning Checklist, even when
+    // the checklist has an older manually saved workflow status.
+    if (derived === "completed" || derived === "not-applicable") {
+      return derived;
+    }
+
+    // Let an active Scorecard stage replace an empty or stale Not Started
+    // checklist status. Preserve a more specific manual checklist workflow
+    // status for nonterminal Scorecard stages.
+    if (!saved || saved === "not-started") {
+      return derived;
+    }
+
+    return saved;
+  }
+
+  function buildYearEndPlanningChecklist(
+    input,
+    recommendations,
+    smartAlerts,
+    scorecard,
+    records = {}
+  ) {
+    const taxYear = String(input?.taxYear || "").trim() || "Current";
+    const items = [];
+    const seen = new Set();
+
+    function addItem(item) {
+      if (!item?.id || seen.has(item.id)) return;
+      seen.add(item.id);
+      items.push({
+        id: item.id,
+        title: String(item.title || "Planning item"),
+        detail: String(item.detail || "Review this item before the tax year is finalized."),
+        clientAction: String(item.clientAction || "Provide the requested information and supporting records."),
+        professionalAction: String(item.professionalAction || "Review the facts, documentation, timing, and tax treatment."),
+        timing: YEAR_END_TIMING_MAP.has(item.timing) ? item.timing : "before-filing",
+        owner: String(item.owner || "Client + Tax Professional"),
+        priority: String(item.priority || "review"),
+        servicePath: String(item.servicePath || "Tax Planning Review"),
+        sourceRecommendationId: String(item.sourceRecommendationId || ""),
+        source: String(item.source || "planner")
+      });
+    }
+
+    const hasPlannerActivity = Boolean(
+      input?.hasWithholdingData ||
+      numberOrZero(input?.opportunitySummary?.selectedCount) > 0 ||
+      (recommendations || []).length > 0 ||
+      numberOrZero(smartAlerts?.totalCount) > 0
+    );
+
+    addItem({
+      id: "year-end-income-picture",
+      title: `Confirm the complete ${taxYear} income picture`,
+      detail: "Confirm wages, business income, investment activity, retirement distributions, Social Security, and other income before relying on the final projection.",
+      clientAction: "Provide the latest paystubs, business profit and loss information, investment activity, retirement statements, and other current-year income records.",
+      professionalAction: "Reconcile all known income sources to the projection and identify missing information or possible tax exposure.",
+      timing: "before-year-end",
+      owner: "Client + Tax Professional",
+      priority: hasPlannerActivity ? "high" : "review",
+      servicePath: "Year-End Tax Planning",
+      source: "baseline"
+    });
+
+    addItem({
+      id: "year-end-payment-reconciliation",
+      title: "Reconcile federal and state tax payments",
+      detail: "Confirm withholding and estimated payments so the client understands the projected balance, refund position, and any payment action still needed.",
+      clientAction: "Provide the latest paystubs and proof of every federal and state estimated-tax payment made for the year.",
+      professionalAction: "Reconcile withholding and estimated payments to the current projection and determine whether an additional payment or withholding adjustment should be considered.",
+      timing: "next-payment",
+      owner: "Client + Tax Professional",
+      priority: "high",
+      servicePath: "Tax Planning Review",
+      source: "baseline"
+    });
+
+    addItem({
+      id: "year-end-document-readiness",
+      title: "Identify missing records before filing season",
+      detail: "Create a clear list of records that are complete, still expected, missing, or require professional review.",
+      clientAction: "Gather receipts, statements, notices, payment confirmations, basis records, charitable documentation, and business records identified by the Planner.",
+      professionalAction: "Review documentation gaps and explain which records are required before a conclusion or tax position can be treated as verified.",
+      timing: "before-filing",
+      owner: "Client + Tax Professional",
+      priority: "medium",
+      servicePath: "Written Red Flag Review",
+      source: "baseline"
+    });
+
+    sortActions(recommendations || []).forEach((recommendation) => {
+      addItem({
+        id: `year-end-${recommendation.id}`,
+        title: recommendation.title,
+        detail: recommendation.detail,
+        clientAction: recommendation.clientAction,
+        professionalAction: recommendation.professionalAction,
+        timing: checklistTimingForRecommendation(recommendation),
+        owner: checklistOwnerForRecommendation(recommendation),
+        priority: recommendation.priority,
+        servicePath: recommendation.servicePath,
+        sourceRecommendationId: recommendation.id,
+        source: recommendation.source || recommendation.category || "recommendation"
+      });
+    });
+
+    addItem({
+      id: "year-end-final-planning-review",
+      title: "Complete the final planning review and document next steps",
+      detail: "Review the completed checklist, unresolved items, Tax Health Score, verified opportunities, and remaining client actions before the year or filing work is closed.",
+      clientAction: "Attend the review, confirm the agreed next steps, and complete any remaining document or payment requests.",
+      professionalAction: "Explain what was verified, what remains potential, what action is required, and how the completed work affects the client's Tax Health Score and filing readiness.",
+      timing: "final-review",
+      owner: "Client + Tax Professional",
+      priority: "medium",
+      servicePath: "Tax Planning Meeting",
+      source: "baseline"
+    });
+
+    const normalizedRecords = normalizeYearEndChecklistRecords(items, records);
+
+    const normalizedItems = items.map((item) => {
+      const record = normalizedRecords[item.id];
+      const derivedStatus = item.sourceRecommendationId
+        ? checklistStatusFromScorecard(scorecard, item.sourceRecommendationId)
+        : "not-started";
+      const statusKey = resolveYearEndChecklistStatus(
+        record.status,
+        derivedStatus
+      );
+      const status = YEAR_END_CHECKLIST_STATUS_MAP.get(statusKey) ||
+        YEAR_END_CHECKLIST_STATUS_MAP.get("not-started");
+      const timing = YEAR_END_TIMING_MAP.get(item.timing) ||
+        YEAR_END_TIMING_MAP.get("before-filing");
+
+      return {
+        ...item,
+        status: status.key,
+        statusLabel: status.label,
+        statusTone: status.tone,
+        statusProgress: status.progress,
+        timingLabel: timing.label,
+        timingOrder: timing.order,
+        targetDate: record.targetDate,
+        notes: record.notes
+      };
+    }).sort((a, b) => {
+      const timingDifference = a.timingOrder - b.timingOrder;
+      if (timingDifference !== 0) return timingDifference;
+      const priorityDifference = priorityRank(a.priority) - priorityRank(b.priority);
+      if (priorityDifference !== 0) return priorityDifference;
+      return a.title.localeCompare(b.title);
+    });
+
+    const applicableItems = normalizedItems.filter((item) => item.status !== "not-applicable");
+    const completedCount = applicableItems.filter((item) => item.status === "completed").length;
+    const waitingClientCount = applicableItems.filter((item) => item.status === "waiting-client").length;
+    const readyReviewCount = applicableItems.filter((item) => item.status === "ready-review").length;
+    const inProgressCount = applicableItems.filter((item) => item.status === "in-progress").length;
+    const actNowCount = applicableItems.filter(
+      (item) => item.timing === "act-now" && item.status !== "completed"
+    ).length;
+    const progress = applicableItems.length
+      ? Math.round(
+          applicableItems.reduce((total, item) => total + item.statusProgress, 0) /
+          applicableItems.length
+        )
+      : 0;
+
+    let status = "Checklist ready to begin";
+    if (actNowCount > 0) status = "Immediate checklist action required";
+    else if (waitingClientCount > 0) status = "Waiting on client information";
+    else if (readyReviewCount > 0) status = "Items ready for professional review";
+    else if (progress >= 75 && completedCount < applicableItems.length) status = "Final review in progress";
+    else if (progress > 0) status = "Checklist in progress";
+    if (applicableItems.length > 0 && completedCount === applicableItems.length) {
+      status = "Year-end checklist completed";
+    }
+
+    const groups = YEAR_END_TIMING_DEFINITIONS.map((timing) => ({
+      ...timing,
+      items: normalizedItems.filter((item) => item.timing === timing.key)
+    })).filter((group) => group.items.length > 0);
+
+    return {
+      taxYear,
+      items: normalizedItems,
+      groups,
+      records: normalizedRecords,
+      totalCount: normalizedItems.length,
+      applicableCount: applicableItems.length,
+      completedCount,
+      remainingCount: Math.max(0, applicableItems.length - completedCount),
+      waitingClientCount,
+      readyReviewCount,
+      inProgressCount,
+      actNowCount,
+      progress,
+      status
+    };
+  }
+
   function evaluate(input = {}) {
     const opportunitySummary = calculateOpportunitySummary(input);
     const smartAlerts = buildSmartAlerts({
@@ -1497,6 +1849,16 @@
       smartAlerts,
       scorecard
     );
+    const yearEndChecklist = buildYearEndPlanningChecklist(
+      {
+        ...input,
+        opportunitySummary
+      },
+      recommendations,
+      smartAlerts,
+      scorecard,
+      input?.yearEndChecklistRecords || {}
+    );
     const servicePaths = [...new Set(
       recommendations
         .map((recommendation) => recommendation.servicePath)
@@ -1513,6 +1875,7 @@
       scorecard,
       immediateAction,
       taxHealthProgress,
+      yearEndChecklist,
       primaryRecommendation: recommendations[0] || null,
       servicePaths
     };
@@ -1537,11 +1900,13 @@
     buildOpportunityScorecard,
     buildImmediateAction,
     buildTaxHealthProgress,
+    buildYearEndPlanningChecklist,
     buildClientExplanation,
     getOpportunityDefinitions,
     getDefinition,
     getOpportunityStages,
     getOpportunityStage,
+    getYearEndChecklistStatuses,
     sortActions
   });
 });

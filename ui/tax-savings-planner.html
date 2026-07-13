@@ -140,10 +140,48 @@
     .health-history-list{display:flex;gap:8px;flex-wrap:wrap}
     .health-history-chip{border:1px solid var(--line);background:#fff;padding:8px 10px;font-size:11px;color:var(--ink-soft)}
     .health-history-chip strong{display:block;color:var(--navy);font-family:"IBM Plex Mono",monospace;font-size:14px}
+    .year-end-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 8px}
+    .year-end-toolbar button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
+    .year-end-toolbar button.secondary{background:#fff;color:var(--navy)}
+    .year-end-save-status{font-size:12px;color:var(--ink-soft);margin-bottom:16px}
+    .year-end-progress-card{border:1px solid var(--gold-soft);background:#fbf5e7;padding:15px;margin:16px 0}
+    .year-end-progress-row{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+    .year-end-progress-row strong{color:var(--navy);font-family:Fraunces,serif;font-size:19px}
+    .year-end-progress-row span{font-family:"IBM Plex Mono",monospace;font-weight:800;color:var(--green)}
+    .year-end-progress-track{height:14px;background:#e9e1d0;border:1px solid var(--line);margin-top:11px;overflow:hidden}
+    .year-end-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .25s ease}
+    .year-end-group{margin-top:22px}
+    .year-end-group:first-child{margin-top:0}
+    .year-end-group-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid var(--navy);padding-bottom:8px;margin-bottom:12px}
+    .year-end-group-head h4{margin:0;color:var(--navy);font-family:Fraunces,serif;font-size:20px}
+    .year-end-group-head span{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;color:var(--ink-soft)}
+    .year-end-list{display:grid;gap:14px}
+    .year-end-card{border:1px solid var(--line);border-left:7px solid var(--gold);background:#fff;padding:16px}
+    .year-end-card[data-tone="waiting"]{border-left-color:var(--red)}
+    .year-end-card[data-tone="ready"]{border-left-color:#5777a5}
+    .year-end-card[data-tone="completed"]{border-left-color:var(--green);background:#fbfffc}
+    .year-end-card[data-tone="closed"]{border-left-color:#8b8b84;background:#f7f5ef}
+    .year-end-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .year-end-card-head h5{margin:6px 0 0;color:var(--navy);font-family:Fraunces,serif;font-size:18px;line-height:1.3}
+    .year-end-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+    .year-end-owner{display:inline-block;border:1px solid var(--line);background:#f0eadb;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:700;text-transform:uppercase}
+    .year-end-detail{margin:13px 0;color:var(--ink-soft);font-size:13px;line-height:1.55}
+    .year-end-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+    .year-end-action-box{border-top:1px solid var(--line-soft);padding-top:10px}
+    .year-end-action-box strong{display:block;color:var(--navy);font-size:12px;margin-bottom:5px}
+    .year-end-action-box p{margin:0;color:var(--ink-soft);font-size:12px;line-height:1.5}
+    .year-end-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .year-end-control{display:flex;flex-direction:column;gap:6px}
+    .year-end-control label{font-size:12px}
+    .year-end-notes{margin-top:10px}
+    .year-end-notes textarea{width:100%;min-height:68px;resize:vertical;border:1px solid var(--line);padding:10px;background:#fff;color:var(--ink)}
+    .year-end-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:11px;color:var(--ink-soft)}
+    .year-end-footer strong{color:var(--navy)}
+    .year-end-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
     @media(max-width:900px){.health-progress-top,.health-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.health-detail-grid{grid-template-columns:1fr}.immediate-action-grid{grid-template-columns:1fr}.immediate-action-detail,.immediate-action-detail:nth-child(2n){border-right:0}}
-    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head,.immediate-action-top{flex-direction:column}.priority-pill{white-space:normal}.health-progress-top,.health-category-grid{grid-template-columns:1fr}.immediate-action-count{min-width:0;width:100%;text-align:left}.immediate-action-count strong,.immediate-action-count span{display:inline}.immediate-action-count span{margin-left:7px}}
+    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid,.year-end-actions,.year-end-controls{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head,.immediate-action-top,.year-end-card-head{flex-direction:column}.priority-pill{white-space:normal}.health-progress-top,.health-category-grid{grid-template-columns:1fr}.immediate-action-count{min-width:0;width:100%;text-align:left}.immediate-action-count strong,.immediate-action-count span{display:inline}.immediate-action-count span{margin-left:7px}}
     @media print{
-      .tabs,.note-actions,.cta{display:none!important}
+      .tabs,.note-actions,.cta,.year-end-toolbar{display:none!important}
       .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
       body{background:#fff}
       main{max-width:none;padding:0}
@@ -152,12 +190,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.2 + Smart Alerts active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.3.1 + Year-End Checklist sync active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.2 + Smart Alerts active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.3.1 + Year-End Checklist sync active</span></div>
 
   <section class="immediate-action-banner" id="immediateActionBanner" aria-live="assertive" hidden>
     <div class="immediate-action-top">
@@ -200,6 +238,7 @@
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
     <button class="tab" data-tab="scorecard">06 Opportunity Scorecard</button>
     <button class="tab" data-tab="smartAlerts">07 Client Tax Profile</button>
+    <button class="tab" data-tab="yearEndChecklist">08 Year-End Planning Checklist</button>
   </nav>
 
   <section class="panel active" id="overview">
@@ -838,6 +877,56 @@
     </div>
   </section>
 
+  <section class="panel" id="yearEndChecklist">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">Y</div><h3>Year-End Planning Checklist</h3></div>
+        <p class="module-note">This checklist converts the Recommendation Engine, Client Tax Profile, Smart Alerts, and Opportunity Scorecard into a timed work plan. It separates what the client must provide from what the tax professional must review.</p>
+
+        <div class="year-end-progress-card">
+          <div class="year-end-progress-row">
+            <strong id="yearEndProgressTitle">Tax Year Planning Progress</strong>
+            <span id="yearEndProgressText">0%</span>
+          </div>
+          <div class="year-end-progress-track" aria-hidden="true"><div class="year-end-progress-fill" id="yearEndProgressFill"></div></div>
+        </div>
+
+        <div class="year-end-toolbar">
+          <button type="button" id="copyYearEndChecklist">Copy Client Checklist</button>
+          <button type="button" class="secondary" id="printYearEndChecklist">Print / Save Checklist</button>
+        </div>
+        <div class="year-end-save-status" id="yearEndChecklistSaveStatus">Checklist statuses, target dates, and notes save automatically in this browser for this planner record.</div>
+
+        <div id="yearEndChecklistGroups">
+          <div class="year-end-empty">Complete the Planner sections to generate the year-end work plan.</div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Checklist Summary</h3>
+          <div class="row"><span>Total checklist items</span><strong class="number" id="yearEndTotalCount">0</strong></div>
+          <div class="row"><span>Act now</span><strong class="number" id="yearEndActNowCount">0</strong></div>
+          <div class="row"><span>Waiting on client</span><strong class="number" id="yearEndWaitingCount">0</strong></div>
+          <div class="row"><span>Ready for review</span><strong class="number" id="yearEndReadyCount">0</strong></div>
+          <div class="row"><span>Completed</span><strong class="number" id="yearEndCompletedCount">0</strong></div>
+          <div class="row total"><span>Checklist progress</span><strong class="number" id="yearEndProgressSummary">0%</strong></div>
+          <span class="status" id="yearEndChecklistStatus">Checklist ready to begin</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>How to Use This Checklist</h3>
+          <div class="action-list">
+            <div class="action-item"><strong>1. Start with Act Now</strong><span>Urgent IRS, payment, deadline, or record-recovery issues come first.</span></div>
+            <div class="action-item"><strong>2. Separate client work from professional review</strong><span>The checklist tells the client what to provide and shows what Cedric will verify before making a recommendation.</span></div>
+            <div class="action-item"><strong>3. Document completion</strong><span>Use the status, target date, and Advisor Note so the next action remains clear after the meeting.</span></div>
+            <div class="action-item"><strong>4. Update the Opportunity Scorecard</strong><span>Checklist completion tracks workflow. The Tax Health Score changes when supporting information and opportunity stages are updated and verified.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
@@ -931,6 +1020,17 @@
       nextActions: [],
       blockers: []
     },
+    yearEndChecklist: {
+      items: [],
+      groups: [],
+      totalCount: 0,
+      completedCount: 0,
+      waitingClientCount: 0,
+      readyReviewCount: 0,
+      actNowCount: 0,
+      progress: 0,
+      status: "Checklist ready to begin"
+    },
     primaryRecommendation: null,
     servicePaths: []
   };
@@ -953,10 +1053,14 @@
     `taxSavingsPlannerOpportunityScorecard:${plannerLeadId}`;
   const taxHealthHistoryKey =
     `taxSavingsPlannerTaxHealthHistory:${plannerLeadId}`;
+  const yearEndChecklistKey =
+    `taxSavingsPlannerYearEndChecklist:${plannerLeadId}`;
   const opportunityStages = recommendationEngine.getOpportunityStages();
+  const yearEndChecklistStatuses = recommendationEngine.getYearEndChecklistStatuses();
   const potentialBenefitClientScript =
     "The Planner identified a possible opportunity based on the information currently available. The amount shown is a preliminary estimate, not a guaranteed tax savings amount. I need to confirm eligibility, review the supporting information, and verify the tax treatment before recommending that you take action.";
   let opportunityScorecardRecords = {};
+  let yearEndChecklistRecords = {};
 
   try {
     opportunityScorecardRecords = JSON.parse(
@@ -964,6 +1068,14 @@
     );
   } catch (error) {
     opportunityScorecardRecords = {};
+  }
+
+  try {
+    yearEndChecklistRecords = JSON.parse(
+      window.localStorage.getItem(yearEndChecklistKey) || "{}"
+    );
+  } catch (error) {
+    yearEndChecklistRecords = {};
   }
 
   function numberValue(id) {
@@ -1794,9 +1906,11 @@
       payPeriods: Number(document.getElementById("whPayFrequency")?.value || 26),
       wages: numberValue("whWages"),
       otherIncome: numberValue("whOtherIncome"),
+      taxYear: currentPlannerTaxYear,
       smartAlertSignals: buildSmartAlertSignals(),
       maxRecommendations: 40,
-      scorecardRecords: opportunityScorecardRecords
+      scorecardRecords: opportunityScorecardRecords,
+      yearEndChecklistRecords
     });
 
     latestFinderSummary = latestRecommendationResult.opportunitySummary;
@@ -1829,6 +1943,7 @@
     );
     renderOpportunityScorecard(latestRecommendationResult.recommendations);
     renderSmartAlerts(latestRecommendationResult.smartAlerts);
+    renderYearEndPlanningChecklist(latestRecommendationResult.yearEndChecklist);
     updatePlannerOverview();
   }
 
@@ -2231,6 +2346,216 @@
     if (status) status.textContent = successMessage;
   }
 
+  function getYearEndChecklistRecord(itemId) {
+    const current = yearEndChecklistRecords[itemId];
+    if (current && typeof current === "object") {
+      return {
+        status: String(current.status || ""),
+        targetDate: String(current.targetDate || "").slice(0, 10),
+        notes: String(current.notes || "")
+      };
+    }
+
+    return {
+      status: "",
+      targetDate: "",
+      notes: ""
+    };
+  }
+
+  function saveYearEndChecklistRecords(message = "Checklist saved automatically.") {
+    window.localStorage.setItem(
+      yearEndChecklistKey,
+      JSON.stringify(yearEndChecklistRecords)
+    );
+
+    const status = document.getElementById("yearEndChecklistSaveStatus");
+    if (status) {
+      status.textContent = `${message} ${new Date().toLocaleTimeString()}`;
+    }
+  }
+
+  function buildYearEndChecklistStatusOptions(selectedStatus) {
+    return yearEndChecklistStatuses.map(status => (
+      `<option value="${escapeHtml(status.key)}"${status.key === selectedStatus ? " selected" : ""}>${escapeHtml(status.label)}</option>`
+    )).join("");
+  }
+
+  function renderYearEndPlanningChecklist(checklist) {
+    const result = checklist || {
+      taxYear: currentPlannerTaxYear,
+      groups: [],
+      totalCount: 0,
+      completedCount: 0,
+      waitingClientCount: 0,
+      readyReviewCount: 0,
+      actNowCount: 0,
+      progress: 0,
+      status: "Checklist ready to begin"
+    };
+    const container = document.getElementById("yearEndChecklistGroups");
+    if (!container) return;
+
+    document.getElementById("yearEndProgressTitle").textContent =
+      `Tax Year ${result.taxYear || currentPlannerTaxYear} Planning Progress`;
+    document.getElementById("yearEndProgressText").textContent = `${result.progress || 0}%`;
+    document.getElementById("yearEndProgressFill").style.width = `${Math.max(0, Math.min(100, Number(result.progress || 0)))}%`;
+    document.getElementById("yearEndTotalCount").textContent = result.totalCount || 0;
+    document.getElementById("yearEndActNowCount").textContent = result.actNowCount || 0;
+    document.getElementById("yearEndWaitingCount").textContent = result.waitingClientCount || 0;
+    document.getElementById("yearEndReadyCount").textContent = result.readyReviewCount || 0;
+    document.getElementById("yearEndCompletedCount").textContent = result.completedCount || 0;
+    document.getElementById("yearEndProgressSummary").textContent = `${result.progress || 0}%`;
+
+    const status = document.getElementById("yearEndChecklistStatus");
+    status.textContent = result.status || "Checklist ready to begin";
+    status.classList.remove("good", "warn");
+    if ((result.actNowCount || 0) > 0 || (result.waitingClientCount || 0) > 0) {
+      status.classList.add("warn");
+    } else if ((result.progress || 0) >= 75) {
+      status.classList.add("good");
+    }
+
+    if (!Array.isArray(result.groups) || !result.groups.length) {
+      container.innerHTML = '<div class="year-end-empty">Complete the Planner sections to generate the year-end work plan.</div>';
+      return;
+    }
+
+    container.innerHTML = result.groups.map(group => `
+      <section class="year-end-group" data-year-end-group="${escapeHtml(group.key)}">
+        <div class="year-end-group-head">
+          <h4>${escapeHtml(group.label)}</h4>
+          <span>${group.items.length} item${group.items.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="year-end-list">
+          ${group.items.map(item => {
+            const priorityClass = ["urgent", "high", "medium", "monitor"].includes(item.priority)
+              ? item.priority
+              : "review";
+            const record = getYearEndChecklistRecord(item.id);
+            const selectedStatus = item.status || record.status || "not-started";
+            const targetDate = record.targetDate || item.targetDate || "";
+            const notes = record.notes || item.notes || "";
+
+            return `
+              <article class="year-end-card" data-year-end-id="${escapeHtml(item.id)}" data-tone="${escapeHtml(item.statusTone)}">
+                <div class="year-end-card-head">
+                  <div>
+                    <div class="year-end-meta">
+                      <span class="priority-pill ${escapeHtml(priorityClass)}">${escapeHtml(item.priority === "urgent" ? "Urgent" : item.priority || "Review")}</span>
+                      <span class="year-end-owner">${escapeHtml(item.owner)}</span>
+                    </div>
+                    <h5>${escapeHtml(item.title)}</h5>
+                  </div>
+                  <span class="number">${escapeHtml(item.statusLabel)}</span>
+                </div>
+
+                <p class="year-end-detail">${escapeHtml(item.detail)}</p>
+
+                <div class="year-end-actions">
+                  <div class="year-end-action-box">
+                    <strong>What the client must do</strong>
+                    <p>${escapeHtml(item.clientAction)}</p>
+                  </div>
+                  <div class="year-end-action-box">
+                    <strong>What Cedric will review</strong>
+                    <p>${escapeHtml(item.professionalAction)}</p>
+                  </div>
+                </div>
+
+                <div class="year-end-controls">
+                  <div class="year-end-control">
+                    <label for="yearEndStatus-${escapeHtml(item.id)}">Checklist status</label>
+                    <select id="yearEndStatus-${escapeHtml(item.id)}" data-year-end-status="${escapeHtml(item.id)}">
+                      ${buildYearEndChecklistStatusOptions(selectedStatus)}
+                    </select>
+                  </div>
+                  <div class="year-end-control">
+                    <label for="yearEndDate-${escapeHtml(item.id)}">Target date</label>
+                    <input id="yearEndDate-${escapeHtml(item.id)}" type="date" value="${escapeHtml(targetDate)}" data-year-end-date="${escapeHtml(item.id)}">
+                  </div>
+                </div>
+
+                <div class="year-end-notes">
+                  <label for="yearEndNotes-${escapeHtml(item.id)}">Advisor note / client follow-up</label>
+                  <textarea id="yearEndNotes-${escapeHtml(item.id)}" data-year-end-notes="${escapeHtml(item.id)}" placeholder="Record the missing document, agreed action, follow-up detail, or professional conclusion.">${escapeHtml(notes)}</textarea>
+                </div>
+
+                <div class="year-end-footer">
+                  <span><strong>Timing:</strong> ${escapeHtml(item.timingLabel)}</span>
+                  <span><strong>Service path:</strong> ${escapeHtml(item.servicePath)}</span>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `).join("");
+  }
+
+  function updateYearEndChecklistRecord(control) {
+    const itemId =
+      control.dataset.yearEndStatus ||
+      control.dataset.yearEndDate ||
+      control.dataset.yearEndNotes;
+    if (!itemId) return;
+
+    const current = getYearEndChecklistRecord(itemId);
+
+    if (control.hasAttribute("data-year-end-status")) {
+      current.status = control.value;
+    }
+
+    if (control.hasAttribute("data-year-end-date")) {
+      current.targetDate = control.value;
+    }
+
+    if (control.hasAttribute("data-year-end-notes")) {
+      current.notes = control.value;
+    }
+
+    yearEndChecklistRecords[itemId] = current;
+    saveYearEndChecklistRecords();
+  }
+
+  function buildYearEndChecklistSummaryText() {
+    const checklist = latestRecommendationResult.yearEndChecklist || { groups: [] };
+    const clientName = document.getElementById("clientName")?.textContent || "Client";
+    const taxYear = checklist.taxYear || document.getElementById("taxYear")?.textContent || "—";
+    const lines = [
+      "TAX SAVINGS PLANNER™ — YEAR-END PLANNING CHECKLIST",
+      `Client: ${clientName}`,
+      `Tax year: ${taxYear}`,
+      `Progress: ${checklist.progress || 0}%`,
+      `Status: ${checklist.status || "Checklist ready to begin"}`,
+      "",
+      "This checklist identifies the next planning steps. Potential opportunities remain subject to eligibility, documentation, timing, and professional review.",
+      ""
+    ];
+
+    (checklist.groups || []).forEach(group => {
+      lines.push(group.label.toUpperCase());
+      group.items.forEach((item, index) => {
+        const record = getYearEndChecklistRecord(item.id);
+        lines.push(`${index + 1}. ${item.title}`);
+        lines.push(`Status: ${item.statusLabel}`);
+        lines.push(`Who acts: ${item.owner}`);
+        lines.push(`What the client must do: ${item.clientAction}`);
+        lines.push(`What Cedric will review: ${item.professionalAction}`);
+        if (record.targetDate || item.targetDate) {
+          lines.push(`Target date: ${record.targetDate || item.targetDate}`);
+        }
+        if (record.notes || item.notes) {
+          lines.push(`Advisor note: ${record.notes || item.notes}`);
+        }
+        lines.push("");
+      });
+    });
+
+    lines.push("Next step: Complete urgent items first, provide the requested records, and review all potential tax actions before relying on an estimated benefit or final tax result.");
+    return lines.join("\n");
+  }
+
   function updateTaxActionPlan(actions, combinedSavings, recommendations = []) {
     const list = document.getElementById("actionPlanList");
     const sortedActions = recommendationEngine.sortActions(actions || []);
@@ -2288,6 +2613,21 @@
     });
   });
 
+  document.getElementById("yearEndChecklistGroups").addEventListener("change", event => {
+    const control = event.target.closest(
+      "[data-year-end-status], [data-year-end-date]"
+    );
+    if (!control) return;
+    updateYearEndChecklistRecord(control);
+    updateTaxSavingsFinder();
+  });
+
+  document.getElementById("yearEndChecklistGroups").addEventListener("input", event => {
+    const control = event.target.closest("[data-year-end-notes]");
+    if (!control) return;
+    updateYearEndChecklistRecord(control);
+  });
+
   document.getElementById("opportunityScorecardList").addEventListener("change", event => {
     const control = event.target.closest(
       "[data-scorecard-stage], [data-scorecard-benefit]"
@@ -2301,6 +2641,18 @@
     const control = event.target.closest("[data-scorecard-notes]");
     if (!control) return;
     updateScorecardRecordFromControl(control);
+  });
+
+  document.getElementById("copyYearEndChecklist").addEventListener("click", () => {
+    copyPlannerText(
+      buildYearEndChecklistSummaryText(),
+      "Year-End Planning Checklist copied.",
+      "yearEndChecklistSaveStatus"
+    );
+  });
+
+  document.getElementById("printYearEndChecklist").addEventListener("click", () => {
+    window.print();
   });
 
   document.getElementById("copySmartAlertSummary").addEventListener("click", () => {
