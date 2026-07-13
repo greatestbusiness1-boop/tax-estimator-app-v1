@@ -19,6 +19,12 @@
     .disclaimer{margin-top:26px;border:1px solid var(--line);padding:18px;background:#f0eadb;color:var(--ink-soft);font-size:12px;line-height:1.6}footer{background:var(--navy-deep);color:#dce5ea;text-align:center;padding:20px;font-size:12px}
     @media(max-width:880px){.grid{grid-template-columns:1fr}.masthead-inner{align-items:flex-start;flex-direction:column}.tagline{text-align:left}.field-grid,.finder-grid{grid-template-columns:1fr}}
   
+    .action-list{display:grid;gap:10px}
+    .action-item{padding:12px 0;border-bottom:1px solid var(--line-soft)}
+    .action-item:first-child{padding-top:0}
+    .action-item:last-child{padding-bottom:0;border-bottom:0}
+    .action-item strong{display:block;color:var(--navy);line-height:1.35;margin-bottom:5px}
+    .action-item span{display:block;color:var(--ink-soft);font-size:14px;line-height:1.5}
     .advisor-grid{display:grid;gap:12px;margin-top:16px}
     .advisor-card{border:1px solid var(--line-soft);background:#fff;padding:14px}
     .advisor-card strong{display:block;color:var(--navy);margin-bottom:5px}
@@ -29,6 +35,38 @@
     .note-actions button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
     .note-actions button.secondary{background:#fff;color:var(--navy)}
     .note-status{margin-top:8px;font-size:12px;color:var(--ink-soft)}
+    .scorecard-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 8px}
+    .scorecard-toolbar button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
+    .scorecard-toolbar button.secondary{background:#fff;color:var(--navy)}
+    .scorecard-save-status{font-size:12px;color:var(--ink-soft);margin-bottom:16px}
+    .scorecard-list{display:grid;gap:16px}
+    .scorecard-card{border:1px solid var(--line);border-left:6px solid var(--gold);background:#fff;padding:17px}
+    .scorecard-card[data-tone="review"]{border-left-color:#6f7890}
+    .scorecard-card[data-tone="action"]{border-left-color:var(--red)}
+    .scorecard-card[data-tone="verified"],.scorecard-card[data-tone="completed"]{border-left-color:var(--green)}
+    .scorecard-card[data-tone="closed"]{border-left-color:#8b8b84;background:#f7f5ef}
+    .scorecard-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:14px}
+    .scorecard-card-head h4{font-family:Fraunces,serif;font-size:19px;line-height:1.3;margin:5px 0 0;color:var(--navy)}
+    .priority-pill{display:inline-block;border:1px solid var(--line);background:#f0eadb;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+    .priority-pill.urgent,.priority-pill.high{background:#f5dedb;color:var(--red-deep);border-color:#e8bcb7}
+    .priority-pill.medium{background:#f5ead2;color:#76561e;border-color:#e4d3ac}
+    .priority-pill.monitor{background:#dcefe6;color:var(--green-deep);border-color:#b9ddcd}
+    .scorecard-controls{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin-bottom:14px}
+    .scorecard-control{display:flex;flex-direction:column;gap:6px}
+    .scorecard-control small{color:var(--ink-soft);line-height:1.4}
+    .scorecard-values{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+    .scorecard-value{border:1px solid var(--line-soft);background:#fbf8f0;padding:9px 11px;font-size:12px}
+    .scorecard-value strong{display:block;margin-top:3px;font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--navy)}
+    .scorecard-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .scorecard-detail{border-top:1px solid var(--line-soft);padding-top:10px}
+    .scorecard-detail strong,.scorecard-explanation strong{display:block;color:var(--navy);font-size:13px;margin-bottom:5px}
+    .scorecard-detail p,.scorecard-explanation p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
+    .scorecard-explanation{margin-top:12px;border:1px solid var(--gold-soft);background:#fbf5e7;padding:12px}
+    .scorecard-notes{margin-top:12px}
+    .scorecard-notes textarea{width:100%;min-height:78px;resize:vertical;border:1px solid var(--line);padding:10px;background:#fff;color:var(--ink)}
+    .scorecard-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
+    .script-box{border-left:4px solid var(--gold);padding-left:12px;color:var(--ink-soft);font-size:14px;line-height:1.6}
+    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid{grid-template-columns:1fr}.scorecard-card-head{flex-direction:column}.priority-pill{white-space:normal}}
     @media print{
       .tabs,.note-actions,.cta{display:none!important}
       .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
@@ -43,8 +81,8 @@
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
-  <p class="lead">Your estimate showed a snapshot. These five planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">—</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.0 active</span></div>
+  <p class="lead">Your estimate showed a snapshot. These six planning tools will turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, and your next action.</p>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.0 active</span></div>
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -53,6 +91,7 @@
     <button class="tab" data-tab="whatif">03 What-If Scenarios</button>
     <button class="tab" data-tab="finder">04 Tax Savings Finder</button>
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
+    <button class="tab" data-tab="scorecard">06 Opportunity Scorecard</button>
   </nav>
 
   <section class="panel active" id="overview">
@@ -414,6 +453,45 @@
     </div>
   </section>
 
+  <section class="panel" id="scorecard">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">C</div><h3>Client Opportunity Scorecard</h3></div>
+        <p class="module-note">Use this scorecard to move each finding from a potential opportunity to a documented professional conclusion. A potential benefit is not guaranteed and should not be presented as verified until eligibility, supporting information, and tax treatment have been reviewed.</p>
+
+        <div class="scorecard-toolbar">
+          <button type="button" id="copyClientOpportunitySummary">Copy Client Summary</button>
+          <button type="button" class="secondary" id="copyPotentialBenefitScript">Copy Potential-Benefit Script</button>
+        </div>
+        <div class="scorecard-save-status" id="scorecardSaveStatus">Planner entries, selections, and scorecard changes save automatically in this browser for this planner record.</div>
+
+        <div class="scorecard-list" id="opportunityScorecardList">
+          <div class="scorecard-empty">Complete the Withholding Checkup and Tax Savings Finder to create the Client Opportunity Scorecard.</div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Opportunity Review Summary</h3>
+          <div class="row"><span>Opportunities on scorecard</span><strong class="number" id="scorecardTotalCount">0</strong></div>
+          <div class="row"><span>Under professional review</span><strong class="number" id="scorecardReviewCount">0</strong></div>
+          <div class="row"><span>Client action required</span><strong class="number" id="scorecardClientActionCount">0</strong></div>
+          <div class="row"><span>Verified opportunities</span><strong class="number" id="scorecardVerifiedCount">0</strong></div>
+          <div class="row"><span>Potential benefit identified</span><strong class="money positive" id="scorecardPotentialBenefit">$0</strong></div>
+          <div class="row"><span>Verified estimate entered</span><strong class="money positive" id="scorecardVerifiedBenefit">$0</strong></div>
+          <div class="row total"><span>Review readiness</span><strong class="number" id="scorecardReadiness">0 / 100</strong></div>
+          <span class="status" id="scorecardStatus">Not started</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>How to Explain a Potential Benefit</h3>
+          <div class="script-box" id="potentialBenefitScript">The Planner identified a possible opportunity based on the information currently available. The amount shown is a preliminary estimate, not a guaranteed tax savings amount. I need to confirm eligibility, review the supporting information, and verify the tax treatment before recommending that you take action.</div>
+          <p class="module-note">Use this as a starting point, then explain the specific facts you reviewed and the information still needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
@@ -481,6 +559,7 @@
   let latestRecommendationResult = {
     recommendations: [],
     actionPlan: [],
+    scorecard: null,
     primaryRecommendation: null,
     servicePaths: []
   };
@@ -491,14 +570,136 @@
   }
 
   let latestTaxHealthScore = 0;
-  const plannerLeadId =
-    new URLSearchParams(window.location.search).get("leadId") || "general";
+  const plannerParams = new URLSearchParams(window.location.search);
+  const plannerLeadId = plannerParams.get("leadId") || "general";
+  const plannerStateKey = `taxSavingsPlannerState:${plannerLeadId}`;
+  const defaultPlannerTaxYear = String(plannerParams.get("taxYear") || "2025");
+  let currentPlannerTaxYear = defaultPlannerTaxYear;
+  let hasSavedPlannerState = false;
   const professionalNotesKey =
     `taxSavingsPlannerNotes:${plannerLeadId}`;
+  const opportunityScorecardKey =
+    `taxSavingsPlannerOpportunityScorecard:${plannerLeadId}`;
+  const opportunityStages = recommendationEngine.getOpportunityStages();
+  const potentialBenefitClientScript =
+    "The Planner identified a possible opportunity based on the information currently available. The amount shown is a preliminary estimate, not a guaranteed tax savings amount. I need to confirm eligibility, review the supporting information, and verify the tax treatment before recommending that you take action.";
+  let opportunityScorecardRecords = {};
+
+  try {
+    opportunityScorecardRecords = JSON.parse(
+      window.localStorage.getItem(opportunityScorecardKey) || "{}"
+    );
+  } catch (error) {
+    opportunityScorecardRecords = {};
+  }
 
   function numberValue(id) {
     const value = Number(document.getElementById(id)?.value || 0);
     return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function setPlannerTaxYear(value) {
+    const normalized = String(value || "").trim();
+    currentPlannerTaxYear = /^\d{4}$/.test(normalized)
+      ? normalized
+      : defaultPlannerTaxYear;
+
+    const taxYearElement = document.getElementById("taxYear");
+    if (taxYearElement) {
+      taxYearElement.textContent = currentPlannerTaxYear;
+    }
+  }
+
+  function collectPlannerControlState() {
+    const controls = {};
+
+    document.querySelectorAll(
+      "#withholding input, #withholding select, #finder input, #finder select"
+    ).forEach(control => {
+      if (control.type === "radio") {
+        if (control.checked && control.name) {
+          controls[`radio:${control.name}`] = control.value;
+        }
+        return;
+      }
+
+      if (!control.id) return;
+      controls[control.id] = control.type === "checkbox"
+        ? Boolean(control.checked)
+        : control.value;
+    });
+
+    return controls;
+  }
+
+  function savePlannerState() {
+    try {
+      const state = {
+        version: 1,
+        taxYear: currentPlannerTaxYear,
+        controls: collectPlannerControlState(),
+        savedAt: new Date().toISOString()
+      };
+
+      window.localStorage.setItem(plannerStateKey, JSON.stringify(state));
+      return true;
+    } catch (error) {
+      console.warn("Planner entries could not be saved in this browser.", error);
+      return false;
+    }
+  }
+
+  function restorePlannerState() {
+    try {
+      const saved = JSON.parse(
+        window.localStorage.getItem(plannerStateKey) || "null"
+      );
+
+      if (!saved || typeof saved !== "object") return false;
+
+      setPlannerTaxYear(saved.taxYear || defaultPlannerTaxYear);
+
+      const controls = saved.controls && typeof saved.controls === "object"
+        ? saved.controls
+        : {};
+
+      Object.entries(controls).forEach(([key, value]) => {
+        if (key.startsWith("radio:")) {
+          const name = key.slice(6);
+          document.querySelectorAll(`input[name="${name}"]`).forEach(control => {
+            control.checked = control.value === String(value);
+          });
+          return;
+        }
+
+        const control = document.getElementById(key);
+        if (!control) return;
+
+        if (control.type === "checkbox") {
+          control.checked = Boolean(value);
+        } else {
+          control.value = String(value ?? "");
+        }
+      });
+
+      const itemizedSelected =
+        document.querySelector('input[name="whDeductionMethod"]:checked')?.value === "itemized";
+      document.getElementById("whItemizedField").hidden = !itemizedSelected;
+
+      return true;
+    } catch (error) {
+      console.warn("Saved Planner entries could not be restored.", error);
+      return false;
+    }
   }
 
   function calculateOrdinaryTax(taxableIncome, filingStatus) {
@@ -551,7 +752,7 @@
     const otherDependents = Math.floor(numberValue("whOtherDependents"));
 
     return {
-      taxYear: 2025,
+      taxYear: Number(currentPlannerTaxYear) || 2025,
       filingStatus,
       age: Math.max(1, Math.floor(numberValue("whAge") || 40)),
       isFullTimeStudent: false,
@@ -720,7 +921,7 @@
       adjustment.textContent = "Your projected federal and state withholding is close to the combined estimated tax. Recheck after a major income, dependent, or deduction change.";
     } else if (combinedDifference > 0) {
       resultLabel.textContent = "Combined projected refund";
-      setMoney("whProjectedResult", difference, "positive");
+      setMoney("whProjectedResult", combinedDifference, "positive");
       status.textContent = "Overwithheld";
       status.classList.add("good");
       setMoney("whPerPaycheck", perPaycheck, "positive");
@@ -972,7 +1173,8 @@
         numberValue("whWithholding") +
         numberValue("whStateWithholding") > 0,
       payPeriods: Number(document.getElementById("whPayFrequency")?.value || 26),
-      maxRecommendations: 4
+      maxRecommendations: 20,
+      scorecardRecords: opportunityScorecardRecords
     });
 
     latestFinderSummary = latestRecommendationResult.opportunitySummary;
@@ -1003,6 +1205,7 @@
       latestFinderSummary.combinedSavings,
       latestRecommendationResult.recommendations
     );
+    renderOpportunityScorecard(latestRecommendationResult.recommendations);
     updatePlannerOverview();
   }
 
@@ -1062,6 +1265,236 @@
     status.textContent = "Notes cleared.";
   }
 
+  function getScorecardRecord(recommendationId) {
+    const current = opportunityScorecardRecords[recommendationId];
+    if (current && typeof current === "object") {
+      return {
+        stage: String(current.stage || "potential"),
+        verifiedBenefit: Math.max(0, Number(current.verifiedBenefit || 0)),
+        notes: String(current.notes || "")
+      };
+    }
+
+    return {
+      stage: "potential",
+      verifiedBenefit: 0,
+      notes: ""
+    };
+  }
+
+  function saveOpportunityScorecardRecords(message = "Scorecard saved automatically.") {
+    window.localStorage.setItem(
+      opportunityScorecardKey,
+      JSON.stringify(opportunityScorecardRecords)
+    );
+
+    const status = document.getElementById("scorecardSaveStatus");
+    if (status) {
+      status.textContent = `${message} ${new Date().toLocaleTimeString()}`;
+    }
+  }
+
+  function buildStageOptions(selectedStage) {
+    return opportunityStages.map(stage => (
+      `<option value="${escapeHtml(stage.key)}"${stage.key === selectedStage ? " selected" : ""}>${escapeHtml(stage.label)}</option>`
+    )).join("");
+  }
+
+  function updateOpportunityScorecardSummary(scorecard) {
+    document.getElementById("scorecardTotalCount").textContent = scorecard.totalCount;
+    document.getElementById("scorecardReviewCount").textContent = scorecard.reviewCount;
+    document.getElementById("scorecardClientActionCount").textContent = scorecard.clientActionCount;
+    document.getElementById("scorecardVerifiedCount").textContent =
+      scorecard.verifiedCount + scorecard.completedCount;
+    setMoney("scorecardPotentialBenefit", scorecard.potentialBenefit, "positive");
+    setMoney("scorecardVerifiedBenefit", scorecard.verifiedBenefit, "positive");
+    document.getElementById("scorecardReadiness").textContent =
+      `${scorecard.readinessScore} / 100`;
+
+    const status = document.getElementById("scorecardStatus");
+    status.textContent = scorecard.status;
+    status.classList.remove("good", "warn");
+
+    if (scorecard.clientActionCount > 0) {
+      status.classList.add("warn");
+    } else if (scorecard.verifiedCount > 0 || scorecard.completedCount > 0) {
+      status.classList.add("good");
+    }
+  }
+
+  function renderOpportunityScorecard(recommendations = []) {
+    const container = document.getElementById("opportunityScorecardList");
+    if (!container) return;
+
+    const scorecard = recommendationEngine.buildOpportunityScorecard(
+      recommendations,
+      opportunityScorecardRecords
+    );
+    latestRecommendationResult.scorecard = scorecard;
+    updateOpportunityScorecardSummary(scorecard);
+
+    if (!scorecard.items.length) {
+      container.innerHTML = '<div class="scorecard-empty">Complete the Withholding Checkup and Tax Savings Finder to create the Client Opportunity Scorecard.</div>';
+      return;
+    }
+
+    container.innerHTML = scorecard.items.map(item => {
+      const potentialBenefit = Number(item.estimatedBenefit || 0);
+      const verifiedBenefit = Number(item.verifiedBenefit || 0);
+      const priorityClass = ["urgent", "high", "medium", "monitor"].includes(item.priority)
+        ? item.priority
+        : "review";
+      const priorityLabel = item.priority === "urgent"
+        ? "Urgent priority"
+        : `${item.priority || "Review"} priority`;
+
+      return `
+        <article class="scorecard-card" data-scorecard-id="${escapeHtml(item.id)}" data-tone="${escapeHtml(item.stageTone)}">
+          <div class="scorecard-card-head">
+            <div>
+              <span class="priority-pill ${escapeHtml(priorityClass)}">${escapeHtml(priorityLabel)}</span>
+              <h4>${escapeHtml(item.title)}</h4>
+            </div>
+            <span class="number">#${item.scorecardOrder}</span>
+          </div>
+
+          <div class="scorecard-controls">
+            <label class="scorecard-control">
+              Review status
+              <select data-scorecard-stage>${buildStageOptions(item.stage)}</select>
+              <small>${escapeHtml(item.stageSummary)}</small>
+            </label>
+            ${potentialBenefit > 0 ? `
+              <label class="scorecard-control">
+                Verified estimate
+                <input class="money" type="number" min="0" step="1" value="${verifiedBenefit}" data-scorecard-benefit>
+                <small>Enter only after professional review. Leave at $0 while the amount is still potential.</small>
+              </label>
+            ` : `
+              <div class="scorecard-control">
+                <label>Dollar estimate</label>
+                <div class="scorecard-value"><span>No reliable dollar estimate yet</span><strong>Professional review item</strong></div>
+              </div>
+            `}
+          </div>
+
+          <div class="scorecard-values">
+            <div class="scorecard-value"><span>Potential benefit</span><strong>${potentialBenefit > 0 ? money.format(Math.round(potentialBenefit)) : "Not estimated"}</strong></div>
+            <div class="scorecard-value"><span>Current status</span><strong>${escapeHtml(item.stageLabel)}</strong></div>
+            <div class="scorecard-value"><span>Service path</span><strong>${escapeHtml(item.servicePath || "Tax Planning Meeting")}</strong></div>
+          </div>
+
+          <div class="scorecard-detail-grid">
+            <div class="scorecard-detail">
+              <strong>What the Planner found</strong>
+              <p>${escapeHtml(item.detail)}</p>
+            </div>
+            <div class="scorecard-detail">
+              <strong>What I need from the client</strong>
+              <p>${escapeHtml(item.clientAction || "Confirm the facts and provide the requested supporting information.")}</p>
+            </div>
+            <div class="scorecard-detail">
+              <strong>Professional review</strong>
+              <p>${escapeHtml(item.professionalAction || "Verify eligibility, documentation, timing, and tax treatment before recommending action.")}</p>
+            </div>
+            <div class="scorecard-detail">
+              <strong>Potential does not mean guaranteed</strong>
+              <p>${potentialBenefit > 0 ? `The ${money.format(Math.round(potentialBenefit))} amount is an estimate until the review is completed.` : "This item may reduce risk or identify a required action even when no dollar estimate is available."}</p>
+            </div>
+          </div>
+
+          <div class="scorecard-explanation">
+            <strong>Suggested client explanation</strong>
+            <p data-scorecard-explanation>${escapeHtml(item.clientExplanation)}</p>
+          </div>
+
+          <label class="scorecard-notes">
+            Advisor notes / documents still needed
+            <textarea data-scorecard-notes placeholder="Record documents requested, questions to verify, deadlines, and the reason for the final conclusion.">${escapeHtml(item.notes)}</textarea>
+          </label>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function updateScorecardRecordFromControl(control) {
+    const card = control.closest("[data-scorecard-id]");
+    if (!card) return;
+
+    const recommendationId = card.dataset.scorecardId;
+    const record = getScorecardRecord(recommendationId);
+
+    if (control.matches("[data-scorecard-stage]")) {
+      record.stage = control.value;
+    } else if (control.matches("[data-scorecard-benefit]")) {
+      record.verifiedBenefit = Math.max(0, Number(control.value || 0));
+    } else if (control.matches("[data-scorecard-notes]")) {
+      record.notes = control.value;
+    }
+
+    opportunityScorecardRecords[recommendationId] = record;
+    saveOpportunityScorecardRecords();
+  }
+
+  function buildClientOpportunitySummaryText() {
+    const scorecard = recommendationEngine.buildOpportunityScorecard(
+      latestRecommendationResult.recommendations || [],
+      opportunityScorecardRecords
+    );
+    const clientName = document.getElementById("clientName")?.textContent || "Client";
+    const taxYear = document.getElementById("taxYear")?.textContent || "—";
+    const lines = [
+      "TAX SAVINGS PLANNER™ — CLIENT OPPORTUNITY SUMMARY",
+      `Client: ${clientName}`,
+      `Tax year: ${taxYear}`,
+      "",
+      "Important: A potential benefit is a preliminary estimate, not a guaranteed tax savings amount. Eligibility, supporting information, and tax treatment must be reviewed before action is recommended.",
+      ""
+    ];
+
+    scorecard.items
+      .filter(item => item.stage !== "not-applicable")
+      .forEach((item, index) => {
+        lines.push(`${index + 1}. ${item.title}`);
+        lines.push(`Status: ${item.stageLabel}`);
+        if (Number(item.estimatedBenefit || 0) > 0) {
+          lines.push(`Potential benefit: ${money.format(Math.round(item.estimatedBenefit))}`);
+        }
+        if (Number(item.verifiedBenefit || 0) > 0 && ["verified", "completed"].includes(item.stage)) {
+          lines.push(`Verified estimate: ${money.format(Math.round(item.verifiedBenefit))}`);
+        }
+        lines.push(`What I need from you: ${item.clientAction}`);
+        lines.push(`Explanation: ${item.clientExplanation}`);
+        lines.push("");
+      });
+
+    if (!scorecard.items.length) {
+      lines.push("Complete the Planner to create your opportunity summary.");
+    }
+
+    lines.push("Next step: Review the identified items with your tax professional before making a financial or tax decision.");
+    return lines.join("\n");
+  }
+
+  async function copyPlannerText(text, successMessage) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      const helper = document.createElement("textarea");
+      helper.value = text;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand("copy");
+      helper.remove();
+    }
+
+    const status = document.getElementById("scorecardSaveStatus");
+    if (status) status.textContent = successMessage;
+  }
+
   function updateTaxActionPlan(actions, combinedSavings, recommendations = []) {
     const list = document.getElementById("actionPlanList");
     const sortedActions = recommendationEngine.sortActions(actions || []);
@@ -1098,8 +1531,43 @@
   });
 
   document.querySelectorAll("#finder input").forEach(control => {
-    control.addEventListener("input", updateTaxSavingsFinder);
-    control.addEventListener("change", updateTaxSavingsFinder);
+    control.addEventListener("input", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+    control.addEventListener("change", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+  });
+
+  document.getElementById("opportunityScorecardList").addEventListener("change", event => {
+    const control = event.target.closest(
+      "[data-scorecard-stage], [data-scorecard-benefit]"
+    );
+    if (!control) return;
+    updateScorecardRecordFromControl(control);
+    renderOpportunityScorecard(latestRecommendationResult.recommendations || []);
+  });
+
+  document.getElementById("opportunityScorecardList").addEventListener("input", event => {
+    const control = event.target.closest("[data-scorecard-notes]");
+    if (!control) return;
+    updateScorecardRecordFromControl(control);
+  });
+
+  document.getElementById("copyClientOpportunitySummary").addEventListener("click", () => {
+    copyPlannerText(
+      buildClientOpportunitySummaryText(),
+      "Client Opportunity Summary copied."
+    );
+  });
+
+  document.getElementById("copyPotentialBenefitScript").addEventListener("click", () => {
+    copyPlannerText(
+      potentialBenefitClientScript,
+      "Potential-benefit explanation copied."
+    );
   });
 
   document.getElementById("saveProfessionalNotes").addEventListener("click", saveProfessionalNotes);
@@ -1117,6 +1585,7 @@
   document.querySelectorAll(
     "#withholding input, #withholding select"
   ).forEach(control => control.addEventListener("input", () => {
+    savePlannerState();
     updateWithholdingCheckup();
     scheduleStateEstimate();
   }));
@@ -1126,12 +1595,13 @@
       const itemizedSelected =
         document.querySelector('input[name="whDeductionMethod"]:checked')?.value === "itemized";
       document.getElementById("whItemizedField").hidden = !itemizedSelected;
+      savePlannerState();
       updateWithholdingCheckup();
     });
   });
 
   async function loadClientContext() {
-    const leadId = new URLSearchParams(location.search).get("leadId");
+    const leadId = plannerParams.get("leadId");
     if (!leadId) return;
 
     try {
@@ -1146,8 +1616,9 @@
       document.getElementById("clientName").textContent =
         contact.name || lead.name || "Paid Review Client";
 
-      document.getElementById("taxYear").textContent =
-        taxData.taxYear || lead.taxYear || lead.filingYear || "—";
+      setPlannerTaxYear(
+        taxData.taxYear || lead.taxYear || lead.filingYear || currentPlannerTaxYear
+      );
 
       const filingMap = {
         "single": "single",
@@ -1156,40 +1627,43 @@
         "head of household": "hoh"
       };
 
-      const filing = String(taxData.filingStatus || "").trim().toLowerCase();
-      if (filingMap[filing]) {
-        document.getElementById("whFilingStatus").value = filingMap[filing];
+      if (!hasSavedPlannerState) {
+        const filing = String(taxData.filingStatus || "").trim().toLowerCase();
+        if (filingMap[filing]) {
+          document.getElementById("whFilingStatus").value = filingMap[filing];
+        }
+
+        const wages =
+          taxData.wages ||
+          taxData.w2Wages ||
+          taxData.totalWages ||
+          0;
+
+        const withholding =
+          taxData.federalWithholding ||
+          taxData.federalTaxWithheld ||
+          0;
+
+        const stateWithholding =
+          taxData.stateWithholding ||
+          taxData.stateTaxWithheld ||
+          0;
+
+        const stateCode =
+          taxData.stateCode ||
+          taxData.state ||
+          lead.stateCode ||
+          "";
+
+        if (Number(wages) > 0) document.getElementById("whWages").value = Number(wages);
+        if (Number(withholding) > 0) document.getElementById("whWithholding").value = Number(withholding);
+        if (Number(stateWithholding) > 0) document.getElementById("whStateWithholding").value = Number(stateWithholding);
+        if (stateCode && document.querySelector(`#whStateCode option[value="${String(stateCode).toUpperCase()}"]`)) {
+          document.getElementById("whStateCode").value = String(stateCode).toUpperCase();
+        }
       }
 
-      const wages =
-        taxData.wages ||
-        taxData.w2Wages ||
-        taxData.totalWages ||
-        0;
-
-      const withholding =
-        taxData.federalWithholding ||
-        taxData.federalTaxWithheld ||
-        0;
-
-      const stateWithholding =
-        taxData.stateWithholding ||
-        taxData.stateTaxWithheld ||
-        0;
-
-      const stateCode =
-        taxData.stateCode ||
-        taxData.state ||
-        lead.stateCode ||
-        "";
-
-      if (Number(wages) > 0) document.getElementById("whWages").value = Number(wages);
-      if (Number(withholding) > 0) document.getElementById("whWithholding").value = Number(withholding);
-      if (Number(stateWithholding) > 0) document.getElementById("whStateWithholding").value = Number(stateWithholding);
-      if (stateCode && document.querySelector(`#whStateCode option[value="${String(stateCode).toUpperCase()}"]`)) {
-        document.getElementById("whStateCode").value = String(stateCode).toUpperCase();
-      }
-
+      savePlannerState();
       updateWithholdingCheckup();
       scheduleStateEstimate();
     } catch (error) {
@@ -1197,6 +1671,8 @@
     }
   }
 
+  setPlannerTaxYear(defaultPlannerTaxYear);
+  hasSavedPlannerState = restorePlannerState();
   updateWithholdingCheckup();
   updateTaxSavingsFinder();
   updatePlannerOverview();

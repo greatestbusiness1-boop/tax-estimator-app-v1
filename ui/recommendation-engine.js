@@ -23,6 +23,55 @@
     monitor: 4
   });
 
+  const OPPORTUNITY_STAGE_DEFINITIONS = Object.freeze([
+    Object.freeze({
+      key: "potential",
+      label: "Potential Opportunity",
+      summary: "The Planner identified an item that may apply. Eligibility and the amount have not been verified.",
+      weight: 10,
+      tone: "potential"
+    }),
+    Object.freeze({
+      key: "under-review",
+      label: "Under Professional Review",
+      summary: "The facts and supporting documents are being reviewed before a recommendation is made.",
+      weight: 35,
+      tone: "review"
+    }),
+    Object.freeze({
+      key: "client-action",
+      label: "Client Action Required",
+      summary: "The review cannot move forward until the client provides information, documents, or completes a requested step.",
+      weight: 55,
+      tone: "action"
+    }),
+    Object.freeze({
+      key: "verified",
+      label: "Verified Opportunity",
+      summary: "The available facts support the opportunity. The verified estimate remains subject to final tax-return information.",
+      weight: 80,
+      tone: "verified"
+    }),
+    Object.freeze({
+      key: "completed",
+      label: "Completed",
+      summary: "The agreed planning action has been completed and documented.",
+      weight: 100,
+      tone: "completed"
+    }),
+    Object.freeze({
+      key: "not-applicable",
+      label: "Not Applicable",
+      summary: "The item was reviewed and does not apply based on the information currently available.",
+      weight: 100,
+      tone: "closed"
+    })
+  ]);
+
+  const OPPORTUNITY_STAGE_MAP = new Map(
+    OPPORTUNITY_STAGE_DEFINITIONS.map((stage) => [stage.key, stage])
+  );
+
   const OPPORTUNITY_DEFINITIONS = Object.freeze([
     Object.freeze({
       key: "retirement",
@@ -397,9 +446,159 @@
     return deduplicated.slice(0, maximum);
   }
 
+  function getOpportunityStages() {
+    return OPPORTUNITY_STAGE_DEFINITIONS.map((stage) => ({ ...stage }));
+  }
+
+  function getOpportunityStage(key) {
+    const stage = OPPORTUNITY_STAGE_MAP.get(String(key || ""));
+    return stage ? { ...stage } : null;
+  }
+
+  function normalizeScorecardRecords(recommendations, records) {
+    const source = records && typeof records === "object" ? records : {};
+
+    return sortActions(recommendations || []).reduce((normalized, recommendation) => {
+      const record = source[recommendation.id] && typeof source[recommendation.id] === "object"
+        ? source[recommendation.id]
+        : {};
+      const requestedStage = String(record.stage || "potential");
+      const stage = OPPORTUNITY_STAGE_MAP.has(requestedStage)
+        ? requestedStage
+        : "potential";
+
+      normalized[recommendation.id] = {
+        stage,
+        verifiedBenefit: Math.round(numberOrZero(record.verifiedBenefit)),
+        notes: String(record.notes || "").slice(0, 5000)
+      };
+
+      return normalized;
+    }, {});
+  }
+
+  function buildClientExplanation(recommendation, stageKey, verifiedBenefit = 0) {
+    const stage = OPPORTUNITY_STAGE_MAP.get(String(stageKey || "")) ||
+      OPPORTUNITY_STAGE_MAP.get("potential");
+    const title = String(recommendation?.title || "This planning item");
+    const potentialBenefit = Math.round(numberOrZero(recommendation?.estimatedBenefit));
+    const verifiedAmount = Math.round(numberOrZero(verifiedBenefit));
+
+    if (stage.key === "under-review") {
+      return `${title} is under professional review. I am checking the facts, eligibility rules, supporting documents, and tax treatment before recommending that you take action.`;
+    }
+
+    if (stage.key === "client-action") {
+      return `${title} needs information, documents, or action from you before I can complete the review. The amount shown remains a potential estimate until the missing items are received and verified.`;
+    }
+
+    if (stage.key === "verified") {
+      const amountText = verifiedAmount > 0
+        ? ` The current verified estimate is ${money(verifiedAmount)}.`
+        : " The opportunity appears available, but a verified dollar estimate has not yet been entered.";
+      return `${title} has been reviewed and appears to be available based on the information provided.${amountText} The final result may change if the client's facts or final tax-return information changes.`;
+    }
+
+    if (stage.key === "completed") {
+      const amountText = verifiedAmount > 0
+        ? ` The documented estimate is ${money(verifiedAmount)}.`
+        : " No verified dollar amount is recorded for this item.";
+      return `${title} has been completed and documented.${amountText} The final tax-return result remains subject to the complete filing information.`;
+    }
+
+    if (stage.key === "not-applicable") {
+      return `${title} was reviewed and does not apply based on the information currently available. No tax benefit is being claimed or promised for this item.`;
+    }
+
+    const amountText = potentialBenefit > 0
+      ? ` The Planner currently estimates a potential benefit of ${money(potentialBenefit)}.`
+      : " A reliable dollar estimate is not available yet.";
+
+    return `${title} was identified as a potential opportunity based on the information currently entered.${amountText} This is not a guaranteed tax benefit. I need to confirm eligibility, supporting documents, deadlines, and the tax treatment before recommending any action.`;
+  }
+
+  function buildOpportunityScorecard(recommendations, records = {}) {
+    const normalizedRecords = normalizeScorecardRecords(recommendations, records);
+    const items = sortActions(recommendations || []).map((recommendation, index) => {
+      const record = normalizedRecords[recommendation.id];
+      const stage = OPPORTUNITY_STAGE_MAP.get(record.stage) ||
+        OPPORTUNITY_STAGE_MAP.get("potential");
+
+      return {
+        ...recommendation,
+        scorecardOrder: index + 1,
+        stage: stage.key,
+        stageLabel: stage.label,
+        stageSummary: stage.summary,
+        stageTone: stage.tone,
+        stageWeight: stage.weight,
+        verifiedBenefit: record.verifiedBenefit,
+        notes: record.notes,
+        clientExplanation: buildClientExplanation(
+          recommendation,
+          stage.key,
+          record.verifiedBenefit
+        )
+      };
+    });
+
+    const applicableItems = items.filter((item) => item.stage !== "not-applicable");
+    const countByStage = OPPORTUNITY_STAGE_DEFINITIONS.reduce((counts, stage) => {
+      counts[stage.key] = items.filter((item) => item.stage === stage.key).length;
+      return counts;
+    }, {});
+
+    const potentialBenefit = applicableItems.reduce(
+      (total, item) => total + numberOrZero(item.estimatedBenefit),
+      0
+    );
+    const verifiedBenefit = applicableItems
+      .filter((item) => item.stage === "verified" || item.stage === "completed")
+      .reduce((total, item) => total + numberOrZero(item.verifiedBenefit), 0);
+    const readinessScore = applicableItems.length
+      ? Math.round(
+          applicableItems.reduce((total, item) => total + item.stageWeight, 0) /
+          applicableItems.length
+        )
+      : 0;
+
+    let status = "Not started";
+    if (items.length) status = "Potential opportunities identified";
+    if (countByStage.verified > 0) status = "Verified opportunities identified";
+    if (countByStage["under-review"] > 0) status = "Professional review in progress";
+    if (countByStage["client-action"] > 0) status = "Client action required";
+    if (
+      applicableItems.length > 0 &&
+      countByStage.completed === applicableItems.length
+    ) {
+      status = "Opportunity plan completed";
+    }
+
+    return {
+      items,
+      records: normalizedRecords,
+      totalCount: items.length,
+      applicableCount: applicableItems.length,
+      potentialCount: countByStage.potential || 0,
+      reviewCount: countByStage["under-review"] || 0,
+      clientActionCount: countByStage["client-action"] || 0,
+      verifiedCount: countByStage.verified || 0,
+      completedCount: countByStage.completed || 0,
+      notApplicableCount: countByStage["not-applicable"] || 0,
+      potentialBenefit: Math.round(potentialBenefit),
+      verifiedBenefit: Math.round(verifiedBenefit),
+      readinessScore,
+      status
+    };
+  }
+
   function evaluate(input = {}) {
     const opportunitySummary = calculateOpportunitySummary(input);
     const recommendations = buildRecommendations(input, opportunitySummary);
+    const scorecard = buildOpportunityScorecard(
+      recommendations,
+      input?.scorecardRecords || {}
+    );
     const servicePaths = [...new Set(
       recommendations
         .map((recommendation) => recommendation.servicePath)
@@ -412,6 +611,7 @@
       opportunitySummary,
       actionPlan: opportunitySummary.actions,
       recommendations,
+      scorecard,
       primaryRecommendation: recommendations[0] || null,
       servicePaths
     };
@@ -432,8 +632,12 @@
     calculateOpportunitySummary,
     buildRecommendations,
     buildWithholdingRecommendation,
+    buildOpportunityScorecard,
+    buildClientExplanation,
     getOpportunityDefinitions,
     getDefinition,
+    getOpportunityStages,
+    getOpportunityStage,
     sortActions
   });
 });
