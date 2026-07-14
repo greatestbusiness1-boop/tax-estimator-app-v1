@@ -853,6 +853,11 @@ function mapRowToLead(row) {
       row.updatedAt ||
       row.updated_at ||
       "",
+    taxSavingsPlanner:
+      estimate.taxSavingsPlanner ||
+      row.taxSavingsPlanner ||
+      row.tax_savings_planner ||
+      null,
     Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
 }
@@ -2162,8 +2167,11 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
 // MIDDLEWARE
 // =============================================================================
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Planner CRM synchronization includes the completed Planner state, score history,
+// checklist records, and Executive Report snapshot. Express defaults JSON bodies to
+// 100 KB, which can reject a legitimate completed Planner before the sync route runs.
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 
 // =============================================================================
@@ -3665,6 +3673,296 @@ Greatest Business Solution LLC`
 });
 
 // =============================================================================
+// TAX SAVINGS PLANNER CRM SYNCHRONIZATION
+// The primary route keeps the existing URL. The alias route provides a stable
+// fallback for environments that do not resolve the parameterized route.
+// If an existing Supabase/local record cannot be updated, a minimal local
+// overlay preserves the Planner summary without overwriting unrelated lead data.
+// The Recommendation Engine remains the single source of recommendation logic.
+// =============================================================================
+
+function savePlannerLocalOverlay(leadId, plannerRecord, syncedAt) {
+  const cleanId = String(leadId || "").trim();
+
+  const matchesLeadId = (lead = {}) => {
+    const estimate = lead?.estimate || {};
+
+    const possibleIds = [
+      lead?.leadId,
+      lead?.leadid,
+      lead?.lead_id,
+      lead?.id,
+      lead?.estimateId,
+      lead?.estimate_id,
+      estimate?.leadId,
+      estimate?.leadid,
+      estimate?.lead_id,
+      estimate?.id,
+      estimate?.estimateId,
+      estimate?.estimate_id
+    ];
+
+    return possibleIds.some(
+      (id) => String(id || "").trim() === cleanId
+    );
+  };
+
+  const localLeads = readLeads();
+  const localIndex = localLeads.findIndex(matchesLeadId);
+
+  if (localIndex >= 0) {
+    localLeads[localIndex] = {
+      ...localLeads[localIndex],
+      taxSavingsPlanner: plannerRecord,
+      updatedAt: syncedAt
+    };
+  } else {
+    // This is intentionally a minimal overlay. When the same lead already
+    // exists in Supabase, /api/leads merges this Planner data into that record
+    // without replacing the client's existing status, contact, or tax data.
+    localLeads.push({
+      leadId: cleanId,
+      taxSavingsPlanner: plannerRecord,
+      updatedAt: syncedAt
+    });
+  }
+
+  writeLeads(localLeads);
+
+  return {
+    ok: true,
+    source: localIndex >= 0
+      ? "local"
+      : "local-overlay"
+  };
+}
+
+async function handleTaxSavingsPlannerSync(req, res) {
+  const payload = req.body && typeof req.body === "object"
+    ? req.body
+    : {};
+
+  const cleanId = String(
+    req.params?.leadId ||
+    payload.leadId ||
+    ""
+  ).trim();
+
+  const now = new Date().toISOString();
+
+  if (!cleanId || cleanId === "general") {
+    return res.status(400).json({
+      ok: false,
+      error: "A valid client lead ID is required for Planner synchronization."
+    });
+  }
+
+  let payloadSize = 0;
+
+  try {
+    payloadSize = Buffer.byteLength(
+      JSON.stringify(payload),
+      "utf8"
+    );
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      error: "The Planner synchronization payload is not valid JSON."
+    });
+  }
+
+  if (payloadSize > 750000) {
+    return res.status(413).json({
+      ok: false,
+      error: "The Planner synchronization payload is too large."
+    });
+  }
+
+  const asObject = (value) => (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+      ? value
+      : {}
+  );
+
+  const asNumber = (value) => {
+    const number = Number(value || 0);
+    return Number.isFinite(number) ? number : 0;
+  };
+
+  const incomingSummary = asObject(payload.summary);
+
+  const taxYear = /^\d{4}$/.test(
+    String(payload.taxYear || "")
+  )
+    ? String(payload.taxYear)
+    : "";
+
+  const plannerRecord = {
+    version: 1,
+    engineVersion: String(
+      payload.engineVersion || ""
+    ).slice(0, 30),
+    syncedAt: now,
+    source: "Tax Savings Planner",
+    taxYear,
+    plannerState: asObject(payload.plannerState),
+    professionalNotes: String(
+      payload.professionalNotes || ""
+    ).slice(0, 12000),
+    opportunityScorecardRecords: asObject(
+      payload.opportunityScorecardRecords
+    ),
+    yearEndChecklistRecords: asObject(
+      payload.yearEndChecklistRecords
+    ),
+    taxHealthHistory: Array.isArray(
+      payload.taxHealthHistory
+    )
+      ? payload.taxHealthHistory.slice(-36)
+      : [],
+    executiveReport: asObject(payload.executiveReport),
+    summary: {
+      clientName: String(
+        incomingSummary.clientName || ""
+      ).slice(0, 160),
+      taxHealthScore: asNumber(
+        incomingSummary.taxHealthScore
+      ),
+      attainableScore: asNumber(
+        incomingSummary.attainableScore
+      ),
+      nextMilestone: asNumber(
+        incomingSummary.nextMilestone
+      ),
+      urgentCount: asNumber(
+        incomingSummary.urgentCount
+      ),
+      highPriorityCount: asNumber(
+        incomingSummary.highPriorityCount
+      ),
+      opportunityCount: asNumber(
+        incomingSummary.opportunityCount
+      ),
+      potentialCount: asNumber(
+        incomingSummary.potentialCount
+      ),
+      underReviewCount: asNumber(
+        incomingSummary.underReviewCount
+      ),
+      clientActionCount: asNumber(
+        incomingSummary.clientActionCount
+      ),
+      verifiedCount: asNumber(
+        incomingSummary.verifiedCount
+      ),
+      completedCount: asNumber(
+        incomingSummary.completedCount
+      ),
+      potentialBenefit: asNumber(
+        incomingSummary.potentialBenefit
+      ),
+      verifiedBenefit: asNumber(
+        incomingSummary.verifiedBenefit
+      ),
+      businessDetected: Boolean(
+        incomingSummary.businessDetected
+      ),
+      currentRoadmapPhase: String(
+        incomingSummary.currentRoadmapPhase || ""
+      ).slice(0, 160),
+      roadmapProgress: asNumber(
+        incomingSummary.roadmapProgress
+      ),
+      nextAction: String(
+        incomingSummary.nextAction || ""
+      ).slice(0, 500),
+      reportGeneratedAt: String(
+        incomingSummary.reportGeneratedAt || ""
+      ).slice(0, 60),
+      plannerStatus: String(
+        incomingSummary.plannerStatus || ""
+      ).slice(0, 160)
+    }
+  };
+
+  try {
+    const primaryUpdate =
+      await updateLeadAfterStripePayment(
+        cleanId,
+        (record = {}) => ({
+          ...record,
+          taxSavingsPlanner: plannerRecord,
+          updatedAt: now
+        })
+      );
+
+    if (!primaryUpdate.ok) {
+      console.warn(
+        "[tax-savings-planner sync] Existing lead update was unavailable. Preserving the Planner through the local CRM overlay.",
+        {
+          leadId: cleanId,
+          reason:
+            primaryUpdate.error ||
+            "Existing lead record was not found."
+        }
+      );
+    }
+
+    // Keep a current local overlay even when Supabase updates successfully.
+    // /api/leads merges this minimal record by lead ID, which guarantees that
+    // the CRM summary is visible without replacing unrelated client fields.
+    const overlayUpdate = savePlannerLocalOverlay(
+      cleanId,
+      plannerRecord,
+      now
+    );
+
+    const syncSource = primaryUpdate.ok
+      ? `${primaryUpdate.source}+${overlayUpdate.source}`
+      : overlayUpdate.source;
+
+    return res.status(200).json({
+      ok: true,
+      source: syncSource,
+      leadId: cleanId,
+      syncedAt: now,
+      summary: plannerRecord.summary
+    });
+  } catch (error) {
+    console.error(
+      "[tax-savings-planner sync] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        "The Planner could not be synchronized with the Tax Lead Center."
+    });
+  }
+}
+
+app.get("/api/tax-savings-planner-sync/health", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    route: "tax-savings-planner-sync",
+    version: "1.0.5"
+  });
+});
+
+app.post(
+  "/api/tax-savings-planner/:leadId/sync",
+  handleTaxSavingsPlannerSync
+);
+
+app.post(
+  "/api/tax-savings-planner-sync",
+  handleTaxSavingsPlannerSync
+);
+
+// =============================================================================
 // GET /api/estimate-summary/:leadId
 // =============================================================================
 
@@ -3761,6 +4059,10 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
       localLeadForRequest?.Request ||
       localLeadForRequest?.request ||
       null;
+    const mergedTaxSavingsPlanner =
+      foundLead.taxSavingsPlanner ||
+      localLeadForRequest?.taxSavingsPlanner ||
+      null;
 
     return res.status(200).json({
       ok: true,
@@ -3774,6 +4076,7 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
         estimateSummary: foundLead.estimateSummary || null,
         taxData: foundLead.taxData || null,
         contact: foundLead.contact || null,
+        taxSavingsPlanner: mergedTaxSavingsPlanner,
         Request: mergedRequest,
         request: mergedRequest
       }

@@ -239,6 +239,7 @@
     .executive-report-hero h3{font-size:30px;margin:4px 0 8px;color:#fff}.executive-report-hero p{margin:0;color:#dce5ea;line-height:1.6;max-width:720px}.executive-report-badge{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);padding:16px;text-align:center;min-width:170px}.executive-report-badge strong{display:block;font-family:"IBM Plex Mono",monospace;font-size:28px;color:#fff}.executive-report-badge span{display:block;margin-top:5px;color:#dce5ea;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
     .executive-report-scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 22px}.executive-report-scope div{border:1px solid var(--line-soft);background:#fff;padding:13px}.executive-report-scope strong{display:block;color:var(--navy);margin-bottom:4px}.executive-report-scope span{display:block;color:var(--ink-soft);font-size:12px;line-height:1.45}
     .executive-report-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0}.executive-report-actions button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:13px 18px;font-weight:800;cursor:pointer}.executive-report-actions button:hover{background:var(--navy-deep)}.executive-report-status{font-size:12px;color:var(--ink-soft)}
+    .crm-integration-card{border:2px solid #9bb4ca;background:#f5f9fc;padding:18px;margin:20px 0}.crm-integration-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.crm-integration-card h4{margin:0;color:var(--navy);font-family:Fraunces,serif;font-size:22px}.crm-integration-card p{margin:6px 0 0;color:var(--ink-soft);line-height:1.55}.crm-sync-badge{display:inline-flex;align-items:center;gap:7px;border:1px solid #b9cddd;background:#fff;padding:7px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:800;color:var(--navy);white-space:nowrap}.crm-sync-badge.good{border-color:#9bc8b1;background:#eef8f2;color:#12613f}.crm-sync-badge.warn{border-color:#e2bf79;background:#fff8e8;color:#7a5415}.crm-integration-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}.crm-integration-actions button{border:1px solid var(--navy);background:#fff;color:var(--navy);padding:11px 15px;font-weight:800;cursor:pointer}.crm-integration-actions button:hover{background:#eaf1f7}.crm-integration-actions button:disabled{opacity:.6;cursor:not-allowed}.crm-sync-detail{font-size:12px;color:var(--ink-soft)}
     .service-boundary{border:2px solid var(--gold);background:#fbf5e7;padding:18px;margin-top:22px}.service-boundary h4{margin:0 0 10px;color:var(--navy);font-family:Fraunces,serif;font-size:22px}.service-boundary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.service-boundary-item{border:1px solid var(--gold-soft);background:#fff;padding:13px}.service-boundary-item strong{display:block;color:var(--navy);margin-bottom:5px}.service-boundary-item span{display:block;color:var(--ink-soft);font-size:12px;line-height:1.5}.service-price{margin-top:7px!important;color:var(--green-deep)!important;font-family:"IBM Plex Mono",monospace;font-weight:800}
     .planner-print-message{display:none}
     @media(max-width:800px){.executive-report-hero{grid-template-columns:1fr}.executive-report-badge{text-align:left}.executive-report-scope,.service-boundary-grid{grid-template-columns:1fr}}
@@ -1078,6 +1079,20 @@
           <span class="executive-report-status" id="executiveReportStatus">The report opens in a separate page with one Print / Save PDF button.</span>
         </div>
 
+        <div class="crm-integration-card">
+          <div class="crm-integration-top">
+            <div>
+              <h4>Tax Lead Center Connection</h4>
+              <p>The Planner automatically saves a professional summary, Tax Health Score, urgent-item count, opportunity progress, business indicator, next action, and Executive Report snapshot to this client’s CRM record.</p>
+            </div>
+            <span class="crm-sync-badge" id="crmSyncBadge">Not connected</span>
+          </div>
+          <div class="crm-integration-actions">
+            <button type="button" id="syncPlannerToCrm">Sync Planner to Tax Lead Center</button>
+            <span class="crm-sync-detail" id="crmSyncStatus">Open the Planner from a client lead to enable CRM synchronization.</span>
+          </div>
+        </div>
+
         <div class="service-boundary">
           <h4>Included Report vs. Continued Service</h4>
           <div class="service-boundary-grid">
@@ -1253,6 +1268,10 @@
     `taxSavingsPlannerYearEndChecklist:${plannerLeadId}`;
   const executiveReportKey =
     `taxSavingsPlannerExecutiveReport:${plannerLeadId}`;
+  let crmSyncTimer = null;
+  let crmSyncReady = false;
+  let crmSyncInFlight = false;
+  let crmLastSyncedAt = "";
   const opportunityStages = recommendationEngine.getOpportunityStages();
   const yearEndChecklistStatuses = recommendationEngine.getYearEndChecklistStatuses();
   const potentialBenefitClientScript =
@@ -1324,16 +1343,22 @@
     return controls;
   }
 
+  function buildPlannerStateRecord() {
+    return {
+      version: 1,
+      taxYear: currentPlannerTaxYear,
+      controls: collectPlannerControlState(),
+      savedAt: new Date().toISOString()
+    };
+  }
+
   function savePlannerState() {
     try {
-      const state = {
-        version: 1,
-        taxYear: currentPlannerTaxYear,
-        controls: collectPlannerControlState(),
-        savedAt: new Date().toISOString()
-      };
-
-      window.localStorage.setItem(plannerStateKey, JSON.stringify(state));
+      window.localStorage.setItem(
+        plannerStateKey,
+        JSON.stringify(buildPlannerStateRecord())
+      );
+      scheduleCrmSync();
       return true;
     } catch (error) {
       console.warn("Planner entries could not be saved in this browser.", error);
@@ -2927,6 +2952,231 @@
     return String(element?.selectedOptions?.[0]?.textContent || fallback).trim();
   }
 
+  function setCrmSyncDisplay(state, message) {
+    const badge = document.getElementById("crmSyncBadge");
+    const status = document.getElementById("crmSyncStatus");
+    const button = document.getElementById("syncPlannerToCrm");
+
+    if (!badge || !status || !button) return;
+
+    badge.classList.remove("good", "warn");
+    button.disabled = crmSyncInFlight || plannerLeadId === "general";
+
+    if (state === "synced") {
+      badge.textContent = "Synced";
+      badge.classList.add("good");
+    } else if (state === "saving") {
+      badge.textContent = "Saving";
+      badge.classList.add("warn");
+    } else if (state === "error") {
+      badge.textContent = "Needs retry";
+      badge.classList.add("warn");
+    } else if (plannerLeadId === "general") {
+      badge.textContent = "No client lead";
+    } else {
+      badge.textContent = "Ready to sync";
+    }
+
+    status.textContent = message;
+  }
+
+  function buildCrmIntegrationPayload() {
+    const recommendation = latestRecommendationResult || {};
+    const scorecard = recommendation.scorecard || {};
+    const health = recommendation.taxHealthProgress || {};
+    const smartAlerts = recommendation.smartAlerts || {};
+    const roadmap = recommendation.wealthRoadmap || {};
+    const executiveReport = buildExecutiveReportSnapshot();
+    const businessDetected = Boolean(
+      buildSmartAlertSignals().hasBusinessActivity ||
+      roadmap.businessTrack?.active
+    );
+
+    return {
+      version: 1,
+      engineVersion: recommendation.version || recommendationEngine.VERSION || "",
+      taxYear: currentPlannerTaxYear,
+      plannerState: buildPlannerStateRecord(),
+      professionalNotes: plannerValue("professionalNotes", ""),
+      opportunityScorecardRecords,
+      yearEndChecklistRecords,
+      taxHealthHistory: loadTaxHealthHistory(),
+      executiveReport,
+      summary: {
+        clientName: plannerText("clientName", "Paid Review Client"),
+        taxHealthScore: Number(health.score || latestTaxHealthScore || 0),
+        attainableScore: Number(health.attainableScore || 100),
+        nextMilestone: Number(health.nextMilestone || 0),
+        urgentCount: Number(smartAlerts.urgentCount || 0),
+        highPriorityCount: Number(smartAlerts.highCount || 0),
+        opportunityCount: Number(scorecard.totalCount || 0),
+        potentialCount: Number(scorecard.potentialCount || 0),
+        underReviewCount: Number(scorecard.reviewCount || 0),
+        clientActionCount: Number(scorecard.clientActionCount || 0),
+        verifiedCount: Number(scorecard.verifiedCount || 0),
+        completedCount: Number(scorecard.completedCount || 0),
+        potentialBenefit: Number(scorecard.potentialBenefit || 0),
+        verifiedBenefit: Number(scorecard.verifiedBenefit || 0),
+        businessDetected,
+        currentRoadmapPhase: String(roadmap.currentPhase?.label || "Not started"),
+        roadmapProgress: Number(roadmap.roadmapProgress || 0),
+        nextAction: String(
+          recommendation.primaryRecommendation?.title ||
+          roadmap.nextMoves?.[0]?.title ||
+          "Complete the Tax Savings Planner"
+        ),
+        reportGeneratedAt: String(executiveReport.generatedAt || ""),
+        plannerStatus: String(scorecard.status || "Planner in progress")
+      }
+    };
+  }
+
+  async function requestPlannerCrmSync(endpoint, payloadText) {
+    const response = await fetch(
+      endpoint,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payloadText
+      }
+    );
+
+    const responseText = await response.text();
+    let data = {};
+
+    try {
+      data = responseText
+        ? JSON.parse(responseText)
+        : {};
+    } catch (parseError) {
+      data = {};
+    }
+
+    return {
+      endpoint,
+      response,
+      responseText,
+      data
+    };
+  }
+
+  async function syncPlannerToCrm(options = {}) {
+    const silent = options.silent === true;
+
+    if (plannerLeadId === "general") {
+      setCrmSyncDisplay(
+        "idle",
+        "Open the Planner from a client lead to enable CRM synchronization."
+      );
+      return false;
+    }
+
+    if (crmSyncInFlight) return false;
+
+    crmSyncInFlight = true;
+    setCrmSyncDisplay(
+      "saving",
+      silent
+        ? "Saving the latest Planner changes to the Tax Lead Center..."
+        : "Synchronizing the Planner with the Tax Lead Center..."
+    );
+
+    try {
+      const payload = {
+        ...buildCrmIntegrationPayload(),
+        leadId: plannerLeadId
+      };
+
+      const payloadText = JSON.stringify(payload);
+
+      let result = await requestPlannerCrmSync(
+        "/api/tax-savings-planner-sync",
+        payloadText
+      );
+
+      // Compatibility fallback for a server that still exposes only the
+      // original parameterized route.
+      if (result.response.status === 404) {
+        result = await requestPlannerCrmSync(
+          `/api/tax-savings-planner/${encodeURIComponent(plannerLeadId)}/sync`,
+          payloadText
+        );
+      }
+
+      const {
+        endpoint,
+        response,
+        responseText,
+        data
+      } = result;
+
+      if (!response.ok || !data.ok) {
+        const sizeKb = Math.max(
+          1,
+          Math.ceil(payloadText.length / 1024)
+        );
+
+        const shortServerMessage =
+          responseText &&
+          responseText.length <= 240 &&
+          !responseText.trim().startsWith("<")
+            ? responseText.trim()
+            : "";
+
+        throw new Error(
+          data.error ||
+          shortServerMessage ||
+          `Planner synchronization failed at ${endpoint} (HTTP ${response.status}; ${sizeKb} KB payload).`
+        );
+      }
+
+      crmLastSyncedAt =
+        data.syncedAt ||
+        new Date().toISOString();
+
+      const syncedTime =
+        new Date(crmLastSyncedAt).toLocaleString();
+
+      setCrmSyncDisplay(
+        "synced",
+        `Saved to the Tax Lead Center ${syncedTime}.`
+      );
+
+      return true;
+    } catch (error) {
+      console.error(
+        "Planner CRM synchronization failed.",
+        error
+      );
+
+      setCrmSyncDisplay(
+        "error",
+        `The Planner is still saved in this browser. ${error.message || "CRM synchronization needs to be retried."}`
+      );
+
+      return false;
+    } finally {
+      crmSyncInFlight = false;
+
+      const button =
+        document.getElementById("syncPlannerToCrm");
+
+      if (button) {
+        button.disabled =
+          plannerLeadId === "general";
+      }
+    }
+  }
+
+  function scheduleCrmSync(delay = 1200) {
+    if (!crmSyncReady || plannerLeadId === "general") return;
+    window.clearTimeout(crmSyncTimer);
+    crmSyncTimer = window.setTimeout(
+      () => syncPlannerToCrm({ silent: true }),
+      delay
+    );
+  }
+
   function buildExecutiveReportSnapshot() {
     const recommendation = latestRecommendationResult || {};
     const profile = buildSmartAlertSignals();
@@ -3006,6 +3256,7 @@
       savePlannerState();
       const snapshot = buildExecutiveReportSnapshot();
       window.localStorage.setItem(executiveReportKey, JSON.stringify(snapshot));
+      syncPlannerToCrm({ silent: true });
       status.textContent = "Executive report snapshot created. Opening the report...";
 
       const reportUrl = new URL("/tax-planning-report.html", window.location.origin);
@@ -3110,6 +3361,10 @@
   });
 
   document.getElementById("generateExecutiveReport").addEventListener("click", openExecutiveReport);
+  document.getElementById("syncPlannerToCrm").addEventListener("click", () => {
+    savePlannerState();
+    syncPlannerToCrm();
+  });
 
   document.getElementById("saveProfessionalNotes").addEventListener("click", saveProfessionalNotes);
   document.getElementById("clearProfessionalNotes").addEventListener("click", clearProfessionalNotes);
@@ -3152,6 +3407,54 @@
       const lead = data.lead || {};
       const contact = lead.contact || {};
       const taxData = lead.taxData || {};
+      const crmPlanner = lead.taxSavingsPlanner || null;
+
+      if (!hasSavedPlannerState && crmPlanner?.plannerState) {
+        window.localStorage.setItem(
+          plannerStateKey,
+          JSON.stringify(crmPlanner.plannerState)
+        );
+
+        if (crmPlanner.professionalNotes) {
+          window.localStorage.setItem(
+            professionalNotesKey,
+            String(crmPlanner.professionalNotes)
+          );
+        }
+
+        if (crmPlanner.opportunityScorecardRecords) {
+          opportunityScorecardRecords = crmPlanner.opportunityScorecardRecords;
+          window.localStorage.setItem(
+            opportunityScorecardKey,
+            JSON.stringify(opportunityScorecardRecords)
+          );
+        }
+
+        if (crmPlanner.yearEndChecklistRecords) {
+          yearEndChecklistRecords = crmPlanner.yearEndChecklistRecords;
+          window.localStorage.setItem(
+            yearEndChecklistKey,
+            JSON.stringify(yearEndChecklistRecords)
+          );
+        }
+
+        if (Array.isArray(crmPlanner.taxHealthHistory)) {
+          window.localStorage.setItem(
+            taxHealthHistoryKey,
+            JSON.stringify(crmPlanner.taxHealthHistory)
+          );
+        }
+
+        if (crmPlanner.executiveReport) {
+          window.localStorage.setItem(
+            executiveReportKey,
+            JSON.stringify(crmPlanner.executiveReport)
+          );
+        }
+
+        hasSavedPlannerState = restorePlannerState();
+        loadProfessionalNotes();
+      }
 
       document.getElementById("clientName").textContent =
         contact.name || lead.name || "Paid Review Client";
@@ -3203,15 +3506,37 @@
         }
       }
 
+      crmSyncReady = true;
+      if (crmPlanner?.syncedAt) {
+        crmLastSyncedAt = crmPlanner.syncedAt;
+        setCrmSyncDisplay(
+          "synced",
+          `Loaded from the Tax Lead Center. Last saved ${new Date(crmPlanner.syncedAt).toLocaleString()}.`
+        );
+      } else {
+        setCrmSyncDisplay(
+          "idle",
+          "Connected to this client lead. Planner changes will save automatically."
+        );
+      }
+
       savePlannerState();
       updateWithholdingCheckup();
+      updateTaxSavingsFinder();
       scheduleStateEstimate();
+      scheduleCrmSync(400);
     } catch (error) {
       console.warn("Planner client context could not be loaded.", error);
     }
   }
 
   setPlannerTaxYear(defaultPlannerTaxYear);
+  setCrmSyncDisplay(
+    "idle",
+    plannerLeadId === "general"
+      ? "Open the Planner from a client lead to enable CRM synchronization."
+      : "Connecting this Planner to the Tax Lead Center..."
+  );
   hasSavedPlannerState = restorePlannerState();
   updateWithholdingCheckup();
   updateTaxSavingsFinder();

@@ -338,6 +338,88 @@
       }
     }
 
+    .tax-planner-crm-card {
+      margin-top: 14px;
+      border: 2px solid #9bb4ca;
+      border-radius: 12px;
+      background: #f5f9fc;
+      padding: 15px;
+      color: #17324d;
+    }
+
+    .tax-planner-crm-card h3 {
+      margin: 0 0 10px;
+      color: #0f2f59;
+      font-size: 18px;
+    }
+
+    .tax-planner-crm-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .tax-planner-crm-metric {
+      background: #ffffff;
+      border: 1px solid #cbd9e5;
+      border-radius: 8px;
+      padding: 9px;
+    }
+
+    .tax-planner-crm-metric span {
+      display: block;
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .tax-planner-crm-metric strong {
+      display: block;
+      margin-top: 4px;
+      color: #0f2f59;
+      font-size: 16px;
+    }
+
+    .tax-planner-crm-next {
+      margin: 10px 0;
+      border-left: 4px solid #b58b42;
+      background: #ffffff;
+      padding: 10px 12px;
+      line-height: 1.45;
+    }
+
+    .tax-planner-crm-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tax-planner-crm-actions a {
+      display: inline-block;
+      border-radius: 7px;
+      background: #28588c;
+      color: #ffffff;
+      padding: 8px 11px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .tax-planner-crm-actions a.secondary {
+      background: #ffffff;
+      color: #28588c;
+      border: 1px solid #28588c;
+    }
+
+    @media (max-width: 760px) {
+      .tax-planner-crm-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     .taxprep-open-btn {
       border: 0;
       border-radius: 6px;
@@ -3584,6 +3666,127 @@ async function sendGoogleReviewRequest(
   }
 }
 
+function formatTaxPlannerCrmMoney(value){
+  const number = Number(value || 0);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  }).format(Number.isFinite(number) ? number : 0);
+}
+
+function getTaxPlannerCrmHtml(lead){
+  const planner = lead?.taxSavingsPlanner;
+
+  if(!planner || !planner.summary){
+    return `
+      <div class="tax-planner-crm-card">
+        <h3>Tax Savings Planner™</h3>
+        <div>No Planner summary has been synchronized to this client record yet.</div>
+        ${lead?.leadId ? `
+          <div class="tax-planner-crm-actions">
+            <a href="/tax-savings-planner.html?leadId=${encodeURIComponent(lead.leadId)}&taxYear=${encodeURIComponent(lead?.taxData?.taxYear || "2025")}" target="_blank" rel="noopener">
+              Open Tax Savings Planner
+            </a>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
+  const summary = planner.summary || {};
+  const taxYear = planner.taxYear || lead?.taxData?.taxYear || "";
+  const syncedAt = planner.syncedAt
+    ? formatLeadDate(planner.syncedAt)
+    : "Not recorded";
+  const plannerUrl = `/tax-savings-planner.html?leadId=${encodeURIComponent(lead.leadId || "")}&taxYear=${encodeURIComponent(taxYear || "2025")}`;
+  const reportUrl = `/tax-planning-report.html?leadId=${encodeURIComponent(lead.leadId || "")}&taxYear=${encodeURIComponent(taxYear || "2025")}`;
+  const urgentCount = Number(summary.urgentCount || 0);
+  const businessLabel = summary.businessDetected
+    ? "Business activity detected"
+    : "Personal tax planning";
+
+  return `
+    <div class="tax-planner-crm-card">
+      <h3>Tax Savings Planner™ CRM Summary</h3>
+      <div>
+        <strong>${escapeOfficeHtml(summary.plannerStatus || "Planner in progress")}</strong><br>
+        Tax year: ${escapeOfficeHtml(taxYear || "Not recorded")} · Last synced: ${escapeOfficeHtml(syncedAt)}<br>
+        ${escapeOfficeHtml(businessLabel)} · Roadmap phase: ${escapeOfficeHtml(summary.currentRoadmapPhase || "Not started")}
+      </div>
+
+      <div class="tax-planner-crm-metrics">
+        <div class="tax-planner-crm-metric">
+          <span>Tax Health Score</span>
+          <strong>${Number(summary.taxHealthScore || 0)} / 100</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Urgent Items</span>
+          <strong style="${urgentCount > 0 ? "color:#b91c1c;" : "color:#166534;"}">${urgentCount}</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Verified</span>
+          <strong>${Number(summary.verifiedCount || 0)}</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Completed</span>
+          <strong>${Number(summary.completedCount || 0)}</strong>
+        </div>
+      </div>
+
+      <div class="tax-planner-crm-metrics">
+        <div class="tax-planner-crm-metric">
+          <span>Potential Benefit</span>
+          <strong>${formatTaxPlannerCrmMoney(summary.potentialBenefit)}</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Verified Estimate</span>
+          <strong>${formatTaxPlannerCrmMoney(summary.verifiedBenefit)}</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Opportunity Items</span>
+          <strong>${Number(summary.opportunityCount || 0)}</strong>
+        </div>
+        <div class="tax-planner-crm-metric">
+          <span>Roadmap Progress</span>
+          <strong>${Number(summary.roadmapProgress || 0)}%</strong>
+        </div>
+      </div>
+
+      <div class="tax-planner-crm-next">
+        <strong>Recommended Next Action</strong><br>
+        ${escapeOfficeHtml(summary.nextAction || "Complete the Tax Savings Planner")}
+      </div>
+
+      <div class="tax-planner-crm-actions">
+        <a href="${plannerUrl}" target="_blank" rel="noopener">Open Tax Savings Planner</a>
+        <a class="secondary" href="${reportUrl}" target="_blank" rel="noopener">Open Executive Report</a>
+      </div>
+    </div>
+  `;
+}
+
+
+function appendTaxPlannerCrmToDetail(lead){
+  const detailContent = document.getElementById("dpRefund");
+
+  if(!detailContent){
+    return;
+  }
+
+  const existingPlannerCard =
+    detailContent.querySelector(".tax-planner-crm-card");
+
+  if(existingPlannerCard){
+    existingPlannerCard.remove();
+  }
+
+  detailContent.insertAdjacentHTML(
+    "beforeend",
+    getTaxPlannerCrmHtml(lead)
+  );
+}
+
 function openPanel(lead){
   const panel=document.getElementById("detailPanel");
   panel.style.display="block";
@@ -3620,6 +3823,8 @@ function openPanel(lead){
     const closedAt = formatLeadDate(getLeadClosedAt(lead));
     document.getElementById("dpEntered").innerText = enteredAt ? "Entered: " + enteredAt : "";
     document.getElementById("dpClosed").innerText = closedAt ? "Closed: " + closedAt : "";
+
+    appendTaxPlannerCrmToDetail(lead);
     return;
   }
 
@@ -3649,6 +3854,14 @@ function openPanel(lead){
 
   document.getElementById("dpClosed").innerText =
     closedAt ? "Closed: " + closedAt : "";
+
+  const detailContent = document.getElementById("dpRefund");
+  const existingDetail = detailContent.innerText;
+
+  detailContent.innerHTML =
+    `<div>${officeNl2br(existingDetail)}</div>`;
+
+  appendTaxPlannerCrmToDetail(lead);
 }
 
 function openConversionOpportunityPanel(item){
@@ -3859,6 +4072,8 @@ function openConversionOpportunityPanel(item){
       </button>
     </div>
   `;
+
+  appendTaxPlannerCrmToDetail(lead);
 
   document.getElementById("dpEntered").innerText =
     "";
@@ -5805,7 +6020,7 @@ function openClosedLead(index){
 
 async function loadLeads(){
   try{
-    const res=await fetch("/api/leads");
+    const res=await fetch("/api/leads?includeLocal=1");
     const data=await res.json();
 
     allLeads = data.leads || [];
