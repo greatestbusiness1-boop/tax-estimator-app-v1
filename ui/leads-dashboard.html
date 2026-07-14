@@ -3703,8 +3703,10 @@ function getTaxPlannerCrmHtml(lead){
   const reportUrl = `/tax-planning-report.html?leadId=${encodeURIComponent(lead.leadId || "")}&taxYear=${encodeURIComponent(taxYear || "2025")}`;
   const urgentCount = Number(summary.urgentCount || 0);
   const businessLabel = summary.businessDetected
-    ? "Business activity detected"
-    : "Personal tax planning";
+    ? (summary.businessProfile || "Business activity detected")
+    : (summary.businessDetectionLevel === "Possible business activity"
+        ? "Possible business activity"
+        : "Personal tax planning");
 
   return `
     <div class="tax-planner-crm-card">
@@ -3714,6 +3716,16 @@ function getTaxPlannerCrmHtml(lead){
         Tax year: ${escapeOfficeHtml(taxYear || "Not recorded")} · Last synced: ${escapeOfficeHtml(syncedAt)}<br>
         ${escapeOfficeHtml(businessLabel)} · Roadmap phase: ${escapeOfficeHtml(summary.currentRoadmapPhase || "Not started")}
       </div>
+
+      ${summary.businessDetected || summary.businessDetectionLevel === "Possible business activity" ? `
+        <div class="tax-planner-crm-next" style="margin-top:12px;border-left-color:#b08a4e;">
+          <strong>Business Detection™</strong><br>
+          ${escapeOfficeHtml(summary.businessDetectionLevel || "Business activity detected")} ·
+          Readiness: ${Number(summary.businessReadinessScore || 0)} / 100<br>
+          Review: ${escapeOfficeHtml(summary.businessReviewPriority || "Business review recommended")}<br>
+          Service path: ${escapeOfficeHtml(summary.businessServicePath || "Business Tax Intelligence™ Assessment")}
+        </div>
+      ` : ""}
 
       <div class="tax-planner-crm-metrics">
         <div class="tax-planner-crm-metric">

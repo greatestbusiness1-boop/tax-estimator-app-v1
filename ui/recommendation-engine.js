@@ -13,7 +13,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = "1.4.0";
+  const VERSION = "1.5.0";
 
   const PRIORITY_RANK = Object.freeze({
     urgent: 0,
@@ -210,6 +210,33 @@
       label: "Documentation / Verification",
       tone: "documentation"
     })
+  });
+
+
+  const BUSINESS_ENTITY_LABELS = Object.freeze({
+    unknown: "Business type not confirmed",
+    "independent-contractor": "Independent contractor / gig worker",
+    "sole-proprietor": "Sole proprietor",
+    "single-member-llc": "Single-member LLC",
+    partnership: "Partnership",
+    "multi-member-llc": "Multi-member LLC",
+    "s-corporation": "S corporation",
+    "c-corporation": "C corporation",
+    other: "Other business structure"
+  });
+
+  const BUSINESS_PAYROLL_LABELS = Object.freeze({
+    unknown: "Payroll status not confirmed",
+    none: "No employees or owner payroll reported",
+    employees: "Employees reported",
+    "owner-payroll": "Owner payroll reported",
+    both: "Employees and owner payroll reported"
+  });
+
+  const BUSINESS_ACCOUNT_LABELS = Object.freeze({
+    unknown: "Account separation not confirmed",
+    separate: "Business and personal funds are separated",
+    mixed: "Business and personal funds are mixed"
   });
 
   function numberOrZero(value) {
@@ -436,6 +463,237 @@
   function normalizeReviewStatus(value, allowed, fallback = "unknown") {
     const normalized = String(value || "").trim().toLowerCase();
     return allowed.includes(normalized) ? normalized : fallback;
+  }
+
+  function buildBusinessDetection(input = {}) {
+    const signals = input?.smartAlertSignals && typeof input.smartAlertSignals === "object"
+      ? input.smartAlertSignals
+      : input?.signals && typeof input.signals === "object"
+        ? input.signals
+        : input;
+    const selections = normalizeSelections(input?.selections || {});
+
+    const entityType = normalizeReviewStatus(
+      signals.businessEntityType,
+      Object.keys(BUSINESS_ENTITY_LABELS)
+    );
+    const payrollStatus = normalizeReviewStatus(
+      signals.businessPayrollStatus,
+      Object.keys(BUSINESS_PAYROLL_LABELS)
+    );
+    const accountStatus = normalizeReviewStatus(
+      signals.businessAccountStatus,
+      Object.keys(BUSINESS_ACCOUNT_LABELS)
+    );
+    const booksStatus = normalizeReviewStatus(
+      signals.businessBooksStatus,
+      ["current", "cleanup", "unknown"]
+    );
+
+    const quarterlyGrossIncome = numberOrZero(signals.quarterlyBusinessIncome);
+    const quarterlyExpenses = numberOrZero(signals.quarterlyBusinessExpenses);
+    const quarterlyNetProfit = Math.max(0, quarterlyGrossIncome - quarterlyExpenses);
+    const profileNetProfit = numberOrZero(signals.businessNetProfit);
+    const netProfit = Math.max(profileNetProfit, quarterlyNetProfit);
+    const estimatedPayments =
+      numberOrZero(signals.federalEstimatedPayments) +
+      numberOrZero(signals.stateEstimatedPayments) +
+      numberOrZero(signals.quarterlyEstimatedPayments);
+
+    const finderSignals = [
+      ["mileage", "Business mileage / vehicle records selected"],
+      ["homeOffice", "Home-office review selected"],
+      ["entity", "Entity / business tax review selected"],
+      ["bookkeeping", "Bookkeeping cleanup selected"]
+    ].filter(([key]) => Boolean(selections[key]?.selected));
+
+    const indicators = [];
+    let score = 0;
+
+    if (Boolean(signals.hasBusinessActivity)) {
+      score += 5;
+      indicators.push("Business or self-employment activity was confirmed in the Client Tax Profile.");
+    }
+    if (quarterlyGrossIncome > 0) {
+      score += 5;
+      indicators.push(`${money(quarterlyGrossIncome)} of 1099 / business income was entered in the Quarterly Planner.`);
+    }
+    if (profileNetProfit > 0) {
+      score += 4;
+      indicators.push(`${money(profileNetProfit)} of estimated net business profit was entered.`);
+    }
+    if (entityType !== "unknown") {
+      score += 5;
+      indicators.push(`${BUSINESS_ENTITY_LABELS[entityType]} was identified as the business structure.`);
+    }
+    if (booksStatus !== "unknown") {
+      score += 2;
+      indicators.push(booksStatus === "current"
+        ? "Business books were reported as current and reconciled."
+        : "Business books were reported as needing cleanup.");
+    }
+    if (accountStatus !== "unknown") {
+      score += 2;
+      indicators.push(BUSINESS_ACCOUNT_LABELS[accountStatus] + ".");
+    }
+    if (payrollStatus !== "unknown") {
+      score += 2;
+      indicators.push(BUSINESS_PAYROLL_LABELS[payrollStatus] + ".");
+    }
+    finderSignals.forEach(([, label]) => {
+      score += 2;
+      indicators.push(label + ".");
+    });
+
+    const directConfirmation = Boolean(
+      signals.hasBusinessActivity ||
+      quarterlyGrossIncome > 0 ||
+      profileNetProfit > 0 ||
+      entityType !== "unknown"
+    );
+    const secondaryCount = finderSignals.length +
+      (booksStatus !== "unknown" ? 1 : 0) +
+      (accountStatus !== "unknown" ? 1 : 0) +
+      (payrollStatus !== "unknown" ? 1 : 0);
+
+    let level = "none";
+    let levelLabel = "Not detected";
+    let tone = "none";
+
+    if (directConfirmation) {
+      level = "confirmed";
+      levelLabel = "Business activity confirmed";
+      tone = "confirmed";
+    } else if (score >= 4 || secondaryCount >= 2) {
+      level = "strong";
+      levelLabel = "Strong business indicators";
+      tone = "strong";
+    } else if (score > 0) {
+      level = "possible";
+      levelLabel = "Possible business activity";
+      tone = "possible";
+    }
+
+    const isBusinessClient = level === "confirmed" || level === "strong";
+    const possibleBusinessClient = level === "possible";
+
+    let profileType = "Personal tax planning profile";
+    if (["partnership", "multi-member-llc", "s-corporation", "c-corporation"].includes(entityType)) {
+      profileType = "Business entity owner";
+    } else if (["independent-contractor", "sole-proprietor", "single-member-llc"].includes(entityType)) {
+      profileType = "Self-employed business owner";
+    } else if (isBusinessClient && (quarterlyGrossIncome > 0 || netProfit > 0)) {
+      profileType = "Self-employed / business owner";
+    } else if (possibleBusinessClient) {
+      profileType = "Business activity needs confirmation";
+    } else if (isBusinessClient) {
+      profileType = "Small-business owner";
+    }
+
+    const missingItems = [];
+    if (level !== "none") {
+      if (entityType === "unknown") missingItems.push("Confirm the business type and federal tax classification.");
+      if (netProfit <= 0) missingItems.push("Provide current gross income, expenses, and estimated net profit.");
+      if (booksStatus === "unknown") missingItems.push("Confirm whether the business books are current and reconciled.");
+      if (booksStatus === "cleanup") missingItems.push("Complete bookkeeping cleanup before relying on the profit figure.");
+      if (accountStatus === "unknown") missingItems.push("Confirm whether business and personal funds are separated.");
+      if (accountStatus === "mixed") missingItems.push("Separate business and personal activity and document owner transactions.");
+      if (payrollStatus === "unknown") missingItems.push("Confirm employee and owner-payroll status.");
+      if (netProfit > 0 && estimatedPayments <= 0) missingItems.push("Review federal and state estimated-tax payments.");
+    }
+
+    let readinessScore = 0;
+    if (level !== "none") {
+      readinessScore += 15;
+      if (entityType !== "unknown") readinessScore += 20;
+      if (netProfit > 0) readinessScore += 15;
+      if (booksStatus === "current") readinessScore += 20;
+      else if (booksStatus === "cleanup") readinessScore += 5;
+      if (accountStatus === "separate") readinessScore += 15;
+      else if (accountStatus === "mixed") readinessScore += 3;
+      if (payrollStatus !== "unknown") readinessScore += 8;
+      if (netProfit <= 0 || estimatedPayments > 0) readinessScore += 7;
+    }
+    readinessScore = Math.max(0, Math.min(100, readinessScore));
+
+    const highRisk = Boolean(
+      booksStatus === "cleanup" ||
+      accountStatus === "mixed" ||
+      (netProfit >= 25000 && estimatedPayments <= 0) ||
+      (["s-corporation", "c-corporation"].includes(entityType) && payrollStatus === "unknown")
+    );
+
+    let priority = "monitor";
+    if (highRisk) priority = "high";
+    else if (isBusinessClient) priority = "medium";
+    else if (possibleBusinessClient) priority = "review";
+
+    let servicePath = "Personal Tax Planning";
+    if (isBusinessClient) servicePath = "Business Tax Intelligence™ Assessment";
+    else if (possibleBusinessClient) servicePath = "Confirm Business Activity";
+
+    const clientNeeds = level === "none"
+      ? ["Update the Client Tax Profile if the client receives 1099 income, operates a side business, owns an LLC or corporation, or has business deductions."]
+      : [
+          "Current year-to-date profit and loss report or a reliable income-and-expense summary.",
+          "Business bank and credit-card statements, mileage records, payroll information, entity documents, and estimated-payment records.",
+          ...missingItems.slice(0, 4)
+        ];
+
+    const professionalReview = level === "none"
+      ? ["No business review is currently triggered. Continue the personal tax-planning workflow unless new business facts are entered."]
+      : [
+          "Confirm the business type, federal tax classification, filing requirements, and whether a separate business return may be required.",
+          "Review bookkeeping reliability, owner activity, payroll, estimated-tax exposure, documented deductions, and retirement-plan opportunities.",
+          "Determine whether the client should remain in the personal Planner or be routed to the separate Business Tax Intelligence™ Assessment."
+        ];
+
+    let nextAction = "Continue the personal Tax Savings Planner workflow.";
+    if (highRisk) {
+      nextAction = "Complete a business tax review before relying on the current profit figure or making year-end tax decisions.";
+    } else if (isBusinessClient) {
+      nextAction = "Confirm the business profile and schedule the Business Tax Intelligence™ Assessment when deeper entity, bookkeeping, payroll, and owner-planning analysis is needed.";
+    } else if (possibleBusinessClient) {
+      nextAction = "Confirm whether the activity is a business, side gig, or self-employment before routing the client to business planning.";
+    }
+
+    return {
+      level,
+      levelLabel,
+      tone,
+      detected: level !== "none",
+      isBusinessClient,
+      possibleBusinessClient,
+      profileType,
+      priority,
+      priorityLabel: priority === "high"
+        ? "High-priority review"
+        : priority === "medium"
+          ? "Business review recommended"
+          : priority === "review"
+            ? "Confirm business activity"
+            : "No business review triggered",
+      readinessScore,
+      entityType,
+      entityLabel: BUSINESS_ENTITY_LABELS[entityType],
+      payrollStatus,
+      payrollLabel: BUSINESS_PAYROLL_LABELS[payrollStatus],
+      accountStatus,
+      accountLabel: BUSINESS_ACCOUNT_LABELS[accountStatus],
+      booksStatus,
+      grossBusinessIncome: quarterlyGrossIncome,
+      businessExpenses: quarterlyExpenses,
+      netProfit,
+      estimatedPayments,
+      indicators,
+      missingItems,
+      clientNeeds,
+      professionalReview,
+      nextAction,
+      servicePath,
+      routeToBusinessAssessment: isBusinessClient,
+      boundaryNote: "Business Detection identifies when deeper business analysis may be appropriate. It does not complete the separate Business Tax Intelligence™ Assessment or guarantee an entity, deduction, payroll, or tax-saving recommendation."
+    };
   }
 
   function createSmartAlert({
@@ -2036,7 +2294,11 @@
     const businessSignals = input?.smartAlertSignals && typeof input.smartAlertSignals === "object"
       ? input.smartAlertSignals
       : {};
+    const businessDetection = input?.businessDetection && typeof input.businessDetection === "object"
+      ? input.businessDetection
+      : buildBusinessDetection(input || {});
     const businessDetected = Boolean(
+      businessDetection.isBusinessClient ||
       businessSignals.hasBusinessActivity ||
       alerts.some((alert) => String(alert.id || "").includes("business")) ||
       (recommendations || []).some(
@@ -2151,8 +2413,19 @@
 
   function evaluate(input = {}) {
     const opportunitySummary = calculateOpportunitySummary(input);
+    const businessDetection = buildBusinessDetection({
+      ...input,
+      opportunitySummary
+    });
     const smartAlerts = buildSmartAlerts({
-      signals: input?.smartAlertSignals || {},
+      signals: {
+        ...(input?.smartAlertSignals || {}),
+        hasBusinessActivity: businessDetection.isBusinessClient || Boolean(input?.smartAlertSignals?.hasBusinessActivity),
+        businessNetProfit: Math.max(
+          numberOrZero(input?.smartAlertSignals?.businessNetProfit),
+          numberOrZero(businessDetection.netProfit)
+        )
+      },
       context: {
         combinedWithholdingResult: input?.combinedWithholdingResult,
         wages: input?.wages,
@@ -2191,7 +2464,8 @@
     const wealthRoadmap = buildWealthRoadmap(
       {
         ...input,
-        opportunitySummary
+        opportunitySummary,
+        businessDetection
       },
       recommendations,
       smartAlerts,
@@ -2209,6 +2483,7 @@
       engine: "Tax Recommendation Engine",
       version: VERSION,
       opportunitySummary,
+      businessDetection,
       smartAlerts,
       actionPlan: recommendations,
       recommendations,
@@ -2238,6 +2513,7 @@
     buildRecommendations,
     buildWithholdingRecommendation,
     buildSmartAlerts,
+    buildBusinessDetection,
     buildOpportunityScorecard,
     buildImmediateAction,
     buildTaxHealthProgress,

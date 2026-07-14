@@ -241,6 +241,7 @@
     .executive-report-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0}.executive-report-actions button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:13px 18px;font-weight:800;cursor:pointer}.executive-report-actions button:hover{background:var(--navy-deep)}.executive-report-status{font-size:12px;color:var(--ink-soft)}
     .crm-integration-card{border:2px solid #9bb4ca;background:#f5f9fc;padding:18px;margin:20px 0}.crm-integration-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.crm-integration-card h4{margin:0;color:var(--navy);font-family:Fraunces,serif;font-size:22px}.crm-integration-card p{margin:6px 0 0;color:var(--ink-soft);line-height:1.55}.crm-sync-badge{display:inline-flex;align-items:center;gap:7px;border:1px solid #b9cddd;background:#fff;padding:7px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:800;color:var(--navy);white-space:nowrap}.crm-sync-badge.good{border-color:#9bc8b1;background:#eef8f2;color:#12613f}.crm-sync-badge.warn{border-color:#e2bf79;background:#fff8e8;color:#7a5415}.crm-integration-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}.crm-integration-actions button{border:1px solid var(--navy);background:#fff;color:var(--navy);padding:11px 15px;font-weight:800;cursor:pointer}.crm-integration-actions button:hover{background:#eaf1f7}.crm-integration-actions button:disabled{opacity:.6;cursor:not-allowed}.crm-sync-detail{font-size:12px;color:var(--ink-soft)}
     .service-boundary{border:2px solid var(--gold);background:#fbf5e7;padding:18px;margin-top:22px}.service-boundary h4{margin:0 0 10px;color:var(--navy);font-family:Fraunces,serif;font-size:22px}.service-boundary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.service-boundary-item{border:1px solid var(--gold-soft);background:#fff;padding:13px}.service-boundary-item strong{display:block;color:var(--navy);margin-bottom:5px}.service-boundary-item span{display:block;color:var(--ink-soft);font-size:12px;line-height:1.5}.service-price{margin-top:7px!important;color:var(--green-deep)!important;font-family:"IBM Plex Mono",monospace;font-weight:800}
+    .business-detection-card{margin-top:20px;border:3px solid #9aa8b4;background:#f7f9fb;padding:18px;box-shadow:0 2px 0 rgba(19,42,61,.08)}.business-detection-card[data-tone="confirmed"]{border-color:var(--green-deep);background:#f2f8f5}.business-detection-card[data-tone="strong"]{border-color:var(--gold);background:#fcf8ee}.business-detection-card[data-tone="possible"]{border-color:#c28a27;background:#fff9eb}.business-detection-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.business-detection-kicker{display:block;color:var(--gold-dark);font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.business-detection-card h4{margin:5px 0 7px;color:var(--navy);font-family:Fraunces,serif;font-size:24px}.business-detection-card p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.6}.business-detection-level{min-width:155px;border:1px solid var(--line);background:#fff;padding:12px;text-align:center}.business-detection-level span{display:block;color:var(--ink-soft);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.business-detection-level strong{display:block;margin-top:6px;color:var(--navy);font-size:14px}.business-detection-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:16px}.business-detection-metric{border:1px solid var(--line-soft);background:#fff;padding:11px}.business-detection-metric span{display:block;color:var(--ink-soft);font-size:9px;text-transform:uppercase;letter-spacing:.05em}.business-detection-metric strong{display:block;color:var(--navy);font-size:13px;margin-top:6px;line-height:1.35}.business-detection-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.business-detection-detail{border:1px solid var(--line-soft);background:#fff;padding:13px}.business-detection-detail strong{display:block;color:var(--navy);font-size:13px;margin-bottom:7px}.business-detection-detail ul{margin:0;padding-left:18px}.business-detection-detail li{color:var(--ink-soft);font-size:12px;line-height:1.5;margin:4px 0}.business-detection-boundary{margin-top:12px;border-left:5px solid var(--gold);background:#fff;padding:12px 14px;color:var(--ink-soft);font-size:11px;line-height:1.55}.business-detection-boundary strong{color:var(--navy)}.business-detection-tape-list{display:grid;gap:8px;margin-top:12px}.business-detection-tape-item{border:1px solid rgba(255,255,255,.16);padding:9px}.business-detection-tape-item span{display:block;color:#cbd8e1;font-size:9px;text-transform:uppercase;letter-spacing:.06em}.business-detection-tape-item strong{display:block;color:#fff;font-size:13px;margin-top:5px;line-height:1.35}@media(max-width:900px){.business-detection-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.business-detection-grid{grid-template-columns:1fr}.business-detection-top{display:block}.business-detection-level{margin-top:12px;text-align:left}}
     .planner-print-message{display:none}
     @media(max-width:800px){.executive-report-hero{grid-template-columns:1fr}.executive-report-badge{text-align:left}.executive-report-scope,.service-boundary-grid{grid-template-columns:1fr}}
     @media print{
@@ -252,12 +253,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.4.0 + Executive Planning Report active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.5.0 + Business Detection active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.4.0 + Executive Planning Report active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.5.0 + Business Detection active</span></div>
 
   <section class="immediate-action-banner" id="immediateActionBanner" aria-live="assertive" hidden>
     <div class="immediate-action-top">
@@ -576,7 +577,7 @@
     </div>
   </section>
 
-  <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><div class="field-grid"><div class="field"><label>1099 / business income</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Business expenses</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Federal tax already withheld</label><input class="money" type="number" min="0" placeholder="$0"></div><div class="field"><label>Estimated payments already made</label><input class="money" type="number" min="0" placeholder="$0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Payment Plan</h3><div class="row"><span>Net self-employment profit</span><strong class="money">$0</strong></div><div class="row"><span>Self-employment tax</span><strong class="money">$0</strong></div><div class="row"><span>Income tax estimate</span><strong class="money">$0</strong></div><div class="row total"><span>Total still owed</span><strong class="money">$0</strong></div><span class="status">Due-date calculator — Phase 2</span></div></div></div></section>
+  <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><p class="module-note">Enter known year-to-date business amounts. These figures feed Business Detection and the Recommendation Engine; they are not a final business-return calculation.</p><div class="field-grid"><div class="field"><label for="quarterlyBusinessIncome">1099 / business income</label><input id="quarterlyBusinessIncome" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyBusinessExpenses">Business expenses</label><input id="quarterlyBusinessExpenses" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyFederalWithheld">Federal tax already withheld</label><input id="quarterlyFederalWithheld" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyEstimatedPayments">Estimated payments already made</label><input id="quarterlyEstimatedPayments" class="money" type="number" min="0" step="1" value="0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Planning Snapshot</h3><div class="row"><span>Gross business income entered</span><strong class="money" id="quarterlyGrossDisplay">$0</strong></div><div class="row"><span>Business expenses entered</span><strong class="money" id="quarterlyExpensesDisplay">$0</strong></div><div class="row total"><span>Estimated net business profit</span><strong class="money" id="quarterlyNetProfitDisplay">$0</strong></div><span class="status" id="quarterlyBusinessStatus">Enter business figures to activate Business Detection</span></div></div></div></section>
 
   <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
 
@@ -880,14 +881,28 @@
 
         <div class="signal-section">
           <h4>Small-Business Activity</h4>
-          <p>Flag business or self-employment activity now. Smart Alerts identifies the immediate owner-review needs; a detailed Business Tax Intelligence™ assessment remains a separate service.</p>
+          <p>Enter what is known. Business Detection combines these answers with the Quarterly Planner and business-related Tax Savings Finder selections. The separate Business Tax Intelligence™ Assessment is not built inside this Planner.</p>
           <div class="field-grid">
             <div class="field full">
               <label class="signal-toggle"><input id="alertBusinessOn" type="checkbox"><span>Client owns a business or has self-employment income</span></label>
             </div>
             <div class="field">
               <label for="alertBusinessProfit">Estimated net business profit</label>
-              <input id="alertBusinessProfit" class="money" type="number" min="0" step="500" value="0">
+              <input id="alertBusinessProfit" class="money" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="alertBusinessEntityType">Business type / tax structure</label>
+              <select id="alertBusinessEntityType">
+                <option value="unknown">Not confirmed</option>
+                <option value="independent-contractor">Independent contractor / gig worker</option>
+                <option value="sole-proprietor">Sole proprietor</option>
+                <option value="single-member-llc">Single-member LLC</option>
+                <option value="partnership">Partnership</option>
+                <option value="multi-member-llc">Multi-member LLC</option>
+                <option value="s-corporation">S corporation</option>
+                <option value="c-corporation">C corporation</option>
+                <option value="other">Other / not sure</option>
+              </select>
             </div>
             <div class="field">
               <label for="alertBusinessBooksStatus">Business books</label>
@@ -897,7 +912,55 @@
                 <option value="cleanup">Needs cleanup</option>
               </select>
             </div>
+            <div class="field">
+              <label for="alertBusinessPayrollStatus">Employees / owner payroll</label>
+              <select id="alertBusinessPayrollStatus">
+                <option value="unknown">Not confirmed</option>
+                <option value="none">No employees or owner payroll</option>
+                <option value="employees">Employees reported</option>
+                <option value="owner-payroll">Owner payroll reported</option>
+                <option value="both">Employees and owner payroll</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="alertBusinessAccountStatus">Business and personal funds</label>
+              <select id="alertBusinessAccountStatus">
+                <option value="unknown">Separation not confirmed</option>
+                <option value="separate">Separate business accounts are used</option>
+                <option value="mixed">Business and personal funds are mixed</option>
+              </select>
+            </div>
           </div>
+        </div>
+
+        <div class="business-detection-card" id="businessDetectionCard" data-tone="none">
+          <div class="business-detection-top">
+            <div>
+              <span class="business-detection-kicker">Business Detection™</span>
+              <h4 id="businessDetectionTitle">No business activity detected</h4>
+              <p id="businessDetectionSummary">The Planner will identify business indicators from the Client Tax Profile, Quarterly Planner, and business-related planning selections.</p>
+            </div>
+            <div class="business-detection-level">
+              <span>Detection level</span>
+              <strong id="businessDetectionLevel">Not detected</strong>
+            </div>
+          </div>
+
+          <div class="business-detection-metrics">
+            <div class="business-detection-metric"><span>Business profile</span><strong id="businessDetectionProfile">Personal tax planning profile</strong></div>
+            <div class="business-detection-metric"><span>Review priority</span><strong id="businessDetectionPriority">No business review triggered</strong></div>
+            <div class="business-detection-metric"><span>Business readiness</span><strong id="businessDetectionReadiness">0 / 100</strong></div>
+            <div class="business-detection-metric"><span>Recommended path</span><strong id="businessDetectionPath">Personal Tax Planning</strong></div>
+          </div>
+
+          <div class="business-detection-grid">
+            <div class="business-detection-detail"><strong>Why the Planner reached this result</strong><ul id="businessDetectionIndicators"><li>No business indicators are currently entered.</li></ul></div>
+            <div class="business-detection-detail"><strong>What the client should provide</strong><ul id="businessDetectionClientNeeds"><li>Update the profile when business or self-employment activity applies.</li></ul></div>
+            <div class="business-detection-detail"><strong>What Greatest Business Solution LLC will review</strong><ul id="businessDetectionProfessionalReview"><li>Continue personal tax planning unless business facts are identified.</li></ul></div>
+            <div class="business-detection-detail"><strong>What should happen next</strong><p id="businessDetectionNextAction">Continue the personal Tax Savings Planner workflow.</p></div>
+          </div>
+
+          <div class="business-detection-boundary"><strong>Important boundary:</strong> <span id="businessDetectionBoundary">Business Detection identifies when deeper business analysis may be appropriate. It does not complete a separate Business Tax Intelligence™ Assessment.</span></div>
         </div>
 
         <div class="alert-save-status" id="smartAlertSaveStatus">Client Tax Profile inputs save automatically in this browser for this planner record.</div>
@@ -918,6 +981,17 @@
           <div class="row"><span>Documentation / verification</span><strong class="number" id="smartAlertDocumentation">0</strong></div>
           <div class="row total"><span>Urgent / high priority</span><strong class="number" id="smartAlertPriorityCount">0</strong></div>
           <span class="status" id="smartAlertStatus">No active alerts</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px" id="businessDetectionTape">
+          <h3>Business Detection Summary</h3>
+          <div class="business-detection-tape-list">
+            <div class="business-detection-tape-item"><span>Detection</span><strong id="businessTapeLevel">Not detected</strong></div>
+            <div class="business-detection-tape-item"><span>Profile</span><strong id="businessTapeProfile">Personal tax planning profile</strong></div>
+            <div class="business-detection-tape-item"><span>Readiness</span><strong id="businessTapeReadiness">0 / 100</strong></div>
+            <div class="business-detection-tape-item"><span>Recommended path</span><strong id="businessTapePath">Personal Tax Planning</strong></div>
+          </div>
+          <span class="status" id="businessTapeStatus">No business review triggered</span>
         </div>
 
         <div class="tape" style="margin-top:34px">
@@ -1204,6 +1278,22 @@
       highCount: 0,
       status: "No active alerts"
     },
+    businessDetection: {
+      level: "none",
+      levelLabel: "Not detected",
+      tone: "none",
+      detected: false,
+      isBusinessClient: false,
+      profileType: "Personal tax planning profile",
+      priority: "monitor",
+      priorityLabel: "No business review triggered",
+      readinessScore: 0,
+      servicePath: "Personal Tax Planning",
+      indicators: [],
+      clientNeeds: [],
+      professionalReview: [],
+      nextAction: "Continue the personal Tax Savings Planner workflow."
+    },
     scorecard: null,
     immediateAction: {
       active: false,
@@ -1325,7 +1415,7 @@
     const controls = {};
 
     document.querySelectorAll(
-      "#withholding input, #withholding select, #finder input, #finder select, #smartAlerts input, #smartAlerts select"
+      "#withholding input, #withholding select, #quarterly input, #quarterly select, #finder input, #finder select, #smartAlerts input, #smartAlerts select"
     ).forEach(control => {
       if (control.type === "radio") {
         if (control.checked && control.name) {
@@ -1358,6 +1448,12 @@
         plannerStateKey,
         JSON.stringify(buildPlannerStateRecord())
       );
+
+      // A user edit becomes the active local source immediately. This prevents
+      // a slower CRM client-context response from overwriting the first change
+      // made while the Planner is still connecting to the Tax Lead Center.
+      hasSavedPlannerState = true;
+
       scheduleCrmSync();
       return true;
     } catch (error) {
@@ -1393,7 +1489,10 @@
         if (!control) return;
 
         if (control.type === "checkbox") {
-          control.checked = Boolean(value);
+          control.checked =
+            value === true ||
+            value === 1 ||
+            String(value).toLowerCase() === "true";
         } else {
           control.value = String(value ?? "");
         }
@@ -1473,10 +1572,10 @@
       otherIncome: numberValue("whOtherIncome"),
       scholarships: 0,
       educationExpenses: 0,
-      selfEmploymentIncome: 0,
-      businessExpenses: 0,
+      selfEmploymentIncome: numberValue("quarterlyBusinessIncome"),
+      businessExpenses: numberValue("quarterlyBusinessExpenses"),
       businessMileage: 0,
-      estimatedTaxPayments: 0,
+      estimatedTaxPayments: numberValue("quarterlyEstimatedPayments"),
       selfEmploymentStreams: []
     };
   }
@@ -2105,7 +2204,14 @@
       installmentStatus: document.getElementById("alertInstallmentStatus")?.value || "unknown",
       hasBusinessActivity: Boolean(document.getElementById("alertBusinessOn")?.checked),
       businessNetProfit: numberValue("alertBusinessProfit"),
-      businessBooksStatus: document.getElementById("alertBusinessBooksStatus")?.value || "unknown"
+      businessBooksStatus: document.getElementById("alertBusinessBooksStatus")?.value || "unknown",
+      businessEntityType: document.getElementById("alertBusinessEntityType")?.value || "unknown",
+      businessPayrollStatus: document.getElementById("alertBusinessPayrollStatus")?.value || "unknown",
+      businessAccountStatus: document.getElementById("alertBusinessAccountStatus")?.value || "unknown",
+      quarterlyBusinessIncome: numberValue("quarterlyBusinessIncome"),
+      quarterlyBusinessExpenses: numberValue("quarterlyBusinessExpenses"),
+      quarterlyFederalWithheld: numberValue("quarterlyFederalWithheld"),
+      quarterlyEstimatedPayments: numberValue("quarterlyEstimatedPayments")
     };
   }
 
@@ -2166,9 +2272,97 @@
     );
     renderOpportunityScorecard(latestRecommendationResult.recommendations);
     renderSmartAlerts(latestRecommendationResult.smartAlerts);
+    renderBusinessDetection(latestRecommendationResult.businessDetection);
     renderYearEndPlanningChecklist(latestRecommendationResult.yearEndChecklist);
     renderWealthRoadmap(latestRecommendationResult.wealthRoadmap);
     updatePlannerOverview();
+  }
+
+  function renderBusinessDetection(businessDetection) {
+    const result = businessDetection || {
+      level: "none",
+      levelLabel: "Not detected",
+      tone: "none",
+      profileType: "Personal tax planning profile",
+      priorityLabel: "No business review triggered",
+      readinessScore: 0,
+      servicePath: "Personal Tax Planning",
+      indicators: [],
+      clientNeeds: [],
+      professionalReview: [],
+      nextAction: "Continue the personal Tax Savings Planner workflow.",
+      boundaryNote: "Business Detection identifies when deeper business analysis may be appropriate. It does not complete a separate Business Tax Intelligence™ Assessment."
+    };
+
+    const card = document.getElementById("businessDetectionCard");
+    if (!card) return;
+
+    card.dataset.tone = result.tone || "none";
+    document.getElementById("businessDetectionTitle").textContent =
+      result.level === "none"
+        ? "No business activity detected"
+        : result.profileType;
+    document.getElementById("businessDetectionSummary").textContent =
+      result.level === "none"
+        ? "No business indicators are currently entered. The Planner will continue the personal tax-planning workflow unless new business facts are added."
+        : `${result.levelLabel}. The Planner identified ${Number(result.indicators?.length || 0)} business signal${Number(result.indicators?.length || 0) === 1 ? "" : "s"} and routed the result to the appropriate review path.`;
+    document.getElementById("businessDetectionLevel").textContent = result.levelLabel;
+    document.getElementById("businessDetectionProfile").textContent = result.profileType;
+    document.getElementById("businessDetectionPriority").textContent = result.priorityLabel;
+    document.getElementById("businessDetectionReadiness").textContent = `${Number(result.readinessScore || 0)} / 100`;
+    document.getElementById("businessDetectionPath").textContent = result.servicePath;
+    document.getElementById("businessDetectionNextAction").textContent = result.nextAction;
+    document.getElementById("businessDetectionBoundary").textContent = result.boundaryNote;
+
+    const renderList = (id, items, fallback) => {
+      const element = document.getElementById(id);
+      if (!element) return;
+      const values = Array.isArray(items) && items.length ? items : [fallback];
+      element.innerHTML = values.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+    };
+
+    renderList(
+      "businessDetectionIndicators",
+      result.indicators,
+      "No business indicators are currently entered."
+    );
+    renderList(
+      "businessDetectionClientNeeds",
+      result.clientNeeds,
+      "Update the profile if business or self-employment activity applies."
+    );
+    renderList(
+      "businessDetectionProfessionalReview",
+      result.professionalReview,
+      "Continue personal tax planning unless business facts are identified."
+    );
+
+    document.getElementById("businessTapeLevel").textContent = result.levelLabel;
+    document.getElementById("businessTapeProfile").textContent = result.profileType;
+    document.getElementById("businessTapeReadiness").textContent = `${Number(result.readinessScore || 0)} / 100`;
+    document.getElementById("businessTapePath").textContent = result.servicePath;
+    const tapeStatus = document.getElementById("businessTapeStatus");
+    tapeStatus.textContent = result.priorityLabel;
+    tapeStatus.classList.remove("good", "warn");
+    if (result.priority === "high") tapeStatus.classList.add("warn");
+    else if (result.detected) tapeStatus.classList.add("good");
+
+    setMoney("quarterlyGrossDisplay", numberValue("quarterlyBusinessIncome"));
+    setMoney("quarterlyExpensesDisplay", numberValue("quarterlyBusinessExpenses"));
+    setMoney(
+      "quarterlyNetProfitDisplay",
+      Math.max(0, numberValue("quarterlyBusinessIncome") - numberValue("quarterlyBusinessExpenses")),
+      result.detected ? "positive" : ""
+    );
+    const quarterlyStatus = document.getElementById("quarterlyBusinessStatus");
+    if (quarterlyStatus) {
+      quarterlyStatus.textContent = result.level === "none"
+        ? "Enter business figures to activate Business Detection"
+        : `${result.levelLabel} — ${result.servicePath}`;
+      quarterlyStatus.classList.remove("good", "warn");
+      if (result.priority === "high") quarterlyStatus.classList.add("warn");
+      else quarterlyStatus.classList.add("good");
+    }
   }
 
   function renderSmartAlerts(smartAlertResult) {
@@ -2987,8 +3181,9 @@
     const smartAlerts = recommendation.smartAlerts || {};
     const roadmap = recommendation.wealthRoadmap || {};
     const executiveReport = buildExecutiveReportSnapshot();
+    const businessDetection = recommendation.businessDetection || {};
     const businessDetected = Boolean(
-      buildSmartAlertSignals().hasBusinessActivity ||
+      businessDetection.isBusinessClient ||
       roadmap.businessTrack?.active
     );
 
@@ -3018,7 +3213,13 @@
         potentialBenefit: Number(scorecard.potentialBenefit || 0),
         verifiedBenefit: Number(scorecard.verifiedBenefit || 0),
         businessDetected,
-        currentRoadmapPhase: String(roadmap.currentPhase?.label || "Not started"),
+        businessDetectionLevel: String(businessDetection.levelLabel || "Not detected"),
+        businessProfile: String(businessDetection.profileType || "Personal tax planning profile"),
+        businessReviewPriority: String(businessDetection.priorityLabel || "No business review triggered"),
+        businessReadinessScore: Number(businessDetection.readinessScore || 0),
+        businessServicePath: String(businessDetection.servicePath || "Personal Tax Planning"),
+        businessNextAction: String(businessDetection.nextAction || "Continue the personal Tax Savings Planner workflow."),
+        currentRoadmapPhase: String(roadmap.currentPhaseLabel || roadmap.currentPhase?.label || "Not started"),
         roadmapProgress: Number(roadmap.roadmapProgress || 0),
         nextAction: String(
           recommendation.primaryRecommendation?.title ||
@@ -3330,6 +3531,17 @@
     });
   });
 
+  document.querySelectorAll("#quarterly input, #quarterly select").forEach(control => {
+    control.addEventListener("input", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+    control.addEventListener("change", () => {
+      savePlannerState();
+      updateTaxSavingsFinder();
+    });
+  });
+
   document.getElementById("yearEndChecklistGroups").addEventListener("change", event => {
     const control = event.target.closest(
       "[data-year-end-status], [data-year-end-date]"
@@ -3408,8 +3620,15 @@
       const contact = lead.contact || {};
       const taxData = lead.taxData || {};
       const crmPlanner = lead.taxSavingsPlanner || null;
+      const plannerStateExistsNow = Boolean(
+        window.localStorage.getItem(plannerStateKey)
+      );
 
-      if (!hasSavedPlannerState && crmPlanner?.plannerState) {
+      if (
+        !hasSavedPlannerState &&
+        !plannerStateExistsNow &&
+        crmPlanner?.plannerState
+      ) {
         window.localStorage.setItem(
           plannerStateKey,
           JSON.stringify(crmPlanner.plannerState)

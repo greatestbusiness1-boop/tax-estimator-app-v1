@@ -174,7 +174,12 @@
       addText("Installment agreement status", profile.installmentStatus);
       if (profile.hasBusinessActivity) items.push(["Business or self-employment activity", "Yes"]);
       addMoney("Estimated net business profit", profile.businessNetProfit);
+      addText("Business type / tax structure", profile.businessEntityType);
       addText("Business books", profile.businessBooksStatus);
+      addText("Employees / owner payroll", profile.businessPayrollStatus);
+      addText("Business and personal funds", profile.businessAccountStatus);
+      addMoney("Quarterly Planner business income", profile.quarterlyBusinessIncome);
+      addMoney("Quarterly Planner business expenses", profile.quarterlyBusinessExpenses);
       return items;
     }
 
@@ -187,6 +192,7 @@
       const checklist = result.yearEndChecklist || { groups: [], items: [] };
       const roadmap = result.wealthRoadmap || { phases: [], nextMoves: [] };
       const immediate = result.immediateAction || { active: false };
+      const businessDetection = result.businessDetection || { level: "none", detected: false, indicators: [], clientNeeds: [], professionalReview: [] };
       const withholding = data.withholding || {};
       const finder = data.finder?.summary || {};
       const generated = dateLabel(data.generatedAt);
@@ -273,6 +279,18 @@
         ${(alerts.alerts||[]).length ? `<div class="summary-list">${alerts.alerts.slice(0,8).map(item=>`<div class="summary-row"><div class="finding-copy"><strong>${esc(item.title)}</strong><span>${esc(item.alertTypeLabel||item.category||"Planning review")} - ${emphasizeAmounts(item.detail||"")}</span></div><div class="right">${statusBadge(item.priority||"review",priorityTone(item.priority))}${Number(item.flaggedAmount||0)>0?`<span>${money(item.flaggedAmount)} reviewed</span>`:""}</div></div>`).join("")}</div>${alerts.alerts.length>8?`<div class="card gold" style="margin-top:12px"><p><strong>${alerts.alerts.length-8} additional Smart Alert(s)</strong> are already included in the Opportunity Scorecard section so the same full guidance is not repeated twice.</p></div>`:""}` : '<div class="empty">No active Smart Alerts were identified.</div>'}
         ${reportFooter(client,"Client Tax Profile & Smart Alerts")}
       </section>`);
+
+      if (businessDetection.detected) {
+        report.push(`<section class="report-section page-break">
+          <span class="section-kicker">Business Detection™</span><h2 class="section-title">Business Activity, Readiness &amp; Recommended Service Path</h2><p class="section-intro">Business Detection combines the Client Tax Profile, Quarterly Planner, and business-related planning selections. It identifies when deeper business review may be appropriate without completing the separate Business Tax Intelligence™ Assessment.</p><div class="section-rule"></div>
+          <div class="roadmap-hero"><div class="roadmap-hero-main"><span class="section-kicker" style="color:#F3E7CD">Detection Result</span><h3>${esc(businessDetection.profileType || businessDetection.levelLabel || "Business activity detected")}</h3><p>${esc(businessDetection.nextAction || "Confirm the business profile and review the appropriate next service.")}</p></div><div class="roadmap-score"><strong>${Number(businessDetection.readinessScore || 0)}</strong><span>Business readiness / 100</span></div></div>
+          <div class="metric-grid">${renderMetric("Detection Level", businessDetection.levelLabel || "Detected")}${renderMetric("Review Priority", businessDetection.priorityLabel || "Review recommended")}${renderMetric("Entity / Structure", businessDetection.entityLabel || "Not confirmed")}${renderMetric("Recommended Path", businessDetection.servicePath || "Business Tax Intelligence™ Assessment")}</div>
+          <div class="two-col"><div class="card gold"><h3>Why Business Activity Was Detected</h3>${(businessDetection.indicators||[]).length ? `<ul>${businessDetection.indicators.map(item=>`<li>${esc(item)}</li>`).join("")}</ul>` : '<p>Business activity was identified from the Planner information.</p>'}</div><div class="card red"><h3>Information Still Needed</h3>${(businessDetection.missingItems||[]).length ? `<ul>${businessDetection.missingItems.map(item=>`<li>${esc(item)}</li>`).join("")}</ul>` : '<p>No major business-profile gaps are currently identified. Final review still depends on verified records.</p>'}</div></div>
+          <div class="action-grid" style="margin-top:18px"><div class="action-detail"><strong>What the client should provide</strong><span>${esc((businessDetection.clientNeeds||[]).join(" ") || "Provide current business records and confirm the business structure.")}</span></div><div class="action-detail"><strong>What Greatest Business Solution LLC will review</strong><span>${esc((businessDetection.professionalReview||[]).join(" ") || "Review the business facts, records, structure, payments, payroll, and planning needs.")}</span></div></div>
+          <div class="disclaimer"><strong>Business Detection limitation.</strong> ${esc(businessDetection.boundaryNote || "Business Detection does not complete the separate Business Tax Intelligence™ Assessment or guarantee an entity, deduction, payroll, or tax-saving recommendation.")}</div>
+          ${reportFooter(client,"Business Detection")}
+        </section>`);
+      }
 
       report.push(`<section class="report-section page-break">
         <span class="section-kicker">Year-End Planning Checklist</span><h2 class="section-title">Timed Work Plan</h2><p class="section-intro">The checklist separates what the client should provide from what Greatest Business Solution LLC will verify. Status, target dates, and Advisor Notes show where each item stands.</p><div class="section-rule"></div>
