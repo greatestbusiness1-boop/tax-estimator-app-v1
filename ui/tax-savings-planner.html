@@ -17,6 +17,28 @@
     .panel{display:none;background:var(--paper);border:1px solid var(--line);border-top:0;padding:26px}.panel.active{display:block}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}.form-card{border:1px solid var(--line);padding:20px;background:var(--paper)}.section-head{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft);padding-bottom:10px;margin:0 0 16px}.letter{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-weight:700}.section-head h3{margin:0;font-size:20px}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:var(--navy)}input,select{width:100%;border:1px solid var(--line);background:white;padding:11px 12px;color:var(--ink)}input:focus,select:focus,button:focus,a:focus{outline:3px solid var(--gold-soft);outline-offset:2px}
     .ledger-wrap{background:var(--navy);padding:26px 20px;min-height:360px}.tape{position:relative;background:var(--paper);padding:30px 22px;margin:10px 0}.tape:before,.tape:after{content:"";position:absolute;left:0;width:100%;height:12px;background:linear-gradient(135deg,transparent 6px,var(--paper) 0) 0 0/12px 12px repeat-x}.tape:before{top:-12px}.tape:after{bottom:-12px;transform:rotate(180deg)}.tape h3{margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed var(--line)}.total{margin-top:8px;border-top:4px double var(--ink);border-bottom:0;font-weight:700;font-size:18px}.status{display:inline-block;margin-top:18px;padding:7px 10px;background:var(--gold-soft);color:var(--navy-deep);font-size:12px;font-weight:700}.positive{color:var(--green)!important}.negative{color:var(--red)!important}.status.good{background:#dcefe6;color:var(--green-deep)}.status.warn{background:#f5dedb;color:var(--red-deep)}.module-note{color:var(--ink-soft);font-size:14px;line-height:1.55}.engine-note{margin-top:12px;color:#dbe4ea;font-size:11px;line-height:1.45}.engine-error{margin-top:12px;padding:9px 10px;background:#f5dedb;color:var(--red-deep);font-size:12px;font-weight:700}.cta{display:inline-block;margin-top:16px;background:var(--navy);color:#fff;text-decoration:none;padding:11px 15px;font-weight:700}.finder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.finder-item{border:1px solid var(--line);padding:14px;background:#fff}.finder-item input{width:auto;margin-right:8px}.score{font-size:44px;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green)}
     .disclaimer{margin-top:26px;border:1px solid var(--line);padding:18px;background:#f0eadb;color:var(--ink-soft);font-size:12px;line-height:1.6}footer{background:var(--navy-deep);color:#dce5ea;text-align:center;padding:20px;font-size:12px}
+    /* Final UI Polish + Resume Where You Left Off */
+    .money,.number{font-weight:900}
+    .client-strip>span{font-weight:650}
+    .client-strip>span>span{font-weight:900;color:var(--navy)}
+    .section-head h3,.tape h3,.scorecard-card-head h4,.smart-alert-head h4,.year-end-card-head h5,.wealth-next-card h5,.wealth-phase h5,.business-detection-card h4{font-weight:800}
+    .tape .row>span{font-weight:650;color:#394852}
+    .tape .row>strong{font-size:16px;font-weight:900;color:var(--navy)}
+    .tape .row.total>span{font-weight:900;color:var(--navy-deep)}
+    .tape .row.total>strong{font-size:22px;font-weight:900}
+    .score,.health-ring,.health-metric strong,.health-category-score,.scorecard-value strong,.year-end-progress-row span,.wealth-roadmap-score strong,.wealth-roadmap-metric strong,.business-detection-level strong,.business-detection-metric strong{font-weight:900}
+    .scorecard-value strong,.wealth-roadmap-metric strong,.business-detection-metric strong{font-size:16px}
+    .action-item strong,.advisor-card strong,.scorecard-detail strong,.scorecard-explanation strong,.smart-alert-step strong,.year-end-action-box strong,.wealth-next-action strong,.business-detection-detail strong{font-weight:800}
+    .resume-banner{margin:16px 0 0;border:2px solid var(--green);background:#f1f8f4;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;padding:15px 17px;box-shadow:0 2px 0 rgba(31,111,82,.10)}
+    .resume-copy{display:flex;flex-direction:column;gap:4px}
+    .resume-kicker{font-family:"IBM Plex Mono",monospace;color:var(--green-deep);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .resume-copy>strong{color:var(--navy);font-size:17px;line-height:1.35}
+    .resume-copy>span:last-child{color:#43525b;font-size:13px;line-height:1.5}
+    .resume-location{min-width:190px;border-left:1px solid #b9d8c8;padding-left:16px;text-align:right}
+    .resume-location>span{display:block;color:#596b62;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .resume-location>strong{display:block;color:var(--navy);font-size:15px;font-weight:900;margin-top:5px}
+    .resume-location>small{display:block;color:#52645b;font-size:11px;margin-top:5px}
+    @media(max-width:760px){.resume-banner{grid-template-columns:1fr}.resume-location{border-left:0;border-top:1px solid #b9d8c8;padding:12px 0 0;text-align:left;min-width:0}}
     @media(max-width:880px){.grid{grid-template-columns:1fr}.masthead-inner{align-items:flex-start;flex-direction:column}.tagline{text-align:left}.field-grid,.finder-grid{grid-template-columns:1fr}}
   
     .action-list{display:grid;gap:10px}
@@ -250,15 +272,233 @@
       .planner-print-message h1{font-size:26px}.planner-print-message p{font-size:15px;line-height:1.6}
     }
 
+
+    /* Final UI Polish V1.0.1 — Readability + Easy Section Navigation */
+    .planner-navigator{
+      position:sticky;
+      top:8px;
+      z-index:70;
+      margin:20px 0 12px;
+      border:2px solid var(--navy);
+      background:rgba(255,254,251,.98);
+      box-shadow:0 8px 22px rgba(19,42,61,.16);
+      padding:13px 15px;
+      display:grid;
+      grid-template-columns:minmax(230px,1fr) auto;
+      gap:18px;
+      align-items:center;
+    }
+    .planner-nav-summary{min-width:0}
+    .planner-nav-kicker{
+      display:block;
+      color:var(--gold);
+      font-family:"IBM Plex Mono",monospace;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+    }
+    .planner-nav-title-row{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:14px;
+      margin-top:4px;
+    }
+    .planner-nav-title-row strong{
+      color:var(--navy-deep);
+      font-family:Fraunces,serif;
+      font-size:20px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .planner-nav-title-row span{
+      flex:0 0 auto;
+      color:#4a5963;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .planner-nav-track{
+      height:7px;
+      margin-top:9px;
+      border:1px solid var(--line);
+      background:#e9e1d0;
+      overflow:hidden;
+    }
+    .planner-nav-fill{
+      width:9.09%;
+      height:100%;
+      background:linear-gradient(90deg,var(--gold),var(--green));
+      transition:width .2s ease;
+    }
+    .planner-nav-controls{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:9px;
+      flex-wrap:wrap;
+    }
+    .planner-nav-controls button{
+      width:auto;
+      min-height:43px;
+      border:1px solid var(--navy);
+      background:var(--navy);
+      color:#fff;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .planner-nav-controls button.secondary{
+      background:#fff;
+      color:var(--navy);
+    }
+    .planner-nav-controls button:disabled{
+      opacity:.42;
+      cursor:not-allowed;
+    }
+    .planner-nav-select-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:270px;
+    }
+    .planner-nav-select-wrap span{
+      color:#55636d;
+      font-size:9px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .planner-nav-select-wrap select{
+      min-height:43px;
+      border:1px solid var(--navy);
+      color:var(--navy);
+      font-weight:900;
+      background:#fff;
+      padding:8px 34px 8px 10px;
+    }
+
+    /* The complete Section Map is visible without a horizontal scrollbar. */
+    .tabs{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      align-items:stretch;
+      gap:7px;
+      overflow:visible;
+      border-bottom:0;
+      margin-top:14px;
+      padding-top:0;
+    }
+    .tab{
+      clip-path:none;
+      white-space:normal;
+      min-height:52px;
+      border:1px solid var(--line);
+      background:#e7dfcc;
+      padding:10px 12px;
+      text-align:left;
+      line-height:1.3;
+      font-size:13px;
+      font-weight:800;
+    }
+    .tab.active{
+      z-index:1;
+      border:2px solid var(--navy);
+      border-top:5px solid var(--gold);
+      background:var(--paper);
+      padding:8px 11px 9px;
+      color:var(--navy-deep);
+      font-weight:900;
+    }
+    .panel{
+      border-top:1px solid var(--line);
+      scroll-margin-top:118px;
+    }
+
+    /* Business Detection Summary must remain readable on the white receipt card. */
+    #businessDetectionTape .business-detection-tape-list{
+      gap:10px;
+    }
+    #businessDetectionTape .business-detection-tape-item{
+      border:1px solid var(--line);
+      border-left:4px solid var(--gold);
+      background:#f8f4ea;
+      padding:12px 13px;
+    }
+    #businessDetectionTape .business-detection-tape-item span{
+      color:#53616b;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.06em;
+    }
+    #businessDetectionTape .business-detection-tape-item strong{
+      color:var(--navy-deep);
+      font-size:15px;
+      font-weight:900;
+      line-height:1.45;
+      overflow-wrap:anywhere;
+    }
+
+    /* Tax Health Score headline metrics use the same emphasis as the category cards. */
+    .health-progress-top .health-metric{
+      border:1px solid var(--line);
+      border-top:4px solid var(--gold);
+      background:#fff;
+      padding:13px 12px;
+    }
+    .health-progress-top .health-metric span{
+      color:var(--navy);
+      font-size:12px;
+      font-weight:900;
+      line-height:1.3;
+      letter-spacing:.04em;
+    }
+    .health-progress-top .health-metric strong{
+      color:var(--navy-deep);
+      font-size:22px;
+      font-weight:900;
+      line-height:1.2;
+    }
+
+    @media(max-width:980px){
+      .planner-navigator{grid-template-columns:1fr;top:4px}
+      .planner-nav-controls{justify-content:flex-start}
+      .planner-nav-select-wrap{flex:1 1 280px}
+      .tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:620px){
+      .planner-nav-title-row{display:block}
+      .planner-nav-title-row span{display:block;margin-top:5px}
+      .planner-nav-controls{display:grid;grid-template-columns:1fr 1fr}
+      .planner-nav-select-wrap{grid-column:1/-1;min-width:0}
+      .planner-nav-controls button{width:100%}
+      .tabs{grid-template-columns:1fr}
+    }
+
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.5.0 + Business Detection active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.5.0 + Business Detection + Auto-Save active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.5.0 + Business Detection active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.5.0 + Business Detection + Auto-Save active</span></div>
+
+  <section class="resume-banner" id="resumeBanner" aria-live="polite">
+    <div class="resume-copy">
+      <span class="resume-kicker">Your progress is saved automatically</span>
+      <strong id="resumeHeadline">You can leave and return without starting over.</strong>
+      <span id="resumeDetail">Your answers, selections, notes, progress, and last Planner section are saved for this client.</span>
+    </div>
+    <div class="resume-location">
+      <span>Continue from</span>
+      <strong id="resumeSection">00 Overview</strong>
+      <small id="resumeSavedAt">Ready to begin</small>
+    </div>
+  </section>
 
   <section class="immediate-action-banner" id="immediateActionBanner" aria-live="assertive" hidden>
     <div class="immediate-action-top">
@@ -282,7 +522,7 @@
         <p id="immediateActionNext">Provide the requested information immediately.</p>
       </div>
       <div class="immediate-action-detail">
-        <strong>What your tax professional will review</strong>
+        <strong>What Greatest Business Solution LLC will review</strong>
         <p id="immediateActionProfessional">The issue, deadline, records, and appropriate next step will be reviewed.</p>
       </div>
     </div>
@@ -291,6 +531,44 @@
       <a class="immediate-action-cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Urgent Tax Review</a>
     </div>
   </section>
+
+
+  <section class="planner-navigator" id="plannerNavigator" aria-label="Planner section navigation">
+    <div class="planner-nav-summary">
+      <span class="planner-nav-kicker">Easy Planner Navigation</span>
+      <div class="planner-nav-title-row">
+        <strong id="plannerNavCurrent">00 Overview</strong>
+        <span id="plannerNavCount">Section 1 of 11</span>
+      </div>
+      <div class="planner-nav-track" aria-hidden="true">
+        <div class="planner-nav-fill" id="plannerNavFill"></div>
+      </div>
+    </div>
+
+    <div class="planner-nav-controls">
+      <button type="button" class="secondary" id="plannerPrevButton">← Previous Section</button>
+
+      <label class="planner-nav-select-wrap" for="plannerSectionSelect">
+        <span>Jump directly to any section</span>
+        <select id="plannerSectionSelect">
+          <option value="overview">00 Overview</option>
+          <option value="withholding">01 Withholding Checkup</option>
+          <option value="quarterly">02 Quarterly Planner</option>
+          <option value="whatif">03 What-If Scenarios</option>
+          <option value="finder">04 Tax Savings Finder</option>
+          <option value="action">05 Your Tax Action Plan</option>
+          <option value="scorecard">06 Opportunity Scorecard</option>
+          <option value="smartAlerts">07 Client Tax Profile</option>
+          <option value="yearEndChecklist">08 Year-End Planning Checklist</option>
+          <option value="wealthRoadmap">09 Wealth Roadmap™</option>
+          <option value="executiveReport">10 Executive Report</option>
+        </select>
+      </label>
+
+      <button type="button" id="plannerNextButton">Next Section →</button>
+    </div>
+  </section>
+
 
   <nav class="tabs" aria-label="Tax Savings Planner tools">
     <button class="tab active" data-tab="overview">00 Overview</button>
@@ -579,7 +857,7 @@
 
   <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><p class="module-note">Enter known year-to-date business amounts. These figures feed Business Detection and the Recommendation Engine; they are not a final business-return calculation.</p><div class="field-grid"><div class="field"><label for="quarterlyBusinessIncome">1099 / business income</label><input id="quarterlyBusinessIncome" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyBusinessExpenses">Business expenses</label><input id="quarterlyBusinessExpenses" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyFederalWithheld">Federal tax already withheld</label><input id="quarterlyFederalWithheld" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyEstimatedPayments">Estimated payments already made</label><input id="quarterlyEstimatedPayments" class="money" type="number" min="0" step="1" value="0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Planning Snapshot</h3><div class="row"><span>Gross business income entered</span><strong class="money" id="quarterlyGrossDisplay">$0</strong></div><div class="row"><span>Business expenses entered</span><strong class="money" id="quarterlyExpensesDisplay">$0</strong></div><div class="row total"><span>Estimated net business profit</span><strong class="money" id="quarterlyNetProfitDisplay">$0</strong></div><span class="status" id="quarterlyBusinessStatus">Enter business figures to activate Business Detection</span></div></div></div></section>
 
-  <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
+  <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input id="whatIfRetirement" type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input id="whatIfFreelance" type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input id="whatIfChildren" type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
 
   <section class="panel" id="finder">
     <div class="grid">
@@ -1044,7 +1322,7 @@
           <h3>How to Use This Checklist</h3>
           <div class="action-list">
             <div class="action-item"><strong>1. Start with Act Now</strong><span>Urgent IRS, payment, deadline, or record-recovery issues come first.</span></div>
-            <div class="action-item"><strong>2. Separate client work from professional review</strong><span>The checklist tells the client what to provide and shows what Cedric will verify before making a recommendation.</span></div>
+            <div class="action-item"><strong>2. Separate client work from professional review</strong><span>The checklist tells the client what to provide and shows what Greatest Business Solution LLC will verify before making a recommendation.</span></div>
             <div class="action-item"><strong>3. Document completion</strong><span>Use the status, target date, and Advisor Note so the next action remains clear after the meeting.</span></div>
             <div class="action-item"><strong>4. Update the Opportunity Scorecard</strong><span>Checklist completion tracks workflow. The Tax Health Score changes when supporting information and opportunity stages are updated and verified.</span></div>
           </div>
@@ -1348,6 +1626,11 @@
   const defaultPlannerTaxYear = String(plannerParams.get("taxYear") || "2025");
   let currentPlannerTaxYear = defaultPlannerTaxYear;
   let hasSavedPlannerState = false;
+  let plannerResumeTab = "overview";
+  let plannerScrollPositions = {};
+  let plannerLastSavedAt = "";
+  let plannerScrollSaveTimer = null;
+  let professionalNotesAutoSaveTimer = null;
   const professionalNotesKey =
     `taxSavingsPlannerNotes:${plannerLeadId}`;
   const opportunityScorecardKey =
@@ -1415,7 +1698,7 @@
     const controls = {};
 
     document.querySelectorAll(
-      "#withholding input, #withholding select, #quarterly input, #quarterly select, #finder input, #finder select, #smartAlerts input, #smartAlerts select"
+      "#withholding input, #withholding select, #quarterly input, #quarterly select, #whatif input, #whatif select, #finder input, #finder select, #smartAlerts input, #smartAlerts select, #action textarea"
     ).forEach(control => {
       if (control.type === "radio") {
         if (control.checked && control.name) {
@@ -1433,28 +1716,133 @@
     return controls;
   }
 
-  function buildPlannerStateRecord() {
+  function getActivePlannerTab() {
+    return document.querySelector(".tab.active")?.dataset.tab || plannerResumeTab || "overview";
+  }
+
+  function getPlannerTabLabel(tabId) {
+    const button = document.querySelector(`.tab[data-tab="${tabId}"]`);
+    return button?.textContent?.trim() || "00 Overview";
+  }
+
+  function getPlannerTabOrder() {
+    return Array.from(
+      document.querySelectorAll(".tab[data-tab]")
+    ).map(button => button.dataset.tab);
+  }
+
+  function updatePlannerNavigator(tabId = getActivePlannerTab()) {
+    const order = getPlannerTabOrder();
+    const index = Math.max(0, order.indexOf(tabId));
+    const total = Math.max(1, order.length);
+    const currentLabel = getPlannerTabLabel(order[index] || "overview");
+
+    const current = document.getElementById("plannerNavCurrent");
+    const count = document.getElementById("plannerNavCount");
+    const fill = document.getElementById("plannerNavFill");
+    const select = document.getElementById("plannerSectionSelect");
+    const previous = document.getElementById("plannerPrevButton");
+    const next = document.getElementById("plannerNextButton");
+
+    if (current) current.textContent = currentLabel;
+    if (count) count.textContent = `Section ${index + 1} of ${total}`;
+    if (fill) fill.style.width = `${((index + 1) / total) * 100}%`;
+    if (select) select.value = order[index] || "overview";
+
+    if (previous) {
+      previous.disabled = index === 0;
+      previous.title = index === 0
+        ? "You are at the first section."
+        : `Go to ${getPlannerTabLabel(order[index - 1])}`;
+    }
+
+    if (next) {
+      next.disabled = index >= total - 1;
+      next.textContent = index >= total - 1
+        ? "Planner Complete"
+        : "Next Section →";
+      next.title = index >= total - 1
+        ? "You are at the final section."
+        : `Go to ${getPlannerTabLabel(order[index + 1])}`;
+    }
+  }
+
+  function navigatePlannerByOffset(offset) {
+    const order = getPlannerTabOrder();
+    const currentIndex = Math.max(0, order.indexOf(getActivePlannerTab()));
+    const targetIndex = Math.min(
+      Math.max(currentIndex + Number(offset || 0), 0),
+      order.length - 1
+    );
+
+    if (targetIndex === currentIndex || !order[targetIndex]) return;
+
+    activatePlannerTab(order[targetIndex]);
+  }
+
+  function capturePlannerPosition() {
+    const activeTab = getActivePlannerTab();
+    plannerResumeTab = activeTab;
+    plannerScrollPositions[activeTab] = Math.max(0, Math.round(window.scrollY || 0));
+  }
+
+  function updateResumeDisplay(savedAt = plannerLastSavedAt) {
+    const section = document.getElementById("resumeSection");
+    const saved = document.getElementById("resumeSavedAt");
+    if (section) {
+      section.textContent = getPlannerTabLabel(plannerResumeTab);
+    }
+
+    if (!saved) return;
+
+    if (!savedAt) {
+      saved.textContent = "Ready to begin";
+      return;
+    }
+
+    const date = new Date(savedAt);
+    saved.textContent = Number.isNaN(date.getTime())
+      ? "Progress saved"
+      : `Last saved ${date.toLocaleString()}`;
+  }
+
+  function buildPlannerStateRecord(options = {}) {
+    if (options.capturePosition !== false) {
+      capturePlannerPosition();
+    }
+
+    const savedAt = new Date().toISOString();
+    plannerLastSavedAt = savedAt;
+
     return {
-      version: 1,
+      version: 2,
       taxYear: currentPlannerTaxYear,
       controls: collectPlannerControlState(),
-      savedAt: new Date().toISOString()
+      activeTab: plannerResumeTab,
+      scrollPositions: { ...plannerScrollPositions },
+      savedAt
     };
   }
 
-  function savePlannerState() {
+  function savePlannerState(options = {}) {
     try {
+      const state = buildPlannerStateRecord(options);
+
       window.localStorage.setItem(
         plannerStateKey,
-        JSON.stringify(buildPlannerStateRecord())
+        JSON.stringify(state)
       );
 
       // A user edit becomes the active local source immediately. This prevents
       // a slower CRM client-context response from overwriting the first change
       // made while the Planner is still connecting to the Tax Lead Center.
       hasSavedPlannerState = true;
+      updateResumeDisplay(state.savedAt);
 
-      scheduleCrmSync();
+      if (options.sync !== false) {
+        scheduleCrmSync();
+      }
+
       return true;
     } catch (error) {
       console.warn("Planner entries could not be saved in this browser.", error);
@@ -1471,6 +1859,22 @@
       if (!saved || typeof saved !== "object") return false;
 
       setPlannerTaxYear(saved.taxYear || defaultPlannerTaxYear);
+
+      const validTab = document.querySelector(
+        `.tab[data-tab="${String(saved.activeTab || "")}"]`
+      );
+
+      plannerResumeTab = validTab
+        ? String(saved.activeTab)
+        : "overview";
+
+      plannerScrollPositions =
+        saved.scrollPositions &&
+        typeof saved.scrollPositions === "object"
+          ? { ...saved.scrollPositions }
+          : {};
+
+      plannerLastSavedAt = String(saved.savedAt || "");
 
       const controls = saved.controls && typeof saved.controls === "object"
         ? saved.controls
@@ -1498,15 +1902,40 @@
         }
       });
 
+      document.querySelectorAll("#whatif input[type='range']").forEach(slider => {
+        const output = slider.nextElementSibling;
+        if (!output) return;
+        output.textContent = slider.max === "4"
+          ? slider.value
+          : money.format(Number(slider.value || 0));
+      });
+
       const itemizedSelected =
         document.querySelector('input[name="whDeductionMethod"]:checked')?.value === "itemized";
       document.getElementById("whItemizedField").hidden = !itemizedSelected;
 
+      updateResumeDisplay(saved.savedAt);
       return true;
     } catch (error) {
       console.warn("Saved Planner entries could not be restored.", error);
       return false;
     }
+  }
+
+  function resumePlannerFromSavedState() {
+    const tabId = document.querySelector(
+      `.tab[data-tab="${plannerResumeTab}"]`
+    )
+      ? plannerResumeTab
+      : "overview";
+
+    activatePlannerTab(tabId, {
+      save: false,
+      restoreScroll: true,
+      behavior: "auto"
+    });
+
+    updateResumeDisplay();
   }
 
   function calculateOrdinaryTax(taxableIncome, filingStatus) {
@@ -1743,16 +2172,57 @@
     }
   }
 
-  function activatePlannerTab(tabId) {
+  function activatePlannerTab(tabId, options = {}) {
+    const currentTab = getActivePlannerTab();
+
+    if (currentTab && currentTab !== tabId) {
+      plannerScrollPositions[currentTab] = Math.max(
+        0,
+        Math.round(window.scrollY || 0)
+      );
+    }
+
+    const validTab = document.querySelector(`.tab[data-tab="${tabId}"]`)
+      ? tabId
+      : "overview";
+
     document.querySelectorAll(".tab").forEach(button => {
-      button.classList.toggle("active", button.dataset.tab === tabId);
+      const isActive = button.dataset.tab === validTab;
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-current", isActive ? "step" : "false");
     });
 
     document.querySelectorAll(".panel").forEach(panel => {
-      panel.classList.toggle("active", panel.id === tabId);
+      panel.classList.toggle("active", panel.id === validTab);
     });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    plannerResumeTab = validTab;
+
+    const targetScroll = options.restoreScroll
+      ? Math.max(0, Number(plannerScrollPositions[validTab] || 0))
+      : 0;
+
+    plannerScrollPositions[validTab] = targetScroll;
+
+    const applyTargetScroll = () => {
+      window.scrollTo({
+        top: targetScroll,
+        behavior: options.behavior || "smooth"
+      });
+    };
+
+    window.requestAnimationFrame(applyTargetScroll);
+
+    if (options.restoreScroll) {
+      window.setTimeout(applyTargetScroll, 250);
+    }
+
+    updateResumeDisplay();
+    updatePlannerNavigator(validTab);
+
+    if (options.save !== false) {
+      savePlannerState({ capturePosition: false });
+    }
   }
 
   function loadTaxHealthHistory() {
@@ -2515,13 +2985,14 @@
       : "No notes saved yet.";
   }
 
-  function saveProfessionalNotes() {
+  function saveProfessionalNotes(message = "Notes saved") {
     const field = document.getElementById("professionalNotes");
     const status = document.getElementById("professionalNotesStatus");
     if (!field || !status) return;
 
     window.localStorage.setItem(professionalNotesKey, field.value || "");
-    status.textContent = `Notes saved ${new Date().toLocaleString()}.`;
+    status.textContent = `${message} ${new Date().toLocaleString()}.`;
+    savePlannerState();
   }
 
   function clearProfessionalNotes() {
@@ -2532,6 +3003,7 @@
     field.value = "";
     window.localStorage.removeItem(professionalNotesKey);
     status.textContent = "Notes cleared.";
+    savePlannerState();
   }
 
   function getScorecardRecord(recommendationId) {
@@ -2561,6 +3033,8 @@
     if (status) {
       status.textContent = `${message} ${new Date().toLocaleTimeString()}`;
     }
+
+    scheduleCrmSync();
   }
 
   function buildStageOptions(selectedStage) {
@@ -2791,6 +3265,8 @@
     if (status) {
       status.textContent = `${message} ${new Date().toLocaleTimeString()}`;
     }
+
+    scheduleCrmSync();
   }
 
   function buildYearEndChecklistStatusOptions(selectedStatus) {
@@ -2876,7 +3352,7 @@
                     <p>${escapeHtml(item.clientAction)}</p>
                   </div>
                   <div class="year-end-action-box">
-                    <strong>What Cedric will review</strong>
+                    <strong>What Greatest Business Solution LLC will review</strong>
                     <p>${escapeHtml(item.professionalAction)}</p>
                   </div>
                 </div>
@@ -2959,7 +3435,7 @@
         lines.push(`Status: ${item.statusLabel}`);
         lines.push(`Who acts: ${item.owner}`);
         lines.push(`What the client must do: ${item.clientAction}`);
-        lines.push(`What Cedric will review: ${item.professionalAction}`);
+        lines.push(`What Greatest Business Solution LLC will review: ${item.professionalAction}`);
         if (record.targetDate || item.targetDate) {
           lines.push(`Target date: ${record.targetDate || item.targetDate}`);
         }
@@ -3038,7 +3514,7 @@
             <span>${escapeHtml(move.statusLabel || "Not Started")}</span>
           </div>
           <div class="wealth-next-action">
-            <strong>What Cedric will review</strong>
+            <strong>What Greatest Business Solution LLC will review</strong>
             <p>${escapeHtml(move.professionalAction)}</p>
           </div>
         </article>
@@ -3107,7 +3583,7 @@
         lines.push(`${move.order}. ${move.title}`);
         lines.push(`Timing: ${move.timingLabel}`);
         lines.push(`What you should do: ${move.clientAction}`);
-        lines.push(`What Cedric will review: ${move.professionalAction}`);
+        lines.push(`What Greatest Business Solution LLC will review: ${move.professionalAction}`);
         lines.push("");
       });
     }
@@ -3390,7 +3866,7 @@
       client: {
         name: plannerText("clientName", "Paid Review Client"),
         taxYear: plannerText("taxYear", currentPlannerTaxYear),
-        preparedBy: "Cedric Easley",
+        preparedBy: "Greatest Business Solution LLC",
         company: "Greatest Business Solution LLC"
       },
       withholding: {
@@ -3504,6 +3980,38 @@
     activatePlannerTab(button.dataset.tab);
   }));
 
+  document.getElementById("plannerSectionSelect")?.addEventListener("change", event => {
+    activatePlannerTab(event.target.value);
+  });
+
+  document.getElementById("plannerPrevButton")?.addEventListener("click", () => {
+    navigatePlannerByOffset(-1);
+  });
+
+  document.getElementById("plannerNextButton")?.addEventListener("click", () => {
+    navigatePlannerByOffset(1);
+  });
+
+  updatePlannerNavigator();
+
+  window.addEventListener("scroll", () => {
+    window.clearTimeout(plannerScrollSaveTimer);
+    plannerScrollSaveTimer = window.setTimeout(() => {
+      capturePlannerPosition();
+      savePlannerState({ capturePosition: false, sync: false });
+    }, 300);
+  }, { passive: true });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      savePlannerState();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    savePlannerState({ sync: false });
+  });
+
   document.getElementById("overviewStartButton").addEventListener("click", event => {
     event.preventDefault();
     activatePlannerTab("withholding");
@@ -3589,6 +4097,22 @@
       : money.format(Number(slider.value));
   }));
 
+  document.querySelectorAll("#whatif input, #whatif select").forEach(control => {
+    control.addEventListener("input", () => {
+      savePlannerState();
+    });
+    control.addEventListener("change", () => {
+      savePlannerState();
+    });
+  });
+
+  document.getElementById("professionalNotes").addEventListener("input", () => {
+    window.clearTimeout(professionalNotesAutoSaveTimer);
+    professionalNotesAutoSaveTimer = window.setTimeout(() => {
+      saveProfessionalNotes("Notes saved automatically");
+    }, 450);
+  });
+
   document.querySelectorAll(
     "#withholding input, #withholding select"
   ).forEach(control => control.addEventListener("input", () => {
@@ -3673,6 +4197,7 @@
 
         hasSavedPlannerState = restorePlannerState();
         loadProfessionalNotes();
+        resumePlannerFromSavedState();
       }
 
       document.getElementById("clientName").textContent =
@@ -3757,6 +4282,11 @@
       : "Connecting this Planner to the Tax Lead Center..."
   );
   hasSavedPlannerState = restorePlannerState();
+  if (hasSavedPlannerState) {
+    resumePlannerFromSavedState();
+  } else {
+    updateResumeDisplay();
+  }
   updateWithholdingCheckup();
   updateTaxSavingsFinder();
   updatePlannerOverview();
