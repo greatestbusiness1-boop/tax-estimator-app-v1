@@ -13,7 +13,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = "1.3.1";
+  const VERSION = "1.4.0";
 
   const PRIORITY_RANK = Object.freeze({
     urgent: 0,
@@ -1820,6 +1820,335 @@
     };
   }
 
+
+  const WEALTH_ROADMAP_PHASE_DEFINITIONS = Object.freeze([
+    Object.freeze({
+      key: "protect",
+      order: 1,
+      label: "Protect & Stabilize",
+      timeline: "Act Now",
+      purpose: "Resolve deadlines, IRS issues, payment-plan concerns, projected balances, and other risks before optional strategies are pursued."
+    }),
+    Object.freeze({
+      key: "prepare",
+      order: 2,
+      label: "Verify & Organize",
+      timeline: "Next 30 Days",
+      purpose: "Collect the records, confirm eligibility, and move findings from possible to professionally reviewed."
+    }),
+    Object.freeze({
+      key: "optimize",
+      order: 3,
+      label: "Optimize & Capture",
+      timeline: "Next 90 Days / Before Year-End",
+      purpose: "Improve withholding and estimated payments, capture verified tax opportunities, and strengthen business and retirement planning."
+    }),
+    Object.freeze({
+      key: "grow",
+      order: 4,
+      label: "Maintain & Grow",
+      timeline: "Ongoing",
+      purpose: "Use quarterly reviews, current records, annual planning, and documented follow-through to preserve progress and build long-term tax readiness."
+    })
+  ]);
+
+  function roadmapCategoryProgress(taxHealthProgress, key) {
+    const category = (taxHealthProgress?.categories || []).find(
+      (item) => item.key === key
+    );
+    if (!category || !numberOrZero(category.maximum)) return 0;
+    return Math.round(
+      Math.min(1, numberOrZero(category.score) / numberOrZero(category.maximum)) * 100
+    );
+  }
+
+  function roadmapPhaseStatus(progress, isCurrent) {
+    if (progress >= 90) {
+      return { key: "complete", label: "Strong Foundation", tone: "complete" };
+    }
+    if (isCurrent) {
+      return { key: "current", label: "Current Focus", tone: "current" };
+    }
+    if (progress > 0) {
+      return { key: "progress", label: "In Progress", tone: "progress" };
+    }
+    return { key: "upcoming", label: "Upcoming", tone: "upcoming" };
+  }
+
+  function roadmapPhaseForChecklistItem(item) {
+    const timing = String(item?.timing || "");
+    const id = String(item?.id || "");
+    const priority = String(item?.priority || "review");
+
+    if (
+      timing === "act-now" ||
+      priority === "urgent" ||
+      id.includes("notice") ||
+      id.includes("installment") ||
+      id.includes("transcript")
+    ) {
+      return "protect";
+    }
+
+    if (
+      timing === "before-filing" ||
+      id.includes("document") ||
+      id.includes("books") ||
+      id.includes("income-picture")
+    ) {
+      return "prepare";
+    }
+
+    if (
+      timing === "next-payment" ||
+      timing === "before-year-end"
+    ) {
+      return "optimize";
+    }
+
+    return "grow";
+  }
+
+  function roadmapBusinessStepStatus(scorecard, ids, fallbackLabel) {
+    const items = Array.isArray(scorecard?.items) ? scorecard.items : [];
+    const item = items.find((candidate) => ids.includes(candidate.id));
+
+    if (!item) {
+      return {
+        status: "upcoming",
+        label: fallbackLabel || "Review Needed",
+        tone: "upcoming"
+      };
+    }
+
+    if (item.stage === "completed" || item.stage === "not-applicable") {
+      return { status: "complete", label: "Completed / Documented", tone: "complete" };
+    }
+
+    if (item.stage === "verified") {
+      return { status: "ready", label: "Verified — Next Action Ready", tone: "ready" };
+    }
+
+    if (item.stage === "client-action") {
+      return { status: "action", label: "Client Action Required", tone: "action" };
+    }
+
+    if (item.stage === "under-review") {
+      return { status: "review", label: "Under Professional Review", tone: "review" };
+    }
+
+    return { status: "potential", label: "Potential — Needs Review", tone: "potential" };
+  }
+
+  function buildWealthRoadmap(
+    input,
+    recommendations,
+    smartAlerts,
+    scorecard,
+    taxHealthProgress,
+    yearEndChecklist
+  ) {
+    const health = taxHealthProgress || {};
+    const checklist = yearEndChecklist || {};
+    const scorecardSummary = scorecard || {};
+    const alerts = Array.isArray(smartAlerts?.alerts) ? smartAlerts.alerts : [];
+    const checklistItems = Array.isArray(checklist.items) ? checklist.items : [];
+
+    const riskProgress = roadmapCategoryProgress(health, "risk");
+    const documentationProgress = roadmapCategoryProgress(health, "documentation");
+    const reviewProgress = roadmapCategoryProgress(health, "review");
+    const withholdingProgress = roadmapCategoryProgress(health, "withholding");
+    const checklistProgress = Math.round(numberOrZero(checklist.progress));
+    const score = Math.round(numberOrZero(health.score));
+
+    const phaseProgress = {
+      protect: riskProgress,
+      prepare: Math.round((documentationProgress + reviewProgress) / 2),
+      optimize: Math.round((withholdingProgress + reviewProgress + checklistProgress) / 3),
+      grow: Math.round((score + checklistProgress) / 2)
+    };
+
+    const unresolvedUrgent = alerts.filter(
+      (alert) =>
+        alert.priority === "urgent" &&
+        !isScorecardItemResolved(scorecardSummary, alert.id)
+    );
+
+    let currentPhaseIndex = unresolvedUrgent.length
+      ? 0
+      : WEALTH_ROADMAP_PHASE_DEFINITIONS.findIndex(
+          (phase) => phaseProgress[phase.key] < 85
+        );
+    if (currentPhaseIndex < 0) currentPhaseIndex = WEALTH_ROADMAP_PHASE_DEFINITIONS.length - 1;
+
+    const openChecklistItems = checklistItems
+      .filter((item) => item.status !== "completed" && item.status !== "not-applicable")
+      .sort((a, b) => {
+        const timingDifference = numberOrZero(a.timingOrder) - numberOrZero(b.timingOrder);
+        if (timingDifference !== 0) return timingDifference;
+        const priorityDifference = priorityRank(a.priority) - priorityRank(b.priority);
+        if (priorityDifference !== 0) return priorityDifference;
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      });
+
+    const phases = WEALTH_ROADMAP_PHASE_DEFINITIONS.map((definition, index) => {
+      const progress = Math.max(0, Math.min(100, phaseProgress[definition.key] || 0));
+      const status = roadmapPhaseStatus(progress, index === currentPhaseIndex);
+      const items = openChecklistItems
+        .filter((item) => roadmapPhaseForChecklistItem(item) === definition.key)
+        .slice(0, 3)
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          timingLabel: item.timingLabel,
+          priority: item.priority,
+          status: item.status,
+          statusLabel: item.statusLabel,
+          clientAction: item.clientAction,
+          professionalAction: item.professionalAction,
+          servicePath: item.servicePath
+        }));
+
+      return {
+        ...definition,
+        progress,
+        status: status.key,
+        statusLabel: status.label,
+        statusTone: status.tone,
+        items
+      };
+    });
+
+    const nextMoves = openChecklistItems.slice(0, 3).map((item, index) => ({
+      order: index + 1,
+      id: item.id,
+      title: item.title,
+      timingLabel: item.timingLabel,
+      priority: item.priority,
+      status: item.status,
+      statusLabel: item.statusLabel,
+      clientAction: item.clientAction,
+      professionalAction: item.professionalAction,
+      servicePath: item.servicePath,
+      roadmapPhase: roadmapPhaseForChecklistItem(item)
+    }));
+
+    const businessSignals = input?.smartAlertSignals && typeof input.smartAlertSignals === "object"
+      ? input.smartAlertSignals
+      : {};
+    const businessDetected = Boolean(
+      businessSignals.hasBusinessActivity ||
+      alerts.some((alert) => String(alert.id || "").includes("business")) ||
+      (recommendations || []).some(
+        (item) => item.category === "business" || String(item.id || "").includes("entity")
+      )
+    );
+    const booksReportedCurrent = String(businessSignals.businessBooksStatus || "") === "current";
+    const estimatedPaymentsEntered =
+      numberOrZero(businessSignals.federalEstimatedPayments) +
+      numberOrZero(businessSignals.stateEstimatedPayments) > 0;
+
+    const businessTrack = businessDetected
+      ? {
+          active: true,
+          title: "Small-Business Owner Wealth Track",
+          summary: "Reliable books, controlled estimated taxes, the right entity and compensation structure, and owner retirement planning create the foundation for stronger tax decisions.",
+          steps: [
+            {
+              key: "books",
+              title: "Build reliable books",
+              detail: "Keep business income, expenses, owner activity, and account reconciliations current before relying on profit or tax projections.",
+              ...(booksReportedCurrent
+                ? { status: "complete", label: "Books Reported Current", tone: "complete" }
+                : roadmapBusinessStepStatus(
+                    scorecardSummary,
+                    ["smart-business-books-cleanup", "smart-business-books-verification", "opportunity-bookkeeping"],
+                    "Confirm Bookkeeping Status"
+                  ))
+            },
+            {
+              key: "payments",
+              title: "Control quarterly tax payments",
+              detail: "Review business profit, withholding, and federal and state estimated payments before a balance grows unexpectedly.",
+              ...(estimatedPaymentsEntered
+                ? { status: "review", label: "Payments Entered — Verify", tone: "review" }
+                : roadmapBusinessStepStatus(
+                    scorecardSummary,
+                    ["smart-business-estimated-tax", "smart-estimated-payment-need", "withholding-adjust"],
+                    "Quarterly Review Needed"
+                  ))
+            },
+            {
+              key: "entity",
+              title: "Review entity and owner compensation",
+              detail: "Evaluate whether the current structure, payroll treatment, and owner compensation still fit the business facts and goals.",
+              ...roadmapBusinessStepStatus(
+                scorecardSummary,
+                ["opportunity-entity", "smart-business-owner-review"],
+                "Business Tax Review Needed"
+              )
+            },
+            {
+              key: "owner-wealth",
+              title: "Build an owner tax-and-retirement strategy",
+              detail: "Coordinate retirement contributions, cash needs, deductions, and year-end planning instead of making isolated tax decisions.",
+              ...roadmapBusinessStepStatus(
+                scorecardSummary,
+                ["opportunity-retirement", "opportunity-hsa"],
+                "Owner Strategy Review"
+              )
+            }
+          ]
+        }
+      : { active: false, title: "", summary: "", steps: [] };
+
+    const currentPhase = phases[currentPhaseIndex] || phases[0];
+    const roadmapProgress = phases.length
+      ? Math.round(
+          phases.reduce((total, phase) => total + phase.progress, 0) /
+          phases.length
+        )
+      : 0;
+    const targetScore = Math.round(numberOrZero(health.nextMilestone) || 60);
+    const attainableScore = Math.round(numberOrZero(health.attainableScore) || 100);
+    const pointsToTarget = Math.max(0, targetScore - score);
+
+    let status = "Roadmap ready to begin";
+    if (unresolvedUrgent.length) status = "Immediate action required before optimization";
+    else if (score >= 95 && checklistProgress >= 90) status = "Maintain and protect strong tax readiness";
+    else if (roadmapProgress >= 70) status = "Roadmap progress is strong";
+    else if (roadmapProgress > 0) status = "Roadmap in progress";
+
+    return {
+      taxYear: String(input?.taxYear || "Current"),
+      currentPhaseKey: currentPhase?.key || "protect",
+      currentPhaseLabel: currentPhase?.label || "Protect & Stabilize",
+      currentPhasePurpose: currentPhase?.purpose || "Resolve urgent tax risks first.",
+      roadmapProgress,
+      score,
+      targetScore,
+      pointsToTarget,
+      attainableScore,
+      potentialBenefit: Math.round(numberOrZero(scorecardSummary.potentialBenefit)),
+      verifiedBenefit: Math.round(numberOrZero(scorecardSummary.verifiedBenefit)),
+      checklistProgress,
+      unresolvedUrgentCount: unresolvedUrgent.length,
+      unresolvedOpportunityCount: Math.max(
+        0,
+        numberOrZero(scorecardSummary.applicableCount) -
+        numberOrZero(scorecardSummary.completedCount)
+      ),
+      verifiedOpportunityCount:
+        numberOrZero(scorecardSummary.verifiedCount) +
+        numberOrZero(scorecardSummary.completedCount),
+      phases,
+      nextMoves,
+      businessTrack,
+      status,
+      guidance: "Potential benefits remain estimates until eligibility, documentation, timing, and tax treatment are professionally reviewed. The roadmap is tax-focused planning and is not investment advice."
+    };
+  }
+
   function evaluate(input = {}) {
     const opportunitySummary = calculateOpportunitySummary(input);
     const smartAlerts = buildSmartAlerts({
@@ -1859,6 +2188,17 @@
       scorecard,
       input?.yearEndChecklistRecords || {}
     );
+    const wealthRoadmap = buildWealthRoadmap(
+      {
+        ...input,
+        opportunitySummary
+      },
+      recommendations,
+      smartAlerts,
+      scorecard,
+      taxHealthProgress,
+      yearEndChecklist
+    );
     const servicePaths = [...new Set(
       recommendations
         .map((recommendation) => recommendation.servicePath)
@@ -1876,6 +2216,7 @@
       immediateAction,
       taxHealthProgress,
       yearEndChecklist,
+      wealthRoadmap,
       primaryRecommendation: recommendations[0] || null,
       servicePaths
     };
@@ -1901,6 +2242,7 @@
     buildImmediateAction,
     buildTaxHealthProgress,
     buildYearEndPlanningChecklist,
+    buildWealthRoadmap,
     buildClientExplanation,
     getOpportunityDefinitions,
     getDefinition,

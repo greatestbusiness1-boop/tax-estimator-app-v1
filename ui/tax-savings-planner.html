@@ -178,24 +178,85 @@
     .year-end-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:11px;color:var(--ink-soft)}
     .year-end-footer strong{color:var(--navy)}
     .year-end-empty{border:1px dashed var(--line);padding:18px;color:var(--ink-soft);line-height:1.55}
-    @media(max-width:900px){.health-progress-top,.health-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.health-detail-grid{grid-template-columns:1fr}.immediate-action-grid{grid-template-columns:1fr}.immediate-action-detail,.immediate-action-detail:nth-child(2n){border-right:0}}
-    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid,.year-end-actions,.year-end-controls{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head,.immediate-action-top,.year-end-card-head{flex-direction:column}.priority-pill{white-space:normal}.health-progress-top,.health-category-grid{grid-template-columns:1fr}.immediate-action-count{min-width:0;width:100%;text-align:left}.immediate-action-count strong,.immediate-action-count span{display:inline}.immediate-action-count span{margin-left:7px}}
+
+    .wealth-roadmap-hero{border:1px solid var(--navy);background:linear-gradient(135deg,var(--navy-deep),var(--navy));color:#fff;padding:20px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin:16px 0}
+    .wealth-roadmap-kicker{display:block;color:var(--gold-soft);font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .wealth-roadmap-hero h4{margin:7px 0 8px;font-family:Fraunces,serif;font-size:28px;color:#fff}
+    .wealth-roadmap-hero p{margin:0;color:#dce5ea;font-size:13px;line-height:1.55;max-width:690px}
+    .wealth-roadmap-score{min-width:150px;text-align:center;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);padding:14px}
+    .wealth-roadmap-score strong{display:block;font-family:"IBM Plex Mono",monospace;font-size:30px;color:#fff}
+    .wealth-roadmap-score span{display:block;margin-top:4px;color:#dce5ea;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .wealth-roadmap-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 22px}
+    .wealth-roadmap-metric{border:1px solid var(--line-soft);background:#fff;padding:12px}
+    .wealth-roadmap-metric span{display:block;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+    .wealth-roadmap-metric strong{display:block;margin-top:6px;color:var(--navy);font-family:"IBM Plex Mono",monospace;font-size:18px}
+    .wealth-next-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 24px}
+    .wealth-next-card{border:1px solid var(--line);border-top:5px solid var(--gold);background:#fff;padding:15px;min-height:210px}
+    .wealth-next-card[data-priority="urgent"],.wealth-next-card[data-priority="high"]{border-top-color:var(--red)}
+    .wealth-next-card .wealth-next-number{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-family:"IBM Plex Mono",monospace;font-weight:800}
+    .wealth-next-card h5{margin:11px 0 7px;color:var(--navy);font-family:Fraunces,serif;font-size:18px;line-height:1.3}
+    .wealth-next-card p{margin:0;color:var(--ink-soft);font-size:12px;line-height:1.5}
+    .wealth-next-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+    .wealth-next-meta span{border:1px solid var(--line);background:#f7f3e9;padding:4px 7px;font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:700;text-transform:uppercase}
+    .wealth-next-action{margin-top:11px;border-top:1px solid var(--line-soft);padding-top:9px}
+    .wealth-next-action strong{display:block;color:var(--navy);font-size:11px;margin-bottom:3px}
+    .wealth-roadmap-phases{display:grid;gap:13px;margin-top:14px}
+    .wealth-phase{border:1px solid var(--line);background:#fff;display:grid;grid-template-columns:72px 1fr;gap:14px;padding:16px;position:relative}
+    .wealth-phase[data-tone="current"]{border:2px solid var(--gold);background:#fffaf0}
+    .wealth-phase[data-tone="complete"]{border-left:7px solid var(--green)}
+    .wealth-phase[data-tone="progress"]{border-left:7px solid #6f7890}
+    .wealth-phase[data-tone="upcoming"]{border-left:7px solid var(--line)}
+    .wealth-phase-number{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:800}
+    .wealth-phase[data-tone="complete"] .wealth-phase-number{background:var(--green)}
+    .wealth-phase[data-tone="current"] .wealth-phase-number{background:var(--gold);color:var(--navy-deep)}
+    .wealth-phase-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .wealth-phase-head h5{margin:0;color:var(--navy);font-family:Fraunces,serif;font-size:21px}
+    .wealth-phase-head p{margin:4px 0 0;color:var(--ink-soft);font-size:12px}
+    .wealth-phase-status{border:1px solid var(--line);padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+    .wealth-phase-progress{height:11px;background:#e9e1d0;border:1px solid var(--line);margin:12px 0 7px;overflow:hidden}
+    .wealth-phase-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green))}
+    .wealth-phase-caption{display:flex;justify-content:space-between;gap:12px;color:var(--ink-soft);font-size:11px}
+    .wealth-phase-items{display:grid;gap:6px;margin-top:11px}
+    .wealth-phase-item{border-left:3px solid var(--gold);padding-left:9px;color:var(--ink-soft);font-size:11px;line-height:1.4}
+    .wealth-phase-item strong{color:var(--navy)}
+    .wealth-business-track{margin-top:24px;border:2px solid var(--navy);background:#f5f8fa;padding:18px}
+    .wealth-business-track h4{margin:0;color:var(--navy);font-family:Fraunces,serif;font-size:23px}
+    .wealth-business-track>p{color:var(--ink-soft);font-size:13px;line-height:1.55}
+    .wealth-business-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:13px}
+    .wealth-business-step{border:1px solid var(--line);background:#fff;padding:13px}
+    .wealth-business-step h5{margin:0 0 5px;color:var(--navy);font-size:14px}
+    .wealth-business-step p{margin:0;color:var(--ink-soft);font-size:11px;line-height:1.45}
+    .wealth-business-step span{display:inline-block;margin-top:9px;border:1px solid var(--line);padding:4px 7px;font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:800;text-transform:uppercase}
+    .wealth-business-step[data-tone="complete"] span,.wealth-business-step[data-tone="ready"] span{background:#dcefe6;color:var(--green-deep)}
+    .wealth-business-step[data-tone="action"] span{background:#f5dedb;color:var(--red-deep)}
+    .wealth-roadmap-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+    .wealth-roadmap-toolbar button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer}
+    .wealth-roadmap-toolbar button.secondary{background:#fff;color:var(--navy)}
+    .wealth-roadmap-guidance{border:1px solid var(--gold-soft);background:#fbf5e7;padding:12px;color:var(--ink-soft);font-size:12px;line-height:1.55;margin-top:14px}
+    @media(max-width:900px){.health-progress-top,.health-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.health-detail-grid{grid-template-columns:1fr}.immediate-action-grid{grid-template-columns:1fr}.immediate-action-detail,.immediate-action-detail:nth-child(2n){border-right:0}.wealth-roadmap-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.wealth-next-grid{grid-template-columns:1fr}.wealth-business-grid{grid-template-columns:1fr}}
+    @media(max-width:700px){.scorecard-controls,.scorecard-detail-grid,.smart-alert-grid,.year-end-actions,.year-end-controls{grid-template-columns:1fr}.scorecard-card-head,.smart-alert-head,.immediate-action-top,.year-end-card-head,.wealth-phase-head{flex-direction:column}.priority-pill{white-space:normal}.health-progress-top,.health-category-grid,.wealth-roadmap-metrics{grid-template-columns:1fr}.immediate-action-count{min-width:0;width:100%;text-align:left}.immediate-action-count strong,.immediate-action-count span{display:inline}.immediate-action-count span{margin-left:7px}.wealth-roadmap-hero{grid-template-columns:1fr}.wealth-roadmap-score{text-align:left}.wealth-phase{grid-template-columns:1fr}.wealth-phase-status{white-space:normal}}
+    .executive-report-hero{border:2px solid var(--navy);background:linear-gradient(135deg,#0c1e2c,#183a52);color:#fff;padding:24px;margin:4px 0 22px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+    .executive-report-hero h3{font-size:30px;margin:4px 0 8px;color:#fff}.executive-report-hero p{margin:0;color:#dce5ea;line-height:1.6;max-width:720px}.executive-report-badge{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);padding:16px;text-align:center;min-width:170px}.executive-report-badge strong{display:block;font-family:"IBM Plex Mono",monospace;font-size:28px;color:#fff}.executive-report-badge span{display:block;margin-top:5px;color:#dce5ea;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+    .executive-report-scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 22px}.executive-report-scope div{border:1px solid var(--line-soft);background:#fff;padding:13px}.executive-report-scope strong{display:block;color:var(--navy);margin-bottom:4px}.executive-report-scope span{display:block;color:var(--ink-soft);font-size:12px;line-height:1.45}
+    .executive-report-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0}.executive-report-actions button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:13px 18px;font-weight:800;cursor:pointer}.executive-report-actions button:hover{background:var(--navy-deep)}.executive-report-status{font-size:12px;color:var(--ink-soft)}
+    .service-boundary{border:2px solid var(--gold);background:#fbf5e7;padding:18px;margin-top:22px}.service-boundary h4{margin:0 0 10px;color:var(--navy);font-family:Fraunces,serif;font-size:22px}.service-boundary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.service-boundary-item{border:1px solid var(--gold-soft);background:#fff;padding:13px}.service-boundary-item strong{display:block;color:var(--navy);margin-bottom:5px}.service-boundary-item span{display:block;color:var(--ink-soft);font-size:12px;line-height:1.5}.service-price{margin-top:7px!important;color:var(--green-deep)!important;font-family:"IBM Plex Mono",monospace;font-weight:800}
+    .planner-print-message{display:none}
+    @media(max-width:800px){.executive-report-hero{grid-template-columns:1fr}.executive-report-badge{text-align:left}.executive-report-scope,.service-boundary-grid{grid-template-columns:1fr}}
     @media print{
-      .tabs,.note-actions,.cta,.year-end-toolbar{display:none!important}
-      .panel{display:block!important;border-top:1px solid var(--line);page-break-inside:avoid}
-      body{background:#fff}
-      main{max-width:none;padding:0}
+      .masthead,main,footer{display:none!important}
+      .planner-print-message{display:block!important;padding:40px;font-family:Arial,sans-serif;color:#111}
+      .planner-print-message h1{font-size:26px}.planner-print-message p{font-size:15px;line-height:1.6}
     }
 
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.3.1 + Year-End Checklist sync active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.4.0 + Executive Planning Report active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.3.1 + Year-End Checklist sync active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.4.0 + Executive Planning Report active</span></div>
 
   <section class="immediate-action-banner" id="immediateActionBanner" aria-live="assertive" hidden>
     <div class="immediate-action-top">
@@ -239,6 +300,8 @@
     <button class="tab" data-tab="scorecard">06 Opportunity Scorecard</button>
     <button class="tab" data-tab="smartAlerts">07 Client Tax Profile</button>
     <button class="tab" data-tab="yearEndChecklist">08 Year-End Planning Checklist</button>
+    <button class="tab" data-tab="wealthRoadmap">09 Wealth Roadmap™</button>
+    <button class="tab" data-tab="executiveReport">10 Executive Report</button>
   </nav>
 
   <section class="panel active" id="overview">
@@ -642,7 +705,6 @@
         <div class="note-actions">
           <button type="button" id="saveProfessionalNotes">Save Notes</button>
           <button type="button" class="secondary" id="clearProfessionalNotes">Clear Notes</button>
-          <button type="button" class="secondary" id="printPlanningSummary">Print / Save Planning Summary</button>
         </div>
         <div class="note-status" id="professionalNotesStatus">No notes saved yet.</div>
 
@@ -670,10 +732,6 @@
         <div class="section-head"><div class="letter">C</div><h3>Client Opportunity Scorecard</h3></div>
         <p class="module-note">Use this scorecard to move each finding from a potential opportunity to a documented professional conclusion. A potential benefit is not guaranteed and should not be presented as verified until eligibility, supporting information, and tax treatment have been reviewed.</p>
 
-        <div class="scorecard-toolbar">
-          <button type="button" id="copyClientOpportunitySummary">Copy Client Summary</button>
-          <button type="button" class="secondary" id="copyPotentialBenefitScript">Copy Potential-Benefit Script</button>
-        </div>
         <div class="scorecard-save-status" id="scorecardSaveStatus">Planner entries, selections, and scorecard changes save automatically in this browser for this planner record.</div>
 
         <div class="scorecard-list" id="opportunityScorecardList">
@@ -841,9 +899,6 @@
           </div>
         </div>
 
-        <div class="alert-toolbar">
-          <button type="button" id="copySmartAlertSummary">Copy Smart Alert Summary</button>
-        </div>
         <div class="alert-save-status" id="smartAlertSaveStatus">Client Tax Profile inputs save automatically in this browser for this planner record.</div>
 
         <div class="section-head" style="margin-top:24px"><div class="letter">!</div><h3>Active Client Alerts</h3></div>
@@ -891,10 +946,6 @@
           <div class="year-end-progress-track" aria-hidden="true"><div class="year-end-progress-fill" id="yearEndProgressFill"></div></div>
         </div>
 
-        <div class="year-end-toolbar">
-          <button type="button" id="copyYearEndChecklist">Copy Client Checklist</button>
-          <button type="button" class="secondary" id="printYearEndChecklist">Print / Save Checklist</button>
-        </div>
         <div class="year-end-save-status" id="yearEndChecklistSaveStatus">Checklist statuses, target dates, and notes save automatically in this browser for this planner record.</div>
 
         <div id="yearEndChecklistGroups">
@@ -927,9 +978,142 @@
     </div>
   </section>
 
+
+  <section class="panel" id="wealthRoadmap">
+    <div class="grid">
+      <div class="form-card">
+        <div class="section-head"><div class="letter">W</div><h3>Wealth Roadmap™</h3></div>
+        <p class="module-note">This tax-focused roadmap converts the Tax Health Score, Opportunity Scorecard, Smart Alerts, and Year-End Planning Checklist into a clear path from immediate protection to long-term tax readiness. It answers: <strong>“What should I do next?”</strong></p>
+
+        <div class="wealth-roadmap-hero">
+          <div>
+            <span class="wealth-roadmap-kicker">Your Current Roadmap Phase</span>
+            <h4 id="wealthRoadmapCurrentPhase">Protect &amp; Stabilize</h4>
+            <p id="wealthRoadmapCurrentPurpose">Resolve urgent tax risks and establish a reliable starting point.</p>
+          </div>
+          <div class="wealth-roadmap-score">
+            <strong id="wealthRoadmapProgress">0%</strong>
+            <span>Roadmap progress</span>
+          </div>
+        </div>
+
+        <div class="wealth-roadmap-metrics">
+          <div class="wealth-roadmap-metric"><span>Current Tax Health Score</span><strong id="wealthRoadmapHealthScore">0 / 100</strong></div>
+          <div class="wealth-roadmap-metric"><span>Next Score Target</span><strong id="wealthRoadmapTargetScore">60 / 100</strong></div>
+          <div class="wealth-roadmap-metric"><span>Potential Benefit</span><strong class="positive" id="wealthRoadmapPotentialBenefit">$0</strong></div>
+          <div class="wealth-roadmap-metric"><span>Verified Estimate</span><strong class="positive" id="wealthRoadmapVerifiedBenefit">$0</strong></div>
+        </div>
+
+        <div class="section-head"><div class="letter">N</div><h3>Your Next 3 Moves</h3></div>
+        <p class="module-note">Complete these items in order. The first move is the most time-sensitive or highest-priority unresolved action in the current plan.</p>
+        <div class="wealth-next-grid" id="wealthRoadmapNextMoves">
+          <div class="year-end-empty">Complete the Planner sections to create the next three moves.</div>
+        </div>
+
+        <div class="section-head"><div class="letter">4</div><h3>Your 4-Phase Tax-to-Wealth Path</h3></div>
+        <div class="wealth-roadmap-phases" id="wealthRoadmapPhases"></div>
+
+        <div class="wealth-business-track" id="wealthBusinessTrack" hidden>
+          <h4 id="wealthBusinessTrackTitle">Small-Business Owner Wealth Track</h4>
+          <p id="wealthBusinessTrackSummary"></p>
+          <div class="wealth-business-grid" id="wealthBusinessTrackSteps"></div>
+        </div>
+
+        <div class="wealth-roadmap-guidance" id="wealthRoadmapGuidance">Potential benefits remain estimates until eligibility, documentation, timing, and tax treatment are professionally reviewed.</div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Roadmap Snapshot</h3>
+          <div class="row"><span>Current phase</span><strong id="wealthSnapshotPhase">Protect &amp; Stabilize</strong></div>
+          <div class="row"><span>Points to next score target</span><strong class="number" id="wealthSnapshotPoints">60</strong></div>
+          <div class="row"><span>Unresolved opportunities</span><strong class="number" id="wealthSnapshotOpen">0</strong></div>
+          <div class="row"><span>Verified / completed opportunities</span><strong class="number" id="wealthSnapshotVerified">0</strong></div>
+          <div class="row"><span>Year-End Checklist progress</span><strong class="number" id="wealthSnapshotChecklist">0%</strong></div>
+          <div class="row total"><span>Current attainable score</span><strong class="number" id="wealthSnapshotAttainable">100 / 100</strong></div>
+          <span class="status" id="wealthRoadmapStatus">Roadmap ready to begin</span>
+        </div>
+
+        <div class="tape" style="margin-top:34px">
+          <h3>How This Roadmap Works</h3>
+          <div class="action-list">
+            <div class="action-item"><strong>1. Protect first</strong><span>Urgent notices, payment risks, missing records, and projected balances are handled before optional strategies.</span></div>
+            <div class="action-item"><strong>2. Verify before promising</strong><span>Potential benefits move through professional review before they are described as verified.</span></div>
+            <div class="action-item"><strong>3. Optimize the tax year</strong><span>Withholding, estimated payments, retirement, charitable, investment, and business decisions are coordinated rather than handled separately.</span></div>
+            <div class="action-item"><strong>4. Maintain the progress</strong><span>The Tax Health Score, Year-End Checklist, and future quarterly reviews show whether the client is moving toward stronger tax readiness.</span></div>
+          </div>
+          <a class="cta" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule Tax Planning Review</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="executiveReport">
+    <div class="grid">
+      <div class="form-card">
+        <div class="executive-report-hero">
+          <div>
+            <span class="wealth-roadmap-kicker">One Complete Client Deliverable</span>
+            <h3>Executive Tax Planning Report</h3>
+            <p>Generate one organized report from Sections 00-09. The report includes only relevant findings, removes blank input screens and internal controls, and keeps potential benefits separate from professionally verified estimates.</p>
+          </div>
+          <div class="executive-report-badge">
+            <strong>1</strong>
+            <span>Complete report</span>
+          </div>
+        </div>
+
+        <div class="section-head"><div class="letter">R</div><h3>What the Report Includes</h3></div>
+        <div class="executive-report-scope">
+          <div><strong>Executive Summary</strong><span>Tax Health Score, score progress, roadmap phase, projected result, potential benefit, verified estimate, and highest-priority next actions.</span></div>
+          <div><strong>Immediate Action Required</strong><span>Urgent findings stand out with the reason, possible consequence, required client action, and professional review step.</span></div>
+          <div><strong>Opportunity &amp; Risk Review</strong><span>Potential tax savings, potential tax exposure, documentation needs, risk-reduction items, and current professional-review status.</span></div>
+          <div><strong>Client Tax Profile</strong><span>Relevant charitable, investment, retirement, Social Security, estimated-payment, IRS agreement, and business information.</span></div>
+          <div><strong>Year-End Planning Checklist</strong><span>Timed client actions, professional review steps, target dates, current status, and completed work.</span></div>
+          <div><strong>Wealth Roadmap™</strong><span>Current phase, next three moves, four-phase path, Tax Health Score target, and the business-owner track when applicable.</span></div>
+        </div>
+
+        <div class="executive-report-actions">
+          <button type="button" id="generateExecutiveReport">Open Executive Tax Planning Report</button>
+          <span class="executive-report-status" id="executiveReportStatus">The report opens in a separate page with one Print / Save PDF button.</span>
+        </div>
+
+        <div class="service-boundary">
+          <h4>Included Report vs. Continued Service</h4>
+          <div class="service-boundary-grid">
+            <div class="service-boundary-item"><strong>Included With the Paid Review</strong><span>The initial Tax Savings Planner™ assessment and one Executive Tax Planning Report are included as the client’s planning snapshot.</span><span class="service-price">Included bonus</span></div>
+            <div class="service-boundary-item"><strong>Continued Tax Planning Access</strong><span>Future portal access can preserve score history, saved actions, updated checklists, and new automated recommendations. It does not include unlimited calls or professional review.</span><span class="service-price">Planned: $59 / year</span></div>
+            <div class="service-boundary-item"><strong>Tax Planning Review Meeting</strong><span>Live review of the Tax Health Score, urgent items, supporting information, potential opportunities, and recommended next actions is a separate professional service.</span><span class="service-price">Planned: 45 minutes / $99</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape">
+          <h3>Report Rules</h3>
+          <div class="action-list">
+            <div class="action-item"><strong>One report only</strong><span>Section-by-section copy and print buttons have been removed.</span></div>
+            <div class="action-item"><strong>Relevant information only</strong><span>Unused input fields and blank sections are excluded from the client report.</span></div>
+            <div class="action-item"><strong>Potential is not verified</strong><span>Preliminary opportunities remain clearly separated from professionally verified estimates.</span></div>
+            <div class="action-item"><strong>Professional time is separate</strong><span>Portal access does not include unlimited calls, document review, tax preparation, IRS representation, or recurring meetings.</span></div>
+          </div>
+        </div>
+        <div class="tape" style="margin-top:34px">
+          <h3>Before You Generate</h3>
+          <p class="module-note">Review the Opportunity Scorecard statuses, verified estimates, Advisor Notes, target dates, and completed actions. The report captures the Planner exactly as it exists when you open it.</p>
+          <span class="status">Final review recommended</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="disclaimer"><strong>Educational planning estimate only.</strong> This tool is not a filed tax return and is not personalized legal or tax advice. The completed version will not account for every tax rule, including AMT, capital gains, high-income phase-outs, local/city taxes, the Qualified Business Income deduction, or every available credit. Review important decisions with a qualified tax professional at Greatest Business Solution LLC.</div>
 </main>
 <footer>© Greatest Business Solution LLC — Tax &amp; Financial Services</footer>
+<div class="planner-print-message">
+  <h1>Use the Executive Tax Planning Report</h1>
+  <p>This interactive Planner is not formatted as the client deliverable. Open <strong>10 Executive Report</strong>, then select <strong>Open Executive Tax Planning Report</strong> to print or save one organized PDF.</p>
+</div>
 <script src="/recommendation-engine.js"></script>
 <script>
   const TAX_2026 = {
@@ -1031,6 +1215,18 @@
       progress: 0,
       status: "Checklist ready to begin"
     },
+    wealthRoadmap: {
+      phases: [],
+      nextMoves: [],
+      roadmapProgress: 0,
+      score: 0,
+      targetScore: 60,
+      attainableScore: 100,
+      potentialBenefit: 0,
+      verifiedBenefit: 0,
+      checklistProgress: 0,
+      status: "Roadmap ready to begin"
+    },
     primaryRecommendation: null,
     servicePaths: []
   };
@@ -1055,6 +1251,8 @@
     `taxSavingsPlannerTaxHealthHistory:${plannerLeadId}`;
   const yearEndChecklistKey =
     `taxSavingsPlannerYearEndChecklist:${plannerLeadId}`;
+  const executiveReportKey =
+    `taxSavingsPlannerExecutiveReport:${plannerLeadId}`;
   const opportunityStages = recommendationEngine.getOpportunityStages();
   const yearEndChecklistStatuses = recommendationEngine.getYearEndChecklistStatuses();
   const potentialBenefitClientScript =
@@ -1944,6 +2142,7 @@
     renderOpportunityScorecard(latestRecommendationResult.recommendations);
     renderSmartAlerts(latestRecommendationResult.smartAlerts);
     renderYearEndPlanningChecklist(latestRecommendationResult.yearEndChecklist);
+    renderWealthRoadmap(latestRecommendationResult.wealthRoadmap);
     updatePlannerOverview();
   }
 
@@ -2556,6 +2755,273 @@
     return lines.join("\n");
   }
 
+
+  function wealthRoadmapPhaseLabel(key) {
+    const labels = {
+      protect: "Protect & Stabilize",
+      prepare: "Verify & Organize",
+      optimize: "Optimize & Capture",
+      grow: "Maintain & Grow"
+    };
+    return labels[key] || "Tax Planning";
+  }
+
+  function renderWealthRoadmap(roadmap) {
+    const result = roadmap || {
+      phases: [],
+      nextMoves: [],
+      roadmapProgress: 0,
+      score: 0,
+      targetScore: 60,
+      pointsToTarget: 60,
+      attainableScore: 100,
+      potentialBenefit: 0,
+      verifiedBenefit: 0,
+      checklistProgress: 0,
+      unresolvedOpportunityCount: 0,
+      verifiedOpportunityCount: 0,
+      currentPhaseLabel: "Protect & Stabilize",
+      currentPhasePurpose: "Resolve urgent tax risks and establish a reliable starting point.",
+      businessTrack: { active: false, steps: [] },
+      status: "Roadmap ready to begin",
+      guidance: "Potential benefits remain estimates until eligibility, documentation, timing, and tax treatment are professionally reviewed."
+    };
+
+    document.getElementById("wealthRoadmapCurrentPhase").textContent = result.currentPhaseLabel;
+    document.getElementById("wealthRoadmapCurrentPurpose").textContent = result.currentPhasePurpose;
+    document.getElementById("wealthRoadmapProgress").textContent = `${result.roadmapProgress || 0}%`;
+    document.getElementById("wealthRoadmapHealthScore").textContent = `${result.score || 0} / 100`;
+    document.getElementById("wealthRoadmapTargetScore").textContent = `${result.targetScore || 0} / 100`;
+    setMoney("wealthRoadmapPotentialBenefit", result.potentialBenefit || 0, "positive");
+    setMoney("wealthRoadmapVerifiedBenefit", result.verifiedBenefit || 0, "positive");
+
+    document.getElementById("wealthSnapshotPhase").textContent = result.currentPhaseLabel;
+    document.getElementById("wealthSnapshotPoints").textContent = result.pointsToTarget || 0;
+    document.getElementById("wealthSnapshotOpen").textContent = result.unresolvedOpportunityCount || 0;
+    document.getElementById("wealthSnapshotVerified").textContent = result.verifiedOpportunityCount || 0;
+    document.getElementById("wealthSnapshotChecklist").textContent = `${result.checklistProgress || 0}%`;
+    document.getElementById("wealthSnapshotAttainable").textContent = `${result.attainableScore || 100} / 100`;
+    document.getElementById("wealthRoadmapStatus").textContent = result.status || "Roadmap ready to begin";
+    document.getElementById("wealthRoadmapGuidance").textContent = result.guidance || "";
+
+    const nextMoves = document.getElementById("wealthRoadmapNextMoves");
+    if (!result.nextMoves?.length) {
+      nextMoves.innerHTML = '<div class="year-end-empty">Complete the Planner sections to create the next three moves.</div>';
+    } else {
+      nextMoves.innerHTML = result.nextMoves.map(move => `
+        <article class="wealth-next-card" data-priority="${escapeHtml(move.priority || "review")}">
+          <span class="wealth-next-number">${Number(move.order || 0)}</span>
+          <h5>${escapeHtml(move.title)}</h5>
+          <p>${escapeHtml(move.clientAction)}</p>
+          <div class="wealth-next-meta">
+            <span>${escapeHtml(move.timingLabel || "Planning")}</span>
+            <span>${escapeHtml(wealthRoadmapPhaseLabel(move.roadmapPhase))}</span>
+            <span>${escapeHtml(move.statusLabel || "Not Started")}</span>
+          </div>
+          <div class="wealth-next-action">
+            <strong>What Cedric will review</strong>
+            <p>${escapeHtml(move.professionalAction)}</p>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    const phaseContainer = document.getElementById("wealthRoadmapPhases");
+    phaseContainer.innerHTML = (result.phases || []).map(phase => `
+      <article class="wealth-phase" data-tone="${escapeHtml(phase.statusTone || "upcoming")}">
+        <div class="wealth-phase-number">${Number(phase.order || 0)}</div>
+        <div>
+          <div class="wealth-phase-head">
+            <div>
+              <h5>${escapeHtml(phase.label)}</h5>
+              <p>${escapeHtml(phase.timeline)} · ${escapeHtml(phase.purpose)}</p>
+            </div>
+            <span class="wealth-phase-status">${escapeHtml(phase.statusLabel)}</span>
+          </div>
+          <div class="wealth-phase-progress" aria-hidden="true"><span style="width:${Math.max(0, Math.min(100, Number(phase.progress || 0)))}%"></span></div>
+          <div class="wealth-phase-caption"><span>${Number(phase.progress || 0)}% foundation strength</span><span>${phase.items?.length ? `${phase.items.length} active move${phase.items.length === 1 ? "" : "s"}` : "No open move in this phase"}</span></div>
+          ${phase.items?.length ? `<div class="wealth-phase-items">${phase.items.map(item => `<div class="wealth-phase-item"><strong>${escapeHtml(item.title)}</strong> — ${escapeHtml(item.statusLabel)}</div>`).join("")}</div>` : ""}
+        </div>
+      </article>
+    `).join("");
+
+    const businessTrack = document.getElementById("wealthBusinessTrack");
+    if (result.businessTrack?.active) {
+      businessTrack.hidden = false;
+      document.getElementById("wealthBusinessTrackTitle").textContent = result.businessTrack.title;
+      document.getElementById("wealthBusinessTrackSummary").textContent = result.businessTrack.summary;
+      document.getElementById("wealthBusinessTrackSteps").innerHTML = result.businessTrack.steps.map(step => `
+        <article class="wealth-business-step" data-tone="${escapeHtml(step.tone || "upcoming")}">
+          <h5>${escapeHtml(step.title)}</h5>
+          <p>${escapeHtml(step.detail)}</p>
+          <span>${escapeHtml(step.label)}</span>
+        </article>
+      `).join("");
+    } else {
+      businessTrack.hidden = true;
+      document.getElementById("wealthBusinessTrackSteps").innerHTML = "";
+    }
+  }
+
+  function buildWealthRoadmapSummaryText() {
+    const roadmap = latestRecommendationResult.wealthRoadmap || { phases: [], nextMoves: [] };
+    const clientName = document.getElementById("clientName")?.textContent || "Client";
+    const taxYear = roadmap.taxYear || document.getElementById("taxYear")?.textContent || "—";
+    const lines = [
+      "TAX SAVINGS PLANNER™ — WEALTH ROADMAP™",
+      `Client: ${clientName}`,
+      `Tax year: ${taxYear}`,
+      `Current Tax Health Score: ${roadmap.score || 0} / 100`,
+      `Next score target: ${roadmap.targetScore || 0} / 100`,
+      `Current roadmap phase: ${roadmap.currentPhaseLabel || "Protect & Stabilize"}`,
+      `Roadmap progress: ${roadmap.roadmapProgress || 0}%`,
+      `Potential benefit identified: ${money.format(Math.round(roadmap.potentialBenefit || 0))}`,
+      `Verified estimate entered: ${money.format(Math.round(roadmap.verifiedBenefit || 0))}`,
+      "",
+      "YOUR NEXT 3 MOVES"
+    ];
+
+    if (!roadmap.nextMoves?.length) {
+      lines.push("Complete the Planner sections to create the next action list.");
+    } else {
+      roadmap.nextMoves.forEach(move => {
+        lines.push(`${move.order}. ${move.title}`);
+        lines.push(`Timing: ${move.timingLabel}`);
+        lines.push(`What you should do: ${move.clientAction}`);
+        lines.push(`What Cedric will review: ${move.professionalAction}`);
+        lines.push("");
+      });
+    }
+
+    lines.push("YOUR 4-PHASE TAX-TO-WEALTH PATH");
+    (roadmap.phases || []).forEach(phase => {
+      lines.push(`${phase.order}. ${phase.label} — ${phase.statusLabel} (${phase.progress}%)`);
+      lines.push(phase.purpose);
+    });
+
+    if (roadmap.businessTrack?.active) {
+      lines.push("", roadmap.businessTrack.title.toUpperCase());
+      roadmap.businessTrack.steps.forEach(step => {
+        lines.push(`- ${step.title}: ${step.label}`);
+      });
+    }
+
+    lines.push("", roadmap.guidance || "Potential benefits require professional verification before action is recommended.");
+    return lines.join("\n");
+  }
+
+  function plannerText(id, fallback = "") {
+    const element = document.getElementById(id);
+    return String(element?.textContent || fallback).trim();
+  }
+
+  function plannerValue(id, fallback = "") {
+    const element = document.getElementById(id);
+    if (!element) return fallback;
+    if (element.type === "checkbox") return Boolean(element.checked);
+    return String(element.value ?? fallback);
+  }
+
+  function plannerSelectedText(id, fallback = "") {
+    const element = document.getElementById(id);
+    return String(element?.selectedOptions?.[0]?.textContent || fallback).trim();
+  }
+
+  function buildExecutiveReportSnapshot() {
+    const recommendation = latestRecommendationResult || {};
+    const profile = buildSmartAlertSignals();
+    const reportGeneratedAt = new Date().toISOString();
+
+    return {
+      version: 1,
+      generatedAt: reportGeneratedAt,
+      leadId: plannerLeadId,
+      client: {
+        name: plannerText("clientName", "Paid Review Client"),
+        taxYear: plannerText("taxYear", currentPlannerTaxYear),
+        preparedBy: "Cedric Easley",
+        company: "Greatest Business Solution LLC"
+      },
+      withholding: {
+        filingStatus: plannerSelectedText("whFilingStatus", "Not entered"),
+        payFrequency: plannerSelectedText("whPayFrequency", "Not entered"),
+        state: plannerSelectedText("whStateCode", "Not entered"),
+        age: plannerValue("whAge", ""),
+        qualifyingChildren: plannerValue("whChildren", "0"),
+        otherDependents: plannerValue("whOtherDependents", "0"),
+        annualWages: numberValue("whWages"),
+        otherIncome: numberValue("whOtherIncome"),
+        deductionMethod: document.querySelector('input[name="whDeductionMethod"]:checked')?.value || "standard",
+        itemizedDeductions: numberValue("whItemized"),
+        federalWithholding: numberValue("whWithholding"),
+        stateWithholding: numberValue("whStateWithholding"),
+        grossIncome: plannerText("whGrossIncome", "$0"),
+        deductionUsed: plannerText("whDeductionUsed", "$0"),
+        taxableIncome: plannerText("whTaxableIncome", "$0"),
+        federalTaxBeforeCredits: plannerText("whTaxBeforeCredits", "$0"),
+        childDependentCredits: plannerText("whCredits", "$0"),
+        estimatedFederalTax: plannerText("whEstimatedTax", "$0"),
+        federalResultLabel: plannerText("whFederalLabel", "Federal projected result"),
+        federalResult: plannerText("whFederalResult", "$0"),
+        estimatedStateTaxLabel: plannerText("whStateTaxLabel", "Estimated state tax"),
+        estimatedStateTax: plannerText("whStateTax", "$0"),
+        stateResultLabel: plannerText("whStateLabel", "State projected result"),
+        stateResult: plannerText("whStateResult", "$0"),
+        combinedResultLabel: plannerText("whResultLabel", "Combined projected result"),
+        combinedResult: plannerText("whProjectedResult", "$0"),
+        status: plannerText("whStatus", "Not started"),
+        recommendedAdjustment: plannerText("whAdjustmentText", "")
+      },
+      finder: {
+        summary: latestFinderSummary,
+        selections: buildFinderSelections()
+      },
+      profile,
+      professionalNotes: plannerValue("professionalNotes", ""),
+      recommendation,
+      scoreHistory: loadTaxHealthHistory(),
+      serviceBoundaries: {
+        included: "Initial Tax Savings Planner assessment and one Executive Tax Planning Report",
+        continuedAccess: {
+          label: "Continued Tax Planning Access",
+          price: "$59 per year",
+          status: "Planned after client portal activation",
+          includes: "Saved Planner information, Tax Health Score history, progress tracking, updated checklists, reminders, and new automated recommendations",
+          excludes: "Unlimited calls, document review, tax-return preparation, IRS representation, and live professional meetings"
+        },
+        reviewMeeting: {
+          label: "Tax Planning Review Meeting",
+          price: "$99",
+          duration: "45 minutes",
+          status: "Scheduled and billed separately"
+        }
+      }
+    };
+  }
+
+  function openExecutiveReport() {
+    const status = document.getElementById("executiveReportStatus");
+
+    try {
+      savePlannerState();
+      const snapshot = buildExecutiveReportSnapshot();
+      window.localStorage.setItem(executiveReportKey, JSON.stringify(snapshot));
+      status.textContent = "Executive report snapshot created. Opening the report...";
+
+      const reportUrl = new URL("/tax-planning-report.html", window.location.origin);
+      reportUrl.searchParams.set("leadId", plannerLeadId);
+      reportUrl.searchParams.set("taxYear", currentPlannerTaxYear);
+      const reportWindow = window.open(reportUrl.toString(), "_blank", "noopener");
+
+      if (!reportWindow) {
+        window.location.href = reportUrl.toString();
+      }
+    } catch (error) {
+      console.error("Executive report could not be created.", error);
+      status.textContent = "The Executive Report could not be created. Please save the Planner and try again.";
+    }
+  }
+
   function updateTaxActionPlan(actions, combinedSavings, recommendations = []) {
     const list = document.getElementById("actionPlanList");
     const sortedActions = recommendationEngine.sortActions(actions || []);
@@ -2643,43 +3109,10 @@
     updateScorecardRecordFromControl(control);
   });
 
-  document.getElementById("copyYearEndChecklist").addEventListener("click", () => {
-    copyPlannerText(
-      buildYearEndChecklistSummaryText(),
-      "Year-End Planning Checklist copied.",
-      "yearEndChecklistSaveStatus"
-    );
-  });
-
-  document.getElementById("printYearEndChecklist").addEventListener("click", () => {
-    window.print();
-  });
-
-  document.getElementById("copySmartAlertSummary").addEventListener("click", () => {
-    copyPlannerText(
-      buildSmartAlertSummaryText(),
-      "Smart Alert Summary copied.",
-      "smartAlertSaveStatus"
-    );
-  });
-
-  document.getElementById("copyClientOpportunitySummary").addEventListener("click", () => {
-    copyPlannerText(
-      buildClientOpportunitySummaryText(),
-      "Client Opportunity Summary copied."
-    );
-  });
-
-  document.getElementById("copyPotentialBenefitScript").addEventListener("click", () => {
-    copyPlannerText(
-      potentialBenefitClientScript,
-      "Potential-benefit explanation copied."
-    );
-  });
+  document.getElementById("generateExecutiveReport").addEventListener("click", openExecutiveReport);
 
   document.getElementById("saveProfessionalNotes").addEventListener("click", saveProfessionalNotes);
   document.getElementById("clearProfessionalNotes").addEventListener("click", clearProfessionalNotes);
-  document.getElementById("printPlanningSummary").addEventListener("click", () => window.print());
 
   document.querySelectorAll("input[type='range']").forEach(slider => slider.addEventListener("input", () => {
     const output = slider.nextElementSibling;
