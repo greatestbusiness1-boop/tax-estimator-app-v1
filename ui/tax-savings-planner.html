@@ -477,15 +477,283 @@
       .tabs{grid-template-columns:1fr}
     }
 
+
+    /* Life Event & Tax Scenario Planner */
+    .scenario-layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(340px,.9fr);
+      gap:24px;
+      align-items:start;
+    }
+    .scenario-year-note{
+      margin:0 0 18px;
+      padding:13px 14px;
+      border:1px solid #d8c18f;
+      border-left:5px solid var(--gold);
+      background:#fffaf0;
+      color:#344452;
+      font-size:13px;
+      line-height:1.55;
+    }
+    .scenario-year-note strong{
+      color:var(--navy-deep);
+      font-weight:900;
+    }
+    .scenario-grid{
+      display:grid;
+      gap:13px;
+    }
+    .scenario-item{
+      border:1px solid var(--line);
+      border-left:5px solid #b9c7d2;
+      background:#fff;
+      box-shadow:0 3px 10px rgba(16,43,65,.04);
+      transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .scenario-item.is-active{
+      border-left-color:var(--gold);
+      background:#fffdf8;
+      box-shadow:0 8px 20px rgba(16,43,65,.08);
+    }
+    .scenario-title{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:15px 16px;
+      cursor:pointer;
+    }
+    .scenario-title input{
+      width:19px;
+      height:19px;
+      margin-top:2px;
+      flex:0 0 auto;
+      accent-color:var(--navy);
+    }
+    .scenario-title span{
+      display:grid;
+      gap:5px;
+    }
+    .scenario-title strong{
+      color:var(--navy-deep);
+      font-size:15px;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .scenario-title small{
+      color:#576775;
+      font-size:12px;
+      font-weight:600;
+      line-height:1.5;
+    }
+    .scenario-detail{
+      display:none;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+      padding:0 16px 16px 47px;
+      border-top:1px solid #eee4d3;
+    }
+    .scenario-item.is-active .scenario-detail{
+      display:grid;
+      padding-top:14px;
+    }
+    .scenario-detail .field{
+      min-width:0;
+    }
+    .scenario-detail label{
+      font-weight:900;
+      color:var(--navy);
+    }
+    .scenario-detail input,
+    .scenario-detail select{
+      font-weight:800;
+      color:var(--navy-deep);
+      background:#fff;
+    }
+    .life-scenario-tape .row strong{
+      font-size:17px;
+      font-weight:900;
+      color:var(--navy-deep);
+    }
+    .life-scenario-tape .row.total strong{
+      font-size:18px;
+    }
+    .scenario-results-wrap{
+      margin-top:24px;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:18px;
+    }
+    .section-head.compact{
+      margin-bottom:12px;
+    }
+    .scenario-results{
+      display:grid;
+      gap:12px;
+    }
+    .scenario-result{
+      border:1px solid #dfe5e9;
+      border-left:5px solid var(--gold);
+      background:#fbfcfd;
+      padding:15px;
+    }
+    .scenario-result.urgent{
+      border-left-color:#a62d2d;
+      background:#fff7f6;
+    }
+    .scenario-result.high{
+      border-left-color:#c05a23;
+      background:#fff9f4;
+    }
+    .scenario-result-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:8px;
+    }
+    .scenario-result h4{
+      margin:0;
+      color:var(--navy-deep);
+      font-size:15px;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .scenario-priority{
+      display:inline-flex;
+      align-items:center;
+      min-height:25px;
+      padding:4px 8px;
+      border:1px solid #d7c6a2;
+      background:#f5ecd9;
+      color:#614719;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .scenario-priority.urgent{
+      border-color:#e0a7a7;
+      background:#f7dede;
+      color:#8b1f1f;
+    }
+    .scenario-priority.high{
+      border-color:#e8b496;
+      background:#fae5d8;
+      color:#8f3d13;
+    }
+    .scenario-result p{
+      margin:0 0 10px;
+      color:#485968;
+      font-size:12px;
+      line-height:1.55;
+    }
+    .scenario-result-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .scenario-result-detail{
+      border:1px solid #e5dccb;
+      background:#fff;
+      padding:10px 11px;
+    }
+    .scenario-result-detail strong{
+      display:block;
+      margin-bottom:4px;
+      color:var(--navy-deep);
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .scenario-result-detail span{
+      display:block;
+      color:#53616d;
+      font-size:11px;
+      line-height:1.5;
+    }
+    .scenario-result-amount{
+      margin-top:10px;
+      padding:9px 10px;
+      background:#eef6f1;
+      border:1px solid #c9ded0;
+      color:#145a3a;
+      font-size:12px;
+      font-weight:900;
+    }
+    .scenario-empty{
+      color:#62717d;
+      font-size:12px;
+      line-height:1.55;
+      padding:14px;
+      border:1px dashed #cbd4da;
+      background:#f8fafb;
+    }
+    .scenario-boundary{
+      margin-top:18px;
+      padding:13px 14px;
+      background:#f4f6f8;
+      border:1px solid #d6dde2;
+      color:#4c5d69;
+      font-size:11px;
+      line-height:1.55;
+    }
+    .scenario-boundary strong{
+      color:var(--navy-deep);
+      font-weight:900;
+    }
+    @media(max-width:1050px){
+      .scenario-layout{grid-template-columns:1fr}
+    }
+    @media(max-width:720px){
+      .scenario-detail,
+      .scenario-result-grid{grid-template-columns:1fr}
+      .scenario-detail{padding-left:16px}
+      .scenario-result-head{display:block}
+      .scenario-priority{margin-top:8px}
+    }
+
+  
+    /* Global Money Display Standard V1.0.4 — unmistakable client-facing emphasis */
+    input.money,
+    input.currency-entry{
+      font-family:"Arial Black","Segoe UI Black","Segoe UI",Arial,Helvetica,sans-serif!important;
+      font-weight:900!important;
+      font-size:16px!important;
+      letter-spacing:-.01em;
+      font-variant-numeric:tabular-nums;
+      font-synthesis:weight;
+      -webkit-text-stroke:.16px currentColor;
+    }
+    .money-emphasis,
+    strong.money-emphasis,
+    b.money-emphasis,
+    .inline-amount,
+    .numeric-callout,
+    .value-pill strong,
+    .summary-row .right>span:not(.badge){
+      font-family:"Arial Black","Segoe UI Black","Segoe UI",Arial,Helvetica,sans-serif!important;
+      font-weight:900!important;
+      font-size:1.07em!important;
+      line-height:inherit;
+      letter-spacing:-.012em;
+      color:inherit;
+      font-variant-numeric:tabular-nums;
+      font-synthesis:weight;
+      -webkit-text-stroke:.16px currentColor;
+      text-rendering:geometricPrecision;
+    }
+
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.5.0 + Business Detection + Auto-Save active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.8.0 + Business Detection + Auto-Save active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.5.0 + Business Detection + Auto-Save active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.7.0 + Business Detection + Auto-Save active</span></div>
 
   <section class="resume-banner" id="resumeBanner" aria-live="polite">
     <div class="resume-copy">
@@ -554,7 +822,7 @@
           <option value="overview">00 Overview</option>
           <option value="withholding">01 Withholding Checkup</option>
           <option value="quarterly">02 Quarterly Planner</option>
-          <option value="whatif">03 What-If Scenarios</option>
+          <option value="whatif">03 Life Event Tax Scenarios</option>
           <option value="finder">04 Tax Savings Finder</option>
           <option value="action">05 Your Tax Action Plan</option>
           <option value="scorecard">06 Opportunity Scorecard</option>
@@ -574,7 +842,7 @@
     <button class="tab active" data-tab="overview">00 Overview</button>
     <button class="tab" data-tab="withholding">01 Withholding Checkup</button>
     <button class="tab" data-tab="quarterly">02 Quarterly Planner</button>
-    <button class="tab" data-tab="whatif">03 What-If Scenarios</button>
+    <button class="tab" data-tab="whatif">03 Life Event Tax Scenarios</button>
     <button class="tab" data-tab="finder">04 Tax Savings Finder</button>
     <button class="tab" data-tab="action">05 Your Tax Action Plan</button>
     <button class="tab" data-tab="scorecard">06 Opportunity Scorecard</button>
@@ -794,11 +1062,11 @@
         <div class="field-grid">
           <div class="field">
             <label for="whWages">Annual W-2 wages</label>
-            <input id="whWages" class="money" type="number" min="0" step="100" value="0">
+            <input id="whWages" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
           </div>
           <div class="field">
             <label for="whOtherIncome">Other taxable income</label>
-            <input id="whOtherIncome" class="money" type="number" min="0" step="100" value="0">
+            <input id="whOtherIncome" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
           </div>
           <div class="field full">
             <label>Deduction method</label>
@@ -809,7 +1077,7 @@
           </div>
           <div class="field full" id="whItemizedField" hidden>
             <label for="whItemized">Estimated itemized deductions</label>
-            <input id="whItemized" class="money" type="number" min="0" step="100" value="0">
+            <input id="whItemized" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
           </div>
         </div>
 
@@ -817,11 +1085,11 @@
         <div class="field-grid">
           <div class="field full">
             <label for="whWithholding">Projected annual federal tax withheld</label>
-            <input id="whWithholding" class="money" type="number" min="0" step="100" value="0">
+            <input id="whWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
           </div>
           <div class="field full">
             <label for="whStateWithholding">Projected annual state tax withheld</label>
-            <input id="whStateWithholding" class="money" type="number" min="0" step="100" value="0">
+            <input id="whStateWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
           </div>
         </div>
       </div>
@@ -855,9 +1123,165 @@
     </div>
   </section>
 
-  <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><p class="module-note">Enter known year-to-date business amounts. These figures feed Business Detection and the Recommendation Engine; they are not a final business-return calculation.</p><div class="field-grid"><div class="field"><label for="quarterlyBusinessIncome">1099 / business income</label><input id="quarterlyBusinessIncome" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyBusinessExpenses">Business expenses</label><input id="quarterlyBusinessExpenses" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyFederalWithheld">Federal tax already withheld</label><input id="quarterlyFederalWithheld" class="money" type="number" min="0" step="1" value="0"></div><div class="field"><label for="quarterlyEstimatedPayments">Estimated payments already made</label><input id="quarterlyEstimatedPayments" class="money" type="number" min="0" step="1" value="0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Planning Snapshot</h3><div class="row"><span>Gross business income entered</span><strong class="money" id="quarterlyGrossDisplay">$0</strong></div><div class="row"><span>Business expenses entered</span><strong class="money" id="quarterlyExpensesDisplay">$0</strong></div><div class="row total"><span>Estimated net business profit</span><strong class="money" id="quarterlyNetProfitDisplay">$0</strong></div><span class="status" id="quarterlyBusinessStatus">Enter business figures to activate Business Detection</span></div></div></div></section>
+  <section class="panel" id="quarterly"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">D</div><h3>Self-Employment Income</h3></div><p class="module-note">Enter known year-to-date business amounts. These figures feed Business Detection and the Recommendation Engine; they are not a final business-return calculation.</p><div class="field-grid"><div class="field"><label for="quarterlyBusinessIncome">1099 / business income</label><input id="quarterlyBusinessIncome" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div><div class="field"><label for="quarterlyBusinessExpenses">Business expenses</label><input id="quarterlyBusinessExpenses" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div><div class="field"><label for="quarterlyFederalWithheld">Federal tax already withheld</label><input id="quarterlyFederalWithheld" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div><div class="field"><label for="quarterlyEstimatedPayments">Estimated payments already made</label><input id="quarterlyEstimatedPayments" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Quarterly Planning Snapshot</h3><div class="row"><span>Gross business income entered</span><strong class="money" id="quarterlyGrossDisplay">$0</strong></div><div class="row"><span>Business expenses entered</span><strong class="money" id="quarterlyExpensesDisplay">$0</strong></div><div class="row total"><span>Estimated net business profit</span><strong class="money" id="quarterlyNetProfitDisplay">$0</strong></div><span class="status" id="quarterlyBusinessStatus">Enter business figures to activate Business Detection</span></div></div></div></section>
 
-  <section class="panel" id="whatif"><div class="grid"><div class="form-card"><div class="section-head"><div class="letter">E</div><h3>Test a Move</h3></div><div class="field-grid"><div class="field full"><label>Traditional retirement contribution</label><input id="whatIfRetirement" type="range" min="0" max="24000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional freelance income</label><input id="whatIfFreelance" type="range" min="0" max="40000" value="0"><span class="money">$0</span></div><div class="field full"><label>Additional qualifying children</label><input id="whatIfChildren" type="range" min="0" max="4" value="0"><span class="number">0</span></div></div></div><div class="ledger-wrap"><div class="tape"><h3>Before vs. With This Move</h3><div class="row"><span>Before</span><strong class="money">$0</strong></div><div class="row"><span>With this move</span><strong class="money">$0</strong></div><div class="row total"><span>Estimated difference</span><strong class="money">$0</strong></div><span class="status">Live scenario engine — Phase 2</span></div></div></div></section>
+  <section class="panel" id="whatif">
+    <div class="scenario-layout">
+      <div class="form-card">
+        <div class="section-head">
+          <div class="letter">E</div>
+          <div>
+            <h3>Life Event &amp; Tax Scenario Planner</h3>
+            <p class="module-note">Select a real-life event, enter what you know, and the Planner will organize the tax questions, documents, possible exposure or opportunity, and the next professional review. It does not promise a tax result.</p>
+          </div>
+        </div>
+
+        <div class="scenario-year-note">
+          <strong>Tax-year update design:</strong>
+          This section uses the active tax year shown above. Annual limits, credits, brackets, and state rules are updated in the year-specific tax engines before a new tax year is released.
+        </div>
+
+        <div class="scenario-grid">
+          <article class="scenario-item" data-scenario-card="lottery">
+            <label class="scenario-title">
+              <input id="lifeLotteryOn" type="checkbox" data-scenario-toggle="lottery">
+              <span><strong>Won a lottery, jackpot, raffle, or major gambling prize</strong><small>Review taxable winnings, withholding, state tax, estimated payments, and the effect on the rest of the return.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeLotteryAmount">Gross winnings or prize value</label><input id="lifeLotteryAmount" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeLotteryFederalWithholding">Federal tax withheld</label><input id="lifeLotteryFederalWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeLotteryStateWithholding">State tax withheld</label><input id="lifeLotteryStateWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeLotteryPayoutType">How was it paid?</label><select id="lifeLotteryPayoutType"><option value="unknown">Not sure</option><option value="lump-sum">Lump sum</option><option value="annuity">Annuity / installments</option><option value="property">Property or noncash prize</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="adoption">
+            <label class="scenario-title">
+              <input id="lifeAdoptionOn" type="checkbox" data-scenario-toggle="adoption">
+              <span><strong>Completed an adoption or paid adoption expenses</strong><small>Review qualified expenses, employer assistance, timing, documentation, and possible adoption-credit eligibility.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeAdoptionExpenses">Qualified expenses paid</label><input id="lifeAdoptionExpenses" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeAdoptionBenefits">Employer adoption benefits</label><input id="lifeAdoptionBenefits" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeAdoptionType">Adoption type</label><select id="lifeAdoptionType"><option value="unknown">Not confirmed</option><option value="domestic">Domestic</option><option value="foreign">Foreign</option><option value="special-needs">Special-needs adoption</option></select></div>
+              <div class="field"><label for="lifeAdoptionStatus">Current status</label><select id="lifeAdoptionStatus"><option value="unknown">Not confirmed</option><option value="in-progress">In progress</option><option value="finalized">Finalized</option><option value="unsuccessful">Domestic adoption was not finalized</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="cash-home">
+            <label class="scenario-title">
+              <input id="lifeCashHomeOn" type="checkbox" data-scenario-toggle="cash-home">
+              <span><strong>Purchased a home with cash</strong><small>Document cost basis, closing costs, property taxes, intended use, and records needed for future sale or business use.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeCashHomePrice">Cash purchase price</label><input id="lifeCashHomePrice" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeCashHomeClosingCosts">Closing costs paid</label><input id="lifeCashHomeClosingCosts" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeCashHomePropertyTax">Property taxes paid at closing</label><input id="lifeCashHomePropertyTax" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeCashHomeUse">Primary use</label><select id="lifeCashHomeUse"><option value="unknown">Not confirmed</option><option value="primary">Primary residence</option><option value="second-home">Second home</option><option value="rental">Rental / investment property</option><option value="business">Business property</option><option value="mixed">Mixed personal and business use</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="stock-sale">
+            <label class="scenario-title">
+              <input id="lifeStockSaleOn" type="checkbox" data-scenario-toggle="stock-sale">
+              <span><strong>Sold stock, mutual funds, crypto, or another investment</strong><small>Compare proceeds with adjusted basis, identify short- or long-term treatment, and reconcile brokerage reporting.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeStockProceeds">Gross proceeds</label><input id="lifeStockProceeds" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeStockBasis">Known adjusted basis</label><input id="lifeStockBasis" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeStockHolding">Holding period</label><select id="lifeStockHolding"><option value="unknown">Unknown / mixed</option><option value="short">Short-term</option><option value="long">Long-term</option><option value="mixed">Both short- and long-term</option></select></div>
+              <div class="field"><label for="lifeStockDocs">Brokerage documents</label><select id="lifeStockDocs"><option value="unknown">Not confirmed</option><option value="complete">1099-B / brokerage statement available</option><option value="missing-basis">Statement received but basis is missing</option><option value="missing">Documents not received</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="business-purchase">
+            <label class="scenario-title">
+              <input id="lifeBusinessPurchaseOn" type="checkbox" data-scenario-toggle="business-purchase">
+              <span><strong>Purchased or acquired a new business</strong><small>Review the purchase structure, price allocation, entity setup, books, payroll, licenses, and future tax obligations.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeBusinessPurchasePrice">Purchase price</label><input id="lifeBusinessPurchasePrice" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeBusinessPurchaseType">Acquisition structure</label><select id="lifeBusinessPurchaseType"><option value="unknown">Not confirmed</option><option value="assets">Purchased business assets</option><option value="equity">Purchased ownership interest / stock</option><option value="new-startup">Started a new business</option></select></div>
+              <div class="field"><label for="lifeBusinessEntity">Entity after purchase</label><select id="lifeBusinessEntity"><option value="unknown">Not confirmed</option><option value="sole-proprietor">Sole proprietor</option><option value="single-member-llc">Single-member LLC</option><option value="partnership">Partnership / multi-member LLC</option><option value="s-corporation">S corporation</option><option value="c-corporation">C corporation</option></select></div>
+              <div class="field"><label for="lifeBusinessBooks">Accounting records</label><select id="lifeBusinessBooks"><option value="unknown">Not confirmed</option><option value="ready">Books and opening balances are ready</option><option value="needs-setup">Bookkeeping system needs setup</option><option value="needs-cleanup">Records need cleanup</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="early-retirement">
+            <label class="scenario-title">
+              <input id="lifeEarlyRetirementOn" type="checkbox" data-scenario-toggle="early-retirement">
+              <span><strong>Took an early 1099-R retirement distribution</strong><small>Review the taxable amount, withholding, age, distribution code, rollover treatment, and possible additional-tax exceptions.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeRetirementGross">Gross distribution</label><input id="lifeRetirementGross" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeRetirementTaxable">Taxable amount shown</label><input id="lifeRetirementTaxable" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeRetirementWithholding">Federal tax withheld</label><input id="lifeRetirementWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0"></div>
+              <div class="field"><label for="lifeRetirementAge">Age when distributed</label><input id="lifeRetirementAge" class="number" type="number" min="0" max="120" step="1" value="0"></div>
+              <div class="field"><label for="lifeRetirementCode">Form 1099-R Box 7 code</label><input id="lifeRetirementCode" type="text" maxlength="10" placeholder="Example: 1, 2, 7, G"></div>
+              <div class="field"><label for="lifeRetirementException">Possible exception or rollover</label><select id="lifeRetirementException"><option value="unknown">Not confirmed</option><option value="none-known">No exception known</option><option value="possible">Possible exception needs review</option><option value="rollover">Full or partial rollover reported</option></select></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="spouse-debt">
+            <label class="scenario-title">
+              <input id="lifeSpouseDebtOn" type="checkbox" data-scenario-toggle="spouse-debt">
+              <span><strong>Marriage, divorce, or a spouse's prior tax debt</strong><small>Determine which tax years and returns created the debt, whether a joint refund was offset, and whether spouse-relief rules may need review.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeSpouseEvent">Current relationship event</label><select id="lifeSpouseEvent"><option value="unknown">Not confirmed</option><option value="new-marriage">Recently married</option><option value="separated">Separated</option><option value="divorced">Divorced</option><option value="remarried">Remarried</option></select></div>
+              <div class="field"><label for="lifeSpouseDebtYears">Tax year(s) connected to the debt</label><input id="lifeSpouseDebtYears" type="text" maxlength="80" placeholder="Example: 2021–2023"></div>
+              <div class="field"><label for="lifeSpouseFiling">How were the affected returns filed?</label><select id="lifeSpouseFiling"><option value="unknown">Not sure</option><option value="before-marriage">Debt arose before marriage</option><option value="joint">Joint return with spouse</option><option value="separate">Separate returns</option><option value="mixed">More than one situation</option></select></div>
+              <div class="field"><label for="lifeSpouseOffset">Was a refund taken or offset?</label><select id="lifeSpouseOffset"><option value="unknown">Not sure</option><option value="no">No</option><option value="yes">Yes</option><option value="expected">Expected / warning received</option></select></div>
+              <div class="field"><label for="lifeSpouseNotice">IRS or state notice received?</label><select id="lifeSpouseNotice"><option value="unknown">Not sure</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+              <div class="field"><label for="lifeSpouseState">State connected to the marriage or debt</label><input id="lifeSpouseState" type="text" maxlength="40" placeholder="Example: Arizona"></div>
+            </div>
+          </article>
+
+          <article class="scenario-item" data-scenario-card="death-of-loved-one">
+            <label class="scenario-title">
+              <input id="lifeDeathOn" type="checkbox" data-scenario-toggle="death-of-loved-one">
+              <span><strong>My spouse, mother, or father died — what taxes am I responsible for?</strong><small>Separate the deceased person's final return, estate income, inherited property, retirement accounts, unpaid tax, and the responsibilities of a surviving spouse, beneficiary, executor, or personal representative.</small></span>
+            </label>
+            <div class="scenario-detail">
+              <div class="field"><label for="lifeDeathRelationship">Relationship to the person who died</label><select id="lifeDeathRelationship"><option value="unknown">Not confirmed</option><option value="spouse">Spouse</option><option value="mother">Mother</option><option value="father">Father</option><option value="other-family">Other family member</option></select></div>
+              <div class="field"><label for="lifeDeathRole">Your role</label><select id="lifeDeathRole"><option value="unknown">Not confirmed</option><option value="surviving-spouse">Surviving spouse</option><option value="beneficiary">Beneficiary / heir</option><option value="executor">Executor / personal representative</option><option value="both">Beneficiary and executor / personal representative</option></select></div>
+              <div class="field"><label for="lifeDeathDate">Date of death</label><input id="lifeDeathDate" type="date"></div>
+              <div class="field"><label for="lifeDeathJointReturn">Joint return with a deceased spouse</label><select id="lifeDeathJointReturn"><option value="not-applicable">Not applicable / not a spouse</option><option value="unknown">Not sure</option><option value="no">No joint return planned or signed</option><option value="yes">Joint return planned or signed</option><option value="prior-joint">Prior joint returns may have unpaid tax</option></select></div>
+              <div class="field"><label for="lifeDeathAssets">What was inherited or received?</label><select id="lifeDeathAssets"><option value="unknown">Not confirmed</option><option value="life-insurance">Life insurance proceeds</option><option value="cash">Cash</option><option value="home-property">Home or other real property</option><option value="investments">Stocks, investments, or brokerage assets</option><option value="retirement">IRA, 401(k), pension, or other retirement account</option><option value="business">Business ownership or business assets</option><option value="mixed">More than one type of asset</option><option value="none">Nothing received</option></select></div>
+              <div class="field"><label for="lifeDeathBeneficiaryStatus">Life insurance beneficiary designation</label><select id="lifeDeathBeneficiaryStatus"><option value="not-applicable">Not applicable / no life insurance</option><option value="unknown">Not sure</option><option value="primary">Named primary beneficiary</option><option value="contingent">Named contingent beneficiary</option><option value="estate">The estate was named beneficiary</option><option value="other">Another person or trust was named beneficiary</option></select></div>
+              <div class="field"><label for="lifeDeathInheritedValue">Estimated value inherited or received</label><input id="lifeDeathInheritedValue" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" value="$0" placeholder="$25,000" data-currency-entry></div>
+              <div class="field"><label for="lifeDeathTaxDebt">Known unpaid federal or state tax?</label><select id="lifeDeathTaxDebt"><option value="unknown">Not sure</option><option value="no">No known unpaid tax</option><option value="yes">Yes</option></select></div>
+              <div class="field"><label for="lifeDeathDistributed">Have estate assets already been distributed?</label><select id="lifeDeathDistributed"><option value="unknown">Not sure</option><option value="no">No</option><option value="partial">Partially distributed</option><option value="yes">Fully distributed</option></select></div>
+              <div class="field"><label for="lifeDeathNotice">IRS or state tax notice received?</label><select id="lifeDeathNotice"><option value="unknown">Not sure</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="ledger-wrap">
+        <div class="tape life-scenario-tape">
+          <h3>Life Event Scenario Summary</h3>
+          <div class="row"><span>Scenarios selected</span><strong class="number" id="lifeScenarioCount">0</strong></div>
+          <div class="row"><span>High-priority reviews</span><strong class="number" id="lifeScenarioHighCount">0</strong></div>
+          <div class="row"><span>Reported amounts to review</span><strong class="money" id="lifeScenarioAmount">$0</strong></div>
+          <div class="row total"><span>Highest review level</span><strong id="lifeScenarioPriority">Not started</strong></div>
+          <span class="status" id="lifeScenarioStatus">Select a real-life event to begin</span>
+        </div>
+
+        <div class="scenario-results-wrap">
+          <div class="section-head compact"><div class="letter">?</div><h3>What This May Affect</h3></div>
+          <div id="lifeScenarioResults" class="scenario-results">
+            <div class="scenario-empty">Select a scenario to see the tax questions, documents, and next review step.</div>
+          </div>
+        </div>
+
+        <div class="scenario-boundary">
+          <strong>Professional review required.</strong>
+          These scenarios identify questions and planning needs. They do not create a filed tax return, legal conclusion, investment recommendation, or guaranteed tax result.
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="panel" id="finder">
     <div class="grid">
@@ -870,7 +1294,7 @@
             <label class="finder-title"><input id="findRetirementOn" type="checkbox">Deductible retirement contribution</label>
             <div class="finder-detail">
               <label for="findRetirementAmount">Amount being considered</label>
-              <input id="findRetirementAmount" class="money" type="number" min="0" step="100" value="0">
+              <input id="findRetirementAmount" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Traditional IRA, SEP IRA, SIMPLE IRA, or deductible employer-plan contribution. Eligibility and limits vary.</span>
             </div>
           </div>
@@ -879,7 +1303,7 @@
             <label class="finder-title"><input id="findHsaOn" type="checkbox">Health Savings Account contribution</label>
             <div class="finder-detail">
               <label for="findHsaAmount">Potential deductible contribution</label>
-              <input id="findHsaAmount" class="money" type="number" min="0" step="100" value="0">
+              <input id="findHsaAmount" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Requires HSA eligibility and is subject to annual contribution limits.</span>
             </div>
           </div>
@@ -888,7 +1312,7 @@
             <label class="finder-title"><input id="findMileageOn" type="checkbox">Business mileage / vehicle records</label>
             <div class="finder-detail">
               <label for="findMileageDeduction">Estimated additional deduction</label>
-              <input id="findMileageDeduction" class="money" type="number" min="0" step="100" value="0">
+              <input id="findMileageDeduction" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Use the estimated deductible amount from qualified business mileage or actual vehicle expenses.</span>
             </div>
           </div>
@@ -897,7 +1321,7 @@
             <label class="finder-title"><input id="findHomeOfficeOn" type="checkbox">Qualified home office</label>
             <div class="finder-detail">
               <label for="findHomeOfficeDeduction">Estimated deduction</label>
-              <input id="findHomeOfficeDeduction" class="money" type="number" min="0" step="100" value="0">
+              <input id="findHomeOfficeDeduction" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Generally requires regular and exclusive business use and other eligibility rules.</span>
             </div>
           </div>
@@ -906,7 +1330,7 @@
             <label class="finder-title"><input id="findEnergyOn" type="checkbox">Residential energy improvements</label>
             <div class="finder-detail">
               <label for="findEnergyCredit">Estimated available credit</label>
-              <input id="findEnergyCredit" class="money" type="number" min="0" step="100" value="0">
+              <input id="findEnergyCredit" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Examples may include qualifying solar, HVAC, insulation, windows, doors, or other eligible improvements.</span>
             </div>
           </div>
@@ -915,7 +1339,7 @@
             <label class="finder-title"><input id="findEducationOn" type="checkbox">Education credit opportunity</label>
             <div class="finder-detail">
               <label for="findEducationCredit">Estimated available credit</label>
-              <input id="findEducationCredit" class="money" type="number" min="0" step="100" value="0">
+              <input id="findEducationCredit" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
               <span class="finder-hint">Eligibility depends on the student, expenses, enrollment, prior claims, and income limits.</span>
             </div>
           </div>
@@ -1053,11 +1477,11 @@
           <div class="field-grid">
             <div class="field">
               <label for="alertCharitableCash">Cash contributions</label>
-              <input id="alertCharitableCash" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertCharitableCash" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertCharitableNoncash">Noncash contributions</label>
-              <input id="alertCharitableNoncash" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertCharitableNoncash" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field full">
               <label for="alertCharitableDocs">Contribution documentation</label>
@@ -1077,19 +1501,19 @@
           <div class="field-grid">
             <div class="field">
               <label for="alertShortTermGains">Short-term capital gains</label>
-              <input id="alertShortTermGains" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertShortTermGains" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertLongTermGains">Long-term capital gains</label>
-              <input id="alertLongTermGains" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertLongTermGains" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertCapitalLosses">Capital losses</label>
-              <input id="alertCapitalLosses" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertCapitalLosses" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertDividends">Dividends / investment distributions</label>
-              <input id="alertDividends" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertDividends" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field full">
               <label for="alertInvestmentDocs">Investment tax documents and basis</label>
@@ -1109,15 +1533,15 @@
           <div class="field-grid">
             <div class="field">
               <label for="alertRetirementDistributions">1099-R gross distributions</label>
-              <input id="alertRetirementDistributions" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertRetirementDistributions" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertRetirementWithholding">Federal withholding from 1099-R</label>
-              <input id="alertRetirementWithholding" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertRetirementWithholding" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertSocialSecurity">SSA-1099 benefits</label>
-              <input id="alertSocialSecurity" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertSocialSecurity" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertRetirementDocs">Retirement / Social Security documents</label>
@@ -1137,11 +1561,11 @@
           <div class="field-grid">
             <div class="field">
               <label for="alertFederalEstimated">Federal estimated taxes paid</label>
-              <input id="alertFederalEstimated" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertFederalEstimated" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field">
               <label for="alertStateEstimated">State estimated taxes paid</label>
-              <input id="alertStateEstimated" class="money" type="number" min="0" step="100" value="0">
+              <input id="alertStateEstimated" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="100" value="0">
             </div>
             <div class="field full">
               <label class="signal-toggle"><input id="alertInstallmentOn" type="checkbox"><span>Client currently has an IRS installment agreement</span></label>
@@ -1166,7 +1590,7 @@
             </div>
             <div class="field">
               <label for="alertBusinessProfit">Estimated net business profit</label>
-              <input id="alertBusinessProfit" class="money" type="number" min="0" step="1" value="0">
+              <input id="alertBusinessProfit" class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="0">
             </div>
             <div class="field">
               <label for="alertBusinessEntityType">Business type / tax structure</label>
@@ -1668,9 +2092,46 @@
     yearEndChecklistRecords = {};
   }
 
+  function numericInputValue(value) {
+    const normalized = String(value ?? "")
+      .replace(/[^0-9.-]/g, "");
+    const parsed = Number(normalized || 0);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }
+
   function numberValue(id) {
-    const value = Number(document.getElementById(id)?.value || 0);
-    return Number.isFinite(value) ? Math.max(0, value) : 0;
+    return numericInputValue(document.getElementById(id)?.value || 0);
+  }
+
+  function prepareCurrencyEntry(control, formatValue = true) {
+    if (!control || !control.matches("input.money, [data-currency-entry]")) return;
+
+    control.type = "text";
+    control.inputMode = "decimal";
+    control.autocomplete = "off";
+    control.dataset.currencyEntry = "true";
+    control.classList.add("currency-entry");
+
+    if (formatValue) {
+      control.value = money.format(numericInputValue(control.value));
+    }
+  }
+
+  function formatCurrencyEntry(control) {
+    prepareCurrencyEntry(control, true);
+  }
+
+  function formatAllCurrencyEntries(root = document) {
+    const controls = [];
+
+    if (root?.matches?.("input.money, [data-currency-entry]")) {
+      controls.push(root);
+    }
+
+    root?.querySelectorAll?.("input.money, [data-currency-entry]")
+      .forEach(control => controls.push(control));
+
+    controls.forEach(formatCurrencyEntry);
   }
 
   function escapeHtml(value) {
@@ -1680,6 +2141,91 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function emphasizeMoneyText(root = document.body) {
+    if (!root) return;
+
+    const scope = root.nodeType === Node.TEXT_NODE
+      ? root.parentElement
+      : root;
+
+    if (!scope) return;
+
+    const moneyPattern = /-?\$[0-9][0-9,]*(?:\.[0-9]{2})?/g;
+
+    // Existing <strong> and <b> elements can still inherit a thin monospace
+    // font from their section. Give every one that contains money the same
+    // unmistakable heavy client-facing treatment.
+    scope.querySelectorAll("strong, b").forEach(element => {
+      moneyPattern.lastIndex = 0;
+      if (moneyPattern.test(element.textContent || "")) {
+        element.classList.add("money-emphasis");
+      }
+    });
+
+    const textNodes = [];
+    const walker = document.createTreeWalker(
+      scope,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const text = node.nodeValue || "";
+          moneyPattern.lastIndex = 0;
+
+          if (!moneyPattern.test(text)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+
+          const parent = node.parentElement;
+
+          if (
+            !parent ||
+            parent.closest(
+              "script, style, input, textarea, select, option, strong, b, .money-emphasis"
+            )
+          ) {
+            return NodeFilter.FILTER_REJECT;
+          }
+
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    textNodes.forEach(node => {
+      const text = node.nodeValue || "";
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+
+      moneyPattern.lastIndex = 0;
+
+      for (const match of text.matchAll(moneyPattern)) {
+        if (match.index > lastIndex) {
+          fragment.appendChild(
+            document.createTextNode(text.slice(lastIndex, match.index))
+          );
+        }
+
+        const strong = document.createElement("strong");
+        strong.className = "money-emphasis";
+        strong.textContent = match[0];
+        fragment.appendChild(strong);
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(
+          document.createTextNode(text.slice(lastIndex))
+        );
+      }
+
+      node.replaceWith(fragment);
+    });
   }
 
   function setPlannerTaxYear(value) {
@@ -1902,13 +2448,8 @@
         }
       });
 
-      document.querySelectorAll("#whatif input[type='range']").forEach(slider => {
-        const output = slider.nextElementSibling;
-        if (!output) return;
-        output.textContent = slider.max === "4"
-          ? slider.value
-          : money.format(Number(slider.value || 0));
-      });
+      syncLifeEventScenarioVisibility();
+      formatAllCurrencyEntries();
 
       const itemizedSelected =
         document.querySelector('input[name="whDeductionMethod"]:checked')?.value === "itemized";
@@ -2654,6 +3195,162 @@
     }, {});
   }
 
+  function buildLifeEventScenarioInput() {
+    return {
+      lottery: {
+        selected: Boolean(document.getElementById("lifeLotteryOn")?.checked),
+        amount: numberValue("lifeLotteryAmount"),
+        federalWithholding: numberValue("lifeLotteryFederalWithholding"),
+        stateWithholding: numberValue("lifeLotteryStateWithholding"),
+        payoutType: document.getElementById("lifeLotteryPayoutType")?.value || "unknown"
+      },
+      adoption: {
+        selected: Boolean(document.getElementById("lifeAdoptionOn")?.checked),
+        expenses: numberValue("lifeAdoptionExpenses"),
+        employerBenefits: numberValue("lifeAdoptionBenefits"),
+        type: document.getElementById("lifeAdoptionType")?.value || "unknown",
+        status: document.getElementById("lifeAdoptionStatus")?.value || "unknown"
+      },
+      cashHome: {
+        selected: Boolean(document.getElementById("lifeCashHomeOn")?.checked),
+        purchasePrice: numberValue("lifeCashHomePrice"),
+        closingCosts: numberValue("lifeCashHomeClosingCosts"),
+        propertyTax: numberValue("lifeCashHomePropertyTax"),
+        use: document.getElementById("lifeCashHomeUse")?.value || "unknown"
+      },
+      stockSale: {
+        selected: Boolean(document.getElementById("lifeStockSaleOn")?.checked),
+        proceeds: numberValue("lifeStockProceeds"),
+        basis: numberValue("lifeStockBasis"),
+        holding: document.getElementById("lifeStockHolding")?.value || "unknown",
+        docs: document.getElementById("lifeStockDocs")?.value || "unknown"
+      },
+      businessPurchase: {
+        selected: Boolean(document.getElementById("lifeBusinessPurchaseOn")?.checked),
+        purchasePrice: numberValue("lifeBusinessPurchasePrice"),
+        purchaseType: document.getElementById("lifeBusinessPurchaseType")?.value || "unknown",
+        entity: document.getElementById("lifeBusinessEntity")?.value || "unknown",
+        books: document.getElementById("lifeBusinessBooks")?.value || "unknown"
+      },
+      earlyRetirement: {
+        selected: Boolean(document.getElementById("lifeEarlyRetirementOn")?.checked),
+        gross: numberValue("lifeRetirementGross"),
+        taxable: numberValue("lifeRetirementTaxable"),
+        withholding: numberValue("lifeRetirementWithholding"),
+        age: numberValue("lifeRetirementAge"),
+        code: document.getElementById("lifeRetirementCode")?.value || "",
+        exception: document.getElementById("lifeRetirementException")?.value || "unknown"
+      },
+      spouseDebt: {
+        selected: Boolean(document.getElementById("lifeSpouseDebtOn")?.checked),
+        event: document.getElementById("lifeSpouseEvent")?.value || "unknown",
+        debtYears: document.getElementById("lifeSpouseDebtYears")?.value || "",
+        filing: document.getElementById("lifeSpouseFiling")?.value || "unknown",
+        offset: document.getElementById("lifeSpouseOffset")?.value || "unknown",
+        notice: document.getElementById("lifeSpouseNotice")?.value || "unknown",
+        state: document.getElementById("lifeSpouseState")?.value || ""
+      },
+      deathOfLovedOne: {
+        selected: Boolean(document.getElementById("lifeDeathOn")?.checked),
+        relationship: document.getElementById("lifeDeathRelationship")?.value || "unknown",
+        role: document.getElementById("lifeDeathRole")?.value || "unknown",
+        dateOfDeath: document.getElementById("lifeDeathDate")?.value || "",
+        jointReturn: document.getElementById("lifeDeathJointReturn")?.value || "unknown",
+        inheritedAssets: document.getElementById("lifeDeathAssets")?.value || "unknown",
+        beneficiaryStatus: document.getElementById("lifeDeathBeneficiaryStatus")?.value || "not-applicable",
+        inheritedValue: numberValue("lifeDeathInheritedValue"),
+        knownTaxDebt: document.getElementById("lifeDeathTaxDebt")?.value || "unknown",
+        estateDistributed: document.getElementById("lifeDeathDistributed")?.value || "unknown",
+        notice: document.getElementById("lifeDeathNotice")?.value || "unknown"
+      }
+    };
+  }
+
+  function syncLifeEventScenarioVisibility() {
+    document.querySelectorAll("[data-scenario-card]").forEach((card) => {
+      const key = card.getAttribute("data-scenario-card");
+      const toggle = document.querySelector(`[data-scenario-toggle="${key}"]`);
+      card.classList.toggle("is-active", Boolean(toggle?.checked));
+    });
+  }
+
+  function renderLifeEventScenarios(result) {
+    const scenario = result || {
+      items: [],
+      selectedCount: 0,
+      highCount: 0,
+      totalReportedAmount: 0,
+      highestPriorityLabel: "Not started",
+      status: "Select a real-life event to begin"
+    };
+
+    document.getElementById("lifeScenarioCount").textContent =
+      String(scenario.selectedCount || 0);
+    document.getElementById("lifeScenarioHighCount").textContent =
+      String(scenario.highCount || 0);
+    setMoney("lifeScenarioAmount", scenario.totalReportedAmount || 0);
+    document.getElementById("lifeScenarioPriority").textContent =
+      scenario.highestPriorityLabel || "Not started";
+
+    const status = document.getElementById("lifeScenarioStatus");
+    status.textContent = scenario.status || "Select a real-life event to begin";
+    status.classList.remove("good", "warn");
+
+    if (scenario.urgentCount > 0) {
+      status.classList.add("warn");
+    } else if (scenario.selectedCount > 0) {
+      status.classList.add("good");
+    }
+
+    const container = document.getElementById("lifeScenarioResults");
+    const items = Array.isArray(scenario.items) ? scenario.items : [];
+
+    if (!items.length) {
+      container.innerHTML =
+        '<div class="scenario-empty">Select a scenario to see the tax questions, documents, and next review step.</div>';
+      return;
+    }
+
+    container.innerHTML = items.map((item) => {
+      const priority = String(item.priority || "review");
+      const amount = Number(item.amount || 0);
+      const docs = Array.isArray(item.documents) && item.documents.length
+        ? item.documents.join(" • ")
+        : "Documents depend on the client facts.";
+
+      return `
+        <article class="scenario-result ${escapeHtml(priority)}">
+          <div class="scenario-result-head">
+            <h4>${escapeHtml(item.title || "Life event review")}</h4>
+            <span class="scenario-priority ${escapeHtml(priority)}">${escapeHtml(item.statusLabel || "Professional review")}</span>
+          </div>
+          <p>${escapeHtml(item.detail || "")}</p>
+          <div class="scenario-result-grid">
+            <div class="scenario-result-detail">
+              <strong>What the client should provide</strong>
+              <span>${escapeHtml(item.clientAction || "")}</span>
+            </div>
+            <div class="scenario-result-detail">
+              <strong>What Greatest Business Solution LLC will review</strong>
+              <span>${escapeHtml(item.professionalAction || "")}</span>
+            </div>
+            <div class="scenario-result-detail">
+              <strong>Documents to gather</strong>
+              <span>${escapeHtml(docs)}</span>
+            </div>
+            <div class="scenario-result-detail">
+              <strong>Important limitation</strong>
+              <span>${escapeHtml(item.caution || "")}</span>
+            </div>
+          </div>
+          ${amount > 0
+            ? `<div class="scenario-result-amount">Reported amount connected to this review: ${money.format(Math.round(amount))}</div>`
+            : ""}
+        </article>
+      `;
+    }).join("");
+  }
+
   function buildSmartAlertSignals() {
     return {
       charitableCash: numberValue("alertCharitableCash"),
@@ -2707,6 +3404,7 @@
       otherIncome: numberValue("whOtherIncome"),
       taxYear: currentPlannerTaxYear,
       smartAlertSignals: buildSmartAlertSignals(),
+      lifeEventScenarios: buildLifeEventScenarioInput(),
       maxRecommendations: 40,
       scorecardRecords: opportunityScorecardRecords,
       yearEndChecklistRecords
@@ -2742,6 +3440,7 @@
     );
     renderOpportunityScorecard(latestRecommendationResult.recommendations);
     renderSmartAlerts(latestRecommendationResult.smartAlerts);
+    renderLifeEventScenarios(latestRecommendationResult.lifeEventScenarios);
     renderBusinessDetection(latestRecommendationResult.businessDetection);
     renderYearEndPlanningChecklist(latestRecommendationResult.yearEndChecklist);
     renderWealthRoadmap(latestRecommendationResult.wealthRoadmap);
@@ -3110,7 +3809,7 @@
             ${potentialBenefit > 0 ? `
               <label class="scorecard-control">
                 Verified estimate
-                <input class="money" type="number" min="0" step="1" value="${verifiedBenefit}" data-scorecard-benefit>
+                <input class="money currency-entry" type="text" inputmode="decimal" autocomplete="off" data-currency-entry min="0" step="1" value="${verifiedBenefit}" data-scorecard-benefit>
                 <small>Enter only after professional review. Leave at $0 while the amount is still potential.</small>
               </label>
             ` : `
@@ -3158,6 +3857,9 @@
         </article>
       `;
     }).join("");
+
+    formatAllCurrencyEntries(container);
+    emphasizeMoneyText(container);
   }
 
   function updateScorecardRecordFromControl(control) {
@@ -3170,7 +3872,7 @@
     if (control.matches("[data-scorecard-stage]")) {
       record.stage = control.value;
     } else if (control.matches("[data-scorecard-benefit]")) {
-      record.verifiedBenefit = Math.max(0, Number(control.value || 0));
+      record.verifiedBenefit = numericInputValue(control.value);
     } else if (control.matches("[data-scorecard-notes]")) {
       record.notes = control.value;
     }
@@ -3911,7 +4613,9 @@
         included: "Initial Tax Savings Planner assessment and one Executive Tax Planning Report",
         continuedAccess: {
           label: "Continued Tax Planning Access",
-          price: "$59 per year",
+          price: "$59 per year or $8 per month",
+          annualPrice: "$59",
+          monthlyPrice: "$8",
           status: "Planned after client portal activation",
           includes: "Saved Planner information, Tax Health Score history, progress tracking, updated checklists, reminders, and new automated recommendations",
           excludes: "Unlimited calls, document review, tax-return preparation, IRS representation, and live professional meetings"
@@ -4089,21 +4793,66 @@
   document.getElementById("saveProfessionalNotes").addEventListener("click", saveProfessionalNotes);
   document.getElementById("clearProfessionalNotes").addEventListener("click", clearProfessionalNotes);
 
-  document.querySelectorAll("input[type='range']").forEach(slider => slider.addEventListener("input", () => {
-    const output = slider.nextElementSibling;
-    if (!output) return;
-    output.textContent = slider.max === "4"
-      ? slider.value
-      : money.format(Number(slider.value));
-  }));
+  document.addEventListener("focusin", event => {
+    const control = event.target.closest?.("input.money, [data-currency-entry]");
+    if (!control) return;
+
+    prepareCurrencyEntry(control, false);
+
+    const value = numericInputValue(control.value);
+    control.value = value > 0 ? String(value) : "";
+    window.setTimeout(() => control.select(), 0);
+  });
+
+  document.addEventListener("focusout", event => {
+    const control = event.target.closest?.("input.money, [data-currency-entry]");
+    if (!control) return;
+
+    formatCurrencyEntry(control);
+    savePlannerState();
+    updateTaxSavingsFinder();
+    emphasizeMoneyText(document.body);
+  });
 
   document.querySelectorAll("#whatif input, #whatif select").forEach(control => {
     control.addEventListener("input", () => {
+      syncLifeEventScenarioVisibility();
       savePlannerState();
+      updateTaxSavingsFinder();
     });
     control.addEventListener("change", () => {
+      syncLifeEventScenarioVisibility();
       savePlannerState();
+      updateTaxSavingsFinder();
     });
+  });
+
+  const plannerMoneyObserver = new MutationObserver(mutations => {
+    const addedRoots = [];
+
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          addedRoots.push(node);
+        } else if (node.nodeType === Node.TEXT_NODE && node.parentElement) {
+          addedRoots.push(node.parentElement);
+        }
+      });
+    });
+
+    if (!addedRoots.length) return;
+
+    window.requestAnimationFrame(() => {
+      addedRoots.forEach(root => {
+        formatAllCurrencyEntries(root);
+        emphasizeMoneyText(root);
+      });
+    });
+  });
+
+  plannerMoneyObserver.observe(document.body, {
+    childList: true,
+    subtree: true
   });
 
   document.getElementById("professionalNotes").addEventListener("input", () => {
@@ -4287,6 +5036,9 @@
   } else {
     updateResumeDisplay();
   }
+  syncLifeEventScenarioVisibility();
+  formatAllCurrencyEntries();
+  emphasizeMoneyText(document.body);
   updateWithholdingCheckup();
   updateTaxSavingsFinder();
   updatePlannerOverview();

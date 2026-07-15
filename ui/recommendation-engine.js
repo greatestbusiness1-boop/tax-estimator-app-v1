@@ -13,7 +13,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = "1.5.0";
+  const VERSION = "1.8.0";
 
   const PRIORITY_RANK = Object.freeze({
     urgent: 0,
@@ -1094,6 +1094,360 @@
     };
   }
 
+
+  function cleanScenarioText(value, fallback = "Not confirmed") {
+    const text = String(value ?? "").trim();
+    return text && text !== "unknown" ? text : fallback;
+  }
+
+  function lifeEventRecommendation(item) {
+    return {
+      id: item.id,
+      source: "life-event-scenario",
+      category: item.category,
+      title: item.title,
+      detail: item.detail,
+      clientAction: item.clientAction,
+      professionalAction: item.professionalAction,
+      estimatedBenefit: 0,
+      priority: item.priority,
+      priorityRank: PRIORITY_RANK[item.priority] ?? PRIORITY_RANK.review,
+      impact: item.impact,
+      servicePath: item.servicePath,
+      opportunityKey: item.key
+    };
+  }
+
+  function buildLifeEventScenarios(input = {}) {
+    const items = [];
+    const lottery = input?.lottery || {};
+    const adoption = input?.adoption || {};
+    const cashHome = input?.cashHome || {};
+    const stockSale = input?.stockSale || {};
+    const businessPurchase = input?.businessPurchase || {};
+    const earlyRetirement = input?.earlyRetirement || {};
+    const spouseDebt = input?.spouseDebt || {};
+    const deathOfLovedOne = input?.deathOfLovedOne || {};
+
+    if (lottery.selected) {
+      const amount = Math.round(numberOrZero(lottery.amount));
+      const federalWithholding = Math.round(numberOrZero(lottery.federalWithholding));
+      const stateWithholding = Math.round(numberOrZero(lottery.stateWithholding));
+      const payoutType = cleanScenarioText(lottery.payoutType);
+
+      items.push({
+        key: "lottery",
+        id: "life-event-lottery",
+        title: "Review lottery or major gambling winnings",
+        category: "tax-exposure",
+        priority: "high",
+        priorityRank: PRIORITY_RANK.high,
+        impact: "Potential Tax Exposure",
+        statusLabel: "Income and payment review",
+        amount,
+        detail: `${amount > 0 ? `${money(amount)} of winnings or prize value` : "Lottery or gambling winnings"} were reported. Review taxable income, federal and state withholding, payout timing, estimated-payment needs, and the effect on credits, deductions, and the total return. Payout type: ${payoutType}.`,
+        clientAction: "Provide every W-2G, award statement, payout agreement, proof of federal and state withholding, and the date the winnings or prize were received.",
+        professionalAction: "Reconcile the reported winnings and withholding, review federal and state treatment, update the full-year projection, and determine whether an estimated payment or withholding adjustment should be considered.",
+        documents: ["W-2G or prize statement", "Payout agreement", "Proof of withholding", "Payment date"],
+        servicePath: "Tax Planning Review",
+        caution: "The amount won is not the amount of tax due. The complete income picture and current-law rules must be reviewed."
+      });
+    }
+
+    if (adoption.selected) {
+      const expenses = Math.round(numberOrZero(adoption.expenses));
+      const benefits = Math.round(numberOrZero(adoption.employerBenefits));
+      const adoptionType = cleanScenarioText(adoption.type);
+      const status = cleanScenarioText(adoption.status);
+
+      items.push({
+        key: "adoption",
+        id: "life-event-adoption",
+        title: "Review adoption tax credit and employer-benefit eligibility",
+        category: "tax-savings",
+        priority: "medium",
+        priorityRank: PRIORITY_RANK.medium,
+        impact: "Potential Tax Opportunity",
+        statusLabel: "Eligibility and timing review",
+        amount: expenses,
+        detail: `${expenses > 0 ? `${money(expenses)} of adoption expenses` : "Adoption expenses"} and ${benefits > 0 ? `${money(benefits)} of employer benefits` : "no confirmed employer-benefit amount"} were entered. Adoption type: ${adoptionType}. Status: ${status}. Eligibility, timing, income limits, employer assistance, and documentation must be verified before estimating a credit.`,
+        clientAction: "Provide itemized adoption expenses, proof of payment, agency and attorney records, employer adoption assistance, and documents showing the adoption type and current status.",
+        professionalAction: "Verify qualified expenses, timing rules, employer-benefit coordination, income limitations, special-needs treatment when applicable, and the amount that can be used in the active tax year.",
+        documents: ["Expense ledger", "Receipts and proof of payment", "Agency or legal records", "Employer-benefit statement"],
+        servicePath: "Tax Planning Review",
+        caution: "The amount paid is not automatically the credit amount. Eligibility, annual limits, timing, and phase-outs apply."
+      });
+    }
+
+    if (cashHome.selected) {
+      const purchasePrice = Math.round(numberOrZero(cashHome.purchasePrice));
+      const closingCosts = Math.round(numberOrZero(cashHome.closingCosts));
+      const propertyTax = Math.round(numberOrZero(cashHome.propertyTax));
+      const use = cleanScenarioText(cashHome.use);
+
+      items.push({
+        key: "cash-home",
+        id: "life-event-cash-home",
+        title: "Document cash home purchase, basis, and homeowner tax items",
+        category: "documentation",
+        priority: "medium",
+        priorityRank: PRIORITY_RANK.medium,
+        impact: "Documentation and Future Tax Planning",
+        statusLabel: "Basis and property-use review",
+        amount: purchasePrice,
+        detail: `${purchasePrice > 0 ? `${money(purchasePrice)} cash purchase price` : "A cash home purchase"} was entered, with ${money(closingCosts)} of closing costs and ${money(propertyTax)} of property tax reported. Intended use: ${use}. The purchase price itself is not automatically a current deduction; basis, deductible taxes, closing items, improvements, and business or rental use must be separated correctly.`,
+        clientAction: "Provide the closing disclosure or settlement statement, deed, proof of payment, property-tax records, improvement records, and the intended personal, rental, or business use.",
+        professionalAction: "Establish starting basis, identify capitalizable closing costs, separate potentially deductible taxes from basis items, and review depreciation or home-office implications when the property has business or rental use.",
+        documents: ["Closing statement", "Proof of cash purchase", "Deed", "Property-tax records", "Improvement records"],
+        servicePath: "Tax Planning Review",
+        caution: "Paying cash does not make the purchase price deductible. Good basis records may be important for depreciation and a future sale."
+      });
+    }
+
+    if (stockSale.selected) {
+      const proceeds = Math.round(numberOrZero(stockSale.proceeds));
+      const basis = Math.round(numberOrZero(stockSale.basis));
+      const estimatedGain = proceeds - basis;
+      const holding = cleanScenarioText(stockSale.holding);
+      const docs = cleanScenarioText(stockSale.docs);
+      const basisMissing = proceeds > 0 && basis <= 0;
+      const priority = basisMissing || stockSale.docs === "missing" || stockSale.docs === "missing-basis"
+        ? "high"
+        : "medium";
+
+      items.push({
+        key: "stock-sale",
+        id: "life-event-stock-sale",
+        title: "Review investment sale, basis, and capital-gain treatment",
+        category: "tax-exposure",
+        priority,
+        priorityRank: PRIORITY_RANK[priority],
+        impact: estimatedGain >= 0 ? "Potential Tax Exposure" : "Potential Capital Loss Review",
+        statusLabel: basisMissing ? "Basis information required" : "Gain or loss review",
+        amount: Math.max(proceeds, Math.abs(estimatedGain)),
+        detail: `${money(proceeds)} of proceeds and ${money(basis)} of known basis were entered. The preliminary difference is ${money(estimatedGain)}, but the final gain or loss depends on adjusted basis, transaction details, holding period, wash-sale adjustments, and complete brokerage reporting. Holding period: ${holding}. Documents: ${docs}.`,
+        clientAction: "Provide the complete consolidated brokerage statement, every Form 1099-B, acquisition records for any missing basis, and records of prior transfers, reinvested dividends, splits, or inherited or gifted property.",
+        professionalAction: "Reconcile proceeds and basis, separate short- and long-term transactions, identify adjustments, review capital-loss treatment, and update the tax projection before year-end or filing.",
+        documents: ["1099-B", "Consolidated brokerage statement", "Basis records", "Acquisition and sale dates"],
+        servicePath: "Tax Planning Review",
+        caution: "Proceeds are not the taxable gain. The taxable result generally depends on adjusted basis and transaction-specific rules."
+      });
+    }
+
+    if (businessPurchase.selected) {
+      const purchasePrice = Math.round(numberOrZero(businessPurchase.purchasePrice));
+      const purchaseType = cleanScenarioText(businessPurchase.purchaseType);
+      const entity = cleanScenarioText(businessPurchase.entity);
+      const books = cleanScenarioText(businessPurchase.books);
+
+      items.push({
+        key: "business-purchase",
+        id: "life-event-business-purchase",
+        title: "Review new business purchase and tax setup",
+        category: "business",
+        priority: "high",
+        priorityRank: PRIORITY_RANK.high,
+        impact: "Business Tax and Compliance Review",
+        statusLabel: "Business acquisition review",
+        amount: purchasePrice,
+        detail: `${purchasePrice > 0 ? `${money(purchasePrice)} business purchase price` : "A new business purchase or startup"} was entered. Structure: ${purchaseType}. Entity: ${entity}. Accounting records: ${books}. The tax treatment depends on what was acquired, purchase-price allocation, entity ownership, financing, opening balances, payroll, licenses, and the date operations began.`,
+        clientAction: "Provide the purchase agreement, closing statement, asset list, allocation schedules, financing documents, entity documents, tax IDs, licenses, opening bank records, and the first accounting records.",
+        professionalAction: "Determine whether the transaction was an asset purchase, ownership-interest purchase, or startup; review purchase-price allocation, basis, depreciation or amortization, entity setup, payroll, estimated taxes, and bookkeeping readiness.",
+        documents: ["Purchase agreement", "Asset and allocation schedules", "Financing documents", "Entity records", "Opening books and bank statements"],
+        servicePath: "Business Tax Intelligence™ Assessment",
+        caution: "A business purchase should be reviewed before the first tax return, payroll filing, owner payment, or major year-end decision."
+      });
+    }
+
+    if (earlyRetirement.selected) {
+      const gross = Math.round(numberOrZero(earlyRetirement.gross));
+      const taxable = Math.round(numberOrZero(earlyRetirement.taxable));
+      const withholding = Math.round(numberOrZero(earlyRetirement.withholding));
+      const age = numberOrZero(earlyRetirement.age);
+      const code = cleanScenarioText(earlyRetirement.code);
+      const exception = cleanScenarioText(earlyRetirement.exception);
+      const possibleEarly = age > 0 && age < 59.5;
+      const priority = possibleEarly || earlyRetirement.exception === "unknown"
+        ? "high"
+        : "medium";
+
+      items.push({
+        key: "early-retirement",
+        id: "life-event-early-retirement",
+        title: "Review early 1099-R distribution and possible additional tax",
+        category: "tax-exposure",
+        priority,
+        priorityRank: PRIORITY_RANK[priority],
+        impact: "Potential Tax Exposure",
+        statusLabel: possibleEarly ? "Early-distribution review" : "Retirement-distribution review",
+        amount: gross,
+        detail: `${money(gross)} gross distribution, ${money(taxable)} taxable amount, and ${money(withholding)} federal withholding were entered. Age at distribution: ${age || "not confirmed"}. Box 7 code: ${code}. Exception or rollover: ${exception}. Income tax and a possible additional tax must be reviewed using the complete Form 1099-R facts.`,
+        clientAction: "Provide every page of Form 1099-R, the retirement account statement, rollover documentation, proof of any returned funds, and records supporting any claimed exception.",
+        professionalAction: "Verify the taxable amount, distribution code, age, rollover treatment, withholding, applicable exception, Form 5329 reporting, state treatment, and whether an additional payment is needed.",
+        documents: ["Form 1099-R", "Account statement", "Rollover proof", "Exception documentation"],
+        servicePath: "Tax Planning Review",
+        caution: "An early distribution may be subject to regular income tax and an additional tax unless a specific exception applies."
+      });
+    }
+
+    if (spouseDebt.selected) {
+      const event = cleanScenarioText(spouseDebt.event);
+      const debtYears = cleanScenarioText(spouseDebt.debtYears);
+      const filing = cleanScenarioText(spouseDebt.filing);
+      const offset = cleanScenarioText(spouseDebt.offset);
+      const notice = cleanScenarioText(spouseDebt.notice);
+      const state = cleanScenarioText(spouseDebt.state);
+      const urgent = spouseDebt.offset === "yes" ||
+        spouseDebt.offset === "expected" ||
+        spouseDebt.notice === "yes";
+
+      items.push({
+        key: "spouse-debt",
+        id: "life-event-spouse-debt",
+        title: "Review marriage, divorce, and spouse tax-debt responsibility",
+        category: "risk-action",
+        priority: urgent ? "urgent" : "high",
+        priorityRank: PRIORITY_RANK[urgent ? "urgent" : "high"],
+        impact: "Tax Liability and Refund Protection Review",
+        statusLabel: urgent ? "Notice or refund-offset review" : "Responsibility review",
+        amount: 0,
+        detail: `Relationship event: ${event}. Debt year(s): ${debtYears}. Filing situation: ${filing}. Refund offset: ${offset}. Notice: ${notice}. State: ${state}. A spouse's tax debt from before marriage is not automatically divided 50/50, but joint returns, refund offsets, community-property rules, later joint-return liabilities, and the exact tax years can change the result.`,
+        clientAction: "Provide the IRS or state account notices, prior returns for the affected years, marriage or divorce dates, refund-offset notice, current filing status, and any divorce decree or separation agreement.",
+        professionalAction: "Separate premarital debt from joint-return liability, identify which returns created the balance, review refund-offset exposure, community-property rules, injured-spouse or innocent-spouse relief, and determine whether legal counsel or IRS representation is appropriate.",
+        documents: ["IRS or state notices", "Affected tax returns", "Refund-offset notice", "Marriage or divorce dates", "Divorce decree when applicable"],
+        servicePath: urgent ? "Spouse Tax Relief / IRS Review" : "Tax Planning Review",
+        caution: "Do not assume you owe half—or nothing—until the tax years, return signatures, state rules, notices, and refund history are reviewed."
+      });
+    }
+
+    if (deathOfLovedOne.selected) {
+      const relationship = cleanScenarioText(deathOfLovedOne.relationship);
+      const role = cleanScenarioText(deathOfLovedOne.role);
+      const dateOfDeath = cleanScenarioText(deathOfLovedOne.dateOfDeath);
+      const jointReturn = cleanScenarioText(deathOfLovedOne.jointReturn);
+      const inheritedAssets = cleanScenarioText(deathOfLovedOne.inheritedAssets);
+      const beneficiaryStatus = cleanScenarioText(
+        deathOfLovedOne.beneficiaryStatus,
+        "Not applicable / not confirmed"
+      );
+      const inheritedValue = Math.round(numberOrZero(deathOfLovedOne.inheritedValue));
+      const inheritedAssetLabels = {
+        "life-insurance": "Life insurance proceeds",
+        "cash": "Cash",
+        "home-property": "Home or other real property",
+        "investments": "Stocks, investments, or brokerage assets",
+        "retirement": "IRA, 401(k), pension, or other retirement account",
+        "business": "Business ownership or business assets",
+        "mixed": "More than one type of asset",
+        "none": "Nothing received"
+      };
+      const inheritedAssetLabel =
+        inheritedAssetLabels[deathOfLovedOne.inheritedAssets] || inheritedAssets;
+      const beneficiaryLabels = {
+        "primary": "Named primary beneficiary",
+        "contingent": "Named contingent beneficiary",
+        "estate": "The estate was named beneficiary",
+        "other": "Another person or trust was named beneficiary",
+        "not-applicable": "Not applicable / no life insurance"
+      };
+      const beneficiaryLabel =
+        beneficiaryLabels[deathOfLovedOne.beneficiaryStatus] || beneficiaryStatus;
+      const lifeInsuranceSelected =
+        deathOfLovedOne.inheritedAssets === "life-insurance" ||
+        deathOfLovedOne.inheritedAssets === "mixed";
+      const knownTaxDebt = cleanScenarioText(deathOfLovedOne.knownTaxDebt);
+      const estateDistributed = cleanScenarioText(deathOfLovedOne.estateDistributed);
+      const notice = cleanScenarioText(deathOfLovedOne.notice);
+      const urgent =
+        deathOfLovedOne.notice === "yes" ||
+        (
+          deathOfLovedOne.knownTaxDebt === "yes" &&
+          (
+            deathOfLovedOne.estateDistributed === "partial" ||
+            deathOfLovedOne.estateDistributed === "yes"
+          )
+        );
+
+      items.push({
+        key: "death-of-loved-one",
+        id: "life-event-death-of-loved-one",
+        title: "Review tax responsibilities after the death of a spouse or parent",
+        category: "risk-action",
+        priority: urgent ? "urgent" : "high",
+        priorityRank: PRIORITY_RANK[urgent ? "urgent" : "high"],
+        impact: "Estate, Survivor, and Inheritance Tax Review",
+        statusLabel: urgent ? "Tax notice or estate-distribution review" : "Survivor and estate responsibility review",
+        amount: inheritedValue,
+        detail: `Relationship: ${relationship}. Role: ${role}. Date of death: ${dateOfDeath}. Joint-return status: ${jointReturn}. What was inherited or received: ${inheritedAssetLabel}. Life insurance beneficiary designation: ${beneficiaryLabel}. Estimated value received: ${money(inheritedValue)}. Known tax debt: ${knownTaxDebt}. Estate distribution status: ${estateDistributed}. IRS or state notice: ${notice}. A spouse or child is not automatically personally responsible for the deceased person's taxes merely because of the relationship. The final individual return and the estate's income-tax return are separate matters. ${lifeInsuranceSelected ? "Life insurance proceeds paid because of the insured person's death are generally not included in the beneficiary's gross income, but interest, installment terms, ownership, transfer, or estate-beneficiary facts may require separate review. " : ""}Responsibility can change when a surviving spouse signs a joint return, a person serves as executor or personal representative, estate assets are distributed before taxes are resolved, inherited retirement accounts create taxable distributions, or a beneficiary receives estate income.`,
+        clientAction: `Provide the death certificate, will or trust, letters of appointment if you are the executor or personal representative, prior and final tax records, IRS or state notices, estate bank records, asset and beneficiary statements, inherited retirement-account documents, property valuations, and any Schedule K-1 received from the estate.${lifeInsuranceSelected ? " Also provide the life insurance policy or beneficiary designation, claim or settlement statement, payment election, and any Form 1099-INT or other tax form from the insurer." : ""}`,
+        professionalAction: `Determine who is responsible for the final Form 1040, whether a surviving spouse should file jointly or separately for the year of death, whether the estate needs Form 1041 or another return, whether inherited retirement distributions or estate income are taxable to the beneficiary, what basis records are needed for inherited property, whether unpaid tax belongs to the estate or a jointly filed return, and whether estate or legal counsel should be involved.${lifeInsuranceSelected ? " Verify who was named beneficiary, whether proceeds were paid directly or through the estate, and whether any interest or other taxable amount was included in the insurance settlement." : ""}`,
+        documents: [
+          "Death certificate",
+          "Will or trust",
+          "Executor / personal representative papers",
+          "Prior and final tax records",
+          "IRS or state notices",
+          "Estate bank and asset statements",
+          ...(lifeInsuranceSelected
+            ? [
+                "Life insurance policy or beneficiary designation",
+                "Insurance claim or settlement statement",
+                "Form 1099-INT or other insurer tax form"
+              ]
+            : []),
+          "Inherited retirement-account records",
+          "Property valuations and estate Schedule K-1"
+        ],
+        servicePath: urgent ? "Estate / Survivor Tax Review" : "Tax Planning Review",
+        caution: "Do not assume you owe the deceased person's taxes—or that you owe nothing—until the signed returns, estate role, assets received, distributions made, notices, and applicable federal and state rules are reviewed."
+      });
+    }
+
+    const sortedItems = [...items].sort((a, b) =>
+      (a.priorityRank - b.priorityRank) ||
+      String(a.title).localeCompare(String(b.title))
+    );
+
+    const recommendations = sortedItems.map(lifeEventRecommendation);
+    const urgentCount = sortedItems.filter((item) => item.priority === "urgent").length;
+    const highCount = sortedItems.filter((item) =>
+      item.priority === "urgent" || item.priority === "high"
+    ).length;
+    const totalReportedAmount = sortedItems.reduce(
+      (total, item) => total + numberOrZero(item.amount),
+      0
+    );
+    const highestPriority = sortedItems[0]?.priority || "review";
+    const priorityLabels = {
+      urgent: "Immediate review",
+      high: "High-priority review",
+      medium: "Planning review",
+      review: "Professional review",
+      monitor: "Monitor"
+    };
+
+    return {
+      items: sortedItems,
+      recommendations,
+      selectedCount: sortedItems.length,
+      urgentCount,
+      highCount,
+      totalReportedAmount: Math.round(totalReportedAmount),
+      highestPriority,
+      highestPriorityLabel: sortedItems.length
+        ? priorityLabels[highestPriority] || "Professional review"
+        : "Not started",
+      status: sortedItems.length
+        ? urgentCount > 0
+          ? "Immediate professional review identified"
+          : highCount > 0
+            ? "High-priority life event review identified"
+            : "Life event planning review ready"
+        : "Select a real-life event to begin",
+      boundaryNote: "Life Event Tax Scenarios organize tax questions, documents, possible exposure or opportunity, and next actions. They do not create a filed return, legal conclusion, investment recommendation, or guaranteed tax result."
+    };
+  }
+
   function actionToRecommendation(action) {
     return {
       id: action.id,
@@ -1112,16 +1466,20 @@
     };
   }
 
-  function buildRecommendations(input, opportunitySummary, smartAlertResult = null) {
+  function buildRecommendations(input, opportunitySummary, smartAlertResult = null, lifeEventResult = null) {
     const maximum = Math.max(1, Math.round(numberOrZero(input?.maxRecommendations) || 4));
     const withholdingRecommendation = buildWithholdingRecommendation(input);
     const opportunityRecommendations = (opportunitySummary?.actions || []).map(actionToRecommendation);
     const smartAlertRecommendations = Array.isArray(smartAlertResult?.alerts)
       ? smartAlertResult.alerts
       : [];
+    const lifeEventRecommendations = Array.isArray(lifeEventResult?.recommendations)
+      ? lifeEventResult.recommendations
+      : [];
     const recommendations = [
       withholdingRecommendation,
       ...opportunityRecommendations,
+      ...lifeEventRecommendations,
       ...smartAlertRecommendations
     ];
 
@@ -2432,10 +2790,14 @@
         otherIncome: input?.otherIncome
       }
     });
+    const lifeEventScenarios = buildLifeEventScenarios(
+      input?.lifeEventScenarios || {}
+    );
     const recommendations = buildRecommendations(
       input,
       opportunitySummary,
-      smartAlerts
+      smartAlerts,
+      lifeEventScenarios
     );
     const scorecard = buildOpportunityScorecard(
       recommendations,
@@ -2485,6 +2847,7 @@
       opportunitySummary,
       businessDetection,
       smartAlerts,
+      lifeEventScenarios,
       actionPlan: recommendations,
       recommendations,
       scorecard,
@@ -2513,6 +2876,7 @@
     buildRecommendations,
     buildWithholdingRecommendation,
     buildSmartAlerts,
+    buildLifeEventScenarios,
     buildBusinessDetection,
     buildOpportunityScorecard,
     buildImmediateAction,
