@@ -363,6 +363,216 @@
       font-weight:800;
       color:var(--navy)
     }
+    /* Secure Document Center Version 1.0 */
+    .document-center-status{
+      margin:0 0 18px;
+      padding:14px 16px;
+      border-left:5px solid var(--green);
+      background:#edf8f2;
+      color:#15583b;
+      font-weight:800;
+      line-height:1.55
+    }
+    .document-center-status.testing{
+      border-left-color:var(--gold);
+      background:#fff7df;
+      color:#684d20
+    }
+    .document-center-status.error{
+      border-left-color:var(--red);
+      background:#fff0ee;
+      color:#8b211d
+    }
+    .document-center-grid{
+      display:grid;
+      grid-template-columns:minmax(320px,.92fr) minmax(0,1.25fr);
+      gap:24px;
+      align-items:start
+    }
+    .document-upload-card{
+      border:1px solid var(--line);
+      border-top:6px solid var(--gold);
+      background:var(--paper);
+      padding:22px
+    }
+    .document-upload-card h3,
+    .document-history-card h3{
+      font-family:Georgia,serif;
+      color:var(--navy);
+      font-size:25px;
+      margin:0 0 8px
+    }
+    .document-upload-card p,
+    .document-history-card p{
+      color:var(--muted);
+      line-height:1.55;
+      margin:0 0 15px
+    }
+    .document-field{
+      display:grid;
+      gap:7px;
+      margin-top:15px
+    }
+    .document-field label{
+      color:var(--navy);
+      font-size:12px;
+      font-weight:900
+    }
+    .document-field select,
+    .document-field textarea,
+    .document-field input[type="file"]{
+      width:100%;
+      border:1px solid #bac6ce;
+      background:#fff;
+      padding:12px 13px;
+      color:var(--ink);
+      font:inherit
+    }
+    .document-field textarea{
+      min-height:92px;
+      resize:vertical
+    }
+    .document-file-help{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55
+    }
+    .document-upload-message{
+      display:none;
+      margin:0 0 16px;
+      padding:13px 15px;
+      border-left:5px solid var(--gold);
+      background:#fff7df;
+      line-height:1.5;
+      font-weight:800
+    }
+    .document-upload-message.show{
+      display:block
+    }
+    .document-upload-message.good{
+      border-color:var(--green);
+      background:#edf8f2;
+      color:#125236
+    }
+    .document-upload-message.bad{
+      border-color:var(--red);
+      background:#fff0ee;
+      color:#8b211d
+    }
+    .document-history-card{
+      min-width:0
+    }
+    .document-summary{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin:0 0 16px
+    }
+    .document-summary-item{
+      border:1px solid var(--line);
+      background:#faf7f0;
+      padding:13px
+    }
+    .document-summary-item span{
+      display:block;
+      color:var(--muted);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.07em;
+      text-transform:uppercase
+    }
+    .document-summary-item strong{
+      display:block;
+      color:var(--navy);
+      font-size:22px;
+      margin-top:6px
+    }
+    .document-list{
+      display:grid;
+      gap:12px
+    }
+    .document-year-group{
+      display:grid;
+      gap:10px
+    }
+    .document-year-title{
+      margin:6px 0 0;
+      padding:9px 12px;
+      background:#edf3f6;
+      border-left:5px solid var(--navy);
+      color:var(--navy);
+      font-family:Georgia,serif;
+      font-size:18px
+    }
+    .document-item{
+      border:1px solid #d7dfe5;
+      border-left:6px solid var(--gold);
+      background:#fff;
+      padding:16px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:16px;
+      align-items:center
+    }
+    .document-item h4{
+      color:var(--navy);
+      margin:0 0 6px;
+      font-size:16px;
+      overflow-wrap:anywhere
+    }
+    .document-meta{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6
+    }
+    .document-note{
+      margin-top:8px;
+      color:var(--ink);
+      font-size:13px;
+      line-height:1.5
+    }
+    .document-status-pill{
+      display:inline-block;
+      margin-top:8px;
+      padding:5px 8px;
+      border:1px solid #d9c08c;
+      background:#fff7df;
+      color:#684d20;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase
+    }
+    .document-download{
+      display:inline-block;
+      padding:10px 12px;
+      background:var(--navy);
+      color:#fff;
+      text-decoration:none;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap
+    }
+    .document-empty{
+      border:1px dashed #b8c4cc;
+      padding:26px;
+      text-align:center;
+      color:var(--muted);
+      background:#fbfcfc
+    }
+    .document-privacy-note{
+      margin-top:18px;
+      padding:14px 16px;
+      border-left:5px solid var(--navy);
+      background:#edf3f6;
+      color:#28465d;
+      line-height:1.55;
+      font-size:13px
+    }
+    .document-privacy-note strong{
+      color:var(--navy)
+    }
     .security-grid{
       display:grid;
       grid-template-columns:.9fr 1.1fr;
@@ -491,6 +701,7 @@
     @media(max-width:1000px){
       .hero,
       .document-banner,
+      .document-center-grid,
       .security-grid{
         grid-template-columns:1fr
       }
@@ -518,7 +729,16 @@
       .metrics{grid-template-columns:1fr}
       .section-head{display:block}
       .categories,
-      .history-grid{grid-template-columns:1fr}
+      .history-grid,
+      .document-summary{
+        grid-template-columns:1fr
+      }
+      .document-item{
+        grid-template-columns:1fr
+      }
+      .document-download{
+        text-align:center
+      }
       .hero h1{font-size:32px}
     }
   </style>
@@ -529,10 +749,11 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.1</span>
+        <span>Tax Savings Planner™ Portal — Version 1.2</span>
       </div>
     </div>
     <div class="top-actions">
+      <a class="top-link" href="#documentCenter">Documents</a>
       <a class="top-link" href="#accountSecurity">Account &amp; Security</a>
       <button class="signout" id="signOutButton" type="button">Sign Out</button>
     </div>
@@ -607,20 +828,101 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="documentCenter">
       <div class="section-head">
         <div>
           <h2>Secure Document Center</h2>
-          <p>Documents will be organized under your client profile and the correct tax year.</p>
+          <p>Upload supporting records to your client profile and the correct tax year. Your upload history and office-review status remain available here.</p>
         </div>
       </div>
-      <div class="section-body document-banner">
-        <div class="coming">
-          <span class="label">NEXT PORTAL MODULE</span>
-          <h3>Secure uploads are not active yet.</h3>
-          <p>The next module will add protected document uploads, category and tax-year organization, upload history, and office review status. This page does not ask you to email sensitive documents.</p>
+
+      <div class="section-body">
+        <div class="document-center-status" id="documentCenterStatus">
+          Loading secure document storage...
         </div>
-        <div class="categories" id="documentCategories"></div>
+
+        <div class="document-center-grid">
+          <form class="document-upload-card" id="documentUploadForm">
+            <div class="document-upload-message" id="documentUploadMessage" role="status" aria-live="polite"></div>
+
+            <h3>Upload a document</h3>
+            <p>Choose one file, identify the tax year and category, and add a short note when it will help the office understand the document.</p>
+
+            <div class="document-field">
+              <label for="documentTaxYear">Tax year</label>
+              <select id="documentTaxYear" required>
+                <option value="">Choose tax year</option>
+              </select>
+            </div>
+
+            <div class="document-field">
+              <label for="documentCategory">Document category</label>
+              <select id="documentCategory" required>
+                <option value="">Choose category</option>
+              </select>
+            </div>
+
+            <div class="document-field">
+              <label for="documentFile">Document file</label>
+              <input
+                id="documentFile"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif"
+                required
+              >
+            </div>
+
+            <div class="document-field">
+              <label for="documentNote">Note for the office <span style="font-weight:400;">(optional)</span></label>
+              <textarea
+                id="documentNote"
+                maxlength="500"
+                placeholder="Example: 2025 W-2 from ABC Company or IRS notice dated July 1, 2026."
+              ></textarea>
+            </div>
+
+            <div class="document-file-help" id="documentFileHelp">
+              Allowed: PDF, JPG, JPEG, PNG, HEIC, or HEIF. Maximum file size: 15 MB.
+            </div>
+
+            <div class="form-actions">
+              <button class="button" id="documentUploadButton" type="submit">
+                Upload Document Securely
+              </button>
+            </div>
+
+            <div class="document-privacy-note">
+              <strong>Use this secure upload instead of email.</strong>
+              Do not place passwords or portal security codes in the note. Upload only records that belong to you or that you are authorized to provide.
+            </div>
+          </form>
+
+          <div class="document-history-card">
+            <h3>My upload history</h3>
+            <p>Each file stays connected to your portal profile and selected tax year. The status below shows where it is in the office-review process.</p>
+
+            <div class="document-summary">
+              <div class="document-summary-item">
+                <span>Documents</span>
+                <strong id="documentTotal">0</strong>
+              </div>
+
+              <div class="document-summary-item">
+                <span>Awaiting Review</span>
+                <strong id="documentAwaiting">0</strong>
+              </div>
+
+              <div class="document-summary-item">
+                <span>Latest Upload</span>
+                <strong id="documentLatest">None</strong>
+              </div>
+            </div>
+
+            <div class="document-list" id="documentList">
+              <div class="document-empty">No documents have been uploaded yet.</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -724,6 +1026,370 @@
               hour: "numeric",
               minute: "2-digit"
             }
+      );
+    }
+
+    let currentDocumentCenter = null;
+
+    function formatFileSize(
+      bytes
+    ) {
+      const size = Number(
+        bytes || 0
+      );
+
+      if (
+        !Number.isFinite(size) ||
+        size <= 0
+      ) {
+        return "0 KB";
+      }
+
+      if (
+        size < 1024 * 1024
+      ) {
+        return `${Math.max(
+          1,
+          Math.round(
+            size / 1024
+          )
+        )} KB`;
+      }
+
+      return `${(
+        size /
+        (1024 * 1024)
+      ).toFixed(1)} MB`;
+    }
+
+    function showDocumentMessage(
+      text,
+      type = ""
+    ) {
+      const message =
+        document.getElementById(
+          "documentUploadMessage"
+        );
+
+      message.textContent =
+        String(text || "");
+
+      message.className =
+        `document-upload-message show ${type}`.trim();
+    }
+
+    function clearDocumentMessage() {
+      const message =
+        document.getElementById(
+          "documentUploadMessage"
+        );
+
+      message.textContent = "";
+
+      message.className =
+        "document-upload-message";
+    }
+
+    function populateDocumentSelects(
+      center = {}
+    ) {
+      const taxYearSelect =
+        document.getElementById(
+          "documentTaxYear"
+        );
+
+      const categorySelect =
+        document.getElementById(
+          "documentCategory"
+        );
+
+      const currentTaxYear =
+        taxYearSelect.value;
+
+      const currentCategory =
+        categorySelect.value;
+
+      taxYearSelect.innerHTML =
+        '<option value="">Choose tax year</option>' +
+        (
+          center.taxYears || []
+        )
+          .map(
+            (item) =>
+              `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`
+          )
+          .join("");
+
+      categorySelect.innerHTML =
+        '<option value="">Choose category</option>' +
+        (
+          center.categories || []
+        )
+          .map(
+            (item) =>
+              `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`
+          )
+          .join("");
+
+      if (
+        currentTaxYear &&
+        [
+          ...taxYearSelect.options
+        ].some(
+          (option) =>
+            option.value ===
+            currentTaxYear
+        )
+      ) {
+        taxYearSelect.value =
+          currentTaxYear;
+      }
+
+      if (
+        currentCategory &&
+        [
+          ...categorySelect.options
+        ].some(
+          (option) =>
+            option.value ===
+            currentCategory
+        )
+      ) {
+        categorySelect.value =
+          currentCategory;
+      }
+    }
+
+    function renderDocumentList(
+      documents = []
+    ) {
+      const container =
+        document.getElementById(
+          "documentList"
+        );
+
+      if (!documents.length) {
+        container.innerHTML =
+          '<div class="document-empty">No documents have been uploaded yet.</div>';
+        return;
+      }
+
+      const groups = new Map();
+
+      documents.forEach(
+        (document) => {
+          const label =
+            document.taxYearLabel ||
+            "Tax Year Not Recorded";
+
+          if (!groups.has(label)) {
+            groups.set(
+              label,
+              []
+            );
+          }
+
+          groups.get(label).push(
+            document
+          );
+        }
+      );
+
+      container.innerHTML =
+        Array.from(
+          groups.entries()
+        )
+          .map(
+            ([yearLabel, yearDocuments]) => {
+              const items =
+                yearDocuments
+                  .map(
+                    (document) => {
+                      const note =
+                        document.note
+                          ? `
+                            <div class="document-note">
+                              <strong>Note:</strong>
+                              ${escapeHtml(document.note)}
+                            </div>
+                          `
+                          : "";
+
+                      const downloadUrl =
+                        `/api/client-portal/documents/${encodeURIComponent(document.documentId)}/download`;
+
+                      return `
+                        <article class="document-item">
+                          <div>
+                            <h4>${escapeHtml(document.originalName || "Document")}</h4>
+
+                            <div class="document-meta">
+                              ${escapeHtml(document.categoryLabel || "Other Supporting Records")}
+                              &bull;
+                              ${escapeHtml(formatFileSize(document.sizeBytes))}
+                              <br>
+                              Uploaded: ${escapeHtml(formatDate(document.uploadedAt))}
+                            </div>
+
+                            ${note}
+
+                            <span class="document-status-pill">
+                              ${escapeHtml(document.statusLabel || "Received — Awaiting Office Review")}
+                            </span>
+                          </div>
+
+                          <div>
+                            <a
+                              class="document-download"
+                              href="${downloadUrl}"
+                            >
+                              Download My Copy
+                            </a>
+                          </div>
+                        </article>
+                      `;
+                    }
+                  )
+                  .join("");
+
+              return `
+                <section class="document-year-group">
+                  <h4 class="document-year-title">
+                    ${escapeHtml(yearLabel)}
+                  </h4>
+                  ${items}
+                </section>
+              `;
+            }
+          )
+          .join("");
+    }
+
+    function renderDocumentCenter(
+      center = {}
+    ) {
+      currentDocumentCenter =
+        center;
+
+      const status =
+        document.getElementById(
+          "documentCenterStatus"
+        );
+
+      const uploadButton =
+        document.getElementById(
+          "documentUploadButton"
+        );
+
+      const fileInput =
+        document.getElementById(
+          "documentFile"
+        );
+
+      const enabled =
+        center.enabled === true;
+
+      status.textContent =
+        center.status ||
+        (
+          enabled
+            ? "Private client document storage is active."
+            : "Secure document storage is not configured yet."
+        );
+
+      status.className =
+        center.localTesting
+          ? "document-center-status testing"
+          : enabled
+            ? "document-center-status"
+            : "document-center-status error";
+
+      uploadButton.disabled =
+        !enabled;
+
+      fileInput.disabled =
+        !enabled;
+
+      populateDocumentSelects(
+        center
+      );
+
+      const summary =
+        center.summary || {};
+
+      document.getElementById(
+        "documentTotal"
+      ).textContent =
+        Number(
+          summary.totalDocuments || 0
+        );
+
+      document.getElementById(
+        "documentAwaiting"
+      ).textContent =
+        Number(
+          summary.awaitingReview || 0
+        );
+
+      document.getElementById(
+        "documentLatest"
+      ).textContent =
+        summary.latestUploadAt
+          ? formatDate(
+              summary.latestUploadAt,
+              true
+            )
+          : "None";
+
+      renderDocumentList(
+        center.documents || []
+      );
+
+      const maximum =
+        Number(
+          center.maxFileMegabytes || 15
+        );
+
+      document.getElementById(
+        "documentFileHelp"
+      ).textContent =
+        `Allowed: PDF, JPG, JPEG, PNG, HEIC, or HEIF. Maximum file size: ${maximum} MB.`;
+    }
+
+    async function refreshDocumentCenter() {
+      const response = await fetch(
+        "/api/client-portal/documents",
+        {
+          credentials:
+            "same-origin",
+          cache: "no-store"
+        }
+      );
+
+      if (response.status === 401) {
+        window.location.href =
+          "/client-portal?reason=session";
+        return;
+      }
+
+      const data = await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+      if (
+        !response.ok ||
+        !data.ok
+      ) {
+        throw new Error(
+          data.error ||
+          "Your secure document list could not be refreshed."
+        );
+      }
+
+      renderDocumentCenter(
+        data.documentCenter || {}
       );
     }
 
@@ -1087,18 +1753,9 @@
         );
       }
 
-      document.getElementById(
-        "documentCategories"
-      ).innerHTML =
-        (
-          portal.documentCenter
-            ?.categories || []
-        )
-          .map(
-            (category) =>
-              `<div class="category">${escapeHtml(category)}</div>`
-          )
-          .join("");
+      renderDocumentCenter(
+        portal.documentCenter || {}
+      );
     }
 
     document.getElementById(
@@ -1123,6 +1780,189 @@
         button.textContent = opening
           ? "Hide Older Tax Years"
           : "View Older Tax Years";
+      }
+    );
+
+    document.getElementById(
+      "documentUploadForm"
+    ).addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
+        clearDocumentMessage();
+
+        if (
+          !currentDocumentCenter ||
+          currentDocumentCenter.enabled !== true
+        ) {
+          showDocumentMessage(
+            "Secure document storage is not available yet.",
+            "bad"
+          );
+          return;
+        }
+
+        const taxYear =
+          document.getElementById(
+            "documentTaxYear"
+          ).value;
+
+        const category =
+          document.getElementById(
+            "documentCategory"
+          ).value;
+
+        const fileInput =
+          document.getElementById(
+            "documentFile"
+          );
+
+        const note =
+          document.getElementById(
+            "documentNote"
+          ).value.trim();
+
+        const file =
+          fileInput.files?.[0];
+
+        if (!taxYear) {
+          showDocumentMessage(
+            "Choose the tax year for this document.",
+            "bad"
+          );
+          return;
+        }
+
+        if (!category) {
+          showDocumentMessage(
+            "Choose a document category.",
+            "bad"
+          );
+          return;
+        }
+
+        if (!file) {
+          showDocumentMessage(
+            "Choose a document to upload.",
+            "bad"
+          );
+          return;
+        }
+
+        const maximum = Number(
+          currentDocumentCenter
+            .maxFileBytes ||
+          15 * 1024 * 1024
+        );
+
+        if (
+          file.size >
+          maximum
+        ) {
+          showDocumentMessage(
+            "The document is larger than 15 MB.",
+            "bad"
+          );
+          return;
+        }
+
+        const button =
+          document.getElementById(
+            "documentUploadButton"
+          );
+
+        button.disabled = true;
+        button.textContent =
+          "Uploading securely...";
+
+        showDocumentMessage(
+          "Uploading your document. Keep this page open until you receive confirmation."
+        );
+
+        try {
+          const response = await fetch(
+            "/api/client-portal/documents/upload",
+            {
+              method: "POST",
+              credentials:
+                "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/octet-stream",
+                "X-Document-File-Name":
+                  encodeURIComponent(
+                    file.name
+                  ),
+                "X-Document-Content-Type":
+                  encodeURIComponent(
+                    file.type || ""
+                  ),
+                "X-Document-Tax-Year":
+                  encodeURIComponent(
+                    taxYear
+                  ),
+                "X-Document-Category":
+                  encodeURIComponent(
+                    category
+                  ),
+                "X-Document-Note":
+                  encodeURIComponent(
+                    note
+                  )
+              },
+              body: file
+            }
+          );
+
+          if (response.status === 401) {
+            window.location.href =
+              "/client-portal?reason=session";
+            return;
+          }
+
+          const data = await response
+            .json()
+            .catch(
+              () => ({})
+            );
+
+          if (
+            !response.ok ||
+            !data.ok
+          ) {
+            throw new Error(
+              data.error ||
+              "The document could not be uploaded."
+            );
+          }
+
+          fileInput.value = "";
+
+          document.getElementById(
+            "documentNote"
+          ).value = "";
+
+          await refreshDocumentCenter();
+
+          showDocumentMessage(
+            data.message ||
+            "Your document was uploaded securely and is awaiting office review.",
+            "good"
+          );
+        } catch (error) {
+          showDocumentMessage(
+            error.message ||
+            "The document could not be uploaded.",
+            "bad"
+          );
+        } finally {
+          button.disabled =
+            !currentDocumentCenter ||
+            currentDocumentCenter.enabled !== true;
+
+          button.textContent =
+            "Upload Document Securely";
+        }
       }
     );
 

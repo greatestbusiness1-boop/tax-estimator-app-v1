@@ -8,3 +8,8 @@ leads.json
 # Secure Client Portal local-development credential store
 client-portal-accounts.local.json
 client-portal-accounts.local.json.tmp
+
+# Secure Document Center local-development storage
+client-portal-documents.local/
+client-portal-documents.local.json
+client-portal-documents.local.json.tmp

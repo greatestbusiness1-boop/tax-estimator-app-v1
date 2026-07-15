@@ -4,6 +4,15 @@ const express = require("express");
 const clientCore = require("./server/clientCore");
 const { createClientPortalSecurity } = require("./server/clientPortalSecurity");
 const { createClientPortalStore } = require("./server/clientPortalStore");
+const { createClientDocumentStore } = require("./server/clientDocumentStore");
+const {
+  MAX_FILE_BYTES: CLIENT_DOCUMENT_MAX_BYTES,
+  DOCUMENT_CATEGORIES: CLIENT_DOCUMENT_CATEGORIES,
+  normalizeTaxYear: normalizeClientDocumentTaxYear,
+  validateDocumentUpload,
+  publicDocumentRecord
+} = require("./server/clientDocumentSecurity");
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
@@ -84,6 +93,34 @@ const clientPortalStore = createClientPortalStore({
   localFile: path.join(
     __dirname,
     "client-portal-accounts.local.json"
+  ),
+  allowLocalFallback:
+    !CLIENT_PORTAL_PRODUCTION_HOST
+});
+
+// =============================================================================
+// SECURE DOCUMENT CENTER
+// Files are never served from the public /ui directory. Local development uses
+// a private folder beside server.js. Live storage requires the Supabase service
+// role plus the private bucket/table created by supabase/client-document-center.sql.
+// =============================================================================
+
+const CLIENT_DOCUMENTS_BUCKET = String(
+  process.env.CLIENT_DOCUMENTS_BUCKET ||
+  "client-portal-documents"
+).trim();
+
+const clientDocumentStore = createClientDocumentStore({
+  supabaseAdmin: clientPortalSupabaseAdmin,
+  tableName: "client_portal_documents",
+  bucketName: CLIENT_DOCUMENTS_BUCKET,
+  localMetadataFile: path.join(
+    __dirname,
+    "client-portal-documents.local.json"
+  ),
+  localDirectory: path.join(
+    __dirname,
+    "client-portal-documents.local"
   ),
   allowLocalFallback:
     !CLIENT_PORTAL_PRODUCTION_HOST
@@ -844,6 +881,13 @@ function sanitizeClientPortalRecord(record) {
       ? record
       : {};
 
+  const documentCenter =
+    value.documentCenter &&
+    typeof value.documentCenter === "object" &&
+    !Array.isArray(value.documentCenter)
+      ? value.documentCenter
+      : {};
+
   return {
     version: Number(value.version || 1),
     status: String(value.status || "not-activated"),
@@ -852,7 +896,36 @@ function sanitizeClientPortalRecord(record) {
     lastLoginAt: String(value.lastLoginAt || ""),
     lastActivityAt: String(value.lastActivityAt || ""),
     setupRequestedAt: String(value.setupRequestedAt || ""),
-    sourceLeadId: String(value.sourceLeadId || "")
+    sourceLeadId: String(value.sourceLeadId || ""),
+    documentCenter: {
+      version: Number(
+        documentCenter.version || 1
+      ),
+      status: String(
+        documentCenter.status || "not-started"
+      ),
+      totalDocuments: Number(
+        documentCenter.totalDocuments || 0
+      ),
+      awaitingReview: Number(
+        documentCenter.awaitingReview || 0
+      ),
+      inReview: Number(
+        documentCenter.inReview || 0
+      ),
+      accepted: Number(
+        documentCenter.accepted || 0
+      ),
+      needsReplacement: Number(
+        documentCenter.needsReplacement || 0
+      ),
+      latestUploadAt: String(
+        documentCenter.latestUploadAt || ""
+      ),
+      latestFileName: String(
+        documentCenter.latestFileName || ""
+      )
+    }
   };
 }
 
@@ -3093,6 +3166,317 @@ function buildClientPortalRecordGroups(records = []) {
   };
 }
 
+
+function decodeClientDocumentHeader(
+  value,
+  maxLength = 500
+) {
+  const raw = String(
+    value || ""
+  ).slice(0, maxLength * 3);
+
+  try {
+    return decodeURIComponent(raw)
+      .slice(0, maxLength);
+  } catch {
+    return raw.slice(
+      0,
+      maxLength
+    );
+  }
+}
+
+function getClientDocumentTaxYearOptions() {
+  const currentYear =
+    new Date().getFullYear();
+
+  const years = [];
+
+  for (
+    let year = currentYear;
+    year >= currentYear - 20;
+    year -= 1
+  ) {
+    years.push({
+      value: String(year),
+      label: `Tax Year ${year}`
+    });
+  }
+
+  years.push(
+    {
+      value: "multiple",
+      label: "Multiple Tax Years"
+    },
+    {
+      value: "not-sure",
+      label: "Not Sure Which Tax Year"
+    }
+  );
+
+  return years;
+}
+
+async function getClientPortalDocumentCenterState(
+  session
+) {
+  const available =
+    clientDocumentStore.isAvailable();
+
+  const localTesting =
+    clientDocumentStore.mode ===
+    "local-development";
+
+  if (!available) {
+    return {
+      version: "1.0.0",
+      enabled: false,
+      status:
+        "Secure document storage is not configured yet.",
+      storageMode:
+        clientDocumentStore.mode,
+      liveStorageReady: false,
+      localTesting: false,
+      maxFileBytes:
+        CLIENT_DOCUMENT_MAX_BYTES,
+      maxFileMegabytes: 15,
+      categories:
+        CLIENT_DOCUMENT_CATEGORIES,
+      taxYears:
+        getClientDocumentTaxYearOptions(),
+      allowedFileTypes: [
+        "PDF",
+        "JPG / JPEG",
+        "PNG",
+        "HEIC / HEIF"
+      ],
+      documents: [],
+      summary:
+        clientDocumentStore.buildSummary(
+          []
+        )
+    };
+  }
+
+  let records = [];
+  let loadError = "";
+
+  try {
+    records =
+      await clientDocumentStore.listForPortal({
+        portalId:
+          session.portal.portalId,
+        email:
+          session.email
+      });
+  } catch (error) {
+    loadError =
+      error?.message ||
+      String(error);
+
+    console.warn(
+      "[client document center] Document list unavailable:",
+      loadError
+    );
+  }
+
+  return {
+    version: "1.0.0",
+    enabled: !loadError,
+    status: loadError
+      ? "Your secure document list could not be loaded."
+      : localTesting
+        ? "Local testing storage is active. Do not upload real client documents until private cloud storage is configured and validated."
+        : "Private client document storage is active.",
+    storageMode:
+      clientDocumentStore.mode,
+    liveStorageReady:
+      clientDocumentStore.isLiveReady(),
+    localTesting,
+    maxFileBytes:
+      CLIENT_DOCUMENT_MAX_BYTES,
+    maxFileMegabytes: 15,
+    categories:
+      CLIENT_DOCUMENT_CATEGORIES,
+    taxYears:
+      getClientDocumentTaxYearOptions(),
+    allowedFileTypes: [
+      "PDF",
+      "JPG / JPEG",
+      "PNG",
+      "HEIC / HEIF"
+    ],
+    documents:
+      records.map(
+        publicDocumentRecord
+      ),
+    summary:
+      clientDocumentStore.buildSummary(
+        records
+      )
+  };
+}
+
+async function findClientDocumentLinkedLeadId(
+  email,
+  taxYear,
+  accountLeadId
+) {
+  const normalizedYear =
+    normalizeClientDocumentTaxYear(
+      taxYear
+    );
+
+  if (
+    !normalizedYear ||
+    normalizedYear === "multiple" ||
+    normalizedYear === "not-sure"
+  ) {
+    return String(
+      accountLeadId || ""
+    );
+  }
+
+  const accessible =
+    await getClientPortalAccessibleLeads(
+      email
+    );
+
+  const matching =
+    accessible.find(
+      (entry) =>
+        getClientPortalTaxYear(
+          entry.lead || {},
+          entry.lead?.taxSavingsPlanner || {}
+        ) === normalizedYear
+    );
+
+  return String(
+    matching?.leadId ||
+    accountLeadId ||
+    ""
+  );
+}
+
+async function syncClientDocumentSummaryToLead(
+  session,
+  summary
+) {
+  const accountLeadId = String(
+    session?.payload?.accountLeadId || ""
+  );
+
+  if (!accountLeadId) {
+    return;
+  }
+
+  await updateClientPortalLeadStatus(
+    accountLeadId,
+    (current = {}) => ({
+      ...current,
+      documentCenter: {
+        version: 1,
+        status: "active",
+        totalDocuments: Number(
+          summary.totalDocuments || 0
+        ),
+        awaitingReview: Number(
+          summary.awaitingReview || 0
+        ),
+        inReview: Number(
+          summary.inReview || 0
+        ),
+        accepted: Number(
+          summary.accepted || 0
+        ),
+        needsReplacement: Number(
+          summary.needsReplacement || 0
+        ),
+        latestUploadAt: String(
+          summary.latestUploadAt || ""
+        ),
+        latestFileName: String(
+          summary.latestFileName || ""
+        )
+      }
+    })
+  );
+}
+
+async function sendClientDocumentUploadReceipt({
+  to,
+  clientName,
+  document
+}) {
+  const email = normalizeEmail(to);
+
+  if (
+    !email ||
+    !EMAIL_USER ||
+    !EMAIL_APP_PASSWORD ||
+    !document
+  ) {
+    return;
+  }
+
+  const portalUrl =
+    String(APP_BASE_URL || "")
+      .replace(/\/+$/, "") +
+    "/client-portal";
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject:
+        "Secure document upload received",
+      text:
+`Hello ${clientName || "Client"},
+
+We received your secure portal upload.
+
+Document:
+${document.originalName}
+
+Tax year:
+${document.taxYearLabel}
+
+Category:
+${document.categoryLabel}
+
+Status:
+Received — Awaiting Office Review
+
+You can view your upload history in the Secure Document Center:
+${portalUrl}
+
+For your protection, do not email Social Security numbers, tax documents, passwords, or security codes.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+  } catch (error) {
+    console.warn(
+      "[client document center] Upload receipt email could not be sent:",
+      error?.message || error
+    );
+  }
+}
+
+function safeClientDocumentDownloadName(
+  value
+) {
+  return String(
+    value || "document"
+  )
+    .replace(
+      /[\r\n"\\;]/g,
+      "-"
+    )
+    .slice(0, 180) ||
+    "document";
+}
+
 async function sendClientPortalAccountEmail({
   to,
   clientName,
@@ -5065,10 +5449,10 @@ app.post(
 
 
 // =============================================================================
-// SECURE CLIENT PORTAL FOUNDATION ROUTES
-// Activation requires the lead reference number and the exact email on the
-// client record. A six-digit code is sent to that email before a password can
-// be created or reset. Document uploads are intentionally not enabled yet.
+// SECURE CLIENT PORTAL + DOCUMENT CENTER ROUTES
+// Activation requires the lead reference number and exact email on the client
+// record. Document files are stored outside the public UI and can be listed or
+// downloaded only through an authenticated portal session.
 // =============================================================================
 
 app.get("/client-portal", (req, res) => {
@@ -5157,8 +5541,8 @@ app.get("/api/client-portal/health", (req, res) => {
 
   return res.status(200).json({
     ok: true,
-    module: "Secure Client Portal Foundation",
-    version: "1.0.0",
+    module: "Secure Client Portal + Document Center",
+    version: "1.2.0",
     sessionCookie: "HttpOnly / SameSite=Lax",
     persistentSessionSecretConfigured: Boolean(
       process.env.CLIENT_PORTAL_SESSION_SECRET
@@ -5169,7 +5553,14 @@ app.get("/api/client-portal/health", (req, res) => {
     emailDeliveryConfigured: Boolean(
       EMAIL_USER && EMAIL_APP_PASSWORD
     ),
-    documentUploadsEnabled: false
+    documentUploadsEnabled:
+      clientDocumentStore.isAvailable(),
+    documentStorageMode:
+      clientDocumentStore.mode,
+    liveDocumentStorageReady:
+      clientDocumentStore.isLiveReady(),
+    documentBucket:
+      CLIENT_DOCUMENTS_BUCKET
   });
 });
 
@@ -5923,10 +6314,15 @@ app.get(
           session.payload.accountLeadId
       ) || accessible[0];
 
+    const documentCenter =
+      await getClientPortalDocumentCenterState(
+        session
+      );
+
     return res.status(200).json({
       ok: true,
       portal: {
-        version: "1.1.0",
+        version: "1.2.0",
         status: "active",
         clientName:
           primary
@@ -5955,22 +6351,389 @@ app.get(
           recordOrganization.totalRawRecords,
         visibleYearLimit:
           recordOrganization.visibleYearLimit,
-        documentCenter: {
-          enabled: false,
-          status:
-            "Secure document uploads are the next portal module.",
-          categories: [
-            "Income Documents",
-            "Deductions & Credits",
-            "Life Events",
-            "Business Records",
-            "IRS / State Notices",
-            "Identity & Authorization",
-            "Other Supporting Records"
-          ]
-        }
+        documentCenter
       }
     });
+  }
+);
+
+
+const clientDocumentUploadParser =
+  express.raw({
+    type: "application/octet-stream",
+    limit:
+      CLIENT_DOCUMENT_MAX_BYTES
+  });
+
+function parseClientDocumentUpload(
+  req,
+  res,
+  next
+) {
+  clientDocumentUploadParser(
+    req,
+    res,
+    (error) => {
+      if (!error) {
+        next();
+        return;
+      }
+
+      setClientPortalNoStore(res);
+
+      if (
+        error.type ===
+        "entity.too.large"
+      ) {
+        res.status(413).json({
+          ok: false,
+          error:
+            "The document is larger than 15 MB."
+        });
+        return;
+      }
+
+      console.warn(
+        "[client document center] Upload body could not be read:",
+        error.message || error
+      );
+
+      res.status(400).json({
+        ok: false,
+        error:
+          "The document upload could not be read."
+      });
+    }
+  );
+}
+
+app.get(
+  "/api/client-portal/documents",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    const documentCenter =
+      await getClientPortalDocumentCenterState(
+        req.clientPortalSession
+      );
+
+    return res.status(
+      documentCenter.enabled
+        ? 200
+        : 503
+    ).json({
+      ok:
+        documentCenter.enabled,
+      documentCenter,
+      error:
+        documentCenter.enabled
+          ? undefined
+          : documentCenter.status
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/documents/upload",
+  requireClientPortalApiSession,
+  parseClientDocumentUpload,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    if (
+      !clientDocumentStore.isAvailable()
+    ) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure document storage is not configured yet."
+      });
+    }
+
+    const session =
+      req.clientPortalSession;
+
+    const fileName =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-file-name"
+        ],
+        220
+      );
+
+    const contentType =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-content-type"
+        ],
+        100
+      );
+
+    const category =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-category"
+        ],
+        80
+      );
+
+    const taxYear =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-tax-year"
+        ],
+        20
+      );
+
+    const note =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-note"
+        ],
+        500
+      );
+
+    const validation =
+      validateDocumentUpload({
+        buffer: req.body,
+        originalName:
+          fileName,
+        contentType,
+        category,
+        taxYear,
+        note
+      });
+
+    if (!validation.ok) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          validation.errors.join(
+            " "
+          ),
+        errors:
+          validation.errors
+      });
+    }
+
+    const rateKey =
+      clientPortalRateLimitKey(
+        req,
+        "document-upload",
+        session.email
+      );
+
+    const rate =
+      consumeClientPortalAttempt(
+        rateKey,
+        {
+          limit: 25,
+          windowMs:
+            60 * 60 * 1000
+        }
+      );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many document uploads were attempted. Please wait before trying again."
+      });
+    }
+
+    const upload =
+      validation.value;
+
+    const duplicate =
+      await clientDocumentStore.findDuplicate({
+        portalId:
+          session.portal.portalId,
+        email:
+          session.email,
+        taxYear:
+          upload.taxYear,
+        sha256:
+          upload.sha256
+      });
+
+    if (duplicate) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "This same document is already saved under the selected tax year."
+      });
+    }
+
+    const linkedLeadId =
+      await findClientDocumentLinkedLeadId(
+        session.email,
+        upload.taxYear,
+        session.payload.accountLeadId
+      );
+
+    const now =
+      new Date().toISOString();
+
+    const documentId =
+      crypto.randomUUID();
+
+    const saveResult =
+      await clientDocumentStore.upload({
+        buffer:
+          upload.buffer,
+        record: {
+          documentId,
+          portalId:
+            session.portal.portalId,
+          accountLeadId:
+            session.payload.accountLeadId,
+          linkedLeadId,
+          email:
+            session.email,
+          taxYear:
+            upload.taxYear,
+          category:
+            upload.category,
+          originalName:
+            upload.originalName,
+          extension:
+            upload.extension,
+          contentType:
+            upload.contentType,
+          sizeBytes:
+            upload.sizeBytes,
+          sha256:
+            upload.sha256,
+          note:
+            upload.note,
+          reviewStatus:
+            "awaiting-review",
+          clientVisible: true,
+          uploadedAt: now,
+          updatedAt: now
+        }
+      });
+
+    if (!saveResult.ok) {
+      console.error(
+        "[client document center] Upload save failed:",
+        saveResult.error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          clientDocumentStore.isLiveReady()
+            ? "The secure document could not be saved. Confirm the private document bucket and database table are configured."
+            : "The secure document could not be saved."
+      });
+    }
+
+    const records =
+      await clientDocumentStore.listForPortal({
+        portalId:
+          session.portal.portalId,
+        email:
+          session.email
+      });
+
+    const summary =
+      clientDocumentStore.buildSummary(
+        records
+      );
+
+    await syncClientDocumentSummaryToLead(
+      session,
+      summary
+    );
+
+    const publicRecord =
+      publicDocumentRecord(
+        saveResult.record
+      );
+
+    void sendClientDocumentUploadReceipt({
+      to:
+        session.email,
+      clientName:
+        getLeadNameValue(
+          session.accountLead.raw
+        ),
+      document:
+        publicRecord
+    });
+
+    return res.status(201).json({
+      ok: true,
+      message:
+        "Your document was uploaded securely and is awaiting office review.",
+      document:
+        publicRecord,
+      summary
+    });
+  }
+);
+
+app.get(
+  "/api/client-portal/documents/:documentId/download",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const documentId = String(
+      req.params?.documentId || ""
+    ).trim();
+
+    const result =
+      await clientDocumentStore.download({
+        documentId,
+        portalId:
+          req.clientPortalSession
+            .portal
+            .portalId,
+        email:
+          req.clientPortalSession
+            .email
+      });
+
+    if (!result.ok) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The requested document is not available in your portal."
+      });
+    }
+
+    const fileName =
+      safeClientDocumentDownloadName(
+        result.record.originalName
+      );
+
+    res.setHeader(
+      "Content-Type",
+      result.record.contentType ||
+      "application/octet-stream"
+    );
+
+    res.setHeader(
+      "Content-Length",
+      String(
+        result.buffer.length
+      )
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+    );
+
+    res.setHeader(
+      "X-Content-Type-Options",
+      "nosniff"
+    );
+
+    return res.send(
+      result.buffer
+    );
   }
 );
 

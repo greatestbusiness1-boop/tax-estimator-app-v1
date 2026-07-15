@@ -3852,6 +3852,7 @@ function getTaxPlannerCrmHtml(lead){
 
 function getClientPortalCrmHtml(lead){
   const portal = lead?.clientPortal || {};
+  const documents = portal.documentCenter || {};
   const leadId = String(lead?.leadId || "").trim();
   const status = String(portal.status || "not-activated");
   const active = status === "active";
@@ -3864,18 +3865,42 @@ function getClientPortalCrmHtml(lead){
       ? "Security code requested"
       : "Not activated";
 
+  const totalDocuments = Number(
+    documents.totalDocuments || 0
+  );
+
+  const awaitingReview = Number(
+    documents.awaitingReview || 0
+  );
+
+  const latestUpload = documents.latestUploadAt
+    ? formatLeadDate(documents.latestUploadAt)
+    : "No upload recorded";
+
   return `
     <div class="client-portal-crm-card">
-      <h3>Secure Client Portal Foundation</h3>
+      <h3>Secure Client Portal &amp; Document Center</h3>
       <div>
         <strong>${escapeOfficeHtml(statusLabel)}</strong><br>
-        The client activates access with the email address on file, the client reference number, and a six-digit code delivered by email.
+        The client signs in with the email address on file and can securely upload supported documents to the correct tax year and category.
       </div>
 
       <div class="client-portal-status-grid">
         <div class="client-portal-status-item">
           <span>Portal Status</span>
           <strong>${escapeOfficeHtml(statusLabel)}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Secure Documents</span>
+          <strong>${totalDocuments}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Awaiting Review</span>
+          <strong style="${awaitingReview > 0 ? "color:#b45309;" : "color:#166534;"}">${awaitingReview}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Latest Upload</span>
+          <strong>${escapeOfficeHtml(latestUpload)}</strong>
         </div>
         <div class="client-portal-status-item">
           <span>Activated</span>
@@ -3887,9 +3912,16 @@ function getClientPortalCrmHtml(lead){
         </div>
       </div>
 
+      ${documents.latestFileName ? `
+        <div class="tax-planner-crm-next" style="border-left-color:#b78c49;">
+          <strong>Latest secure upload</strong><br>
+          ${escapeOfficeHtml(documents.latestFileName)}
+        </div>
+      ` : ""}
+
       <div class="tax-planner-crm-next" style="border-left-color:#176344;">
-        <strong>Foundation scope</strong><br>
-        Secure activation, password sign-in, private session, saved Planner access, and tax-year record organization are included. Secure document uploads are the next portal module and are not active yet.
+        <strong>Document Center scope</strong><br>
+        Client upload, tax-year and category organization, protected client download, upload history, and initial office-review status are active. This CRM card shows document counts only; the secure office document-review workspace is the next controlled-access module.
       </div>
 
       <div class="client-portal-actions">
@@ -3899,7 +3931,6 @@ function getClientPortalCrmHtml(lead){
     </div>
   `;
 }
-
 
 function appendTaxPlannerCrmToDetail(lead){
   const detailContent = document.getElementById("dpRefund");
