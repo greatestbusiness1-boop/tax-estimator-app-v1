@@ -2048,6 +2048,7 @@
   let latestTaxHealthScore = 0;
   const plannerParams = new URLSearchParams(window.location.search);
   const plannerLeadId = plannerParams.get("leadId") || "general";
+  const plannerPortalMode = plannerParams.get("portal") === "1";
   const plannerStateKey = `taxSavingsPlannerState:${plannerLeadId}`;
   const defaultPlannerTaxYear = String(plannerParams.get("taxYear") || "2025");
   const activePlanningYear = ACTIVE_PLANNING_YEAR;
@@ -4360,6 +4361,34 @@
     status.textContent = message;
   }
 
+  function configurePlannerAccessMode() {
+    if (!plannerPortalMode) return;
+
+    const card = document.querySelector(".crm-integration-card");
+    const title = card?.querySelector("h4");
+    const description = card?.querySelector("p");
+    const button = document.getElementById("syncPlannerToCrm");
+    const status = document.getElementById("crmSyncStatus");
+
+    if (title) {
+      title.textContent = "Secure Client Portal Connection";
+    }
+
+    if (description) {
+      description.textContent =
+        "Your answers, progress, Tax Health Score, checklist work, and report snapshot save to your client profile so you can return without starting over.";
+    }
+
+    if (button) {
+      button.textContent = "Save Planner Progress";
+    }
+
+    if (status) {
+      status.textContent =
+        "Connected to your secure client portal. Changes save automatically.";
+    }
+  }
+
   function buildCrmIntegrationPayload() {
     const recommendation = latestRecommendationResult || {};
     const scorecard = recommendation.scorecard || {};
@@ -4477,17 +4506,30 @@
       const payloadText = JSON.stringify(payload);
 
       let result = await requestPlannerCrmSync(
-        "/api/tax-savings-planner-sync",
+        plannerPortalMode
+          ? "/api/client-portal/planner-sync"
+          : "/api/tax-savings-planner-sync",
         payloadText
       );
 
-      // Compatibility fallback for a server that still exposes only the
-      // original parameterized route.
-      if (result.response.status === 404) {
+      // Compatibility fallback applies only to the office / CRM workflow.
+      if (
+        !plannerPortalMode &&
+        result.response.status === 404
+      ) {
         result = await requestPlannerCrmSync(
           `/api/tax-savings-planner/${encodeURIComponent(plannerLeadId)}/sync`,
           payloadText
         );
+      }
+
+      if (
+        plannerPortalMode &&
+        result.response.status === 401
+      ) {
+        window.location.href =
+          "/client-portal?reason=session";
+        return false;
       }
 
       const {
@@ -4526,7 +4568,9 @@
 
       setCrmSyncDisplay(
         "synced",
-        `Saved to the Tax Lead Center ${syncedTime}.`
+        plannerPortalMode
+          ? `Saved securely to your client profile ${syncedTime}.`
+          : `Saved to the Tax Lead Center ${syncedTime}.`
       );
 
       return true;
@@ -4650,9 +4694,17 @@
       syncPlannerToCrm({ silent: true });
       status.textContent = "Executive report snapshot created. Opening the report...";
 
-      const reportUrl = new URL("/tax-planning-report.html", window.location.origin);
+      const reportUrl = new URL(
+        plannerPortalMode
+          ? "/client-portal/report"
+          : "/tax-planning-report.html",
+        window.location.origin
+      );
       reportUrl.searchParams.set("leadId", plannerLeadId);
       reportUrl.searchParams.set("taxYear", currentPlannerTaxYear);
+      if (plannerPortalMode) {
+        reportUrl.searchParams.set("portal", "1");
+      }
       const reportWindow = window.open(reportUrl.toString(), "_blank", "noopener");
 
       if (!reportWindow) {
@@ -4895,7 +4947,24 @@
     if (!leadId) return;
 
     try {
-      const response = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const contextUrl = plannerPortalMode
+        ? "/api/client-portal/context?leadId=" + encodeURIComponent(leadId)
+        : "/api/estimate-summary/" + encodeURIComponent(leadId);
+
+      const response = await fetch(contextUrl, {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+
+      if (
+        plannerPortalMode &&
+        response.status === 401
+      ) {
+        window.location.href =
+          "/client-portal?reason=session";
+        return;
+      }
+
       const data = await response.json();
       if (!response.ok || !data.ok) return;
 
@@ -5014,12 +5083,16 @@
         crmLastSyncedAt = crmPlanner.syncedAt;
         setCrmSyncDisplay(
           "synced",
-          `Loaded from the Tax Lead Center. Last saved ${new Date(crmPlanner.syncedAt).toLocaleString()}.`
+          plannerPortalMode
+            ? `Loaded from your secure client profile. Last saved ${new Date(crmPlanner.syncedAt).toLocaleString()}.`
+            : `Loaded from the Tax Lead Center. Last saved ${new Date(crmPlanner.syncedAt).toLocaleString()}.`
         );
       } else {
         setCrmSyncDisplay(
           "idle",
-          "Connected to this client lead. Planner changes will save automatically."
+          plannerPortalMode
+            ? "Connected to your secure client profile. Planner changes will save automatically."
+            : "Connected to this client lead. Planner changes will save automatically."
         );
       }
 
@@ -5054,6 +5127,7 @@
   updatePlannerOverview();
   loadProfessionalNotes();
   scheduleStateEstimate();
+  configurePlannerAccessMode();
   loadClientContext();
 </script>
 </body>

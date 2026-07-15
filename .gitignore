@@ -4,3 +4,7 @@ leads.json
 # Local manual backups - do not commit
 *BACKUP*
 *-BACKUP-*
+
+# Secure Client Portal local-development credential store
+client-portal-accounts.local.json
+client-portal-accounts.local.json.tmp

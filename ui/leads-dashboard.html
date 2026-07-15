@@ -414,6 +414,77 @@
       border: 1px solid #28588c;
     }
 
+
+    .client-portal-crm-card {
+      margin-top: 18px;
+      border: 2px solid #9bb4ca;
+      border-left: 7px solid #176344;
+      background: #f6faf8;
+      padding: 18px;
+    }
+
+    .client-portal-crm-card h3 {
+      margin: 0 0 8px;
+      color: #0f2f59;
+      font-size: 20px;
+    }
+
+    .client-portal-status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .client-portal-status-item {
+      border: 1px solid #c9d6cf;
+      background: #fff;
+      padding: 11px;
+    }
+
+    .client-portal-status-item span {
+      display: block;
+      color: #5d6c75;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .client-portal-status-item strong {
+      display: block;
+      color: #0f2f59;
+      margin-top: 5px;
+    }
+
+    .client-portal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 13px;
+    }
+
+    .client-portal-actions a {
+      display: inline-block;
+      background: #0f2f59;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 900;
+      padding: 10px 13px;
+    }
+
+    .client-portal-actions a.secondary {
+      background: #fff;
+      color: #0f2f59;
+      border: 1px solid #0f2f59;
+    }
+
+    @media (max-width: 760px) {
+      .client-portal-status-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 760px) {
       .tax-planner-crm-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3779,6 +3850,57 @@ function getTaxPlannerCrmHtml(lead){
 }
 
 
+function getClientPortalCrmHtml(lead){
+  const portal = lead?.clientPortal || {};
+  const leadId = String(lead?.leadId || "").trim();
+  const status = String(portal.status || "not-activated");
+  const active = status === "active";
+  const activationUrl = `/client-portal?activate=1&leadId=${encodeURIComponent(leadId)}`;
+  const signInUrl = "/client-portal";
+
+  const statusLabel = active
+    ? "Active"
+    : status === "pending-activation"
+      ? "Security code requested"
+      : "Not activated";
+
+  return `
+    <div class="client-portal-crm-card">
+      <h3>Secure Client Portal Foundation</h3>
+      <div>
+        <strong>${escapeOfficeHtml(statusLabel)}</strong><br>
+        The client activates access with the email address on file, the client reference number, and a six-digit code delivered by email.
+      </div>
+
+      <div class="client-portal-status-grid">
+        <div class="client-portal-status-item">
+          <span>Portal Status</span>
+          <strong>${escapeOfficeHtml(statusLabel)}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Activated</span>
+          <strong>${escapeOfficeHtml(portal.activatedAt ? formatLeadDate(portal.activatedAt) : "Not yet")}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Last Sign In</span>
+          <strong>${escapeOfficeHtml(portal.lastLoginAt ? formatLeadDate(portal.lastLoginAt) : "No sign-in recorded")}</strong>
+        </div>
+      </div>
+
+      <div class="tax-planner-crm-next" style="border-left-color:#176344;">
+        <strong>Foundation scope</strong><br>
+        Secure activation, password sign-in, private session, saved Planner access, and tax-year record organization are included. Secure document uploads are the next portal module and are not active yet.
+      </div>
+
+      <div class="client-portal-actions">
+        ${leadId ? `<a href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
+        <a class="secondary" href="${signInUrl}" target="_blank" rel="noopener">Open Portal Sign In</a>
+      </div>
+    </div>
+  `;
+}
+
+
 function appendTaxPlannerCrmToDetail(lead){
   const detailContent = document.getElementById("dpRefund");
 
@@ -3786,16 +3908,16 @@ function appendTaxPlannerCrmToDetail(lead){
     return;
   }
 
-  const existingPlannerCard =
-    detailContent.querySelector(".tax-planner-crm-card");
-
-  if(existingPlannerCard){
-    existingPlannerCard.remove();
-  }
+  detailContent
+    .querySelectorAll(
+      ".tax-planner-crm-card, .client-portal-crm-card"
+    )
+    .forEach((card) => card.remove());
 
   detailContent.insertAdjacentHTML(
     "beforeend",
-    getTaxPlannerCrmHtml(lead)
+    getTaxPlannerCrmHtml(lead) +
+    getClientPortalCrmHtml(lead)
   );
 }
 

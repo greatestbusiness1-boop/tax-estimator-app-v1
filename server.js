@@ -2,6 +2,8 @@
 
 const express = require("express");
 const clientCore = require("./server/clientCore");
+const { createClientPortalSecurity } = require("./server/clientPortalSecurity");
+const { createClientPortalStore } = require("./server/clientPortalStore");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
@@ -23,6 +25,69 @@ const PORT = process.env.PORT || 3000;
 const LEADS_FILE = path.join(__dirname, "leads.json");
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
 const recentLeads = new Map();
+
+// =============================================================================
+// SECURE CLIENT PORTAL FOUNDATION
+// Client sessions use an HttpOnly, signed cookie. Passwords and activation
+// codes are stored only as slow hashes. Set CLIENT_PORTAL_SESSION_SECRET in
+// Render before inviting live clients so sessions remain valid after restarts.
+// =============================================================================
+
+const CLIENT_PORTAL_COOKIE_NAME =
+  "tsp_client_portal_session";
+
+const CLIENT_PORTAL_SESSION_DAYS = 7;
+const CLIENT_PORTAL_ACTIVATION_MINUTES = 15;
+
+const CLIENT_PORTAL_SESSION_SECRET = String(
+  process.env.CLIENT_PORTAL_SESSION_SECRET ||
+  process.env.STRIPE_SECRET_KEY ||
+  process.env.EMAIL_APP_PASSWORD ||
+  ""
+).trim();
+
+const clientPortalSecurity = createClientPortalSecurity({
+  secret:
+    CLIENT_PORTAL_SESSION_SECRET ||
+    "tax-savings-planner-local-session-only",
+  cookieName: CLIENT_PORTAL_COOKIE_NAME
+});
+
+const clientPortalAttemptBuckets = new Map();
+
+const CLIENT_PORTAL_PRODUCTION_HOST = Boolean(
+  process.env.RENDER ||
+  String(process.env.NODE_ENV || "").toLowerCase() === "production"
+);
+
+const CLIENT_PORTAL_SERVICE_ROLE_KEY = String(
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+).trim();
+
+const clientPortalSupabaseAdmin =
+  CLIENT_PORTAL_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        CLIENT_PORTAL_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false
+          }
+        }
+      )
+    : null;
+
+const clientPortalStore = createClientPortalStore({
+  supabaseAdmin: clientPortalSupabaseAdmin,
+  tableName: "client_portal_accounts",
+  localFile: path.join(
+    __dirname,
+    "client-portal-accounts.local.json"
+  ),
+  allowLocalFallback:
+    !CLIENT_PORTAL_PRODUCTION_HOST
+});
 
 // =============================================================================
 // EMAIL CONFIG
@@ -771,6 +836,26 @@ function buildFreeEstimatePdfBuffer(lead = {}) {
   });
 }
 
+function sanitizeClientPortalRecord(record) {
+  const value =
+    record &&
+    typeof record === "object" &&
+    !Array.isArray(record)
+      ? record
+      : {};
+
+  return {
+    version: Number(value.version || 1),
+    status: String(value.status || "not-activated"),
+    email: String(value.email || ""),
+    activatedAt: String(value.activatedAt || ""),
+    lastLoginAt: String(value.lastLoginAt || ""),
+    lastActivityAt: String(value.lastActivityAt || ""),
+    setupRequestedAt: String(value.setupRequestedAt || ""),
+    sourceLeadId: String(value.sourceLeadId || "")
+  };
+}
+
 function mapRowToLead(row) {
   const estimate = row.estimate || {};
 
@@ -858,6 +943,12 @@ function mapRowToLead(row) {
       row.taxSavingsPlanner ||
       row.tax_savings_planner ||
       null,
+    clientPortal: sanitizeClientPortalRecord(
+      estimate.clientPortal ||
+      row.clientPortal ||
+      row.client_portal ||
+      null
+    ),
     Request: estimate.Request || estimate.request || row.Request || row.request || null
   };
 }
@@ -2184,6 +2275,1013 @@ function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+
+function getClientPortalRecord(record = {}) {
+  const estimate = record?.estimate || {};
+
+  const value =
+    estimate.clientPortal ||
+    record.clientPortal ||
+    record.client_portal ||
+    null;
+
+  return value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+      ? value
+      : null;
+}
+
+function getLeadIdValue(record = {}) {
+  const estimate = record?.estimate || {};
+
+  return String(
+    record.leadId ||
+    record.leadid ||
+    record.lead_id ||
+    record.id ||
+    record.estimateId ||
+    estimate.leadId ||
+    estimate.leadid ||
+    estimate.lead_id ||
+    estimate.id ||
+    estimate.estimateId ||
+    ""
+  ).trim();
+}
+
+function getLeadEmailValue(record = {}) {
+  const estimate = record?.estimate || {};
+  const contact =
+    estimate.contact ||
+    record.contact ||
+    {};
+
+  return normalizeEmail(
+    contact.email ||
+    record.email ||
+    ""
+  );
+}
+
+function getLeadNameValue(record = {}) {
+  const estimate = record?.estimate || {};
+  const contact =
+    estimate.contact ||
+    record.contact ||
+    {};
+
+  return String(
+    contact.name ||
+    record.name ||
+    "Client"
+  ).trim();
+}
+
+function getClientPortalRequestIsSecure(req) {
+  return Boolean(
+    req.secure ||
+    String(
+      req.headers["x-forwarded-proto"] || ""
+    ).toLowerCase() === "https"
+  );
+}
+
+function setClientPortalNoStore(res) {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader(
+    "X-Robots-Tag",
+    "noindex, nofollow, noarchive"
+  );
+}
+
+function setClientPortalSessionCookie(req, res, payload) {
+  const now = Date.now();
+  const maxAgeSeconds =
+    CLIENT_PORTAL_SESSION_DAYS * 24 * 60 * 60;
+
+  const token = clientPortalSecurity.createSessionToken({
+    ...payload,
+    issuedAt: now,
+    expiresAt: now + (maxAgeSeconds * 1000)
+  });
+
+  res.setHeader(
+    "Set-Cookie",
+    clientPortalSecurity.buildSessionCookie(
+      token,
+      {
+        maxAgeSeconds,
+        secure: getClientPortalRequestIsSecure(req)
+      }
+    )
+  );
+}
+
+function clearClientPortalSessionCookie(req, res) {
+  res.setHeader(
+    "Set-Cookie",
+    clientPortalSecurity.buildClearCookie({
+      secure: getClientPortalRequestIsSecure(req)
+    })
+  );
+}
+
+function clientPortalRateLimitKey(
+  req,
+  action,
+  identity = ""
+) {
+  const forwarded = String(
+    req.headers["x-forwarded-for"] || ""
+  ).split(",")[0].trim();
+
+  const ip =
+    forwarded ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    "unknown";
+
+  return [
+    action,
+    ip,
+    normalizeEmail(identity)
+  ].join(":");
+}
+
+function consumeClientPortalAttempt(
+  key,
+  options = {}
+) {
+  const now = Date.now();
+  const windowMs = Number(
+    options.windowMs || (15 * 60 * 1000)
+  );
+  const limit = Number(options.limit || 5);
+  const current = clientPortalAttemptBuckets.get(key);
+
+  if (
+    !current ||
+    Number(current.resetAt || 0) <= now
+  ) {
+    const next = {
+      count: 1,
+      resetAt: now + windowMs
+    };
+
+    clientPortalAttemptBuckets.set(key, next);
+
+    return {
+      allowed: true,
+      remaining: Math.max(0, limit - 1),
+      resetAt: next.resetAt
+    };
+  }
+
+  current.count += 1;
+  clientPortalAttemptBuckets.set(key, current);
+
+  return {
+    allowed: current.count <= limit,
+    remaining: Math.max(0, limit - current.count),
+    resetAt: current.resetAt
+  };
+}
+
+function clearClientPortalAttempts(key) {
+  clientPortalAttemptBuckets.delete(key);
+}
+
+function saveClientPortalLocalOverlay(
+  leadId,
+  clientPortal,
+  updatedAt
+) {
+  const cleanId = String(leadId || "").trim();
+  const localLeads = readLeads();
+  const localIndex = localLeads.findIndex(
+    (lead) => getLeadIdValue(lead) === cleanId
+  );
+
+  if (localIndex >= 0) {
+    localLeads[localIndex] = {
+      ...localLeads[localIndex],
+      clientPortal,
+      updatedAt
+    };
+  } else {
+    localLeads.push({
+      leadId: cleanId,
+      clientPortal,
+      updatedAt
+    });
+  }
+
+  writeLeads(localLeads);
+
+  return {
+    ok: true,
+    source:
+      localIndex >= 0
+        ? "local"
+        : "local-overlay"
+  };
+}
+
+async function updateClientPortalLeadStatus(
+  leadId,
+  applyStatusUpdate
+) {
+  const cleanId = String(leadId || "").trim();
+  const now = new Date().toISOString();
+
+  if (!cleanId) {
+    return {
+      ok: false,
+      error: "The client reference number is missing."
+    };
+  }
+
+  // Client Portal Foundation V1.0.1:
+  // Save the portal status locally first so activation, sign-in, and sign-out
+  // never wait for a slower Supabase/CRM request before the browser receives
+  // its response. The local overlay is already merged into /api/leads.
+  const localLeads = readLeads();
+  const localRecord = localLeads.find(
+    (record = {}) => getLeadIdValue(record) === cleanId
+  ) || {};
+
+  const currentStatus =
+    getClientPortalRecord(localRecord) || {};
+
+  const nextStatus = applyStatusUpdate(
+    currentStatus,
+    localRecord,
+    now
+  );
+
+  if (!nextStatus) {
+    return {
+      ok: false,
+      error:
+        "The client portal status could not be updated."
+    };
+  }
+
+  const overlay = saveClientPortalLocalOverlay(
+    cleanId,
+    nextStatus,
+    now
+  );
+
+  // Keep the primary CRM/Supabase record synchronized in the background.
+  // A slow external connection must not strand the client on the activation
+  // screen after the account and password were already saved successfully.
+  void updateLeadAfterStripePayment(
+    cleanId,
+    (record = {}) => ({
+      ...record,
+      clientPortal: {
+        ...(getClientPortalRecord(record) || {}),
+        ...nextStatus
+      },
+      updatedAt: now
+    })
+  )
+    .then((primaryUpdate) => {
+      if (!primaryUpdate?.ok) {
+        console.warn(
+          "[client portal] Background CRM status sync used the local overlay:",
+          cleanId,
+          primaryUpdate?.error || "Primary update unavailable."
+        );
+      }
+    })
+    .catch((error) => {
+      console.warn(
+        "[client portal] Background CRM status sync failed; local overlay preserved:",
+        cleanId,
+        error?.message || error
+      );
+    });
+
+  return {
+    ok: true,
+    source: `${overlay.source}+background-crm-sync`,
+    status: nextStatus,
+    updatedAt: now
+  };
+}
+
+async function loadClientPortalLeadCandidates() {
+  const byId = new Map();
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    (data || []).forEach((row) => {
+      const leadId = getLeadIdValue(row);
+
+      if (!leadId) return;
+
+      byId.set(leadId, {
+        leadId,
+        raw: row,
+        lead: mapRowToLead(row),
+        portal: getClientPortalRecord(row),
+        source: "supabase"
+      });
+    });
+  } catch (error) {
+    console.warn(
+      "[client portal] Supabase lead load unavailable:",
+      error.message || error
+    );
+  }
+
+  readLeads().forEach((row) => {
+    const leadId = getLeadIdValue(row);
+
+    if (!leadId) return;
+
+    const existing = byId.get(leadId);
+    const mapped = mapRowToLead(row);
+    const localPortal = getClientPortalRecord(row);
+
+    if (!existing) {
+      byId.set(leadId, {
+        leadId,
+        raw: row,
+        lead: mapped,
+        portal: localPortal,
+        source: "local"
+      });
+      return;
+    }
+
+    byId.set(leadId, {
+      ...existing,
+      lead: {
+        ...existing.lead,
+        ...mapped,
+        contact: {
+          ...(existing.lead?.contact || {}),
+          ...(mapped.contact || {})
+        },
+        taxData:
+          mapped.taxData ||
+          existing.lead?.taxData,
+        estimateSummary:
+          mapped.estimateSummary ||
+          existing.lead?.estimateSummary,
+        taxSavingsPlanner:
+          mapped.taxSavingsPlanner ||
+          existing.lead?.taxSavingsPlanner,
+        clientPortal:
+          sanitizeClientPortalRecord(
+            localPortal ||
+            existing.portal
+          )
+      },
+      portal:
+        localPortal ||
+        existing.portal,
+      source: `${existing.source}+local`
+    });
+  });
+
+  return Array.from(byId.values());
+}
+
+async function findClientPortalLeadById(leadId) {
+  const cleanId = String(leadId || "").trim();
+  const candidates =
+    await loadClientPortalLeadCandidates();
+
+  return candidates.find(
+    (entry) => entry.leadId === cleanId
+  ) || null;
+}
+
+async function findActiveClientPortalAccountByEmail(email) {
+  return clientPortalStore.getActiveByEmail(
+    normalizeEmail(email)
+  );
+}
+
+async function getClientPortalAccessibleLeads(email) {
+  const normalized = normalizeEmail(email);
+  const candidates =
+    await loadClientPortalLeadCandidates();
+
+  return candidates.filter(
+    (entry) =>
+      getLeadEmailValue(entry.raw) === normalized
+  );
+}
+
+function getClientPortalServiceLabel(lead = {}) {
+  if (lead.taxSavingsPlanner) {
+    return "Tax Savings Planner";
+  }
+
+  if (lead.writtenReview) {
+    return "Written Red Flag Review";
+  }
+
+  if (lead.taxPreparationIntake) {
+    return "Tax Preparation";
+  }
+
+  const requestedService = String(
+    lead.contactRequest?.service || ""
+  ).trim();
+
+  if (requestedService) {
+    return requestedService;
+  }
+
+  return "Tax Planning Profile";
+}
+
+function normalizeClientPortalServiceLabel(value) {
+  const label = String(value || "").trim();
+  const lower = label.toLowerCase();
+
+  if (
+    lower.includes("transcript")
+  ) {
+    return "IRS Transcript Help";
+  }
+
+  if (
+    lower.includes("written") &&
+    lower.includes("review")
+  ) {
+    return "Written Red Flag Review";
+  }
+
+  if (
+    lower.includes("tax prep") ||
+    lower.includes("tax preparation")
+  ) {
+    return "Tax Preparation";
+  }
+
+  if (
+    lower.includes("tax planning") ||
+    lower.includes("strategy")
+  ) {
+    return "Tax Planning";
+  }
+
+  if (
+    lower.includes("general question") ||
+    lower === "question"
+  ) {
+    return "General Question";
+  }
+
+  if (
+    lower.includes("tax savings planner")
+  ) {
+    return "Tax Savings Planner";
+  }
+
+  return label || "Tax Planning Profile";
+}
+
+function getClientPortalRecordDate(lead = {}, planner = {}) {
+  const values = [
+    planner.syncedAt,
+    planner.updatedAt,
+    lead.updatedAt,
+    lead.timestamp,
+    lead.createdAt,
+    lead.estimate?.timestamp
+  ];
+
+  return String(
+    values.find((value) => value) || ""
+  );
+}
+
+function getClientPortalTaxYear(lead = {}, planner = {}) {
+  return String(
+    planner.taxYear ||
+    lead.taxData?.taxYear ||
+    lead.taxYear ||
+    lead.filingYear ||
+    lead.estimate?.taxData?.taxYear ||
+    "Not recorded"
+  );
+}
+
+function buildClientPortalLeadSummary(entry) {
+  const lead = entry.lead || {};
+  const planner = lead.taxSavingsPlanner || {};
+  const summary = planner.summary || {};
+  const service = normalizeClientPortalServiceLabel(
+    getClientPortalServiceLabel(lead)
+  );
+
+  return {
+    leadId: entry.leadId,
+    taxYear: getClientPortalTaxYear(
+      lead,
+      planner
+    ),
+    service,
+    status: String(
+      summary.plannerStatus ||
+      lead.status ||
+      "Profile available"
+    ),
+    hasPlanner: Boolean(lead.taxSavingsPlanner),
+    hasExecutiveReport: Boolean(
+      lead.taxSavingsPlanner?.executiveReport
+    ),
+    plannerSyncedAt: String(
+      planner.syncedAt || ""
+    ),
+    recordDate: getClientPortalRecordDate(
+      lead,
+      planner
+    ),
+    taxHealthScore: Number(
+      summary.taxHealthScore || 0
+    ),
+    urgentCount: Number(
+      summary.urgentCount || 0
+    ),
+    completedCount: Number(
+      summary.completedCount || 0
+    ),
+    nextAction: String(
+      summary.nextAction ||
+      "Continue your tax planning profile."
+    ).slice(0, 500)
+  };
+}
+
+function getClientPortalRecordSortTime(record = {}) {
+  const value =
+    record.plannerSyncedAt ||
+    record.recordDate ||
+    "";
+
+  const parsed = Date.parse(value);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : 0;
+}
+
+function getClientPortalPrimaryRecord(records = []) {
+  return [...records].sort((left, right) => {
+    const plannerDifference =
+      Number(Boolean(right.hasPlanner)) -
+      Number(Boolean(left.hasPlanner));
+
+    if (plannerDifference) {
+      return plannerDifference;
+    }
+
+    const reportDifference =
+      Number(Boolean(right.hasExecutiveReport)) -
+      Number(Boolean(left.hasExecutiveReport));
+
+    if (reportDifference) {
+      return reportDifference;
+    }
+
+    return (
+      getClientPortalRecordSortTime(right) -
+      getClientPortalRecordSortTime(left)
+    );
+  })[0] || null;
+}
+
+function buildClientPortalRecordGroups(records = []) {
+  const generalRequests = [];
+  const taxYearRecords = [];
+
+  records.forEach((record) => {
+    if (
+      normalizeClientPortalServiceLabel(
+        record.service
+      ) === "General Question"
+    ) {
+      generalRequests.push(record);
+      return;
+    }
+
+    taxYearRecords.push(record);
+  });
+
+  const byTaxYear = new Map();
+
+  taxYearRecords.forEach((record) => {
+    const year = String(
+      record.taxYear || "Not recorded"
+    );
+
+    if (!byTaxYear.has(year)) {
+      byTaxYear.set(year, []);
+    }
+
+    byTaxYear.get(year).push(record);
+  });
+
+  const groups = Array.from(
+    byTaxYear.entries()
+  ).map(([taxYear, yearRecords]) => {
+    const primary =
+      getClientPortalPrimaryRecord(
+        yearRecords
+      ) || {};
+
+    const services = Array.from(
+      new Set(
+        yearRecords.map((record) =>
+          normalizeClientPortalServiceLabel(
+            record.service
+          )
+        )
+      )
+    ).sort();
+
+    const serviceHistory = services.map(
+      (service) => {
+        const matching = yearRecords
+          .filter(
+            (record) =>
+              normalizeClientPortalServiceLabel(
+                record.service
+              ) === service
+          )
+          .sort(
+            (left, right) =>
+              getClientPortalRecordSortTime(right) -
+              getClientPortalRecordSortTime(left)
+          );
+
+        return {
+          service,
+          requestCount: matching.length,
+          latestAt:
+            matching[0]?.recordDate ||
+            matching[0]?.plannerSyncedAt ||
+            ""
+        };
+      }
+    );
+
+    return {
+      taxYear,
+      leadId: primary.leadId || "",
+      service:
+        primary.service ||
+        services[0] ||
+        "Tax Planning Profile",
+      services,
+      serviceHistory,
+      requestCount: yearRecords.length,
+      status:
+        primary.status ||
+        "Profile available",
+      hasPlanner: Boolean(
+        primary.hasPlanner
+      ),
+      hasExecutiveReport: Boolean(
+        primary.hasExecutiveReport
+      ),
+      plannerSyncedAt:
+        primary.plannerSyncedAt || "",
+      recordDate:
+        primary.recordDate || "",
+      taxHealthScore: Number(
+        primary.taxHealthScore || 0
+      ),
+      urgentCount: Number(
+        primary.urgentCount || 0
+      ),
+      completedCount: Number(
+        primary.completedCount || 0
+      ),
+      nextAction:
+        primary.nextAction ||
+        "Continue your tax planning profile."
+    };
+  });
+
+  groups.sort((left, right) => {
+    const leftYear = Number(left.taxYear);
+    const rightYear = Number(right.taxYear);
+
+    if (
+      Number.isFinite(leftYear) &&
+      Number.isFinite(rightYear)
+    ) {
+      return rightYear - leftYear;
+    }
+
+    if (Number.isFinite(rightYear)) {
+      return 1;
+    }
+
+    if (Number.isFinite(leftYear)) {
+      return -1;
+    }
+
+    return String(left.taxYear).localeCompare(
+      String(right.taxYear)
+    );
+  });
+
+  const numericGroups = groups.filter(
+    (group) =>
+      Number.isFinite(Number(group.taxYear))
+  );
+
+  const unassignedGroups = groups.filter(
+    (group) =>
+      !Number.isFinite(Number(group.taxYear))
+  );
+
+  const visibleRecordGroups = [
+    ...numericGroups.slice(0, 4),
+    ...unassignedGroups
+  ];
+
+  const olderRecordGroups =
+    numericGroups.slice(4);
+
+  const serviceHistoryRecords = records.filter(
+    (record) =>
+      normalizeClientPortalServiceLabel(
+        record.service
+      ) !== "General Question"
+  );
+
+  const serviceHistory = Array.from(
+    new Map(
+      serviceHistoryRecords.map((record) => {
+        const service =
+          normalizeClientPortalServiceLabel(
+            record.service
+          );
+
+        return [
+          service,
+          {
+            service,
+            count: serviceHistoryRecords.filter(
+              (candidate) =>
+                normalizeClientPortalServiceLabel(
+                  candidate.service
+                ) === service
+            ).length,
+            latestAt: serviceHistoryRecords
+              .filter(
+                (candidate) =>
+                  normalizeClientPortalServiceLabel(
+                    candidate.service
+                  ) === service
+              )
+              .sort(
+                (left, right) =>
+                  getClientPortalRecordSortTime(right) -
+                  getClientPortalRecordSortTime(left)
+              )[0]?.recordDate || ""
+          }
+        ];
+      })
+    ).values()
+  ).sort(
+    (left, right) =>
+      getClientPortalRecordSortTime({
+        recordDate: right.latestAt
+      }) -
+      getClientPortalRecordSortTime({
+        recordDate: left.latestAt
+      })
+  );
+
+  return {
+    visibleRecordGroups,
+    olderRecordGroups,
+    serviceHistory,
+    generalRequestCount:
+      generalRequests.length,
+    totalTaxYearGroups:
+      groups.length,
+    totalRawRecords:
+      records.length,
+    visibleYearLimit: 4
+  };
+}
+
+async function sendClientPortalAccountEmail({
+  to,
+  clientName,
+  leadId,
+  subject,
+  headline,
+  message
+}) {
+  const email = normalizeEmail(to);
+
+  if (
+    !email ||
+    !EMAIL_USER ||
+    !EMAIL_APP_PASSWORD
+  ) {
+    return {
+      ok: false,
+      skipped: true
+    };
+  }
+
+  const portalUrl =
+    String(APP_BASE_URL || "")
+      .replace(/\/+$/, "") +
+    "/client-portal";
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject,
+      text:
+`Hello ${clientName || "Client"},
+
+${headline}
+
+Username:
+${email}
+
+${message}
+
+Secure portal:
+${portalUrl}
+
+Client reference number:
+${leadId || "Available in your portal invitation"}
+
+For your security, your password is never included in email. Greatest Business Solution LLC cannot view or recover your current password. Use Activate / Reset Access if you forget it.
+
+If you did not make this change, contact Greatest Business Solution LLC promptly.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+
+    return {
+      ok: true
+    };
+  } catch (error) {
+    console.warn(
+      "[client portal] Account email could not be sent:",
+      error?.message || error
+    );
+
+    return {
+      ok: false,
+      error:
+        error?.message ||
+        String(error)
+    };
+  }
+}
+
+async function getAuthenticatedClientPortalSession(req) {
+  const token =
+    clientPortalSecurity.getSessionTokenFromRequest(req);
+
+  const payload =
+    clientPortalSecurity.verifySessionToken(token);
+
+  if (!payload) {
+    return null;
+  }
+
+  const portal = await clientPortalStore.getByLeadId(
+    payload.accountLeadId
+  );
+
+  if (!portal) {
+    return null;
+  }
+
+  const accountLead = await findClientPortalLeadById(
+    payload.accountLeadId
+  );
+
+  if (!accountLead) {
+    return null;
+  }
+
+  if (
+    String(portal.status || "") !== "active" ||
+    String(portal.portalId || "") !==
+      String(payload.portalId || "") ||
+    Number(portal.sessionVersion || 0) !==
+      Number(payload.sessionVersion || 0) ||
+    normalizeEmail(portal.email) !==
+      normalizeEmail(payload.email)
+  ) {
+    return null;
+  }
+
+  return {
+    payload,
+    accountLead,
+    portal,
+    email: normalizeEmail(payload.email)
+  };
+}
+
+async function requireClientPortalApiSession(
+  req,
+  res,
+  next
+) {
+  setClientPortalNoStore(res);
+
+  const session =
+    await getAuthenticatedClientPortalSession(req);
+
+  if (!session) {
+    clearClientPortalSessionCookie(req, res);
+
+    return res.status(401).json({
+      ok: false,
+      error:
+        "Your secure portal session has expired. Please sign in again."
+    });
+  }
+
+  req.clientPortalSession = session;
+  return next();
+}
+
+async function requireClientPortalPageSession(
+  req,
+  res,
+  next
+) {
+  setClientPortalNoStore(res);
+
+  const session =
+    await getAuthenticatedClientPortalSession(req);
+
+  if (!session) {
+    clearClientPortalSessionCookie(req, res);
+
+    const returnTo = encodeURIComponent(
+      req.originalUrl || "/client-portal/home"
+    );
+
+    return res.redirect(
+      `/client-portal?reason=session&returnTo=${returnTo}`
+    );
+  }
+
+  req.clientPortalSession = session;
+  return next();
+}
+
+async function clientPortalSessionCanAccessLead(
+  session,
+  leadId
+) {
+  const candidate = await findClientPortalLeadById(leadId);
+
+  if (!candidate) {
+    return null;
+  }
+
+  const candidateEmail = getLeadEmailValue(
+    candidate.raw
+  );
+
+  return candidateEmail === session.email
+    ? candidate
+    : null;
+}
+
 function getCalendlyWebhookSecret(req) {
   return String(
     req.query?.secret ||
@@ -2660,6 +3758,7 @@ app.use((req, res, next) => {
     path.startsWith("/leads-dashboard/") ||
     path.startsWith("/written-review-report/") ||
     path.startsWith("/client-tax-strategy-worksheet/") ||
+    path.startsWith("/client-portal") ||
     path.startsWith("/api/") ||
     path === "/stripe-thank-you";
 
@@ -2676,6 +3775,7 @@ app.get("/robots.txt", (req, res) => {
 Disallow: /leads-dashboard
 Disallow: /written-review-report/
 Disallow: /client-tax-strategy-worksheet/
+Disallow: /client-portal
 Disallow: /api/
 Disallow: /stripe-thank-you
 
@@ -2690,6 +3790,7 @@ app.use(express.static(path.join(__dirname, "ui"), {
       lowerFilePath.endsWith("leads-dashboard.html") ||
       lowerFilePath.endsWith("written-review-report.html") ||
       lowerFilePath.endsWith("client-tax-strategy-worksheet.html") ||
+      lowerFilePath.endsWith("client-portal.html") ||
       lowerFilePath.endsWith("stripe-thank-you.html");
 
     if (shouldNoIndexFile) {
@@ -3960,6 +5061,994 @@ app.post(
 app.post(
   "/api/tax-savings-planner-sync",
   handleTaxSavingsPlannerSync
+);
+
+
+// =============================================================================
+// SECURE CLIENT PORTAL FOUNDATION ROUTES
+// Activation requires the lead reference number and the exact email on the
+// client record. A six-digit code is sent to that email before a password can
+// be created or reset. Document uploads are intentionally not enabled yet.
+// =============================================================================
+
+app.get("/client-portal", (req, res) => {
+  setClientPortalNoStore(res);
+  res.sendFile(
+    path.join(__dirname, "ui", "client-portal.html")
+  );
+});
+
+app.get(
+  "/client-portal/home",
+  requireClientPortalPageSession,
+  (req, res) => {
+    res.sendFile(
+      path.join(
+        __dirname,
+        "private-ui",
+        "client-portal-home.html"
+      )
+    );
+  }
+);
+
+app.get(
+  "/client-portal/planner",
+  requireClientPortalPageSession,
+  async (req, res) => {
+    const leadId = String(
+      req.query?.leadId || ""
+    ).trim();
+
+    const allowed =
+      await clientPortalSessionCanAccessLead(
+        req.clientPortalSession,
+        leadId
+      );
+
+    if (!allowed) {
+      return res.status(403).send(
+        "This tax-planning record is not available in your portal."
+      );
+    }
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "ui",
+        "tax-savings-planner.html"
+      )
+    );
+  }
+);
+
+app.get(
+  "/client-portal/report",
+  requireClientPortalPageSession,
+  async (req, res) => {
+    const leadId = String(
+      req.query?.leadId || ""
+    ).trim();
+
+    const allowed =
+      await clientPortalSessionCanAccessLead(
+        req.clientPortalSession,
+        leadId
+      );
+
+    if (!allowed) {
+      return res.status(403).send(
+        "This tax-planning report is not available in your portal."
+      );
+    }
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "ui",
+        "tax-planning-report.html"
+      )
+    );
+  }
+);
+
+app.get("/api/client-portal/health", (req, res) => {
+  setClientPortalNoStore(res);
+
+  return res.status(200).json({
+    ok: true,
+    module: "Secure Client Portal Foundation",
+    version: "1.0.0",
+    sessionCookie: "HttpOnly / SameSite=Lax",
+    persistentSessionSecretConfigured: Boolean(
+      process.env.CLIENT_PORTAL_SESSION_SECRET
+    ),
+    credentialStorageMode: clientPortalStore.mode,
+    liveCredentialStorageReady:
+      clientPortalStore.isLiveReady(),
+    emailDeliveryConfigured: Boolean(
+      EMAIL_USER && EMAIL_APP_PASSWORD
+    ),
+    documentUploadsEnabled: false
+  });
+});
+
+app.post(
+  "/api/client-portal/request-activation",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const leadId = String(
+      req.body?.leadId || ""
+    ).trim();
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "activation-request",
+      `${leadId}:${email}`
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 5,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many activation requests. Please wait 15 minutes and try again."
+      });
+    }
+
+    if (
+      !leadId ||
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter your email address and client reference number."
+      });
+    }
+
+    if (!clientPortalStore.isAvailable()) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure portal credential storage is not configured yet. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure portal email delivery is not configured yet. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    const detailsMatch = Boolean(
+      candidate &&
+      getLeadEmailValue(candidate.raw) === email
+    );
+
+    if (!detailsMatch) {
+      return res.status(200).json({
+        ok: true,
+        message:
+          "If the information matches our records, a six-digit security code will be sent to the email address on file."
+      });
+    }
+
+    const code =
+      clientPortalSecurity.generateActivationCode();
+
+    const codeRecord =
+      clientPortalSecurity.hashActivationCode(code);
+
+    const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() +
+      (CLIENT_PORTAL_ACTIVATION_MINUTES * 60 * 1000)
+    ).toISOString();
+
+    const currentAccount =
+      await clientPortalStore.getByLeadId(leadId) || {};
+
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...currentAccount,
+        leadId,
+        version: 1,
+        status:
+          currentAccount.status === "active"
+            ? "active"
+            : "pending-activation",
+        portalId:
+          currentAccount.portalId ||
+          require("crypto").randomUUID(),
+        email,
+        setupRequestedAt: now.toISOString(),
+        activation: {
+          hash: codeRecord.hash,
+          salt: codeRecord.salt,
+          expiresAt,
+          attempts: 0,
+          requestedAt: now.toISOString()
+        }
+      });
+
+    if (!accountUpdate.ok) {
+      console.error(
+        "[client portal] Credential store update failed:",
+        accountUpdate.error
+      );
+
+      return res.status(503).json({
+        ok: false,
+        error:
+          "The secure portal invitation could not be prepared."
+      });
+    }
+
+    await updateClientPortalLeadStatus(
+      leadId,
+      (current = {}) => ({
+        ...current,
+        version: 1,
+        status:
+          accountUpdate.record.status,
+        email,
+        sourceLeadId: leadId,
+        setupRequestedAt: now.toISOString()
+      })
+    );
+
+    const clientName = getLeadNameValue(
+      candidate.raw
+    );
+
+    const activationUrl =
+      String(APP_BASE_URL || "")
+        .replace(/\/+$/, "") +
+      "/client-portal?activate=1&leadId=" +
+      encodeURIComponent(leadId);
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject:
+          "Your Tax Savings Planner Secure Portal Code",
+        text:
+`Hello ${clientName},
+
+Your six-digit secure portal code is:
+
+${code}
+
+This code expires in ${CLIENT_PORTAL_ACTIVATION_MINUTES} minutes.
+
+Your portal username is:
+${email}
+
+Open your secure portal:
+${activationUrl}
+
+Enter your client reference number:
+${leadId}
+
+For your protection, your password is never included in email. Do not email Social Security numbers, tax documents, passwords, or this security code.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+    } catch (error) {
+      console.error(
+        "[client portal] Activation email failed:",
+        error.message || error
+      );
+
+      return res.status(503).json({
+        ok: false,
+        error:
+          "The security code could not be emailed. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    clearClientPortalAttempts(rateKey);
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "A six-digit security code was sent to the email address on file. It expires in 15 minutes."
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/activate",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const leadId = String(
+      req.body?.leadId || ""
+    ).trim();
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const code = String(
+      req.body?.code || ""
+    ).replace(/\D/g, "").slice(0, 6);
+
+    const password = String(
+      req.body?.password || ""
+    );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "activation-verify",
+      `${leadId}:${email}`
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 7,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many code attempts. Request a new code after 15 minutes."
+      });
+    }
+
+    const policy =
+      clientPortalSecurity.passwordPolicy(password);
+
+    if (
+      !leadId ||
+      !email ||
+      code.length !== 6 ||
+      !policy.ok
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          policy.ok
+            ? "Enter the complete six-digit code."
+            : policy.errors.join(" ")
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    const portal =
+      await clientPortalStore.getByLeadId(leadId) || {};
+    const activation = portal.activation || {};
+
+    const matches = Boolean(
+      candidate &&
+      getLeadEmailValue(candidate.raw) === email &&
+      normalizeEmail(portal.email) === email &&
+      activation.hash &&
+      activation.salt &&
+      Date.parse(activation.expiresAt || "") > Date.now() &&
+      Number(activation.attempts || 0) < 7 &&
+      clientPortalSecurity.verifyActivationCode(
+        code,
+        activation
+      )
+    );
+
+    if (!matches) {
+      if (candidate && portal.portalId) {
+        await clientPortalStore.upsert({
+          ...portal,
+          leadId,
+          activation: {
+            ...(portal.activation || {}),
+            attempts:
+              Number(
+                portal.activation?.attempts || 0
+              ) + 1
+          }
+        });
+      }
+
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The security code is invalid or expired. Request a new code and try again."
+      });
+    }
+
+    const passwordRecord =
+      clientPortalSecurity.hashPassword(password);
+
+    const now = new Date().toISOString();
+
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...portal,
+        leadId,
+        version: 1,
+        status: "active",
+        email,
+        passwordAlgorithm:
+          passwordRecord.algorithm,
+        passwordIterations:
+          passwordRecord.iterations,
+        passwordSalt:
+          passwordRecord.salt,
+        passwordHash:
+          passwordRecord.hash,
+        sessionVersion:
+          Number(portal.sessionVersion || 0) + 1,
+        activatedAt:
+          portal.activatedAt || now,
+        passwordUpdatedAt: now,
+        lastLoginAt: now,
+        lastActivityAt: now,
+        activation: null
+      });
+
+    if (!accountUpdate.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Your secure portal access could not be activated."
+      });
+    }
+
+    await updateClientPortalLeadStatus(
+      leadId,
+      (current = {}) => ({
+        ...current,
+        version: 1,
+        status: "active",
+        email,
+        sourceLeadId: leadId,
+        activatedAt:
+          current.activatedAt || now,
+        lastLoginAt: now,
+        lastActivityAt: now
+      })
+    );
+
+    setClientPortalSessionCookie(
+      req,
+      res,
+      {
+        accountLeadId: leadId,
+        portalId: accountUpdate.record.portalId,
+        email,
+        sessionVersion:
+          Number(accountUpdate.record.sessionVersion || 1)
+      }
+    );
+
+    clearClientPortalAttempts(rateKey);
+
+    void sendClientPortalAccountEmail({
+      to: email,
+      clientName: getLeadNameValue(
+        candidate.raw
+      ),
+      leadId,
+      subject:
+        "Your Secure Tax Portal Is Active",
+      headline:
+        "Your Tax Savings Planner Secure Client Portal is active.",
+      message:
+        "Your password was created or updated successfully. Your saved tax-planning data remains connected to your client profile."
+    });
+
+    console.log(
+      "[client portal] Activation completed and secure session issued:",
+      leadId
+    );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your secure portal is active. A confirmation email with your username was sent. Your password is never emailed.",
+      redirect: "/client-portal/home"
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/login",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const password = String(
+      req.body?.password || ""
+    );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "login",
+      email
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 5,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many sign-in attempts. Please wait 15 minutes and try again."
+      });
+    }
+
+    if (
+      !email ||
+      !password ||
+      !/^\S+@\S+\.\S+$/.test(email)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter your email address and password."
+      });
+    }
+
+    const account =
+      await findActiveClientPortalAccountByEmail(email);
+
+    const portal = account || {};
+
+    const valid = Boolean(
+      account &&
+      clientPortalSecurity.verifyPassword(
+        password,
+        {
+          hash: portal.passwordHash,
+          salt: portal.passwordSalt,
+          iterations: portal.passwordIterations
+        }
+      )
+    );
+
+    if (!valid) {
+      return res.status(401).json({
+        ok: false,
+        error:
+          "The email address or password is not correct."
+      });
+    }
+
+    const now = new Date().toISOString();
+
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...portal,
+        lastLoginAt: now,
+        lastActivityAt: now
+      });
+
+    if (!accountUpdate.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Your secure portal session could not be started."
+      });
+    }
+
+    const currentPortal = accountUpdate.record;
+
+    await updateClientPortalLeadStatus(
+      account.leadId,
+      (current = {}) => ({
+        ...current,
+        status: "active",
+        email,
+        sourceLeadId: account.leadId,
+        activatedAt:
+          current.activatedAt ||
+          currentPortal.activatedAt || "",
+        lastLoginAt: now,
+        lastActivityAt: now
+      })
+    );
+
+    setClientPortalSessionCookie(
+      req,
+      res,
+      {
+        accountLeadId: account.leadId,
+        portalId: currentPortal.portalId,
+        email,
+        sessionVersion:
+          Number(currentPortal.sessionVersion || 1)
+      }
+    );
+
+    clearClientPortalAttempts(rateKey);
+
+    return res.status(200).json({
+      ok: true,
+      message: "Signed in securely.",
+      redirect: "/client-portal/home"
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/change-password",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session = req.clientPortalSession;
+    const currentPassword = String(
+      req.body?.currentPassword || ""
+    );
+    const newPassword = String(
+      req.body?.newPassword || ""
+    );
+
+    const policy =
+      clientPortalSecurity.passwordPolicy(
+        newPassword
+      );
+
+    if (!currentPassword) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter your current password."
+      });
+    }
+
+    if (!policy.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: policy.errors.join(" ")
+      });
+    }
+
+    const portal =
+      await clientPortalStore.getByLeadId(
+        session.payload.accountLeadId
+      );
+
+    if (!portal) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "Your secure portal account could not be found."
+      });
+    }
+
+    const currentIsValid =
+      clientPortalSecurity.verifyPassword(
+        currentPassword,
+        {
+          hash: portal.passwordHash,
+          salt: portal.passwordSalt,
+          iterations:
+            portal.passwordIterations
+        }
+      );
+
+    if (!currentIsValid) {
+      return res.status(401).json({
+        ok: false,
+        error:
+          "Your current password is not correct."
+      });
+    }
+
+    const samePassword =
+      clientPortalSecurity.verifyPassword(
+        newPassword,
+        {
+          hash: portal.passwordHash,
+          salt: portal.passwordSalt,
+          iterations:
+            portal.passwordIterations
+        }
+      );
+
+    if (samePassword) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Choose a new password that is different from your current password."
+      });
+    }
+
+    const passwordRecord =
+      clientPortalSecurity.hashPassword(
+        newPassword
+      );
+
+    const now = new Date().toISOString();
+
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...portal,
+        passwordAlgorithm:
+          passwordRecord.algorithm,
+        passwordIterations:
+          passwordRecord.iterations,
+        passwordSalt:
+          passwordRecord.salt,
+        passwordHash:
+          passwordRecord.hash,
+        sessionVersion:
+          Number(
+            portal.sessionVersion || 0
+          ) + 1,
+        passwordUpdatedAt: now,
+        lastActivityAt: now
+      });
+
+    if (!accountUpdate.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Your password could not be changed."
+      });
+    }
+
+    const updatedPortal =
+      accountUpdate.record;
+
+    setClientPortalSessionCookie(
+      req,
+      res,
+      {
+        accountLeadId:
+          updatedPortal.leadId,
+        portalId:
+          updatedPortal.portalId,
+        email:
+          updatedPortal.email,
+        sessionVersion:
+          Number(
+            updatedPortal.sessionVersion || 1
+          )
+      }
+    );
+
+    void updateClientPortalLeadStatus(
+      updatedPortal.leadId,
+      (current = {}) => ({
+        ...current,
+        status: "active",
+        email:
+          updatedPortal.email,
+        sourceLeadId:
+          updatedPortal.leadId,
+        passwordUpdatedAt: now,
+        lastActivityAt: now
+      })
+    );
+
+    void sendClientPortalAccountEmail({
+      to:
+        updatedPortal.email,
+      clientName:
+        "Client",
+      leadId:
+        updatedPortal.leadId,
+      subject:
+        "Your Secure Tax Portal Password Was Changed",
+      headline:
+        "Your secure portal password was changed successfully.",
+      message:
+        "Your username and all saved Planner data, reports, tax-year records, and future document history remain connected to the same client profile."
+    });
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your password was changed. Your saved portal data remains connected to your profile.",
+      passwordUpdatedAt: now
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/logout",
+  (req, res) => {
+    setClientPortalNoStore(res);
+    clearClientPortalSessionCookie(req, res);
+
+    return res.status(200).json({
+      ok: true,
+      redirect: "/client-portal"
+    });
+  }
+);
+
+app.get(
+  "/api/client-portal/session",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    const session = req.clientPortalSession;
+    const accessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    const records = accessible
+      .map(buildClientPortalLeadSummary)
+      .sort(
+        (left, right) =>
+          getClientPortalRecordSortTime(right) -
+          getClientPortalRecordSortTime(left)
+      );
+
+    const recordOrganization =
+      buildClientPortalRecordGroups(records);
+
+    const primary =
+      accessible.find(
+        (entry) =>
+          entry.leadId ===
+          session.payload.accountLeadId
+      ) || accessible[0];
+
+    return res.status(200).json({
+      ok: true,
+      portal: {
+        version: "1.1.0",
+        status: "active",
+        clientName:
+          primary
+            ? getLeadNameValue(primary.raw)
+            : "Client",
+        username: session.email,
+        email: session.email,
+        activatedAt:
+          session.portal.activatedAt || "",
+        lastLoginAt:
+          session.portal.lastLoginAt || "",
+        passwordUpdatedAt:
+          session.portal.passwordUpdatedAt || "",
+        planningYear: "2026",
+        records:
+          recordOrganization.visibleRecordGroups,
+        olderRecords:
+          recordOrganization.olderRecordGroups,
+        serviceHistory:
+          recordOrganization.serviceHistory,
+        generalRequestCount:
+          recordOrganization.generalRequestCount,
+        totalTaxYearGroups:
+          recordOrganization.totalTaxYearGroups,
+        totalRawRecords:
+          recordOrganization.totalRawRecords,
+        visibleYearLimit:
+          recordOrganization.visibleYearLimit,
+        documentCenter: {
+          enabled: false,
+          status:
+            "Secure document uploads are the next portal module.",
+          categories: [
+            "Income Documents",
+            "Deductions & Credits",
+            "Life Events",
+            "Business Records",
+            "IRS / State Notices",
+            "Identity & Authorization",
+            "Other Supporting Records"
+          ]
+        }
+      }
+    });
+  }
+);
+
+app.get(
+  "/api/client-portal/context",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    const leadId = String(
+      req.query?.leadId || ""
+    ).trim();
+
+    const candidate =
+      await clientPortalSessionCanAccessLead(
+        req.clientPortalSession,
+        leadId
+      );
+
+    if (!candidate) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "This tax-planning record is not available in your portal."
+      });
+    }
+
+    const lead = candidate.lead || {};
+
+    return res.status(200).json({
+      ok: true,
+      source: candidate.source,
+      lead: {
+        leadId: candidate.leadId,
+        timestamp: lead.timestamp || null,
+        status: lead.status || "Active",
+        estimateSummary:
+          lead.estimateSummary || null,
+        taxData:
+          lead.taxData || null,
+        contact: {
+          name:
+            lead.contact?.name ||
+            getLeadNameValue(candidate.raw),
+          email:
+            req.clientPortalSession.email,
+          phone:
+            lead.contact?.phone || ""
+        },
+        taxSavingsPlanner:
+          lead.taxSavingsPlanner || null
+      }
+    });
+  }
+);
+
+app.post(
+  "/api/client-portal/planner-sync",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    const leadId = String(
+      req.body?.leadId || ""
+    ).trim();
+
+    const candidate =
+      await clientPortalSessionCanAccessLead(
+        req.clientPortalSession,
+        leadId
+      );
+
+    if (!candidate) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "This tax-planning record is not available in your portal."
+      });
+    }
+
+    return handleTaxSavingsPlannerSync(req, res);
+  }
 );
 
 // =============================================================================
