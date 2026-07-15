@@ -240,7 +240,9 @@
     }
 
     function reportFooter(client, label) {
-      return `<div class="report-footer"><span>${esc(client.company || "Greatest Business Solution LLC")} | ${esc(client.name || "Client")} | Tax Year ${esc(client.taxYear || "-")}</span><span>${esc(label)}</span></div>`;
+      const planningYear = client.planningYear || "2026";
+      const sourceReviewTaxYear = client.sourceReviewTaxYear || client.taxYear || "-";
+      return `<div class="report-footer"><span>${esc(client.company || "Greatest Business Solution LLC")} | ${esc(client.name || "Client")} | Planning Year ${esc(planningYear)} | Source Review Tax Year ${esc(sourceReviewTaxYear)}</span><span>${esc(label)}</span></div>`;
     }
 
     function renderMetric(label, value, tone = "") {
@@ -328,10 +330,10 @@
         <section class="cover">
           <div class="brand"><div class="monogram">G</div><div><strong>${esc(client.company || "Greatest Business Solution LLC")}</strong><span>Tax &amp; Financial Services</span></div></div>
           <div class="cover-main">
-            <span class="cover-kicker">Tax Savings Planner™</span>
+            <span class="cover-kicker">Tax Savings Planner™ Version 1.0</span>
             <h1>Executive Tax Planning Report</h1>
             <p class="cover-subtitle">A prioritized planning snapshot showing what may save money, what may create tax exposure, what requires documentation, what presents risk, and what should happen next.</p>
-            <div class="cover-client"><strong>${esc(client.name || "Paid Review Client")}</strong><span>Tax Year ${esc(client.taxYear || "-")} | Prepared ${esc(generated)}</span></div>
+            <div class="cover-client"><strong>${esc(client.name || "Paid Review Client")}</strong><span>Planning Year ${esc(client.planningYear || "2026")} | Source Review Tax Year ${esc(client.sourceReviewTaxYear || client.taxYear || "-")} | Prepared ${esc(generated)}</span></div>
           </div>
           <div class="cover-footer"><div><strong>Prepared by</strong>${esc(client.company || "Greatest Business Solution LLC")}<br>Tax Planning Team</div><div><strong>Professional standard</strong>Identify. Verify. Explain. Recommend. Document.</div></div>
         </section>`);
@@ -359,7 +361,7 @@
       </section>`);
 
       report.push(`<section class="report-section page-break">
-        <span class="section-kicker">Projection</span><h2 class="section-title">Withholding &amp; Tax Projection</h2><p class="section-intro">A current-year projection helps identify whether withholding and estimated payments are reasonably aligned with the information entered. It is not a filed tax return.</p><div class="section-rule"></div>
+        <span class="section-kicker">Projection</span><h2 class="section-title">${esc(client.planningYear || "2026")} Withholding &amp; Tax Projection</h2><p class="section-intro">The federal projection uses ${esc(client.planningYear || "2026")} planning figures. The state result is a preliminary estimate from the currently configured state engine and must be verified against planning-year state law before the client acts. This is not a filed tax return.</p><div class="section-rule"></div>
         <div class="projection-grid"><div class="projection-panel inputs"><h3>Information Entered</h3><table class="data-table"><tbody>
           <tr><th>Filing status</th><td><strong>${esc(withholding.filingStatus || "Not entered")}</strong></td></tr><tr><th>State</th><td><strong>${esc(withholding.state || "Not entered")}</strong></td></tr><tr><th>Annual W-2 wages</th><td><strong>${money(withholding.annualWages)}</strong></td></tr><tr><th>Other taxable income</th><td><strong>${money(withholding.otherIncome)}</strong></td></tr><tr><th>Deduction method</th><td><strong>${esc(String(withholding.deductionMethod || "standard").replaceAll("-"," "))}</strong></td></tr><tr><th>Federal withholding</th><td><strong>${money(withholding.federalWithholding)}</strong></td></tr><tr><th>State withholding</th><td><strong>${money(withholding.stateWithholding)}</strong></td></tr>
         </tbody></table></div><div class="projection-panel summary"><h3>Projection Summary</h3><table class="data-table"><tbody>

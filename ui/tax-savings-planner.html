@@ -748,12 +748,12 @@
   </style>
 </head>
 <body>
-<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ — included with your paid Written Estimate Red Flag Review. 2026 federal and state figures · Recommendation Engine v1.8.0 + Business Detection + Auto-Save active.</div></div></header>
+<header class="masthead"><div class="masthead-inner"><div class="brand"><div class="monogram">G</div><div><strong>Greatest Business Solution LLC</strong><span>Tax &amp; Financial Services</span></div></div><div class="tagline">Tax Savings Planner™ Version 1.0 — included with your paid Written Estimate Red Flag Review. 2026 federal planning figures · preliminary state estimate · Recommendation Engine v1.8.0 + Business Detection + Auto-Save active.</div></div></header>
 <main>
   <div class="eyebrow">Interactive Tax Planning Suite</div>
   <h1>Tax Savings Planner™</h1>
   <p class="lead">Your estimate showed a snapshot. These planning tools turn that snapshot into practical decisions for withholding, estimated payments, tax-saving opportunities, risk reduction, and your next action.</p>
-  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planner status:</strong> Recommendation Engine v1.7.0 + Business Detection + Auto-Save active</span></div>
+  <div class="client-strip"><span><strong>Client:</strong> <span id="clientName">Paid Review Client</span></span><span><strong>Source review tax year:</strong> <span id="taxYear" class="number">2025</span></span><span><strong>Planning year:</strong> <span id="planningYear" class="number">2026</span></span><span><strong>Planner status:</strong> Version 1.0 · Recommendation Engine v1.8.0 · Business Detection · Auto-Save active</span></div>
 
   <section class="resume-banner" id="resumeBanner" aria-live="polite">
     <div class="resume-copy">
@@ -1907,6 +1907,8 @@
 </div>
 <script src="/recommendation-engine.js"></script>
 <script>
+  const ACTIVE_PLANNING_YEAR = 2026;
+
   const TAX_2026 = {
     standardDeduction: {
       single: 16100,
@@ -2048,6 +2050,7 @@
   const plannerLeadId = plannerParams.get("leadId") || "general";
   const plannerStateKey = `taxSavingsPlannerState:${plannerLeadId}`;
   const defaultPlannerTaxYear = String(plannerParams.get("taxYear") || "2025");
+  const activePlanningYear = ACTIVE_PLANNING_YEAR;
   let currentPlannerTaxYear = defaultPlannerTaxYear;
   let hasSavedPlannerState = false;
   let plannerResumeTab = "overview";
@@ -2237,6 +2240,11 @@
     const taxYearElement = document.getElementById("taxYear");
     if (taxYearElement) {
       taxYearElement.textContent = currentPlannerTaxYear;
+    }
+
+    const planningYearElement = document.getElementById("planningYear");
+    if (planningYearElement) {
+      planningYearElement.textContent = String(activePlanningYear);
     }
   }
 
@@ -2589,7 +2597,7 @@
       } else if (!latestStateResult.canEstimate) {
         note.textContent = `${latestStateResult.stateName} is not yet available in the current state-estimate engine.`;
       } else {
-        note.textContent = `${latestStateResult.stateName} result uses the same state-estimate engine as your Free Tax Estimate.`;
+        note.textContent = `${latestStateResult.stateName} is a preliminary state estimate from the currently configured state engine. Verify planning-year state law before acting.`;
       }
 
       updateWithholdingCheckup();
@@ -4568,6 +4576,8 @@
       client: {
         name: plannerText("clientName", "Paid Review Client"),
         taxYear: plannerText("taxYear", currentPlannerTaxYear),
+        sourceReviewTaxYear: plannerText("taxYear", currentPlannerTaxYear),
+        planningYear: String(activePlanningYear),
         preparedBy: "Greatest Business Solution LLC",
         company: "Greatest Business Solution LLC"
       },
