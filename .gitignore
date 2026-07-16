@@ -13,3 +13,29 @@ client-portal-accounts.local.json.tmp
 client-portal-documents.local/
 client-portal-documents.local.json
 client-portal-documents.local.json.tmp
+
+# Generated files and obsolete project artifacts
+Project Checkpoints/
+*.zip
+*.log
+*.bak
+*.tmp
+AUTO-FIX-*
+CHATGPT-*
+CHECKPOINT-*
+DEBUG-*
+PROJECT-STATE-*
+SEND-TO-CHATGPT-*
+STABLE-CHECKPOINT-*
+TAX-ESTIMATOR-8-SNAPSHOT*
+Tax-Estimator-8/
+Tax-Estimator-EXPORT-*
+LIVE-TEST-KEY.txt
+/-ForegroundColor
+/({
+/0
+/npm
+/stream.source
+/sum
+/Tax-Estimator-BACKUP-WORKING.txt
+/input.schema.js
