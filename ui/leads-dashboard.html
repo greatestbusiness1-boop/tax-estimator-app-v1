@@ -67,6 +67,46 @@
       background: rgba(255, 255, 255, 0.16);
     }
 
+    .portal-documents-home{
+      margin:0 0 18px;
+      padding:16px;
+      border:2px solid #9bb4ca;
+      border-radius:12px;
+      background:#f5f9fc;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .portal-documents-home strong{
+      display:block;
+      color:#0f2c56;
+      font-size:18px;
+      margin-bottom:4px;
+    }
+    .portal-documents-home span{
+      color:#52637a;
+      font-weight:700;
+    }
+    .portal-documents-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .portal-documents-actions a{
+      display:inline-block;
+      padding:10px 13px;
+      border-radius:8px;
+      background:#0f2c56;
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+    }
+    .portal-documents-actions a.secondary{
+      background:#28588c;
+    }
+
     .main {
       flex: 1;
       padding: 24px;
@@ -974,31 +1014,40 @@
     <h2>Tax Lead Center</h2>
 
     <div class="sidebar-group">Lead Work</div>
-    <button class="sidebar-btn active" data-view="office">Office Work Queue</button>
-    <button class="sidebar-btn" data-view="all">All Leads</button>
-    <button class="sidebar-btn" data-view="written">Written Review Requests</button>
-    <button class="sidebar-btn" data-view="taxprep">Tax Preparation Requests</button>
-    <button class="sidebar-btn" data-view="websitecontact">Website Contact Requests</button>
-    <button class="sidebar-btn" data-view="closed">Closed Leads</button>
+    <button class="sidebar-btn" data-view="all" data-title="All Leads">All Leads</button>
+    <button class="sidebar-btn" data-view="closed" data-title="Closed Leads">Closed Leads</button>
+    <button class="sidebar-btn" data-view="office" data-office-queue="follow-up" data-title="Conversion Opportunities">Conversion Opportunities</button>
+    <button class="sidebar-btn" data-view="office" data-office-queue="new-today" data-title="New Today">New Today</button>
+    <button class="sidebar-btn active" data-view="office" data-office-queue="all" data-title="Office Work Queue">Office Work Queue</button>
+    <button class="sidebar-btn" data-view="office" data-office-queue="paid-work" data-title="Revenue Work Queue">Revenue Work Queue</button>
+    <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
+    <button class="sidebar-btn" data-view="websitecontact" data-title="Website Contact Requests">Website Contact Requests</button>
+    <button class="sidebar-btn" data-view="written" data-title="Written Review Requests">Written Review Requests</button>
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Calendar</div>
-    <button class="sidebar-btn" data-view="calendar">Calendar Scheduled</button>
-    <button class="sidebar-btn" data-view="calendarclosed">Closed Calendar</button>
+    <button class="sidebar-btn" data-view="calendarclosed" data-title="Closed Calendar">Closed Calendar</button>
+    <button class="sidebar-btn" data-view="calendar" data-title="Scheduled Consultations">Scheduled Consultations</button>
 
     <div class="sidebar-divider"></div>
-    <div class="sidebar-group">Transcripts</div>
-    <button class="sidebar-btn" onclick="window.location.href='/transcript-requests'">IRS Transcript Work Center</button>
+    <div class="sidebar-group">IRS Transcript Work Center</div>
+    <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=consults'">Transcript Consults</button>
+    <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=monitoring'">Transcript Monitoring Requests</button>
+    <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=requests'">Transcript Requests</button>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-group">Portal &amp; Documents</div>
+    <button class="sidebar-btn" onclick="window.open('/client-portal','_blank','noopener')">Client Portal Sign In</button>
+    <button class="sidebar-btn" onclick="window.location.href='/office-document-review'">Document Review Queue</button>
   </aside>
 
   <main class="main">
-    <h1 id="viewTitle">Lead Conversion Command Center</h1>
+    <h1 id="viewTitle">Office Work Queue</h1>
     <div id="leadCount"> </div>
-
     <div id="officeCommandCenter" class="office-command-center">
       <div class="office-command-hero">
-        <h2>Lead Conversion Command Center</h2>
-        <p>Track the path from free estimate to paid work, tax prep, transcript help, and scheduled consultations.</p>
+        <h2>Lead Conversion Snapshot</h2>
+        <p>Use the left menu as your home base. This snapshot shows the totals; the selected work queue appears below.</p>
         <div class="office-command-stats">
           <div class="office-command-stat">
             <strong id="officeNewTodayCount">0</strong>
@@ -1030,15 +1079,6 @@
           </div>
         </div>
         <div id="officeHotLeadAlert" class="office-hot-alert"></div>
-      </div>
-
-      <div class="office-command-tabs">
-        <button class="office-command-tab active" data-office-tab="new-today">New Today</button>
-        <button class="office-command-tab" data-office-tab="paid-work">Revenue Work Queue</button>
-        <button class="office-command-tab" data-office-tab="tax-prep">Tax Prep Requests</button>
-        <button class="office-command-tab" data-office-tab="transcripts">Transcript Requests</button>
-        <button class="office-command-tab" data-office-tab="scheduled-consults">Scheduled Consults</button>
-        <button class="office-command-tab" data-office-tab="follow-up">Conversion Opportunities</button>
       </div>
     </div>
 
@@ -1328,7 +1368,7 @@
 <script>
 let allLeads = [];
 let currentView = "office";
-let currentOfficeQueueTab = "new-today";
+let currentOfficeQueueTab = "all";
 let currentTaxPrepFilter = "all";
 let currentContactFilter = "new";
 
@@ -3389,6 +3429,7 @@ function getOfficeWorkItems(){
 }
 
 function matchesOfficeQueueTab(item){
+  if(currentOfficeQueueTab === "all") return true;
   if(currentOfficeQueueTab === "new-today") return item.bucket === "new-today";
   if(currentOfficeQueueTab === "paid-work") return item.bucket === "paid-work";
   if(currentOfficeQueueTab === "tax-prep") return item.bucket === "tax-prep";
@@ -3396,7 +3437,7 @@ function matchesOfficeQueueTab(item){
   if(currentOfficeQueueTab === "scheduled-consults") return item.bucket === "scheduled-consults";
   if(currentOfficeQueueTab === "follow-up") return item.bucket === "follow-up";
 
-  return item.bucket === "new-today";
+  return true;
 }
 
 function sortOfficeWorkItems(a,b){
@@ -3873,6 +3914,18 @@ function getClientPortalCrmHtml(lead){
     documents.awaitingReview || 0
   );
 
+  const inReview = Number(
+    documents.inReview || 0
+  );
+
+  const acceptedDocuments = Number(
+    documents.accepted || 0
+  );
+
+  const needsReplacement = Number(
+    documents.needsReplacement || 0
+  );
+
   const latestUpload = documents.latestUploadAt
     ? formatLeadDate(documents.latestUploadAt)
     : "No upload recorded";
@@ -3899,6 +3952,18 @@ function getClientPortalCrmHtml(lead){
           <strong style="${awaitingReview > 0 ? "color:#b45309;" : "color:#166534;"}">${awaitingReview}</strong>
         </div>
         <div class="client-portal-status-item">
+          <span>In Review</span>
+          <strong>${inReview}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Accepted</span>
+          <strong style="color:#166534;">${acceptedDocuments}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Needs Replacement</span>
+          <strong style="${needsReplacement > 0 ? "color:#b91c1c;" : "color:#166534;"}">${needsReplacement}</strong>
+        </div>
+        <div class="client-portal-status-item">
           <span>Latest Upload</span>
           <strong>${escapeOfficeHtml(latestUpload)}</strong>
         </div>
@@ -3921,11 +3986,12 @@ function getClientPortalCrmHtml(lead){
 
       <div class="tax-planner-crm-next" style="border-left-color:#176344;">
         <strong>Document Center scope</strong><br>
-        Client upload, tax-year and category organization, protected client download, upload history, and initial office-review status are active. This CRM card shows document counts only; the secure office document-review workspace is the next controlled-access module.
+        Client upload, tax-year and category organization, protected download, office review, replacement requests, acceptance notices, retention reminders, and controlled deletion are active. Live production use remains blocked until private Supabase storage and office access are verified.
       </div>
 
       <div class="client-portal-actions">
-        ${leadId ? `<a href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
+        <a href="/office-document-review" target="_blank" rel="noopener">Open Secure Office Document Review</a>
+        ${leadId ? `<a class="secondary" href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
         <a class="secondary" href="${signInUrl}" target="_blank" rel="noopener">Open Portal Sign In</a>
       </div>
     </div>
@@ -6215,19 +6281,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
       currentView = btn.dataset.view;
 
+      if(currentView === "office"){
+        currentOfficeQueueTab =
+          btn.dataset.officeQueue ||
+          "all";
+      }
+
       const titles = {
-        office: "Lead Conversion Command Center",
+        office: "Office Work Queue",
         all: "All Leads",
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
         websitecontact: "Website Contact Requests",
-        calendar: "Calendar Scheduled",
+        calendar: "Scheduled Consultations",
         calendarclosed: "Closed Calendar",
         closed: "Closed Leads"
       };
 
       document.getElementById("viewTitle").innerText =
-        titles[currentView] || "Leads";
+        btn.dataset.title ||
+        titles[currentView] ||
+        "Leads";
 
       const allFilters = document.getElementById("allFilters");
       if(allFilters){

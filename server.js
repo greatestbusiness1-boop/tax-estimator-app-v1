@@ -8,9 +8,14 @@ const { createClientDocumentStore } = require("./server/clientDocumentStore");
 const {
   MAX_FILE_BYTES: CLIENT_DOCUMENT_MAX_BYTES,
   DOCUMENT_CATEGORIES: CLIENT_DOCUMENT_CATEGORIES,
+  REVIEW_STATUSES: CLIENT_DOCUMENT_REVIEW_STATUSES,
   normalizeTaxYear: normalizeClientDocumentTaxYear,
+  normalizeReviewStatus: normalizeClientDocumentReviewStatus,
+  normalizeRetentionDate: normalizeClientDocumentRetentionDate,
+  cleanText: cleanClientDocumentText,
   validateDocumentUpload,
-  publicDocumentRecord
+  publicDocumentRecord,
+  officeDocumentRecord
 } = require("./server/clientDocumentSecurity");
 const crypto = require("crypto");
 const path = require("path");
@@ -125,6 +130,301 @@ const clientDocumentStore = createClientDocumentStore({
   allowLocalFallback:
     !CLIENT_PORTAL_PRODUCTION_HOST
 });
+
+// =============================================================================
+// SECURE OFFICE DOCUMENT REVIEW
+// Local development uses an explicit local-only bypass. Production requires
+// OFFICE_DOCUMENT_REVIEW_KEY and a signed HttpOnly office session cookie.
+// =============================================================================
+
+const OFFICE_DOCUMENT_REVIEW_COOKIE_NAME =
+  "tsp_office_document_review";
+
+const OFFICE_DOCUMENT_REVIEW_SESSION_HOURS = 8;
+
+const OFFICE_DOCUMENT_REVIEW_KEY = String(
+  process.env.OFFICE_DOCUMENT_REVIEW_KEY || ""
+).trim();
+
+const OFFICE_DOCUMENT_REVIEW_SECRET = String(
+  process.env.OFFICE_DOCUMENT_REVIEW_SESSION_SECRET ||
+  process.env.CLIENT_PORTAL_SESSION_SECRET ||
+  process.env.STRIPE_SECRET_KEY ||
+  process.env.EMAIL_APP_PASSWORD ||
+  OFFICE_DOCUMENT_REVIEW_KEY ||
+  ""
+).trim();
+
+function officeReviewBase64Url(value) {
+  return Buffer.from(value)
+    .toString("base64url");
+}
+
+function createOfficeDocumentReviewToken() {
+  const now = Date.now();
+
+  const payload = {
+    purpose: "office-document-review",
+    issuedAt: now,
+    expiresAt:
+      now +
+      OFFICE_DOCUMENT_REVIEW_SESSION_HOURS *
+      60 *
+      60 *
+      1000
+  };
+
+  const encoded =
+    officeReviewBase64Url(
+      JSON.stringify(payload)
+    );
+
+  const signature = crypto
+    .createHmac(
+      "sha256",
+      OFFICE_DOCUMENT_REVIEW_SECRET ||
+      "local-office-document-review-only"
+    )
+    .update(encoded)
+    .digest("base64url");
+
+  return `${encoded}.${signature}`;
+}
+
+function verifyOfficeDocumentReviewToken(token) {
+  const [encoded, signature] = String(
+    token || ""
+  ).split(".");
+
+  if (!encoded || !signature) {
+    return null;
+  }
+
+  const expected = crypto
+    .createHmac(
+      "sha256",
+      OFFICE_DOCUMENT_REVIEW_SECRET ||
+      "local-office-document-review-only"
+    )
+    .update(encoded)
+    .digest("base64url");
+
+  const suppliedBuffer =
+    Buffer.from(signature);
+
+  const expectedBuffer =
+    Buffer.from(expected);
+
+  if (
+    suppliedBuffer.length !==
+    expectedBuffer.length
+  ) {
+    return null;
+  }
+
+  if (
+    !crypto.timingSafeEqual(
+      suppliedBuffer,
+      expectedBuffer
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(
+      Buffer.from(
+        encoded,
+        "base64url"
+      ).toString("utf8")
+    );
+
+    if (
+      payload.purpose !==
+        "office-document-review" ||
+      Number(payload.expiresAt || 0) <=
+        Date.now()
+    ) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function getCookieValue(req, name) {
+  const cookieHeader = String(
+    req.headers?.cookie || ""
+  );
+
+  const target =
+    `${encodeURIComponent(name)}=`;
+
+  const pair = cookieHeader
+    .split(";")
+    .map((value) => value.trim())
+    .find(
+      (value) =>
+        value.startsWith(target)
+    );
+
+  return pair
+    ? decodeURIComponent(
+        pair.slice(target.length)
+      )
+    : "";
+}
+
+function setOfficeDocumentReviewCookie(
+  res,
+  token
+) {
+  const secure =
+    CLIENT_PORTAL_PRODUCTION_HOST
+      ? "; Secure"
+      : "";
+
+  res.setHeader(
+    "Set-Cookie",
+    `${encodeURIComponent(OFFICE_DOCUMENT_REVIEW_COOKIE_NAME)}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${OFFICE_DOCUMENT_REVIEW_SESSION_HOURS * 60 * 60}${secure}`
+  );
+}
+
+function clearOfficeDocumentReviewCookie(
+  res
+) {
+  const secure =
+    CLIENT_PORTAL_PRODUCTION_HOST
+      ? "; Secure"
+      : "";
+
+  res.setHeader(
+    "Set-Cookie",
+    `${encodeURIComponent(OFFICE_DOCUMENT_REVIEW_COOKIE_NAME)}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`
+  );
+}
+
+function officeDocumentReviewLocalBypass() {
+  return (
+    !CLIENT_PORTAL_PRODUCTION_HOST &&
+    !OFFICE_DOCUMENT_REVIEW_KEY
+  );
+}
+
+function officeDocumentReviewAuthenticated(
+  req
+) {
+  if (
+    officeDocumentReviewLocalBypass()
+  ) {
+    return {
+      mode:
+        "local-development-bypass"
+    };
+  }
+
+  const token =
+    getCookieValue(
+      req,
+      OFFICE_DOCUMENT_REVIEW_COOKIE_NAME
+    );
+
+  const payload =
+    verifyOfficeDocumentReviewToken(
+      token
+    );
+
+  return payload
+    ? {
+        mode: "signed-office-session",
+        payload
+      }
+    : null;
+}
+
+function requireOfficeDocumentReviewPage(
+  req,
+  res,
+  next
+) {
+  const access =
+    officeDocumentReviewAuthenticated(
+      req
+    );
+
+  if (access) {
+    req.officeDocumentReview =
+      access;
+    return next();
+  }
+
+  if (
+    CLIENT_PORTAL_PRODUCTION_HOST &&
+    !OFFICE_DOCUMENT_REVIEW_KEY
+  ) {
+    return res.status(503).send(
+      "Secure office document review is not enabled. Configure OFFICE_DOCUMENT_REVIEW_KEY before live use."
+    );
+  }
+
+  return res.redirect(
+    "/office-document-review/sign-in"
+  );
+}
+
+function requireOfficeDocumentReviewApi(
+  req,
+  res,
+  next
+) {
+  const access =
+    officeDocumentReviewAuthenticated(
+      req
+    );
+
+  if (access) {
+    req.officeDocumentReview =
+      access;
+    return next();
+  }
+
+  return res.status(401).json({
+    ok: false,
+    error:
+      "Secure office document review sign-in is required."
+  });
+}
+
+function officeDocumentReviewKeyMatches(
+  supplied
+) {
+  const actual = Buffer.from(
+    String(
+      OFFICE_DOCUMENT_REVIEW_KEY || ""
+    )
+  );
+
+  const candidate = Buffer.from(
+    String(
+      supplied || ""
+    )
+  );
+
+  if (
+    actual.length === 0 ||
+    actual.length !==
+      candidate.length
+  ) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(
+    actual,
+    candidate
+  );
+}
 
 // =============================================================================
 // EMAIL CONFIG
@@ -3229,7 +3529,7 @@ async function getClientPortalDocumentCenterState(
 
   if (!available) {
     return {
-      version: "1.0.0",
+      version: "1.1.0",
       enabled: false,
       status:
         "Secure document storage is not configured yet.",
@@ -3281,7 +3581,7 @@ async function getClientPortalDocumentCenterState(
   }
 
   return {
-    version: "1.0.0",
+    version: "1.1.0",
     enabled: !loadError,
     status: loadError
       ? "Your secure document list could not be loaded."
@@ -3461,6 +3761,214 @@ Greatest Business Solution LLC`
       error?.message || error
     );
   }
+}
+
+
+async function syncClientDocumentSummaryToAccountLead(
+  record,
+  summary
+) {
+  const accountLeadId = String(
+    record?.accountLeadId || ""
+  ).trim();
+
+  if (!accountLeadId) {
+    return;
+  }
+
+  await updateClientPortalLeadStatus(
+    accountLeadId,
+    (current = {}) => ({
+      ...current,
+      documentCenter: {
+        version: 2,
+        status: "active",
+        totalDocuments: Number(
+          summary.totalDocuments || 0
+        ),
+        awaitingReview: Number(
+          summary.awaitingReview || 0
+        ),
+        inReview: Number(
+          summary.inReview || 0
+        ),
+        accepted: Number(
+          summary.accepted || 0
+        ),
+        needsReplacement: Number(
+          summary.needsReplacement || 0
+        ),
+        latestUploadAt: String(
+          summary.latestUploadAt || ""
+        ),
+        latestFileName: String(
+          summary.latestFileName || ""
+        )
+      }
+    })
+  );
+}
+
+async function sendClientDocumentReviewEmail({
+  document,
+  clientName
+}) {
+  if (
+    !document ||
+    !EMAIL_USER ||
+    !EMAIL_APP_PASSWORD
+  ) {
+    return;
+  }
+
+  const email = normalizeEmail(
+    document.email
+  );
+
+  if (!email) {
+    return;
+  }
+
+  const status = String(
+    document.reviewStatus || ""
+  );
+
+  if (
+    status !== "accepted" &&
+    status !== "needs-replacement"
+  ) {
+    return;
+  }
+
+  const portalUrl =
+    String(APP_BASE_URL || "")
+      .replace(/\/+$/, "") +
+    "/client-portal";
+
+  const accepted =
+    status === "accepted";
+
+  const subject = accepted
+    ? "Secure document accepted"
+    : "Replacement document requested";
+
+  const headline = accepted
+    ? "Your document was accepted."
+    : "A replacement document is needed.";
+
+  const clientMessage =
+    cleanClientDocumentText(
+      document.clientMessage,
+      1200
+    );
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject,
+      text:
+`Hello ${clientName || "Client"},
+
+${headline}
+
+Document:
+${document.originalName}
+
+Tax year:
+${document.taxYear}
+
+Category:
+${document.category}
+
+Status:
+${accepted ? "Accepted" : "Replacement Requested"}
+
+${clientMessage ? `Message from Greatest Business Solution LLC:
+${clientMessage}
+
+` : ""}View your Secure Document Center:
+${portalUrl}
+
+For your protection, do not email Social Security numbers, tax documents, passwords, or security codes.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+  } catch (error) {
+    console.warn(
+      "[office document review] Client status email could not be sent:",
+      error?.message || error
+    );
+  }
+}
+
+async function getOfficeDocumentReviewState(
+  filters = {}
+) {
+  let records = [];
+  let error = "";
+
+  try {
+    records =
+      await clientDocumentStore.listForOffice(
+        filters
+      );
+  } catch (loadError) {
+    error =
+      loadError?.message ||
+      String(loadError);
+  }
+
+  let allRecords = records;
+
+  if (
+    filters.status ||
+    filters.search ||
+    filters.portalId ||
+    filters.email
+  ) {
+    try {
+      allRecords =
+        await clientDocumentStore
+          .listForOffice({});
+    } catch {
+      allRecords = records;
+    }
+  }
+
+  const readiness =
+    await clientDocumentStore
+      .checkLiveReadiness();
+
+  return {
+    version: "1.0.0",
+    enabled:
+      clientDocumentStore.isAvailable(),
+    localTesting:
+      clientDocumentStore.mode ===
+      "local-development",
+    officeAccessMode:
+      officeDocumentReviewLocalBypass()
+        ? "local-development-bypass"
+        : OFFICE_DOCUMENT_REVIEW_KEY
+          ? "signed-office-session"
+          : "not-configured",
+    storageMode:
+      clientDocumentStore.mode,
+    readiness,
+    statuses:
+      CLIENT_DOCUMENT_REVIEW_STATUSES,
+    documents:
+      records.map(
+        officeDocumentRecord
+      ),
+    summary:
+      clientDocumentStore.buildSummary(
+        allRecords
+      ),
+    error
+  };
 }
 
 function safeClientDocumentDownloadName(
@@ -4143,6 +4651,7 @@ app.use((req, res, next) => {
     path.startsWith("/written-review-report/") ||
     path.startsWith("/client-tax-strategy-worksheet/") ||
     path.startsWith("/client-portal") ||
+    path.startsWith("/office-document-review") ||
     path.startsWith("/api/") ||
     path === "/stripe-thank-you";
 
@@ -4160,6 +4669,7 @@ Disallow: /leads-dashboard
 Disallow: /written-review-report/
 Disallow: /client-tax-strategy-worksheet/
 Disallow: /client-portal
+Disallow: /office-document-review
 Disallow: /api/
 Disallow: /stripe-thank-you
 
@@ -4175,6 +4685,7 @@ app.use(express.static(path.join(__dirname, "ui"), {
       lowerFilePath.endsWith("written-review-report.html") ||
       lowerFilePath.endsWith("client-tax-strategy-worksheet.html") ||
       lowerFilePath.endsWith("client-portal.html") ||
+      lowerFilePath.endsWith("office-document-review-login.html") ||
       lowerFilePath.endsWith("stripe-thank-you.html");
 
     if (shouldNoIndexFile) {
@@ -5536,13 +6047,121 @@ app.get(
   }
 );
 
+
+app.get(
+  "/office-document-review/sign-in",
+  (req, res) => {
+    setClientPortalNoStore(res);
+
+    if (
+      officeDocumentReviewLocalBypass()
+    ) {
+      return res.redirect(
+        "/office-document-review"
+      );
+    }
+
+    return res.sendFile(
+      path.join(
+        __dirname,
+        "ui",
+        "office-document-review-login.html"
+      )
+    );
+  }
+);
+
+app.get(
+  "/office-document-review",
+  requireOfficeDocumentReviewPage,
+  (req, res) => {
+    setClientPortalNoStore(res);
+
+    return res.sendFile(
+      path.join(
+        __dirname,
+        "private-ui",
+        "office-document-review.html"
+      )
+    );
+  }
+);
+
+app.post(
+  "/api/office-document-review/sign-in",
+  (req, res) => {
+    setClientPortalNoStore(res);
+
+    if (
+      officeDocumentReviewLocalBypass()
+    ) {
+      return res.status(200).json({
+        ok: true,
+        redirectTo:
+          "/office-document-review",
+        mode:
+          "local-development-bypass"
+      });
+    }
+
+    if (!OFFICE_DOCUMENT_REVIEW_KEY) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure office review access is not configured."
+      });
+    }
+
+    if (
+      !officeDocumentReviewKeyMatches(
+        req.body?.accessKey
+      )
+    ) {
+      return res.status(401).json({
+        ok: false,
+        error:
+          "The office review access key is incorrect."
+      });
+    }
+
+    setOfficeDocumentReviewCookie(
+      res,
+      createOfficeDocumentReviewToken()
+    );
+
+    return res.status(200).json({
+      ok: true,
+      redirectTo:
+        "/office-document-review",
+      mode:
+        "signed-office-session"
+    });
+  }
+);
+
+app.post(
+  "/api/office-document-review/sign-out",
+  (req, res) => {
+    setClientPortalNoStore(res);
+    clearOfficeDocumentReviewCookie(
+      res
+    );
+
+    return res.status(200).json({
+      ok: true,
+      redirectTo:
+        "/office-document-review/sign-in"
+    });
+  }
+);
+
 app.get("/api/client-portal/health", (req, res) => {
   setClientPortalNoStore(res);
 
   return res.status(200).json({
     ok: true,
     module: "Secure Client Portal + Document Center",
-    version: "1.2.0",
+    version: "1.3.0",
     sessionCookie: "HttpOnly / SameSite=Lax",
     persistentSessionSecretConfigured: Boolean(
       process.env.CLIENT_PORTAL_SESSION_SECRET
@@ -6734,6 +7353,346 @@ app.get(
     return res.send(
       result.buffer
     );
+  }
+);
+
+
+app.get(
+  "/api/office-document-review/state",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const state =
+      await getOfficeDocumentReviewState({
+        status: String(
+          req.query?.status || ""
+        ),
+        search: String(
+          req.query?.search || ""
+        ),
+        portalId: String(
+          req.query?.portalId || ""
+        ),
+        email: String(
+          req.query?.email || ""
+        )
+      });
+
+    return res.status(
+      state.error
+        ? 503
+        : 200
+    ).json({
+      ok: !state.error,
+      state,
+      error:
+        state.error ||
+        undefined
+    });
+  }
+);
+
+app.get(
+  "/api/office-document-review/documents/:documentId/download",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const result =
+      await clientDocumentStore
+        .downloadForOffice({
+          documentId:
+            req.params?.documentId
+        });
+
+    if (!result.ok) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The requested office document is not available."
+      });
+    }
+
+    const fileName =
+      safeClientDocumentDownloadName(
+        result.record.originalName
+      );
+
+    res.setHeader(
+      "Content-Type",
+      result.record.contentType ||
+      "application/octet-stream"
+    );
+
+    res.setHeader(
+      "Content-Length",
+      String(
+        result.buffer.length
+      )
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+    );
+
+    res.setHeader(
+      "X-Content-Type-Options",
+      "nosniff"
+    );
+
+    return res.send(
+      result.buffer
+    );
+  }
+);
+
+app.post(
+  "/api/office-document-review/documents/:documentId/review",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const reviewStatus =
+      normalizeClientDocumentReviewStatus(
+        req.body?.reviewStatus
+      );
+
+    if (!reviewStatus) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Choose a valid document review status."
+      });
+    }
+
+    const clientMessage =
+      cleanClientDocumentText(
+        req.body?.clientMessage,
+        1200
+      );
+
+    if (
+      reviewStatus ===
+        "needs-replacement" &&
+      !clientMessage
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter a client-visible replacement request."
+      });
+    }
+
+    const retentionRaw =
+      String(
+        req.body?.retentionUntil || ""
+      ).trim();
+
+    const retentionUntil =
+      normalizeClientDocumentRetentionDate(
+        retentionRaw
+      );
+
+    if (
+      retentionRaw &&
+      !retentionUntil
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The retention reminder date is not valid."
+      });
+    }
+
+    const now =
+      new Date().toISOString();
+
+    const result =
+      await clientDocumentStore
+        .updateReview({
+          documentId:
+            req.params?.documentId,
+          patch: {
+            reviewStatus,
+            officeNote:
+              cleanClientDocumentText(
+                req.body?.officeNote,
+                3000
+              ),
+            clientMessage,
+            retentionUntil,
+            reviewedAt:
+              reviewStatus ===
+                "in-review" ||
+              reviewStatus ===
+                "awaiting-review"
+                ? ""
+                : now,
+            reviewedBy:
+              cleanClientDocumentText(
+                req.body?.reviewedBy ||
+                "Greatest Business Solution LLC",
+                200
+              ),
+            statusChangedAt: now,
+            clientVisible:
+              reviewStatus !==
+              "withdrawn",
+            withdrawnAt:
+              reviewStatus ===
+              "withdrawn"
+                ? now
+                : ""
+          }
+        });
+
+    if (!result.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          result.error ||
+          "The document review could not be saved."
+      });
+    }
+
+    const portalRecords =
+      await clientDocumentStore
+        .listForOffice({
+          portalId:
+            result.record.portalId
+        });
+
+    const summary =
+      clientDocumentStore
+        .buildSummary(
+          portalRecords
+        );
+
+    await syncClientDocumentSummaryToAccountLead(
+      result.record,
+      summary
+    );
+
+    if (
+      reviewStatus === "accepted" ||
+      reviewStatus ===
+        "needs-replacement"
+    ) {
+      const lead =
+        await findClientPortalLeadById(
+          result.record.accountLeadId
+        );
+
+      void sendClientDocumentReviewEmail({
+        document:
+          result.record,
+        clientName:
+          getLeadNameValue(
+            lead?.raw || {}
+          )
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "The secure document review was saved.",
+      document:
+        officeDocumentRecord(
+          result.record
+        ),
+      summary
+    });
+  }
+);
+
+app.delete(
+  "/api/office-document-review/documents/:documentId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    if (
+      String(
+        req.body?.confirmation || ""
+      ).trim() !==
+      "DELETE PERMANENTLY"
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          'Type "DELETE PERMANENTLY" to confirm permanent deletion.'
+      });
+    }
+
+    const existing =
+      await clientDocumentStore
+        .getForOffice({
+          documentId:
+            req.params?.documentId
+        });
+
+    if (!existing) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The document could not be found."
+      });
+    }
+
+    if (
+      existing.reviewStatus !==
+      "withdrawn"
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Remove the document from the active portal before deleting it permanently."
+      });
+    }
+
+    const result =
+      await clientDocumentStore
+        .deletePermanently({
+          documentId:
+            existing.documentId
+        });
+
+    if (!result.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          result.error ||
+          "The document could not be deleted."
+      });
+    }
+
+    const portalRecords =
+      await clientDocumentStore
+        .listForOffice({
+          portalId:
+            existing.portalId
+        });
+
+    const summary =
+      clientDocumentStore
+        .buildSummary(
+          portalRecords
+        );
+
+    await syncClientDocumentSummaryToAccountLead(
+      existing,
+      summary
+    );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "The document file and metadata were permanently deleted.",
+      summary
+    });
   }
 );
 

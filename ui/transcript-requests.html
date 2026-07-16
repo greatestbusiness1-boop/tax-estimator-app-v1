@@ -36,8 +36,8 @@
   <div class="wrap">
     <div class="top">
       <div>
-        <h1>IRS Transcript Work Center</h1>
-        <div class="sub">Manage IRS transcript help requests: payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery.</div>
+        <h1 id="workspaceTitle">IRS Transcript Work Center</h1>
+        <div class="sub" id="workspaceSub">Manage IRS transcript help requests: payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery.</div>
       </div>
       <button class="btn secondary" onclick="window.location.href='/leads-dashboard'">Back to Tax Lead Center</button>
     </div>
@@ -50,7 +50,7 @@
         <button class="btn secondary" id="toggleCompletedBtn" onclick="toggleCompleted()">Show Completed</button>
       </div>
 
-      <div class="header">
+      <div class="header" id="workspaceHeader">
         <div>Client</div>
         <div>Client Issue</div>
         <div>Payment / 8821</div>
@@ -87,6 +87,55 @@
   </div>
 
 <script>
+const requestedTranscriptWorkspace =
+  new URLSearchParams(window.location.search).get("workspace");
+
+const transcriptWorkspace =
+  ["consults", "monitoring", "requests"].includes(
+    String(requestedTranscriptWorkspace || "").toLowerCase()
+  )
+    ? String(requestedTranscriptWorkspace).toLowerCase()
+    : "requests";
+
+const transcriptWorkspaceDetails = {
+  consults: {
+    title: "Transcript Consults",
+    subtitle: "Review consultation requests related to IRS transcripts."
+  },
+  monitoring: {
+    title: "Transcript Monitoring Requests",
+    subtitle: "Review requests for ongoing transcript monitoring and follow-up."
+  },
+  requests: {
+    title: "Transcript Requests",
+    subtitle: "Manage payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery."
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  const details =
+    transcriptWorkspaceDetails[transcriptWorkspace] ||
+    transcriptWorkspaceDetails.requests;
+
+  const title = document.getElementById("workspaceTitle");
+  const subtitle = document.getElementById("workspaceSub");
+  const header = document.getElementById("workspaceHeader");
+
+  if(title) title.textContent = details.title;
+  if(subtitle) subtitle.textContent = details.subtitle;
+
+  if(header && transcriptWorkspace!=="requests"){
+    header.innerHTML = `
+      <div>Client</div>
+      <div>Request / Notes</div>
+      <div>Status</div>
+      <div>Work Center</div>
+      <div>Submitted</div>
+      <div>Action</div>
+    `;
+  }
+});
+
 let showCompleted=false;
 
 const requestedTranscriptLeadId =
@@ -135,10 +184,72 @@ function backToTranscriptList(){
   load();
 }
 function esc(v){return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+function transcriptWorkspaceText(lead){
+  return [
+    lead?.status,
+    lead?.notes,
+    lead?.service,
+    lead?.serviceType,
+    lead?.requestType,
+    lead?.calendarAppointment?.title,
+    lead?.calendarAppointment?.service,
+    lead?.transcriptRequest?.clientIssue,
+    lead?.transcriptRequest?.clientComment,
+    lead?.transcriptRequest?.requestType
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function isTranscriptConsult(lead){
+  const text=transcriptWorkspaceText(lead);
+  return (
+    text.includes("transcript consult") ||
+    text.includes("consultation transcript") ||
+    text.includes("transcript consultation")
+  );
+}
+
+function isTranscriptMonitoring(lead){
+  const text=transcriptWorkspaceText(lead);
+  return (
+    text.includes("transcript monitoring") ||
+    text.includes("monitor transcript") ||
+    text.includes("monitoring request")
+  );
+}
+
 function isTranscriptLead(lead){
   const status=String(lead.status||"");
   const notes=String(lead.notes||"").toLowerCase();
   return status.startsWith("Transcript Help -") || notes.includes("irs transcript") || notes.includes("transcript help") || Boolean(lead.transcriptRequest&&lead.transcriptRequest.requested);
+}
+
+function matchesTranscriptWorkspace(lead){
+  if(transcriptWorkspace==="consults"){
+    return isTranscriptConsult(lead);
+  }
+
+  if(transcriptWorkspace==="monitoring"){
+    return isTranscriptMonitoring(lead);
+  }
+
+  return (
+    isTranscriptLead(lead) &&
+    !isTranscriptConsult(lead) &&
+    !isTranscriptMonitoring(lead)
+  );
+}
+
+function isTranscriptWorkspaceCompleted(lead){
+  const status=String(lead?.status||"").toLowerCase();
+
+  if(transcriptWorkspace==="requests"){
+    return status==="transcript help - completed";
+  }
+
+  return status.includes("completed") || status.includes("closed");
 }
 function leadTime(lead){
   const m=String(lead.leadId||"").match(/LEAD-(\d+)/i);
@@ -231,18 +342,67 @@ async function load(){
   const res=await fetch("/api/leads");
   const data=await res.json();
   const all=Array.isArray(data)?data:(Array.isArray(data.leads)?data.leads:[]);
-  const transcriptRows=all.filter(isTranscriptLead);
-  const openRows=transcriptRows.filter(l=>String(l.status||"")!=="Transcript Help - Completed");
-  const completedRows=transcriptRows.filter(l=>String(l.status||"")==="Transcript Help - Completed");
+  const transcriptRows=all.filter(matchesTranscriptWorkspace);
+  const openRows=transcriptRows.filter(l=>!isTranscriptWorkspaceCompleted(l));
+  const completedRows=transcriptRows.filter(isTranscriptWorkspaceCompleted);
   const rows=(showCompleted?completedRows:openRows).sort((a,b)=>leadTime(b)-leadTime(a));
 
   document.getElementById("countOpen").textContent=`Open: ${openRows.length}`;
-  document.getElementById("countReady").textContent=`Ready to Pull: ${openRows.filter(l=>nextAction(l).text==="Next: Pull in PitBullTax").length}`;
-  document.getElementById("countNeed8821").textContent=`Need 8821: ${openRows.filter(l=>!auth(l).good).length}`;
+
+  const readyPill=document.getElementById("countReady");
+  const need8821Pill=document.getElementById("countNeed8821");
+
+  if(transcriptWorkspace==="requests"){
+    readyPill.style.display="";
+    need8821Pill.style.display="";
+    readyPill.textContent=`Ready to Pull: ${openRows.filter(l=>nextAction(l).text==="Next: Pull in PitBullTax").length}`;
+    need8821Pill.textContent=`Need 8821: ${openRows.filter(l=>!auth(l).good).length}`;
+  }else{
+    readyPill.style.display="none";
+    need8821Pill.style.display="none";
+  }
 
   const toggleBtn=document.getElementById("toggleCompletedBtn");
   if(toggleBtn){
     toggleBtn.textContent=showCompleted?`Show Open (${openRows.length})`:`Show Completed (${completedRows.length})`;
+  }
+
+  if(transcriptWorkspace!=="requests"){
+    const rowsEl=document.getElementById("rows");
+    const workspaceLabel =
+      transcriptWorkspaceDetails[transcriptWorkspace]?.title ||
+      "Transcript Work";
+
+    rowsEl.innerHTML=rows.length
+      ? rows.map(lead=>{
+          const name=lead?.contact?.name||"Unknown";
+          const email=lead?.contact?.email||"No email";
+          const issue=
+            lead?.transcriptRequest?.clientIssue ||
+            lead?.transcriptRequest?.clientComment ||
+            lead?.notes ||
+            "Review request";
+          const status=lead?.status||"Open";
+          const rawDate=lead.timestamp||lead.createdAt||lead.updatedAt||"";
+          const parsedDate=new Date(rawDate);
+          const entered=Number.isNaN(parsedDate.getTime())
+            ? String(rawDate||"")
+            : parsedDate.toLocaleString();
+
+          return `<div class="row">
+            <div><div class="name">${esc(name)}</div><div class="small">${esc(email)}</div></div>
+            <div class="small">${esc(issue)}</div>
+            <div>${pill(status,isTranscriptWorkspaceCompleted(lead))}</div>
+            <div class="small">${esc(workspaceLabel)}</div>
+            <div class="small">${esc(entered||"Date not recorded")}</div>
+            <div><button class="btn secondary" onclick="window.location.href='/leads-dashboard'">Tax Lead Center</button></div>
+          </div>`;
+        }).join("")
+      : `<div style="padding:28px 16px;text-align:center;color:#64748b;font-weight:900;">
+          No ${esc(workspaceLabel.toLowerCase())} are in this queue yet.
+        </div>`;
+
+    return;
   }
 
   const displayRows=focusedTranscriptLeadId

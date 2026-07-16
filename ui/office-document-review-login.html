@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Office Document Review Sign In</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#f3efe7;color:#10273d;font:16px/1.5 Arial,Helvetica,sans-serif;display:grid;min-height:100vh;place-items:center;padding:20px}
+    .card{width:min(560px,100%);background:white;border:1px solid #d8ccb7;border-top:7px solid #b78c49;box-shadow:0 18px 45px rgba(15,45,74,.14);padding:28px}
+    h1{margin:0 0 10px;font:800 32px Georgia,serif;color:#0f2d4a}
+    p{color:#526274}
+    label{display:block;font-weight:900;margin:18px 0 6px}
+    input{width:100%;padding:12px;border:1px solid #aeb9c4;font:inherit}
+    button{width:100%;margin-top:16px;border:0;background:#0f2d4a;color:white;padding:13px;font-weight:900;cursor:pointer}
+    .message{display:none;margin-top:14px;padding:12px;background:#fff0ef;border-left:5px solid #b42318;color:#8c1d18;font-weight:800}
+    .message.show{display:block}
+    .note{margin-top:18px;padding:12px;background:#fff7e6;border-left:5px solid #a15c00;font-size:14px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Secure Office Document Review</h1>
+    <p>Enter the private office review key configured on the production server.</p>
+    <form id="form">
+      <label for="accessKey">Office review access key</label>
+      <input id="accessKey" type="password" autocomplete="current-password" required>
+      <button type="submit">Open Secure Office Review</button>
+    </form>
+    <div class="message" id="message" role="alert"></div>
+    <div class="note">
+      Local development can use a local-only bypass. Production requires <strong>OFFICE_DOCUMENT_REVIEW_KEY</strong> and a signed HttpOnly office session.
+    </div>
+  </main>
+  <script>
+    document.getElementById("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = document.getElementById("message");
+      message.className = "message";
+      try {
+        const response = await fetch("/api/office-document-review/sign-in", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          credentials:"same-origin",
+          body:JSON.stringify({
+            accessKey:document.getElementById("accessKey").value
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Office sign-in failed.");
+        }
+        window.location.href = data.redirectTo || "/office-document-review";
+      } catch (error) {
+        message.textContent = error.message || "Office sign-in failed.";
+        message.className = "message show";
+      }
+    });
+  </script>
+</body>
+</html>

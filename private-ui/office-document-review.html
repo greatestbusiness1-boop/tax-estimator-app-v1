@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Secure Office Document Review</title>
+  <style>
+    :root{
+      --navy:#0f2d4a;
+      --navy2:#173d5f;
+      --green:#176344;
+      --gold:#b78c49;
+      --cream:#fbf8f1;
+      --paper:#fff;
+      --line:#d9cfbd;
+      --muted:#586474;
+      --red:#b42318;
+      --orange:#a15c00;
+      --shadow:0 12px 28px rgba(15,45,74,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:#f2eee6;
+      color:#10273d;
+      font:15px/1.5 Arial,Helvetica,sans-serif;
+    }
+    button,input,select,textarea{font:inherit}
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--navy);
+      color:white;
+      padding:14px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      box-shadow:0 4px 18px rgba(0,0,0,.18);
+    }
+    .topbar h1{margin:0;font:800 22px Georgia,serif}
+    .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .top-actions a,.top-actions button{
+      border:1px solid rgba(255,255,255,.35);
+      background:transparent;
+      color:#fff;
+      padding:8px 12px;
+      border-radius:6px;
+      text-decoration:none;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .layout{
+      max-width:1500px;
+      margin:20px auto;
+      padding:0 18px 40px;
+      display:grid;
+      grid-template-columns:minmax(350px,470px) minmax(520px,1fr);
+      gap:18px;
+    }
+    .panel{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-top:5px solid var(--gold);
+      box-shadow:var(--shadow);
+    }
+    .panel-head{padding:18px 20px;border-bottom:1px solid var(--line)}
+    .panel-head h2{margin:0 0 5px;font:800 24px Georgia,serif}
+    .panel-head p{margin:0;color:var(--muted)}
+    .summary{
+      padding:14px 18px;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:9px;
+    }
+    .summary-item{
+      border:1px solid var(--line);
+      background:var(--cream);
+      padding:11px;
+      min-height:76px;
+    }
+    .summary-item span{
+      display:block;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      color:var(--muted)
+    }
+    .summary-item strong{font-size:23px;color:var(--navy)}
+    .readiness{
+      margin:0 18px 14px;
+      padding:12px;
+      border-left:5px solid var(--orange);
+      background:#fff7e6;
+      font-weight:700;
+    }
+    .readiness.ready{border-left-color:var(--green);background:#edf8f2}
+    .filters{
+      padding:14px 18px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+    }
+    .filters label,.form-field label{
+      display:block;
+      font-size:12px;
+      font-weight:900;
+      margin-bottom:5px;
+      color:#233c54;
+    }
+    input,select,textarea{
+      width:100%;
+      border:1px solid #bfc7cf;
+      background:white;
+      padding:10px 11px;
+      border-radius:4px;
+      color:#10273d;
+    }
+    textarea{min-height:92px;resize:vertical}
+    .document-list{
+      max-height:calc(100vh - 385px);
+      overflow:auto;
+      padding:12px;
+    }
+    .doc-card{
+      border:1px solid var(--line);
+      border-left:5px solid var(--gold);
+      background:#fff;
+      padding:13px;
+      margin-bottom:10px;
+      cursor:pointer;
+    }
+    .doc-card:hover,.doc-card.active{border-left-color:var(--green);background:#f5fbf7}
+    .doc-card h3{margin:0 0 5px;font-size:16px}
+    .meta{font-size:13px;color:var(--muted)}
+    .status{
+      display:inline-block;
+      margin-top:8px;
+      padding:4px 8px;
+      border:1px solid #c9b997;
+      background:#faf6ec;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .status.needs-replacement{border-color:#e2aaa5;background:#fff0ef;color:var(--red)}
+    .status.accepted{border-color:#9fceb3;background:#eff9f3;color:var(--green)}
+    .status.in-review{border-color:#9eb7cc;background:#eef5fb;color:var(--navy2)}
+    .detail{padding:20px}
+    .empty{
+      padding:45px 20px;
+      text-align:center;
+      color:var(--muted);
+    }
+    .detail-title{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:16px;
+    }
+    .detail-title h2{margin:0;font:800 27px Georgia,serif;overflow-wrap:anywhere}
+    .detail-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+    .fact{
+      border:1px solid var(--line);
+      background:var(--cream);
+      padding:10px;
+    }
+    .fact span{display:block;font-size:11px;font-weight:900;text-transform:uppercase;color:var(--muted)}
+    .fact strong{display:block;margin-top:3px;overflow-wrap:anywhere}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-field.full{grid-column:1/-1}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .button{
+      border:0;
+      border-radius:5px;
+      padding:11px 15px;
+      font-weight:900;
+      cursor:pointer;
+      background:var(--navy);
+      color:white;
+      text-decoration:none;
+      display:inline-block;
+    }
+    .button.green{background:var(--green)}
+    .button.gold{background:#8a642c}
+    .button.red{background:var(--red)}
+    .button.secondary{background:white;color:var(--navy);border:1px solid var(--navy)}
+    .danger-zone{
+      margin-top:22px;
+      border:1px solid #e2aaa5;
+      background:#fff5f4;
+      padding:14px;
+    }
+    .danger-zone h3{margin:0 0 8px;color:var(--red)}
+    .message{
+      display:none;
+      margin-bottom:14px;
+      padding:12px;
+      border-left:5px solid var(--green);
+      background:#edf8f2;
+      font-weight:800;
+    }
+    .message.show{display:block}
+    .message.error{border-left-color:var(--red);background:#fff0ef;color:#8c1d18}
+    .local-warning{
+      background:#fff7e6;
+      border:1px solid #e0c17e;
+      padding:10px 12px;
+      margin:0 18px 14px;
+      font-weight:800;
+    }
+    .workflow-location{
+      margin:0 18px 14px;
+      padding:12px 14px;
+      border:1px solid #c9d7e5;
+      border-radius:10px;
+      background:#f7fafc;
+      color:#334155;
+      font-weight:800;
+    }
+    .workflow-location strong{color:#0f2c56}
+    .save-toast{
+      position:fixed;
+      top:18px;
+      right:18px;
+      z-index:9999;
+      max-width:520px;
+      padding:16px 20px;
+      border-radius:12px;
+      border:2px solid #176344;
+      background:#eaf8f0;
+      color:#0c4a2d;
+      box-shadow:0 12px 30px rgba(15,44,86,.22);
+      font-size:15px;
+      font-weight:900;
+      line-height:1.45;
+      opacity:0;
+      transform:translateY(-12px);
+      pointer-events:none;
+      transition:.2s ease;
+    }
+    .save-toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+    .save-toast.error{
+      border-color:#b42318;
+      background:#fff0ee;
+      color:#8b211d;
+    }
+    .button.saving,
+    .button.saved{
+      min-width:190px;
+    }
+    .button.saving{background:#64748b!important}
+    .button.saved{background:#176344!important}
+    @media(max-width:1050px){
+      .layout{grid-template-columns:1fr}
+      .document-list{max-height:520px}
+    }
+    @media(max-width:700px){
+      .summary{grid-template-columns:repeat(2,1fr)}
+      .filters,.form-grid,.detail-grid{grid-template-columns:1fr}
+      .form-field.full{grid-column:auto}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Secure Office Document Review</h1>
+    <div class="top-actions">
+      <a href="/leads-dashboard">← Tax Lead Center Home</a>
+      <a href="/client-portal" target="_blank" rel="noopener">Client Portal Sign In</a>
+      <button id="refreshButton" type="button">Refresh</button>
+      <button id="signOutButton" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <div id="globalSaveToast" class="save-toast" role="status" aria-live="assertive"></div>
+
+  <div class="workflow-location">
+    <strong>You are here:</strong> Tax Lead Center → Portal &amp; Documents → Secure Office Document Review
+  </div>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Document Work Queue</h2>
+        <p>Review protected client uploads without exposing them through the public website.</p>
+      </div>
+
+      <div class="summary">
+        <div class="summary-item"><span>Total</span><strong id="sumTotal">0</strong></div>
+        <div class="summary-item"><span>Awaiting</span><strong id="sumAwaiting">0</strong></div>
+        <div class="summary-item"><span>In Review</span><strong id="sumInReview">0</strong></div>
+        <div class="summary-item"><span>Accepted</span><strong id="sumAccepted">0</strong></div>
+        <div class="summary-item"><span>Replacement</span><strong id="sumReplacement">0</strong></div>
+      </div>
+
+      <div class="readiness" id="readinessBox">Checking live-storage readiness...</div>
+      <div class="local-warning" id="localWarning" hidden>
+        Local testing mode is active. Do not use real client documents until the private Supabase bucket, document table, service-role key, and production office access key are verified.
+      </div>
+
+      <div class="filters">
+        <div>
+          <label for="statusFilter">Review status</label>
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option value="awaiting-review">Awaiting Review</option>
+            <option value="in-review">In Review</option>
+            <option value="accepted">Accepted</option>
+            <option value="needs-replacement">Needs Replacement</option>
+            <option value="withdrawn">Removed From Active Portal</option>
+          </select>
+        </div>
+        <div>
+          <label for="searchFilter">Search client, file, year, or note</label>
+          <input id="searchFilter" type="search" placeholder="Search documents">
+        </div>
+      </div>
+
+      <div class="document-list" id="documentList">
+        <div class="empty">Loading documents...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="detail" id="detailPanel">
+        <div class="empty">
+          Select a document from the work queue to begin review.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    let currentState = null;
+    let selectedDocumentId = "";
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(value) {
+      const parsed = Date.parse(value || "");
+      if (!Number.isFinite(parsed)) return "Not recorded";
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(new Date(parsed));
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value || 0);
+      if (bytes < 1024) return `${bytes} bytes`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function showMessage(text, type = "success") {
+      const messageText = String(text || "");
+      const box = document.getElementById("detailMessage");
+
+      if (box) {
+        box.textContent = messageText;
+        box.className = `message show ${type === "error" ? "error" : ""}`.trim();
+      }
+
+      const toast = document.getElementById("globalSaveToast");
+      if (!toast) return;
+
+      toast.textContent = messageText;
+      toast.className = `save-toast show ${type === "error" ? "error" : ""}`.trim();
+
+      window.clearTimeout(window.officeReviewToastTimer);
+      window.officeReviewToastTimer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, type === "error" ? 7000 : 4500);
+    }
+
+    function statusLabel(status) {
+      return ({
+        "awaiting-review": "Received — Awaiting Office Review",
+        "in-review": "Office Review In Progress",
+        "accepted": "Accepted",
+        "needs-replacement": "Replacement Requested",
+        "withdrawn": "Removed From Active Portal"
+      })[status] || status || "Awaiting Review";
+    }
+
+    function activeDocuments() {
+      return currentState?.documents || [];
+    }
+
+    function updateSummary(summary = {}) {
+      document.getElementById("sumTotal").textContent = Number(summary.totalDocuments || 0);
+      document.getElementById("sumAwaiting").textContent = Number(summary.awaitingReview || 0);
+      document.getElementById("sumInReview").textContent = Number(summary.inReview || 0);
+      document.getElementById("sumAccepted").textContent = Number(summary.accepted || 0);
+      document.getElementById("sumReplacement").textContent = Number(summary.needsReplacement || 0);
+    }
+
+    function renderReadiness(state) {
+      const box = document.getElementById("readinessBox");
+      const readiness = state.readiness || {};
+      const ready = Boolean(readiness.liveStorageReady);
+      box.className = `readiness ${ready ? "ready" : ""}`.trim();
+
+      if (ready) {
+        box.innerHTML = "<strong>Live private storage verified:</strong> document table available, bucket found, and bucket is private.";
+      } else {
+        const reasons = (readiness.errors || []).join(" ");
+        box.innerHTML = `<strong>Live storage is not ready yet.</strong> ${escapeHtml(reasons || "Local development storage is active.")}`;
+      }
+
+      document.getElementById("localWarning").hidden = !state.localTesting;
+    }
+
+    function renderList() {
+      const container = document.getElementById("documentList");
+      const documents = activeDocuments();
+
+      if (!documents.length) {
+        container.innerHTML = '<div class="empty">No documents match the current filters.</div>';
+        return;
+      }
+
+      container.innerHTML = documents.map((doc) => `
+        <article class="doc-card ${doc.documentId === selectedDocumentId ? "active" : ""}" data-id="${escapeHtml(doc.documentId)}">
+          <h3>${escapeHtml(doc.originalName || "Document")}</h3>
+          <div class="meta">
+            ${escapeHtml(doc.email || "No email")}<br>
+            ${escapeHtml(doc.taxYearLabel || doc.taxYear || "Tax year not recorded")} ·
+            ${escapeHtml(doc.categoryLabel || doc.category || "Other")}<br>
+            Uploaded: ${escapeHtml(formatDate(doc.uploadedAt))}
+          </div>
+          <span class="status ${escapeHtml(doc.reviewStatus)}">${escapeHtml(doc.statusLabel || statusLabel(doc.reviewStatus))}</span>
+        </article>
+      `).join("");
+
+      container.querySelectorAll(".doc-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          selectedDocumentId = card.dataset.id || "";
+          renderList();
+          renderDetail();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const panel = document.getElementById("detailPanel");
+      const doc = activeDocuments().find((entry) => entry.documentId === selectedDocumentId);
+
+      if (!doc) {
+        panel.innerHTML = '<div class="empty">Select a document from the work queue to begin review.</div>';
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="message" id="detailMessage" role="status" aria-live="polite"></div>
+
+        <div class="detail-title">
+          <div>
+            <h2>${escapeHtml(doc.originalName || "Document")}</h2>
+            <span class="status ${escapeHtml(doc.reviewStatus)}">${escapeHtml(doc.statusLabel || statusLabel(doc.reviewStatus))}</span>
+          </div>
+          <a class="button secondary" href="/api/office-document-review/documents/${encodeURIComponent(doc.documentId)}/download">Download for Office Review</a>
+        </div>
+
+        <div class="detail-grid">
+          <div class="fact"><span>Client email</span><strong>${escapeHtml(doc.email || "Not recorded")}</strong></div>
+          <div class="fact"><span>Tax year</span><strong>${escapeHtml(doc.taxYearLabel || doc.taxYear || "Not recorded")}</strong></div>
+          <div class="fact"><span>Category</span><strong>${escapeHtml(doc.categoryLabel || doc.category || "Not recorded")}</strong></div>
+          <div class="fact"><span>Uploaded</span><strong>${escapeHtml(formatDate(doc.uploadedAt))}</strong></div>
+          <div class="fact"><span>File size</span><strong>${escapeHtml(formatBytes(doc.sizeBytes))}</strong></div>
+          <div class="fact"><span>Client reference</span><strong>${escapeHtml(doc.accountLeadId || "Not recorded")}</strong></div>
+        </div>
+
+        ${doc.note ? `<div class="fact" style="margin-bottom:16px;"><span>Client note</span><strong>${escapeHtml(doc.note)}</strong></div>` : ""}
+
+        <form id="reviewForm">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="reviewStatus">Review status</label>
+              <select id="reviewStatus">
+                ${(currentState.statuses || []).map((status) => `
+                  <option value="${escapeHtml(status.id)}" ${status.id === doc.reviewStatus ? "selected" : ""}>${escapeHtml(status.label)}</option>
+                `).join("")}
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="retentionUntil">Retention reminder date</label>
+              <input id="retentionUntil" type="date" value="${escapeHtml(doc.retentionUntil || "")}">
+            </div>
+
+            <div class="form-field full">
+              <label for="clientMessage">Client-visible message</label>
+              <textarea id="clientMessage" placeholder="Required when requesting a replacement. The client will see this message in the portal.">${escapeHtml(doc.clientMessage || "")}</textarea>
+            </div>
+
+            <div class="form-field full">
+              <label for="officeNote">Private office note</label>
+              <textarea id="officeNote" placeholder="Internal review note. The client cannot see this.">${escapeHtml(doc.officeNote || "")}</textarea>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="button green" id="saveReviewButton" type="submit">Save Document Review</button>
+            <button class="button secondary quick-status" type="button" data-status="in-review">Begin Review</button>
+            <button class="button green quick-status" type="button" data-status="accepted">Accept Document</button>
+            <button class="button gold quick-status" type="button" data-status="needs-replacement">Request Replacement</button>
+            <button class="button red quick-status" type="button" data-status="withdrawn">Remove From Active Portal</button>
+          </div>
+        </form>
+
+        <div class="danger-zone">
+          <h3>Permanent deletion</h3>
+          <p>Permanent deletion removes both the protected file and its metadata. It cannot be undone. The document must first be marked <strong>Removed From Active Portal</strong>.</p>
+          <label for="deleteConfirmation"><strong>Type DELETE PERMANENTLY</strong></label>
+          <input id="deleteConfirmation" type="text" autocomplete="off">
+          <div class="actions">
+            <button class="button red" id="deleteButton" type="button">Permanently Delete File and Record</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("reviewForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await saveReview(doc.documentId);
+      });
+
+      panel.querySelectorAll(".quick-status").forEach((button) => {
+        button.addEventListener("click", async () => {
+          document.getElementById("reviewStatus").value = button.dataset.status;
+          await saveReview(doc.documentId);
+        });
+      });
+
+      document.getElementById("deleteButton").addEventListener("click", async () => {
+        await deleteDocument(doc.documentId);
+      });
+    }
+
+    async function saveReview(documentId) {
+      const reviewStatus = document.getElementById("reviewStatus").value;
+      const officeNote = document.getElementById("officeNote").value;
+      const clientMessage = document.getElementById("clientMessage").value;
+      const retentionUntil = document.getElementById("retentionUntil").value;
+      const saveButton = document.getElementById("saveReviewButton");
+
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.classList.add("saving");
+        saveButton.textContent = "Saving Document Review...";
+      }
+
+      showMessage("Saving the secure document review...");
+
+      try {
+        const response = await fetch(
+          `/api/office-document-review/documents/${encodeURIComponent(documentId)}/review`,
+          {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            credentials: "same-origin",
+            body: JSON.stringify({
+              reviewStatus,
+              officeNote,
+              clientMessage,
+              retentionUntil,
+              reviewedBy: "Greatest Business Solution LLC"
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "The review could not be saved.");
+        }
+
+        await loadState();
+        selectedDocumentId = documentId;
+        renderList();
+        renderDetail();
+
+        const savedAt = new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit"
+        });
+
+        showMessage(
+          `DOCUMENT REVIEW SAVED — ${statusLabel(reviewStatus)} — ${savedAt}`
+        );
+
+        const refreshedButton = document.getElementById("saveReviewButton");
+        if (refreshedButton) {
+          refreshedButton.disabled = true;
+          refreshedButton.classList.add("saved");
+          refreshedButton.textContent = "Saved ✓";
+
+          window.setTimeout(() => {
+            const currentButton = document.getElementById("saveReviewButton");
+            if (!currentButton) return;
+            currentButton.disabled = false;
+            currentButton.classList.remove("saved");
+            currentButton.textContent = "Save Document Review";
+          }, 1800);
+        }
+      } catch (error) {
+        showMessage(error.message || "The review could not be saved.", "error");
+
+        const currentButton = document.getElementById("saveReviewButton");
+        if (currentButton) {
+          currentButton.disabled = false;
+          currentButton.classList.remove("saving", "saved");
+          currentButton.textContent = "Save Document Review";
+        }
+      }
+    }
+
+    async function deleteDocument(documentId) {
+      const confirmation = document.getElementById("deleteConfirmation").value;
+
+      if (confirmation !== "DELETE PERMANENTLY") {
+        showMessage('Type "DELETE PERMANENTLY" before using permanent deletion.', "error");
+        return;
+      }
+
+      if (!window.confirm("Permanently delete this protected file and all of its metadata? This cannot be undone.")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/office-document-review/documents/${encodeURIComponent(documentId)}`,
+          {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json"},
+            credentials: "same-origin",
+            body: JSON.stringify({confirmation})
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "The document could not be deleted.");
+        }
+
+        selectedDocumentId = "";
+        await loadState();
+        showMessage("TEST DOCUMENT PERMANENTLY DELETED — the file and record were removed.");
+      } catch (error) {
+        showMessage(error.message || "The document could not be deleted.", "error");
+      }
+    }
+
+    async function loadState() {
+      const status = document.getElementById("statusFilter").value;
+      const search = document.getElementById("searchFilter").value.trim();
+      const query = new URLSearchParams();
+      if (status) query.set("status", status);
+      if (search) query.set("search", search);
+
+      const response = await fetch(
+        `/api/office-document-review/state?${query.toString()}`,
+        {credentials:"same-origin", cache:"no-store"}
+      );
+
+      if (response.status === 401) {
+        window.location.href = "/office-document-review/sign-in";
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "The office document queue could not be loaded.");
+      }
+
+      currentState = data.state;
+      updateSummary(currentState.summary || {});
+      renderReadiness(currentState);
+      renderList();
+
+      if (selectedDocumentId && !activeDocuments().some((doc) => doc.documentId === selectedDocumentId)) {
+        selectedDocumentId = "";
+      }
+      renderDetail();
+    }
+
+    let searchTimer = null;
+    document.getElementById("statusFilter").addEventListener("change", () => {
+      selectedDocumentId = "";
+      loadState().catch((error) => {
+        document.getElementById("documentList").innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+      });
+    });
+
+    document.getElementById("searchFilter").addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        selectedDocumentId = "";
+        loadState().catch(() => {});
+      }, 300);
+    });
+
+    document.getElementById("refreshButton").addEventListener("click", () => {
+      loadState().catch(() => {});
+    });
+
+    document.getElementById("signOutButton").addEventListener("click", async () => {
+      await fetch("/api/office-document-review/sign-out", {
+        method:"POST",
+        credentials:"same-origin"
+      });
+      window.location.href = "/office-document-review/sign-in";
+    });
+
+    loadState().catch((error) => {
+      document.getElementById("documentList").innerHTML = `<div class="empty">${escapeHtml(error.message || "The queue could not be loaded.")}</div>`;
+    });
+  </script>
+</body>
+</html>

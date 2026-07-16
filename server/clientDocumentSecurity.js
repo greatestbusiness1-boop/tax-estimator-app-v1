@@ -42,6 +42,36 @@ const CATEGORY_BY_ID = new Map(
   )
 );
 
+const REVIEW_STATUSES = Object.freeze([
+  {
+    id: "awaiting-review",
+    label: "Received — Awaiting Office Review"
+  },
+  {
+    id: "in-review",
+    label: "Office Review In Progress"
+  },
+  {
+    id: "accepted",
+    label: "Accepted"
+  },
+  {
+    id: "needs-replacement",
+    label: "Replacement Requested"
+  },
+  {
+    id: "withdrawn",
+    label: "Removed From Active Portal"
+  }
+]);
+
+const REVIEW_STATUS_BY_ID = new Map(
+  REVIEW_STATUSES.map(
+    (status) => [status.id, status]
+  )
+);
+
+
 const FILE_TYPES = Object.freeze({
   ".pdf": {
     contentType: "application/pdf",
@@ -97,6 +127,44 @@ function getCategoryLabel(value) {
 
   return id
     ? CATEGORY_BY_ID.get(id).label
+    : "";
+}
+
+function normalizeReviewStatus(value) {
+  const id = cleanText(value, 80)
+    .toLowerCase();
+
+  return REVIEW_STATUS_BY_ID.has(id)
+    ? id
+    : "";
+}
+
+function getReviewStatusLabel(value) {
+  const id =
+    normalizeReviewStatus(value) ||
+    "awaiting-review";
+
+  return (
+    REVIEW_STATUS_BY_ID.get(id)?.label ||
+    "Received — Awaiting Office Review"
+  );
+}
+
+function normalizeRetentionDate(value) {
+  const text = cleanText(value, 20);
+
+  if (!text) {
+    return "";
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return "";
+  }
+
+  const parsed = Date.parse(`${text}T00:00:00Z`);
+
+  return Number.isFinite(parsed)
+    ? text
     : "";
 }
 
@@ -475,24 +543,11 @@ function validateDocumentUpload(
 function publicDocumentRecord(
   record = {}
 ) {
-  const reviewStatus = String(
-    record.reviewStatus ||
-    "awaiting-review"
-  );
-
-  const statusLabel =
-    reviewStatus === "accepted"
-      ? "Accepted"
-      : reviewStatus ===
-          "needs-replacement"
-        ? "Replacement Requested"
-        : reviewStatus ===
-            "in-review"
-          ? "Office Review In Progress"
-          : reviewStatus ===
-              "withdrawn"
-            ? "Withdrawn"
-            : "Received — Awaiting Office Review";
+  const reviewStatus =
+    normalizeReviewStatus(
+      record.reviewStatus
+    ) ||
+    "awaiting-review";
 
   return {
     documentId:
@@ -533,7 +588,23 @@ function publicDocumentRecord(
         500
       ),
     reviewStatus,
-    statusLabel,
+    statusLabel:
+      getReviewStatusLabel(
+        reviewStatus
+      ),
+    clientMessage:
+      cleanText(
+        record.clientMessage,
+        1200
+      ),
+    retentionUntil:
+      normalizeRetentionDate(
+        record.retentionUntil
+      ),
+    reviewedAt:
+      String(
+        record.reviewedAt || ""
+      ),
     uploadedAt:
       String(
         record.uploadedAt || ""
@@ -545,19 +616,73 @@ function publicDocumentRecord(
   };
 }
 
+function officeDocumentRecord(
+  record = {}
+) {
+  const publicRecord =
+    publicDocumentRecord(record);
+
+  return {
+    ...publicRecord,
+    portalId:
+      String(
+        record.portalId || ""
+      ),
+    accountLeadId:
+      String(
+        record.accountLeadId || ""
+      ),
+    linkedLeadId:
+      String(
+        record.linkedLeadId || ""
+      ),
+    email:
+      normalizeEmail(
+        record.email
+      ),
+    sha256:
+      String(
+        record.sha256 || ""
+      ),
+    officeNote:
+      cleanText(
+        record.officeNote,
+        3000
+      ),
+    reviewedBy:
+      cleanText(
+        record.reviewedBy,
+        200
+      ),
+    statusChangedAt:
+      String(
+        record.statusChangedAt || ""
+      ),
+    withdrawnAt:
+      String(
+        record.withdrawnAt || ""
+      )
+  };
+}
+
 module.exports = {
   MAX_FILE_BYTES,
   DOCUMENT_CATEGORIES,
+  REVIEW_STATUSES,
   FILE_TYPES,
   cleanText,
   normalizeEmail,
   normalizeCategory,
   getCategoryLabel,
+  normalizeReviewStatus,
+  getReviewStatusLabel,
+  normalizeRetentionDate,
   normalizeTaxYear,
   getTaxYearLabel,
   sanitizeOriginalName,
   getFileTypeFromName,
   hasValidFileSignature,
   validateDocumentUpload,
-  publicDocumentRecord
+  publicDocumentRecord,
+  officeDocumentRecord
 };

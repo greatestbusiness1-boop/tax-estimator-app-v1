@@ -749,7 +749,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.2</span>
+        <span>Tax Savings Planner™ Portal — Version 1.3.1</span>
       </div>
     </div>
     <div class="top-actions">
@@ -845,7 +845,7 @@
           <form class="document-upload-card" id="documentUploadForm">
             <div class="document-upload-message" id="documentUploadMessage" role="status" aria-live="polite"></div>
 
-            <h3>Upload a document</h3>
+            <h3>Upload a Document</h3>
             <p>Choose one file, identify the tax year and category, and add a short note when it will help the office understand the document.</p>
 
             <div class="document-field">
@@ -886,6 +886,9 @@
             </div>
 
             <div class="form-actions">
+              <button class="button secondary" id="prepareHarmlessTestButton" type="button" hidden>
+                Prepare Harmless Test Upload
+              </button>
               <button class="button" id="documentUploadButton" type="submit">
                 Upload Document Securely
               </button>
@@ -898,8 +901,8 @@
           </form>
 
           <div class="document-history-card">
-            <h3>My upload history</h3>
-            <p>Each file stays connected to your portal profile and selected tax year. The status below shows where it is in the office-review process.</p>
+            <h3>My Uploaded Documents</h3>
+            <p>Download your own copy here at any time. Each file stays connected to your portal profile and selected tax year, and the status shows where it is in the office-review process.</p>
 
             <div class="document-summary">
               <div class="document-summary-item">
@@ -1215,6 +1218,16 @@
                           `
                           : "";
 
+                      const clientMessage =
+                        document.clientMessage
+                          ? `
+                            <div class="document-note" style="border-left:4px solid #b91c1c;">
+                              <strong>Message from Greatest Business Solution LLC:</strong><br>
+                              ${escapeHtml(document.clientMessage)}
+                            </div>
+                          `
+                          : "";
+
                       const downloadUrl =
                         `/api/client-portal/documents/${encodeURIComponent(document.documentId)}/download`;
 
@@ -1232,6 +1245,7 @@
                             </div>
 
                             ${note}
+                            ${clientMessage}
 
                             <span class="document-status-pill">
                               ${escapeHtml(document.statusLabel || "Received — Awaiting Office Review")}
@@ -1265,6 +1279,69 @@
           .join("");
     }
 
+    function createHarmlessPortalTestFile() {
+      const base64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Wl7sAAAAASUVORK5CYII=";
+      const binary = window.atob(base64);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+
+      return new File(
+        [bytes],
+        "Secure-Portal-Harmless-Test.png",
+        {type: "image/png"}
+      );
+    }
+
+    function prepareHarmlessTestUpload() {
+      if (!currentDocumentCenter?.localTesting) {
+        showDocumentMessage(
+          "The harmless test helper is available only during local testing.",
+          "bad"
+        );
+        return;
+      }
+
+      const fileInput = document.getElementById("documentFile");
+      const taxYear = document.getElementById("documentTaxYear");
+      const category = document.getElementById("documentCategory");
+      const note = document.getElementById("documentNote");
+      const transfer = new DataTransfer();
+
+      transfer.items.add(createHarmlessPortalTestFile());
+      fileInput.files = transfer.files;
+
+      const preferredYear = [...taxYear.options].find(
+        (option) => option.value === "2024"
+      );
+
+      if (preferredYear) {
+        taxYear.value = "2024";
+      } else {
+        const firstYear = [...taxYear.options].find(
+          (option) => option.value
+        );
+        taxYear.value = firstYear?.value || "";
+      }
+
+      const otherCategory = [...category.options].find(
+        (option) => option.value === "other"
+      );
+
+      if (otherCategory) {
+        category.value = "other";
+      }
+
+      note.value = "Harmless office deletion test";
+
+      showDocumentMessage(
+        "HARMLESS TEST UPLOAD READY — the file, tax year, category, and note are filled in. Click Upload Document Securely."
+      );
+    }
+
     function renderDocumentCenter(
       center = {}
     ) {
@@ -1286,8 +1363,18 @@
           "documentFile"
         );
 
+      const testHelperButton =
+        document.getElementById(
+          "prepareHarmlessTestButton"
+        );
+
       const enabled =
         center.enabled === true;
+
+      if (testHelperButton) {
+        testHelperButton.hidden =
+          !center.localTesting;
+      }
 
       status.textContent =
         center.status ||
@@ -1781,6 +1868,13 @@
           ? "Hide Older Tax Years"
           : "View Older Tax Years";
       }
+    );
+
+    document.getElementById(
+      "prepareHarmlessTestButton"
+    ).addEventListener(
+      "click",
+      prepareHarmlessTestUpload
     );
 
     document.getElementById(

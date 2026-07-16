@@ -32,6 +32,11 @@ create table if not exists public.client_portal_documents (
     ),
   client_visible boolean not null default true,
   office_note text,
+  client_message text,
+  retention_until date,
+  reviewed_at timestamptz,
+  reviewed_by text,
+  status_changed_at timestamptz,
   uploaded_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   withdrawn_at timestamptz
