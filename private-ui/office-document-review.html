@@ -72,10 +72,11 @@
     .summary{
       padding:14px 18px;
       display:grid;
-      grid-template-columns:repeat(5,minmax(0,1fr));
+      grid-template-columns:repeat(3,minmax(0,1fr));
       gap:9px;
     }
     .summary-item{
+      min-width:0;
       border:1px solid var(--line);
       background:var(--cream);
       padding:11px;
@@ -83,10 +84,13 @@
     }
     .summary-item span{
       display:block;
+      min-width:0;
       font-size:11px;
+      line-height:1.25;
       font-weight:900;
       letter-spacing:.04em;
       text-transform:uppercase;
+      overflow-wrap:anywhere;
       color:var(--muted)
     }
     .summary-item strong{font-size:23px;color:var(--navy)}
@@ -266,13 +270,94 @@
     }
     .button.saving{background:#64748b!important}
     .button.saved{background:#176344!important}
+    .production-panel{
+      max-width:1464px;
+      margin:0 auto 18px;
+      padding:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-top:5px solid var(--navy);
+      box-shadow:var(--shadow);
+      scroll-margin-top:88px;
+    }
+    .production-panel h2{
+      margin:0 0 6px;
+      font:800 25px Georgia,serif;
+    }
+    .production-panel > p{
+      margin:0 0 14px;
+      color:var(--muted);
+    }
+    .production-summary{
+      padding:13px 14px;
+      border-left:5px solid var(--orange);
+      background:#fff7e6;
+      font-weight:900;
+      margin-bottom:14px;
+    }
+    .production-summary.ready{
+      border-left-color:var(--green);
+      background:#edf8f2;
+      color:#0c4a2d;
+    }
+    .production-checks{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+    .production-check{
+      border:1px solid var(--line);
+      background:var(--cream);
+      padding:12px;
+      min-height:108px;
+    }
+    .production-check strong{
+      display:block;
+      margin-bottom:5px;
+      color:var(--navy);
+    }
+    .production-check span{
+      display:inline-block;
+      margin-bottom:6px;
+      padding:3px 7px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      background:#fff0ef;
+      color:var(--red);
+    }
+    .production-check.ready span{
+      background:#edf8f2;
+      color:var(--green);
+    }
+    .production-check p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .production-actions{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .production-note{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
     @media(max-width:1050px){
       .layout{grid-template-columns:1fr}
       .document-list{max-height:520px}
+      .production-checks{grid-template-columns:repeat(2,minmax(0,1fr))}
     }
     @media(max-width:700px){
-      .summary{grid-template-columns:repeat(2,1fr)}
+      .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
       .filters,.form-grid,.detail-grid{grid-template-columns:1fr}
+      .production-checks{grid-template-columns:1fr}
       .form-field.full{grid-column:auto}
     }
   </style>
@@ -283,6 +368,7 @@
     <div class="top-actions">
       <a href="/leads-dashboard">← Tax Lead Center Home</a>
       <a href="/client-portal" target="_blank" rel="noopener">Client Portal Sign In</a>
+      <a href="#production-readiness">Production Readiness</a>
       <button id="refreshButton" type="button">Refresh</button>
       <button id="signOutButton" type="button">Sign Out</button>
     </div>
@@ -293,6 +379,17 @@
   <div class="workflow-location">
     <strong>You are here:</strong> Tax Lead Center → Portal &amp; Documents → Secure Office Document Review
   </div>
+
+  <section class="production-panel" id="production-readiness">
+    <h2>Production Portal Readiness</h2>
+    <p>One place to confirm the client portal, office access, email delivery, credential table, and private document storage before inviting live clients.</p>
+    <div class="production-summary" id="productionReadinessSummary">Checking production readiness...</div>
+    <div class="production-checks" id="productionReadinessChecks"></div>
+    <div class="production-actions">
+      <button class="button secondary" id="runProductionReadinessButton" type="button">Run Readiness Check</button>
+      <span class="production-note">No secret values are displayed. Local testing remains separate from live activation.</span>
+    </div>
+  </section>
 
   <main class="layout">
     <section class="panel">
@@ -437,6 +534,66 @@
       }
 
       document.getElementById("localWarning").hidden = !state.localTesting;
+    }
+
+    function renderProductionReadiness(state) {
+      const readiness =
+        state.productionReadiness || {};
+
+      const summary =
+        document.getElementById(
+          "productionReadinessSummary"
+        );
+
+      const checksBox =
+        document.getElementById(
+          "productionReadinessChecks"
+        );
+
+      const checks =
+        Array.isArray(readiness.checks)
+          ? readiness.checks
+          : [];
+
+      const ready =
+        Boolean(
+          readiness.livePortalReady
+        );
+
+      summary.className =
+        `production-summary ${
+          ready ? "ready" : ""
+        }`.trim();
+
+      if (ready) {
+        summary.innerHTML =
+          "<strong>LIVE PORTAL READY:</strong> production security, credential storage, and private document storage are verified.";
+      } else if (readiness.localTesting) {
+        summary.innerHTML =
+          "<strong>LOCAL TESTING MODE:</strong> the portal remains available for harmless testing. Complete the items below before inviting real clients.";
+      } else {
+        const blockers =
+          Array.isArray(readiness.blockers)
+            ? readiness.blockers
+            : [];
+
+        summary.innerHTML =
+          `<strong>LIVE ACTIVATION BLOCKED:</strong> ${escapeHtml(
+            blockers.length
+              ? blockers.join(", ")
+              : "Run the readiness check again."
+          )}`;
+      }
+
+      checksBox.innerHTML = checks.length
+        ? checks.map((check) => `
+            <article class="production-check ${check.ready ? "ready" : ""}">
+              <strong>${escapeHtml(check.label || "Readiness item")}</strong>
+              <span>${check.ready ? "Ready" : "Action Required"}</span>
+              <p>${escapeHtml(check.detail || "")}</p>
+            </article>
+          `).join("")
+        : '<div class="empty">Production readiness details are not available yet.</div>';
     }
 
     function renderList() {
@@ -706,6 +863,7 @@
       currentState = data.state;
       updateSummary(currentState.summary || {});
       renderReadiness(currentState);
+      renderProductionReadiness(currentState);
       renderList();
 
       if (selectedDocumentId && !activeDocuments().some((doc) => doc.documentId === selectedDocumentId)) {
@@ -732,6 +890,30 @@
 
     document.getElementById("refreshButton").addEventListener("click", () => {
       loadState().catch(() => {});
+    });
+
+    document.getElementById("runProductionReadinessButton").addEventListener("click", () => {
+      const button = document.getElementById("runProductionReadinessButton");
+      button.disabled = true;
+      button.textContent = "Checking...";
+
+      loadState()
+        .then(() => {
+          button.textContent = "Readiness Check Complete";
+          window.setTimeout(() => {
+            button.disabled = false;
+            button.textContent = "Run Readiness Check";
+          }, 1800);
+        })
+        .catch((error) => {
+          button.disabled = false;
+          button.textContent = "Run Readiness Check";
+          showMessage(
+            error.message ||
+            "The production readiness check could not be completed.",
+            "error"
+          );
+        });
     });
 
     document.getElementById("signOutButton").addEventListener("click", async () => {

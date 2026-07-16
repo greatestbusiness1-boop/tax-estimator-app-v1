@@ -267,11 +267,60 @@ function createClientPortalStore(options = {}) {
     };
   }
 
+  async function checkLiveReadiness() {
+    const result = {
+      mode,
+      liveCredentialStorageReady: false,
+      tableReady: false,
+      errors: []
+    };
+
+    if (!supabaseAdmin) {
+      result.errors.push(
+        "A server-only Supabase secret key is not configured."
+      );
+
+      return result;
+    }
+
+    try {
+      const {
+        error
+      } = await supabaseAdmin
+        .from(tableName)
+        .select(
+          "lead_id",
+          {
+            head: true,
+            count: "exact"
+          }
+        )
+        .limit(1);
+
+      if (error) {
+        throw error;
+      }
+
+      result.tableReady = true;
+      result.liveCredentialStorageReady = true;
+    } catch (error) {
+      result.errors.push(
+        `Portal credential table: ${
+          error.message ||
+          String(error)
+        }`
+      );
+    }
+
+    return result;
+  }
+
   return {
     mode,
     localFile,
     isAvailable,
     isLiveReady,
+    checkLiveReadiness,
     getByLeadId,
     getActiveByEmail,
     upsert

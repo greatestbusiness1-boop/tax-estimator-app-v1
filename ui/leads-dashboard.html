@@ -477,6 +477,7 @@
     }
 
     .client-portal-status-item {
+      min-width: 0;
       border: 1px solid #c9d6cf;
       background: #fff;
       padding: 11px;
@@ -484,17 +485,22 @@
 
     .client-portal-status-item span {
       display: block;
+      min-width: 0;
       color: #5d6c75;
       font-size: 10px;
+      line-height: 1.25;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .06em;
+      overflow-wrap: anywhere;
     }
 
     .client-portal-status-item strong {
       display: block;
+      min-width: 0;
       color: #0f2f59;
       margin-top: 5px;
+      overflow-wrap: anywhere;
     }
 
     .client-portal-actions {
@@ -1039,6 +1045,7 @@
     <div class="sidebar-group">Portal &amp; Documents</div>
     <button class="sidebar-btn" onclick="window.open('/client-portal','_blank','noopener')">Client Portal Sign In</button>
     <button class="sidebar-btn" onclick="window.location.href='/office-document-review'">Document Review Queue</button>
+    <button class="sidebar-btn" onclick="window.location.href='/office-document-review#production-readiness'">Production Readiness</button>
   </aside>
 
   <main class="main">

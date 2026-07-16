@@ -28,9 +28,21 @@ require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
 const { createClient } = require("@supabase/supabase-js");
 
+const SUPABASE_URL = String(
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  ""
+).trim();
+
+const SUPABASE_PUBLIC_KEY = String(
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  ""
+).trim();
+
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  SUPABASE_URL,
+  SUPABASE_PUBLIC_KEY
 );
 
 const app = express();
@@ -53,35 +65,53 @@ const CLIENT_PORTAL_COOKIE_NAME =
 const CLIENT_PORTAL_SESSION_DAYS = 7;
 const CLIENT_PORTAL_ACTIVATION_MINUTES = 15;
 
-const CLIENT_PORTAL_SESSION_SECRET = String(
-  process.env.CLIENT_PORTAL_SESSION_SECRET ||
-  process.env.STRIPE_SECRET_KEY ||
-  process.env.EMAIL_APP_PASSWORD ||
-  ""
-).trim();
-
-const clientPortalSecurity = createClientPortalSecurity({
-  secret:
-    CLIENT_PORTAL_SESSION_SECRET ||
-    "tax-savings-planner-local-session-only",
-  cookieName: CLIENT_PORTAL_COOKIE_NAME
-});
-
-const clientPortalAttemptBuckets = new Map();
-
 const CLIENT_PORTAL_PRODUCTION_HOST = Boolean(
   process.env.RENDER ||
   String(process.env.NODE_ENV || "").toLowerCase() === "production"
 );
 
-const CLIENT_PORTAL_SERVICE_ROLE_KEY = String(
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+const CLIENT_PORTAL_SESSION_SECRET = String(
+  process.env.CLIENT_PORTAL_SESSION_SECRET || ""
 ).trim();
 
+const CLIENT_PORTAL_SESSION_SECRET_READY =
+  CLIENT_PORTAL_SESSION_SECRET.length >= 32;
+
+const clientPortalSecurity = createClientPortalSecurity({
+  secret:
+    CLIENT_PORTAL_SESSION_SECRET ||
+    (
+      CLIENT_PORTAL_PRODUCTION_HOST
+        ? ""
+        : "tax-savings-planner-local-session-only"
+    ),
+  cookieName: CLIENT_PORTAL_COOKIE_NAME
+});
+
+const clientPortalAttemptBuckets = new Map();
+
+const CLIENT_PORTAL_SERVICE_ROLE_KEY = String(
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  ""
+).trim();
+
+const CLIENT_PORTAL_SERVICE_KEY_TYPE =
+  String(
+    process.env.SUPABASE_SECRET_KEY || ""
+  ).trim()
+    ? "Supabase secret key"
+    : String(
+        process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      ).trim()
+      ? "Legacy service-role key"
+      : "Not configured";
+
 const clientPortalSupabaseAdmin =
-  CLIENT_PORTAL_SERVICE_ROLE_KEY
+  CLIENT_PORTAL_SERVICE_ROLE_KEY &&
+  SUPABASE_URL
     ? createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        SUPABASE_URL,
         CLIENT_PORTAL_SERVICE_ROLE_KEY,
         {
           auth: {
@@ -146,14 +176,27 @@ const OFFICE_DOCUMENT_REVIEW_KEY = String(
   process.env.OFFICE_DOCUMENT_REVIEW_KEY || ""
 ).trim();
 
-const OFFICE_DOCUMENT_REVIEW_SECRET = String(
-  process.env.OFFICE_DOCUMENT_REVIEW_SESSION_SECRET ||
-  process.env.CLIENT_PORTAL_SESSION_SECRET ||
-  process.env.STRIPE_SECRET_KEY ||
-  process.env.EMAIL_APP_PASSWORD ||
-  OFFICE_DOCUMENT_REVIEW_KEY ||
-  ""
+const OFFICE_DOCUMENT_REVIEW_KEY_READY =
+  OFFICE_DOCUMENT_REVIEW_KEY.length >= 20;
+
+const OFFICE_DOCUMENT_REVIEW_SESSION_SECRET = String(
+  process.env.OFFICE_DOCUMENT_REVIEW_SESSION_SECRET || ""
 ).trim();
+
+const OFFICE_DOCUMENT_REVIEW_SESSION_SECRET_READY =
+  OFFICE_DOCUMENT_REVIEW_SESSION_SECRET.length >= 32;
+
+const OFFICE_DOCUMENT_REVIEW_SECRET =
+  OFFICE_DOCUMENT_REVIEW_SESSION_SECRET ||
+  (
+    CLIENT_PORTAL_PRODUCTION_HOST
+      ? ""
+      : (
+          CLIENT_PORTAL_SESSION_SECRET ||
+          OFFICE_DOCUMENT_REVIEW_KEY ||
+          "local-office-document-review-only"
+        )
+  );
 
 function officeReviewBase64Url(value) {
   return Buffer.from(value)
@@ -362,10 +405,13 @@ function requireOfficeDocumentReviewPage(
 
   if (
     CLIENT_PORTAL_PRODUCTION_HOST &&
-    !OFFICE_DOCUMENT_REVIEW_KEY
+    (
+      !OFFICE_DOCUMENT_REVIEW_KEY_READY ||
+      !OFFICE_DOCUMENT_REVIEW_SESSION_SECRET_READY
+    )
   ) {
     return res.status(503).send(
-      "Secure office document review is not enabled. Configure OFFICE_DOCUMENT_REVIEW_KEY before live use."
+      "Secure office document review is not enabled. Configure the office access key and office session secret before live use."
     );
   }
 
@@ -424,6 +470,267 @@ function officeDocumentReviewKeyMatches(
     actual,
     candidate
   );
+}
+
+
+function getPortalProductionEnvironmentChecks() {
+  const httpsBaseUrl =
+    /^https:\/\//i.test(
+      String(APP_BASE_URL || "")
+    );
+
+  return [
+    {
+      id: "app-base-url",
+      label: "Secure application URL",
+      ready:
+        !CLIENT_PORTAL_PRODUCTION_HOST ||
+        httpsBaseUrl,
+      required: true,
+      detail:
+        CLIENT_PORTAL_PRODUCTION_HOST
+          ? (
+              httpsBaseUrl
+                ? "APP_BASE_URL uses HTTPS."
+                : "Set APP_BASE_URL to the secure live website URL."
+            )
+          : "Local testing uses localhost."
+    },
+    {
+      id: "portal-session-secret",
+      label: "Client portal session secret",
+      ready:
+        CLIENT_PORTAL_SESSION_SECRET_READY,
+      required: true,
+      detail:
+        CLIENT_PORTAL_SESSION_SECRET_READY
+          ? "CLIENT_PORTAL_SESSION_SECRET is configured."
+          : "Create a private value of at least 32 characters."
+    },
+    {
+      id: "office-access-key",
+      label: "Office review access key",
+      ready:
+        OFFICE_DOCUMENT_REVIEW_KEY_READY,
+      required: true,
+      detail:
+        OFFICE_DOCUMENT_REVIEW_KEY_READY
+          ? "OFFICE_DOCUMENT_REVIEW_KEY is configured."
+          : "Create a private office access key of at least 20 characters."
+    },
+    {
+      id: "office-session-secret",
+      label: "Office review session secret",
+      ready:
+        OFFICE_DOCUMENT_REVIEW_SESSION_SECRET_READY,
+      required: true,
+      detail:
+        OFFICE_DOCUMENT_REVIEW_SESSION_SECRET_READY
+          ? "OFFICE_DOCUMENT_REVIEW_SESSION_SECRET is configured."
+          : "Create a separate private value of at least 32 characters."
+    },
+    {
+      id: "supabase-url",
+      label: "Supabase project URL",
+      ready: Boolean(SUPABASE_URL),
+      required: true,
+      detail:
+        SUPABASE_URL
+          ? "The server has the Supabase project URL."
+          : "Set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL."
+    },
+    {
+      id: "supabase-server-key",
+      label: "Server-only Supabase secret",
+      ready:
+        Boolean(
+          CLIENT_PORTAL_SERVICE_ROLE_KEY
+        ),
+      required: true,
+      detail:
+        CLIENT_PORTAL_SERVICE_ROLE_KEY
+          ? `${CLIENT_PORTAL_SERVICE_KEY_TYPE} is configured on the server.`
+          : "Set SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY on the server only."
+    },
+    {
+      id: "email-delivery",
+      label: "Portal email delivery",
+      ready:
+        Boolean(
+          EMAIL_USER &&
+          EMAIL_APP_PASSWORD
+        ),
+      required: true,
+      detail:
+        EMAIL_USER &&
+        EMAIL_APP_PASSWORD
+          ? "Activation and document-status email delivery is configured."
+          : "Configure the business email and app password."
+    },
+    {
+      id: "document-bucket-name",
+      label: "Private document bucket name",
+      ready:
+        Boolean(
+          CLIENT_DOCUMENTS_BUCKET
+        ),
+      required: true,
+      detail:
+        CLIENT_DOCUMENTS_BUCKET
+          ? `Bucket: ${CLIENT_DOCUMENTS_BUCKET}`
+          : "Set CLIENT_DOCUMENTS_BUCKET."
+    }
+  ];
+}
+
+function clientPortalProductionEnvironmentBlockers() {
+  if (!CLIENT_PORTAL_PRODUCTION_HOST) {
+    return [];
+  }
+
+  return getPortalProductionEnvironmentChecks()
+    .filter(
+      (check) =>
+        check.required &&
+        !check.ready
+    );
+}
+
+async function getPortalProductionReadiness() {
+  const environmentChecks =
+    getPortalProductionEnvironmentChecks();
+
+  const credentialReadiness =
+    await clientPortalStore
+      .checkLiveReadiness();
+
+  const documentReadiness =
+    await clientDocumentStore
+      .checkLiveReadiness();
+
+  const checks = [
+    ...environmentChecks,
+    {
+      id: "portal-credential-table",
+      label: "Portal credential table",
+      ready:
+        Boolean(
+          credentialReadiness.tableReady
+        ),
+      required: true,
+      detail:
+        credentialReadiness.tableReady
+          ? "client_portal_accounts is available."
+          : (
+              credentialReadiness.errors[0] ||
+              "Run the portal foundation SQL migration."
+            )
+    },
+    {
+      id: "document-table",
+      label: "Document metadata table",
+      ready:
+        Boolean(
+          documentReadiness.tableReady
+        ),
+      required: true,
+      detail:
+        documentReadiness.tableReady
+          ? "client_portal_documents is available."
+          : (
+              documentReadiness.errors.find(
+                (error) =>
+                  String(error).startsWith(
+                    "Document table:"
+                  )
+              ) ||
+              "Run the document-center SQL migration."
+            )
+    },
+    {
+      id: "private-document-bucket",
+      label: "Private document storage bucket",
+      ready:
+        Boolean(
+          documentReadiness.bucketReady &&
+          documentReadiness.privateBucket
+        ),
+      required: true,
+      detail:
+        documentReadiness.bucketReady &&
+        documentReadiness.privateBucket
+          ? "The document bucket exists and is private."
+          : (
+              documentReadiness.errors.find(
+                (error) =>
+                  String(error).startsWith(
+                    "Document bucket:"
+                  ) ||
+                  String(error).includes(
+                    "bucket is public"
+                  )
+              ) ||
+              "Create the bucket and keep public access disabled."
+            )
+    }
+  ];
+
+  const blockers = checks.filter(
+    (check) =>
+      check.required &&
+      !check.ready
+  );
+
+  return {
+    version: "1.0.0",
+    productionHost:
+      CLIENT_PORTAL_PRODUCTION_HOST,
+    localTesting:
+      !CLIENT_PORTAL_PRODUCTION_HOST,
+    livePortalReady:
+      CLIENT_PORTAL_PRODUCTION_HOST &&
+      blockers.length === 0,
+    environmentReady:
+      environmentChecks.every(
+        (check) =>
+          !check.required ||
+          check.ready
+      ),
+    credentialStorage:
+      credentialReadiness,
+    documentStorage:
+      documentReadiness,
+    checks,
+    blockers:
+      blockers.map(
+        (check) => check.label
+      )
+  };
+}
+
+function requireClientPortalProductionConfiguration(
+  req,
+  res,
+  next
+) {
+  const blockers =
+    clientPortalProductionEnvironmentBlockers();
+
+  if (!blockers.length) {
+    return next();
+  }
+
+  setClientPortalNoStore(res);
+
+  return res.status(503).json({
+    ok: false,
+    error:
+      "The secure client portal is temporarily unavailable while production security is being configured.",
+    blockers:
+      blockers.map(
+        (check) => check.label
+      )
+  });
 }
 
 // =============================================================================
@@ -3941,8 +4248,11 @@ async function getOfficeDocumentReviewState(
     await clientDocumentStore
       .checkLiveReadiness();
 
+  const productionReadiness =
+    await getPortalProductionReadiness();
+
   return {
-    version: "1.0.0",
+    version: "1.1.0",
     enabled:
       clientDocumentStore.isAvailable(),
     localTesting:
@@ -3957,6 +4267,7 @@ async function getOfficeDocumentReviewState(
     storageMode:
       clientDocumentStore.mode,
     readiness,
+    productionReadiness,
     statuses:
       CLIENT_DOCUMENT_REVIEW_STATUSES,
     documents:
@@ -6104,11 +6415,17 @@ app.post(
       });
     }
 
-    if (!OFFICE_DOCUMENT_REVIEW_KEY) {
+    if (
+      CLIENT_PORTAL_PRODUCTION_HOST &&
+      (
+        !OFFICE_DOCUMENT_REVIEW_KEY_READY ||
+        !OFFICE_DOCUMENT_REVIEW_SESSION_SECRET_READY
+      )
+    ) {
       return res.status(503).json({
         ok: false,
         error:
-          "Secure office review access is not configured."
+          "Secure office review access is not configured. Add the office access key and office session secret."
       });
     }
 
@@ -6155,13 +6472,44 @@ app.post(
   }
 );
 
-app.get("/api/client-portal/health", (req, res) => {
+app.get("/health", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    service:
+      "Greatest Business Solution LLC Tax Estimator",
+    timestamp:
+      new Date().toISOString()
+  });
+});
+
+app.use(
+  "/api/client-portal",
+  (req, res, next) => {
+    if (
+      req.method === "GET" &&
+      req.path === "/health"
+    ) {
+      return next();
+    }
+
+    return requireClientPortalProductionConfiguration(
+      req,
+      res,
+      next
+    );
+  }
+);
+
+app.get("/api/client-portal/health", async (req, res) => {
   setClientPortalNoStore(res);
+
+  const productionReadiness =
+    await getPortalProductionReadiness();
 
   return res.status(200).json({
     ok: true,
     module: "Secure Client Portal + Document Center",
-    version: "1.3.0",
+    version: "1.4.0",
     sessionCookie: "HttpOnly / SameSite=Lax",
     persistentSessionSecretConfigured: Boolean(
       process.env.CLIENT_PORTAL_SESSION_SECRET
@@ -6179,7 +6527,13 @@ app.get("/api/client-portal/health", (req, res) => {
     liveDocumentStorageReady:
       clientDocumentStore.isLiveReady(),
     documentBucket:
-      CLIENT_DOCUMENTS_BUCKET
+      CLIENT_DOCUMENTS_BUCKET,
+    productionHost:
+      productionReadiness.productionHost,
+    livePortalReady:
+      productionReadiness.livePortalReady,
+    productionBlockerCount:
+      productionReadiness.blockers.length
   });
 });
 
