@@ -2050,6 +2050,16 @@
   const plannerLeadId = plannerParams.get("leadId") || "general";
   const plannerPortalMode = plannerParams.get("portal") === "1";
   const plannerStateKey = `taxSavingsPlannerState:${plannerLeadId}`;
+  const businessActivityStateKey =
+    `taxSavingsPlannerBusinessActivity:${plannerLeadId}`;
+  const businessActivityControlIds = Object.freeze([
+    "alertBusinessOn",
+    "alertBusinessProfit",
+    "alertBusinessEntityType",
+    "alertBusinessBooksStatus",
+    "alertBusinessPayrollStatus",
+    "alertBusinessAccountStatus"
+  ]);
   const defaultPlannerTaxYear = String(plannerParams.get("taxYear") || "2025");
   const activePlanningYear = ACTIVE_PLANNING_YEAR;
   let currentPlannerTaxYear = defaultPlannerTaxYear;
@@ -2249,6 +2259,133 @@
     }
   }
 
+  function collectBusinessActivityControlState() {
+    const controls = {};
+
+    businessActivityControlIds.forEach(controlId => {
+      const control = document.getElementById(controlId);
+      if (!control) return;
+
+      controls[controlId] = control.type === "checkbox"
+        ? Boolean(control.checked)
+        : control.value;
+    });
+
+    return controls;
+  }
+
+  function saveBusinessActivityFallback(controls, savedAt) {
+    try {
+      const businessControls = {};
+
+      businessActivityControlIds.forEach(controlId => {
+        if (Object.prototype.hasOwnProperty.call(controls || {}, controlId)) {
+          businessControls[controlId] = controls[controlId];
+        }
+      });
+
+      window.localStorage.setItem(
+        businessActivityStateKey,
+        JSON.stringify({
+          version: 1,
+          taxYear: currentPlannerTaxYear,
+          controls: businessControls,
+          savedAt: String(savedAt || new Date().toISOString())
+        })
+      );
+
+      return true;
+    } catch (error) {
+      console.warn(
+        "Business activity answers could not be saved in the browser fallback.",
+        error
+      );
+      return false;
+    }
+  }
+
+  function loadBusinessActivityFallback() {
+    try {
+      const fallback = JSON.parse(
+        window.localStorage.getItem(businessActivityStateKey) || "null"
+      );
+
+      return fallback && typeof fallback === "object"
+        ? fallback
+        : null;
+    } catch (error) {
+      console.warn(
+        "Saved business activity answers could not be read.",
+        error
+      );
+      return null;
+    }
+  }
+
+  function applyBusinessActivityFallback(savedPlannerState) {
+    const fallback = loadBusinessActivityFallback();
+    if (!fallback) return false;
+
+    const plannerControls =
+      savedPlannerState?.controls &&
+      typeof savedPlannerState.controls === "object"
+        ? savedPlannerState.controls
+        : {};
+
+    const plannerSavedTime = Date.parse(
+      String(savedPlannerState?.savedAt || "")
+    );
+    const fallbackSavedTime = Date.parse(
+      String(fallback.savedAt || "")
+    );
+
+    const plannerHasBusinessState =
+      businessActivityControlIds.some(controlId => (
+        Object.prototype.hasOwnProperty.call(
+          plannerControls,
+          controlId
+        )
+      ));
+
+    const fallbackIsCurrent =
+      !plannerHasBusinessState ||
+      !Number.isFinite(plannerSavedTime) ||
+      (
+        Number.isFinite(fallbackSavedTime) &&
+        fallbackSavedTime >= plannerSavedTime
+      );
+
+    if (!fallbackIsCurrent) return false;
+
+    const controls =
+      fallback.controls &&
+      typeof fallback.controls === "object"
+        ? fallback.controls
+        : {};
+
+    businessActivityControlIds.forEach(controlId => {
+      if (!Object.prototype.hasOwnProperty.call(controls, controlId)) {
+        return;
+      }
+
+      const control = document.getElementById(controlId);
+      if (!control) return;
+
+      const value = controls[controlId];
+
+      if (control.type === "checkbox") {
+        control.checked =
+          value === true ||
+          value === 1 ||
+          String(value).toLowerCase() === "true";
+      } else {
+        control.value = String(value ?? "");
+      }
+    });
+
+    return true;
+  }
+
   function collectPlannerControlState() {
     const controls = {};
 
@@ -2267,6 +2404,11 @@
         ? Boolean(control.checked)
         : control.value;
     });
+
+    Object.assign(
+      controls,
+      collectBusinessActivityControlState()
+    );
 
     return controls;
   }
@@ -2370,7 +2512,7 @@
     plannerLastSavedAt = savedAt;
 
     return {
-      version: 2,
+      version: 3,
       taxYear: currentPlannerTaxYear,
       controls: collectPlannerControlState(),
       activeTab: plannerResumeTab,
@@ -2388,6 +2530,25 @@
         JSON.stringify(state)
       );
 
+      const savedStateCheck = JSON.parse(
+        window.localStorage.getItem(plannerStateKey) || "null"
+      );
+
+      if (
+        !savedStateCheck ||
+        savedStateCheck.controls?.alertBusinessOn !==
+          state.controls.alertBusinessOn
+      ) {
+        throw new Error(
+          "The Planner save verification did not preserve business activity."
+        );
+      }
+
+      saveBusinessActivityFallback(
+        state.controls,
+        state.savedAt
+      );
+
       // A user edit becomes the active local source immediately. This prevents
       // a slower CRM client-context response from overwriting the first change
       // made while the Planner is still connecting to the Tax Lead Center.
@@ -2401,17 +2562,46 @@
       return true;
     } catch (error) {
       console.warn("Planner entries could not be saved in this browser.", error);
+
+      // Even when browser storage is unavailable, keep the secure CRM copy
+      // moving forward so a refresh can recover the latest client answers.
+      if (options.sync !== false) {
+        scheduleCrmSync();
+      }
+
       return false;
     }
   }
 
   function restorePlannerState() {
     try {
-      const saved = JSON.parse(
+      const savedRecord = JSON.parse(
         window.localStorage.getItem(plannerStateKey) || "null"
       );
+      const businessFallback = loadBusinessActivityFallback();
 
-      if (!saved || typeof saved !== "object") return false;
+      if (
+        (!savedRecord || typeof savedRecord !== "object") &&
+        !businessFallback
+      ) {
+        return false;
+      }
+
+      const saved =
+        savedRecord && typeof savedRecord === "object"
+          ? savedRecord
+          : {
+              version: 3,
+              taxYear:
+                businessFallback?.taxYear ||
+                defaultPlannerTaxYear,
+              controls: {},
+              activeTab: "overview",
+              scrollPositions: {},
+              savedAt:
+                businessFallback?.savedAt ||
+                ""
+            };
 
       setPlannerTaxYear(saved.taxYear || defaultPlannerTaxYear);
 
@@ -2457,6 +2647,7 @@
         }
       });
 
+      applyBusinessActivityFallback(saved);
       syncLifeEventScenarioVisibility();
       formatAllCurrencyEntries();
 
