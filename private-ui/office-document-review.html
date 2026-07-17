@@ -137,11 +137,33 @@
       background:#fff;
       padding:13px;
       margin-bottom:10px;
-      cursor:pointer;
+      cursor:default;
     }
-    .doc-card:hover,.doc-card.active{border-left-color:var(--green);background:#f5fbf7}
+    .doc-card.active{border-left-color:var(--green);background:#f5fbf7}
     .doc-card h3{margin:0 0 5px;font-size:16px}
     .meta{font-size:13px;color:var(--muted)}
+    .doc-card-actions{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .doc-card-actions .status{
+      margin-top:0;
+      pointer-events:none;
+      user-select:none;
+      cursor:default;
+    }
+    .open-review-button{
+      min-width:170px;
+      text-align:center;
+    }
+    .open-review-button:focus-visible{
+      outline:3px solid #d4a64b;
+      outline-offset:2px;
+    }
     .status{
       display:inline-block;
       margin-top:8px;
@@ -606,7 +628,7 @@
       }
 
       container.innerHTML = documents.map((doc) => `
-        <article class="doc-card ${doc.documentId === selectedDocumentId ? "active" : ""}" data-id="${escapeHtml(doc.documentId)}">
+        <article class="doc-card ${doc.documentId === selectedDocumentId ? "active" : ""}">
           <h3>${escapeHtml(doc.originalName || "Document")}</h3>
           <div class="meta">
             ${escapeHtml(doc.email || "No email")}<br>
@@ -614,13 +636,23 @@
             ${escapeHtml(doc.categoryLabel || doc.category || "Other")}<br>
             Uploaded: ${escapeHtml(formatDate(doc.uploadedAt))}
           </div>
-          <span class="status ${escapeHtml(doc.reviewStatus)}">${escapeHtml(doc.statusLabel || statusLabel(doc.reviewStatus))}</span>
+          <div class="doc-card-actions">
+            <span
+              class="status ${escapeHtml(doc.reviewStatus)}"
+              aria-label="Current status: ${escapeHtml(doc.statusLabel || statusLabel(doc.reviewStatus))}"
+            >${escapeHtml(doc.statusLabel || statusLabel(doc.reviewStatus))}</span>
+            <button
+              class="button secondary open-review-button"
+              type="button"
+              data-id="${escapeHtml(doc.documentId)}"
+            >Open Document Review</button>
+          </div>
         </article>
       `).join("");
 
-      container.querySelectorAll(".doc-card").forEach((card) => {
-        card.addEventListener("click", () => {
-          selectedDocumentId = card.dataset.id || "";
+      container.querySelectorAll(".open-review-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedDocumentId = button.dataset.id || "";
           renderList();
           renderDetail();
         });
