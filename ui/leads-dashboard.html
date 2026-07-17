@@ -510,16 +510,23 @@
       margin-top: 13px;
     }
 
-    .client-portal-actions a {
-      display: inline-block;
+    .client-portal-actions a,
+    .client-portal-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #0f2f59;
       background: #0f2f59;
       color: #fff;
       text-decoration: none;
+      font: inherit;
       font-weight: 900;
       padding: 10px 13px;
+      cursor: pointer;
     }
 
-    .client-portal-actions a.secondary {
+    .client-portal-actions a.secondary,
+    .client-portal-actions button.secondary {
       background: #fff;
       color: #0f2f59;
       border: 1px solid #0f2f59;
@@ -557,7 +564,7 @@
       white-space: nowrap;
     }
 
-  
+
     .written-action-btn {
       border: 0;
       border-radius: 6px;
@@ -584,7 +591,7 @@
       font-weight: 700;
     }
 
-  
+
     .closed-filters,
     .all-filters,
     .taxprep-advanced-filters,
@@ -1337,7 +1344,7 @@
     <div id="leadList"></div>
   </main>
 
-  
+
 <div id="detailPanel" style="
   position: fixed;
   right: 0;
@@ -1413,7 +1420,20 @@ function formatLeadDate(value){
     return "";
   }
 
-  return date.toLocaleString();
+  const datePart = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "America/Phoenix"
+  }).format(date);
+
+  const timePart = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Phoenix"
+  }).format(date);
+
+  return `${datePart} at ${timePart}`;
 }
 
 function formatDashboardPhone(value){
@@ -3902,9 +3922,20 @@ function getClientPortalCrmHtml(lead){
   const portal = lead?.clientPortal || {};
   const documents = portal.documentCenter || {};
   const leadId = String(lead?.leadId || "").trim();
+  const leadEmail = String(
+    lead?.contact?.email ||
+    lead?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    ""
+  ).trim();
   const status = String(portal.status || "not-activated");
   const active = status === "active";
-  const activationUrl = `/client-portal?activate=1&leadId=${encodeURIComponent(leadId)}`;
+  const activationParams = new URLSearchParams({
+    activate: "1",
+    leadId,
+    email: leadEmail
+  });
+  const activationUrl = `/client-portal?${activationParams.toString()}`;
   const signInUrl = "/client-portal";
 
   const statusLabel = active
@@ -3949,6 +3980,10 @@ function getClientPortalCrmHtml(lead){
         <div class="client-portal-status-item">
           <span>Portal Status</span>
           <strong>${escapeOfficeHtml(statusLabel)}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Client Reference</span>
+          <strong>${escapeOfficeHtml(leadId || "Not available")}</strong>
         </div>
         <div class="client-portal-status-item">
           <span>Secure Documents</span>
@@ -3998,11 +4033,54 @@ function getClientPortalCrmHtml(lead){
 
       <div class="client-portal-actions">
         <a href="/office-document-review" target="_blank" rel="noopener">Open Secure Office Document Review</a>
+        ${leadId ? `<button class="secondary" type="button" data-client-reference="${escapeOfficeHtml(leadId)}" onclick="copyClientReference(this.dataset.clientReference, this)">Copy Client Reference</button>` : ""}
         ${leadId ? `<a class="secondary" href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
         <a class="secondary" href="${signInUrl}" target="_blank" rel="noopener">Open Portal Sign In</a>
       </div>
     </div>
   `;
+}
+
+async function copyClientReference(reference, button){
+  const value = String(reference || "").trim();
+
+  if(!value){
+    return;
+  }
+
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(value);
+    }else{
+      const helper = document.createElement("textarea");
+      helper.value = value;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand("copy");
+      helper.remove();
+    }
+
+    if(button){
+      const originalText =
+        button.dataset.originalText ||
+        button.textContent;
+
+      button.dataset.originalText =
+        originalText;
+
+      button.textContent =
+        "Client Reference Copied ✓";
+
+      window.setTimeout(() => {
+        button.textContent = originalText;
+      }, 2200);
+    }
+  }catch(error){
+    window.alert(`Client Reference: ${value}`);
+  }
 }
 
 function appendTaxPlannerCrmToDetail(lead){

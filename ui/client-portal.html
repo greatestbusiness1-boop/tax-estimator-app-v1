@@ -15,16 +15,16 @@
     <section class="brand">
       <div>
         <img src="/logo.png" alt="Greatest Business Solution LLC">
-        <h1>Your tax planning work should be waiting when you return.</h1>
-        <p>The Secure Client Portal Foundation connects your saved Tax Savings Planner progress to your client profile, so you can continue without starting over.</p>
+        <h1>Your complete tax support, all in one secure place.</h1>
+        <p>Access tax planning, secure document uploads, written reviews, IRS transcript help, tax-preparation updates, and your saved work whenever you return.</p>
         <div class="security-list">
-          <div class="security-item"><span class="check">✓</span><span>Email security-code activation</span></div>
-          <div class="security-item"><span class="check">✓</span><span>Hashed password protection</span></div>
-          <div class="security-item"><span class="check">✓</span><span>Private, expiring sign-in session</span></div>
-          <div class="security-item"><span class="check">✓</span><span>Planner progress connected to your client record</span></div>
+          <div class="security-item"><span class="check">✓</span><span>Tax planning and strategy in one place</span></div>
+          <div class="security-item"><span class="check">✓</span><span>Secure tax-document uploads and downloads</span></div>
+          <div class="security-item"><span class="check">✓</span><span>Written reviews and IRS transcript support</span></div>
+          <div class="security-item"><span class="check">✓</span><span>Tax-preparation progress and saved work</span></div>
         </div>
       </div>
-      <div class="brand-foot">Greatest Business Solution LLC<br>Tax Savings Planner™ Secure Client Portal — Version 1.2</div>
+      <div class="brand-foot">Greatest Business Solution LLC<br>Tax Savings Planner™ Secure Client Portal — Version 1.4</div>
     </section>
 
     <section class="main">
@@ -97,7 +97,7 @@
             </form>
           </div>
 
-          <p class="small">For your protection, do not email Social Security numbers, tax documents, passwords, or security codes. Secure document uploads will be added as a separate portal module.</p>
+          <p class="small">For your protection, do not email Social Security numbers, tax documents, passwords, or security codes. After sign-in, use the Secure Document Center to exchange supported documents.</p>
         </section>
       </div>
     </section>
@@ -243,8 +243,14 @@
     });
 
     const leadId = params.get("leadId") || "";
+    const activationEmail = params.get("email") || "";
+
     if (leadId) {
       document.getElementById("activationLeadId").value = leadId;
+    }
+
+    if (activationEmail) {
+      document.getElementById("activationEmail").value = activationEmail;
     }
 
     if (params.get("activate") === "1") {
