@@ -395,32 +395,39 @@
 
     .tax-planner-crm-metrics {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin: 10px 0;
     }
 
     .tax-planner-crm-metric {
+      min-width: 0;
       background: #ffffff;
       border: 1px solid #cbd9e5;
       border-radius: 8px;
-      padding: 9px;
+      padding: 10px 12px;
     }
 
     .tax-planner-crm-metric span {
       display: block;
+      min-width: 0;
       color: #64748b;
       font-size: 10px;
+      line-height: 1.25;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .03em;
+      overflow-wrap: anywhere;
     }
 
     .tax-planner-crm-metric strong {
       display: block;
-      margin-top: 4px;
+      min-width: 0;
+      margin-top: 5px;
       color: #0f2f59;
       font-size: 16px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
     }
 
     .tax-planner-crm-next {
