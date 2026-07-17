@@ -1027,11 +1027,11 @@
     <h2>Tax Lead Center</h2>
 
     <div class="sidebar-group">Lead Work</div>
-    <button class="sidebar-btn" data-view="all" data-title="All Leads">All Leads</button>
+    <button class="sidebar-btn active" data-view="all" data-title="All Leads">All Leads</button>
     <button class="sidebar-btn" data-view="closed" data-title="Closed Leads">Closed Leads</button>
     <button class="sidebar-btn" data-view="office" data-office-queue="follow-up" data-title="Conversion Opportunities">Conversion Opportunities</button>
     <button class="sidebar-btn" data-view="office" data-office-queue="new-today" data-title="New Today">New Today</button>
-    <button class="sidebar-btn active" data-view="office" data-office-queue="all" data-title="Office Work Queue">Office Work Queue</button>
+    <button class="sidebar-btn" data-view="office" data-office-queue="all" data-title="Office Work Queue">Office Work Queue</button>
     <button class="sidebar-btn" data-view="office" data-office-queue="paid-work" data-title="Revenue Work Queue">Revenue Work Queue</button>
     <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
     <button class="sidebar-btn" data-view="websitecontact" data-title="Website Contact Requests">Website Contact Requests</button>
@@ -1056,9 +1056,9 @@
   </aside>
 
   <main class="main">
-    <h1 id="viewTitle">Office Work Queue</h1>
+    <h1 id="viewTitle">All Leads</h1>
     <div id="leadCount"> </div>
-    <div id="officeCommandCenter" class="office-command-center">
+    <div id="officeCommandCenter" class="office-command-center" style="display: none;">
       <div class="office-command-hero">
         <h2>Lead Conversion Snapshot</h2>
         <p>Use the left menu as your home base. This snapshot shows the totals; the selected work queue appears below.</p>
@@ -1229,7 +1229,7 @@
       <div id="contactAdvancedSummary" class="contact-advanced-summary"></div>
     </div>
 
-    <div id="allFilters" class="all-filters">
+    <div id="allFilters" class="all-filters" style="display: flex;">
       <div class="all-filter-field">
         <label for="allMonthFilter">Month entered</label>
         <select id="allMonthFilter">
@@ -1381,7 +1381,7 @@
 
 <script>
 let allLeads = [];
-let currentView = "office";
+let currentView = "all";
 let currentOfficeQueueTab = "all";
 let currentTaxPrepFilter = "all";
 let currentContactFilter = "new";
