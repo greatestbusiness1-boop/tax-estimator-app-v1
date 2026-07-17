@@ -230,6 +230,64 @@
       padding:14px;
     }
     .danger-zone h3{margin:0 0 8px;color:var(--red)}
+    .delete-modal[hidden]{display:none}
+    .delete-modal{
+      position:fixed;
+      inset:0;
+      z-index:12000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:rgba(7,24,41,.72);
+    }
+    .delete-modal-card{
+      width:min(560px,100%);
+      border:2px solid #b42318;
+      border-top:8px solid #b42318;
+      border-radius:10px;
+      background:#fff;
+      box-shadow:0 24px 60px rgba(0,0,0,.36);
+      padding:24px;
+    }
+    .delete-modal-card h2{
+      margin:0 0 10px;
+      color:#8b1d16;
+      font:900 25px Georgia,serif;
+    }
+    .delete-modal-card p{
+      margin:0 0 12px;
+      color:#26384a;
+    }
+    .delete-modal-file{
+      margin:14px 0;
+      padding:12px;
+      border:1px solid #e2aaa5;
+      background:#fff5f4;
+      font-weight:900;
+      overflow-wrap:anywhere;
+    }
+    .delete-modal-warning{
+      color:#8b1d16;
+      font-weight:900;
+    }
+    .delete-modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
+    .delete-modal-actions button{
+      min-width:180px;
+    }
+    .delete-modal-actions button:focus-visible{
+      outline:4px solid #d4a64b;
+      outline-offset:3px;
+    }
+    body.delete-modal-open{
+      overflow:hidden;
+    }
     .message{
       display:none;
       margin-bottom:14px;
@@ -412,6 +470,43 @@
       <span class="production-note">No secret values are displayed. Local testing remains separate from live activation.</span>
     </div>
   </section>
+
+  <div
+    class="delete-modal"
+    id="permanentDeleteModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="permanentDeleteTitle"
+    aria-describedby="permanentDeleteDescription"
+    hidden
+  >
+    <div class="delete-modal-card">
+      <h2 id="permanentDeleteTitle">Confirm permanent deletion</h2>
+      <p id="permanentDeleteDescription">
+        This will permanently delete the protected file and all of its
+        metadata. This action cannot be undone.
+      </p>
+      <div class="delete-modal-file" id="permanentDeleteFileName">
+        Selected document
+      </div>
+      <p class="delete-modal-warning">
+        The confirmation window will remain open until you choose one
+        of the two buttons below.
+      </p>
+      <div class="delete-modal-actions">
+        <button
+          class="button secondary"
+          id="cancelPermanentDeleteButton"
+          type="button"
+        >Cancel — Keep Document</button>
+        <button
+          class="button red"
+          id="confirmPermanentDeleteButton"
+          type="button"
+        >Permanently Delete</button>
+      </div>
+    </div>
+  </div>
 
   <main class="layout">
     <section class="panel">
@@ -832,17 +927,67 @@
       }
     }
 
-    async function deleteDocument(documentId) {
-      const confirmation = document.getElementById("deleteConfirmation").value;
+    let pendingPermanentDelete = null;
+    let permanentDeletePreviousFocus = null;
 
-      if (confirmation !== "DELETE PERMANENTLY") {
-        showMessage('Type "DELETE PERMANENTLY" before using permanent deletion.', "error");
-        return;
+    function openPermanentDeleteModal({
+      documentId,
+      confirmation,
+      fileName
+    }) {
+      const modal = document.getElementById("permanentDeleteModal");
+      const fileNameBox =
+        document.getElementById("permanentDeleteFileName");
+
+      pendingPermanentDelete = {
+        documentId,
+        confirmation
+      };
+
+      permanentDeletePreviousFocus =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+
+      fileNameBox.textContent =
+        String(fileName || "Selected document");
+
+      modal.hidden = false;
+      document.body.classList.add("delete-modal-open");
+
+      window.setTimeout(() => {
+        document
+          .getElementById("cancelPermanentDeleteButton")
+          .focus();
+      }, 0);
+    }
+
+    function closePermanentDeleteModal() {
+      const modal = document.getElementById("permanentDeleteModal");
+
+      modal.hidden = true;
+      document.body.classList.remove("delete-modal-open");
+      pendingPermanentDelete = null;
+
+      if (permanentDeletePreviousFocus) {
+        permanentDeletePreviousFocus.focus();
       }
 
-      if (!window.confirm("Permanently delete this protected file and all of its metadata? This cannot be undone.")) {
-        return;
-      }
+      permanentDeletePreviousFocus = null;
+    }
+
+    async function performPermanentDelete({
+      documentId,
+      confirmation
+    }) {
+      const confirmButton =
+        document.getElementById("confirmPermanentDeleteButton");
+      const cancelButton =
+        document.getElementById("cancelPermanentDeleteButton");
+
+      confirmButton.disabled = true;
+      cancelButton.disabled = true;
+      confirmButton.textContent = "Permanently Deleting...";
 
       try {
         const response = await fetch(
@@ -858,15 +1003,56 @@
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || "The document could not be deleted.");
+          throw new Error(
+            data.error ||
+            "The document could not be deleted."
+          );
         }
 
+        closePermanentDeleteModal();
         selectedDocumentId = "";
         await loadState();
-        showMessage("TEST DOCUMENT PERMANENTLY DELETED — the file and record were removed.");
+
+        showMessage(
+          "TEST DOCUMENT PERMANENTLY DELETED — the file and record were removed."
+        );
       } catch (error) {
-        showMessage(error.message || "The document could not be deleted.", "error");
+        showMessage(
+          error.message ||
+          "The document could not be deleted.",
+          "error"
+        );
+      } finally {
+        confirmButton.disabled = false;
+        cancelButton.disabled = false;
+        confirmButton.textContent = "Permanently Delete";
       }
+    }
+
+    function deleteDocument(documentId) {
+      const confirmation =
+        document.getElementById("deleteConfirmation").value;
+
+      if (confirmation !== "DELETE PERMANENTLY") {
+        showMessage(
+          'Type "DELETE PERMANENTLY" before using permanent deletion.',
+          "error"
+        );
+        return;
+      }
+
+      const documentRecord =
+        activeDocuments().find(
+          (doc) => doc.documentId === documentId
+        );
+
+      openPermanentDeleteModal({
+        documentId,
+        confirmation,
+        fileName:
+          documentRecord?.originalName ||
+          "Selected document"
+      });
     }
 
     async function loadState() {
@@ -903,6 +1089,73 @@
       }
       renderDetail();
     }
+
+    document
+      .getElementById("cancelPermanentDeleteButton")
+      .addEventListener("click", () => {
+        closePermanentDeleteModal();
+      });
+
+    document
+      .getElementById("confirmPermanentDeleteButton")
+      .addEventListener("click", async () => {
+        if (!pendingPermanentDelete) return;
+
+        await performPermanentDelete(
+          pendingPermanentDelete
+        );
+      });
+
+    document
+      .getElementById("permanentDeleteModal")
+      .addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+
+          showMessage(
+            "Permanent deletion was not canceled. Choose Cancel — Keep Document or Permanently Delete.",
+            "error"
+          );
+          return;
+        }
+
+        if (event.key !== "Tab") return;
+
+        const modalButtons = [
+          document.getElementById(
+            "cancelPermanentDeleteButton"
+          ),
+          document.getElementById(
+            "confirmPermanentDeleteButton"
+          )
+        ].filter(
+          (button) => !button.disabled
+        );
+
+        if (!modalButtons.length) {
+          event.preventDefault();
+          return;
+        }
+
+        const firstButton = modalButtons[0];
+        const lastButton =
+          modalButtons[modalButtons.length - 1];
+
+        if (
+          event.shiftKey &&
+          document.activeElement === firstButton
+        ) {
+          event.preventDefault();
+          lastButton.focus();
+        } else if (
+          !event.shiftKey &&
+          document.activeElement === lastButton
+        ) {
+          event.preventDefault();
+          firstButton.focus();
+        }
+      });
 
     let searchTimer = null;
     document.getElementById("statusFilter").addEventListener("change", () => {
