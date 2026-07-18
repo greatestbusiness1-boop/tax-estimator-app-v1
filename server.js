@@ -13,6 +13,7 @@ const {
   normalizeReviewStatus: normalizeClientDocumentReviewStatus,
   normalizeRetentionDate: normalizeClientDocumentRetentionDate,
   cleanText: cleanClientDocumentText,
+  getCategoryLabel: getClientDocumentCategoryLabel,
   validateDocumentUpload,
   publicDocumentRecord,
   officeDocumentRecord
@@ -4169,6 +4170,16 @@ async function sendClientDocumentReviewEmail({
       1200
     );
 
+  const categoryLabel =
+    getClientDocumentCategoryLabel(
+      document.category
+    ) ||
+    cleanClientDocumentText(
+      document.categoryLabel,
+      120
+    ) ||
+    "Other Supporting Records";
+
   try {
     await transporter.sendMail({
       from: EMAIL_USER,
@@ -4186,7 +4197,7 @@ Tax year:
 ${document.taxYear}
 
 Category:
-${document.category}
+${categoryLabel}
 
 Status:
 ${accepted ? "Accepted" : "Replacement Requested"}
