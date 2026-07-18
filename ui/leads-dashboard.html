@@ -4873,6 +4873,81 @@ function getWrittenAutopilotStatus(lead){
   return "Waiting for Client Worksheet";
 }
 
+function transcriptSidebarWorkspaceText(lead){
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
+  return [
+    lead?.status,
+    lead?.notes,
+    lead?.service,
+    lead?.serviceType,
+    lead?.requestType,
+    lead?.calendarAppointment?.title,
+    lead?.calendarAppointment?.service,
+    transcript.clientIssue,
+    transcript.clientComment,
+    transcript.requestType
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function isTranscriptSidebarConsult(lead){
+  const text =
+    transcriptSidebarWorkspaceText(lead);
+
+  return (
+    text.includes("transcript consult") ||
+    text.includes("consultation transcript") ||
+    text.includes("transcript consultation")
+  );
+}
+
+function isTranscriptSidebarMonitoring(lead){
+  const text =
+    transcriptSidebarWorkspaceText(lead);
+
+  return (
+    text.includes("transcript monitoring") ||
+    text.includes("monitor transcript") ||
+    text.includes("monitoring request")
+  );
+}
+
+function isOpenTranscriptSidebarRequest(lead){
+  const status =
+    String(lead?.status || "");
+
+  const statusLower =
+    status.toLowerCase();
+
+  const notes =
+    String(lead?.notes || "")
+      .toLowerCase();
+
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
+  const isTranscriptRequest =
+    status.startsWith("Transcript Help -") ||
+    notes.includes("irs transcript") ||
+    notes.includes("transcript help") ||
+    Boolean(transcript.requested);
+
+  return (
+    isTranscriptRequest &&
+    !isTranscriptSidebarConsult(lead) &&
+    !isTranscriptSidebarMonitoring(lead) &&
+    statusLower !== "transcript help - completed"
+  );
+}
+
 function updateTranscriptSidebarCount(){
   const badge =
     document.getElementById(
@@ -4885,7 +4960,7 @@ function updateTranscriptSidebarCount(){
     );
 
   const count = (allLeads || [])
-    .filter(isActiveTranscriptRequest)
+    .filter(isOpenTranscriptSidebarRequest)
     .length;
 
   if(badge){
