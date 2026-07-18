@@ -47,6 +47,34 @@
       border-left: 7px solid #f59e0b;
     }
 
+    .sidebar-btn.transcript-sidebar-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .transcript-sidebar-count {
+      min-width: 25px;
+      height: 25px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      background: #f59e0b;
+      color: #0f2c56;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .transcript-sidebar-count.is-zero {
+      background: rgba(255, 255, 255, 0.18);
+      color: #dbeafe;
+    }
+
     .sidebar-group {
       margin: 18px 0 8px;
       padding: 0 4px;
@@ -561,6 +589,21 @@
       cursor: pointer;
     }
 
+    .all-lead-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 116px;
+    }
+
+    .all-lead-actions .taxprep-open-btn {
+      width: 100%;
+    }
+
+    .taxprep-open-btn.transcript-direct-btn {
+      background: #0f2c56;
+    }
+
     .status-pill {
       display: inline-block;
       padding: 4px 8px;
@@ -1053,7 +1096,19 @@
     <div class="sidebar-group">IRS Transcript Work Center</div>
     <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=consults'">Transcript Consults</button>
     <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=monitoring'">Transcript Monitoring Requests</button>
-    <button class="sidebar-btn" onclick="window.location.href='/transcript-requests?workspace=requests'">Transcript Requests</button>
+    <button
+      id="transcriptRequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      onclick="window.location.href='/transcript-requests?workspace=requests'"
+      type="button"
+    >
+      <span>Transcript Requests</span>
+      <span
+        id="transcriptRequestsSidebarCount"
+        class="transcript-sidebar-count is-zero"
+        aria-label="0 open transcript requests"
+      >0</span>
+    </button>
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Portal &amp; Documents</div>
@@ -1569,6 +1624,10 @@ function formatUSPhone(value){
 function getAllLeadTypeKey(lead){
   const status = String(lead?.status || "").toLowerCase();
   const leadId = String(lead?.leadId || "").toLowerCase();
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
 
   if(
     status.includes("written review") ||
@@ -1587,18 +1646,23 @@ function getAllLeadTypeKey(lead){
   }
 
   if(
+    leadId.includes("transcript") ||
+    status.includes("transcript") ||
+    Boolean(
+      transcript.requested ||
+      transcript.transcriptType ||
+      transcript.paymentStatus ||
+      transcript.writtenReviewTranscriptHelpRequest
+    )
+  ){
+    return "transcript";
+  }
+
+  if(
     isWebsiteContactLead(lead) ||
     status.includes("contact request")
   ){
     return "website-contact";
-  }
-
-  if(
-    leadId.includes("transcript") ||
-    status.includes("transcript") ||
-    lead?.transcriptRequest
-  ){
-    return "transcript";
   }
 
   if(
@@ -1617,7 +1681,7 @@ function getAllLeadTypeLabel(lead){
     "written-review": "Written Review",
     "tax-preparation": "Tax Preparation",
     "website-contact": "Website Contact",
-    "transcript": "Transcript",
+    "transcript": "Transcript Help",
     "estimate": "Free Estimate",
     "other": "Other"
   };
@@ -1626,7 +1690,14 @@ function getAllLeadTypeLabel(lead){
 }
 
 function getAllLeadTaxYear(lead){
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
   return String(
+    transcript.taxYears ||
+    transcript.yearsNeeded ||
     lead?.taxPreparationIntake?.taxYear ||
     lead?.taxData?.taxYear ||
     lead?.estimateSummary?.taxYear ||
@@ -1636,6 +1707,21 @@ function getAllLeadTaxYear(lead){
 
 function getAllLeadLatestAction(lead){
   const status = String(lead?.status || "New").trim();
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
+  if(
+    getAllLeadTypeKey(lead) === "transcript"
+  ){
+    return String(
+      transcript.internalStatus ||
+      transcript.paymentStatus ||
+      status ||
+      "Transcript request received"
+    ).trim();
+  }
 
   if(lead?.writtenReviewDeliveredAt){
     return "Written review delivered";
@@ -4787,7 +4873,43 @@ function getWrittenAutopilotStatus(lead){
   return "Waiting for Client Worksheet";
 }
 
+function updateTranscriptSidebarCount(){
+  const badge =
+    document.getElementById(
+      "transcriptRequestsSidebarCount"
+    );
+
+  const button =
+    document.getElementById(
+      "transcriptRequestsSidebarButton"
+    );
+
+  const count = (allLeads || [])
+    .filter(isActiveTranscriptRequest)
+    .length;
+
+  if(badge){
+    badge.textContent = String(count);
+    badge.classList.toggle(
+      "is-zero",
+      count === 0
+    );
+
+    badge.setAttribute(
+      "aria-label",
+      `${count} open transcript ${count === 1 ? "request" : "requests"}`
+    );
+  }
+
+  if(button){
+    button.title =
+      `${count} open transcript ${count === 1 ? "request" : "requests"}`;
+  }
+}
+
 function renderLeads(){
+  updateTranscriptSidebarCount();
+
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
   const count=document.getElementById("leadCount");
@@ -4859,18 +4981,33 @@ function renderLeads(){
                   </td>
 
                   <td>
-                    <button
-                      class="taxprep-open-btn"
-                      onclick="openAllLead(${index})"
-                    >
+                    <div class="all-lead-actions">
+                      <button
+                        class="taxprep-open-btn"
+                        onclick="openAllLead(${index})"
+                      >
+                        ${
+                          String(lead.status || "")
+                            .toLowerCase()
+                            .match(/closed|completed|delivered/)
+                            ? "View Completed"
+                            : "Open"
+                        }
+                      </button>
+
                       ${
-                        String(lead.status || "")
-                          .toLowerCase()
-                          .match(/closed|completed|delivered/)
-                          ? "View Completed"
-                          : "Open"
+                        isActiveTranscriptRequest(lead)
+                          ? `
+                            <button
+                              class="taxprep-open-btn transcript-direct-btn"
+                              onclick="openTranscriptFromAllLeads(${index})"
+                            >
+                              Open Transcript
+                            </button>
+                          `
+                          : ""
                       }
-                    </button>
+                    </div>
                   </td>
                 </tr>`;
             }).join("")}
@@ -6089,6 +6226,23 @@ function openAllLead(index){
   }
 
   openPanel(lead);
+}
+
+function openTranscriptFromAllLeads(index){
+  const lead = (window.visibleAllLeads || [])[index];
+
+  if(!lead?.leadId){
+    alert("Transcript client could not be identified.");
+    return;
+  }
+
+  if(!isActiveTranscriptRequest(lead)){
+    alert("This client does not have an active transcript request.");
+    return;
+  }
+
+  window.location.href =
+    `/transcript-requests?workspace=requests&leadId=${encodeURIComponent(lead.leadId)}`;
 }
 
 async function markOfficeWorkCompleted(index, button){
