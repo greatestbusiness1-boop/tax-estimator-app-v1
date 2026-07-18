@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -325,6 +325,25 @@
       });
     }
 
+    function primaryTranscriptType(types) {
+      const selected = Array.isArray(types) ? types : [];
+
+      if (selected.length > 1) {
+        return "Multiple transcript types";
+      }
+
+      const only = selected[0] || "";
+
+      const mappedTypes = {
+        "Wage and Income Transcript": "Wage and Income Transcript",
+        "Account Transcript": "Account Transcript",
+        "Return Transcript": "Return Transcript",
+        "Proof of Non-Filing": "Verification of Non-Filing"
+      };
+
+      return mappedTypes[only] || "Not sure / preparer review needed";
+    }
+
     $("requestForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       hide("successBox");
@@ -332,21 +351,46 @@
 
       const now = new Date().toISOString();
 
+      const transcriptTypes = selectedTranscriptTypes();
+      const clientMessage = $("message").value.trim();
+      const taxYears = $("taxYears").value.trim();
+
+      const requestDetails = {
+        submittedAt: now,
+        name: $("name").value.trim(),
+        email: $("email").value.trim(),
+        phone: $("phone").value.trim(),
+        taxYears,
+        transcriptTypes,
+        bestTime: $("bestTime").value.trim(),
+        urgency: $("urgency").value,
+        message: clientMessage
+      };
+
       const payload = {
-        Request: {
+        status: "Transcript Help - Payment Pending",
+        transcriptRequest: {
+          requested: true,
+          requestedAt: now,
+          paymentStatus: "Need Payment",
+          authorizationStatus: "Need 8821",
+          identityVerified: "No",
+          internalStatus: "Waiting on payment",
+          transcriptType: primaryTranscriptType(transcriptTypes),
+          transcriptTypes,
+          taxYears,
+          yearsNeeded: taxYears,
+          clientIssue:
+            clientMessage ||
+            transcriptTypes.join(", ") ||
+            "IRS transcript help requested",
+          clientComment: clientMessage,
+          bestTime: requestDetails.bestTime,
+          urgency: requestDetails.urgency,
           writtenReviewTranscriptHelpRequestedAt: now,
           writtenReviewNextStep: "Transcript Help Requested",
-          writtenReviewTranscriptHelpRequest: {
-            submittedAt: now,
-            name: $("name").value.trim(),
-            email: $("email").value.trim(),
-            phone: $("phone").value.trim(),
-            taxYears: $("taxYears").value.trim(),
-            transcriptTypes: selectedTranscriptTypes(),
-            bestTime: $("bestTime").value.trim(),
-            urgency: $("urgency").value,
-            message: $("message").value.trim()
-          }
+          writtenReviewTranscriptHelpRequest: requestDetails,
+          lastSavedAt: now
         }
       };
 
@@ -359,8 +403,16 @@
 
         if (!res.ok) throw new Error("Save failed.");
 
+        $("successBox").textContent =
+          "Your transcript help request was saved and added to the office Transcript Requests work center. Opening the secure $150 payment page...";
         show("successBox");
         window.scrollTo({ top: 0, behavior: "smooth" });
+
+        window.setTimeout(function() {
+          window.location.href =
+            "/transcript-help-next.html?leadId=" +
+            encodeURIComponent(leadId);
+        }, 900);
       } catch (err) {
         console.error(err);
         show("errorBox");
