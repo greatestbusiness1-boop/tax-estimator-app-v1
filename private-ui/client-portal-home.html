@@ -347,6 +347,14 @@
       font-family:Georgia,serif;
       font-size:23px
     }
+    .transcript-request-reference{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      line-height:1.45;
+      overflow-wrap:anywhere
+    }
     .transcript-status-grid{
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
@@ -838,7 +846,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.4.0</span>
+        <span>Tax Savings Planner™ Portal — Version 1.4.1</span>
       </div>
     </div>
     <div class="top-actions">
@@ -1254,6 +1262,12 @@
                 <article class="transcript-portal-card ${complete ? "complete" : ""}">
                   <div>
                     <h3>IRS Transcript Help — ${escapeHtml(request.taxYears || "Tax year not recorded")}</h3>
+
+                    <div class="transcript-request-reference">
+                      ${escapeHtml(request.clientName || "Client")} ·
+                      Request ${escapeHtml(request.requestReference || request.leadId || "Not recorded")} ·
+                      ${escapeHtml(request.transcriptType || "Transcript type not selected")}
+                    </div>
 
                     <div class="transcript-status-grid">
                       <div class="transcript-status-item">

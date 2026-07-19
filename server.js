@@ -3311,14 +3311,32 @@ async function loadClientPortalLeadCandidates() {
       return;
     }
 
+    const authoritativeTranscriptRequest = {
+      ...(
+        mapped.transcriptRequest ||
+        mapped.Request ||
+        {}
+      ),
+      ...(
+        existing.lead?.transcriptRequest ||
+        existing.lead?.Request ||
+        {}
+      )
+    };
+
+    const hasTranscriptRequest =
+      Object.keys(
+        authoritativeTranscriptRequest
+      ).length > 0;
+
     byId.set(leadId, {
       ...existing,
       lead: {
         ...existing.lead,
         ...mapped,
         contact: {
-          ...(existing.lead?.contact || {}),
-          ...(mapped.contact || {})
+          ...(mapped.contact || {}),
+          ...(existing.lead?.contact || {})
         },
         taxData:
           mapped.taxData ||
@@ -3329,6 +3347,20 @@ async function loadClientPortalLeadCandidates() {
         taxSavingsPlanner:
           mapped.taxSavingsPlanner ||
           existing.lead?.taxSavingsPlanner,
+        status:
+          existing.lead?.status ||
+          mapped.status,
+        updatedAt:
+          existing.lead?.updatedAt ||
+          mapped.updatedAt,
+        transcriptRequest:
+          hasTranscriptRequest
+            ? authoritativeTranscriptRequest
+            : undefined,
+        Request:
+          hasTranscriptRequest
+            ? authoritativeTranscriptRequest
+            : undefined,
         clientPortal:
           sanitizeClientPortalRecord(
             localPortal ||
@@ -3602,6 +3634,14 @@ function buildClientPortalTranscriptRequestSummary(
 
   return {
     leadId:
+      String(entry.leadId || ""),
+    clientName:
+      String(
+        lead?.contact?.name ||
+        getLeadNameValue(entry.raw) ||
+        "Client"
+      ),
+    requestReference:
       String(entry.leadId || ""),
     taxYears:
       String(
@@ -7772,6 +7812,12 @@ app.get(
         session
       );
 
+    const accountLeadId =
+      String(
+        session.payload.accountLeadId ||
+        ""
+      );
+
     const transcriptRequests =
       accessible
         .map(
@@ -7779,13 +7825,35 @@ app.get(
         )
         .filter(Boolean)
         .sort(
-          (left, right) =>
-            Date.parse(
-              right.updatedAt || 0
-            ) -
-            Date.parse(
-              left.updatedAt || 0
-            )
+          (left, right) => {
+            const leftPrimary =
+              left.leadId === accountLeadId
+                ? 1
+                : 0;
+
+            const rightPrimary =
+              right.leadId === accountLeadId
+                ? 1
+                : 0;
+
+            if (
+              leftPrimary !== rightPrimary
+            ) {
+              return (
+                rightPrimary -
+                leftPrimary
+              );
+            }
+
+            return (
+              Date.parse(
+                right.updatedAt || 0
+              ) -
+              Date.parse(
+                left.updatedAt || 0
+              )
+            );
+          }
         );
 
     return res.status(200).json({
