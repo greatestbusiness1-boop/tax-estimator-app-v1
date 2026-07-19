@@ -12,18 +12,108 @@
     .btn{border:0;border-radius:12px;padding:10px 13px;font-weight:950;cursor:pointer;background:#0369a1;color:white;}
     .btn.secondary{background:white;color:#0f2c56;border:2px solid #0f2c56;}
     .panel{background:white;border:1px solid #bae6fd;border-radius:18px;padding:14px 16px;box-shadow:0 8px 18px rgba(15,44,86,.06);}
-    .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .workspace-sticky{
+      position:sticky;
+      top:0;
+      z-index:25;
+      margin:-2px -2px 12px;
+      padding:8px 2px 10px;
+      background:rgba(255,255,255,.98);
+      border-bottom:1px solid #dbeafe;
+      box-shadow:0 8px 15px rgba(15,44,86,.08);
+      backdrop-filter:blur(5px);
+    }
+    .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
     .pill{display:inline-block;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;border:1px solid #bae6fd;background:#ecfeff;color:#0369a1;}
-    .header,.row{display:grid;grid-template-columns:1.25fr 1.15fr 1fr 1fr 1fr auto;gap:10px;align-items:center;}
-    .header{background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:9px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;position:sticky;top:0;z-index:5;}
-    .row{border-top:1px solid #e2e8f0;padding:11px 0;font-size:13px;}
+    .header,.row{display:grid;grid-template-columns:1.2fr 1.25fr 1.15fr 1fr auto;gap:12px;align-items:center;}
+    .header{background:#ecfeff;border:1px solid #67e8f9;border-radius:12px;padding:9px;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;}
+    .row{
+      position:relative;
+      border:2px solid #dbeafe;
+      border-left:9px solid #60a5fa;
+      border-radius:16px;
+      padding:14px 12px;
+      margin:12px 0;
+      font-size:13px;
+      background:#ffffff;
+      box-shadow:0 5px 14px rgba(15,44,86,.06);
+    }
+    .row.stage-payment{border-left-color:#ef4444;background:#fffafa;}
+    .row.stage-authorization{border-left-color:#f59e0b;background:#fffdf7;}
+    .row.stage-identity{border-left-color:#a855f7;background:#fdfaff;}
+    .row.stage-details{border-left-color:#0ea5e9;background:#f8fdff;}
+    .row.stage-processing{border-left-color:#2563eb;background:#f8fbff;}
+    .row.stage-delivery{border-left-color:#14b8a6;background:#f7fffd;}
+    .row.stage-completed{border-left-color:#16a34a;background:#f7fff9;}
     .name{font-weight:950;color:#0f2c56;}
     .small{font-size:12px;color:#64748b;font-weight:800;line-height:1.35;}
+    .request-meta{
+      display:grid;
+      gap:4px;
+      line-height:1.35;
+      font-size:12px;
+      color:#475569;
+      font-weight:800;
+    }
+    .request-meta strong{color:#0f2c56;}
+    .next-action-box{
+      border:1px solid #bae6fd;
+      border-radius:12px;
+      padding:9px 10px;
+      background:#f8fafc;
+    }
+    .next-action-label{
+      display:block;
+      margin-bottom:5px;
+      color:#64748b;
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.35px;
+      text-transform:uppercase;
+    }
     .status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:950;margin:2px 3px 2px 0;}
     .good{background:#ecfdf5;color:#047857;border:1px solid #86efac;}
     .need{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;}
     details{grid-column:1/-1;background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:10px;margin-top:8px;}
     summary{cursor:pointer;font-weight:950;color:#0f2c56;}
+    .checklist-workflow-summary{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:12px;
+      padding:10px;
+      border:1px solid #bae6fd;
+      border-radius:12px;
+      background:#ffffff;
+    }
+    .workflow-summary-item{
+      min-width:0;
+      padding:8px 9px;
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      background:#f8fafc;
+    }
+    .workflow-summary-label{
+      display:block;
+      margin-bottom:4px;
+      color:#64748b;
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.35px;
+      text-transform:uppercase;
+    }
+    .workflow-summary-value{
+      color:#0f2c56;
+      font-size:12px;
+      font-weight:950;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+    @media(max-width:900px){
+      .header{display:none;}
+      .row{grid-template-columns:1fr;}
+      .checklist-workflow-summary{grid-template-columns:1fr;}
+    }
     .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px;}
     label{display:block;}
     label span{display:block;font-size:11px;font-weight:950;color:#0369a1;text-transform:uppercase;letter-spacing:.35px;margin-bottom:5px;}
@@ -43,20 +133,21 @@
     </div>
 
     <div class="panel">
-      <div class="stats">
-        <span class="pill" id="countOpen">Open: 0</span>
-        <span class="pill" id="countReady">Ready to Pull: 0</span>
-        <span class="pill" id="countNeed8821">Need 8821: 0</span>
-        <button class="btn secondary" id="toggleCompletedBtn" onclick="toggleCompleted()">Show Completed</button>
-      </div>
+      <div class="workspace-sticky">
+        <div class="stats">
+          <span class="pill" id="countOpen">Open: 0</span>
+          <span class="pill" id="countReady">Ready to Pull: 0</span>
+          <span class="pill" id="countNeed8821">Need 8821: 0</span>
+          <button class="btn secondary" id="toggleCompletedBtn" onclick="toggleCompleted()">Show Completed</button>
+        </div>
 
-      <div class="header" id="workspaceHeader">
-        <div>Client</div>
-        <div>Client Issue</div>
-        <div>Payment / 8821</div>
-        <div>Type / Years</div>
-        <div>Pull / Delivery</div>
-        <div>Action</div>
+        <div class="header" id="workspaceHeader">
+          <div>Client</div>
+          <div>Client Request</div>
+          <div>Submitted / Contact</div>
+          <div>Next Required Action</div>
+          <div>Action</div>
+        </div>
       </div>
 
       <div id="rows"></div>
@@ -128,8 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     header.innerHTML = `
       <div>Client</div>
       <div>Request / Notes</div>
-      <div>Status</div>
-      <div>Work Center</div>
+      <div>Status / Work Center</div>
       <div>Submitted</div>
       <div>Action</div>
     `;
@@ -291,9 +381,150 @@ function getType(lead){
 }
 function getYears(lead){const tr=lead.transcriptRequest||lead.Request||{};return tr.yearsNeeded||tr.taxYears||lead?.taxData?.taxYear||lead?.estimateSummary?.taxYear||lead?.estimateSummary?.meta?.taxYear||"Need years";}
 function getIssue(lead){const tr=lead.transcriptRequest||lead.Request||{};return tr.clientIssue||tr.clientComment||tr.clientExplanation||tr.issueType||"Review request";}
+
+function getTranscriptRequestDetails(lead){
+  const tr=lead.transcriptRequest||lead.Request||{};
+
+  return (
+    tr.writtenReviewTranscriptHelpRequest ||
+    tr.transcriptHelpRequest ||
+    {}
+  );
+}
+
+function transcriptSubmittedAt(lead){
+  const details=getTranscriptRequestDetails(lead);
+  const tr=lead.transcriptRequest||lead.Request||{};
+
+  return (
+    details.submittedAt ||
+    tr.requestedAt ||
+    tr.writtenReviewTranscriptHelpRequestedAt ||
+    lead?.submittedAt ||
+    lead?.timestamp ||
+    lead?.createdAt ||
+    ""
+  );
+}
+
+function formatTranscriptDateTime(value){
+  const parsed=new Date(value);
+
+  if(!value || Number.isNaN(parsed.getTime())){
+    return "Date not recorded";
+  }
+
+  return parsed.toLocaleString("en-US",{
+    month:"short",
+    day:"numeric",
+    year:"numeric",
+    hour:"numeric",
+    minute:"2-digit"
+  });
+}
+
+function transcriptRequestAge(value){
+  const parsed=new Date(value);
+
+  if(!value || Number.isNaN(parsed.getTime())){
+    return "Age not recorded";
+  }
+
+  const elapsed=Math.max(
+    0,
+    Date.now()-parsed.getTime()
+  );
+
+  const days=Math.floor(
+    elapsed/(1000*60*60*24)
+  );
+
+  if(days===0) return "Submitted today";
+  if(days===1) return "Submitted 1 day ago";
+
+  return `Submitted ${days} days ago`;
+}
+
+function transcriptRequestUrgency(lead){
+  const details=getTranscriptRequestDetails(lead);
+  return details.urgency || "Urgency not recorded";
+}
+
+function transcriptPreferredContact(lead){
+  const details=getTranscriptRequestDetails(lead);
+  return details.bestTime || "Contact time not recorded";
+}
+
+function transcriptWorkflowStage(lead){
+  const status=
+    String(lead?.status||"")
+      .toLowerCase();
+
+  const tr=lead.transcriptRequest||lead.Request||{};
+  const action=nextAction(lead).text.toLowerCase();
+
+  if(
+    status==="transcript help - completed" ||
+    String(tr.internalStatus||"").toLowerCase()==="completed"
+  ){
+    return "completed";
+  }
+
+  if(action.includes("payment")) return "payment";
+  if(action.includes("8821")) return "authorization";
+  if(action.includes("identity")) return "identity";
+  if(
+    action.includes("transcript type") ||
+    action.includes("tax years")
+  ){
+    return "details";
+  }
+
+  if(
+    action.includes("pitbulltax") ||
+    action.includes("transcript received")
+  ){
+    return "processing";
+  }
+
+  if(action.includes("deliver")) return "delivery";
+
+  return "processing";
+}
+
+function workflowSummaryText(lead){
+  const tr=lead.transcriptRequest||lead.Request||{};
+  const status=
+    String(lead?.status||"")
+      .toLowerCase();
+
+  if(
+    status==="transcript help - completed" ||
+    String(tr.internalStatus||"").toLowerCase()==="completed"
+  ){
+    return "Completed";
+  }
+
+  return (
+    tr.internalStatus ||
+    "Open transcript request"
+  );
+}
+
 function nextAction(lead){
   const tr=lead.transcriptRequest||lead.Request||{};
   const p=pay(lead);
+
+  const status=
+    String(lead?.status||"")
+      .toLowerCase();
+
+  if(
+    status==="transcript help - completed" ||
+    String(tr.internalStatus||"").toLowerCase()==="completed"
+  ){
+    return {text:"Completed",good:true};
+  }
 
   const authText=String(tr.authorizationStatus||"").toLowerCase();
   const hasReceived8821=Boolean(tr.authorizationReceivedDate) ||
@@ -396,8 +627,7 @@ async function load(){
           return `<div class="row">
             <div><div class="name">${esc(name)}</div><div class="small">${esc(email)}</div></div>
             <div class="small">${esc(issue)}</div>
-            <div>${pill(status,isTranscriptWorkspaceCompleted(lead))}</div>
-            <div class="small">${esc(workspaceLabel)}</div>
+            <div>${pill(status,isTranscriptWorkspaceCompleted(lead))}<div class="small">${esc(workspaceLabel)}</div></div>
             <div class="small">${esc(entered||"Date not recorded")}</div>
             <div><button class="btn secondary" onclick="window.location.href='/leads-dashboard'">Tax Lead Center</button></div>
           </div>`;
@@ -430,17 +660,62 @@ async function load(){
     </div>
   ` : "") + displayRows.map(lead=>{
     const tr=lead.transcriptRequest||lead.Request||{};
-    const p=pay(lead), a=auth(lead), pu=pull(lead), d=deliv(lead);
     const id=lead.leadId;
-    return `<div class="row">
-      <div><div class="name">${esc(lead?.contact?.name||"Unknown")}</div><div class="small">${esc(lead?.contact?.email||"No email")}</div><div class="small">${esc(id)}</div></div>
+    const submittedAt=transcriptSubmittedAt(lead);
+    const action=nextAction(lead);
+    const stage=transcriptWorkflowStage(lead);
+    const lastUpdated=
+      tr.lastSavedAt ||
+      lead?.updatedAt ||
+      submittedAt;
+
+    return `<div class="row stage-${esc(stage)}">
+      <div>
+        <div class="name">${esc(lead?.contact?.name||"Unknown")}</div>
+        <div class="small">${esc(lead?.contact?.email||"No email")}</div>
+        <div class="small">${esc(id)}</div>
+      </div>
+
       <div class="small">${esc(getIssue(lead))}</div>
-      <div>${pill(p.text,p.good)}${pill(a.text,a.good)}</div>
-      <div><strong>${esc(getType(lead))}</strong><div class="small">Years: ${esc(getYears(lead))}</div></div>
-      <div>${pill(nextAction(lead).text,nextAction(lead).good)}<div style="height:4px"></div>${pill(pu.text,pu.good)}${pill(d.text,d.good)}</div>
-      <div><button class="btn" onclick="focusTranscriptClient('${esc(id)}')">Edit</button></div>
+
+      <div class="request-meta">
+        <div><strong>${esc(transcriptRequestAge(submittedAt))}</strong></div>
+        <div>${esc(formatTranscriptDateTime(submittedAt))}</div>
+        <div>Urgency: ${esc(transcriptRequestUrgency(lead))}</div>
+        <div>Preferred contact: ${esc(transcriptPreferredContact(lead))}</div>
+      </div>
+
+      <div class="next-action-box">
+        <span class="next-action-label">Next Required Action</span>
+        ${pill(action.text,action.good)}
+      </div>
+
+      <div>
+        <button class="btn" onclick="focusTranscriptClient('${esc(id)}')">
+          Open Checklist
+        </button>
+      </div>
+
       <details id="edit-${esc(id)}" ${focusedTranscriptLeadId===String(id)?"open":""}>
         <summary>Transcript Service Checklist - ${esc(lead?.contact?.name||"Client")}</summary>
+
+        <div class="checklist-workflow-summary">
+          <div class="workflow-summary-item">
+            <span class="workflow-summary-label">Current Workflow</span>
+            <div class="workflow-summary-value">${esc(workflowSummaryText(lead))}</div>
+          </div>
+
+          <div class="workflow-summary-item">
+            <span class="workflow-summary-label">Next Required Action</span>
+            <div class="workflow-summary-value">${esc(action.text)}</div>
+          </div>
+
+          <div class="workflow-summary-item">
+            <span class="workflow-summary-label">Last Updated</span>
+            <div class="workflow-summary-value">${esc(formatTranscriptDateTime(lastUpdated))}</div>
+          </div>
+        </div>
+
         <div class="grid">
           ${field("Payment Status",select(`pay-${id}`,tr.paymentStatus||"",["Need Payment","Payment Pending","Paid / Verified"]))}
           ${field("Form 8821 Status",select(`auth-${id}`,tr.authorizationStatus||"",["Need 8821","8821 Sent","8821 Signed / Received"]))}
