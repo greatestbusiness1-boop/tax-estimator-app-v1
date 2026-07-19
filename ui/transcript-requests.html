@@ -740,12 +740,21 @@ async function load(){
         <div style="margin-top:10px;">${field("Internal Transcript Notes",area(`notes-${id}`,tr.internalNotes||""))}</div>
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn" onclick="save('${esc(id)}')">Save Transcript Checklist</button>
+          <button class="btn secondary" onclick="openPitBullTax()">Open PitBullTax for Form 8821</button>
           <button class="btn secondary" onclick="openAuthorizationEmail('${esc(id)}','${esc(lead?.contact?.email||"")}','${esc(lead?.contact?.name||"Client")}', this)">Open Email to Client</button>
           <span class="msg" id="msg-${esc(id)}"></span>
         </div>
       </details>
     </div>`;
   }).join("") || `<div style="padding:14px 0;color:#64748b;font-weight:850;">${showCompleted?"No completed transcript requests found.":"No open transcript requests found."}</div>`;
+}
+
+function openPitBullTax(){
+  window.open(
+    "https://www.pitbulltax.com/",
+    "_blank",
+    "noopener"
+  );
 }
 
 function copyAuthorizationMessage(id,btn){

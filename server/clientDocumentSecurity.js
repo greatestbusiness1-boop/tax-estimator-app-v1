@@ -31,6 +31,10 @@ const DOCUMENT_CATEGORIES = Object.freeze([
     label: "Identity & Authorization"
   },
   {
+    id: "signed-8821",
+    label: "Signed Form 8821"
+  },
+  {
     id: "other",
     label: "Other Supporting Records"
   }

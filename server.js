@@ -3373,6 +3373,20 @@ async function getClientPortalAccessibleLeads(email) {
 }
 
 function getClientPortalServiceLabel(lead = {}) {
+  const transcriptRequest =
+    lead.transcriptRequest ||
+    lead.Request ||
+    {};
+
+  if (
+    transcriptRequest.requested ||
+    String(lead.status || "")
+      .toLowerCase()
+      .includes("transcript help")
+  ) {
+    return "IRS Transcript Help";
+  }
+
   if (lead.taxSavingsPlanner) {
     return "Tax Savings Planner";
   }
@@ -3441,6 +3455,244 @@ function normalizeClientPortalServiceLabel(value) {
   }
 
   return label || "Tax Planning Profile";
+}
+
+function getClientPortalTranscriptNextAction(
+  lead = {},
+  transcriptRequest = {}
+) {
+  const status =
+    String(lead.status || "")
+      .toLowerCase();
+
+  const payment =
+    String(
+      transcriptRequest.paymentStatus || ""
+    ).toLowerCase();
+
+  const authorization =
+    String(
+      transcriptRequest.authorizationStatus || ""
+    ).toLowerCase();
+
+  const identity =
+    String(
+      transcriptRequest.identityVerified || ""
+    ).toLowerCase();
+
+  const transcriptType =
+    String(
+      transcriptRequest.transcriptType || ""
+    ).toLowerCase();
+
+  const years =
+    String(
+      transcriptRequest.yearsNeeded ||
+      transcriptRequest.taxYears ||
+      ""
+    ).trim();
+
+  if (
+    status === "transcript help - completed" ||
+    String(
+      transcriptRequest.internalStatus || ""
+    ).toLowerCase() === "completed"
+  ) {
+    return "Your IRS Transcript Help service is complete.";
+  }
+
+  if (
+    !payment.includes("paid") &&
+    !payment.includes("verified")
+  ) {
+    return "Complete the $150 IRS Transcript Help payment.";
+  }
+
+  if (
+    !authorization.includes("received") &&
+    !authorization.includes("signed")
+  ) {
+    if (
+      transcriptRequest.authorizationPortalReviewStatus ===
+      "needs-replacement"
+    ) {
+      return (
+        transcriptRequest.authorizationPortalMessage ||
+        "Upload a corrected signed Form 8821 using the secure backup upload."
+      );
+    }
+
+    if (authorization.includes("sent")) {
+      return "Complete the Form 8821 e-sign request sent by the office. Use the secure backup upload only when instructed.";
+    }
+
+    return "The office will prepare and send Form 8821 through PitBullTax / DocuSign.";
+  }
+
+  if (identity !== "yes") {
+    return "Complete identity verification using the secure method provided by the office.";
+  }
+
+  if (
+    !transcriptType ||
+    transcriptType.includes("need") ||
+    transcriptType.includes("not sure") ||
+    !years
+  ) {
+    return "Confirm the transcript type and tax year information with the office.";
+  }
+
+  if (!transcriptRequest.transcriptPulledDate) {
+    return "Authorization is complete. The office is preparing to pull your IRS transcript.";
+  }
+
+  if (!transcriptRequest.transcriptReceivedDate) {
+    return "Your transcript has been requested and is awaiting office review.";
+  }
+
+  if (!transcriptRequest.deliveryDate) {
+    return "Your transcript is being reviewed for secure delivery.";
+  }
+
+  return "Your transcript was delivered securely.";
+}
+
+function buildClientPortalTranscriptRequestSummary(
+  entry
+) {
+  const lead = entry?.lead || {};
+  const transcriptRequest =
+    lead.transcriptRequest ||
+    lead.Request ||
+    {};
+
+  const status =
+    String(lead.status || "");
+
+  const isTranscriptRequest =
+    Boolean(transcriptRequest.requested) ||
+    status
+      .toLowerCase()
+      .includes("transcript help");
+
+  if (!isTranscriptRequest) {
+    return null;
+  }
+
+  const authorizationStatus =
+    String(
+      transcriptRequest.authorizationStatus ||
+      "Need 8821"
+    );
+
+  const completed =
+    status.toLowerCase() ===
+      "transcript help - completed" ||
+    String(
+      transcriptRequest.internalStatus || ""
+    ).toLowerCase() === "completed";
+
+  const authorizationReceived =
+    /received|signed/i.test(
+      authorizationStatus
+    ) ||
+    Boolean(
+      transcriptRequest.authorizationReceivedDate
+    );
+
+  return {
+    leadId:
+      String(entry.leadId || ""),
+    taxYears:
+      String(
+        transcriptRequest.yearsNeeded ||
+        transcriptRequest.taxYears ||
+        getClientPortalTaxYear(
+          lead,
+          lead.taxSavingsPlanner || {}
+        ) ||
+        "Not recorded"
+      ),
+    transcriptType:
+      String(
+        transcriptRequest.transcriptType ||
+        "Not selected yet"
+      ),
+    paymentStatus:
+      String(
+        transcriptRequest.paymentStatus ||
+        "Need Payment"
+      ),
+    authorizationStatus,
+    authorizationSentDate:
+      String(
+        transcriptRequest.authorizationSentDate ||
+        ""
+      ),
+    authorizationReceivedDate:
+      String(
+        transcriptRequest.authorizationReceivedDate ||
+        ""
+      ),
+    authorizationPortalReviewStatus:
+      String(
+        transcriptRequest.authorizationPortalReviewStatus ||
+        ""
+      ),
+    authorizationPortalMessage:
+      String(
+        transcriptRequest.authorizationPortalMessage ||
+        ""
+      ).slice(0, 1200),
+    identityVerified:
+      String(
+        transcriptRequest.identityVerified ||
+        "No"
+      ),
+    internalStatus:
+      String(
+        transcriptRequest.internalStatus ||
+        "Open"
+      ),
+    transcriptPulledDate:
+      String(
+        transcriptRequest.transcriptPulledDate ||
+        ""
+      ),
+    transcriptReceivedDate:
+      String(
+        transcriptRequest.transcriptReceivedDate ||
+        ""
+      ),
+    deliveryMethod:
+      String(
+        transcriptRequest.deliveryMethod ||
+        ""
+      ),
+    deliveryDate:
+      String(
+        transcriptRequest.deliveryDate ||
+        ""
+      ),
+    completed,
+    authorizationReceived,
+    canUploadSigned8821:
+      !completed &&
+      !authorizationReceived,
+    nextAction:
+      getClientPortalTranscriptNextAction(
+        lead,
+        transcriptRequest
+      ),
+    updatedAt:
+      String(
+        transcriptRequest.lastSavedAt ||
+        transcriptRequest.updatedAt ||
+        lead.updatedAt ||
+        lead.timestamp ||
+        ""
+      )
+  };
 }
 
 function getClientPortalRecordDate(lead = {}, planner = {}) {
@@ -4219,6 +4471,223 @@ Greatest Business Solution LLC`
       error?.message || error
     );
   }
+}
+
+function getTranscriptAuthorizationInternalStatus(
+  transcriptRequest = {}
+) {
+  const payment =
+    String(
+      transcriptRequest.paymentStatus || ""
+    ).toLowerCase();
+
+  if (
+    !payment.includes("paid") &&
+    !payment.includes("verified")
+  ) {
+    return "Waiting on payment";
+  }
+
+  const identityVerified =
+    String(
+      transcriptRequest.identityVerified || ""
+    ).toLowerCase() === "yes";
+
+  const transcriptType =
+    String(
+      transcriptRequest.transcriptType || ""
+    ).toLowerCase();
+
+  const years =
+    String(
+      transcriptRequest.yearsNeeded ||
+      transcriptRequest.taxYears ||
+      ""
+    ).trim();
+
+  const typeReady =
+    transcriptType &&
+    !transcriptType.includes("need") &&
+    !transcriptType.includes("not sure");
+
+  return (
+    identityVerified &&
+    typeReady &&
+    years
+  )
+    ? "Ready to pull"
+    : "Open";
+}
+
+async function syncSigned8821DocumentToTranscriptRequest({
+  document,
+  reviewStatus,
+  clientMessage,
+  reviewedAt
+}) {
+  if (
+    !document ||
+    document.category !== "signed-8821" ||
+    ![
+      "accepted",
+      "needs-replacement"
+    ].includes(reviewStatus)
+  ) {
+    return {
+      ok: true,
+      skipped: true
+    };
+  }
+
+  const linkedLeadId =
+    String(
+      document.linkedLeadId ||
+      document.accountLeadId ||
+      ""
+    ).trim();
+
+  if (!linkedLeadId) {
+    return {
+      ok: false,
+      error:
+        "The signed Form 8821 is not linked to a transcript request."
+    };
+  }
+
+  const dateOnly =
+    String(reviewedAt || "")
+      .slice(0, 10);
+
+  return updateLeadAfterStripePayment(
+    linkedLeadId,
+    (record = {}) => {
+      const updated = {
+        ...record
+      };
+
+      const existing =
+        updated.transcriptRequest ||
+        updated.Request ||
+        {};
+
+      const completed =
+        String(updated.status || "")
+          .toLowerCase() ===
+          "transcript help - completed" ||
+        String(
+          existing.internalStatus || ""
+        ).toLowerCase() === "completed";
+
+      const accepted =
+        reviewStatus === "accepted";
+
+      const nextTranscriptRequest = {
+        ...existing,
+        requested: true,
+        authorizationStatus:
+          accepted
+            ? "8821 Signed / Received"
+            : "Need 8821",
+        authorizationReceivedDate:
+          accepted
+            ? (
+                existing.authorizationReceivedDate ||
+                dateOnly
+              )
+            : "",
+        authorizationFileLocation:
+          accepted
+            ? `Secure Client Portal Document: ${document.originalName} (${document.documentId})`
+            : "",
+        authorizationDocumentId:
+          accepted
+            ? document.documentId
+            : "",
+        authorizationPortalReviewStatus:
+          reviewStatus,
+        authorizationPortalMessage:
+          String(
+            clientMessage ||
+            (
+              accepted
+                ? "Your signed Form 8821 was accepted by the office."
+                : "A corrected signed Form 8821 is required."
+            )
+          ).slice(0, 1200),
+        authorizationReviewedAt:
+          String(reviewedAt || ""),
+        signingMethod:
+          accepted
+            ? (
+                existing.signingMethod &&
+                existing.signingMethod !==
+                  "Not selected"
+                  ? existing.signingMethod
+                  : "Secure portal upload"
+              )
+            : existing.signingMethod || "",
+        internalStatus:
+          completed
+            ? "Completed"
+            : accepted
+              ? getTranscriptAuthorizationInternalStatus({
+                  ...existing,
+                  authorizationStatus:
+                    "8821 Signed / Received",
+                  authorizationReceivedDate:
+                    existing.authorizationReceivedDate ||
+                    dateOnly
+                })
+              : (
+                  String(
+                    existing.paymentStatus || ""
+                  ).toLowerCase().includes("paid")
+                    ? "Waiting on 8821"
+                    : "Waiting on payment"
+                ),
+        lastSavedAt:
+          String(reviewedAt || "")
+      };
+
+      updated.transcriptRequest =
+        nextTranscriptRequest;
+
+      updated.Request = {
+        ...(updated.Request || {}),
+        ...nextTranscriptRequest
+      };
+
+      if (!completed) {
+        updated.status =
+          String(
+            nextTranscriptRequest.paymentStatus ||
+            ""
+          ).toLowerCase().includes("paid")
+            ? "Transcript Help - Paid / Needs Review"
+            : "Transcript Help - Payment Pending";
+      }
+
+      updated.updatedAt =
+        String(reviewedAt || "");
+
+      const note =
+        accepted
+          ? `[${new Date(reviewedAt).toLocaleString()}] Signed Form 8821 accepted from Secure Client Portal document ${document.originalName}.`
+          : `[${new Date(reviewedAt).toLocaleString()}] Replacement signed Form 8821 requested for Secure Client Portal document ${document.originalName}.`;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes =
+        oldNotes
+          ? `${oldNotes}\n${note}`
+          : note;
+
+      return updated;
+    }
+  );
 }
 
 async function getOfficeDocumentReviewState(
@@ -7303,6 +7772,22 @@ app.get(
         session
       );
 
+    const transcriptRequests =
+      accessible
+        .map(
+          buildClientPortalTranscriptRequestSummary
+        )
+        .filter(Boolean)
+        .sort(
+          (left, right) =>
+            Date.parse(
+              right.updatedAt || 0
+            ) -
+            Date.parse(
+              left.updatedAt || 0
+            )
+        );
+
     return res.status(200).json({
       ok: true,
       portal: {
@@ -7335,6 +7820,7 @@ app.get(
           recordOrganization.totalRawRecords,
         visibleYearLimit:
           recordOrganization.visibleYearLimit,
+        transcriptRequests,
         documentCenter
       }
     });
@@ -7476,6 +7962,14 @@ app.post(
         500
       );
 
+    const requestedLinkedLeadId =
+      decodeClientDocumentHeader(
+        req.headers[
+          "x-document-linked-lead-id"
+        ],
+        180
+      );
+
     const validation =
       validateDocumentUpload({
         buffer: req.body,
@@ -7547,12 +8041,61 @@ app.post(
       });
     }
 
-    const linkedLeadId =
-      await findClientDocumentLinkedLeadId(
-        session.email,
-        upload.taxYear,
-        session.payload.accountLeadId
-      );
+    let linkedLeadId = "";
+
+    if (requestedLinkedLeadId) {
+      const linkedCandidate =
+        await clientPortalSessionCanAccessLead(
+          session,
+          requestedLinkedLeadId
+        );
+
+      if (!linkedCandidate) {
+        return res.status(403).json({
+          ok: false,
+          error:
+            "This document cannot be linked to the selected client record."
+        });
+      }
+
+      const linkedTranscriptRequest =
+        linkedCandidate.lead?.transcriptRequest ||
+        linkedCandidate.lead?.Request ||
+        {};
+
+      const isTranscriptRecord =
+        Boolean(
+          linkedTranscriptRequest.requested
+        ) ||
+        String(
+          linkedCandidate.lead?.status || ""
+        )
+          .toLowerCase()
+          .includes("transcript help");
+
+      if (
+        upload.category === "signed-8821" &&
+        !isTranscriptRecord
+      ) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "Signed Form 8821 must be linked to an IRS Transcript Help request."
+        });
+      }
+
+      linkedLeadId =
+        linkedCandidate.leadId;
+    }
+
+    if (!linkedLeadId) {
+      linkedLeadId =
+        await findClientDocumentLinkedLeadId(
+          session.email,
+          upload.taxYear,
+          session.payload.accountLeadId
+        );
+    }
 
     const now =
       new Date().toISOString();
@@ -7940,6 +8483,38 @@ app.post(
       summary
     );
 
+    let transcriptAuthorizationSync = null;
+
+    if (
+      result.record.category ===
+        "signed-8821" &&
+      (
+        reviewStatus === "accepted" ||
+        reviewStatus ===
+          "needs-replacement"
+      )
+    ) {
+      transcriptAuthorizationSync =
+        await syncSigned8821DocumentToTranscriptRequest({
+          document:
+            result.record,
+          reviewStatus,
+          clientMessage,
+          reviewedAt: now
+        });
+
+      if (
+        transcriptAuthorizationSync &&
+        !transcriptAuthorizationSync.ok
+      ) {
+        console.warn(
+          "[office document review] Signed Form 8821 transcript sync failed:",
+          transcriptAuthorizationSync.error ||
+          transcriptAuthorizationSync
+        );
+      }
+    }
+
     if (
       reviewStatus === "accepted" ||
       reviewStatus ===
@@ -7968,7 +8543,8 @@ app.post(
         officeDocumentRecord(
           result.record
         ),
-      summary
+      summary,
+      transcriptAuthorizationSync
     });
   }
 );

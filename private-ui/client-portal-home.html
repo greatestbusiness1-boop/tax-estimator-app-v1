@@ -323,6 +323,86 @@
       line-height:1.45;
       font-size:12px
     }
+    .transcript-portal-list{
+      display:grid;
+      gap:16px
+    }
+    .transcript-portal-card{
+      border:1px solid #c7d7e2;
+      border-left:7px solid #2d648f;
+      background:#fbfdff;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1.4fr auto;
+      gap:20px;
+      align-items:center
+    }
+    .transcript-portal-card.complete{
+      border-left-color:var(--green);
+      background:#f7fff9
+    }
+    .transcript-portal-card h3{
+      margin:0 0 8px;
+      color:var(--navy);
+      font-family:Georgia,serif;
+      font-size:23px
+    }
+    .transcript-status-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:14px
+    }
+    .transcript-status-item{
+      border:1px solid #d7e0e6;
+      background:#fff;
+      padding:10px
+    }
+    .transcript-status-item span{
+      display:block;
+      color:var(--muted);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase
+    }
+    .transcript-status-item strong{
+      display:block;
+      color:var(--navy);
+      margin-top:5px;
+      line-height:1.4
+    }
+    .transcript-next{
+      margin-top:13px;
+      padding:12px 14px;
+      border-left:4px solid var(--gold);
+      background:#f6f1e7;
+      line-height:1.5
+    }
+    .transcript-portal-actions{
+      display:flex;
+      flex-direction:column;
+      gap:9px;
+      min-width:220px
+    }
+    .transcript-portal-actions button{
+      border:0;
+      background:var(--navy);
+      color:#fff;
+      padding:12px 14px;
+      font-weight:900;
+      cursor:pointer
+    }
+    .transcript-portal-actions button.secondary{
+      background:#fff;
+      color:var(--navy);
+      border:1px solid var(--navy)
+    }
+    .transcript-portal-note{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45
+    }
     .document-banner{
       display:grid;
       grid-template-columns:1.3fr 1fr;
@@ -736,6 +816,15 @@
       .document-item{
         grid-template-columns:1fr
       }
+      .transcript-portal-card{
+        grid-template-columns:1fr
+      }
+      .transcript-status-grid{
+        grid-template-columns:1fr
+      }
+      .transcript-portal-actions{
+        min-width:0
+      }
       .document-download{
         text-align:center
       }
@@ -749,10 +838,11 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.3.1</span>
+        <span>Tax Savings Planner™ Portal — Version 1.4.0</span>
       </div>
     </div>
     <div class="top-actions">
+      <a class="top-link" href="#transcriptHelp">Transcript Help</a>
       <a class="top-link" href="#documentCenter">Documents</a>
       <a class="top-link" href="#accountSecurity">Account &amp; Security</a>
       <button class="signout" id="signOutButton" type="button">Sign Out</button>
@@ -824,6 +914,26 @@
       <div class="section-body">
         <div class="history-grid" id="serviceHistory">
           <div class="empty">Loading service history...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="transcriptHelp">
+      <div class="section-head">
+        <div>
+          <h2>IRS Transcript Help</h2>
+          <p>Track payment, Form 8821 authorization, transcript processing, and secure delivery under the correct request.</p>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="home-rule">
+          <strong>Primary Form 8821 signing method:</strong>
+          Greatest Business Solution LLC will normally prepare and send the authorization through PitBullTax / DocuSign. Use the secure backup upload below only when the office asks you to provide a signed copy.
+        </div>
+
+        <div class="transcript-portal-list" id="transcriptPortalList">
+          <div class="empty">Loading your IRS Transcript Help status...</div>
         </div>
       </div>
     </section>
@@ -1033,6 +1143,7 @@
     }
 
     let currentDocumentCenter = null;
+    let pendingTranscriptUploadLeadId = "";
 
     function formatFileSize(
       bytes
@@ -1091,6 +1202,183 @@
 
       message.className =
         "document-upload-message";
+    }
+
+    function renderTranscriptPortal(
+      transcriptRequests = []
+    ) {
+      const container =
+        document.getElementById(
+          "transcriptPortalList"
+        );
+
+      if (!transcriptRequests.length) {
+        container.innerHTML =
+          '<div class="empty">No IRS Transcript Help request is connected to this portal yet.</div>';
+        return;
+      }
+
+      container.innerHTML =
+        transcriptRequests
+          .map(
+            (request) => {
+              const complete =
+                request.completed === true;
+
+              const backupButton =
+                request.canUploadSigned8821
+                  ? `
+                    <button
+                      type="button"
+                      onclick="prepareSigned8821BackupUpload(
+                        '${escapeHtml(request.leadId)}',
+                        '${escapeHtml(request.taxYears)}'
+                      )"
+                    >
+                      Upload Signed Form 8821 — Backup
+                    </button>
+                  `
+                  : "";
+
+              const authorizationMessage =
+                request.authorizationPortalMessage
+                  ? `
+                    <div class="transcript-portal-note">
+                      <strong>Office message:</strong>
+                      ${escapeHtml(request.authorizationPortalMessage)}
+                    </div>
+                  `
+                  : "";
+
+              return `
+                <article class="transcript-portal-card ${complete ? "complete" : ""}">
+                  <div>
+                    <h3>IRS Transcript Help — ${escapeHtml(request.taxYears || "Tax year not recorded")}</h3>
+
+                    <div class="transcript-status-grid">
+                      <div class="transcript-status-item">
+                        <span>Payment</span>
+                        <strong>${escapeHtml(request.paymentStatus || "Need Payment")}</strong>
+                      </div>
+
+                      <div class="transcript-status-item">
+                        <span>Form 8821</span>
+                        <strong>${escapeHtml(request.authorizationStatus || "Need 8821")}</strong>
+                      </div>
+
+                      <div class="transcript-status-item">
+                        <span>Office Workflow</span>
+                        <strong>${escapeHtml(request.internalStatus || "Open")}</strong>
+                      </div>
+                    </div>
+
+                    <div class="transcript-next">
+                      <strong>Next required action</strong><br>
+                      ${escapeHtml(request.nextAction || "The office is reviewing your request.")}
+                    </div>
+
+                    ${authorizationMessage}
+                  </div>
+
+                  <div class="transcript-portal-actions">
+                    ${backupButton}
+
+                    <button
+                      class="secondary"
+                      type="button"
+                      onclick="document.getElementById('documentCenter').scrollIntoView({behavior:'smooth'})"
+                    >
+                      Open Secure Document Center
+                    </button>
+
+                    <div class="transcript-portal-note">
+                      Do not email Social Security numbers, signed authorizations, identity records, or IRS transcripts.
+                    </div>
+                  </div>
+                </article>
+              `;
+            }
+          )
+          .join("");
+    }
+
+    function prepareSigned8821BackupUpload(
+      leadId,
+      taxYears
+    ) {
+      pendingTranscriptUploadLeadId =
+        String(leadId || "").trim();
+
+      const year =
+        String(taxYears || "")
+          .match(/\b(19|20)\d{2}\b/)?.[0] ||
+        "";
+
+      const taxYearSelect =
+        document.getElementById(
+          "documentTaxYear"
+        );
+
+      const categorySelect =
+        document.getElementById(
+          "documentCategory"
+        );
+
+      const note =
+        document.getElementById(
+          "documentNote"
+        );
+
+      if (
+        year &&
+        [
+          ...taxYearSelect.options
+        ].some(
+          (option) =>
+            option.value === year
+        )
+      ) {
+        taxYearSelect.value = year;
+      }
+
+      if (
+        [
+          ...categorySelect.options
+        ].some(
+          (option) =>
+            option.value === "signed-8821"
+        )
+      ) {
+        categorySelect.value =
+          "signed-8821";
+      }
+
+      note.value =
+        "Signed Form 8821 backup upload for IRS Transcript Help.";
+
+      document
+        .getElementById(
+          "documentCenter"
+        )
+        .scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      window.setTimeout(
+        () => {
+          document
+            .getElementById(
+              "documentFile"
+            )
+            .focus();
+        },
+        500
+      );
+
+      showDocumentMessage(
+        "SIGNED FORM 8821 BACKUP UPLOAD READY — choose the signed file, confirm the tax year, and click Upload Document Securely."
+      );
     }
 
     function populateDocumentSelects(
@@ -1826,6 +2114,10 @@
         portal.generalRequestCount || 0
       );
 
+      renderTranscriptPortal(
+        portal.transcriptRequests || []
+      );
+
       const olderButton =
         document.getElementById(
           "olderRecordsButton"
@@ -2002,6 +2294,10 @@
                 "X-Document-Note":
                   encodeURIComponent(
                     note
+                  ),
+                "X-Document-Linked-Lead-Id":
+                  encodeURIComponent(
+                    pendingTranscriptUploadLeadId
                   )
               },
               body: file
@@ -2035,6 +2331,8 @@
           document.getElementById(
             "documentNote"
           ).value = "";
+
+          pendingTranscriptUploadLeadId = "";
 
           await refreshDocumentCenter();
 
