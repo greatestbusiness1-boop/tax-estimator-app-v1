@@ -4258,24 +4258,66 @@ async function findClientDocumentLinkedLeadId(
   );
 }
 
-async function syncClientDocumentSummaryToLead(
-  session,
-  summary
-) {
-  const accountLeadId = String(
-    session?.payload?.accountLeadId || ""
-  );
+function getClientDocumentSummaryLeadId(record = {}) {
+  return String(
+    record.linkedLeadId ||
+    record.accountLeadId ||
+    ""
+  ).trim();
+}
 
-  if (!accountLeadId) {
+function clientDocumentBelongsToLead(
+  record = {},
+  leadId = ""
+) {
+  const cleanLeadId = String(
+    leadId || ""
+  ).trim();
+
+  if (!cleanLeadId) {
+    return false;
+  }
+
+  return getClientDocumentSummaryLeadId(
+    record
+  ) === cleanLeadId;
+}
+
+async function syncClientDocumentSummaryToLinkedLead(
+  record,
+  records = []
+) {
+  const linkedLeadId =
+    getClientDocumentSummaryLeadId(
+      record
+    );
+
+  if (!linkedLeadId) {
     return;
   }
 
+  const linkedRecords = Array.isArray(
+    records
+  )
+    ? records.filter((entry) =>
+        clientDocumentBelongsToLead(
+          entry,
+          linkedLeadId
+        )
+      )
+    : [];
+
+  const summary =
+    clientDocumentStore.buildSummary(
+      linkedRecords
+    );
+
   await updateClientPortalLeadStatus(
-    accountLeadId,
+    linkedLeadId,
     (current = {}) => ({
       ...current,
       documentCenter: {
-        version: 1,
+        version: 3,
         status: "active",
         totalDocuments: Number(
           summary.totalDocuments || 0
@@ -4364,50 +4406,6 @@ Greatest Business Solution LLC`
 }
 
 
-async function syncClientDocumentSummaryToAccountLead(
-  record,
-  summary
-) {
-  const accountLeadId = String(
-    record?.accountLeadId || ""
-  ).trim();
-
-  if (!accountLeadId) {
-    return;
-  }
-
-  await updateClientPortalLeadStatus(
-    accountLeadId,
-    (current = {}) => ({
-      ...current,
-      documentCenter: {
-        version: 2,
-        status: "active",
-        totalDocuments: Number(
-          summary.totalDocuments || 0
-        ),
-        awaitingReview: Number(
-          summary.awaitingReview || 0
-        ),
-        inReview: Number(
-          summary.inReview || 0
-        ),
-        accepted: Number(
-          summary.accepted || 0
-        ),
-        needsReplacement: Number(
-          summary.needsReplacement || 0
-        ),
-        latestUploadAt: String(
-          summary.latestUploadAt || ""
-        ),
-        latestFileName: String(
-          summary.latestFileName || ""
-        )
-      }
-    })
-  );
-}
 
 async function sendClientDocumentReviewEmail({
   document,
@@ -8236,9 +8234,9 @@ app.post(
         records
       );
 
-    await syncClientDocumentSummaryToLead(
-      session,
-      summary
+    await syncClientDocumentSummaryToLinkedLead(
+      saveResult.record,
+      records
     );
 
     const publicRecord =
@@ -8546,9 +8544,9 @@ app.post(
           portalRecords
         );
 
-    await syncClientDocumentSummaryToAccountLead(
+    await syncClientDocumentSummaryToLinkedLead(
       result.record,
-      summary
+      portalRecords
     );
 
     let transcriptAuthorizationSync = null;
@@ -10075,6 +10073,116 @@ app.get("/stripe-thank-you", (req, res) => {
 // GET /api/leads
 // =============================================================================
 
+async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
+  const safeLeads = Array.isArray(leads)
+    ? leads
+    : [];
+
+  try {
+    const records =
+      await clientDocumentStore.listForOffice({});
+
+    const recordsByLeadId = new Map();
+
+    records.forEach((record = {}) => {
+      const accountLeadId = String(
+        record.accountLeadId || ""
+      ).trim();
+
+      const linkedLeadId = String(
+        record.linkedLeadId || ""
+      ).trim();
+
+      const category = String(
+        record.category || ""
+      ).trim();
+
+      const targetLeadId =
+        category === "signed-8821" && linkedLeadId
+          ? linkedLeadId
+          : accountLeadId;
+
+      if (!targetLeadId) {
+        return;
+      }
+
+      if (!recordsByLeadId.has(targetLeadId)) {
+        recordsByLeadId.set(targetLeadId, []);
+      }
+
+      recordsByLeadId
+        .get(targetLeadId)
+        .push(record);
+    });
+
+    return safeLeads.map((lead = {}) => {
+      const leadId = getLeadIdValue(lead);
+
+      const matchingRecords =
+        recordsByLeadId.get(leadId) || [];
+
+      if (matchingRecords.length === 0) {
+        return lead;
+      }
+
+      const summary =
+        clientDocumentStore.buildSummary(
+          matchingRecords
+        );
+
+      const currentPortal =
+        getClientPortalRecord(lead) || {};
+
+      const currentDocumentCenter =
+        currentPortal.documentCenter &&
+        typeof currentPortal.documentCenter === "object" &&
+        !Array.isArray(currentPortal.documentCenter)
+          ? currentPortal.documentCenter
+          : {};
+
+      return {
+        ...lead,
+        clientPortal: {
+          ...currentPortal,
+          documentCenter: {
+            ...currentDocumentCenter,
+            version: 3,
+            status: "active",
+            totalDocuments: Number(
+              summary.totalDocuments || 0
+            ),
+            awaitingReview: Number(
+              summary.awaitingReview || 0
+            ),
+            inReview: Number(
+              summary.inReview || 0
+            ),
+            accepted: Number(
+              summary.accepted || 0
+            ),
+            needsReplacement: Number(
+              summary.needsReplacement || 0
+            ),
+            latestUploadAt: String(
+              summary.latestUploadAt || ""
+            ),
+            latestFileName: String(
+              summary.latestFileName || ""
+            )
+          }
+        }
+      };
+    });
+  } catch (error) {
+    console.warn(
+      "[api/leads] Secure document summaries could not be loaded:",
+      error?.message || error
+    );
+
+    return safeLeads;
+  }
+}
+
 app.get("/api/leads", async (req, res) => {
   try {
     const includeLocal =
@@ -10092,11 +10200,16 @@ app.get("/api/leads", async (req, res) => {
     const supabaseLeads = (data || []).map(mapRowToLead);
 
     if (!includeLocal) {
+      const leads =
+        await hydrateLeadsWithSecureDocumentSummaries(
+          supabaseLeads
+        );
+
       return res.status(200).json({
         ok: true,
-        source: "supabase",
-        count: supabaseLeads.length,
-        leads: supabaseLeads
+        source: "supabase+secure-documents",
+        count: leads.length,
+        leads
       });
     }
 
@@ -10134,7 +10247,10 @@ app.get("/api/leads", async (req, res) => {
       }
     });
 
-    const leads = Array.from(mergedById.values());
+    const leads =
+      await hydrateLeadsWithSecureDocumentSummaries(
+        Array.from(mergedById.values())
+      );
 
     return res.status(200).json({
       ok: true,
@@ -10145,11 +10261,14 @@ app.get("/api/leads", async (req, res) => {
   } catch (err) {
     console.error("Supabase load leads failed. Loading local instead:", err.message || err);
 
-    const leads = readLeads();
+    const leads =
+      await hydrateLeadsWithSecureDocumentSummaries(
+        readLeads()
+      );
 
     return res.status(200).json({
       ok: true,
-      source: "local-fallback",
+      source: "local-fallback+secure-documents",
       count: leads.length,
       leads
     });
