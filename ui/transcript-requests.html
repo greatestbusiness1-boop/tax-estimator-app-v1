@@ -284,6 +284,93 @@
       min-height:16px;
     }
     .document-workspace-message.error{color:#b91c1c;}
+    .document-priority{
+      margin-top:12px;
+      padding:12px;
+      border:2px solid #fed7aa;
+      border-radius:12px;
+      background:#fff7ed;
+    }
+    .document-priority.clear{
+      border-color:#86efac;
+      background:#f0fdf4;
+    }
+    .document-section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:9px;
+    }
+    .document-section-head h4{
+      margin:0;
+      color:#0f2c56;
+      font-size:15px;
+    }
+    .document-section-head p{
+      margin:3px 0 0;
+      color:#475569;
+      font-size:12px;
+      font-weight:800;
+    }
+    .document-count-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      border-radius:999px;
+      padding:5px 8px;
+      background:#ffffff;
+      border:1px solid #cbd5e1;
+      color:#0f2c56;
+      font-size:12px;
+      font-weight:950;
+    }
+    .document-completed,
+    .request-cleanup{
+      margin-top:12px;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      background:#f8fafc;
+      overflow:hidden;
+    }
+    .document-completed>summary,
+    .request-cleanup>summary{
+      padding:11px 12px;
+      color:#0f2c56;
+      font-size:13px;
+      font-weight:950;
+      cursor:pointer;
+    }
+    .document-completed-body,
+    .request-cleanup-body{
+      padding:0 12px 12px;
+    }
+    .document-card.compact{
+      padding:9px 10px;
+      background:#ffffff;
+    }
+    .document-card.compact .document-actions{
+      margin-top:7px;
+    }
+    .document-card.compact .document-note,
+    .document-card.compact .document-replacement{
+      display:none;
+    }
+    .cleanup-grid{
+      display:grid;
+      grid-template-columns:minmax(0,220px) auto auto;
+      gap:8px;
+      align-items:end;
+    }
+    .cleanup-note{
+      margin:8px 0 0;
+      color:#475569;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.45;
+    }
     .document-empty{
       padding:18px;
       text-align:center;
@@ -294,7 +381,8 @@
     @media(max-width:700px){
       .document-upload-grid,
       .document-replacement,
-      .document-admin-grid{
+      .document-admin-grid,
+      .cleanup-grid{
         grid-template-columns:1fr;
       }
       .document-upload-grid .wide{grid-column:auto;}
@@ -902,8 +990,8 @@ async function load(){
         <section class="document-workspace">
           <div class="document-workspace-head">
             <div>
-              <h3>Transcript Document Inbox &amp; Secure Delivery</h3>
-              <p>Review Form 8821 and identity uploads, deliver the IRS transcript, and manage retention without leaving this checklist.</p>
+              <h3>Daily Transcript Document Workspace</h3>
+              <p>Only documents requiring action stay open. Completed documents and protected cleanup controls remain collapsed until needed.</p>
             </div>
             <div class="document-summary" id="document-summary-${esc(id)}">
               <span>Loading secure documents...</span>
@@ -1074,18 +1162,23 @@ function transcriptTaxYearOptions(value){
 
 function renderTranscriptDocumentCard(
   leadId,
-  doc
+  doc,
+  options={}
 ){
   const status=String(
     doc.reviewStatus||
     "awaiting-review"
   );
 
+  const compact=
+    options.compact===true;
+
   const canReview=
     status!=="withdrawn";
 
   const canRequestReplacement=
     canReview &&
+    !compact &&
     doc.category!=="irs-transcript-delivery";
 
   const replacementMessage=
@@ -1096,7 +1189,7 @@ function renderTranscriptDocumentCard(
     );
 
   return `
-    <article class="document-card ${escAttr(status)}">
+    <article class="document-card ${escAttr(status)} ${compact?"compact":""}">
       <div class="document-card-top">
         <div>
           <div class="document-file">${esc(doc.originalName||"Secure document")}</div>
@@ -1111,13 +1204,13 @@ function renderTranscriptDocumentCard(
       </div>
 
       ${
-        doc.note
+        !compact && doc.note
           ? `<div class="document-note"><strong>Note:</strong> ${esc(doc.note)}</div>`
           : ""
       }
 
       ${
-        doc.clientMessage
+        !compact && doc.clientMessage
           ? `<div class="document-note"><strong>Client message:</strong> ${esc(doc.clientMessage)}</div>`
           : ""
       }
@@ -1151,30 +1244,8 @@ function renderTranscriptDocumentCard(
           : ""
       }
 
-      <details class="document-admin">
-        <summary>Retention / remove / permanent-delete administration</summary>
-        <div class="document-admin-grid">
-          <label>
-            <span>Retention Reminder Date</span>
-            <input id="retention-${escAttr(doc.documentId)}"
-              type="date"
-              value="${escAttr(doc.retentionUntil||"")}">
-          </label>
-
-          <button class="btn secondary"
-            onclick="saveTranscriptDocumentRetention('${escAttr(leadId)}','${escAttr(doc.documentId)}',this)">
-            Save Retention
-          </button>
-
-          ${
-            status!=="withdrawn"
-              ? `<button class="btn red" onclick="armTranscriptDocumentRemoval('${escAttr(leadId)}','${escAttr(doc.documentId)}',this)">Remove From Active Portal</button>`
-              : `<a class="btn red" href="/office-document-review?documentId=${encodeURIComponent(doc.documentId)}">Open Protected Permanent Delete</a>`
-          }
-        </div>
-        <div class="document-workspace-message"
-          id="document-message-${escAttr(doc.documentId)}"></div>
-      </details>
+      <div class="document-workspace-message"
+        id="document-message-${escAttr(doc.documentId)}"></div>
     </article>
   `;
 }
@@ -1199,12 +1270,31 @@ function renderTranscriptDocumentWorkspace(
 
   const summary=state.summary||{};
   const delivery=state.delivery||{};
+  const cleanup=state.cleanup||{};
+
+  const activeDocs=docs.filter(
+    (doc)=>String(doc.reviewStatus||"")!=="withdrawn"
+  );
+
+  const actionDocs=activeDocs.filter(
+    (doc)=>!["accepted"].includes(
+      String(doc.reviewStatus||"")
+    )
+  );
+
+  const completedDocs=activeDocs.filter(
+    (doc)=>String(doc.reviewStatus||"")==="accepted"
+  );
+
+  const removedDocs=docs.filter(
+    (doc)=>String(doc.reviewStatus||"")==="withdrawn"
+  );
 
   summaryBox.innerHTML=`
-    <span>Total: <strong>${Number(summary.totalDocuments||0)}</strong></span>
-    <span>Awaiting: <strong>${Number(summary.awaitingReview||0)}</strong></span>
-    <span>Accepted: <strong>${Number(summary.accepted||0)}</strong></span>
-    <span>Replacement: <strong>${Number(summary.needsReplacement||0)}</strong></span>
+    <span>Action Needed: <strong>${actionDocs.length}</strong></span>
+    <span>Completed: <strong>${completedDocs.length}</strong></span>
+    <span>Removed: <strong>${removedDocs.length}</strong></span>
+    <span>Total: <strong>${Number(summary.totalDocuments||docs.length||0)}</strong></span>
   `;
 
   const years=
@@ -1276,18 +1366,107 @@ function renderTranscriptDocumentWorkspace(
       </section>
     `;
 
-  box.innerHTML=
-    deliveryPanel+
-    (
-      docs.length
-        ? `<div class="document-list">${docs.map(
+  const actionPanel=actionDocs.length
+    ? `
+      <section class="document-priority">
+        <div class="document-section-head">
+          <div>
+            <h4>Action Needed</h4>
+            <p>These are the only documents that need an office decision now.</p>
+          </div>
+          <span class="document-count-badge">${actionDocs.length}</span>
+        </div>
+        <div class="document-list">
+          ${actionDocs.map(
             (doc)=>renderTranscriptDocumentCard(
               leadId,
               doc
             )
-          ).join("")}</div>`
-        : `<div class="document-empty">No Form 8821, identity, or secure transcript documents are linked to this request yet.</div>`
-    );
+          ).join("")}
+        </div>
+      </section>
+    `
+    : `
+      <section class="document-priority clear">
+        <div class="document-section-head">
+          <div>
+            <h4>No document action needed</h4>
+            <p>All active secure documents have already been reviewed.</p>
+          </div>
+          <span class="document-count-badge">0</span>
+        </div>
+      </section>
+    `;
+
+  const completedPanel=completedDocs.length
+    ? `
+      <details class="document-completed">
+        <summary>Completed Documents (${completedDocs.length})</summary>
+        <div class="document-completed-body">
+          <div class="document-list">
+            ${completedDocs.map(
+              (doc)=>renderTranscriptDocumentCard(
+                leadId,
+                doc,
+                {compact:true}
+              )
+            ).join("")}
+          </div>
+        </div>
+      </details>
+    `
+    : "";
+
+  const cleanupDate=
+    cleanup.nextReviewDate ||
+    cleanup.defaultReviewDate ||
+    "";
+
+  const adminHref=cleanup.adminDocumentId
+    ? `/office-document-review?documentId=${encodeURIComponent(cleanup.adminDocumentId)}`
+    : "/office-document-review";
+
+  const cleanupPanel=`
+    <details class="request-cleanup">
+      <summary>Retention &amp; Cleanup — Protected Administration</summary>
+      <div class="request-cleanup-body">
+        <div class="cleanup-grid">
+          <label>
+            <span>Portal Cleanup Review Date</span>
+            <input id="cleanup-date-${escAttr(leadId)}"
+              type="date"
+              value="${escAttr(cleanupDate)}">
+          </label>
+
+          <button class="btn secondary"
+            onclick="saveTranscriptWorkspaceRetention('${escAttr(leadId)}',this)">
+            Apply Date to Active Documents
+          </button>
+
+          <a class="btn red" href="${adminHref}">
+            Open Protected Cleanup Administration
+          </a>
+        </div>
+
+        <p class="cleanup-note">
+          Active documents: ${Number(cleanup.activeCount||activeDocs.length||0)} ·
+          Removed from portal: ${Number(cleanup.removedCount||removedDocs.length||0)} ·
+          Reminder dates scheduled: ${Number(cleanup.scheduledCount||0)}.
+          Completing this request automatically applies the displayed cleanup review date.
+          Permanent deletion is intentionally unavailable in this daily workspace.
+        </p>
+
+        <div class="document-workspace-message"
+          id="cleanup-message-${escAttr(leadId)}"></div>
+      </div>
+    </details>
+  `;
+
+  box.innerHTML=
+    deliveryPanel+
+    actionPanel+
+    completedPanel+
+    cleanupPanel;
 }
 
 async function loadTranscriptDocumentWorkspace(
@@ -1319,6 +1498,87 @@ async function loadTranscriptDocumentWorkspace(
         ${esc(error.message||"The secure document inbox could not be loaded.")}
       </div>
     `;
+  }
+}
+
+async function saveTranscriptWorkspaceRetention(
+  leadId,
+  button
+){
+  const retentionUntil=
+    document.getElementById(
+      `cleanup-date-${leadId}`
+    )?.value||"";
+
+  const messageBox=document.getElementById(
+    `cleanup-message-${leadId}`
+  );
+
+  if(!retentionUntil){
+    if(messageBox){
+      messageBox.textContent=
+        "Choose the portal cleanup review date.";
+      messageBox.classList.add("error");
+    }
+    return;
+  }
+
+  const oldText=button.textContent;
+  button.disabled=true;
+  button.textContent="Applying...";
+
+  try{
+    const data=await officeTranscriptFetch(
+      `/api/office-document-review/transcript-workspace/${encodeURIComponent(leadId)}/retention`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          retentionUntil
+        })
+      }
+    );
+
+    transcriptDocumentWorkspaces.set(
+      String(leadId),
+      data.state||{}
+    );
+
+    if(data.state){
+      renderTranscriptDocumentWorkspace(
+        String(leadId),
+        data.state
+      );
+    }else{
+      await loadTranscriptDocumentWorkspace(
+        leadId
+      );
+    }
+
+    const refreshedMessage=document.getElementById(
+      `cleanup-message-${leadId}`
+    );
+
+    if(refreshedMessage){
+      refreshedMessage.textContent=
+        data.message||
+        "The portal cleanup review date was applied.";
+      refreshedMessage.classList.remove("error");
+    }
+  }catch(error){
+    if(messageBox){
+      messageBox.textContent=
+        error.message||
+        "The cleanup review date could not be applied.";
+      messageBox.classList.add("error");
+    }
+  }finally{
+    if(document.body.contains(button)){
+      button.disabled=false;
+      button.textContent=oldText;
+    }
   }
 }
 
@@ -1675,7 +1935,12 @@ async function completeTranscriptRequestNow(
         headers:{
           "Content-Type":"application/json"
         },
-        body:"{}"
+        body:JSON.stringify({
+          retentionUntil:
+            document.getElementById(
+              `cleanup-date-${leadId}`
+            )?.value||""
+        })
       }
     );
 

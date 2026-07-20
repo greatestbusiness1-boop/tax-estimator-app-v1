@@ -9180,6 +9180,184 @@ function transcriptWorkspaceDocumentBelongsToLead(
   );
 }
 
+const DEFAULT_TRANSCRIPT_PORTAL_CLEANUP_DAYS =
+  Math.max(
+    1,
+    Math.min(
+      365,
+      Number(
+        process.env.TRANSCRIPT_PORTAL_CLEANUP_DAYS ||
+        30
+      ) || 30
+    )
+  );
+
+function getDefaultTranscriptPortalCleanupDate(
+  value = Date.now()
+) {
+  const base = new Date(
+    value || Date.now()
+  );
+
+  const safeBase =
+    Number.isFinite(base.getTime())
+      ? base
+      : new Date();
+
+  safeBase.setUTCDate(
+    safeBase.getUTCDate() +
+    DEFAULT_TRANSCRIPT_PORTAL_CLEANUP_DAYS
+  );
+
+  return getPhoenixDateOnly(
+    safeBase
+  );
+}
+
+function getTranscriptWorkspaceCleanupState(
+  documents = []
+) {
+  const safeDocuments =
+    Array.isArray(documents)
+      ? documents
+      : [];
+
+  const activeDocuments =
+    safeDocuments.filter(
+      (document = {}) =>
+        String(
+          document.reviewStatus ||
+          ""
+        ) !== "withdrawn"
+    );
+
+  const removedDocuments =
+    safeDocuments.filter(
+      (document = {}) =>
+        String(
+          document.reviewStatus ||
+          ""
+        ) === "withdrawn"
+    );
+
+  const scheduledDates =
+    activeDocuments
+      .map(
+        (document = {}) =>
+          normalizeClientDocumentRetentionDate(
+            document.retentionUntil
+          )
+      )
+      .filter(Boolean)
+      .sort();
+
+  return {
+    activeCount:
+      activeDocuments.length,
+    removedCount:
+      removedDocuments.length,
+    scheduledCount:
+      scheduledDates.length,
+    nextReviewDate:
+      scheduledDates[0] || "",
+    defaultReviewDate:
+      getDefaultTranscriptPortalCleanupDate(),
+    defaultDays:
+      DEFAULT_TRANSCRIPT_PORTAL_CLEANUP_DAYS,
+    adminDocumentId:
+      String(
+        removedDocuments[0]?.documentId ||
+        activeDocuments[0]?.documentId ||
+        ""
+      )
+  };
+}
+
+async function applyTranscriptWorkspaceRetentionReminder({
+  leadId,
+  retentionUntil
+}) {
+  const cleanLeadId = String(
+    leadId || ""
+  ).trim();
+
+  const cleanRetentionUntil =
+    normalizeClientDocumentRetentionDate(
+      retentionUntil
+    );
+
+  if (
+    !cleanLeadId ||
+    !cleanRetentionUntil
+  ) {
+    return {
+      ok: false,
+      error:
+        "A transcript request and valid cleanup review date are required."
+    };
+  }
+
+  const allDocuments =
+    await clientDocumentStore
+      .listForOffice({});
+
+  const activeDocuments =
+    allDocuments.filter(
+      (document = {}) =>
+        transcriptWorkspaceDocumentBelongsToLead(
+          document,
+          cleanLeadId
+        ) &&
+        String(
+          document.reviewStatus ||
+          ""
+        ) !== "withdrawn"
+    );
+
+  const failures = [];
+  let updatedCount = 0;
+
+  for (const document of activeDocuments) {
+    const result =
+      await clientDocumentStore
+        .updateReview({
+          documentId:
+            document.documentId,
+          patch: {
+            retentionUntil:
+              cleanRetentionUntil,
+            statusChangedAt:
+              document.statusChangedAt ||
+              document.updatedAt ||
+              ""
+          }
+        });
+
+    if (result?.ok) {
+      updatedCount += 1;
+    } else {
+      failures.push({
+        documentId:
+          document.documentId,
+        error:
+          result?.error ||
+          "The retention reminder could not be saved."
+      });
+    }
+  }
+
+  return {
+    ok:
+      failures.length === 0,
+    retentionUntil:
+      cleanRetentionUntil,
+    updatedCount,
+    totalDocuments:
+      activeDocuments.length,
+    failures
+  };
+}
+
 async function getTranscriptWorkspaceDocumentState(
   leadId
 ) {
@@ -9245,7 +9423,7 @@ async function getTranscriptWorkspaceDocumentState(
     ok: true,
     status: 200,
     state: {
-      version: "1.1.0",
+      version: "1.1.1",
       leadId:
         cleanLeadId,
       clientName:
@@ -9265,6 +9443,10 @@ async function getTranscriptWorkspaceDocumentState(
           .buildSummary(
             documents
           ),
+      cleanup:
+        getTranscriptWorkspaceCleanupState(
+          documents
+        ),
       delivery: {
         ready:
           Boolean(
@@ -9359,6 +9541,85 @@ app.get(
 );
 
 app.post(
+  "/api/office-document-review/transcript-workspace/:leadId/retention",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const leadId = String(
+      req.params?.leadId || ""
+    ).trim();
+
+    const candidate =
+      await findClientPortalLeadById(
+        leadId
+      );
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The transcript request could not be found."
+      });
+    }
+
+    const retentionRaw = String(
+      req.body?.retentionUntil ||
+      ""
+    ).trim();
+
+    const retentionUntil =
+      retentionRaw
+        ? normalizeClientDocumentRetentionDate(
+            retentionRaw
+          )
+        : getDefaultTranscriptPortalCleanupDate();
+
+    if (!retentionUntil) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Choose a valid portal cleanup review date."
+      });
+    }
+
+    const result =
+      await applyTranscriptWorkspaceRetentionReminder({
+        leadId,
+        retentionUntil
+      });
+
+    if (!result.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          result.error ||
+          "The cleanup review date could not be applied to every active document.",
+        result
+      });
+    }
+
+    const refreshed =
+      await getTranscriptWorkspaceDocumentState(
+        leadId
+      );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        `Portal cleanup review scheduled for ${retentionUntil} on ${result.updatedCount} active document${result.updatedCount === 1 ? "" : "s"}.`,
+      retentionUntil,
+      updatedCount:
+        result.updatedCount,
+      state:
+        refreshed.ok
+          ? refreshed.state
+          : null
+    });
+  }
+);
+
+app.post(
   "/api/office-document-review/transcript-workspace/:leadId/complete",
   requireOfficeDocumentReviewApi,
   async (req, res) => {
@@ -9444,6 +9705,44 @@ app.post(
     const now =
       new Date().toISOString();
 
+    const retentionRaw = String(
+      req.body?.retentionUntil ||
+      ""
+    ).trim();
+
+    const retentionUntil =
+      retentionRaw
+        ? normalizeClientDocumentRetentionDate(
+            retentionRaw
+          )
+        : getDefaultTranscriptPortalCleanupDate(
+            now
+          );
+
+    if (!retentionUntil) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Choose a valid portal cleanup review date before completing the request."
+      });
+    }
+
+    const retentionResult =
+      await applyTranscriptWorkspaceRetentionReminder({
+        leadId,
+        retentionUntil
+      });
+
+    if (!retentionResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          retentionResult.error ||
+          "The transcript request was not completed because the cleanup review date could not be scheduled for every active document.",
+        retentionResult
+      });
+    }
+
     const result =
       await updateLeadAfterStripePayment(
         leadId,
@@ -9465,6 +9764,8 @@ app.post(
             completedAt:
               existing.completedAt ||
               now,
+            documentCleanupReviewDate:
+              retentionUntil,
             lastSavedAt:
               now
           };
@@ -9488,7 +9789,7 @@ app.post(
             now;
 
           const note =
-            `[${new Date(now).toLocaleString()}] Transcript request completed after secure delivery.`;
+            `[${new Date(now).toLocaleString()}] Transcript request completed after secure delivery. Portal cleanup review scheduled for ${retentionUntil}.`;
 
           const oldNotes =
             typeof updated.notes === "string"
@@ -9516,7 +9817,10 @@ app.post(
     return res.status(200).json({
       ok: true,
       message:
-        "The transcript request was completed and moved out of open work.",
+        `The transcript request was completed and moved out of open work. Portal cleanup review is scheduled for ${retentionUntil}.`,
+      retentionUntil,
+      retentionScheduledCount:
+        retentionResult.updatedCount,
       lead:
         result.lead ||
         null
