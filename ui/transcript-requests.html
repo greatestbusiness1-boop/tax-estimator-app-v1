@@ -726,6 +726,7 @@ async function load(){
           ${field("IRS / CAF Authorization Status",select(`cafstatus-${id}`,tr.cafAuthorizationStatus||"",["Not submitted / not checked","Submitted / pending","Accepted / active","Rejected / needs correction","Not required for current step"]))}
           ${field("Identity Verified",select(`idv-${id}`,tr.identityVerified||"",["No","Yes"]))}
           ${field("Identity Verified Date",input(`iddate-${id}`,tr.identityVerifiedDate||"","date"))}
+          ${field("Identity Verification Storage / File Location",input(`idfile-${id}`,tr.identityVerificationFileLocation||""))}
           ${field("Transcript Type",select(`type-${id}`,tr.transcriptType||"",["Not sure / preparer review needed","Wage and Income Transcript","Account Transcript","Return Transcript","Record of Account","Verification of Non-Filing","Multiple transcript types"]))}
           ${field("Tax Years Needed",input(`years-${id}`,tr.yearsNeeded||tr.taxYears||""))}
           ${field("Client Issue / Reason",input(`issue-${id}`,tr.clientIssue||tr.clientComment||""))}
@@ -861,6 +862,7 @@ async function save(id){
     authorizationNotes:document.getElementById(`authnotes-${id}`)?.value || "",
     identityVerified:document.getElementById(`idv-${id}`).value,
     identityVerifiedDate:document.getElementById(`iddate-${id}`)?.value || "",
+    identityVerificationFileLocation:document.getElementById(`idfile-${id}`)?.value || "",
     transcriptType:document.getElementById(`type-${id}`).value,
     yearsNeeded:document.getElementById(`years-${id}`).value,
     clientIssue:document.getElementById(`issue-${id}`).value,

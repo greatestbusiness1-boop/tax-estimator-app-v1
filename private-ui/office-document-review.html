@@ -780,7 +780,7 @@
           <div class="fact"><span>Category</span><strong>${escapeHtml(doc.categoryLabel || doc.category || "Not recorded")}</strong></div>
           <div class="fact"><span>Uploaded</span><strong>${escapeHtml(formatDate(doc.uploadedAt))}</strong></div>
           <div class="fact"><span>File size</span><strong>${escapeHtml(formatBytes(doc.sizeBytes))}</strong></div>
-          <div class="fact"><span>Client reference</span><strong>${escapeHtml(doc.accountLeadId || "Not recorded")}</strong></div>
+          <div class="fact"><span>${doc.linkedLeadId ? "Linked request reference" : "Client reference"}</span><strong>${escapeHtml(doc.linkedLeadId || doc.accountLeadId || "Not recorded")}</strong></div>
         </div>
 
         ${doc.note ? `<div class="fact" style="margin-bottom:16px;"><span>Client note</span><strong>${escapeHtml(doc.note)}</strong></div>` : ""}
@@ -897,8 +897,17 @@
           minute: "2-digit"
         });
 
+        const transcriptSyncMessage =
+          data.transcriptIdentitySync &&
+          data.transcriptIdentitySync.ok
+            ? " — Transcript identity checklist updated"
+            : data.transcriptAuthorizationSync &&
+              data.transcriptAuthorizationSync.ok
+              ? " — Transcript Form 8821 checklist updated"
+              : "";
+
         showMessage(
-          `DOCUMENT REVIEW SAVED — ${statusLabel(reviewStatus)} — ${savedAt}`
+          `DOCUMENT REVIEW SAVED — ${statusLabel(reviewStatus)}${transcriptSyncMessage} — ${savedAt}`
         );
 
         const refreshedButton = document.getElementById("saveReviewButton");

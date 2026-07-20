@@ -1248,12 +1248,37 @@
                   `
                   : "";
 
+              const identityButton =
+                request.canUploadIdentityVerification
+                  ? `
+                    <button
+                      type="button"
+                      onclick="prepareIdentityVerificationUpload(
+                        '${escapeHtml(request.leadId)}',
+                        '${escapeHtml(request.taxYears)}'
+                      )"
+                    >
+                      Upload Identity Verification Document
+                    </button>
+                  `
+                  : "";
+
               const authorizationMessage =
                 request.authorizationPortalMessage
                   ? `
                     <div class="transcript-portal-note">
-                      <strong>Office message:</strong>
+                      <strong>Form 8821 office message:</strong>
                       ${escapeHtml(request.authorizationPortalMessage)}
+                    </div>
+                  `
+                  : "";
+
+              const identityMessage =
+                request.identityPortalMessage
+                  ? `
+                    <div class="transcript-portal-note">
+                      <strong>Identity verification office message:</strong>
+                      ${escapeHtml(request.identityPortalMessage)}
                     </div>
                   `
                   : "";
@@ -1281,6 +1306,11 @@
                       </div>
 
                       <div class="transcript-status-item">
+                        <span>Identity Verification</span>
+                        <strong>${escapeHtml(request.identityVerified || "No")}</strong>
+                      </div>
+
+                      <div class="transcript-status-item">
                         <span>Office Workflow</span>
                         <strong>${escapeHtml(request.internalStatus || "Open")}</strong>
                       </div>
@@ -1292,10 +1322,12 @@
                     </div>
 
                     ${authorizationMessage}
+                    ${identityMessage}
                   </div>
 
                   <div class="transcript-portal-actions">
                     ${backupButton}
+                    ${identityButton}
 
                     <button
                       class="secondary"
@@ -1392,6 +1424,86 @@
 
       showDocumentMessage(
         "SIGNED FORM 8821 BACKUP UPLOAD READY — choose the signed file, confirm the tax year, and click Upload Document Securely."
+      );
+    }
+
+    function prepareIdentityVerificationUpload(
+      leadId,
+      taxYears
+    ) {
+      pendingTranscriptUploadLeadId =
+        String(leadId || "").trim();
+
+      const year =
+        String(taxYears || "")
+          .match(/\b(19|20)\d{2}\b/)?.[0] ||
+        "";
+
+      const taxYearSelect =
+        document.getElementById(
+          "documentTaxYear"
+        );
+
+      const categorySelect =
+        document.getElementById(
+          "documentCategory"
+        );
+
+      const note =
+        document.getElementById(
+          "documentNote"
+        );
+
+      if (
+        year &&
+        [
+          ...taxYearSelect.options
+        ].some(
+          (option) =>
+            option.value === year
+        )
+      ) {
+        taxYearSelect.value = year;
+      }
+
+      if (
+        [
+          ...categorySelect.options
+        ].some(
+          (option) =>
+            option.value ===
+            "identity-verification"
+        )
+      ) {
+        categorySelect.value =
+          "identity-verification";
+      }
+
+      note.value =
+        "Identity verification document for IRS Transcript Help.";
+
+      document
+        .getElementById(
+          "documentCenter"
+        )
+        .scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      window.setTimeout(
+        () => {
+          document
+            .getElementById(
+              "documentFile"
+            )
+            .focus();
+        },
+        500
+      );
+
+      showDocumentMessage(
+        "IDENTITY VERIFICATION UPLOAD READY — choose the clear photo or PDF requested by the office, confirm the tax year, and click Upload Document Securely."
       );
     }
 

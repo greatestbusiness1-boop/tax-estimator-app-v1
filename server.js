@@ -3689,6 +3689,21 @@ function buildClientPortalTranscriptRequestSummary(
         transcriptRequest.identityVerified ||
         "No"
       ),
+    identityVerifiedDate:
+      String(
+        transcriptRequest.identityVerifiedDate ||
+        ""
+      ),
+    identityPortalReviewStatus:
+      String(
+        transcriptRequest.identityPortalReviewStatus ||
+        ""
+      ),
+    identityPortalMessage:
+      String(
+        transcriptRequest.identityPortalMessage ||
+        ""
+      ).slice(0, 1200),
     internalStatus:
       String(
         transcriptRequest.internalStatus ||
@@ -3719,6 +3734,12 @@ function buildClientPortalTranscriptRequestSummary(
     canUploadSigned8821:
       !completed &&
       !authorizationReceived,
+    canUploadIdentityVerification:
+      !completed &&
+      authorizationReceived &&
+      String(
+        transcriptRequest.identityVerified || ""
+      ).toLowerCase() !== "yes",
     nextAction:
       getClientPortalTranscriptNextAction(
         lead,
@@ -4526,10 +4547,30 @@ function getTranscriptAuthorizationInternalStatus(
     return "Waiting on payment";
   }
 
+  const authorizationStatus =
+    String(
+      transcriptRequest.authorizationStatus || ""
+    ).toLowerCase();
+
+  const authorizationReceived =
+    authorizationStatus.includes("received") ||
+    authorizationStatus.includes("signed") ||
+    Boolean(
+      transcriptRequest.authorizationReceivedDate
+    );
+
+  if (!authorizationReceived) {
+    return "Waiting on 8821";
+  }
+
   const identityVerified =
     String(
       transcriptRequest.identityVerified || ""
     ).toLowerCase() === "yes";
+
+  if (!identityVerified) {
+    return "Waiting on identity";
+  }
 
   const transcriptType =
     String(
@@ -4549,7 +4590,6 @@ function getTranscriptAuthorizationInternalStatus(
     !transcriptType.includes("not sure");
 
   return (
-    identityVerified &&
     typeReady &&
     years
   )
@@ -4712,6 +4752,165 @@ async function syncSigned8821DocumentToTranscriptRequest({
         accepted
           ? `[${new Date(reviewedAt).toLocaleString()}] Signed Form 8821 accepted from Secure Client Portal document ${document.originalName}.`
           : `[${new Date(reviewedAt).toLocaleString()}] Replacement signed Form 8821 requested for Secure Client Portal document ${document.originalName}.`;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes =
+        oldNotes
+          ? `${oldNotes}\n${note}`
+          : note;
+
+      return updated;
+    }
+  );
+}
+
+async function syncIdentityVerificationDocumentToTranscriptRequest({
+  document,
+  reviewStatus,
+  clientMessage,
+  reviewedAt
+}) {
+  if (
+    !document ||
+    document.category !== "identity-verification" ||
+    ![
+      "accepted",
+      "needs-replacement"
+    ].includes(reviewStatus)
+  ) {
+    return {
+      ok: true,
+      skipped: true
+    };
+  }
+
+  const linkedLeadId =
+    String(
+      document.linkedLeadId ||
+      document.accountLeadId ||
+      ""
+    ).trim();
+
+  if (!linkedLeadId) {
+    return {
+      ok: false,
+      error:
+        "The identity verification document is not linked to a transcript request."
+    };
+  }
+
+  const dateOnly =
+    String(reviewedAt || "")
+      .slice(0, 10);
+
+  return updateLeadAfterStripePayment(
+    linkedLeadId,
+    (record = {}) => {
+      const updated = {
+        ...record
+      };
+
+      const existing =
+        updated.transcriptRequest ||
+        updated.Request ||
+        {};
+
+      const completed =
+        String(updated.status || "")
+          .toLowerCase() ===
+          "transcript help - completed" ||
+        String(
+          existing.internalStatus || ""
+        ).toLowerCase() === "completed";
+
+      const accepted =
+        reviewStatus === "accepted";
+
+      const nextTranscriptRequest = {
+        ...existing,
+        requested: true,
+        identityVerified:
+          accepted
+            ? "Yes"
+            : "No",
+        identityVerifiedDate:
+          accepted
+            ? (
+                existing.identityVerifiedDate ||
+                dateOnly
+              )
+            : "",
+        identityVerificationFileLocation:
+          accepted
+            ? `Secure Client Portal Document: ${document.originalName} (${document.documentId})`
+            : "",
+        identityVerificationDocumentId:
+          accepted
+            ? document.documentId
+            : "",
+        identityPortalReviewStatus:
+          reviewStatus,
+        identityPortalMessage:
+          String(
+            clientMessage ||
+            (
+              accepted
+                ? "Your identity verification document was accepted by the office."
+                : "A replacement identity verification document is required."
+            )
+          ).slice(0, 1200),
+        identityReviewedAt:
+          String(reviewedAt || ""),
+        internalStatus:
+          completed
+            ? "Completed"
+            : getTranscriptAuthorizationInternalStatus({
+                ...existing,
+                identityVerified:
+                  accepted
+                    ? "Yes"
+                    : "No",
+                identityVerifiedDate:
+                  accepted
+                    ? (
+                        existing.identityVerifiedDate ||
+                        dateOnly
+                      )
+                    : ""
+              }),
+        lastSavedAt:
+          String(reviewedAt || "")
+      };
+
+      updated.transcriptRequest =
+        nextTranscriptRequest;
+
+      updated.Request = {
+        ...(updated.Request || {}),
+        ...nextTranscriptRequest
+      };
+
+      if (!completed) {
+        updated.status =
+          String(
+            nextTranscriptRequest.paymentStatus ||
+            ""
+          ).toLowerCase().includes("paid")
+            ? "Transcript Help - Paid / Needs Review"
+            : "Transcript Help - Payment Pending";
+      }
+
+      updated.updatedAt =
+        String(reviewedAt || "");
+
+      const note =
+        accepted
+          ? `[${new Date(reviewedAt).toLocaleString()}] Identity verification document accepted from Secure Client Portal document ${document.originalName}.`
+          : `[${new Date(reviewedAt).toLocaleString()}] Replacement identity verification document requested for Secure Client Portal document ${document.originalName}.`;
 
       const oldNotes =
         typeof updated.notes === "string"
@@ -8109,6 +8308,12 @@ app.post(
 
     let linkedLeadId = "";
 
+    const transcriptOnlyCategory =
+      [
+        "signed-8821",
+        "identity-verification"
+      ].includes(upload.category);
+
     if (requestedLinkedLeadId) {
       const linkedCandidate =
         await clientPortalSessionCanAccessLead(
@@ -8124,32 +8329,6 @@ app.post(
         });
       }
 
-      const linkedTranscriptRequest =
-        linkedCandidate.lead?.transcriptRequest ||
-        linkedCandidate.lead?.Request ||
-        {};
-
-      const isTranscriptRecord =
-        Boolean(
-          linkedTranscriptRequest.requested
-        ) ||
-        String(
-          linkedCandidate.lead?.status || ""
-        )
-          .toLowerCase()
-          .includes("transcript help");
-
-      if (
-        upload.category === "signed-8821" &&
-        !isTranscriptRecord
-      ) {
-        return res.status(409).json({
-          ok: false,
-          error:
-            "Signed Form 8821 must be linked to an IRS Transcript Help request."
-        });
-      }
-
       linkedLeadId =
         linkedCandidate.leadId;
     }
@@ -8161,6 +8340,40 @@ app.post(
           upload.taxYear,
           session.payload.accountLeadId
         );
+    }
+
+    if (transcriptOnlyCategory) {
+      const transcriptCandidate =
+        await clientPortalSessionCanAccessLead(
+          session,
+          linkedLeadId
+        );
+
+      const linkedTranscriptRequest =
+        transcriptCandidate?.lead?.transcriptRequest ||
+        transcriptCandidate?.lead?.Request ||
+        {};
+
+      const isTranscriptRecord =
+        Boolean(
+          linkedTranscriptRequest.requested
+        ) ||
+        String(
+          transcriptCandidate?.lead?.status || ""
+        )
+          .toLowerCase()
+          .includes("transcript help");
+
+      if (!isTranscriptRecord) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            upload.category ===
+              "identity-verification"
+              ? "Use the Upload Identity Verification Document button on the IRS Transcript Help request."
+              : "Use the Upload Signed Form 8821 — Backup button on the IRS Transcript Help request."
+        });
+      }
     }
 
     const now =
@@ -8550,6 +8763,7 @@ app.post(
     );
 
     let transcriptAuthorizationSync = null;
+    let transcriptIdentitySync = null;
 
     if (
       result.record.category ===
@@ -8577,6 +8791,36 @@ app.post(
           "[office document review] Signed Form 8821 transcript sync failed:",
           transcriptAuthorizationSync.error ||
           transcriptAuthorizationSync
+        );
+      }
+    }
+
+    if (
+      result.record.category ===
+        "identity-verification" &&
+      (
+        reviewStatus === "accepted" ||
+        reviewStatus ===
+          "needs-replacement"
+      )
+    ) {
+      transcriptIdentitySync =
+        await syncIdentityVerificationDocumentToTranscriptRequest({
+          document:
+            result.record,
+          reviewStatus,
+          clientMessage,
+          reviewedAt: now
+        });
+
+      if (
+        transcriptIdentitySync &&
+        !transcriptIdentitySync.ok
+      ) {
+        console.warn(
+          "[office document review] Identity verification transcript sync failed:",
+          transcriptIdentitySync.error ||
+          transcriptIdentitySync
         );
       }
     }
@@ -8610,7 +8854,8 @@ app.post(
           result.record
         ),
       summary,
-      transcriptAuthorizationSync
+      transcriptAuthorizationSync,
+      transcriptIdentitySync
     });
   }
 );
@@ -10097,8 +10342,15 @@ async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
         record.category || ""
       ).trim();
 
+      const linkedTranscriptCategory =
+        [
+          "signed-8821",
+          "identity-verification"
+        ].includes(category);
+
       const targetLeadId =
-        category === "signed-8821" && linkedLeadId
+        linkedTranscriptCategory &&
+        linkedLeadId
           ? linkedLeadId
           : accountLeadId;
 
