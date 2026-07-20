@@ -734,6 +734,7 @@ async function load(){
           ${field("Transcript Received Date",input(`received-${id}`,tr.transcriptReceivedDate||"","date"))}
           ${field("Delivery Method",select(`method-${id}`,tr.deliveryMethod||"",["Not delivered yet","Email","Client portal","Mail","Certified mail","In-person pickup"]))}
           ${field("Delivery Date",input(`deldate-${id}`,tr.deliveryDate||"","date"))}
+          ${field("Secure Transcript Delivery / File Location",input(`delfile-${id}`,tr.deliveryFileLocation||""))}
           ${field("Delivery Fee",input(`fee-${id}`,tr.deliveryFee||""))}
           ${field("Internal Status",select(`internal-${id}`,tr.internalStatus||"",["Open","Waiting on payment","Waiting on 8821","Waiting on transcript type","Ready to pull","Pulled / waiting review","Delivered / ready to complete","Completed"]))}
         </div>
@@ -742,6 +743,7 @@ async function load(){
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn" onclick="save('${esc(id)}')">Save Transcript Checklist</button>
           <button class="btn secondary" onclick="openPitBullTax()">Open PitBullTax for Form 8821</button>
+          <button class="btn secondary" onclick="openSecureTranscriptDelivery('${esc(id)}')">Open Secure Transcript Delivery</button>
           <button class="btn secondary" onclick="openAuthorizationEmail('${esc(id)}','${esc(lead?.contact?.email||"")}','${esc(lead?.contact?.name||"Client")}', this)">Open Email to Client</button>
           <span class="msg" id="msg-${esc(id)}"></span>
         </div>
@@ -756,6 +758,13 @@ function openPitBullTax(){
     "_blank",
     "noopener"
   );
+}
+
+function openSecureTranscriptDelivery(id){
+  const target =
+    `/office-document-review?transcriptDeliveryLeadId=${encodeURIComponent(id)}`;
+
+  window.location.href = target;
 }
 
 function copyAuthorizationMessage(id,btn){
@@ -870,6 +879,7 @@ async function save(id){
     transcriptReceivedDate:document.getElementById(`received-${id}`).value,
     deliveryMethod:document.getElementById(`method-${id}`).value,
     deliveryDate:document.getElementById(`deldate-${id}`).value,
+    deliveryFileLocation:document.getElementById(`delfile-${id}`)?.value || "",
     deliveryFee:document.getElementById(`fee-${id}`).value,
     internalStatus:document.getElementById(`internal-${id}`).value,
     internalNotes:document.getElementById(`notes-${id}`).value,

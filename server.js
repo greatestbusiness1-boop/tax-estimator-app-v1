@@ -388,6 +388,24 @@ function officeDocumentReviewAuthenticated(
     : null;
 }
 
+function getSafeOfficeDocumentReviewRedirect(
+  value
+) {
+  const target = String(
+    value || ""
+  ).trim();
+
+  return (
+    target ===
+      "/office-document-review" ||
+    target.startsWith(
+      "/office-document-review?"
+    )
+  )
+    ? target
+    : "/office-document-review";
+}
+
 function requireOfficeDocumentReviewPage(
   req,
   res,
@@ -416,8 +434,13 @@ function requireOfficeDocumentReviewPage(
     );
   }
 
+  const returnTo =
+    getSafeOfficeDocumentReviewRedirect(
+      req.originalUrl
+    );
+
   return res.redirect(
-    "/office-document-review/sign-in"
+    `/office-document-review/sign-in?next=${encodeURIComponent(returnTo)}`
   );
 }
 
@@ -3729,6 +3752,26 @@ function buildClientPortalTranscriptRequestSummary(
         transcriptRequest.deliveryDate ||
         ""
       ),
+    deliveryDocumentId:
+      String(
+        transcriptRequest.deliveryDocumentId ||
+        ""
+      ),
+    deliveryFileLocation:
+      String(
+        transcriptRequest.deliveryFileLocation ||
+        ""
+      ),
+    deliveryPortalStatus:
+      String(
+        transcriptRequest.deliveryPortalStatus ||
+        ""
+      ),
+    deliveryPortalMessage:
+      String(
+        transcriptRequest.deliveryPortalMessage ||
+        ""
+      ).slice(0, 1200),
     completed,
     authorizationReceived,
     canUploadSigned8821:
@@ -4107,6 +4150,46 @@ function decodeClientDocumentHeader(
   }
 }
 
+function getClientUploadDocumentCategories() {
+  return CLIENT_DOCUMENT_CATEGORIES.filter(
+    (category) =>
+      category.officeOnly !== true
+  );
+}
+
+function getPhoenixDateOnly(value) {
+  const parsed = new Date(
+    value || Date.now()
+  );
+
+  if (!Number.isFinite(parsed.getTime())) {
+    return "";
+  }
+
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone: "America/Phoenix",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }
+    ).formatToParts(parsed);
+
+  const values =
+    Object.fromEntries(
+      parts.map(
+        (part) => [
+          part.type,
+          part.value
+        ]
+      )
+    );
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function getClientDocumentTaxYearOptions() {
   const currentYear =
     new Date().getFullYear();
@@ -4162,7 +4245,7 @@ async function getClientPortalDocumentCenterState(
         CLIENT_DOCUMENT_MAX_BYTES,
       maxFileMegabytes: 15,
       categories:
-        CLIENT_DOCUMENT_CATEGORIES,
+        getClientUploadDocumentCategories(),
       taxYears:
         getClientDocumentTaxYearOptions(),
       allowedFileTypes: [
@@ -4218,7 +4301,7 @@ async function getClientPortalDocumentCenterState(
       CLIENT_DOCUMENT_MAX_BYTES,
     maxFileMegabytes: 15,
     categories:
-      CLIENT_DOCUMENT_CATEGORIES,
+      getClientUploadDocumentCategories(),
     taxYears:
       getClientDocumentTaxYearOptions(),
     allowedFileTypes: [
@@ -4975,6 +5058,366 @@ async function syncIdentityVerificationDocumentToTranscriptRequest({
       return updated;
     }
   );
+}
+
+
+function getTranscriptRequestRecord(
+  lead = {}
+) {
+  return (
+    lead.transcriptRequest ||
+    lead.Request ||
+    {}
+  );
+}
+
+function getSecureTranscriptDeliveryMissingItems(
+  lead = {},
+  transcriptRequest = {}
+) {
+  const missing = [];
+
+  const payment = String(
+    transcriptRequest.paymentStatus || ""
+  ).toLowerCase();
+
+  if (
+    !payment.includes("paid") &&
+    !payment.includes("verified")
+  ) {
+    missing.push("Verify payment");
+  }
+
+  const authorization = String(
+    transcriptRequest.authorizationStatus || ""
+  ).toLowerCase();
+
+  if (
+    !authorization.includes("signed") &&
+    !authorization.includes("received") &&
+    !transcriptRequest.authorizationReceivedDate
+  ) {
+    missing.push("Receive signed Form 8821");
+  }
+
+  if (
+    String(
+      transcriptRequest.identityVerified || ""
+    ).toLowerCase() !== "yes" ||
+    !transcriptRequest.identityVerifiedDate
+  ) {
+    missing.push("Complete identity verification");
+  }
+
+  const transcriptType = String(
+    transcriptRequest.transcriptType || ""
+  ).trim();
+
+  if (
+    !transcriptType ||
+    /need|not sure/i.test(transcriptType)
+  ) {
+    missing.push("Select transcript type");
+  }
+
+  const taxYears = String(
+    transcriptRequest.yearsNeeded ||
+    transcriptRequest.taxYears ||
+    ""
+  ).trim();
+
+  if (!taxYears || /need/i.test(taxYears)) {
+    missing.push("Enter tax year(s)");
+  }
+
+  if (!transcriptRequest.transcriptPulledDate) {
+    missing.push("Record PitBullTax pull date");
+  }
+
+  return missing;
+}
+
+async function getSecureTranscriptDeliveryTarget(
+  leadId
+) {
+  const cleanLeadId = String(
+    leadId || ""
+  ).trim();
+
+  if (!cleanLeadId) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "A transcript request reference is required."
+    };
+  }
+
+  const candidate =
+    await findClientPortalLeadById(
+      cleanLeadId
+    );
+
+  if (!candidate) {
+    return {
+      ok: false,
+      status: 404,
+      error:
+        "The transcript request could not be found."
+    };
+  }
+
+  const lead = candidate.lead || {};
+  const transcriptRequest =
+    getTranscriptRequestRecord(lead);
+
+  const isTranscriptRequest =
+    Boolean(transcriptRequest.requested) ||
+    String(lead.status || "")
+      .toLowerCase()
+      .includes("transcript help");
+
+  if (!isTranscriptRequest) {
+    return {
+      ok: false,
+      status: 409,
+      error:
+        "The selected client record is not an IRS Transcript Help request."
+    };
+  }
+
+  const email = getLeadEmailValue(
+    candidate.raw
+  );
+
+  const portal = email
+    ? await findActiveClientPortalAccountByEmail(
+        email
+      )
+    : null;
+
+  const missing =
+    getSecureTranscriptDeliveryMissingItems(
+      lead,
+      transcriptRequest
+    );
+
+  if (!email) {
+    missing.unshift(
+      "Add the client email address"
+    );
+  }
+
+  if (!portal?.portalId) {
+    missing.push(
+      "Activate the client's secure portal account"
+    );
+  }
+
+  return {
+    ok: true,
+    leadId: cleanLeadId,
+    lead,
+    candidate,
+    transcriptRequest,
+    email,
+    portal,
+    missing,
+    ready:
+      missing.length === 0,
+    clientName:
+      getLeadNameValue(
+        candidate.raw
+      ) || "Client",
+    taxYears:
+      String(
+        transcriptRequest.yearsNeeded ||
+        transcriptRequest.taxYears ||
+        ""
+      ),
+    transcriptType:
+      String(
+        transcriptRequest.transcriptType ||
+        ""
+      )
+  };
+}
+
+async function syncSecureTranscriptDeliveryToTranscriptRequest({
+  document,
+  deliveredAt,
+  clientMessage
+}) {
+  if (
+    !document ||
+    document.category !==
+      "irs-transcript-delivery"
+  ) {
+    return {
+      ok: true,
+      skipped: true
+    };
+  }
+
+  const linkedLeadId = String(
+    document.linkedLeadId ||
+    document.accountLeadId ||
+    ""
+  ).trim();
+
+  if (!linkedLeadId) {
+    return {
+      ok: false,
+      error:
+        "The secure transcript is not linked to a transcript request."
+    };
+  }
+
+  const dateOnly =
+    getPhoenixDateOnly(
+      deliveredAt
+    );
+
+  return updateLeadAfterStripePayment(
+    linkedLeadId,
+    (record = {}) => {
+      const updated = {
+        ...record
+      };
+
+      const existing =
+        getTranscriptRequestRecord(
+          updated
+        );
+
+      const completed =
+        String(updated.status || "")
+          .toLowerCase() ===
+          "transcript help - completed" ||
+        String(
+          existing.internalStatus || ""
+        ).toLowerCase() === "completed";
+
+      const nextTranscriptRequest = {
+        ...existing,
+        requested: true,
+        transcriptReceivedDate:
+          existing.transcriptReceivedDate ||
+          dateOnly,
+        deliveryMethod:
+          "Client portal",
+        deliveryDate:
+          dateOnly,
+        deliveryDocumentId:
+          document.documentId,
+        deliveryFileLocation:
+          `Secure Client Portal Document: ${document.originalName} (${document.documentId})`,
+        deliveryPortalStatus:
+          "delivered",
+        deliveryPortalMessage:
+          String(
+            clientMessage ||
+            "Your IRS transcript is ready for secure download in the client portal."
+          ).slice(0, 1200),
+        deliveryUploadedAt:
+          String(deliveredAt || ""),
+        internalStatus:
+          completed
+            ? "Completed"
+            : "Delivered / ready to complete",
+        lastSavedAt:
+          String(deliveredAt || "")
+      };
+
+      updated.transcriptRequest =
+        nextTranscriptRequest;
+
+      updated.Request = {
+        ...(updated.Request || {}),
+        ...nextTranscriptRequest
+      };
+
+      if (!completed) {
+        updated.status =
+          "Transcript Help - Paid / Needs Review";
+      }
+
+      updated.updatedAt =
+        String(deliveredAt || "");
+
+      const note =
+        `[${new Date(deliveredAt).toLocaleString()}] IRS transcript delivered through the Secure Client Portal document ${document.originalName}.`;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes = oldNotes
+        ? `${oldNotes}\n${note}`
+        : note;
+
+      return updated;
+    }
+  );
+}
+
+async function sendSecureTranscriptDeliveryEmail({
+  to,
+  clientName,
+  document,
+  transcriptRequest
+}) {
+  const email = normalizeEmail(to);
+
+  if (
+    !email ||
+    !EMAIL_USER ||
+    !EMAIL_APP_PASSWORD ||
+    !document
+  ) {
+    return;
+  }
+
+  const portalUrl =
+    String(APP_BASE_URL || "")
+      .replace(/\/+$/, "") +
+    "/client-portal";
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject:
+        "Your IRS transcript is ready in the secure portal",
+      text:
+`Hello ${clientName || "Client"},
+
+Your IRS transcript is ready for secure download.
+
+Transcript type:
+${transcriptRequest?.transcriptType || "IRS Transcript"}
+
+Tax year(s):
+${transcriptRequest?.yearsNeeded || transcriptRequest?.taxYears || document.taxYear}
+
+Secure file:
+${document.originalName}
+
+Sign in to your Secure Client Portal to download the transcript:
+${portalUrl}
+
+For your protection, the transcript is not attached to this email. Do not email Social Security numbers, identity documents, passwords, security codes, or IRS transcripts.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+  } catch (error) {
+    console.warn(
+      "[secure transcript delivery] Client notification email could not be sent:",
+      error?.message || error
+    );
+  }
 }
 
 async function getOfficeDocumentReviewState(
@@ -7135,7 +7578,9 @@ app.get(
       officeDocumentReviewLocalBypass()
     ) {
       return res.redirect(
-        "/office-document-review"
+        getSafeOfficeDocumentReviewRedirect(
+          req.query?.next
+        )
       );
     }
 
@@ -7170,13 +7615,17 @@ app.post(
   (req, res) => {
     setClientPortalNoStore(res);
 
+    const redirectTo =
+      getSafeOfficeDocumentReviewRedirect(
+        req.body?.next
+      );
+
     if (
       officeDocumentReviewLocalBypass()
     ) {
       return res.status(200).json({
         ok: true,
-        redirectTo:
-          "/office-document-review",
+        redirectTo,
         mode:
           "local-development-bypass"
       });
@@ -7215,8 +7664,7 @@ app.post(
 
     return res.status(200).json({
       ok: true,
-      redirectTo:
-        "/office-document-review",
+      redirectTo,
       mode:
         "signed-office-session"
     });
@@ -8336,6 +8784,17 @@ app.post(
     const upload =
       validation.value;
 
+    if (
+      upload.category ===
+      "irs-transcript-delivery"
+    ) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "IRS transcripts can only be delivered by the secure office workflow."
+      });
+    }
+
     const duplicate =
       await clientDocumentStore.findDuplicate({
         portalId:
@@ -8593,6 +9052,332 @@ app.get(
   }
 );
 
+
+
+app.get(
+  "/api/office-document-review/transcript-delivery/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    try {
+      const target =
+        await getSecureTranscriptDeliveryTarget(
+          req.params?.leadId
+        );
+
+      if (!target.ok) {
+        return res.status(
+          target.status || 400
+        ).json({
+          ok: false,
+          error: target.error
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        target: {
+          leadId:
+            target.leadId,
+          clientName:
+            target.clientName,
+          email:
+            target.email,
+          portalReady:
+            Boolean(
+              target.portal?.portalId
+            ),
+          portalAccountLeadId:
+            String(
+              target.portal?.leadId || ""
+            ),
+          transcriptType:
+            target.transcriptType,
+          taxYears:
+            target.taxYears,
+          transcriptPulledDate:
+            String(
+              target.transcriptRequest
+                .transcriptPulledDate || ""
+            ),
+          transcriptReceivedDate:
+            String(
+              target.transcriptRequest
+                .transcriptReceivedDate || ""
+            ),
+          deliveryDate:
+            String(
+              target.transcriptRequest
+                .deliveryDate || ""
+            ),
+          deliveryDocumentId:
+            String(
+              target.transcriptRequest
+                .deliveryDocumentId || ""
+            ),
+          ready:
+            target.ready,
+          missing:
+            target.missing
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          error?.message ||
+          "The secure transcript delivery record could not be loaded."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/office-document-review/transcript-delivery/upload",
+  requireOfficeDocumentReviewApi,
+  parseClientDocumentUpload,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    try {
+      const linkedLeadId =
+        cleanClientDocumentText(
+          decodeClientDocumentHeader(
+            req.headers[
+              "x-document-linked-lead-id"
+            ],
+            220
+          ),
+          220
+        );
+
+      const target =
+        await getSecureTranscriptDeliveryTarget(
+          linkedLeadId
+        );
+
+      if (!target.ok) {
+        return res.status(
+          target.status || 400
+        ).json({
+          ok: false,
+          error: target.error
+        });
+      }
+
+      if (!target.ready) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            `Complete these transcript checklist items first: ${target.missing.join(", ")}.`,
+          missing:
+            target.missing
+        });
+      }
+
+      const validation =
+        validateDocumentUpload({
+          buffer: req.body,
+          originalName:
+            decodeClientDocumentHeader(
+              req.headers[
+                "x-document-file-name"
+              ],
+              220
+            ),
+          contentType:
+            decodeClientDocumentHeader(
+              req.headers[
+                "x-document-content-type"
+              ],
+              120
+            ),
+          taxYear:
+            decodeClientDocumentHeader(
+              req.headers[
+                "x-document-tax-year"
+              ],
+              20
+            ),
+          category:
+            "irs-transcript-delivery",
+          note:
+            decodeClientDocumentHeader(
+              req.headers[
+                "x-document-note"
+              ],
+              500
+            )
+        });
+
+      if (!validation.ok) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            validation.errors.join(" "),
+          errors:
+            validation.errors
+        });
+      }
+
+      const upload =
+        validation.value;
+
+      const duplicate =
+        await clientDocumentStore.findDuplicate({
+          portalId:
+            target.portal.portalId,
+          email:
+            target.email,
+          taxYear:
+            upload.taxYear,
+          sha256:
+            upload.sha256
+        });
+
+      if (duplicate) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "This same transcript file is already saved under the selected tax year."
+        });
+      }
+
+      const now =
+        new Date().toISOString();
+
+      const clientMessage =
+        "Your IRS transcript is ready for secure download in the client portal.";
+
+      const saveResult =
+        await clientDocumentStore.upload({
+          buffer:
+            upload.buffer,
+          record: {
+            documentId:
+              crypto.randomUUID(),
+            portalId:
+              target.portal.portalId,
+            accountLeadId:
+              target.portal.leadId,
+            linkedLeadId:
+              target.leadId,
+            email:
+              target.email,
+            taxYear:
+              upload.taxYear,
+            category:
+              upload.category,
+            originalName:
+              upload.originalName,
+            extension:
+              upload.extension,
+            contentType:
+              upload.contentType,
+            sizeBytes:
+              upload.sizeBytes,
+            sha256:
+              upload.sha256,
+            note:
+              upload.note ||
+              "IRS transcript securely delivered by Greatest Business Solution LLC.",
+            reviewStatus:
+              "accepted",
+            clientVisible: true,
+            officeNote:
+              "Uploaded by the office for secure client delivery.",
+            clientMessage,
+            reviewedAt: now,
+            reviewedBy:
+              "Greatest Business Solution LLC",
+            statusChangedAt: now,
+            uploadedAt: now,
+            updatedAt: now
+          }
+        });
+
+      if (!saveResult.ok) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            saveResult.error ||
+            "The transcript could not be saved to private storage."
+        });
+      }
+
+      const portalRecords =
+        await clientDocumentStore.listForPortal({
+          portalId:
+            target.portal.portalId,
+          email:
+            target.email
+        });
+
+      await syncClientDocumentSummaryToLinkedLead(
+        saveResult.record,
+        portalRecords
+      );
+
+      const transcriptDeliverySync =
+        await syncSecureTranscriptDeliveryToTranscriptRequest({
+          document:
+            saveResult.record,
+          deliveredAt: now,
+          clientMessage
+        });
+
+      if (
+        !transcriptDeliverySync ||
+        !transcriptDeliverySync.ok
+      ) {
+        console.warn(
+          "[secure transcript delivery] Transcript checklist sync failed:",
+          transcriptDeliverySync?.error ||
+          transcriptDeliverySync
+        );
+      }
+
+      void sendSecureTranscriptDeliveryEmail({
+        to:
+          target.email,
+        clientName:
+          target.clientName,
+        document:
+          saveResult.record,
+        transcriptRequest:
+          target.transcriptRequest
+      });
+
+      return res.status(201).json({
+        ok: true,
+        message:
+          "SECURE TRANSCRIPT DELIVERED — CLIENT PORTAL AND TRANSCRIPT CHECKLIST UPDATED.",
+        document:
+          officeDocumentRecord(
+            saveResult.record
+          ),
+        summary:
+          clientDocumentStore.buildSummary(
+            portalRecords
+          ),
+        transcriptDeliverySync
+      });
+    } catch (error) {
+      console.error(
+        "[secure transcript delivery] Upload failed:",
+        error?.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          error?.message ||
+          "The transcript could not be delivered securely."
+      });
+    }
+  }
+);
 
 app.get(
   "/api/office-document-review/state",

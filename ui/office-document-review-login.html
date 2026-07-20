@@ -34,6 +34,12 @@
     </div>
   </main>
   <script>
+    const officeReviewReturnTo =
+      new URLSearchParams(
+        window.location.search
+      ).get("next") ||
+      "/office-document-review";
+
     document.getElementById("form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const message = document.getElementById("message");
@@ -44,7 +50,8 @@
           headers:{"Content-Type":"application/json"},
           credentials:"same-origin",
           body:JSON.stringify({
-            accessKey:document.getElementById("accessKey").value
+            accessKey:document.getElementById("accessKey").value,
+            next:officeReviewReturnTo
           })
         });
         const data = await response.json();

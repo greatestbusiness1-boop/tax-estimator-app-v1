@@ -393,15 +393,19 @@
       gap:9px;
       min-width:220px
     }
-    .transcript-portal-actions button{
+    .transcript-portal-actions button,
+    .transcript-portal-actions a{
       border:0;
       background:var(--navy);
       color:#fff;
       padding:12px 14px;
       font-weight:900;
-      cursor:pointer
+      cursor:pointer;
+      text-decoration:none;
+      text-align:center
     }
-    .transcript-portal-actions button.secondary{
+    .transcript-portal-actions button.secondary,
+    .transcript-portal-actions a.secondary{
       background:#fff;
       color:var(--navy);
       border:1px solid var(--navy)
@@ -1263,6 +1267,27 @@
                   `
                   : "";
 
+              const secureTranscriptButton =
+                request.deliveryDocumentId
+                  ? `
+                    <a
+                      href="/api/client-portal/documents/${encodeURIComponent(request.deliveryDocumentId)}/download"
+                    >
+                      Download Secure IRS Transcript
+                    </a>
+                  `
+                  : "";
+
+              const deliveryMessage =
+                request.deliveryPortalMessage
+                  ? `
+                    <div class="transcript-portal-note">
+                      <strong>Secure delivery:</strong>
+                      ${escapeHtml(request.deliveryPortalMessage)}
+                    </div>
+                  `
+                  : "";
+
               const authorizationMessage =
                 request.authorizationPortalMessage
                   ? `
@@ -1323,9 +1348,11 @@
 
                     ${authorizationMessage}
                     ${identityMessage}
+                    ${deliveryMessage}
                   </div>
 
                   <div class="transcript-portal-actions">
+                    ${secureTranscriptButton}
                     ${backupButton}
                     ${identityButton}
 
@@ -1622,6 +1649,10 @@
                 yearDocuments
                   .map(
                     (document) => {
+                      const isSecureTranscript =
+                        document.category ===
+                        "irs-transcript-delivery";
+
                       const note =
                         document.note
                           ? `
@@ -1646,7 +1677,7 @@
                         `/api/client-portal/documents/${encodeURIComponent(document.documentId)}/download`;
 
                       return `
-                        <article class="document-item">
+                        <article class="document-item ${isSecureTranscript ? "transcript-delivery" : ""}">
                           <div>
                             <h4>${escapeHtml(document.originalName || "Document")}</h4>
 
@@ -1662,7 +1693,11 @@
                             ${clientMessage}
 
                             <span class="document-status-pill">
-                              ${escapeHtml(document.statusLabel || "Received — Awaiting Office Review")}
+                              ${escapeHtml(
+                                isSecureTranscript
+                                  ? "Ready for Secure Download"
+                                  : document.statusLabel || "Received — Awaiting Office Review"
+                              )}
                             </span>
                           </div>
 
@@ -1671,7 +1706,7 @@
                               class="document-download"
                               href="${downloadUrl}"
                             >
-                              Download My Copy
+                              ${isSecureTranscript ? "Download Secure Transcript" : "Download My Copy"}
                             </a>
                           </div>
                         </article>

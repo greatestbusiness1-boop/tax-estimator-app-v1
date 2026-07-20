@@ -429,15 +429,88 @@
       font-size:13px;
       font-weight:700;
     }
+    .transcript-delivery-panel{
+      max-width:1464px;
+      margin:0 auto 18px;
+      padding:20px;
+      background:#fff;
+      border:1px solid #9fceb3;
+      border-top:7px solid var(--green);
+      box-shadow:var(--shadow);
+      scroll-margin-top:88px;
+    }
+    .transcript-delivery-panel[hidden]{display:none}
+    .transcript-delivery-head{
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      margin-bottom:15px;
+    }
+    .transcript-delivery-head h2{
+      margin:0 0 5px;
+      color:var(--navy);
+      font:900 27px Georgia,serif;
+    }
+    .transcript-delivery-head p{
+      margin:0;
+      color:var(--muted);
+    }
+    .transcript-delivery-facts{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .transcript-delivery-status{
+      margin-bottom:14px;
+      padding:12px 14px;
+      border-left:5px solid var(--orange);
+      background:#fff7e6;
+      font-weight:900;
+    }
+    .transcript-delivery-status.ready{
+      border-left-color:var(--green);
+      background:#edf8f2;
+      color:#0c4a2d;
+    }
+    .transcript-delivery-form{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      align-items:end;
+    }
+    .transcript-delivery-form .full{
+      grid-column:1/-1;
+    }
+    .transcript-delivery-message{
+      display:none;
+      margin-top:14px;
+      padding:13px 14px;
+      border-left:5px solid var(--green);
+      background:#edf8f2;
+      font-weight:900;
+    }
+    .transcript-delivery-message.show{display:block}
+    .transcript-delivery-message.error{
+      border-left-color:var(--red);
+      background:#fff0ef;
+      color:#8c1d18;
+    }
     @media(max-width:1050px){
       .layout{grid-template-columns:1fr}
       .document-list{max-height:520px}
       .production-checks{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .transcript-delivery-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
     }
     @media(max-width:700px){
       .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
       .filters,.form-grid,.detail-grid{grid-template-columns:1fr}
       .production-checks{grid-template-columns:1fr}
+      .transcript-delivery-facts,
+      .transcript-delivery-form{grid-template-columns:1fr}
+      .transcript-delivery-form .full{grid-column:auto}
       .form-field.full{grid-column:auto}
     }
   </style>
@@ -469,6 +542,50 @@
       <button class="button secondary" id="runProductionReadinessButton" type="button">Run Readiness Check</button>
       <span class="production-note">No secret values are displayed. Local testing remains separate from live activation.</span>
     </div>
+  </section>
+
+  <section class="transcript-delivery-panel" id="transcriptDeliveryPanel" hidden>
+    <div class="transcript-delivery-head">
+      <div>
+        <h2>Secure IRS Transcript Delivery</h2>
+        <p>Upload the completed IRS transcript directly into the correct client portal. The file is accepted immediately, the client is notified, and the Transcript Service Checklist is updated automatically.</p>
+      </div>
+      <a class="button secondary" id="returnToTranscriptRequest" href="/transcript-requests">Return to Transcript Request</a>
+    </div>
+
+    <div class="transcript-delivery-facts">
+      <div class="fact"><span>Client</span><strong id="deliveryClientName">Loading...</strong></div>
+      <div class="fact"><span>Client email</span><strong id="deliveryClientEmail">Loading...</strong></div>
+      <div class="fact"><span>Transcript type</span><strong id="deliveryTranscriptType">Loading...</strong></div>
+      <div class="fact"><span>Tax year(s)</span><strong id="deliveryTaxYears">Loading...</strong></div>
+    </div>
+
+    <div class="transcript-delivery-status" id="transcriptDeliveryStatus">
+      Checking the transcript checklist and secure portal account...
+    </div>
+
+    <form class="transcript-delivery-form" id="transcriptDeliveryForm">
+      <div class="form-field">
+        <label for="transcriptDeliveryTaxYear">Tax year</label>
+        <select id="transcriptDeliveryTaxYear"></select>
+      </div>
+
+      <div class="form-field">
+        <label for="transcriptDeliveryFile">IRS transcript file</label>
+        <input id="transcriptDeliveryFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" required>
+      </div>
+
+      <div class="form-field full">
+        <label for="transcriptDeliveryNote">Portal document note</label>
+        <textarea id="transcriptDeliveryNote">IRS transcript securely delivered by Greatest Business Solution LLC.</textarea>
+      </div>
+
+      <div class="actions full">
+        <button class="button green" id="transcriptDeliveryButton" type="submit">Upload &amp; Deliver Transcript Securely</button>
+      </div>
+    </form>
+
+    <div class="transcript-delivery-message" id="transcriptDeliveryMessage" role="status" aria-live="assertive"></div>
   </section>
 
   <div
@@ -565,6 +682,12 @@
 
     let currentState = null;
     let selectedDocumentId = "";
+    let transcriptDeliveryTarget = null;
+
+    const transcriptDeliveryLeadId =
+      new URLSearchParams(
+        window.location.search
+      ).get("transcriptDeliveryLeadId") || "";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -711,6 +834,312 @@
             </article>
           `).join("")
         : '<div class="empty">Production readiness details are not available yet.</div>';
+    }
+
+    function setTranscriptDeliveryMessage(
+      text,
+      type = "success"
+    ) {
+      const box = document.getElementById(
+        "transcriptDeliveryMessage"
+      );
+
+      box.textContent = String(text || "");
+      box.className =
+        `transcript-delivery-message show ${type === "error" ? "error" : ""}`.trim();
+    }
+
+    function buildTranscriptDeliveryTaxYears(
+      value
+    ) {
+      const years = Array.from(
+        new Set(
+          String(value || "")
+            .match(/\b(19|20)\d{2}\b/g) ||
+          []
+        )
+      );
+
+      if (years.length > 1) {
+        return [
+          "multiple",
+          ...years
+        ];
+      }
+
+      return years.length
+        ? years
+        : [""];
+    }
+
+    function renderTranscriptDeliveryTarget(
+      target
+    ) {
+      const panel = document.getElementById(
+        "transcriptDeliveryPanel"
+      );
+
+      panel.hidden = false;
+
+      document.getElementById(
+        "deliveryClientName"
+      ).textContent =
+        target.clientName || "Client";
+
+      document.getElementById(
+        "deliveryClientEmail"
+      ).textContent =
+        target.email || "Not recorded";
+
+      document.getElementById(
+        "deliveryTranscriptType"
+      ).textContent =
+        target.transcriptType ||
+        "Not selected";
+
+      document.getElementById(
+        "deliveryTaxYears"
+      ).textContent =
+        target.taxYears ||
+        "Not entered";
+
+      document.getElementById(
+        "returnToTranscriptRequest"
+      ).href =
+        `/transcript-requests?leadId=${encodeURIComponent(target.leadId)}`;
+
+      const status = document.getElementById(
+        "transcriptDeliveryStatus"
+      );
+
+      const button = document.getElementById(
+        "transcriptDeliveryButton"
+      );
+
+      if (target.ready) {
+        status.className =
+          "transcript-delivery-status ready";
+        status.textContent =
+          "READY FOR SECURE DELIVERY — the transcript checklist and client portal account are ready.";
+        button.disabled = false;
+      } else {
+        status.className =
+          "transcript-delivery-status";
+        status.textContent =
+          `ACTION REQUIRED BEFORE DELIVERY: ${(target.missing || []).join("; ")}.`;
+        button.disabled = true;
+      }
+
+      const taxYearSelect =
+        document.getElementById(
+          "transcriptDeliveryTaxYear"
+        );
+
+      const years =
+        buildTranscriptDeliveryTaxYears(
+          target.taxYears
+        );
+
+      taxYearSelect.innerHTML = years
+        .map(
+          (year) =>
+            `<option value="${escapeHtml(year)}">${escapeHtml(
+              year === "multiple"
+                ? "Multiple Tax Years"
+                : year
+                  ? `Tax Year ${year}`
+                  : "Tax year required"
+            )}</option>`
+        )
+        .join("");
+
+      if (!years[0]) {
+        button.disabled = true;
+      }
+
+      panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    async function loadTranscriptDeliveryTarget() {
+      if (!transcriptDeliveryLeadId) {
+        return;
+      }
+
+      const response = await fetch(
+        `/api/office-document-review/transcript-delivery/${encodeURIComponent(transcriptDeliveryLeadId)}`,
+        {
+          credentials: "same-origin",
+          cache: "no-store"
+        }
+      );
+
+      if (response.status === 401) {
+        window.location.href =
+          "/office-document-review/sign-in";
+        return;
+      }
+
+      const data = await response
+        .json()
+        .catch(() => ({}));
+
+      if (!response.ok || !data.ok) {
+        document.getElementById(
+          "transcriptDeliveryPanel"
+        ).hidden = false;
+
+        setTranscriptDeliveryMessage(
+          data.error ||
+          "The transcript delivery record could not be loaded.",
+          "error"
+        );
+        return;
+      }
+
+      transcriptDeliveryTarget =
+        data.target;
+
+      renderTranscriptDeliveryTarget(
+        transcriptDeliveryTarget
+      );
+    }
+
+    async function uploadSecureTranscript(
+      event
+    ) {
+      event.preventDefault();
+
+      if (
+        !transcriptDeliveryTarget?.ready
+      ) {
+        setTranscriptDeliveryMessage(
+          "Complete the required transcript checklist items before delivery.",
+          "error"
+        );
+        return;
+      }
+
+      const fileInput =
+        document.getElementById(
+          "transcriptDeliveryFile"
+        );
+
+      const file =
+        fileInput.files?.[0];
+
+      const taxYear =
+        document.getElementById(
+          "transcriptDeliveryTaxYear"
+        ).value;
+
+      const note =
+        document.getElementById(
+          "transcriptDeliveryNote"
+        ).value.trim();
+
+      if (!taxYear) {
+        setTranscriptDeliveryMessage(
+          "Choose the tax year for the transcript.",
+          "error"
+        );
+        return;
+      }
+
+      if (!file) {
+        setTranscriptDeliveryMessage(
+          "Choose the IRS transcript file.",
+          "error"
+        );
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "transcriptDeliveryButton"
+        );
+
+      button.disabled = true;
+      button.textContent =
+        "Delivering Securely...";
+
+      setTranscriptDeliveryMessage(
+        "Uploading the transcript to private storage and updating the client portal..."
+      );
+
+      try {
+        const response = await fetch(
+          "/api/office-document-review/transcript-delivery/upload",
+          {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Content-Type":
+                "application/octet-stream",
+              "X-Document-File-Name":
+                encodeURIComponent(file.name),
+              "X-Document-Content-Type":
+                encodeURIComponent(file.type || ""),
+              "X-Document-Tax-Year":
+                encodeURIComponent(taxYear),
+              "X-Document-Linked-Lead-Id":
+                encodeURIComponent(
+                  transcriptDeliveryTarget.leadId
+                ),
+              "X-Document-Note":
+                encodeURIComponent(note)
+            },
+            body: file
+          }
+        );
+
+        const data = await response
+          .json()
+          .catch(() => ({}));
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.error ||
+            "The transcript could not be delivered securely."
+          );
+        }
+
+        fileInput.value = "";
+
+        selectedDocumentId =
+          data.document?.documentId || "";
+
+        await Promise.all([
+          loadState(),
+          loadTranscriptDeliveryTarget()
+        ]);
+
+        renderList();
+        renderDetail();
+
+        setTranscriptDeliveryMessage(
+          data.message ||
+          "SECURE TRANSCRIPT DELIVERED — CLIENT PORTAL AND TRANSCRIPT CHECKLIST UPDATED."
+        );
+
+        showMessage(
+          data.message ||
+          "SECURE TRANSCRIPT DELIVERED — CLIENT PORTAL AND TRANSCRIPT CHECKLIST UPDATED."
+        );
+      } catch (error) {
+        setTranscriptDeliveryMessage(
+          error.message ||
+          "The transcript could not be delivered securely.",
+          "error"
+        );
+
+        button.disabled = false;
+      } finally {
+        button.textContent =
+          "Upload & Deliver Transcript Securely";
+      }
     }
 
     function renderList() {
@@ -1100,6 +1529,13 @@
     }
 
     document
+      .getElementById("transcriptDeliveryForm")
+      .addEventListener(
+        "submit",
+        uploadSecureTranscript
+      );
+
+    document
       .getElementById("cancelPermanentDeleteButton")
       .addEventListener("click", () => {
         closePermanentDeleteModal();
@@ -1218,8 +1654,23 @@
       window.location.href = "/office-document-review/sign-in";
     });
 
-    loadState().catch((error) => {
+    Promise.all([
+      loadState(),
+      loadTranscriptDeliveryTarget()
+    ]).catch((error) => {
       document.getElementById("documentList").innerHTML = `<div class="empty">${escapeHtml(error.message || "The queue could not be loaded.")}</div>`;
+
+      if (transcriptDeliveryLeadId) {
+        document.getElementById(
+          "transcriptDeliveryPanel"
+        ).hidden = false;
+
+        setTranscriptDeliveryMessage(
+          error.message ||
+          "The transcript delivery workspace could not be loaded.",
+          "error"
+        );
+      }
     });
   </script>
 </body>

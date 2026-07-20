@@ -39,6 +39,11 @@ const DOCUMENT_CATEGORIES = Object.freeze([
     label: "Signed Form 8821"
   },
   {
+    id: "irs-transcript-delivery",
+    label: "IRS Transcript — Secure Delivery",
+    officeOnly: true
+  },
+  {
     id: "other",
     label: "Other Supporting Records"
   }
