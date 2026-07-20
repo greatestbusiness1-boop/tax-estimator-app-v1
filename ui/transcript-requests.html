@@ -387,7 +387,30 @@
       }
       .document-upload-grid .wide{grid-column:auto;}
     }
-  </style>
+
+  .transcript-action-banner{
+    display:none;
+    margin:14px 0;
+    padding:14px 16px;
+    border:2px solid #15803d;
+    border-radius:14px;
+    background:#ecfdf5;
+    color:#14532d;
+    font-weight:950;
+    line-height:1.45;
+  }
+
+  .transcript-action-banner.error{
+    border-color:#b91c1c;
+    background:#fef2f2;
+    color:#7f1d1d;
+  }
+
+  .transcript-action-banner.show{
+    display:block;
+  }
+
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -416,6 +439,13 @@
           <div>Action</div>
         </div>
       </div>
+
+      <div
+        id="transcriptActionBanner"
+        class="transcript-action-banner"
+        role="status"
+        aria-live="polite"
+      ></div>
 
       <div id="rows"></div>
     </div>
@@ -494,6 +524,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 let showCompleted=false;
+
+function showTranscriptActionBanner(
+  message,
+  type="success"
+){
+  const banner=document.getElementById(
+    "transcriptActionBanner"
+  );
+
+  if(!banner) return;
+
+  banner.textContent=String(message||"");
+  banner.classList.toggle(
+    "error",
+    type==="error"
+  );
+  banner.classList.add("show");
+}
+
+function clearTranscriptActionBanner(){
+  const banner=document.getElementById(
+    "transcriptActionBanner"
+  );
+
+  if(!banner) return;
+
+  banner.textContent="";
+  banner.classList.remove(
+    "show",
+    "error"
+  );
+}
 
 const transcriptDocumentWorkspaces =
   new Map();
@@ -998,7 +1060,7 @@ async function load(){
             </div>
           </div>
           <div class="document-workspace-body" id="document-workspace-${esc(id)}">
-            <div class="document-empty">Loading this client’s secure transcript documents...</div>
+            <div class="document-empty">Loading this clientâ€™s secure transcript documents...</div>
           </div>
         </section>
 
@@ -1034,7 +1096,7 @@ async function load(){
           ${
             tr.deliveryDate &&
             String(tr.internalStatus||"").toLowerCase()!=="completed"
-              ? `<button class="btn green" onclick="completeTranscriptRequest('${esc(id)}',this)">Complete Transcript Request</button>`
+              ? `<button class="btn green" onclick="completeTranscriptRequest('${esc(id)}',this)">Complete Request & Schedule Cleanup</button>`
               : ""
           }
           <span class="msg" id="msg-${esc(id)}"></span>
@@ -1194,8 +1256,8 @@ function renderTranscriptDocumentCard(
         <div>
           <div class="document-file">${esc(doc.originalName||"Secure document")}</div>
           <div class="document-meta">
-            ${esc(doc.categoryLabel||doc.category||"Document")} ·
-            ${esc(doc.taxYearLabel||doc.taxYear||"Tax year not recorded")} ·
+            ${esc(doc.categoryLabel||doc.category||"Document")} Â·
+            ${esc(doc.taxYearLabel||doc.taxYear||"Tax year not recorded")} Â·
             ${esc(formatDocumentBytes(doc.sizeBytes))}<br>
             Uploaded: ${esc(formatDocumentDate(doc.uploadedAt))}
           </div>
@@ -1428,7 +1490,7 @@ function renderTranscriptDocumentWorkspace(
 
   const cleanupPanel=`
     <details class="request-cleanup">
-      <summary>Retention &amp; Cleanup — Protected Administration</summary>
+      <summary>Retention &amp; Cleanup â€” Protected Administration</summary>
       <div class="request-cleanup-body">
         <div class="cleanup-grid">
           <label>
@@ -1449,8 +1511,8 @@ function renderTranscriptDocumentWorkspace(
         </div>
 
         <p class="cleanup-note">
-          Active documents: ${Number(cleanup.activeCount||activeDocs.length||0)} ·
-          Removed from portal: ${Number(cleanup.removedCount||removedDocs.length||0)} ·
+          Active documents: ${Number(cleanup.activeCount||activeDocs.length||0)} Â·
+          Removed from portal: ${Number(cleanup.removedCount||removedDocs.length||0)} Â·
           Reminder dates scheduled: ${Number(cleanup.scheduledCount||0)}.
           Completing this request automatically applies the displayed cleanup review date.
           Permanent deletion is intentionally unavailable in this daily workspace.
@@ -1888,28 +1950,6 @@ function completeTranscriptRequest(
   leadId,
   button
 ){
-  if(button.dataset.armed!=="yes"){
-    button.dataset.armed="yes";
-    const oldText=button.textContent;
-    button.dataset.oldText=oldText;
-    button.textContent=
-      "Click Again to Complete";
-
-    window.setTimeout(()=>{
-      if(
-        document.body.contains(button) &&
-        button.dataset.armed==="yes"
-      ){
-        button.dataset.armed="";
-        button.textContent=
-          button.dataset.oldText||
-          "Complete Transcript Request";
-      }
-    },5000);
-
-    return;
-  }
-
   completeTranscriptRequestNow(
     leadId,
     button
@@ -1920,12 +1960,26 @@ async function completeTranscriptRequestNow(
   leadId,
   button
 ){
+  if(button.disabled) return;
+
+  clearTranscriptActionBanner();
+
+  const originalText=
+    button.textContent||
+    "Complete Transcript Request";
+
   button.disabled=true;
-  button.textContent="Completing...";
+  button.textContent=
+    "Completing Request...";
 
   const msg=document.getElementById(
     `msg-${leadId}`
   );
+
+  if(msg){
+    msg.textContent=
+      "Completing the request and scheduling document cleanup review...";
+  }
 
   try{
     const data=await officeTranscriptFetch(
@@ -1944,29 +1998,50 @@ async function completeTranscriptRequestNow(
       }
     );
 
-    if(msg){
-      msg.textContent=
-        data.message||
-        "Transcript request completed.";
-    }
+    const scheduledCount=
+      Number(
+        data.retentionScheduledCount||0
+      );
 
     showCompleted=true;
     focusedTranscriptLeadId=
       String(leadId);
 
+    updateTranscriptClientUrl(
+      focusedTranscriptLeadId
+    );
+
     await load();
+
+    const confirmation=
+      `${data.message||"The transcript request was completed."} `+
+      `${scheduledCount} document${scheduledCount===1?"":"s"} remain stored. `+
+      "No document was removed or permanently deleted.";
+
+    showTranscriptActionBanner(
+      confirmation
+    );
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
   }catch(error){
     button.disabled=false;
-    button.dataset.armed="";
-    button.textContent=
-      button.dataset.oldText||
-      "Complete Transcript Request";
+    button.textContent=originalText;
+
+    const errorMessage=
+      error.message||
+      "The transcript request could not be completed.";
 
     if(msg){
-      msg.textContent=
-        error.message||
-        "The transcript request could not be completed.";
+      msg.textContent=errorMessage;
     }
+
+    showTranscriptActionBanner(
+      errorMessage,
+      "error"
+    );
   }
 }
 
