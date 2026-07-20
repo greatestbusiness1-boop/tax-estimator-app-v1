@@ -120,6 +120,185 @@
     input,select,textarea{width:100%;box-sizing:border-box;border:2px solid #bae6fd;border-radius:12px;padding:9px 10px;font-size:14px;font-weight:750;background:white;}
     textarea{min-height:80px;font-family:Arial,sans-serif;line-height:1.45;}
     .msg{font-size:13px;font-weight:950;color:#047857;margin-left:8px;}
+    .btn.green{background:#047857;}
+    .btn.gold{background:#b7791f;}
+    .btn.red{background:#b91c1c;}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+    .document-workspace{
+      margin-top:12px;
+      border:2px solid #0f2c56;
+      border-radius:14px;
+      background:#ffffff;
+      overflow:hidden;
+    }
+    .document-workspace-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+      padding:12px 14px;
+      background:#eff6ff;
+      border-bottom:1px solid #bfdbfe;
+    }
+    .document-workspace-head h3{
+      margin:0;
+      color:#0f2c56;
+      font-size:17px;
+    }
+    .document-workspace-head p{
+      margin:4px 0 0;
+      color:#475569;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.4;
+    }
+    .document-summary{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+    }
+    .document-summary span{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      border:1px solid #cbd5e1;
+      border-radius:999px;
+      background:#ffffff;
+      padding:5px 8px;
+      color:#334155;
+      font-size:11px;
+      font-weight:950;
+    }
+    .document-workspace-body{padding:12px 14px;}
+    .document-delivery{
+      margin-bottom:12px;
+      padding:12px;
+      border:2px solid #86efac;
+      border-radius:12px;
+      background:#f0fdf4;
+    }
+    .document-delivery.blocked{
+      border-color:#fed7aa;
+      background:#fff7ed;
+    }
+    .document-delivery h4{
+      margin:0 0 4px;
+      color:#0f2c56;
+      font-size:15px;
+    }
+    .document-delivery p{
+      margin:3px 0;
+      color:#475569;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.4;
+    }
+    .document-upload-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 190px;
+      gap:9px;
+      margin-top:10px;
+    }
+    .document-upload-grid .wide{grid-column:1/-1;}
+    .document-list{display:grid;gap:10px;}
+    .document-card{
+      border:1px solid #cbd5e1;
+      border-left:7px solid #f59e0b;
+      border-radius:12px;
+      padding:11px;
+      background:#ffffff;
+    }
+    .document-card.accepted{border-left-color:#16a34a;background:#f8fff9;}
+    .document-card.needs-replacement{border-left-color:#dc2626;background:#fffafa;}
+    .document-card.withdrawn{border-left-color:#64748b;background:#f8fafc;}
+    .document-card-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .document-file{
+      color:#0f2c56;
+      font-size:14px;
+      font-weight:950;
+      overflow-wrap:anywhere;
+    }
+    .document-meta{
+      margin-top:4px;
+      color:#64748b;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.45;
+    }
+    .document-note{
+      margin-top:7px;
+      padding:7px 8px;
+      border-left:3px solid #cbd5e1;
+      background:#f8fafc;
+      color:#334155;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.4;
+    }
+    .document-actions{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:9px;
+    }
+    .document-actions .btn{
+      padding:8px 10px;
+      border-radius:9px;
+      font-size:12px;
+    }
+    .document-replacement{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:7px;
+      margin-top:8px;
+    }
+    .document-admin{
+      margin-top:9px;
+      padding-top:9px;
+      border-top:1px dashed #cbd5e1;
+    }
+    .document-admin summary{
+      color:#475569;
+      font-size:12px;
+    }
+    .document-admin-grid{
+      display:grid;
+      grid-template-columns:minmax(0,220px) auto auto;
+      gap:7px;
+      align-items:end;
+      margin-top:8px;
+    }
+    .document-workspace-message{
+      margin-top:8px;
+      color:#047857;
+      font-size:12px;
+      font-weight:950;
+      min-height:16px;
+    }
+    .document-workspace-message.error{color:#b91c1c;}
+    .document-empty{
+      padding:18px;
+      text-align:center;
+      color:#64748b;
+      font-size:13px;
+      font-weight:900;
+    }
+    @media(max-width:700px){
+      .document-upload-grid,
+      .document-replacement,
+      .document-admin-grid{
+        grid-template-columns:1fr;
+      }
+      .document-upload-grid .wide{grid-column:auto;}
+    }
   </style>
 </head>
 <body>
@@ -228,6 +407,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let showCompleted=false;
 
+const transcriptDocumentWorkspaces =
+  new Map();
+
 const requestedTranscriptLeadId =
   new URLSearchParams(window.location.search).get("leadId");
 
@@ -274,6 +456,7 @@ function backToTranscriptList(){
   load();
 }
 function esc(v){return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+function escAttr(v){return esc(v).replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 function transcriptWorkspaceText(lead){
   return [
     lead?.status,
@@ -716,6 +899,21 @@ async function load(){
           </div>
         </div>
 
+        <section class="document-workspace">
+          <div class="document-workspace-head">
+            <div>
+              <h3>Transcript Document Inbox &amp; Secure Delivery</h3>
+              <p>Review Form 8821 and identity uploads, deliver the IRS transcript, and manage retention without leaving this checklist.</p>
+            </div>
+            <div class="document-summary" id="document-summary-${esc(id)}">
+              <span>Loading secure documents...</span>
+            </div>
+          </div>
+          <div class="document-workspace-body" id="document-workspace-${esc(id)}">
+            <div class="document-empty">Loading this client’s secure transcript documents...</div>
+          </div>
+        </section>
+
         <div class="grid">
           ${field("Payment Status",select(`pay-${id}`,tr.paymentStatus||"",["Need Payment","Payment Pending","Paid / Verified"]))}
           ${field("Form 8821 Status",select(`auth-${id}`,tr.authorizationStatus||"",["Need 8821","8821 Sent","8821 Signed / Received"]))}
@@ -743,13 +941,768 @@ async function load(){
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn" onclick="save('${esc(id)}')">Save Transcript Checklist</button>
           <button class="btn secondary" onclick="openPitBullTax()">Open PitBullTax for Form 8821</button>
-          <button class="btn secondary" onclick="openSecureTranscriptDelivery('${esc(id)}')">Open Secure Transcript Delivery</button>
+          <button class="btn secondary" onclick="openSecureTranscriptDelivery('${esc(id)}')">Backup: Open Separate Delivery Page</button>
           <button class="btn secondary" onclick="openAuthorizationEmail('${esc(id)}','${esc(lead?.contact?.email||"")}','${esc(lead?.contact?.name||"Client")}', this)">Open Email to Client</button>
+          ${
+            tr.deliveryDate &&
+            String(tr.internalStatus||"").toLowerCase()!=="completed"
+              ? `<button class="btn green" onclick="completeTranscriptRequest('${esc(id)}',this)">Complete Transcript Request</button>`
+              : ""
+          }
           <span class="msg" id="msg-${esc(id)}"></span>
         </div>
       </details>
     </div>`;
   }).join("") || `<div style="padding:14px 0;color:#64748b;font-weight:850;">${showCompleted?"No completed transcript requests found.":"No open transcript requests found."}</div>`;
+
+  if(focusedTranscriptLeadId){
+    await loadTranscriptDocumentWorkspace(
+      focusedTranscriptLeadId
+    );
+  }
+}
+
+function officeTranscriptSignIn(){
+  const next=
+    window.location.pathname+
+    window.location.search;
+
+  window.location.href=
+    `/office-document-review/sign-in?next=${encodeURIComponent(next)}`;
+}
+
+async function officeTranscriptFetch(
+  url,
+  options={}
+){
+  const response=await fetch(url,{
+    credentials:"same-origin",
+    cache:"no-store",
+    ...options
+  });
+
+  if(response.status===401){
+    officeTranscriptSignIn();
+    throw new Error(
+      "Secure office sign-in is required."
+    );
+  }
+
+  const data=await response
+    .json()
+    .catch(()=>({}));
+
+  if(!response.ok || !data.ok){
+    throw new Error(
+      data.error ||
+      "The secure transcript document action could not be completed."
+    );
+  }
+
+  return data;
+}
+
+function formatDocumentDate(value){
+  const parsed=new Date(value||"");
+
+  if(!value || Number.isNaN(parsed.getTime())){
+    return "Not recorded";
+  }
+
+  return parsed.toLocaleString("en-US",{
+    month:"short",
+    day:"numeric",
+    year:"numeric",
+    hour:"numeric",
+    minute:"2-digit"
+  });
+}
+
+function formatDocumentBytes(value){
+  const bytes=Number(value||0);
+
+  if(bytes<1024) return `${bytes} bytes`;
+  if(bytes<1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+
+  return `${(bytes/(1024*1024)).toFixed(1)} MB`;
+}
+
+function transcriptDocumentDefaultMessage(
+  doc,
+  status
+){
+  const category=String(
+    doc?.category||""
+  );
+
+  if(status==="accepted"){
+    if(category==="signed-8821"){
+      return "Your signed Form 8821 was accepted by the office.";
+    }
+
+    if(category==="identity-verification"){
+      return "Your identity verification document was accepted by the office.";
+    }
+
+    return "Your secure document was accepted by the office.";
+  }
+
+  if(category==="signed-8821"){
+    return "Please upload a corrected and fully signed Form 8821.";
+  }
+
+  if(category==="identity-verification"){
+    return "Please upload a clear, current identity verification document.";
+  }
+
+  return "Please upload a corrected replacement document.";
+}
+
+function transcriptTaxYearOptions(value){
+  const years=Array.from(
+    new Set(
+      String(value||"")
+        .match(/\b(?:19|20)\d{2}\b/g) ||
+      []
+    )
+  );
+
+  return years.length
+    ? years
+    : [""];
+}
+
+function renderTranscriptDocumentCard(
+  leadId,
+  doc
+){
+  const status=String(
+    doc.reviewStatus||
+    "awaiting-review"
+  );
+
+  const canReview=
+    status!=="withdrawn";
+
+  const canRequestReplacement=
+    canReview &&
+    doc.category!=="irs-transcript-delivery";
+
+  const replacementMessage=
+    doc.clientMessage ||
+    transcriptDocumentDefaultMessage(
+      doc,
+      "needs-replacement"
+    );
+
+  return `
+    <article class="document-card ${escAttr(status)}">
+      <div class="document-card-top">
+        <div>
+          <div class="document-file">${esc(doc.originalName||"Secure document")}</div>
+          <div class="document-meta">
+            ${esc(doc.categoryLabel||doc.category||"Document")} ·
+            ${esc(doc.taxYearLabel||doc.taxYear||"Tax year not recorded")} ·
+            ${esc(formatDocumentBytes(doc.sizeBytes))}<br>
+            Uploaded: ${esc(formatDocumentDate(doc.uploadedAt))}
+          </div>
+        </div>
+        ${pill(doc.statusLabel||status,status==="accepted")}
+      </div>
+
+      ${
+        doc.note
+          ? `<div class="document-note"><strong>Note:</strong> ${esc(doc.note)}</div>`
+          : ""
+      }
+
+      ${
+        doc.clientMessage
+          ? `<div class="document-note"><strong>Client message:</strong> ${esc(doc.clientMessage)}</div>`
+          : ""
+      }
+
+      <div class="document-actions">
+        <a class="btn secondary" target="_blank" rel="noopener"
+          href="/api/office-document-review/documents/${encodeURIComponent(doc.documentId)}/download">
+          Download Office Copy
+        </a>
+
+        ${
+          canReview && status!=="accepted"
+            ? `<button class="btn green" onclick="reviewTranscriptDocument('${escAttr(leadId)}','${escAttr(doc.documentId)}','accepted',this)">Accept Document</button>`
+            : ""
+        }
+      </div>
+
+      ${
+        canRequestReplacement
+          ? `
+            <div class="document-replacement">
+              <input id="replacement-${escAttr(doc.documentId)}"
+                value="${escAttr(replacementMessage)}"
+                aria-label="Client replacement message">
+              <button class="btn gold"
+                onclick="reviewTranscriptDocument('${escAttr(leadId)}','${escAttr(doc.documentId)}','needs-replacement',this)">
+                ${status==="needs-replacement"?"Update Replacement Request":"Request Replacement"}
+              </button>
+            </div>
+          `
+          : ""
+      }
+
+      <details class="document-admin">
+        <summary>Retention / remove / permanent-delete administration</summary>
+        <div class="document-admin-grid">
+          <label>
+            <span>Retention Reminder Date</span>
+            <input id="retention-${escAttr(doc.documentId)}"
+              type="date"
+              value="${escAttr(doc.retentionUntil||"")}">
+          </label>
+
+          <button class="btn secondary"
+            onclick="saveTranscriptDocumentRetention('${escAttr(leadId)}','${escAttr(doc.documentId)}',this)">
+            Save Retention
+          </button>
+
+          ${
+            status!=="withdrawn"
+              ? `<button class="btn red" onclick="armTranscriptDocumentRemoval('${escAttr(leadId)}','${escAttr(doc.documentId)}',this)">Remove From Active Portal</button>`
+              : `<a class="btn red" href="/office-document-review?documentId=${encodeURIComponent(doc.documentId)}">Open Protected Permanent Delete</a>`
+          }
+        </div>
+        <div class="document-workspace-message"
+          id="document-message-${escAttr(doc.documentId)}"></div>
+      </details>
+    </article>
+  `;
+}
+
+function renderTranscriptDocumentWorkspace(
+  leadId,
+  state
+){
+  const box=document.getElementById(
+    `document-workspace-${leadId}`
+  );
+
+  const summaryBox=document.getElementById(
+    `document-summary-${leadId}`
+  );
+
+  if(!box || !summaryBox) return;
+
+  const docs=Array.isArray(state.documents)
+    ? state.documents
+    : [];
+
+  const summary=state.summary||{};
+  const delivery=state.delivery||{};
+
+  summaryBox.innerHTML=`
+    <span>Total: <strong>${Number(summary.totalDocuments||0)}</strong></span>
+    <span>Awaiting: <strong>${Number(summary.awaitingReview||0)}</strong></span>
+    <span>Accepted: <strong>${Number(summary.accepted||0)}</strong></span>
+    <span>Replacement: <strong>${Number(summary.needsReplacement||0)}</strong></span>
+  `;
+
+  const years=
+    transcriptTaxYearOptions(
+      delivery.taxYears
+    );
+
+  const yearOptions=years.map(
+    (year)=>`<option value="${escAttr(year)}">${
+      year
+        ? `Tax Year ${esc(year)}`
+        : "Tax year required in checklist"
+    }</option>`
+  ).join("");
+
+  const delivered=
+    Boolean(
+      delivery.deliveryDate &&
+      delivery.deliveryFileLocation
+    );
+
+  const deliveryPanel=delivered
+    ? `
+      <section class="document-delivery">
+        <h4>Secure transcript delivery is recorded</h4>
+        <p><strong>Delivered:</strong> ${esc(delivery.deliveryDate)}</p>
+        <p><strong>Secure file:</strong> ${esc(delivery.deliveryFileLocation)}</p>
+      </section>
+    `
+    : `
+      <section class="document-delivery ${delivery.ready?"":"blocked"}">
+        <h4>Deliver IRS Transcript From This Checklist</h4>
+        ${
+          delivery.ready
+            ? `<p>Ready: the client portal and required transcript checklist items are complete.</p>`
+            : `<p><strong>Complete first:</strong> ${esc((delivery.missing||[]).join(", ")||"Secure delivery is not ready.")}</p>`
+        }
+
+        <div class="document-upload-grid">
+          <label>
+            <span>IRS Transcript File</span>
+            <input id="delivery-file-${escAttr(leadId)}"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.heic,.heif">
+          </label>
+
+          <label>
+            <span>Tax Year</span>
+            <select id="delivery-year-${escAttr(leadId)}">${yearOptions}</select>
+          </label>
+
+          <label class="wide">
+            <span>Client Portal Note</span>
+            <input id="delivery-note-${escAttr(leadId)}"
+              value="IRS transcript securely delivered by Greatest Business Solution LLC.">
+          </label>
+        </div>
+
+        <div class="document-actions">
+          <button class="btn green"
+            ${delivery.ready && years[0]?"":"disabled"}
+            onclick="uploadTranscriptFromChecklist('${escAttr(leadId)}',this)">
+            Upload &amp; Deliver Transcript Securely
+          </button>
+        </div>
+
+        <div class="document-workspace-message"
+          id="delivery-message-${escAttr(leadId)}"></div>
+      </section>
+    `;
+
+  box.innerHTML=
+    deliveryPanel+
+    (
+      docs.length
+        ? `<div class="document-list">${docs.map(
+            (doc)=>renderTranscriptDocumentCard(
+              leadId,
+              doc
+            )
+          ).join("")}</div>`
+        : `<div class="document-empty">No Form 8821, identity, or secure transcript documents are linked to this request yet.</div>`
+    );
+}
+
+async function loadTranscriptDocumentWorkspace(
+  leadId
+){
+  const box=document.getElementById(
+    `document-workspace-${leadId}`
+  );
+
+  if(!box) return;
+
+  try{
+    const data=await officeTranscriptFetch(
+      `/api/office-document-review/transcript-workspace/${encodeURIComponent(leadId)}`
+    );
+
+    transcriptDocumentWorkspaces.set(
+      String(leadId),
+      data.state
+    );
+
+    renderTranscriptDocumentWorkspace(
+      String(leadId),
+      data.state
+    );
+  }catch(error){
+    box.innerHTML=`
+      <div class="document-empty" style="color:#b91c1c;">
+        ${esc(error.message||"The secure document inbox could not be loaded.")}
+      </div>
+    `;
+  }
+}
+
+async function reviewTranscriptDocument(
+  leadId,
+  documentId,
+  reviewStatus,
+  button
+){
+  const state=
+    transcriptDocumentWorkspaces.get(
+      String(leadId)
+    )||{};
+
+  const doc=(state.documents||[]).find(
+    (entry)=>entry.documentId===documentId
+  );
+
+  if(!doc) return;
+
+  let clientMessage=
+    reviewStatus==="accepted"
+      ? transcriptDocumentDefaultMessage(
+          doc,
+          "accepted"
+        )
+      : doc.clientMessage||
+        transcriptDocumentDefaultMessage(
+          doc,
+          reviewStatus
+        );
+
+  if(reviewStatus==="needs-replacement"){
+    clientMessage=String(
+      document.getElementById(
+        `replacement-${documentId}`
+      )?.value||""
+    ).trim();
+
+    if(!clientMessage){
+      const messageBox=document.getElementById(
+        `document-message-${documentId}`
+      );
+
+      if(messageBox){
+        messageBox.textContent=
+          "Enter the replacement message the client should see.";
+        messageBox.classList.add("error");
+      }
+      return;
+    }
+  }
+
+  const retentionUntil=
+    document.getElementById(
+      `retention-${documentId}`
+    )?.value||doc.retentionUntil||"";
+
+  const oldText=button?.textContent||"";
+
+  if(button){
+    button.disabled=true;
+    button.textContent=
+      reviewStatus==="accepted"
+        ? "Accepting..."
+        : reviewStatus==="withdrawn"
+          ? "Removing..."
+          : "Saving Request...";
+  }
+
+  try{
+    await officeTranscriptFetch(
+      `/api/office-document-review/documents/${encodeURIComponent(documentId)}/review`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          reviewStatus,
+          clientMessage,
+          officeNote:doc.officeNote||"",
+          retentionUntil,
+          reviewedBy:
+            "Greatest Business Solution LLC"
+        })
+      }
+    );
+
+    if(
+      reviewStatus==="accepted" ||
+      reviewStatus==="needs-replacement"
+    ){
+      await load();
+    }else{
+      await loadTranscriptDocumentWorkspace(
+        leadId
+      );
+    }
+  }catch(error){
+    const messageBox=document.getElementById(
+      `document-message-${documentId}`
+    );
+
+    if(messageBox){
+      messageBox.textContent=
+        error.message||
+        "The document action failed.";
+      messageBox.classList.add("error");
+    }
+  }finally{
+    if(button && document.body.contains(button)){
+      button.disabled=false;
+      button.textContent=oldText;
+    }
+  }
+}
+
+async function saveTranscriptDocumentRetention(
+  leadId,
+  documentId,
+  button
+){
+  const retentionUntil=
+    document.getElementById(
+      `retention-${documentId}`
+    )?.value||"";
+
+  const messageBox=document.getElementById(
+    `document-message-${documentId}`
+  );
+
+  const oldText=button.textContent;
+  button.disabled=true;
+  button.textContent="Saving...";
+
+  try{
+    const data=await officeTranscriptFetch(
+      `/api/office-document-review/documents/${encodeURIComponent(documentId)}/retention`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          retentionUntil
+        })
+      }
+    );
+
+    if(messageBox){
+      messageBox.textContent=data.message;
+      messageBox.classList.remove("error");
+    }
+
+    await loadTranscriptDocumentWorkspace(
+      leadId
+    );
+  }catch(error){
+    if(messageBox){
+      messageBox.textContent=
+        error.message||
+        "The retention date could not be saved.";
+      messageBox.classList.add("error");
+    }
+  }finally{
+    if(document.body.contains(button)){
+      button.disabled=false;
+      button.textContent=oldText;
+    }
+  }
+}
+
+function armTranscriptDocumentRemoval(
+  leadId,
+  documentId,
+  button
+){
+  if(button.dataset.armed==="yes"){
+    reviewTranscriptDocument(
+      leadId,
+      documentId,
+      "withdrawn",
+      button
+    );
+    return;
+  }
+
+  button.dataset.armed="yes";
+  const oldText=button.textContent;
+  button.textContent=
+    "Click Again to Remove";
+
+  window.setTimeout(()=>{
+    if(
+      document.body.contains(button) &&
+      button.dataset.armed==="yes"
+    ){
+      button.dataset.armed="";
+      button.textContent=oldText;
+    }
+  },5000);
+}
+
+async function uploadTranscriptFromChecklist(
+  leadId,
+  button
+){
+  const fileInput=document.getElementById(
+    `delivery-file-${leadId}`
+  );
+
+  const file=fileInput?.files?.[0];
+  const taxYear=document.getElementById(
+    `delivery-year-${leadId}`
+  )?.value||"";
+  const note=document.getElementById(
+    `delivery-note-${leadId}`
+  )?.value?.trim()||"";
+
+  const messageBox=document.getElementById(
+    `delivery-message-${leadId}`
+  );
+
+  if(!file){
+    messageBox.textContent=
+      "Choose the IRS transcript file.";
+    messageBox.classList.add("error");
+    return;
+  }
+
+  if(!taxYear){
+    messageBox.textContent=
+      "Enter the tax year in the transcript checklist first.";
+    messageBox.classList.add("error");
+    return;
+  }
+
+  const oldText=button.textContent;
+  button.disabled=true;
+  button.textContent=
+    "Delivering Securely...";
+
+  messageBox.textContent=
+    "Saving the transcript privately, notifying the client, and updating the checklist...";
+  messageBox.classList.remove("error");
+
+  try{
+    const response=await fetch(
+      "/api/office-document-review/transcript-delivery/upload",
+      {
+        method:"POST",
+        credentials:"same-origin",
+        headers:{
+          "Content-Type":
+            "application/octet-stream",
+          "X-Document-File-Name":
+            encodeURIComponent(file.name),
+          "X-Document-Content-Type":
+            encodeURIComponent(file.type||""),
+          "X-Document-Tax-Year":
+            encodeURIComponent(taxYear),
+          "X-Document-Linked-Lead-Id":
+            encodeURIComponent(leadId),
+          "X-Document-Note":
+            encodeURIComponent(note)
+        },
+        body:file
+      }
+    );
+
+    if(response.status===401){
+      officeTranscriptSignIn();
+      return;
+    }
+
+    const data=await response
+      .json()
+      .catch(()=>({}));
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error||
+        "The transcript could not be delivered securely."
+      );
+    }
+
+    messageBox.textContent=
+      data.message||
+      "The transcript was delivered securely.";
+
+    await load();
+  }catch(error){
+    messageBox.textContent=
+      error.message||
+      "The transcript could not be delivered securely.";
+    messageBox.classList.add("error");
+  }finally{
+    if(document.body.contains(button)){
+      button.disabled=false;
+      button.textContent=oldText;
+    }
+  }
+}
+
+function completeTranscriptRequest(
+  leadId,
+  button
+){
+  if(button.dataset.armed!=="yes"){
+    button.dataset.armed="yes";
+    const oldText=button.textContent;
+    button.dataset.oldText=oldText;
+    button.textContent=
+      "Click Again to Complete";
+
+    window.setTimeout(()=>{
+      if(
+        document.body.contains(button) &&
+        button.dataset.armed==="yes"
+      ){
+        button.dataset.armed="";
+        button.textContent=
+          button.dataset.oldText||
+          "Complete Transcript Request";
+      }
+    },5000);
+
+    return;
+  }
+
+  completeTranscriptRequestNow(
+    leadId,
+    button
+  );
+}
+
+async function completeTranscriptRequestNow(
+  leadId,
+  button
+){
+  button.disabled=true;
+  button.textContent="Completing...";
+
+  const msg=document.getElementById(
+    `msg-${leadId}`
+  );
+
+  try{
+    const data=await officeTranscriptFetch(
+      `/api/office-document-review/transcript-workspace/${encodeURIComponent(leadId)}/complete`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:"{}"
+      }
+    );
+
+    if(msg){
+      msg.textContent=
+        data.message||
+        "Transcript request completed.";
+    }
+
+    showCompleted=true;
+    focusedTranscriptLeadId=
+      String(leadId);
+
+    await load();
+  }catch(error){
+    button.disabled=false;
+    button.dataset.armed="";
+    button.textContent=
+      button.dataset.oldText||
+      "Complete Transcript Request";
+
+    if(msg){
+      msg.textContent=
+        error.message||
+        "The transcript request could not be completed.";
+    }
+  }
 }
 
 function openPitBullTax(){

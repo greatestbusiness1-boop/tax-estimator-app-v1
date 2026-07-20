@@ -395,13 +395,19 @@ function getSafeOfficeDocumentReviewRedirect(
     value || ""
   ).trim();
 
-  return (
+  const allowed =
     target ===
       "/office-document-review" ||
     target.startsWith(
       "/office-document-review?"
-    )
-  )
+    ) ||
+    target ===
+      "/transcript-requests" ||
+    target.startsWith(
+      "/transcript-requests?"
+    );
+
+  return allowed
     ? target
     : "/office-document-review";
 }
@@ -6259,6 +6265,7 @@ app.use((req, res, next) => {
     path.startsWith("/client-tax-strategy-worksheet/") ||
     path.startsWith("/client-portal") ||
     path.startsWith("/office-document-review") ||
+    path.startsWith("/transcript-requests") ||
     path.startsWith("/api/") ||
     path === "/stripe-thank-you";
 
@@ -6277,6 +6284,7 @@ Disallow: /written-review-report/
 Disallow: /client-tax-strategy-worksheet/
 Disallow: /client-portal
 Disallow: /office-document-review
+Disallow: /transcript-requests
 Disallow: /api/
 Disallow: /stripe-thank-you
 
@@ -6293,6 +6301,7 @@ app.use(express.static(path.join(__dirname, "ui"), {
       lowerFilePath.endsWith("client-tax-strategy-worksheet.html") ||
       lowerFilePath.endsWith("client-portal.html") ||
       lowerFilePath.endsWith("office-document-review-login.html") ||
+      lowerFilePath.endsWith("transcript-requests.html") ||
       lowerFilePath.endsWith("stripe-thank-you.html");
 
     if (shouldNoIndexFile) {
@@ -9140,6 +9149,381 @@ app.get(
 
 
 
+
+const TRANSCRIPT_WORKSPACE_DOCUMENT_CATEGORIES =
+  new Set([
+    "signed-8821",
+    "identity-verification",
+    "irs-transcript-delivery"
+  ]);
+
+function transcriptWorkspaceDocumentBelongsToLead(
+  record = {},
+  leadId = ""
+) {
+  const cleanLeadId = String(
+    leadId || ""
+  ).trim();
+
+  const recordLeadId = String(
+    record.linkedLeadId ||
+    record.accountLeadId ||
+    ""
+  ).trim();
+
+  return (
+    cleanLeadId &&
+    recordLeadId === cleanLeadId &&
+    TRANSCRIPT_WORKSPACE_DOCUMENT_CATEGORIES.has(
+      String(record.category || "")
+    )
+  );
+}
+
+async function getTranscriptWorkspaceDocumentState(
+  leadId
+) {
+  const cleanLeadId = String(
+    leadId || ""
+  ).trim();
+
+  if (!cleanLeadId) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "A transcript request reference is required."
+    };
+  }
+
+  const candidate =
+    await findClientPortalLeadById(
+      cleanLeadId
+    );
+
+  if (!candidate) {
+    return {
+      ok: false,
+      status: 404,
+      error:
+        "The transcript request could not be found."
+    };
+  }
+
+  const allDocuments =
+    await clientDocumentStore
+      .listForOffice({});
+
+  const documents =
+    allDocuments.filter(
+      (record) =>
+        transcriptWorkspaceDocumentBelongsToLead(
+          record,
+          cleanLeadId
+        )
+    );
+
+  let deliveryTarget = null;
+
+  try {
+    deliveryTarget =
+      await getSecureTranscriptDeliveryTarget(
+        cleanLeadId
+      );
+  } catch (error) {
+    deliveryTarget = {
+      ok: false,
+      ready: false,
+      missing: [
+        error?.message ||
+        "The secure delivery readiness could not be checked."
+      ]
+    };
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    state: {
+      version: "1.1.0",
+      leadId:
+        cleanLeadId,
+      clientName:
+        getLeadNameValue(
+          candidate.raw
+        ) || "Client",
+      email:
+        getLeadEmailValue(
+          candidate.raw
+        ),
+      documents:
+        documents.map(
+          officeDocumentRecord
+        ),
+      summary:
+        clientDocumentStore
+          .buildSummary(
+            documents
+          ),
+      delivery: {
+        ready:
+          Boolean(
+            deliveryTarget?.ok &&
+            deliveryTarget?.ready
+          ),
+        missing:
+          Array.isArray(
+            deliveryTarget?.missing
+          )
+            ? deliveryTarget.missing
+            : [],
+        portalReady:
+          Boolean(
+            deliveryTarget?.portal?.portalId
+          ),
+        transcriptType:
+          String(
+            deliveryTarget?.transcriptType ||
+            ""
+          ),
+        taxYears:
+          String(
+            deliveryTarget?.taxYears ||
+            ""
+          ),
+        transcriptPulledDate:
+          String(
+            deliveryTarget?.transcriptRequest
+              ?.transcriptPulledDate ||
+            ""
+          ),
+        transcriptReceivedDate:
+          String(
+            deliveryTarget?.transcriptRequest
+              ?.transcriptReceivedDate ||
+            ""
+          ),
+        deliveryDate:
+          String(
+            deliveryTarget?.transcriptRequest
+              ?.deliveryDate ||
+            ""
+          ),
+        deliveryFileLocation:
+          String(
+            deliveryTarget?.transcriptRequest
+              ?.deliveryFileLocation ||
+            ""
+          )
+      }
+    }
+  };
+}
+
+app.get(
+  "/api/office-document-review/transcript-workspace/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    try {
+      const result =
+        await getTranscriptWorkspaceDocumentState(
+          req.params?.leadId
+        );
+
+      if (!result.ok) {
+        return res.status(
+          result.status || 400
+        ).json({
+          ok: false,
+          error:
+            result.error
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        state:
+          result.state
+      });
+    } catch (error) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          error?.message ||
+          "The transcript document workspace could not be loaded."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/office-document-review/transcript-workspace/:leadId/complete",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const leadId = String(
+      req.params?.leadId || ""
+    ).trim();
+
+    const candidate =
+      await findClientPortalLeadById(
+        leadId
+      );
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The transcript request could not be found."
+      });
+    }
+
+    const currentRequest =
+      getTranscriptRequestRecord(
+        candidate.lead || {}
+      );
+
+    const missing = [];
+
+    if (
+      !currentRequest
+        .transcriptReceivedDate
+    ) {
+      missing.push(
+        "Record the transcript received date"
+      );
+    }
+
+    if (
+      !currentRequest.deliveryDate
+    ) {
+      missing.push(
+        "Deliver the transcript to the client"
+      );
+    }
+
+    if (
+      !currentRequest.deliveryMethod ||
+      String(
+        currentRequest.deliveryMethod
+      ).toLowerCase() ===
+        "not delivered yet"
+    ) {
+      missing.push(
+        "Record the delivery method"
+      );
+    }
+
+    if (
+      String(
+        currentRequest.deliveryMethod ||
+        ""
+      ).toLowerCase().includes(
+        "portal"
+      ) &&
+      !currentRequest
+        .deliveryFileLocation
+    ) {
+      missing.push(
+        "Record the secure transcript file"
+      );
+    }
+
+    if (missing.length) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          `Complete these items before closing the transcript request: ${missing.join(", ")}.`,
+        missing
+      });
+    }
+
+    const now =
+      new Date().toISOString();
+
+    const result =
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => {
+          const updated = {
+            ...record
+          };
+
+          const existing =
+            getTranscriptRequestRecord(
+              updated
+            );
+
+          const nextTranscriptRequest = {
+            ...existing,
+            requested: true,
+            internalStatus:
+              "Completed",
+            completedAt:
+              existing.completedAt ||
+              now,
+            lastSavedAt:
+              now
+          };
+
+          updated.transcriptRequest =
+            nextTranscriptRequest;
+
+          updated.Request = {
+            ...(updated.Request || {}),
+            ...nextTranscriptRequest
+          };
+
+          updated.status =
+            "Transcript Help - Completed";
+
+          updated.completedAt =
+            updated.completedAt ||
+            now;
+
+          updated.updatedAt =
+            now;
+
+          const note =
+            `[${new Date(now).toLocaleString()}] Transcript request completed after secure delivery.`;
+
+          const oldNotes =
+            typeof updated.notes === "string"
+              ? updated.notes.trim()
+              : "";
+
+          updated.notes =
+            oldNotes
+              ? `${oldNotes}\n${note}`
+              : note;
+
+          return updated;
+        }
+      );
+
+    if (!result?.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          result?.error ||
+          "The transcript request could not be completed."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "The transcript request was completed and moved out of open work.",
+      lead:
+        result.lead ||
+        null
+    });
+  }
+);
+
 app.get(
   "/api/office-document-review/transcript-delivery/:leadId",
   requireOfficeDocumentReviewApi,
@@ -9556,6 +9940,86 @@ app.get(
   }
 );
 
+
+app.post(
+  "/api/office-document-review/documents/:documentId/retention",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const retentionRaw =
+      String(
+        req.body?.retentionUntil || ""
+      ).trim();
+
+    const retentionUntil =
+      normalizeClientDocumentRetentionDate(
+        retentionRaw
+      );
+
+    if (
+      retentionRaw &&
+      !retentionUntil
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The retention reminder date is not valid."
+      });
+    }
+
+    const existing =
+      await clientDocumentStore
+        .getForOffice({
+          documentId:
+            req.params?.documentId
+        });
+
+    if (!existing) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The document could not be found."
+      });
+    }
+
+    const result =
+      await clientDocumentStore
+        .updateReview({
+          documentId:
+            existing.documentId,
+          patch: {
+            retentionUntil,
+            statusChangedAt:
+              existing.statusChangedAt ||
+              existing.updatedAt ||
+              ""
+          }
+        });
+
+    if (!result.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          result.error ||
+          "The retention reminder could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        retentionUntil
+          ? "The retention reminder date was saved."
+          : "The retention reminder date was cleared.",
+      document:
+        officeDocumentRecord(
+          result.record
+        )
+    });
+  }
+);
+
 app.post(
   "/api/office-document-review/documents/:documentId/review",
   requireOfficeDocumentReviewApi,
@@ -9814,6 +10278,134 @@ app.post(
   }
 );
 
+
+async function appendSecureDocumentDeletionAudit(
+  document = {},
+  deletedAt = ""
+) {
+  const leadId =
+    getClientDocumentSummaryLeadId(
+      document
+    );
+
+  if (!leadId) {
+    return {
+      ok: false,
+      skipped: true,
+      error:
+        "No linked client record was available for the deletion audit."
+    };
+  }
+
+  const auditAt =
+    String(
+      deletedAt ||
+      new Date().toISOString()
+    );
+
+  return updateLeadAfterStripePayment(
+    leadId,
+    (record = {}) => {
+      const updated = {
+        ...record
+      };
+
+      const currentPortal =
+        getClientPortalRecord(
+          updated
+        ) || {};
+
+      const currentHistory =
+        Array.isArray(
+          currentPortal
+            .documentAuditHistory
+        )
+          ? currentPortal
+              .documentAuditHistory
+              .filter(Boolean)
+              .slice(-99)
+          : [];
+
+      const auditEntry = {
+        event:
+          "permanently-deleted",
+        documentId:
+          String(
+            document.documentId || ""
+          ),
+        originalName:
+          String(
+            document.originalName || ""
+          ),
+        category:
+          String(
+            document.category || ""
+          ),
+        categoryLabel:
+          getClientDocumentCategoryLabel(
+            document.category
+          ),
+        taxYear:
+          String(
+            document.taxYear || ""
+          ),
+        uploadedAt:
+          String(
+            document.uploadedAt || ""
+          ),
+        reviewedAt:
+          String(
+            document.reviewedAt || ""
+          ),
+        withdrawnAt:
+          String(
+            document.withdrawnAt || ""
+          ),
+        priorReviewStatus:
+          String(
+            document.reviewStatus || ""
+          ),
+        deletedAt:
+          auditAt,
+        linkedLeadId:
+          String(
+            document.linkedLeadId || ""
+          ),
+        accountLeadId:
+          String(
+            document.accountLeadId || ""
+          )
+      };
+
+      updated.clientPortal = {
+        ...currentPortal,
+        documentAuditHistory: [
+          ...currentHistory,
+          auditEntry
+        ]
+      };
+
+      updated.updatedAt =
+        auditAt;
+
+      const note =
+        `[${new Date(auditAt).toLocaleString()}] Secure document permanently deleted after portal removal: ${document.originalName || document.documentId}. Audit details retained on the client record.`;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes =
+        oldNotes
+          ? `${oldNotes}\n${note}`
+          : note;
+
+      return updated;
+    }
+  );
+}
+
 app.delete(
   "/api/office-document-review/documents/:documentId",
   requireOfficeDocumentReviewApi,
@@ -9875,6 +10467,12 @@ app.delete(
       });
     }
 
+    const deletionAudit =
+      await appendSecureDocumentDeletionAudit(
+        existing,
+        new Date().toISOString()
+      );
+
     const portalRecords =
       await clientDocumentStore
         .listForOffice({
@@ -9888,16 +10486,17 @@ app.delete(
           portalRecords
         );
 
-    await syncClientDocumentSummaryToAccountLead(
+    await syncClientDocumentSummaryToLinkedLead(
       existing,
-      summary
+      portalRecords
     );
 
     return res.status(200).json({
       ok: true,
       message:
-        "The document file and metadata were permanently deleted.",
-      summary
+        "The document file and metadata were permanently deleted. A deletion audit was retained on the client record.",
+      summary,
+      deletionAudit
     });
   }
 );
@@ -11245,9 +11844,24 @@ app.get("/written-review-report/:leadId", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "written-review-report.html"));
 });
 
-app.get("/transcript-requests", (req, res) => {
-  res.sendFile(path.join(__dirname, "ui", "transcript-requests.html"));
-});
+app.get(
+  "/transcript-requests",
+  requireOfficeDocumentReviewPage,
+  (req, res) => {
+    res.setHeader(
+      "X-Robots-Tag",
+      "noindex, nofollow, noarchive"
+    );
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "ui",
+        "transcript-requests.html"
+      )
+    );
+  }
+);
 app.get("/-requests", (req, res) => { res.sendFile(path.join(__dirname, "ui", "-requests.html")); });
 
 app.get("/leads-dashboard", (req, res) => {

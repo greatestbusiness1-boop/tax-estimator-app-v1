@@ -681,13 +681,23 @@
     "use strict";
 
     let currentState = null;
-    let selectedDocumentId = "";
+
+    const officeReviewQuery =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    let selectedDocumentId =
+      officeReviewQuery.get(
+        "documentId"
+      ) || "";
+
     let transcriptDeliveryTarget = null;
 
     const transcriptDeliveryLeadId =
-      new URLSearchParams(
-        window.location.search
-      ).get("transcriptDeliveryLeadId") || "";
+      officeReviewQuery.get(
+        "transcriptDeliveryLeadId"
+      ) || "";
 
     function escapeHtml(value) {
       return String(value ?? "")
