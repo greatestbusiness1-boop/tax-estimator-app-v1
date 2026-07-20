@@ -3235,10 +3235,13 @@ function saveClientPortalLocalOverlay(
 
 async function updateClientPortalLeadStatus(
   leadId,
-  applyStatusUpdate
+  applyStatusUpdate,
+  options = {}
 ) {
   const cleanId = String(leadId || "").trim();
   const now = new Date().toISOString();
+  const awaitPrimary =
+    options?.awaitPrimary === true;
 
   if (!cleanId) {
     return {
@@ -3250,7 +3253,8 @@ async function updateClientPortalLeadStatus(
   // Client Portal Foundation V1.0.1:
   // Save the portal status locally first so activation, sign-in, and sign-out
   // never wait for a slower Supabase/CRM request before the browser receives
-  // its response. The local overlay is already merged into /api/leads.
+  // its response. Document workflow updates can opt into an awaited primary
+  // sync so two full-record writes cannot race and overwrite checklist data.
   const localLeads = readLeads();
   const localRecord = localLeads.find(
     (record = {}) => getLeadIdValue(record) === cleanId
@@ -3279,20 +3283,62 @@ async function updateClientPortalLeadStatus(
     now
   );
 
-  // Keep the primary CRM/Supabase record synchronized in the background.
-  // A slow external connection must not strand the client on the activation
-  // screen after the account and password were already saved successfully.
-  void updateLeadAfterStripePayment(
-    cleanId,
-    (record = {}) => ({
-      ...record,
-      clientPortal: {
-        ...(getClientPortalRecord(record) || {}),
-        ...nextStatus
-      },
-      updatedAt: now
-    })
-  )
+  const primarySync =
+    updateLeadAfterStripePayment(
+      cleanId,
+      (record = {}) => ({
+        ...record,
+        clientPortal: {
+          ...(getClientPortalRecord(record) || {}),
+          ...nextStatus
+        },
+        updatedAt: now
+      })
+    );
+
+  if (awaitPrimary) {
+    try {
+      const primaryUpdate =
+        await primarySync;
+
+      if (!primaryUpdate?.ok) {
+        console.warn(
+          "[client portal] Awaited CRM status sync used the local overlay:",
+          cleanId,
+          primaryUpdate?.error || "Primary update unavailable."
+        );
+      }
+
+      return {
+        ok: true,
+        source:
+          primaryUpdate?.ok
+            ? `${overlay.source}+primary-crm-sync`
+            : `${overlay.source}+primary-sync-unavailable`,
+        status: nextStatus,
+        updatedAt: now,
+        primaryUpdate
+      };
+    } catch (error) {
+      console.warn(
+        "[client portal] Awaited CRM status sync failed; local overlay preserved:",
+        cleanId,
+        error?.message || error
+      );
+
+      return {
+        ok: true,
+        source:
+          `${overlay.source}+primary-sync-failed`,
+        status: nextStatus,
+        updatedAt: now,
+        primaryError:
+          error?.message || String(error)
+      };
+    }
+  }
+
+  void primarySync
     .then((primaryUpdate) => {
       if (!primaryUpdate?.ok) {
         console.warn(
@@ -4482,7 +4528,10 @@ async function syncClientDocumentSummaryToLinkedLead(
           summary.latestFileName || ""
         )
       }
-    })
+    }),
+    {
+      awaitPrimary: true
+    }
   );
 }
 
@@ -11250,7 +11299,8 @@ async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
       const linkedTranscriptCategory =
         [
           "signed-8821",
-          "identity-verification"
+          "identity-verification",
+          "irs-transcript-delivery"
         ].includes(category);
 
       const targetLeadId =
@@ -11385,18 +11435,83 @@ app.get("/api/leads", async (req, res) => {
       const existing = mergedById.get(id);
 
       if (existing) {
+        const localTranscriptRequest = {
+          ...(
+            localLead.transcriptRequest ||
+            localLead.Request ||
+            localLead.request ||
+            {}
+          )
+        };
+
+        const primaryTranscriptRequest = {
+          ...(
+            existing.transcriptRequest ||
+            existing.Request ||
+            existing.request ||
+            {}
+          )
+        };
+
+        const authoritativeTranscriptRequest = {
+          ...localTranscriptRequest,
+          ...primaryTranscriptRequest
+        };
+
+        const hasTranscriptRequest =
+          Object.keys(
+            authoritativeTranscriptRequest
+          ).length > 0;
+
+        const existingPortal =
+          existing.clientPortal &&
+          typeof existing.clientPortal === "object"
+            ? existing.clientPortal
+            : {};
+
+        const localPortal =
+          localLead.clientPortal &&
+          typeof localLead.clientPortal === "object"
+            ? localLead.clientPortal
+            : {};
+
         mergedById.set(id, {
-          ...existing,
           ...localLead,
+          ...existing,
           contact: {
-            ...(existing.contact || {}),
-            ...(localLead.contact || {})
+            ...(localLead.contact || {}),
+            ...(existing.contact || {})
           },
-          taxData: localLead.taxData || existing.taxData,
-          estimateSummary: localLead.estimateSummary || existing.estimateSummary,
-          Request: {
-            ...(existing.Request || existing.request || {}),
-            ...(localLead.Request || localLead.request || {})
+          taxData:
+            existing.taxData ||
+            localLead.taxData,
+          estimateSummary:
+            existing.estimateSummary ||
+            localLead.estimateSummary,
+          updatedAt:
+            new Date(
+              localLead.updatedAt || 0
+            ).getTime() >
+            new Date(
+              existing.updatedAt || 0
+            ).getTime()
+              ? localLead.updatedAt
+              : existing.updatedAt,
+          transcriptRequest:
+            hasTranscriptRequest
+              ? authoritativeTranscriptRequest
+              : undefined,
+          Request:
+            hasTranscriptRequest
+              ? authoritativeTranscriptRequest
+              : undefined,
+          clientPortal: {
+            ...existingPortal,
+            ...localPortal,
+            documentCenter: {
+              ...(existingPortal.documentCenter || {}),
+              ...(localPortal.documentCenter || {})
+            }
           }
         });
       } else {
