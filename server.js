@@ -4632,9 +4632,35 @@ async function syncSigned8821DocumentToTranscriptRequest({
     };
   }
 
+  const reviewedDate =
+    new Date(
+      reviewedAt ||
+      Date.now()
+    );
+
+  const phoenixDateParts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone: "America/Phoenix",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }
+    ).formatToParts(reviewedDate);
+
+  const phoenixDateValues =
+    Object.fromEntries(
+      phoenixDateParts.map(
+        (part) => [
+          part.type,
+          part.value
+        ]
+      )
+    );
+
   const dateOnly =
-    String(reviewedAt || "")
-      .slice(0, 10);
+    `${phoenixDateValues.year}-${phoenixDateValues.month}-${phoenixDateValues.day}`;
 
   return updateLeadAfterStripePayment(
     linkedLeadId,
@@ -4803,9 +4829,35 @@ async function syncIdentityVerificationDocumentToTranscriptRequest({
     };
   }
 
+  const reviewedDate =
+    new Date(
+      reviewedAt ||
+      Date.now()
+    );
+
+  const phoenixDateParts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone: "America/Phoenix",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }
+    ).formatToParts(reviewedDate);
+
+  const phoenixDateValues =
+    Object.fromEntries(
+      phoenixDateParts.map(
+        (part) => [
+          part.type,
+          part.value
+        ]
+      )
+    );
+
   const dateOnly =
-    String(reviewedAt || "")
-      .slice(0, 10);
+    `${phoenixDateValues.year}-${phoenixDateValues.month}-${phoenixDateValues.day}`;
 
   return updateLeadAfterStripePayment(
     linkedLeadId,
@@ -4840,7 +4892,6 @@ async function syncIdentityVerificationDocumentToTranscriptRequest({
         identityVerifiedDate:
           accepted
             ? (
-                existing.identityVerifiedDate ||
                 dateOnly
               )
             : "",
@@ -4877,7 +4928,6 @@ async function syncIdentityVerificationDocumentToTranscriptRequest({
                 identityVerifiedDate:
                   accepted
                     ? (
-                        existing.identityVerifiedDate ||
                         dateOnly
                       )
                     : ""
