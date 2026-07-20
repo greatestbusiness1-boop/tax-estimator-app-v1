@@ -1838,7 +1838,23 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
           return { ok: false, error: "Could not update Supabase lead." };
         }
 
-        return { ok: true, source: "supabase" };
+        const updatedLead = mapRowToLead({
+          ...matchingRow,
+          estimate: updatedEstimate
+        });
+
+        if (updatedLead?.leadId) {
+          recentLeads.set(
+            updatedLead.leadId,
+            updatedLead
+          );
+        }
+
+        return {
+          ok: true,
+          source: "supabase",
+          lead: updatedLead
+        };
       }
     }
   } catch (err) {
@@ -1849,9 +1865,30 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
   const localIndex = localLeads.findIndex(matchesLeadId);
 
   if (localIndex >= 0) {
-    localLeads[localIndex] = applyUpdate(localLeads[localIndex]);
+    localLeads[localIndex] =
+      applyUpdate(
+        localLeads[localIndex]
+      );
+
     writeLeads(localLeads);
-    return { ok: true, source: "local" };
+
+    const updatedLead =
+      mapRowToLead(
+        localLeads[localIndex]
+      );
+
+    if (updatedLead?.leadId) {
+      recentLeads.set(
+        updatedLead.leadId,
+        updatedLead
+      );
+    }
+
+    return {
+      ok: true,
+      source: "local",
+      lead: updatedLead
+    };
   }
 
   return { ok: false, error: "Lead not found." };
@@ -9599,6 +9636,7 @@ app.post(
 
     let transcriptAuthorizationSync = null;
     let transcriptIdentitySync = null;
+    let transcriptDeliverySync = null;
 
     if (
       result.record.category ===
@@ -9661,6 +9699,37 @@ app.post(
     }
 
     if (
+      result.record.category ===
+        "irs-transcript-delivery" &&
+      reviewStatus === "accepted"
+    ) {
+      transcriptDeliverySync =
+        await syncSecureTranscriptDeliveryToTranscriptRequest({
+          document:
+            result.record,
+          deliveredAt:
+            result.record.uploadedAt ||
+            result.record.reviewedAt ||
+            now,
+          clientMessage:
+            clientMessage ||
+            result.record.clientMessage ||
+            "Your IRS transcript is ready for secure download in the client portal."
+        });
+
+      if (
+        transcriptDeliverySync &&
+        !transcriptDeliverySync.ok
+      ) {
+        console.warn(
+          "[office document review] Secure transcript delivery checklist sync failed:",
+          transcriptDeliverySync.error ||
+          transcriptDeliverySync
+        );
+      }
+    }
+
+    if (
       reviewStatus === "accepted" ||
       reviewStatus ===
         "needs-replacement"
@@ -9690,7 +9759,8 @@ app.post(
         ),
       summary,
       transcriptAuthorizationSync,
-      transcriptIdentitySync
+      transcriptIdentitySync,
+      transcriptDeliverySync
     });
   }
 );
