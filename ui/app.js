@@ -87,37 +87,91 @@ const PAID_REVIEW_URL = "https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00";
 const TRANSCRIPT_HELP_PAYMENT_URL = "https://buy.stripe.com/fZu6oHfTD6LK98h3wx1ZS01";
 
 async function openPaidReview() {
-  window.open(PAID_REVIEW_URL, "_blank");
-
   const leadId = _leadGatewayContact?.leadId;
-  if (!leadId) return;
+  const clientName = _leadGatewayContact?.fullName || "";
+  const clientEmail = _leadGatewayContact?.email || "";
+  const paymentWindow = window.open("about:blank", "_blank");
+
+  if (!leadId || !clientEmail) {
+    if (paymentWindow) {
+      paymentWindow.location.href = PAID_REVIEW_URL;
+    } else {
+      window.location.href = PAID_REVIEW_URL;
+    }
+    return;
+  }
 
   const stamp = new Date().toLocaleString();
-  const actionNote = "[" + stamp + "] Client clicked Buy Written Estimate Red Flag Review - Payment not yet confirmed";
+  const actionNote =
+    `[${stamp}] Client clicked Written Red Flag Review + Tax Savings Planner Bonus - Payment not yet confirmed`;
 
   try {
     let existingNotes = "";
 
     try {
-      const readRes = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const readRes = await fetch(
+        "/api/estimate-summary/" + encodeURIComponent(leadId)
+      );
       const readData = await readRes.json();
       existingNotes = readData?.lead?.notes || "";
-    } catch (readErr) {
+    } catch {
       existingNotes = "";
     }
 
-    const notes = existingNotes ? existingNotes + "\n" + actionNote : actionNote;
+    const notes = existingNotes
+      ? `${existingNotes}
+${actionNote}`
+      : actionNote;
 
     await fetch("/api/leads/" + encodeURIComponent(leadId), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         status: "Written Review - Payment Pending",
-        notes
-      })
+        notes,
+      }),
     });
+
+    const checkoutRes = await fetch(
+      "/api/create-written-review-checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leadId,
+          clientName,
+          clientEmail,
+        }),
+      }
+    );
+
+    const checkoutData = await checkoutRes.json();
+
+    if (
+      !checkoutRes.ok ||
+      !checkoutData.ok ||
+      !checkoutData.checkoutUrl
+    ) {
+      throw new Error(
+        checkoutData.error ||
+        "Could not open Written Review checkout."
+      );
+    }
+
+    if (paymentWindow) {
+      paymentWindow.location.href = checkoutData.checkoutUrl;
+    } else {
+      window.location.href = checkoutData.checkoutUrl;
+    }
   } catch (err) {
-    console.warn("Could not record written review request before opening Stripe", err);
+    if (paymentWindow) paymentWindow.close();
+    alert(
+      "Payment error: " +
+      (err.message ||
+        "Could not open Written Review checkout.")
+    );
   }
 }
 
@@ -212,7 +266,7 @@ async function requestTranscriptHelp() {
       },
       body: JSON.stringify({
         leadId,
-        clientName: _leadGatewayContact?.name || "",
+        clientName: _leadGatewayContact?.fullName || "",
         clientEmail: _leadGatewayContact?.email || ""
       })
     });
@@ -1105,7 +1159,7 @@ function setLeadLoading(isLoading) {
     btn.style.opacity = "0.72";
   } else {
     btn.disabled = false;
-    btn.innerHTML = btn.dataset.orig || "Request Free 15-Minute Consultation";
+    btn.innerHTML = btn.dataset.orig || "Request Tax Preparation Fit Call";
     btn.style.opacity = "";
   }
 }
@@ -1267,6 +1321,95 @@ function showLeadGateway(input, result) {
   }
 }
 
+
+function buildSavedEstimateSummary(result, input) {
+  if (!result) return null;
+
+  const fed = result.federal?.summary || {};
+  const st = result.state?.summary || {};
+  const experience = result.clientExperience || {};
+  const completeness = getEstimateCompleteness(input || {});
+  const workingChildren = Array.isArray(input?.workingChildren)
+    ? input.workingChildren
+    : [];
+
+  const workingChildResults = workingChildren.map((child) => {
+    const childResult = evaluateWorkingChild(
+      child,
+      input?.taxYear,
+      input?.age,
+      input?.canBeClaimedAsDependent,
+      input?.filingStatus
+    );
+
+    return {
+      name: childResult.name,
+      status: childResult.status,
+      title: childResult.title,
+      classification: childResult.classification,
+      grossIncome: childResult.grossIncome,
+      reasons: childResult.reasons,
+      cautions: childResult.cautions,
+      filing: childResult.filing,
+    };
+  });
+
+  return {
+    taxYear: result.meta?.taxYear,
+    filingStatus: result.meta?.filingStatus,
+    stateCode: result.meta?.stateCode,
+    stateName: result.meta?.stateName,
+    completeness,
+    workingChildResults,
+    clientExperience: {
+      summary: Array.isArray(experience.summary) ? experience.summary : [],
+      whatCouldChange: Array.isArray(experience.whatCouldChange)
+        ? experience.whatCouldChange
+        : [],
+      recommendations: Array.isArray(experience.recommendations)
+        ? experience.recommendations
+        : [],
+      disclaimer: Array.isArray(experience.disclaimer)
+        ? experience.disclaimer
+        : [],
+    },
+    federal: {
+      grossIncome: fed.grossIncome,
+      agi: fed.agi,
+      standardDeduction: fed.standardDeduction,
+      taxableIncome: fed.taxableIncome,
+      taxBeforeCredits: fed.taxBeforeCredits,
+      educationCredit: fed.educationCredit,
+      childTaxCredit: fed.childTaxCredit,
+      taxAfterCredits: fed.taxAfterCredits,
+      federalWithheld: fed.federalWithheld,
+      estimatedTaxPayments: fed.estimatedTaxPayments,
+      selfEmploymentIncome: fed.selfEmploymentIncome,
+      netSelfEmploymentIncome: fed.netSelfEmploymentIncome,
+      selfEmploymentTax: fed.selfEmploymentTax,
+      net: fed.net,
+      isRefund: fed.isRefund,
+      refundAmount: fed.refundAmount,
+      owedAmount: fed.owedAmount,
+      marginalRate: fed.marginalRate,
+      effectiveRate: fed.effectiveRate,
+    },
+    state: {
+      stateName: result.meta?.stateName,
+      hasIncomeTax: result.state?.hasIncomeTax,
+      canEstimate: result.state?.canEstimate,
+      stateTaxableIncome: st.stateTaxableIncome,
+      stateTax: st.stateTax,
+      stateWithheld: st.stateWithheld,
+      net: st.net,
+      isRefund: st.isRefund,
+      refundAmount: st.refundAmount,
+      owedAmount: st.owedAmount,
+    },
+    combined: result.combined,
+  };
+}
+
 async function submitLeadGateway(input, result) {
   const fullName = (document.getElementById("gatewayFullName")?.value || "").trim();
   const email = (document.getElementById("gatewayEmail")?.value || "").trim();
@@ -1296,44 +1439,7 @@ async function submitLeadGateway(input, result) {
     btn.style.opacity = "0.75";
   }
 
-  const estimateSummary = result
-    ? {
-      taxYear: result.meta?.taxYear,
-      filingStatus: result.meta?.filingStatus,
-      stateCode: result.meta?.stateCode,
-      stateName: result.meta?.stateName,
-      federal: {
-        grossIncome: result.federal?.summary?.grossIncome,
-        agi: result.federal?.summary?.agi,
-        taxableIncome: result.federal?.summary?.taxableIncome,
-        taxBeforeCredits: result.federal?.summary?.taxBeforeCredits,
-        taxAfterCredits: result.federal?.summary?.taxAfterCredits,
-        federalWithheld: result.federal?.summary?.federalWithheld,
-        estimatedTaxPayments: result.federal?.summary?.estimatedTaxPayments,
-        selfEmploymentIncome: result.federal?.summary?.selfEmploymentIncome,
-        selfEmploymentTax: result.federal?.summary?.selfEmploymentTax,
-        net: result.federal?.summary?.net,
-        isRefund: result.federal?.summary?.isRefund,
-        refundAmount: result.federal?.summary?.refundAmount,
-        owedAmount: result.federal?.summary?.owedAmount,
-        marginalRate: result.federal?.summary?.marginalRate,
-        effectiveRate: result.federal?.summary?.effectiveRate,
-      },
-      state: {
-        stateName: result.meta?.stateName,
-        hasIncomeTax: result.state?.hasIncomeTax,
-        canEstimate: result.state?.canEstimate,
-        stateTaxableIncome: result.state?.summary?.stateTaxableIncome,
-        stateTax: result.state?.summary?.stateTax,
-        stateWithheld: result.state?.summary?.stateWithheld,
-        net: result.state?.summary?.net,
-        isRefund: result.state?.summary?.isRefund,
-        refundAmount: result.state?.summary?.refundAmount,
-        owedAmount: result.state?.summary?.owedAmount,
-      },
-      combined: result.combined,
-    }
-    : null;
+  const estimateSummary = buildSavedEstimateSummary(result, input);
 
   try {
     const response = await fetch("/api/lead", {
@@ -1411,8 +1517,21 @@ async function handleLeadSubmit(event) {
   const name = (nameEl?.value || "").trim();
   const email = (emailEl?.value || "").trim();
   const phone = formatPhoneDisplay((phoneEl?.value || "").trim());
+  const fitReason = (
+    document.getElementById("taxPrepFitReason")?.value ||
+    ""
+  ).trim();
+  const taxPrepInterestConfirmed = Boolean(
+    document.getElementById("taxPrepInterestConfirm")?.checked
+  );
 
-  console.log("lead values", { name, email, phone });
+  console.log("lead values", {
+    name,
+    email,
+    phone,
+    fitReason,
+    taxPrepInterestConfirmed,
+  });
   console.log("_lastTaxInput", _lastTaxInput);
   console.log("_lastEstimate", _lastEstimate);
 
@@ -1422,6 +1541,18 @@ async function handleLeadSubmit(event) {
     errors.push("Email address is required.");
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errors.push("Please enter a valid email address.");
+  }
+
+  if (!fitReason) {
+    errors.push(
+      "Select the tax preparation service you are considering."
+    );
+  }
+
+  if (!taxPrepInterestConfirmed) {
+    errors.push(
+      "Confirm that you are considering hiring Greatest Business Solution LLC for paid tax preparation."
+    );
   }
 
   console.log("lead validation errors", errors);
@@ -1434,49 +1565,15 @@ async function handleLeadSubmit(event) {
   clearLeadErrors();
   setLeadLoading(true);
 
-  const estimateSummary = _lastEstimate
-    ? {
-      taxYear: _lastEstimate.meta?.taxYear,
-      filingStatus: _lastEstimate.meta?.filingStatus,
-      stateCode: _lastEstimate.meta?.stateCode,
-      stateName: _lastEstimate.meta?.stateName,
-      federal: {
-        grossIncome: _lastEstimate.federal?.summary?.grossIncome,
-        agi: _lastEstimate.federal?.summary?.agi,
-        taxableIncome: _lastEstimate.federal?.summary?.taxableIncome,
-        taxBeforeCredits: _lastEstimate.federal?.summary?.taxBeforeCredits,
-        taxAfterCredits: _lastEstimate.federal?.summary?.taxAfterCredits,
-        federalWithheld: _lastEstimate.federal?.summary?.federalWithheld,
-        estimatedTaxPayments: _lastEstimate.federal?.summary?.estimatedTaxPayments,
-        selfEmploymentIncome: _lastEstimate.federal?.summary?.selfEmploymentIncome,
-        selfEmploymentTax: _lastEstimate.federal?.summary?.selfEmploymentTax,
-        net: _lastEstimate.federal?.summary?.net,
-        isRefund: _lastEstimate.federal?.summary?.isRefund,
-        refundAmount: _lastEstimate.federal?.summary?.refundAmount,
-        owedAmount: _lastEstimate.federal?.summary?.owedAmount,
-        marginalRate: _lastEstimate.federal?.summary?.marginalRate,
-        effectiveRate: _lastEstimate.federal?.summary?.effectiveRate,
-      },
-      state: {
-        stateName: _lastEstimate.meta?.stateName,
-        hasIncomeTax: _lastEstimate.state?.hasIncomeTax,
-        canEstimate: _lastEstimate.state?.canEstimate,
-        stateTaxableIncome: _lastEstimate.state?.summary?.stateTaxableIncome,
-        stateTax: _lastEstimate.state?.summary?.stateTax,
-        stateWithheld: _lastEstimate.state?.summary?.stateWithheld,
-        net: _lastEstimate.state?.summary?.net,
-        isRefund: _lastEstimate.state?.summary?.isRefund,
-        refundAmount: _lastEstimate.state?.summary?.refundAmount,
-        owedAmount: _lastEstimate.state?.summary?.owedAmount,
-      },
-      combined: _lastEstimate.combined,
-    }
-    : null;
+  const estimateSummary = buildSavedEstimateSummary(_lastEstimate, _lastTaxInput);
 
   console.log("about to fetch /api/lead", { estimateSummary });
 
   const followUpStamp = new Date().toLocaleString();
-  const followUpNote = `[${followUpStamp}] Client action from public estimate summary: Requested Free 15-Minute Consultation`;
+  const followUpNote =
+    `[${followUpStamp}] Client requested a Tax Preparation Fit Call. ` +
+    `Service interest: ${fitReason}. ` +
+    `Client confirmed they are considering paid tax preparation.`;
 
   try {
     const response = await fetch("/api/lead", {
@@ -1865,14 +1962,14 @@ function renderTaxProInsightBanner(fed, combined) {
   const reviewStatus = getReviewStatus(fed, combined);
 
   host.innerHTML = `
-    <div class="taxpro-banner taxpro-banner-${escHtml(reviewStatus.level)}">
+    <div class="taxpro-banner taxpro-banner-${escHtml(reviewStatus.level)} taxpro-banner-compact">
       <div class="taxpro-banner-top">
         <div class="taxpro-banner-status">
           <span class="taxpro-status-dot"></span>
           <span class="taxpro-status-label">${escHtml(reviewStatus.label)}</span>
         </div>
         <div class="taxpro-banner-mini">
-          Free instant estimate review - Professional follow-up available
+          Automated estimate screening
         </div>
       </div>
 
@@ -1882,347 +1979,81 @@ function renderTaxProInsightBanner(fed, combined) {
       <div class="taxpro-banner-reason">
         ${escHtml(reviewStatus.reason)}
       </div>
+    </div>
 
-      <div class="taxpro-banner-actions">
-        <button
-          type="button"
-          id="paidReviewCtaBtn"
-          style="margin-top:12px;background:#f59e0b;color:#111827;border:2px solid #92400e;border-radius:12px;padding:14px 22px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 10px 22px rgba(245,158,11,0.35);"
-        >
-          Get My Written Red Flag Review - $29
-        </button>
+    <details class="transcript-help-details">
+      <summary>
+        <span>
+          Missing a W-2, 1099, prior-year return, or IRS record?
+        </span>
+        <strong>View IRS Transcript Help - $150</strong>
+      </summary>
 
-        <div style="margin-top:16px;background:#fff7ed;border:2px solid #f59e0b;border-radius:14px;padding:16px;color:#1f2937;max-width:720px;">
-          <div style="font-size:18px;font-weight:900;margin-bottom:10px;color:#92400e;">What You Receive for $29</div>
-          <div style="display:grid;gap:8px;font-size:14px;line-height:1.5;font-weight:650;">
-            <div>- Review of your estimate for possible missed deductions or credits</div>
-            <div>- Filing-status, dependent, and working-child review based on the information entered</div>
-            <div>- Self-employment, mileage, and withholding review if applicable</div>
-            <div>- Written Tax Strategy Summary with recommended next steps</div>
-            <div>- Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
+      <div class="transcript-help-details-body">
+        <p>
+          Use this only when you need IRS records, missing wage documents,
+          prior-year filing research, or help understanding an IRS notice or balance.
+          The $150 service covers one transcript-help matter for one taxpayer.
+        </p>
+
+        <div class="transcript-help-choice-grid">
+          <div class="transcript-help-choice-box">
+            <div class="transcript-help-choice-title">
+              What do you need help with?
+            </div>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I received an IRS letter or notice"> I received an IRS letter or notice</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a W-2"> I am missing a W-2</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a 1099"> I am missing a 1099</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I need wage or income records"> I need wage or income records</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I need to know if a return was filed"> I need to know if a return was filed</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I need prior-year tax records"> I need prior-year tax records</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I need to know what I owe the IRS"> I need to know what I owe the IRS</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I need records for tax preparation"> I need records for tax preparation</label>
+            <label><input type="checkbox" class="transcriptNeedOption" value="I am not sure / I need help figuring it out"> I am not sure / I need help figuring it out</label>
           </div>
-          <div style="margin-top:12px;font-size:13px;color:#475569;line-height:1.5;">This review does not replace a completed tax return. It is a strategy review based on the information you provide.</div>
+
+          <div class="transcript-help-choice-box">
+            <div class="transcript-help-choice-title">
+              Transcript type, if known
+            </div>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Wage and Income Transcript"> Wage and Income Transcript</label>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Tax Account Transcript"> Tax Account Transcript</label>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Tax Return Transcript"> Tax Return Transcript</label>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Record of Account Transcript"> Record of Account Transcript</label>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Verification of Non-Filing"> Verification of Non-Filing</label>
+            <label><input type="checkbox" class="transcriptTypeOption" value="Not sure - please help me decide"> Not sure - please help me decide</label>
+          </div>
         </div>
 
-        <button type="button" id="taxProInsightCtaBtn" class="cta-urgent-btn" style="margin-top:12px;">
-          Book a Free 15-Minute Consultation
-        </button>
-        <div style="margin-top:8px;font-size:13px;font-weight:700;color:#475569;">Secondary option - no payment required</div>
+        <label class="transcript-help-detail-label" for="transcriptHelpRequestText">
+          Additional details (optional)
+        </label>
+        <textarea
+          id="transcriptHelpRequestText"
+          class="transcript-help-detail-textarea"
+          placeholder="Example: I am missing a 2025 W-2 and need wage and income records for tax preparation."
+        ></textarea>
+
+        <div class="transcript-help-action-row">
+          <button
+            type="button"
+            id="transcriptReviewBtn"
+            class="btn-transcript-help"
+          >
+            Purchase IRS Transcript Help - $150
+          </button>
+          <span>
+            Not full tax preparation, IRS representation, or ongoing monitoring.
+          </span>
+        </div>
       </div>
-
-<div
-  class="transcript-review-box"
-  style="
-    margin-top:24px;
-    background:#0f172a;
-    border:2px solid #38bdf8;
-    border-radius:16px;
-    padding:20px;
-    color:white;
-  "
->
-  <div
-    style="
-      font-size:24px;
-      font-weight:800;
-      margin-bottom:12px;
-      color:#38bdf8;
-    "
-  >
-    Need Help With IRS Transcripts?
-  </div>
-
-  <div
-    style="
-      font-size:15px;
-      line-height:1.7;
-      color:#dbeafe;
-      margin-bottom:18px;
-    "
-  >
-    Missing tax forms or not sure what the IRS has on file?
-    Request IRS Transcript Help so we can help you understand what IRS records may be needed,
-how to get them, and whether wage records, income documents, prior-year filing issues,
-IRS account balances, or tax resolution next steps may need to be reviewed.
-  </div>
-
-  <div
-    style="
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-bottom:20px;
-      color:#dbeafe;
-      font-size:14px;
-      font-weight:600;
-    "
-  >
-    <div>- Wage & Income Transcript Review</div>
-    <div>- Prior-Year Filing Research</div>
-    <div>- IRS Notice & Balance Review</div>
-  </div>
-
-  <div
-    style="
-      margin:16px 0 18px;
-      background:#1e293b;
-      border:1px solid #38bdf8;
-      border-radius:14px;
-      padding:14px;
-      color:#dbeafe;
-      font-size:13px;
-      line-height:1.6;
-    "
-  >
-    <strong style="color:#fde68a;">Important timing note:</strong><br>
-    IRS transcripts are generally available only after the IRS has processed the return.
-    If you recently e-filed, transcripts may not be available for about 2-3 weeks.
-    If you mailed a paper return, it may take about 6-8 weeks.
-    Our office can help identify which IRS records may be needed and review available records quickly once authorization and access are complete.
-  </div>
-
-  <div
-    style="
-      margin-bottom:18px;
-      color:#fde68a;
-      font-weight:700;
-      font-size:15px;
-    "
-  >
-        IRS Transcript Help & Tax Records Review Fee:
-    $150 flat service fee
-  </div>
-
-    <div
-    style="
-      margin:0 0 18px;
-      background:#f8fafc;
-      border:2px solid #bae6fd;
-      border-radius:14px;
-      padding:14px;
-      color:#0f172a;
-      font-size:13px;
-      line-height:1.6;
-    "
-  >
-    <div style="font-size:16px;font-weight:900;color:#0369a1;margin-bottom:8px;">
-      What the $150 service covers
-    </div>
-
-    <div style="font-weight:700;color:#334155;">
-      The $150 fee covers one transcript-help matter for one taxpayer. We will review
-      the issue you describe, determine which IRS transcript type(s) may be needed,
-      review available transcript information related to that issue, and explain the
-      recommended next step.
-    </div>
-
-    <div
-      style="
-        margin-top:10px;
-        background:#fff7ed;
-        border:1px solid #fed7aa;
-        border-radius:10px;
-        padding:10px;
-        color:#7c2d12;
-        font-weight:800;
-      "
-    >
-      This service does not include full tax preparation, amended returns, IRS representation,
-      tax resolution work, or ongoing monitoring unless separately agreed in writing.
-    </div>
-  </div>
-
-    <div
-    style="
-      margin:0 0 18px;
-      background:#eef2ff;
-      border:2px solid #6366f1;
-      border-radius:14px;
-      padding:14px;
-      color:#0f172a;
-      font-size:13px;
-      line-height:1.55;
-    "
-  >
-    <div style="font-size:16px;font-weight:900;color:#312e81;margin-bottom:8px;">
-      Not sure which IRS transcript you need?
-    </div>
-
-    <div style="font-weight:800;color:#334155;margin-bottom:10px;">
-      That is part of the service. We help identify which IRS record may answer your question.
-    </div>
-
-    <div style="display:grid;gap:8px;">
-      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
-        <strong>Missing W-2s or 1099s:</strong> Wage and Income Transcript
-      </div>
-
-      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
-        <strong>IRS notice, balance, payments, or account activity:</strong> Tax Account Transcript
-      </div>
-
-      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
-        <strong>Need information from a filed return:</strong> Tax Return Transcript
-      </div>
-
-      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
-        <strong>Need filed-return details and account activity together:</strong> Record of Account Transcript
-      </div>
-
-      <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:10px;padding:9px;">
-        <strong>Need proof no return was filed:</strong> Verification of Non-Filing
-      </div>
-    </div>
-  </div>
-
-     <div
-    style="
-      margin:0 0 18px;
-      background:#ecfeff;
-      border:2px solid #38bdf8;
-      border-radius:14px;
-      padding:14px;
-      color:#0f172a;
-    "
-  >
-    <div
-      style="
-        font-size:17px;
-        font-weight:950;
-        color:#0369a1;
-        margin-bottom:8px;
-      "
-    >
-      Tell us what you need help with
-    </div>
-
-    <div
-      style="
-        font-size:13px;
-        line-height:1.5;
-        color:#334155;
-        font-weight:800;
-        margin-bottom:12px;
-      "
-    >
-      Select any that apply. At least one item is required before continuing to payment.
-    </div>
-
-    <div
-      style="
-        background:#ffffff;
-        border:1px solid #67e8f9;
-        border-radius:12px;
-        padding:12px;
-        margin-bottom:12px;
-      "
-    >
-      <div style="font-size:14px;font-weight:950;color:#0369a1;margin-bottom:8px;">
-        What do you need help with?
-      </div>
-
-      <div style="display:grid;gap:8px;font-size:13px;color:#0f172a;font-weight:800;">
-        <label><input type="checkbox" class="transcriptNeedOption" value="I received an IRS letter or notice"> I received an IRS letter or notice</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a W-2"> I am missing a W-2</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I am missing a 1099"> I am missing a 1099</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need wage or income records"> I need wage or income records</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need to know if a return was filed"> I need to know if a return was filed</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need prior-year tax records"> I need prior-year tax records</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need to know what I owe the IRS"> I need to know what I owe the IRS</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need help with an IRS balance"> I need help with an IRS balance</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I need records for tax preparation"> I need records for tax preparation</label>
-        <label><input type="checkbox" class="transcriptNeedOption" value="I am not sure / I need help figuring it out"> I am not sure / I need help figuring it out</label>
-      </div>
-    </div>
-
-    <div
-      style="
-        background:#eef2ff;
-        border:1px solid #c7d2fe;
-        border-radius:12px;
-        padding:12px;
-        margin-bottom:12px;
-      "
-    >
-      <div style="font-size:14px;font-weight:950;color:#312e81;margin-bottom:8px;">
-        Which IRS transcript do you think you need? <span style="font-size:12px;color:#64748b;">Optional</span>
-      </div>
-
-      <div style="display:grid;gap:8px;font-size:13px;color:#0f172a;font-weight:800;">
-        <label><input type="checkbox" class="transcriptTypeOption" value="Wage and Income Transcript"> Wage and Income Transcript</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Tax Account Transcript"> Tax Account Transcript</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Tax Return Transcript"> Tax Return Transcript</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Record of Account Transcript"> Record of Account Transcript</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Verification of Non-Filing"> Verification of Non-Filing</label>
-        <label><input type="checkbox" class="transcriptTypeOption" value="Not sure - please help me decide"> Not sure - please help me decide</label>
-      </div>
-    </div>
-
-    <label
-      for="transcriptHelpRequestText"
-      style="
-        display:block;
-        font-size:15px;
-        font-weight:900;
-        color:#0369a1;
-        margin-bottom:8px;
-      "
-    >
-      Additional details <span style="font-size:12px;color:#64748b;">Optional</span>
-    </label>
-
-    <textarea
-      id="transcriptHelpRequestText"
-      placeholder="Example: I received an IRS letter about 2022 and need help figuring out whether I need transcripts or help responding to the notice."
-      style="
-        width:100%;
-        box-sizing:border-box;
-        min-height:95px;
-        border:1px solid #38bdf8;
-        border-radius:12px;
-        padding:12px;
-        font-size:14px;
-        line-height:1.5;
-        resize:vertical;
-      "
-    ></textarea>
-  </div>
-
-  <button
-    type="button"
-    id="transcriptReviewBtn"
-    class="cta-urgent-btn"
-    style="
-      width:100%;
-      max-width:360px;
-    "
-  >
-        Purchase IRS Transcript Help - $150
-  </button>
-</div>
-
-<div
-  style="
-    margin-top:14px;
-    font-size:13px;
-    color:#334155;
-    line-height:1.6;
-  "
->
-  This paid review is designed for taxpayers who want a deeper professional analysis beyond the free estimate calculator.
-</div>
-      </div>
-    </div>
+    </details>
   `;
 
-  const freeBtn = document.getElementById("taxProInsightCtaBtn");
-  if (freeBtn) freeBtn.addEventListener("click", scrollToLead);
-
-  const paidBtn = document.getElementById("paidReviewCtaBtn");
-  if (paidBtn) paidBtn.addEventListener("click", openPaidReview);
-
   const transcriptBtn = document.getElementById("transcriptReviewBtn");
-  if (transcriptBtn) transcriptBtn.addEventListener("click", requestTranscriptHelp);
+  if (transcriptBtn) {
+    transcriptBtn.addEventListener("click", requestTranscriptHelp);
+  }
 }
 
 function renderBreakdownRows(elId, rows) {
@@ -2264,81 +2095,42 @@ function renderClientEstimateSummaryLink() {
   const leadId = _leadGatewayContact?.leadId;
   if (!leadId) return;
 
-  const summaryUrl = `${window.location.origin}/estimate/${encodeURIComponent(leadId)}`;
+  const summaryUrl =
+    `${window.location.origin}/estimate/${encodeURIComponent(leadId)}`;
 
   const box = document.createElement("div");
   box.id = "clientSummaryLinkBox";
-  box.style.cssText = `
-    margin-top:16px;
-    margin-bottom:16px;
-    background:#ecfdf5;
-    border:2px solid #059669;
-    border-radius:16px;
-    padding:18px;
-    color:#064e3b;
-    box-shadow:0 10px 24px rgba(5,150,105,0.12);
-  `;
+  box.className = "detailed-summary-ready-box";
 
   box.innerHTML = `
-    <div style="font-size:20px;font-weight:900;margin-bottom:8px;">
-      Your Tax Estimate Summary Is Ready
+    <div class="detailed-summary-ready-copy">
+      <div class="detailed-summary-ready-kicker">
+        Your saved estimate
+      </div>
+      <div class="detailed-summary-ready-title">
+        Your Detailed Tax Estimate Summary Is Ready
+      </div>
+      <div class="detailed-summary-ready-text">
+        Open it to see tax after credits, estimated credits applied,
+        marginal and effective tax rates, withholding differences,
+        working-child guidance, and the items that could change the estimate.
+      </div>
+      <div class="detailed-summary-ready-reference">
+        Reference ID: ${escHtml(leadId)}
+      </div>
     </div>
 
-    <div style="font-size:14px;line-height:1.6;margin-bottom:14px;color:#065f46;">
-      You can open your estimate summary now. If you click Copy Summary Link, the link is saved to your clipboard so you can paste it into a text message, email, or browser. The copied link will also show below for confirmation.
-    </div>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <a
-        href="${escHtml(summaryUrl)}"
-        target="_blank"
-        rel="noopener noreferrer"
-        style="display:inline-block;background:#0f2c56;color:#fff;text-decoration:none;border-radius:12px;padding:12px 16px;font-weight:900;"
-      >
-        View My Tax Estimate Summary
-      </a>
-
-      <button
-        type="button"
-        id="copyClientSummaryLinkBtn" style="display:none;"
-        style="background:#ffffff;color:#0f2c56;border:2px solid #0f2c56;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer;"
-      >
-        Copy Summary Link
-      </button>
-
-      <span id="clientSummaryCopyMsg" style="font-weight:800;color:#047857;"></span>
-    </div>
-
-    <div style="margin-top:10px;font-size:12px;color:#047857;">
-      Reference ID: ${escHtml(leadId)}
-    </div>
+    <a
+      href="${escHtml(summaryUrl)}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="detailed-summary-ready-button"
+    >
+      Open My Detailed Estimate Summary
+    </a>
   `;
 
   host.parentNode.insertBefore(box, host.nextSibling);
-
-  const copyBtn = document.getElementById("copyClientSummaryLinkBtn");
-  const msg = document.getElementById("clientSummaryCopyMsg");
-
-  if (copyBtn) {
-    copyBtn.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(summaryUrl);
-        if (msg) {
-          msg.textContent = "Link copied. Paste it into a text message, email, or browser: " + summaryUrl;
-          setTimeout(() => {
-            msg.textContent = "";
-          }, 2500);
-        }
-      } catch {
-        if (msg) {
-          msg.textContent = "Copy failed";
-          setTimeout(() => {
-            msg.textContent = "";
-          }, 2500);
-        }
-      }
-    });
-  }
 }
 
 function renderResults(result, input) {
@@ -2529,7 +2321,7 @@ function renderResults(result, input) {
   const ctaTitle = document.getElementById("ctaTitle");
   const ctaCtx = document.getElementById("ctaContext");
   if (ctaTitle) ctaTitle.textContent = "Understand the Number Before You File";
-  if (ctaCtx) ctaCtx.textContent = "The $29 written review is the recommended next step when you want a clear explanation of the number, possible red flags, and what to do before filing. A free 15-minute consultation remains available as a secondary option.";
+  if (ctaCtx) ctaCtx.textContent = "The $29 Written Red Flag Review includes the Tax Savings Planner bonus. A Tax Preparation Fit Call is available only for taxpayers considering paid return preparation.";
 }
 
 // =============================================================================
@@ -2577,10 +2369,13 @@ document.addEventListener("DOMContentLoaded", () => {
       overlay.innerHTML = `
         <div style="background:#ffffff;width:min(920px,96vw);max-height:92vh;overflow:auto;border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.35);border:3px solid #0f2c56;">
           <div style="padding:22px 24px;border-bottom:1px solid #dbe4f0;background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);">
-            <div style="font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.45px;">Written Estimate Red Flag Review - $29</div>
+            <div style="font-size:13px;font-weight:950;color:#0f2c56;text-transform:uppercase;letter-spacing:.45px;">Written Red Flag Review + Tax Savings Planner Bonus - $29</div>
             <div style="font-size:26px;font-weight:950;color:#0f2c56;margin-top:5px;">Before payment, tell us what may affect your estimate</div>
             <div style="margin-top:8px;color:#334155;font-size:15px;line-height:1.55;font-weight:750;">
-              This helps us prepare a more useful written review. Your written review will be emailed to the email address you provided. No printer is needed. The review is limited to the estimate information you entered and the answers below. It is not full tax preparation or a document-by-document tax return review.
+              This helps us prepare a more useful written review. Your written review will be emailed to the email address you provided, and the Tax Savings Planner is included as a bonus at no additional cost. The review is limited to the estimate information you entered and the answers below. It is not full tax preparation or a document-by-document tax return review.
+            </div>
+            <div style="margin-top:12px;padding:12px 14px;border:2px solid #0f766e;border-radius:13px;background:#ecfdf5;color:#065f46;font-size:14px;line-height:1.5;font-weight:850;">
+              <strong>Bonus included:</strong> Tax Savings Planner&trade; with withholding checkup, quarterly-tax planning, what-if scenarios, tax-savings opportunities, and a personalized action plan.
             </div>
           </div>
 
@@ -2675,7 +2470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const stamp = new Date().toLocaleString();
     const actionNote =
-      "[" + stamp + "] Client clicked Buy Written Estimate Red Flag Review and completed Written Estimate Red Flag Review intake. Payment not yet confirmed.\n" +
+      "[" + stamp + "] Client clicked Written Red Flag Review + Tax Savings Planner Bonus and completed the paid-review intake. Payment not yet confirmed.\n" +
       "Paid Review Intake - Selected Items: " + (intake.selected.length ? intake.selected.join("; ") : "None selected") + "\n" +
       "Paid Review Intake - Client Explanation: " + intake.comment + "\n" +
       "Paid Review Intake - Limited Scope Acknowledged: Yes";
@@ -2689,7 +2484,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const lead = readData?.lead || {};
       const contact = lead.contact || {};
-      clientName = contact.name || _leadGatewayContact?.name || "";
+      clientName = contact.name || _leadGatewayContact?.fullName || "";
       clientEmail = contact.email || _leadGatewayContact?.email || "";
 
       const existingNotes = lead.notes || "";

@@ -692,21 +692,39 @@
         <div class="results-section paid-review-primary-section">
           <div class="paid-review-primary-card">
             <div class="paid-review-primary-copy">
-              <div class="paid-review-kicker">Recommended Next Step</div>
-              <h3>Get My Written Red Flag Review</h3>
+              <div class="paid-review-kicker">One-Time Price: $29</div>
+              <h3>Written Red Flag Review + Tax Savings Planner&trade; Bonus</h3>
               <div class="paid-review-price">$29</div>
-              <p>Your free estimate shows the likely number. The written review explains the key drivers, possible withholding issues, dependent concerns, state tax impact, red flags, and recommended next steps before filing.</p>
+              <p>
+                Your free estimate gives you the likely number. The paid review adds a professional written analysis of the key drivers, possible red flags, withholding concerns, dependent issues, and recommended next steps.
+              </p>
+
+              <div class="paid-review-bonus-box">
+                <div class="paid-review-bonus-label">Bonus Included at No Additional Cost</div>
+                <div class="paid-review-bonus-title">Tax Savings Planner&trade;</div>
+                <p>
+                  Your planner gives you a guided withholding checkup, quarterly-tax planning, what-if scenarios, tax-savings opportunities, and a personalized action plan.
+                </p>
+              </div>
+
               <ul>
-                <li>Personalized written explanation of your estimate</li>
-                <li>Dependent and working-child concerns highlighted</li>
-                <li>Potential red flags and practical next steps</li>
-                <li>Delivered by email &mdash; no printer required</li>
+                <li>Personalized Written Red Flag Review delivered by email</li>
+                <li>Key estimate drivers and withholding concerns explained</li>
+                <li>Dependent and working-child issues highlighted</li>
+                <li>Tax Savings Planner&trade; bonus included with purchase</li>
               </ul>
             </div>
+
             <div class="paid-review-primary-actions">
-              <button type="button" class="btn-paid-review-primary" onclick="openPaidReview()">Get My Written Red Flag Review &mdash; $29</button>
-              <button type="button" class="btn-free-consult-secondary" onclick="scrollToLead()">Book a Free 15-Minute Consultation Instead</button>
-              <div class="paid-review-scope-note">The written review is not full tax preparation and does not replace review of your actual tax documents.</div>
+              <button type="button" class="btn-paid-review-primary" onclick="openPaidReview()">
+                Get My Written Review + Planner &mdash; $29
+              </button>
+              <button type="button" class="btn-free-consult-secondary" onclick="scrollToLead()">
+                Considering Full Tax Preparation? Request a Fit Call
+              </button>
+              <div class="paid-review-scope-note">
+                The $29 review is not a filed return or full tax preparation. The Tax Savings Planner&trade; is included as a planning bonus.
+              </div>
             </div>
           </div>
         </div>
@@ -741,53 +759,66 @@
         <div class="lead-section" id="leadSection">
           <div class="lead-inner">
 
-            <!-- Left: value prop -->
             <div class="lead-content">
               <div class="lead-eyebrow">Secondary Option</div>
-              <h3 class="lead-title">Book a Free 15-Minute Consultation</h3>
+              <h3 class="lead-title">Considering Full Tax Preparation?</h3>
               <p class="lead-desc">
-                Have a quick question or need help deciding which service is right for you? Request a short consultation after reviewing the $29 written-review option above.
+                Request a brief Tax Preparation Fit Call if you are seriously considering hiring Greatest Business Solution LLC to prepare your return. We will discuss the type of return, timing, document needs, and whether our preparation service is a good fit.
               </p>
+
               <ul class="lead-benefits">
-                <li><span class="lead-check">&#x2714;</span> Free initial consultation</li>
-                <li><span class="lead-check">&#x2714;</span> Federal and state filing</li>
-                <li><span class="lead-check">&#x2714;</span> Audit support included</li>
-                <li><span class="lead-check">&#x2714;</span> Licensed &amp; insured professionals</li>
-                <li><span class="lead-check">&#x2714;</span> Secure document handling</li>
-                <li><span class="lead-check">&#x2714;</span> Year-round availability</li>
+                <li><span class="lead-check">&#x2714;</span> Discuss tax-preparation needs and timing</li>
+                <li><span class="lead-check">&#x2714;</span> Confirm the likely service category</li>
+                <li><span class="lead-check">&#x2714;</span> Learn what documents may be needed</li>
+                <li><span class="lead-check">&#x2714;</span> Determine whether our service is a fit</li>
               </ul>
+
+              <div class="lead-boundary-note">
+                This is not a free tax-advice session, document review, estimate review, or tax-planning appointment. Detailed estimate questions should be submitted through the $29 Written Red Flag Review.
+              </div>
+
               <div class="lead-trust">
                 <span>&#x1F512;</span>
-                Your information is 100% confidential and will never be shared or sold.
+                Your information is confidential and will not be sold.
               </div>
             </div>
 
-            <!-- Right: form panel -->
             <div class="lead-form-wrap">
-
-              <!-- Form state -->
               <div id="leadFormState">
                 <div class="lead-form-header">
-                  <div class="lead-form-title">Request a Free 15-Minute Consultation</div>
-                  <div class="lead-form-sub">A tax professional will contact you to arrange a brief consultation.</div>
+                  <div class="lead-form-title">Request a Tax Preparation Fit Call</div>
+                  <div class="lead-form-sub">
+                    Complete this form only if you are considering paid tax preparation.
+                  </div>
                 </div>
 
                 <form id="leadForm" class="lead-form" novalidate onsubmit="handleLeadSubmit(event)">
+                  <div class="lead-field-group">
+                    <label class="lead-field-label" for="taxPrepFitReason">
+                      Tax Preparation Need <span class="req-star">*</span>
+                    </label>
+                    <select id="taxPrepFitReason" name="taxPrepFitReason" required>
+                      <option value="">- Select -</option>
+                      <option value="Individual tax return preparation">Individual tax return preparation</option>
+                      <option value="Self-employed or gig-worker tax preparation">Self-employed or gig-worker tax preparation</option>
+                      <option value="Small-business or entity tax preparation">Small-business or entity tax preparation</option>
+                      <option value="Prior-year or multiple-year tax preparation">Prior-year or multiple-year tax preparation</option>
+                      <option value="Not sure which tax-preparation service">Not sure which tax-preparation service</option>
+                    </select>
+                  </div>
 
                   <div class="lead-field-group">
                     <label class="lead-field-label" for="leadName">
                       Full Name <span class="req-star">*</span>
                     </label>
-                    <input type="text" id="leadName" name="leadName" placeholder="Jane Smith" autocomplete="name"
-                      required />
+                    <input type="text" id="leadName" name="leadName" placeholder="Jane Smith" autocomplete="name" required />
                   </div>
 
                   <div class="lead-field-group">
                     <label class="lead-field-label" for="leadEmail">
                       Email Address <span class="req-star">*</span>
                     </label>
-                    <input type="email" id="leadEmail" name="leadEmail" placeholder="jane@email.com"
-                      autocomplete="email" required />
+                    <input type="email" id="leadEmail" name="leadEmail" placeholder="jane@email.com" autocomplete="email" required />
                   </div>
 
                   <div class="lead-field-group">
@@ -797,13 +828,19 @@
                     <input type="tel" id="leadPhone" name="leadPhone" placeholder="(555) 000-0000" autocomplete="tel" />
                   </div>
 
-                  <!-- Lead form errors -->
+                  <label class="tax-prep-interest-confirmation">
+                    <input type="checkbox" id="taxPrepInterestConfirm" />
+                    <span>
+                      I am considering hiring Greatest Business Solution LLC for paid tax preparation.
+                    </span>
+                  </label>
+
                   <div class="lead-errors" id="leadErrors" style="display:none;">
                     <ul class="lead-errors-list" id="leadErrorsList"></ul>
                   </div>
 
                   <button type="submit" class="btn-lead-submit" id="leadSubmitBtn">
-                    Request Free 15-Minute Consultation
+                    Request Tax Preparation Fit Call
                     <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round">
                       <path d="M3 8h10M9 4l4 4-4 4" />
@@ -811,45 +848,20 @@
                   </button>
 
                   <p class="lead-form-note">
-                    No obligation. No spam. We will never sell your information.
+                    This request is for prospective tax-preparation clients. It is not a free tax-advice appointment.
                   </p>
-
                 </form>
               </div>
 
-              <!-- Success state -->
               <div class="lead-success" id="leadSuccess" style="display:none;">
                 <div class="lead-success-icon">&#x2705;</div>
-                <div class="lead-success-title">Request Received!</div>
+                <div class="lead-success-title">Fit Call Request Received</div>
                 <div class="lead-success-desc">
-                  Thank you. A member of our team at Greatest Business Solution LLC
-                  will contact you within 1 business day to discuss your estimate and possible next steps.
+                  Thank you. We will review your tax-preparation interest and contact you about the next step.
                 </div>
                 <div class="lead-success-meta" id="leadSuccessMeta"></div>
               </div>
-
             </div>
-          </div>
-        </div>
-
-        <!-- CTA -->
-        <div class="cta-section">
-          <div class="cta-content">
-            <div class="cta-eyebrow">Choose Your Next Step</div>
-            <h3 class="cta-title" id="ctaTitle">Understand the Number Before You File</h3>
-            <p class="cta-context" id="ctaContext"></p>
-            <ul class="cta-perks">
-              <li>&#x2714; Written explanation</li>
-              <li>&#x2714; Red-flag review</li>
-              <li>&#x2714; Dependent concerns</li>
-              <li>&#x2714; Recommended next steps</li>
-            </ul>
-          </div>
-          <div class="cta-actions">
-            <button class="btn-cta-primary" onclick="openPaidReview()">Get My Written Red Flag Review &mdash; $29</button>
-            <button class="btn-cta-secondary" onclick="scrollToLead()">
-              Book a Free 15-Minute Consultation
-            </button>
           </div>
         </div>
 

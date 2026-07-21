@@ -12672,8 +12672,8 @@ app.post("/api/create-written-review-checkout", async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "Written Estimate Red Flag Review",
-              description: "One-time written review of the tax estimate for possible red flags, missing items, and next-step guidance. This is not full tax preparation."
+              name: "Written Red Flag Review + Tax Savings Planner Bonus",
+              description: "One-time written review of the tax estimate plus the Tax Savings Planner bonus at no additional cost. Includes red flags, missing items, withholding concerns, and next-step guidance. This is not full tax preparation."
             },
             unit_amount: amount
           },
@@ -12684,7 +12684,8 @@ app.post("/api/create-written-review-checkout", async (req, res) => {
         leadId,
         clientName,
         clientEmail,
-        service: "written_review"
+        service: "written_review",
+        includedBonus: "tax_savings_planner"
       },
       success_url: `${APP_BASE_URL}/stripe-thank-you?service=written-review&leadId=${encodeURIComponent(leadId)}`,
       cancel_url: `${APP_BASE_URL}/estimate/${encodeURIComponent(leadId)}?checkout=cancelled`
@@ -12841,43 +12842,3 @@ function updateClientTranscript(leadId, update) {
     console.log("[transcript merge error]", err.message);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
