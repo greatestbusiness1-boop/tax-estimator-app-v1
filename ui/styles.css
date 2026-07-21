@@ -2605,6 +2605,108 @@ input.error-field {
   color: inherit;
 }
 
+.field-label-note {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.working-child-field-help {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.working-child-withholding-grid {
+  margin-top: 2px;
+}
+
+.working-child-filing-summary {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.working-child-filing-summary.not-required {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.working-child-filing-summary.required {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.working-child-filing-summary strong {
+  color: var(--navy);
+  font-size: 12px;
+}
+
+.working-child-filing-summary span,
+.working-child-filing-summary small {
+  color: var(--text-mid);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.working-child-dependent-reminder {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-left: 4px solid var(--blue);
+  background: #eff6ff;
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.working-child-filing-card {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.working-child-filing-card.not-required {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.working-child-filing-card.required {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.working-child-filing-card > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--navy);
+  font-size: 14px;
+}
+
+.working-child-filing-card p {
+  margin: 0 0 8px;
+  color: var(--text-mid);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.working-child-filing-card ul {
+  margin-top: 7px;
+}
+
+.working-child-refund-list {
+  padding-top: 8px;
+  border-top: 1px solid rgba(15, 44, 86, .12);
+}
+
 .working-child-inline-result.eligible {
   border: 1px solid #86efac;
   background: #ecfdf5;

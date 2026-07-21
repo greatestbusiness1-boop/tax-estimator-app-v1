@@ -17,6 +17,33 @@ const QUALIFYING_RELATIVE_GROSS_INCOME_LIMITS = {
   2025: 5200,
 };
 
+const DEPENDENT_FILING_THRESHOLDS = {
+  2022: {
+    unearnedIncome: 1150,
+    earnedIncome: 12950,
+    earnedIncomeCap: 12550,
+    earnedIncomeAddition: 400,
+  },
+  2023: {
+    unearnedIncome: 1250,
+    earnedIncome: 13850,
+    earnedIncomeCap: 13450,
+    earnedIncomeAddition: 400,
+  },
+  2024: {
+    unearnedIncome: 1300,
+    earnedIncome: 14600,
+    earnedIncomeCap: 14150,
+    earnedIncomeAddition: 450,
+  },
+  2025: {
+    unearnedIncome: 1350,
+    earnedIncome: 15750,
+    earnedIncomeCap: 15300,
+    earnedIncomeAddition: 450,
+  },
+};
+
 // =============================================================================
 // SCREEN NAVIGATION
 // =============================================================================
@@ -216,6 +243,117 @@ function getWorkingChildIncomeLimit(taxYear) {
   return QUALIFYING_RELATIVE_GROSS_INCOME_LIMITS[Number(taxYear)] || 5200;
 }
 
+function getDependentFilingThresholds(taxYear) {
+  return DEPENDENT_FILING_THRESHOLDS[Number(taxYear)] ||
+    DEPENDENT_FILING_THRESHOLDS[2025];
+}
+
+function evaluateDependentFiling(child, taxYear) {
+  const name = child.name || "This child";
+  const year = Number(taxYear) || 2025;
+  const thresholds = getDependentFilingThresholds(year);
+  const wages = Number(child.wages || 0);
+  const gigIncome = Number(child.gigIncome || 0);
+  const unearnedIncome = Number(child.unearnedIncome || 0);
+  const federalWithheld = Number(child.federalWithheld || 0);
+  const stateWithheld = Number(child.stateWithheld || 0);
+  const earnedIncome = wages + gigIncome;
+  const grossIncome = earnedIncome + unearnedIncome;
+  const grossIncomeThreshold = Math.max(
+    thresholds.unearnedIncome,
+    Math.min(
+      earnedIncome,
+      thresholds.earnedIncomeCap
+    ) + thresholds.earnedIncomeAddition
+  );
+
+  const filingReasons = [];
+
+  if (unearnedIncome > thresholds.unearnedIncome) {
+    filingReasons.push(
+      `Unearned income is more than the ${fmt(thresholds.unearnedIncome)} dependent filing threshold.`
+    );
+  }
+
+  if (earnedIncome > thresholds.earnedIncome) {
+    filingReasons.push(
+      `Earned income is more than the ${fmt(thresholds.earnedIncome)} dependent filing threshold.`
+    );
+  }
+
+  if (grossIncome > grossIncomeThreshold) {
+    filingReasons.push(
+      `Gross income is more than the applicable ${fmt(grossIncomeThreshold)} dependent filing threshold.`
+    );
+  }
+
+  if (gigIncome >= 400) {
+    filingReasons.push(
+      "Net self-employment income is at least $400."
+    );
+  }
+
+  const federalReturnLikelyRequired =
+    filingReasons.length > 0;
+
+  let filingTitle = "";
+  let filingMessage = "";
+
+  if (federalReturnLikelyRequired) {
+    filingTitle =
+      "Separate Federal Return Likely Required";
+    filingMessage =
+      `${name} appears to meet at least one ${year} federal filing requirement for a dependent.`;
+  } else {
+    filingTitle =
+      "Federal Return Likely Not Required";
+    filingMessage =
+      `Based on the income entered, ${name} appears below the ${year} federal filing thresholds for a dependent.`;
+  }
+
+  const refundMessages = [];
+
+  if (federalWithheld > 0) {
+    refundMessages.push(
+      `${name} should consider filing a separate federal return to claim up to ${fmt(federalWithheld)} of federal income tax withheld from W-2 Box 2.`
+    );
+  } else if (!federalReturnLikelyRequired) {
+    refundMessages.push(
+      "No federal income tax withholding was entered, so a federal refund is not indicated from withholding alone."
+    );
+  }
+
+  if (stateWithheld > 0) {
+    refundMessages.push(
+      `${name} should check the state filing rules and may need to file a state return to claim up to ${fmt(stateWithheld)} of state income tax withheld from W-2 Box 17.`
+    );
+  }
+
+  if (
+    !federalReturnLikelyRequired &&
+    federalWithheld === 0 &&
+    stateWithheld === 0
+  ) {
+    refundMessages.push(
+      "A separate return may still be needed for another filing trigger not covered by this screening."
+    );
+  }
+
+  return {
+    federalReturnLikelyRequired,
+    filingTitle,
+    filingMessage,
+    filingReasons,
+    refundMessages,
+    earnedIncome,
+    grossIncome,
+    federalWithheld,
+    stateWithheld,
+    thresholds,
+    grossIncomeThreshold,
+  };
+}
+
 function getWorkingChildStatusLabel(value) {
   const labels = {
     eligible: "Likely Eligible to Claim",
@@ -234,6 +372,10 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
     Number(child.unearnedIncome || 0);
   const earnedIncome = Number(child.wages || 0) + Number(child.gigIncome || 0);
   const incomeLimit = getWorkingChildIncomeLimit(taxYear);
+  const filing = evaluateDependentFiling(
+    child,
+    taxYear
+  );
   const relationshipPass = ["child", "sibling"].includes(child.relationship);
   const relationshipRelativePass = ["child", "sibling", "other-relative"].includes(child.relationship);
   const agePass =
@@ -271,6 +413,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
       classification: "Taxpayer dependent rule needs review",
       reasons: ["You indicated that another taxpayer can claim you. A taxpayer who can be claimed as a dependent generally cannot claim another dependent."],
       cautions: ["Review the dependent-taxpayer exception and your filing situation before including this child."],
+      filing,
     };
   }
 
@@ -304,6 +447,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
       classification: "Likely qualifying child",
       reasons,
       cautions,
+      filing,
     };
   }
 
@@ -327,6 +471,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
       classification: "Spouse age needed",
       reasons: ["The child must be younger than you or your spouse on a joint return. The estimator has your age but not your spouse's age."],
       cautions: ["Confirm the spouse's age before deciding whether this person is a qualifying child."],
+      filing,
     };
   }
 
@@ -353,6 +498,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
       classification: "Possible qualifying relative",
       reasons,
       cautions,
+      filing,
     };
   }
 
@@ -372,6 +518,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
       classification: "Facts need review",
       reasons,
       cautions,
+      filing,
     };
   }
 
@@ -391,6 +538,7 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
     classification: "Likely not claimable from these answers",
     reasons: reasons.length ? reasons : ["The answers entered do not satisfy the simplified dependent screen."],
     cautions: ["A tax professional should review special circumstances before the return is filed."],
+    filing,
   };
 }
 
@@ -480,6 +628,19 @@ function workingChildCardTemplate(index) {
         </div>
       </div>
 
+      <div class="field-row cols-2 working-child-grid working-child-withholding-grid">
+        <div class="field-group">
+          <label class="field-label">Federal Income Tax Withheld <span class="field-label-note">(W-2 Box 2)</span></label>
+          <div class="dollar-input"><input type="number" class="wc-federal-withheld" min="0" placeholder="0" /></div>
+          <div class="working-child-field-help">Income tax only - do not include Social Security or Medicare.</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">State Income Tax Withheld <span class="field-label-note">(W-2 Box 17)</span></label>
+          <div class="dollar-input"><input type="number" class="wc-state-withheld" min="0" placeholder="0" /></div>
+          <div class="working-child-field-help">Enter the state income tax withheld, if any.</div>
+        </div>
+      </div>
+
       <div class="field-row working-child-grid working-child-grid-four">
         <div class="field-group">
           <label class="field-label">Who Provided More Than Half of Total Support? <span class="req-star">*</span></label>
@@ -547,6 +708,8 @@ function collectWorkingChildren() {
     wages: moneyValue(card.querySelector(".wc-wages")?.value),
     gigIncome: moneyValue(card.querySelector(".wc-gig-income")?.value),
     unearnedIncome: moneyValue(card.querySelector(".wc-unearned-income")?.value),
+    federalWithheld: moneyValue(card.querySelector(".wc-federal-withheld")?.value),
+    stateWithheld: moneyValue(card.querySelector(".wc-state-withheld")?.value),
     support: card.querySelector(".wc-support")?.value || "",
     citizenship: card.querySelector(".wc-citizenship")?.value || "",
     jointReturn: card.querySelector(".wc-joint-return")?.value || "",
@@ -603,11 +766,24 @@ function refreshWorkingChildInlineResults() {
       document.querySelector('input[name="canBeClaimedAsDependent"]:checked')?.value === "yes",
       document.getElementById("filingStatus")?.value || ""
     );
+    const filing = result.filing;
+    const refundMessage =
+      filing.refundMessages[0] ||
+      "Review whether a separate child return is needed.";
+
     host.className = `working-child-inline-result ${result.status}`;
     host.innerHTML = `
       <strong>${escHtml(result.title)}</strong>
       <span>${escHtml(result.classification)}. Total income entered: ${escHtml(fmt(result.grossIncome))}.</span>
       <small>${escHtml(result.reasons[0] || "Review the dependent rules before filing.")}</small>
+      <div class="working-child-filing-summary ${filing.federalReturnLikelyRequired ? "required" : "not-required"}">
+        <strong>${escHtml(filing.filingTitle)}</strong>
+        <span>${escHtml(filing.filingMessage)}</span>
+        <small>${escHtml(refundMessage)}</small>
+      </div>
+      <div class="working-child-dependent-reminder">
+        Include ${escHtml(result.name)} in Number of Dependents above if you expect to claim ${escHtml(result.name)}.
+      </div>
     `;
   });
 }
@@ -682,6 +858,12 @@ function renderWorkingChildResults(input) {
     );
     const reasonItems = result.reasons.map((reason) => `<li>${escHtml(reason)}</li>`).join("");
     const cautionItems = result.cautions.map((caution) => `<li>${escHtml(caution)}</li>`).join("");
+    const filingReasonItems = result.filing.filingReasons
+      .map((reason) => `<li>${escHtml(reason)}</li>`)
+      .join("");
+    const refundItems = result.filing.refundMessages
+      .map((message) => `<li>${escHtml(message)}</li>`)
+      .join("");
 
     return `
       <article class="working-child-result-card ${escHtml(result.status)}">
@@ -694,7 +876,13 @@ function renderWorkingChildResults(input) {
         </div>
         <div class="working-child-result-income">Income entered: <strong>${escHtml(fmt(result.grossIncome))}</strong></div>
         <ul>${reasonItems}${cautionItems}</ul>
-        <div class="working-child-result-next">Use this screening result when deciding whether to include ${escHtml(result.name)} in the Number of Dependents entered on your estimate. Special custody, support, residency, disability, and joint-return rules may require professional review.</div>
+        <div class="working-child-filing-card ${result.filing.federalReturnLikelyRequired ? "required" : "not-required"}">
+          <strong>${escHtml(result.filing.filingTitle)}</strong>
+          <p>${escHtml(result.filing.filingMessage)}</p>
+          ${filingReasonItems ? `<ul>${filingReasonItems}</ul>` : ""}
+          ${refundItems ? `<ul class="working-child-refund-list">${refundItems}</ul>` : ""}
+        </div>
+        <div class="working-child-result-next"><strong>Remember:</strong> Include ${escHtml(result.name)} in Number of Dependents above if you expect to claim ${escHtml(result.name)}. This is a screening result; special custody, support, residency, disability, married-dependent, and other filing rules may require professional review.</div>
       </article>
     `;
   }).join("");
