@@ -104,9 +104,6 @@
 
   <main class="main-content">
 
-    <!-- Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â
-         SCREEN 1 - WELCOME
-    Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â -->
     <section class="screen active" id="screen-welcome">
 
       <div class="welcome-hero-section">
@@ -277,9 +274,6 @@
 
     </section>
 
-    <!-- Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â
-         SCREEN 2 - FORM
-    Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â -->
     <section class="screen" id="screen-form">
       <div class="form-wrap">
 
@@ -439,35 +433,29 @@
               </div>
 
               <div class="working-child-checker" id="workingChildChecker">
-                <div class="working-child-heading">
-                  <div>
-                    <div class="working-child-overline">New dependent check</div>
-                    <h3>Working Child &amp; Dependent Eligibility Check</h3>
-                    <p>Find out whether a child who worked a summer job, worked during school, or earned side-income may still qualify as your dependent.</p>
-                  </div>
-                  <span class="working-child-badge">Income alone does not decide it</span>
-                </div>
-
                 <div class="working-child-question">
-                  <div>
+                  <div class="working-child-question-copy">
+                    <div class="working-child-overline">Working Child &amp; Dependent Eligibility Check</div>
                     <strong>Did any child or dependent earn money during the tax year?</strong>
-                    <span>We will check age, student status, residency, support, income, and possible competing claims.</span>
+                    <span>Summer jobs and school-year jobs do not automatically prevent you from claiming a child.</span>
                   </div>
-                  <div class="radio-group compact-radio-group">
-                    <label class="radio-opt">
+
+                  <div class="working-child-choice-group" role="radiogroup"
+                    aria-label="Did any child or dependent earn money during the tax year?">
+                    <label class="working-child-choice">
                       <input type="radio" name="hasWorkingChildIncome" value="yes" />
-                      <span class="radio-label">Yes</span>
+                      <span class="working-child-choice-label">Yes &mdash; Check eligibility</span>
                     </label>
-                    <label class="radio-opt">
+                    <label class="working-child-choice">
                       <input type="radio" name="hasWorkingChildIncome" value="no" checked />
-                      <span class="radio-label">No</span>
+                      <span class="working-child-choice-label">No</span>
                     </label>
                   </div>
                 </div>
 
                 <div id="workingChildPanel" class="working-child-panel" hidden>
                   <div class="working-child-callout">
-                    A child can file their own tax return and may still be your dependent. Enter each working child separately so the estimator can explain the likely result.
+                    A child can file a separate tax return and may still be your dependent. Enter each working child separately.
                   </div>
                   <div id="workingChildList"></div>
                   <button type="button" class="btn-add-working-child" id="addWorkingChildBtn">+ Add Another Working Child</button>
@@ -614,9 +602,6 @@
       </div>
     </section>
 
-    <!-- Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â
-         SCREEN 3 - RESULTS
-    Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â -->
     <section class="screen" id="screen-results">
       <div class="results-wrap">
 
@@ -646,7 +631,6 @@
             <div class="confidence-desc" id="confidenceDesc"></div>
           </div>
         </div>
-        <!-- Ã°Å¸"Â¥ Tax Pro Insight Banner -->
         <div id="taxProInsightBanner" style="margin-top:16px;"></div>
 
         <!-- Breakdown -->
@@ -754,9 +738,6 @@
           </div>
         </div>
 
-        <!-- Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â
-             LEAD CAPTURE SECTION
-        Ã¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-ÂÃ¢-Â -->
         <div class="lead-section" id="leadSection">
           <div class="lead-inner">
 
