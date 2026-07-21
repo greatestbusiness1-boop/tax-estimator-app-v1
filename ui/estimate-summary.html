@@ -603,13 +603,14 @@
 
     @page {
       size: Letter portrait;
-      margin: .58in .42in .58in;
+      margin: .68in .42in .58in;
     }
 
     @media print {
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        box-sizing: border-box;
       }
 
       html,
@@ -617,15 +618,21 @@
         background: #ffffff !important;
       }
 
+      html {
+        font-size: 100%;
+      }
+
       body {
         margin: 0;
         padding: 0;
         color: #12233d;
-        font-size: 9pt;
+        font-size: 8.5pt;
+        line-height: 1.35;
       }
 
       .wrap {
         width: 100%;
+        max-width: none;
         margin: 0;
       }
 
@@ -642,78 +649,83 @@
         align-items: center;
         justify-content: space-between;
         color: #475569;
-        font-size: 7.5pt;
-        line-height: 1.2;
+        font-size: 6.4pt;
+        line-height: 1.15;
       }
 
       .print-report-header {
-        top: -.43in;
-        padding-bottom: 5pt;
+        top: -.48in;
+        min-height: 12pt;
+        padding: 0 1pt 3pt;
         border-bottom: .75pt solid #b58a3a;
       }
 
       .print-report-header strong {
         color: #0f2c56;
-        font-size: 8.5pt;
+        font-size: 7.2pt;
       }
 
       .print-report-footer {
-        bottom: -.41in;
-        padding-top: 5pt;
+        bottom: -.40in;
+        min-height: 11pt;
+        padding: 3pt 1pt 0;
         border-top: .75pt solid #cbd5e1;
       }
 
       .panel {
-        margin: 0 0 9pt;
+        margin: 0;
         border: .75pt solid #d7e0ec;
-        border-radius: 8pt;
+        border-radius: 7pt;
         box-shadow: none;
         overflow: visible;
         break-inside: auto;
       }
 
       .header {
-        grid-template-columns: minmax(0, 1fr) 1.7in;
-        gap: 12pt;
-        padding: 10pt 12pt;
-        border-top-width: 4pt;
+        grid-template-columns: minmax(0, 1fr) 1.58in;
+        gap: 9pt;
+        margin-bottom: 7pt;
+        padding: 8pt 10pt;
+        border-top-width: 3.5pt;
+        break-inside: avoid-page;
         break-after: avoid-page;
       }
 
       .brand {
-        gap: 10pt;
+        gap: 8pt;
       }
 
       .brand img {
-        max-width: 85pt;
-        max-height: 42pt;
+        max-width: 72pt;
+        max-height: 34pt;
       }
 
       .eyebrow {
-        font-size: 7pt;
+        font-size: 6.3pt;
+        letter-spacing: .08em;
       }
 
       h1 {
-        margin: 2pt 0 3pt;
-        font-size: 19pt;
-        line-height: 1.03;
+        margin: 1.5pt 0 2pt;
+        font-size: 16.5pt;
+        line-height: 1.02;
       }
 
       .header-sub {
-        font-size: 8pt;
-        line-height: 1.35;
+        font-size: 7.2pt;
+        line-height: 1.25;
       }
 
       .reference {
         min-width: 0;
-        padding: 7pt 8pt;
-        border-radius: 7pt;
-        font-size: 7pt;
-        line-height: 1.35;
+        padding: 6pt 7pt;
+        border-radius: 6pt;
+        font-size: 6.3pt;
+        line-height: 1.25;
       }
 
       .reference strong {
-        font-size: 8pt;
+        font-size: 7pt;
       }
 
       #contentPanel {
@@ -722,46 +734,49 @@
       }
 
       .hero {
-        grid-template-columns: minmax(0, 1.45fr) minmax(2.2in, .55fr);
-        gap: 10pt;
-        padding: 12pt 14pt;
-        border-radius: 8pt;
+        grid-template-columns: minmax(0, 1.52fr) minmax(2.02in, .48fr);
+        gap: 8pt;
+        padding: 9pt 11pt;
+        border-radius: 7pt;
         break-inside: avoid-page;
       }
 
       .hero-label {
-        font-size: 7pt;
+        font-size: 6.2pt;
       }
 
       .hero-amount {
-        margin: 4pt 0 1pt;
-        font-size: 34pt;
+        margin: 2pt 0 0;
+        font-size: 28pt;
+        line-height: .95;
       }
 
       .hero-status {
-        font-size: 10pt;
-      }
-
-      .hero-meta {
-        gap: 5pt;
-      }
-
-      .hero-meta-card {
-        padding: 6pt;
-        border-radius: 6pt;
-      }
-
-      .hero-meta-card span {
-        font-size: 6pt;
-      }
-
-      .hero-meta-card strong {
         margin-top: 2pt;
         font-size: 8.5pt;
       }
 
+      .hero-meta {
+        gap: 4pt;
+      }
+
+      .hero-meta-card {
+        padding: 5pt;
+        border-radius: 5pt;
+      }
+
+      .hero-meta-card span {
+        font-size: 5.5pt;
+      }
+
+      .hero-meta-card strong {
+        margin-top: 1pt;
+        font-size: 7.5pt;
+        line-height: 1.15;
+      }
+
       .section {
-        padding: 10pt 12pt;
+        padding: 8pt 10pt;
       }
 
       .section + .section {
@@ -769,148 +784,169 @@
       }
 
       .section-head {
-        margin-bottom: 8pt;
+        margin-bottom: 6pt;
+        break-after: avoid-page;
       }
 
       h2 {
-        font-size: 16pt;
+        font-size: 14.5pt;
+        line-height: 1.05;
       }
 
       .section-sub {
-        margin-top: 2pt;
-        font-size: 7.5pt;
-        line-height: 1.35;
+        margin-top: 1.5pt;
+        font-size: 6.8pt;
+        line-height: 1.25;
       }
 
       .snapshot-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 6pt;
+        gap: 5pt;
       }
 
       .metric {
-        min-height: 66pt;
-        padding: 8pt;
-        border-radius: 7pt;
+        min-height: 54pt;
+        padding: 6pt;
+        border-radius: 6pt;
         break-inside: avoid-page;
       }
 
       .metric-label {
-        font-size: 6pt;
-        line-height: 1.25;
+        font-size: 5.5pt;
+        line-height: 1.18;
       }
 
       .metric-value {
-        margin-top: 4pt;
-        font-size: 15pt;
+        margin-top: 2.5pt;
+        font-size: 13pt;
+        line-height: 1;
       }
 
       .metric-detail {
-        margin-top: 3pt;
-        font-size: 6.3pt;
-        line-height: 1.3;
+        margin-top: 2.5pt;
+        font-size: 5.65pt;
+        line-height: 1.22;
+      }
+
+      #explanationSection {
+        break-before: auto;
+        break-inside: avoid-page;
+        padding-top: 7pt;
       }
 
       .explanation {
-        gap: 6pt;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5pt;
       }
 
       .explanation p {
-        padding: 7pt 9pt;
-        border-left-width: 3pt;
+        margin: 0;
+        padding: 6pt 7pt;
+        border-left-width: 2.5pt;
         border-radius: 5pt;
-        font-size: 8pt;
-        line-height: 1.42;
+        font-size: 7pt;
+        line-height: 1.32;
         break-inside: avoid-page;
       }
 
+      .explanation p:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+
+      #workingChildSection {
+        break-before: page;
+        break-inside: auto;
+        padding-top: 0;
+      }
+
       .working-child-list {
-        gap: 7pt;
+        gap: 6pt;
       }
 
       .working-child-card {
-        padding: 10pt;
-        border-width: 1.25pt;
-        border-radius: 8pt;
+        padding: 8pt;
+        border-width: 1pt;
+        border-radius: 7pt;
         break-inside: avoid-page;
       }
 
       .working-child-name {
-        font-size: 14pt;
+        font-size: 12.5pt;
       }
 
       .working-child-class {
-        font-size: 7.5pt;
+        margin-top: 1pt;
+        font-size: 6.8pt;
       }
 
       .status-pill {
-        padding: 4pt 6pt;
-        font-size: 6.5pt;
+        padding: 3pt 5pt;
+        font-size: 5.8pt;
       }
 
       .working-child-card ul {
-        margin: 7pt 0 0;
-        padding-left: 14pt;
-        font-size: 7.5pt;
-        line-height: 1.42;
+        margin: 5pt 0 0;
+        padding-left: 12pt;
+        font-size: 6.7pt;
+        line-height: 1.3;
       }
 
       .child-filing {
-        margin-top: 7pt;
-        padding: 7pt 8pt;
-        border-radius: 6pt;
+        margin-top: 5pt;
+        padding: 6pt 7pt;
+        border-radius: 5pt;
         break-inside: avoid-page;
       }
 
       .child-filing strong {
-        font-size: 9pt;
+        font-size: 8pt;
       }
 
       .child-filing p {
-        margin-top: 3pt;
-        font-size: 7.5pt;
-        line-height: 1.4;
+        margin-top: 2pt;
+        font-size: 6.7pt;
+        line-height: 1.3;
+      }
+
+      #changeSection {
+        break-before: auto;
+        break-inside: auto;
+        padding-top: 7pt;
       }
 
       .change-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6pt;
+        gap: 5pt;
       }
 
       .change-card {
-        padding: 8pt 9pt;
-        border-radius: 6pt;
+        padding: 7pt 8pt;
+        border-radius: 5pt;
         break-inside: avoid-page;
       }
 
       .change-card strong {
-        font-size: 8.5pt;
+        font-size: 7.6pt;
       }
 
       .change-card span {
-        margin-top: 3pt;
-        font-size: 7pt;
-        line-height: 1.35;
-      }
-
-      .notice {
-        padding: 7pt 8pt;
-        border-radius: 6pt;
-        font-size: 7pt;
-        line-height: 1.35;
-        break-inside: avoid-page;
-      }
-
-      #explanationSection,
-      #changeSection {
-        break-before: page;
-      }
-
-      #workingChildSection {
-        break-inside: auto;
+        margin-top: 2pt;
+        font-size: 6.3pt;
+        line-height: 1.28;
       }
 
       #disclaimerSection {
-        padding-top: 8pt;
+        padding-top: 6pt;
+        break-inside: avoid-page;
+      }
+
+      .notice {
+        padding: 6pt 7pt;
+        border-radius: 5pt;
+        font-size: 6.2pt;
+        line-height: 1.28;
+        break-inside: avoid-page;
       }
 
       .no-print {
