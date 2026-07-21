@@ -538,6 +538,10 @@
       font-weight: 800;
     }
 
+    .print-only {
+      display: none;
+    }
+
     .no-print-actions {
       display: flex;
       gap: 10px;
@@ -597,15 +601,316 @@
       }
     }
 
+    @page {
+      size: Letter portrait;
+      margin: .58in .42in .58in;
+    }
+
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      html,
       body {
+        background: #ffffff !important;
+      }
+
+      body {
+        margin: 0;
         padding: 0;
-        background: #ffffff;
+        color: #12233d;
+        font-size: 9pt;
+      }
+
+      .wrap {
+        width: 100%;
+        margin: 0;
+      }
+
+      .print-only {
+        display: flex !important;
+      }
+
+      .print-report-header,
+      .print-report-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        align-items: center;
+        justify-content: space-between;
+        color: #475569;
+        font-size: 7.5pt;
+        line-height: 1.2;
+      }
+
+      .print-report-header {
+        top: -.43in;
+        padding-bottom: 5pt;
+        border-bottom: .75pt solid #b58a3a;
+      }
+
+      .print-report-header strong {
+        color: #0f2c56;
+        font-size: 8.5pt;
+      }
+
+      .print-report-footer {
+        bottom: -.41in;
+        padding-top: 5pt;
+        border-top: .75pt solid #cbd5e1;
       }
 
       .panel {
+        margin: 0 0 9pt;
+        border: .75pt solid #d7e0ec;
+        border-radius: 8pt;
         box-shadow: none;
-        break-inside: avoid;
+        overflow: visible;
+        break-inside: auto;
+      }
+
+      .header {
+        grid-template-columns: minmax(0, 1fr) 1.7in;
+        gap: 12pt;
+        padding: 10pt 12pt;
+        border-top-width: 4pt;
+        break-after: avoid-page;
+      }
+
+      .brand {
+        gap: 10pt;
+      }
+
+      .brand img {
+        max-width: 85pt;
+        max-height: 42pt;
+      }
+
+      .eyebrow {
+        font-size: 7pt;
+      }
+
+      h1 {
+        margin: 2pt 0 3pt;
+        font-size: 19pt;
+        line-height: 1.03;
+      }
+
+      .header-sub {
+        font-size: 8pt;
+        line-height: 1.35;
+      }
+
+      .reference {
+        min-width: 0;
+        padding: 7pt 8pt;
+        border-radius: 7pt;
+        font-size: 7pt;
+        line-height: 1.35;
+      }
+
+      .reference strong {
+        font-size: 8pt;
+      }
+
+      #contentPanel {
+        border: 0;
+        border-radius: 0;
+      }
+
+      .hero {
+        grid-template-columns: minmax(0, 1.45fr) minmax(2.2in, .55fr);
+        gap: 10pt;
+        padding: 12pt 14pt;
+        border-radius: 8pt;
+        break-inside: avoid-page;
+      }
+
+      .hero-label {
+        font-size: 7pt;
+      }
+
+      .hero-amount {
+        margin: 4pt 0 1pt;
+        font-size: 34pt;
+      }
+
+      .hero-status {
+        font-size: 10pt;
+      }
+
+      .hero-meta {
+        gap: 5pt;
+      }
+
+      .hero-meta-card {
+        padding: 6pt;
+        border-radius: 6pt;
+      }
+
+      .hero-meta-card span {
+        font-size: 6pt;
+      }
+
+      .hero-meta-card strong {
+        margin-top: 2pt;
+        font-size: 8.5pt;
+      }
+
+      .section {
+        padding: 10pt 12pt;
+      }
+
+      .section + .section {
+        border-top: .75pt solid #dbe5f1;
+      }
+
+      .section-head {
+        margin-bottom: 8pt;
+      }
+
+      h2 {
+        font-size: 16pt;
+      }
+
+      .section-sub {
+        margin-top: 2pt;
+        font-size: 7.5pt;
+        line-height: 1.35;
+      }
+
+      .snapshot-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6pt;
+      }
+
+      .metric {
+        min-height: 66pt;
+        padding: 8pt;
+        border-radius: 7pt;
+        break-inside: avoid-page;
+      }
+
+      .metric-label {
+        font-size: 6pt;
+        line-height: 1.25;
+      }
+
+      .metric-value {
+        margin-top: 4pt;
+        font-size: 15pt;
+      }
+
+      .metric-detail {
+        margin-top: 3pt;
+        font-size: 6.3pt;
+        line-height: 1.3;
+      }
+
+      .explanation {
+        gap: 6pt;
+      }
+
+      .explanation p {
+        padding: 7pt 9pt;
+        border-left-width: 3pt;
+        border-radius: 5pt;
+        font-size: 8pt;
+        line-height: 1.42;
+        break-inside: avoid-page;
+      }
+
+      .working-child-list {
+        gap: 7pt;
+      }
+
+      .working-child-card {
+        padding: 10pt;
+        border-width: 1.25pt;
+        border-radius: 8pt;
+        break-inside: avoid-page;
+      }
+
+      .working-child-name {
+        font-size: 14pt;
+      }
+
+      .working-child-class {
+        font-size: 7.5pt;
+      }
+
+      .status-pill {
+        padding: 4pt 6pt;
+        font-size: 6.5pt;
+      }
+
+      .working-child-card ul {
+        margin: 7pt 0 0;
+        padding-left: 14pt;
+        font-size: 7.5pt;
+        line-height: 1.42;
+      }
+
+      .child-filing {
+        margin-top: 7pt;
+        padding: 7pt 8pt;
+        border-radius: 6pt;
+        break-inside: avoid-page;
+      }
+
+      .child-filing strong {
+        font-size: 9pt;
+      }
+
+      .child-filing p {
+        margin-top: 3pt;
+        font-size: 7.5pt;
+        line-height: 1.4;
+      }
+
+      .change-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6pt;
+      }
+
+      .change-card {
+        padding: 8pt 9pt;
+        border-radius: 6pt;
+        break-inside: avoid-page;
+      }
+
+      .change-card strong {
+        font-size: 8.5pt;
+      }
+
+      .change-card span {
+        margin-top: 3pt;
+        font-size: 7pt;
+        line-height: 1.35;
+      }
+
+      .notice {
+        padding: 7pt 8pt;
+        border-radius: 6pt;
+        font-size: 7pt;
+        line-height: 1.35;
+        break-inside: avoid-page;
+      }
+
+      #explanationSection,
+      #changeSection {
+        break-before: page;
+      }
+
+      #workingChildSection {
+        break-inside: auto;
+      }
+
+      #disclaimerSection {
+        padding-top: 8pt;
       }
 
       .no-print {
@@ -615,6 +920,23 @@
   </style>
 </head>
 <body>
+  <div class="print-report-header print-only" aria-hidden="true">
+    <div>
+      <strong>Greatest Business Solution LLC</strong>
+      <span> - Detailed Tax Estimate Summary</span>
+    </div>
+    <div>
+      <span id="printClientName">Client</span>
+      <span> | Tax Year </span>
+      <span id="printTaxYear">-</span>
+    </div>
+  </div>
+
+  <div class="print-report-footer print-only" aria-hidden="true">
+    <span>Client Copy - Estimate only; not a filed tax return.</span>
+    <span id="printReferenceId">Reference ID</span>
+  </div>
+
   <main class="wrap">
     <section class="panel header">
       <div class="brand">
@@ -663,7 +985,7 @@
         </div>
       </div>
 
-      <div class="section">
+      <div class="section" id="positionSection">
         <div class="section-head">
           <div>
             <h2>Your Tax Position Snapshot</h2>
@@ -675,7 +997,7 @@
         <div class="snapshot-grid" id="snapshotGrid"></div>
       </div>
 
-      <div class="section">
+      <div class="section" id="explanationSection">
         <div class="section-head">
           <div>
             <h2>What the Numbers Are Telling You</h2>
@@ -699,7 +1021,7 @@
         <div class="working-child-list" id="workingChildList"></div>
       </div>
 
-      <div class="section">
+      <div class="section" id="changeSection">
         <div class="section-head">
           <div>
             <h2>What Could Change This Estimate</h2>
@@ -711,7 +1033,7 @@
         <div class="change-grid" id="changeGrid"></div>
       </div>
 
-      <div class="section">
+      <div class="section" id="disclaimerSection">
         <div class="notice">
           This is an automated estimate based on information entered by the user. It is not a completed tax return, professional document review, tax advice, or a guarantee of the final refund or balance due.
         </div>
@@ -825,9 +1147,16 @@
     function filingStatusLabel(value) {
       const labels = {
         single: "Single",
+        mfj: "Married Filing Jointly",
         married_joint: "Married Filing Jointly",
+        married_filing_jointly: "Married Filing Jointly",
+        mfs: "Married Filing Separately",
         married_separate: "Married Filing Separately",
+        married_filing_separately: "Married Filing Separately",
+        hoh: "Head of Household",
         head_of_household: "Head of Household",
+        head_of_household_filer: "Head of Household",
+        qss: "Qualifying Surviving Spouse",
         qualifying_surviving_spouse: "Qualifying Surviving Spouse",
       };
 
@@ -1121,10 +1450,18 @@
 
       section.hidden = false;
       host.innerHTML = results.map((result) => {
+        const obsoleteFilingCaution =
+          /may still need to file a separate return depending on total earned and unearned income/i;
+
         const reasons = [
           ...(Array.isArray(result.reasons) ? result.reasons : []),
           ...(Array.isArray(result.cautions) ? result.cautions : []),
-        ];
+        ].filter(
+          (message) =>
+            !obsoleteFilingCaution.test(
+              String(message || "")
+            )
+        );
 
         const filing = result.filing || {};
         const filingMessages = [
@@ -1162,7 +1499,76 @@
       }).join("");
     }
 
-    function renderChanges(summary) {
+    const EITC_AGI_LIMITS = {
+      2022: {
+        single: [16480, 43492, 49399, 53057],
+        joint: [22610, 49622, 55529, 59187],
+      },
+      2023: {
+        single: [17640, 46560, 52918, 56838],
+        joint: [24210, 53120, 59478, 63398],
+      },
+      2024: {
+        single: [18591, 49084, 55768, 59899],
+        joint: [25511, 56004, 62688, 66819],
+      },
+      2025: {
+        single: [19104, 50434, 57310, 61555],
+        joint: [26214, 57554, 64430, 68675],
+      },
+    };
+
+    function shouldShowEitcOpportunity(summary, taxData) {
+      const year = Number(
+        summary?.taxYear ||
+        taxData?.taxYear ||
+        2025
+      );
+      const limits = EITC_AGI_LIMITS[year];
+
+      if (!limits) return true;
+
+      const filingStatus = String(
+        summary?.filingStatus ||
+        taxData?.filingStatus ||
+        ""
+      ).toLowerCase();
+      const isJoint = [
+        "mfj",
+        "married_joint",
+        "married_filing_jointly",
+      ].includes(filingStatus);
+
+      const workingChildCount =
+        Array.isArray(summary?.workingChildResults)
+          ? summary.workingChildResults.filter(
+            (child) =>
+              child?.status === "eligible"
+          ).length
+          : 0;
+      const dependentCount = Math.max(
+        0,
+        Number(taxData?.numberOfDependents || 0),
+        workingChildCount
+      );
+      const qualifyingChildIndex = Math.min(
+        3,
+        dependentCount
+      );
+      const agi = numberValue(
+        summary?.federal?.agi
+      );
+      const limit =
+        (isJoint ? limits.joint : limits.single)[
+          qualifyingChildIndex
+        ];
+
+      if (!limit || agi <= 0) return true;
+
+      return agi < limit;
+    }
+
+    function renderChanges(summary, taxData) {
       const host = document.getElementById("changeGrid");
       const savedChanges = summary?.clientExperience?.whatCouldChange;
       const fallback = [
@@ -1184,10 +1590,29 @@
         },
       ];
 
-      const changes = Array.isArray(savedChanges) &&
+      const changes = (
+        Array.isArray(savedChanges) &&
         savedChanges.length
           ? savedChanges
-          : fallback;
+          : fallback
+      ).filter((change) => {
+        const label = String(
+          change?.label || ""
+        );
+
+        if (
+          /Earned Income Tax Credit|EITC/i.test(
+            label
+          )
+        ) {
+          return shouldShowEitcOpportunity(
+            summary,
+            taxData
+          );
+        }
+
+        return true;
+      });
 
       host.innerHTML = changes.map((change) => `
         <div class="change-card">
@@ -1265,6 +1690,10 @@
         const monthlyWithholdingGap =
           withholdingGap / 12;
         const stateGap = stateWithheld - stateTax;
+        const effectiveFederalRate =
+          agi > 0
+            ? (taxAfterCredits / agi) * 100
+            : 0;
 
         document.getElementById("pageTitle").textContent =
           `Tax Estimate Summary for ${lead.contact?.name || "Client"}`;
@@ -1276,6 +1705,12 @@
           lead.timestamp
             ? `Saved ${new Date(lead.timestamp).toLocaleDateString()}`
             : "Saved estimate";
+        document.getElementById("printClientName").textContent =
+          lead.contact?.name || "Client";
+        document.getElementById("printTaxYear").textContent =
+          summary.taxYear || taxData.taxYear || "-";
+        document.getElementById("printReferenceId").textContent =
+          `Reference: ${lead.leadId || leadId}`;
         document.getElementById("taxYear").textContent =
           summary.taxYear || taxData.taxYear || "Not recorded";
         document.getElementById("filingStatus").textContent =
@@ -1377,8 +1812,8 @@
         addMetric(
           metrics,
           "Effective Federal Rate",
-          rate(fed.effectiveRate),
-          "Estimated federal tax as a share of income."
+          rate(effectiveFederalRate),
+          "Federal tax after credits as a share of adjusted gross income."
         );
         addMetric(
           metrics,
@@ -1471,7 +1906,7 @@
             : buildLegacyWorkingChildResults(taxData);
 
         renderWorkingChildren(workingChildResults);
-        renderChanges(summary);
+        renderChanges(summary, taxData);
 
         document.getElementById("buyReviewButton")
           .addEventListener(

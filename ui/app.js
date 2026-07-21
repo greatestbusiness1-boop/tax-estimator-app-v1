@@ -488,8 +488,6 @@ function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed 
 
     if (Number(child.gigIncome || 0) >= 400) {
       cautions.push(`${name} may need a separate tax return because net self-employment income is at least $400.`);
-    } else if (earnedIncome > 0 || Number(child.unearnedIncome || 0) > 0) {
-      cautions.push(`${name} may still need to file a separate return depending on total earned and unearned income. Filing a return does not automatically prevent a dependent claim.`);
     }
 
     return {
@@ -1392,7 +1390,13 @@ function buildSavedEstimateSummary(result, input) {
       refundAmount: fed.refundAmount,
       owedAmount: fed.owedAmount,
       marginalRate: fed.marginalRate,
-      effectiveRate: fed.effectiveRate,
+      effectiveRate:
+        Number(fed.agi) > 0
+          ? (
+            Number(fed.taxAfterCredits || 0) /
+            Number(fed.agi)
+          ) * 100
+          : 0,
     },
     state: {
       stateName: result.meta?.stateName,
