@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 // =============================================================================
 // MODULE STATE
@@ -8,6 +8,14 @@ let _lastTaxInput = null;
 let _lastEstimate = null;
 let _leadGatewayUnlocked = false;
 let _leadGatewayContact = null;
+let _workingChildCounter = 0;
+
+const QUALIFYING_RELATIVE_GROSS_INCOME_LIMITS = {
+  2022: 4400,
+  2023: 4700,
+  2024: 5050,
+  2025: 5200,
+};
 
 // =============================================================================
 // SCREEN NAVIGATION
@@ -195,6 +203,526 @@ async function requestTranscriptHelp() {
 }
 
 // =============================================================================
+// WORKING CHILD & DEPENDENT ELIGIBILITY CHECK
+// =============================================================================
+
+function moneyValue(value) {
+  const cleaned = String(value || "").replace(/[$,\s]/g, "");
+  const amount = Number.parseFloat(cleaned);
+  return Number.isFinite(amount) ? Math.max(0, amount) : 0;
+}
+
+function getWorkingChildIncomeLimit(taxYear) {
+  return QUALIFYING_RELATIVE_GROSS_INCOME_LIMITS[Number(taxYear)] || 5200;
+}
+
+function getWorkingChildStatusLabel(value) {
+  const labels = {
+    eligible: "Likely Eligible to Claim",
+    review: "Preparer Review Recommended",
+    ineligible: "Probably Not Eligible",
+  };
+  return labels[value] || labels.review;
+}
+
+function evaluateWorkingChild(child, taxYear, taxpayerAge, taxpayerCanBeClaimed = false, filingStatus = "") {
+  const name = child.name || "This child";
+  const age = Number(child.age || 0);
+  const grossIncome =
+    Number(child.wages || 0) +
+    Number(child.gigIncome || 0) +
+    Number(child.unearnedIncome || 0);
+  const earnedIncome = Number(child.wages || 0) + Number(child.gigIncome || 0);
+  const incomeLimit = getWorkingChildIncomeLimit(taxYear);
+  const relationshipPass = ["child", "sibling"].includes(child.relationship);
+  const relationshipRelativePass = ["child", "sibling", "other-relative"].includes(child.relationship);
+  const agePass =
+    child.disabled === "yes" ||
+    (age > 0 && age < 19) ||
+    (age > 0 && age < 24 && child.student === "yes");
+  const youngerPass = !taxpayerAge || !age || age < Number(taxpayerAge);
+  const residencyPass = ["yes", "school-absence"].includes(child.residency);
+  const childProvidedOwnSupport = child.support === "child";
+  const supportKnown = Boolean(child.support && child.support !== "not-sure");
+  const jointReturnPass = ["no", "refund-only"].includes(child.jointReturn);
+  const citizenshipPass = child.citizenship === "yes";
+  const competingClaimClear = child.otherClaim === "no";
+  const spouseAgeMayMatter = filingStatus === "mfj" && age > 0 && taxpayerAge > 0 && age >= Number(taxpayerAge);
+  const hasUncertainty = [
+    child.student,
+    child.disabled,
+    child.residency,
+    child.support,
+    child.citizenship,
+    child.jointReturn,
+    child.otherClaim,
+  ].some((value) => !value || value === "not-sure");
+
+  const reasons = [];
+  const cautions = [];
+
+  if (taxpayerCanBeClaimed) {
+    return {
+      status: "review",
+      title: getWorkingChildStatusLabel("review"),
+      name,
+      grossIncome,
+      incomeLimit,
+      classification: "Taxpayer dependent rule needs review",
+      reasons: ["You indicated that another taxpayer can claim you. A taxpayer who can be claimed as a dependent generally cannot claim another dependent."],
+      cautions: ["Review the dependent-taxpayer exception and your filing situation before including this child."],
+    };
+  }
+
+  const qualifyingChildPass =
+    relationshipPass &&
+    agePass &&
+    youngerPass &&
+    residencyPass &&
+    supportKnown &&
+    !childProvidedOwnSupport &&
+    citizenshipPass &&
+    jointReturnPass &&
+    competingClaimClear;
+
+  if (qualifyingChildPass) {
+    reasons.push(`${name} appears to meet the relationship, age or student, residency, support, and joint-return tests for a qualifying child.`);
+    reasons.push(`${name}'s ${fmt(grossIncome)} of income does not create a gross-income cutoff for the qualifying-child test.`);
+
+    if (Number(child.gigIncome || 0) >= 400) {
+      cautions.push(`${name} may need a separate tax return because net self-employment income is at least $400.`);
+    } else if (earnedIncome > 0 || Number(child.unearnedIncome || 0) > 0) {
+      cautions.push(`${name} may still need to file a separate return depending on total earned and unearned income. Filing a return does not automatically prevent a dependent claim.`);
+    }
+
+    return {
+      status: "eligible",
+      title: getWorkingChildStatusLabel("eligible"),
+      name,
+      grossIncome,
+      incomeLimit,
+      classification: "Likely qualifying child",
+      reasons,
+      cautions,
+    };
+  }
+
+  if (
+    spouseAgeMayMatter &&
+    relationshipPass &&
+    agePass &&
+    residencyPass &&
+    supportKnown &&
+    !childProvidedOwnSupport &&
+    citizenshipPass &&
+    jointReturnPass &&
+    competingClaimClear
+  ) {
+    return {
+      status: "review",
+      title: getWorkingChildStatusLabel("review"),
+      name,
+      grossIncome,
+      incomeLimit,
+      classification: "Spouse age needed",
+      reasons: ["The child must be younger than you or your spouse on a joint return. The estimator has your age but not your spouse's age."],
+      cautions: ["Confirm the spouse's age before deciding whether this person is a qualifying child."],
+    };
+  }
+
+  const qualifyingRelativePass =
+    relationshipRelativePass &&
+    grossIncome < incomeLimit &&
+    child.support === "taxpayer" &&
+    citizenshipPass &&
+    jointReturnPass &&
+    competingClaimClear;
+
+  if (qualifyingRelativePass) {
+    reasons.push(`${name} may qualify under the qualifying-relative rules because gross income is below ${fmt(incomeLimit)} for tax year ${taxYear} and you indicated that you provided more than half of total support.`);
+    cautions.push("This result depends on the person not being the qualifying child of another taxpayer.");
+    if (Number(child.gigIncome || 0) > 0) {
+      cautions.push("Business gross-income rules can differ from net profit, so self-employment income should be reviewed before relying on the qualifying-relative limit.");
+    }
+    return {
+      status: hasUncertainty ? "review" : "eligible",
+      title: hasUncertainty ? getWorkingChildStatusLabel("review") : getWorkingChildStatusLabel("eligible"),
+      name,
+      grossIncome,
+      incomeLimit,
+      classification: "Possible qualifying relative",
+      reasons,
+      cautions,
+    };
+  }
+
+  if (hasUncertainty || child.otherClaim === "yes" || spouseAgeMayMatter) {
+    reasons.push("One or more answers require a closer review before deciding who can claim this person.");
+    if (child.otherClaim === "yes") cautions.push("Another taxpayer may also have a claim, so the IRS tie-breaker or custodial-parent rules may matter.");
+    if (spouseAgeMayMatter) cautions.push("Because you selected Married Filing Jointly, the spouse's age may determine whether the child is younger than at least one spouse.");
+    if (child.citizenship === "not-sure") cautions.push("The citizen or resident test must be confirmed.");
+    if (!residencyPass) cautions.push("The child may not meet the more-than-half-the-year residency test unless an exception applies.");
+    if (childProvidedOwnSupport) cautions.push("You indicated that the child provided more than half of their own support.");
+    return {
+      status: "review",
+      title: getWorkingChildStatusLabel("review"),
+      name,
+      grossIncome,
+      incomeLimit,
+      classification: "Facts need review",
+      reasons,
+      cautions,
+    };
+  }
+
+  if (!citizenshipPass) reasons.push(`${name} did not meet the citizen or resident test based on the answer entered.`);
+  if (!jointReturnPass) reasons.push(`${name} filed or expects to file a joint return for a reason other than claiming a refund.`);
+  if (childProvidedOwnSupport) reasons.push(`${name} provided more than half of their own support.`);
+  if (!agePass && grossIncome >= incomeLimit) reasons.push(`${name} does not meet the qualifying-child age or student test, and gross income is not below the ${fmt(incomeLimit)} qualifying-relative limit for tax year ${taxYear}.`);
+  if (!residencyPass) reasons.push(`${name} did not live with you for more than half the year and was not marked as temporarily away at school.`);
+  if (!relationshipRelativePass) reasons.push("The relationship entered does not fit the simplified qualifying-child or qualifying-relative screen.");
+
+  return {
+    status: "ineligible",
+    title: getWorkingChildStatusLabel("ineligible"),
+    name,
+    grossIncome,
+    incomeLimit,
+    classification: "Likely not claimable from these answers",
+    reasons: reasons.length ? reasons : ["The answers entered do not satisfy the simplified dependent screen."],
+    cautions: ["A tax professional should review special circumstances before the return is filed."],
+  };
+}
+
+function workingChildCardTemplate(index) {
+  return `
+    <div class="working-child-card" data-working-child-index="${index}">
+      <div class="working-child-card-head">
+        <div>
+          <span class="working-child-number">Working Child ${index + 1}</span>
+          <strong>Dependent eligibility questions</strong>
+        </div>
+        <button type="button" class="working-child-remove" aria-label="Remove working child">Remove</button>
+      </div>
+
+      <div class="field-row cols-3 working-child-grid">
+        <div class="field-group">
+          <label class="field-label">Child's First Name <span class="req-star">*</span></label>
+          <input type="text" class="wc-name" placeholder="e.g. Jordan" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Relationship <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-relationship">
+              <option value="">- Select -</option>
+              <option value="child">Son, daughter, stepchild, foster child, or descendant</option>
+              <option value="sibling">Brother, sister, step-sibling, or descendant</option>
+              <option value="other-relative">Other relative</option>
+              <option value="not-related">Not related</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Age at Year-End <span class="req-star">*</span></label>
+          <input type="number" class="wc-age" min="0" max="120" placeholder="e.g. 17" />
+        </div>
+      </div>
+
+      <div class="field-row cols-3 working-child-grid">
+        <div class="field-group">
+          <label class="field-label">Full-Time Student for at Least 5 Months? <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-student">
+              <option value="">- Select -</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Permanently and Totally Disabled? <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-disabled">
+              <option value="">- Select -</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Living Arrangement <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-residency">
+              <option value="">- Select -</option>
+              <option value="yes">Lived with me more than half the year</option>
+              <option value="school-absence">Away at school but home otherwise</option>
+              <option value="no">Did not live with me more than half the year</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row cols-3 working-child-grid">
+        <div class="field-group">
+          <label class="field-label">W-2 / Job Wages</label>
+          <div class="dollar-input"><input type="number" class="wc-wages" min="0" placeholder="0" /></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Net Gig / Self-Employment Income</label>
+          <div class="dollar-input"><input type="number" class="wc-gig-income" min="0" placeholder="0" /></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Interest, Dividends, or Other Unearned Income</label>
+          <div class="dollar-input"><input type="number" class="wc-unearned-income" min="0" placeholder="0" /></div>
+        </div>
+      </div>
+
+      <div class="field-row working-child-grid working-child-grid-four">
+        <div class="field-group">
+          <label class="field-label">Who Provided More Than Half of Total Support? <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-support">
+              <option value="">- Select -</option>
+              <option value="taxpayer">I did</option>
+              <option value="child">The child did</option>
+              <option value="someone-else">Someone else did</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Citizen or Resident Test <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-citizenship">
+              <option value="">- Select -</option>
+              <option value="yes">U.S. citizen, U.S. national, resident alien, or resident of Canada/Mexico</option>
+              <option value="no">No</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Will the Child File a Joint Return? <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-joint-return">
+              <option value="">- Select -</option>
+              <option value="no">No</option>
+              <option value="refund-only">Only to claim a refund</option>
+              <option value="yes">Yes, for another reason</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Could Another Taxpayer Claim This Child? <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select class="wc-other-claim">
+              <option value="">- Select -</option>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+              <option value="not-sure">Not sure</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="working-child-inline-result" aria-live="polite">
+        Complete the required questions to see the likely dependent result.
+      </div>
+    </div>
+  `;
+}
+
+function collectWorkingChildren() {
+  return Array.from(document.querySelectorAll(".working-child-card")).map((card) => ({
+    name: card.querySelector(".wc-name")?.value?.trim() || "",
+    relationship: card.querySelector(".wc-relationship")?.value || "",
+    age: Number.parseInt(card.querySelector(".wc-age")?.value || "0", 10) || 0,
+    student: card.querySelector(".wc-student")?.value || "",
+    disabled: card.querySelector(".wc-disabled")?.value || "",
+    residency: card.querySelector(".wc-residency")?.value || "",
+    wages: moneyValue(card.querySelector(".wc-wages")?.value),
+    gigIncome: moneyValue(card.querySelector(".wc-gig-income")?.value),
+    unearnedIncome: moneyValue(card.querySelector(".wc-unearned-income")?.value),
+    support: card.querySelector(".wc-support")?.value || "",
+    citizenship: card.querySelector(".wc-citizenship")?.value || "",
+    jointReturn: card.querySelector(".wc-joint-return")?.value || "",
+    otherClaim: card.querySelector(".wc-other-claim")?.value || "",
+  }));
+}
+
+function isWorkingChildComplete(child) {
+  return Boolean(
+    child.name &&
+    child.relationship &&
+    child.age > 0 &&
+    child.student &&
+    child.disabled &&
+    child.residency &&
+    child.support &&
+    child.citizenship &&
+    child.jointReturn &&
+    child.otherClaim
+  );
+}
+
+function updateWorkingChildCardNumbers() {
+  const cards = document.querySelectorAll(".working-child-card");
+  cards.forEach((card, index) => {
+    card.dataset.workingChildIndex = String(index);
+    const number = card.querySelector(".working-child-number");
+    if (number) number.textContent = `Working Child ${index + 1}`;
+    const remove = card.querySelector(".working-child-remove");
+    if (remove) remove.hidden = cards.length === 1;
+  });
+}
+
+function refreshWorkingChildInlineResults() {
+  const taxYear = Number(document.getElementById("taxYear")?.value || 2025);
+  const taxpayerAge = Number(document.getElementById("age")?.value || 0);
+  const children = collectWorkingChildren();
+
+  document.querySelectorAll(".working-child-card").forEach((card, index) => {
+    const host = card.querySelector(".working-child-inline-result");
+    const child = children[index];
+    if (!host || !child) return;
+
+    if (!isWorkingChildComplete(child)) {
+      host.className = "working-child-inline-result";
+      host.textContent = "Complete the required questions to see the likely dependent result.";
+      return;
+    }
+
+    const result = evaluateWorkingChild(
+      child,
+      taxYear,
+      taxpayerAge,
+      document.querySelector('input[name="canBeClaimedAsDependent"]:checked')?.value === "yes",
+      document.getElementById("filingStatus")?.value || ""
+    );
+    host.className = `working-child-inline-result ${result.status}`;
+    host.innerHTML = `
+      <strong>${escHtml(result.title)}</strong>
+      <span>${escHtml(result.classification)}. Total income entered: ${escHtml(fmt(result.grossIncome))}.</span>
+      <small>${escHtml(result.reasons[0] || "Review the dependent rules before filing.")}</small>
+    `;
+  });
+}
+
+function addWorkingChildCard() {
+  const list = document.getElementById("workingChildList");
+  if (!list) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = workingChildCardTemplate(_workingChildCounter++).trim();
+  const card = wrapper.firstElementChild;
+  list.appendChild(card);
+
+  card.querySelectorAll("input, select").forEach((element) => {
+    element.addEventListener("input", refreshWorkingChildInlineResults);
+    element.addEventListener("change", refreshWorkingChildInlineResults);
+  });
+
+  card.querySelector(".working-child-remove")?.addEventListener("click", () => {
+    card.remove();
+    updateWorkingChildCardNumbers();
+    refreshWorkingChildInlineResults();
+  });
+
+  updateWorkingChildCardNumbers();
+  refreshWorkingChildInlineResults();
+}
+
+function setWorkingChildPanelVisible(visible) {
+  const panel = document.getElementById("workingChildPanel");
+  if (!panel) return;
+
+  panel.hidden = !visible;
+  if (visible && !document.querySelector(".working-child-card")) {
+    addWorkingChildCard();
+  }
+}
+
+function initWorkingChildChecker() {
+  document.querySelectorAll('input[name="hasWorkingChildIncome"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      setWorkingChildPanelVisible(radio.value === "yes" && radio.checked);
+    });
+  });
+
+  document.getElementById("addWorkingChildBtn")?.addEventListener("click", addWorkingChildCard);
+  document.getElementById("taxYear")?.addEventListener("change", refreshWorkingChildInlineResults);
+  document.getElementById("age")?.addEventListener("input", refreshWorkingChildInlineResults);
+}
+
+function renderWorkingChildResults(input) {
+  const section = document.getElementById("workingChildResultsSection");
+  const host = document.getElementById("workingChildResults");
+  const children = Array.isArray(input?.workingChildren) ? input.workingChildren : [];
+
+  if (!section || !host) return;
+
+  if (!input?.hasWorkingChildIncome || children.length === 0) {
+    section.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+
+  section.hidden = false;
+  host.innerHTML = children.map((child) => {
+    const result = evaluateWorkingChild(
+      child,
+      input.taxYear,
+      input.age,
+      input.canBeClaimedAsDependent,
+      input.filingStatus
+    );
+    const reasonItems = result.reasons.map((reason) => `<li>${escHtml(reason)}</li>`).join("");
+    const cautionItems = result.cautions.map((caution) => `<li>${escHtml(caution)}</li>`).join("");
+
+    return `
+      <article class="working-child-result-card ${escHtml(result.status)}">
+        <div class="working-child-result-top">
+          <div>
+            <div class="working-child-result-name">${escHtml(result.name)}</div>
+            <div class="working-child-result-classification">${escHtml(result.classification)}</div>
+          </div>
+          <span>${escHtml(result.title)}</span>
+        </div>
+        <div class="working-child-result-income">Income entered: <strong>${escHtml(fmt(result.grossIncome))}</strong></div>
+        <ul>${reasonItems}${cautionItems}</ul>
+        <div class="working-child-result-next">Use this screening result when deciding whether to include ${escHtml(result.name)} in the Number of Dependents entered on your estimate. Special custody, support, residency, disability, and joint-return rules may require professional review.</div>
+      </article>
+    `;
+  }).join("");
+}
+
+function getEstimateCompleteness(input) {
+  const rawRequiredValues = [
+    document.getElementById("taxYear")?.value,
+    document.getElementById("filingStatus")?.value,
+    document.getElementById("age")?.value,
+    document.getElementById("stateCode")?.value,
+    document.getElementById("numberOfDependents")?.value,
+    document.getElementById("w2Income")?.value,
+    document.getElementById("federalWithheld")?.value,
+    document.getElementById("stateWithheld")?.value,
+  ];
+
+  const completed = rawRequiredValues.filter((value) => String(value ?? "").trim() !== "").length;
+  const childCount = Array.isArray(input?.workingChildren) ? input.workingChildren.length : 0;
+
+  return {
+    completed,
+    total: rawRequiredValues.length,
+    childCount,
+  };
+}
+
+// =============================================================================
 // TAX FORM - READ
 // =============================================================================
 
@@ -239,6 +767,8 @@ function readForm() {
     canBeClaimedAsDependent: getRadio("canBeClaimedAsDependent") === "yes",
     stateCode: getVal("stateCode"),
     numberOfDependents: parseInt(getVal("numberOfDependents"), 10) || 0,
+    hasWorkingChildIncome: getRadio("hasWorkingChildIncome") === "yes",
+    workingChildren: getRadio("hasWorkingChildIncome") === "yes" ? collectWorkingChildren() : [],
     w2Income: numVal("w2Income"),
     otherIncome: numVal("otherIncome"),
     scholarships: numVal("scholarships"),
@@ -272,6 +802,19 @@ function validateFormClient(input) {
     errors.push("State of Residence is required.");
     markError("stateCode");
   }
+
+  if (input.hasWorkingChildIncome) {
+    if (!Array.isArray(input.workingChildren) || input.workingChildren.length === 0) {
+      errors.push("Add at least one working child or select No for the working-child question.");
+    } else {
+      input.workingChildren.forEach((child, index) => {
+        if (!isWorkingChildComplete(child)) {
+          errors.push(`Complete all required Working Child ${index + 1} eligibility questions.`);
+        }
+      });
+    }
+  }
+
   if (input.w2Income < 0) {
     errors.push("W-2 Wages must be $0 or more.");
     markError("w2Income");
@@ -324,6 +867,13 @@ function clearForm() {
   const depNo = document.querySelector('input[name="canBeClaimedAsDependent"][value="no"]');
   if (studentNo) studentNo.checked = true;
   if (depNo) depNo.checked = true;
+
+  const workingChildNo = document.querySelector('input[name="hasWorkingChildIncome"][value="no"]');
+  if (workingChildNo) workingChildNo.checked = true;
+  const workingChildList = document.getElementById("workingChildList");
+  if (workingChildList) workingChildList.innerHTML = "";
+  _workingChildCounter = 0;
+  setWorkingChildPanelVisible(false);
   clearErrors();
 }
 
@@ -356,7 +906,7 @@ function setLeadLoading(isLoading) {
     btn.style.opacity = "0.72";
   } else {
     btn.disabled = false;
-    btn.innerHTML = btn.dataset.orig || "Get My Free Professional Review";
+    btn.innerHTML = btn.dataset.orig || "Request Free 15-Minute Consultation";
     btn.style.opacity = "";
   }
 }
@@ -627,6 +1177,10 @@ async function submitLeadGateway(input, result) {
     if (overlay) overlay.remove();
 
     resetLeadForm();
+    const leadNameInput = document.getElementById("leadName");
+    const leadEmailInput = document.getElementById("leadEmail");
+    if (leadNameInput) leadNameInput.value = fullName;
+    if (leadEmailInput) leadEmailInput.value = email;
     renderResults(result, input);
     goToScreen("results");
   } catch (err) {
@@ -723,7 +1277,7 @@ async function handleLeadSubmit(event) {
   console.log("about to fetch /api/lead", { estimateSummary });
 
   const followUpStamp = new Date().toLocaleString();
-  const followUpNote = `[${followUpStamp}] Client action from public estimate summary: Requested Free Tax Pro Follow-Up`;
+  const followUpNote = `[${followUpStamp}] Client action from public estimate summary: Requested Free 15-Minute Consultation`;
 
   try {
     const response = await fetch("/api/lead", {
@@ -1131,68 +1685,31 @@ function renderTaxProInsightBanner(fed, combined) {
       </div>
 
       <div class="taxpro-banner-actions">
-        <button type="button" id="taxProInsightCtaBtn" class="cta-urgent-btn">
-          Request Tax Pro Follow-Up
-        </button>
-        <div
-  style="
-    margin-top:8px;
-    font-size:13px;
-    font-weight:700;
-    color:#475569;
-  "
->
-  Free consultation - No payment required
-</div>
-
         <button
-  type="button"
-  id="paidReviewCtaBtn"
-  style="
-    margin-top:12px;
-    background:#f59e0b;
-    color:#111827;
-    border:2px solid #92400e;
-    border-radius:12px;
-    padding:14px 22px;
-    font-size:15px;
-    font-weight:900;
-    cursor:pointer;
-    box-shadow:0 10px 22px rgba(245,158,11,0.35);
-  "
->
-    Buy Written Estimate Red Flag Review - $29
-</button>
+          type="button"
+          id="paidReviewCtaBtn"
+          style="margin-top:12px;background:#f59e0b;color:#111827;border:2px solid #92400e;border-radius:12px;padding:14px 22px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 10px 22px rgba(245,158,11,0.35);"
+        >
+          Get My Written Red Flag Review - $29
+        </button>
 
-<div
-  style="
-    margin-top:16px;
-    background:#fff7ed;
-    border:2px solid #f59e0b;
-    border-radius:14px;
-    padding:16px;
-    color:#1f2937;
-    max-width:720px;
-  "
->
-  <div style="font-size:18px;font-weight:900;margin-bottom:10px;color:#92400e;">
-    What You Receive for $29
-  </div>
+        <div style="margin-top:16px;background:#fff7ed;border:2px solid #f59e0b;border-radius:14px;padding:16px;color:#1f2937;max-width:720px;">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;color:#92400e;">What You Receive for $29</div>
+          <div style="display:grid;gap:8px;font-size:14px;line-height:1.5;font-weight:650;">
+            <div>- Review of your estimate for possible missed deductions or credits</div>
+            <div>- Filing-status, dependent, and working-child review based on the information entered</div>
+            <div>- Self-employment, mileage, and withholding review if applicable</div>
+            <div>- Written Tax Strategy Summary with recommended next steps</div>
+            <div>- Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
+          </div>
+          <div style="margin-top:12px;font-size:13px;color:#475569;line-height:1.5;">This review does not replace a completed tax return. It is a strategy review based on the information you provide.</div>
+        </div>
 
-  <div style="display:grid;gap:8px;font-size:14px;line-height:1.5;font-weight:650;">
-    <div>- Review of your estimate for possible missed deductions or credits</div>
-    <div>- Filing-status and dependent review based on the information entered</div>
-    <div>- Self-employment, mileage, and withholding review if applicable</div>
-    <div>- Written Tax Strategy Summary with recommended next steps</div>
-    <div>- Guidance on whether full tax prep, transcript review, or tax resolution may be needed</div>
-  </div>
-
-  <div style="margin-top:12px;font-size:13px;color:#475569;line-height:1.5;">
-    This review does not replace a completed tax return. It is a strategy review based on the information you provide.
-  </div>
-</div>
-          
-  </div>
+        <button type="button" id="taxProInsightCtaBtn" class="cta-urgent-btn" style="margin-top:12px;">
+          Book a Free 15-Minute Consultation
+        </button>
+        <div style="margin-top:8px;font-size:13px;font-weight:700;color:#475569;">Secondary option - no payment required</div>
+      </div>
 
 <div
   class="transcript-review-box"
@@ -1657,14 +2174,20 @@ function renderResults(result, input) {
         : "You appear to be near break-even this year";
   }
 
-  const conf = cx.confidence || {};
+  const completeness = getEstimateCompleteness(input);
   const confScore = document.getElementById("confidenceScore");
   const confDesc = document.getElementById("confidenceDesc");
   if (confScore) {
-    confScore.textContent = conf.label || "Estimate";
-    confScore.className = "confidence-score" + (conf.score < 75 ? (conf.score < 55 ? " low" : " moderate") : "");
+    confScore.textContent = `${completeness.completed} of ${completeness.total}`;
+    confScore.className = "confidence-score";
   }
-  if (confDesc) confDesc.textContent = conf.description || "Based on the information provided.";
+  if (confDesc) {
+    confDesc.textContent = completeness.childCount > 0
+      ? `Required fields completed. Working-child check completed for ${completeness.childCount} child${completeness.childCount === 1 ? "" : "ren"}.`
+      : "All required estimate fields were completed.";
+  }
+
+  renderWorkingChildResults(input);
 
   const fedRows = [];
   fedRows.push({ label: "W-2 wages", val: fmt((fed.grossIncome || 0) - (fed.netSelfEmploymentIncome || 0)) });
@@ -1806,8 +2329,8 @@ function renderResults(result, input) {
   const cta = cx.cta || {};
   const ctaTitle = document.getElementById("ctaTitle");
   const ctaCtx = document.getElementById("ctaContext");
-  if (ctaTitle) ctaTitle.textContent = "Have a Tax Professional Review My Estimate";
-  if (ctaCtx) ctaCtx.textContent = cta.context || "Your federal and state results point in different directions. A tax professional can reconcile both, explain what may change, and help you decide your next step.";
+  if (ctaTitle) ctaTitle.textContent = "Understand the Number Before You File";
+  if (ctaCtx) ctaCtx.textContent = "The $29 written review is the recommended next step when you want a clear explanation of the number, possible red flags, and what to do before filing. A free 15-minute consultation remains available as a secondary option.";
 }
 
 // =============================================================================
@@ -1817,6 +2340,7 @@ function renderResults(result, input) {
 function initAllInputFormatting() {
   initPhoneFormatting();
   initGlobalInputFormatting();
+  initWorkingChildChecker();
 }
 
 if (document.readyState === "loading") {
@@ -2012,14 +2536,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 })();
-
-
-
-
-
-
-
-
-
-
-
