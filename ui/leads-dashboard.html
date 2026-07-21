@@ -1109,6 +1109,19 @@
         aria-label="0 open transcript requests"
       >0</span>
     </button>
+    <button
+      id="completedTranscriptRequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      onclick="window.location.href='/transcript-requests?workspace=completed'"
+      type="button"
+    >
+      <span>Completed Transcript Requests</span>
+      <span
+        id="completedTranscriptRequestsSidebarCount"
+        class="transcript-sidebar-count is-zero"
+        aria-label="0 completed transcript requests"
+      >0</span>
+    </button>
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Portal &amp; Documents</div>
@@ -4948,37 +4961,95 @@ function isOpenTranscriptSidebarRequest(lead){
   );
 }
 
+function isCompletedTranscriptSidebarRequest(lead){
+  const status =
+    String(lead?.status || "")
+      .toLowerCase();
+
+  const transcript =
+    lead?.transcriptRequest ||
+    lead?.Request ||
+    {};
+
+  return (
+    isTranscriptServiceRequest(lead) &&
+    !isTranscriptSidebarConsult(lead) &&
+    !isTranscriptSidebarMonitoring(lead) &&
+    (
+      status === "transcript help - completed" ||
+      String(
+        transcript.internalStatus || ""
+      ).toLowerCase() === "completed" ||
+      Boolean(transcript.completedAt)
+    )
+  );
+}
+
 function updateTranscriptSidebarCount(){
-  const badge =
+  const openBadge =
     document.getElementById(
       "transcriptRequestsSidebarCount"
     );
 
-  const button =
+  const openButton =
     document.getElementById(
       "transcriptRequestsSidebarButton"
     );
 
-  const count = (allLeads || [])
+  const completedBadge =
+    document.getElementById(
+      "completedTranscriptRequestsSidebarCount"
+    );
+
+  const completedButton =
+    document.getElementById(
+      "completedTranscriptRequestsSidebarButton"
+    );
+
+  const openCount = (allLeads || [])
     .filter(isOpenTranscriptSidebarRequest)
     .length;
 
-  if(badge){
-    badge.textContent = String(count);
-    badge.classList.toggle(
+  const completedCount = (allLeads || [])
+    .filter(isCompletedTranscriptSidebarRequest)
+    .length;
+
+  if(openBadge){
+    openBadge.textContent = String(openCount);
+    openBadge.classList.toggle(
       "is-zero",
-      count === 0
+      openCount === 0
     );
 
-    badge.setAttribute(
+    openBadge.setAttribute(
       "aria-label",
-      `${count} open transcript ${count === 1 ? "request" : "requests"}`
+      `${openCount} open transcript ${openCount === 1 ? "request" : "requests"}`
     );
   }
 
-  if(button){
-    button.title =
-      `${count} open transcript ${count === 1 ? "request" : "requests"}`;
+  if(openButton){
+    openButton.title =
+      `${openCount} open transcript ${openCount === 1 ? "request" : "requests"}`;
+  }
+
+  if(completedBadge){
+    completedBadge.textContent =
+      String(completedCount);
+
+    completedBadge.classList.toggle(
+      "is-zero",
+      completedCount === 0
+    );
+
+    completedBadge.setAttribute(
+      "aria-label",
+      `${completedCount} completed transcript ${completedCount === 1 ? "request" : "requests"}`
+    );
+  }
+
+  if(completedButton){
+    completedButton.title =
+      `${completedCount} completed transcript ${completedCount === 1 ? "request" : "requests"}`;
   }
 }
 

@@ -1255,7 +1255,7 @@ function buildFreeEstimatePdfBuffer(lead = {}) {
             .fontSize(10)
             .fillColor("#111827")
             .text(
-              "â€¢ " + label + ": " + value,
+              "- " + label + ": " + value,
               {
                 indent: 8,
                 paragraphGap: 2
@@ -1700,7 +1700,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Â° Schedule your 15-minute tax review now:
+Schedule your 15-minute tax review now:
 ${bookingLink}
 
 Thank you,
@@ -1723,7 +1723,7 @@ Summary:
 View your estimate summary:
 ${estimateSummaryLink}
 
-ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Â° Schedule your 15-minute tax review:
+Schedule your 15-minute tax review:
 ${bookingLink}
 
 Thank you,
@@ -6792,7 +6792,7 @@ app.post("/api/calendar-appointment", async (req, res) => {
 
   if (cleanMeetingType === "Phone Call") {
     location.phone = cleanPhone;
-    location.display = `Phone Call â€” ${cleanPhone}`;
+    location.display = `Phone Call - ${cleanPhone}`;
   }
 
   if (

@@ -479,7 +479,7 @@ const requestedTranscriptWorkspace =
   new URLSearchParams(window.location.search).get("workspace");
 
 const transcriptWorkspace =
-  ["consults", "monitoring", "requests"].includes(
+  ["consults", "monitoring", "requests", "completed"].includes(
     String(requestedTranscriptWorkspace || "").toLowerCase()
   )
     ? String(requestedTranscriptWorkspace).toLowerCase()
@@ -496,7 +496,11 @@ const transcriptWorkspaceDetails = {
   },
   requests: {
     title: "Transcript Requests",
-    subtitle: "Manage payment, Form 8821, identity verification, transcript type, PitBullTax pull status, and delivery."
+    subtitle: "Manage open transcript requests from payment through secure delivery."
+  },
+  completed: {
+    title: "Completed Transcript Requests",
+    subtitle: "Review finished transcript services, delivered documents, and scheduled portal cleanup."
   }
 };
 
@@ -512,7 +516,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if(title) title.textContent = details.title;
   if(subtitle) subtitle.textContent = details.subtitle;
 
-  if(header && transcriptWorkspace!=="requests"){
+  if(
+    header &&
+    !["requests", "completed"].includes(
+      transcriptWorkspace
+    )
+  ){
     header.innerHTML = `
       <div>Client</div>
       <div>Request / Notes</div>
@@ -523,7 +532,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-let showCompleted=false;
+let showCompleted=
+  transcriptWorkspace === "completed";
 
 function showTranscriptActionBanner(
   message,
@@ -913,9 +923,20 @@ async function load(){
   const transcriptRows=all.filter(matchesTranscriptWorkspace);
   const openRows=transcriptRows.filter(l=>!isTranscriptWorkspaceCompleted(l));
   const completedRows=transcriptRows.filter(isTranscriptWorkspaceCompleted);
-  const rows=(showCompleted?completedRows:openRows).sort((a,b)=>leadTime(b)-leadTime(a));
+  const rows=(
+    transcriptWorkspace === "completed"
+      ? completedRows
+      : (
+          showCompleted
+            ? completedRows
+            : openRows
+        )
+  ).sort((a,b)=>leadTime(b)-leadTime(a));
 
-  document.getElementById("countOpen").textContent=`Open: ${openRows.length}`;
+  document.getElementById("countOpen").textContent=
+    transcriptWorkspace === "completed"
+      ? `Completed: ${completedRows.length}`
+      : `Open: ${openRows.length}`;
 
   const readyPill=document.getElementById("countReady");
   const need8821Pill=document.getElementById("countNeed8821");
@@ -932,10 +953,19 @@ async function load(){
 
   const toggleBtn=document.getElementById("toggleCompletedBtn");
   if(toggleBtn){
-    toggleBtn.textContent=showCompleted?`Show Open (${openRows.length})`:`Show Completed (${completedRows.length})`;
+    if(transcriptWorkspace === "completed"){
+      toggleBtn.style.display = "none";
+    }else{
+      toggleBtn.style.display = "";
+      toggleBtn.textContent=showCompleted?`Show Open (${openRows.length})`:`Show Completed (${completedRows.length})`;
+    }
   }
 
-  if(transcriptWorkspace!=="requests"){
+  if(
+    !["requests", "completed"].includes(
+      transcriptWorkspace
+    )
+  ){
     const rowsEl=document.getElementById("rows");
     const workspaceLabel =
       transcriptWorkspaceDetails[transcriptWorkspace]?.title ||
@@ -1060,7 +1090,7 @@ async function load(){
             </div>
           </div>
           <div class="document-workspace-body" id="document-workspace-${esc(id)}">
-            <div class="document-empty">Loading this clientâ€™s secure transcript documents...</div>
+            <div class="document-empty">Loading this client's secure transcript documents...</div>
           </div>
         </section>
 
@@ -1256,8 +1286,8 @@ function renderTranscriptDocumentCard(
         <div>
           <div class="document-file">${esc(doc.originalName||"Secure document")}</div>
           <div class="document-meta">
-            ${esc(doc.categoryLabel||doc.category||"Document")} Â·
-            ${esc(doc.taxYearLabel||doc.taxYear||"Tax year not recorded")} Â·
+            ${esc(doc.categoryLabel||doc.category||"Document")} &bull;
+            ${esc(doc.taxYearLabel||doc.taxYear||"Tax year not recorded")} &bull;
             ${esc(formatDocumentBytes(doc.sizeBytes))}<br>
             Uploaded: ${esc(formatDocumentDate(doc.uploadedAt))}
           </div>
@@ -1490,7 +1520,7 @@ function renderTranscriptDocumentWorkspace(
 
   const cleanupPanel=`
     <details class="request-cleanup">
-      <summary>Retention &amp; Cleanup â€” Protected Administration</summary>
+      <summary>Retention &amp; Cleanup &mdash; Protected Administration</summary>
       <div class="request-cleanup-body">
         <div class="cleanup-grid">
           <label>
@@ -1511,8 +1541,8 @@ function renderTranscriptDocumentWorkspace(
         </div>
 
         <p class="cleanup-note">
-          Active documents: ${Number(cleanup.activeCount||activeDocs.length||0)} Â·
-          Removed from portal: ${Number(cleanup.removedCount||removedDocs.length||0)} Â·
+          Active documents: ${Number(cleanup.activeCount||activeDocs.length||0)} &bull;
+          Removed from portal: ${Number(cleanup.removedCount||removedDocs.length||0)} &bull;
           Reminder dates scheduled: ${Number(cleanup.scheduledCount||0)}.
           Completing this request automatically applies the displayed cleanup review date.
           Permanent deletion is intentionally unavailable in this daily workspace.
