@@ -767,9 +767,18 @@ function refreshWorkingChildInlineResults() {
       document.getElementById("filingStatus")?.value || ""
     );
     const filing = result.filing;
-    const refundMessage =
-      filing.refundMessages[0] ||
-      "Review whether a separate child return is needed.";
+    const refundMessages =
+      filing.refundMessages.length > 0
+        ? filing.refundMessages
+        : [
+          "Review whether a separate child return is needed."
+        ];
+    const refundGuidance = refundMessages
+      .map(
+        (message) =>
+          `<li>${escHtml(message)}</li>`
+      )
+      .join("");
 
     host.className = `working-child-inline-result ${result.status}`;
     host.innerHTML = `
@@ -779,7 +788,9 @@ function refreshWorkingChildInlineResults() {
       <div class="working-child-filing-summary ${filing.federalReturnLikelyRequired ? "required" : "not-required"}">
         <strong>${escHtml(filing.filingTitle)}</strong>
         <span>${escHtml(filing.filingMessage)}</span>
-        <small>${escHtml(refundMessage)}</small>
+        <ul class="working-child-inline-refund-list">
+          ${refundGuidance}
+        </ul>
       </div>
       <div class="working-child-dependent-reminder">
         Include ${escHtml(result.name)} in Number of Dependents above if you expect to claim ${escHtml(result.name)}.
