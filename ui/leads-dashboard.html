@@ -1057,6 +1057,116 @@
       }
     }
 
+
+    .extension-filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .extension-filter-btn {
+      border: 1px solid #b9c8d9;
+      background: #ffffff;
+      color: #17324d;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .extension-filter-btn.active {
+      background: #17324d;
+      color: #ffffff;
+      border-color: #17324d;
+    }
+
+    .service-workspace {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .service-workspace-card {
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 12px;
+    }
+
+    .service-workspace-card strong {
+      color: #0f2c56;
+    }
+
+    .service-workspace-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .service-workspace-field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .service-workspace-field label {
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .service-workspace-field select,
+    .service-workspace-field input,
+    .service-workspace-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #b9c8d9;
+      border-radius: 7px;
+      background: #ffffff;
+      padding: 9px;
+      color: #12233d;
+      font: inherit;
+    }
+
+    .service-workspace-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .service-workspace-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .service-workspace-actions button,
+    .service-workspace-actions a {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      border: 0;
+      border-radius: 8px;
+      background: #0f2c56;
+      color: #ffffff;
+      padding: 10px 12px;
+      font-weight: 900;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .service-workspace-actions .secondary {
+      background: #28588c;
+    }
+
+    .service-workspace-note {
+      border-left: 4px solid #f59e0b;
+      background: #fff7ed;
+      color: #7c2d12;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     @media (max-width: 920px) {
       .office-command-stats {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1083,9 +1193,14 @@
     <button class="sidebar-btn" data-view="office" data-office-queue="new-today" data-title="New Today">New Today</button>
     <button class="sidebar-btn" data-view="office" data-office-queue="all" data-title="Office Work Queue">Office Work Queue</button>
     <button class="sidebar-btn" data-view="office" data-office-queue="paid-work" data-title="Revenue Work Queue">Revenue Work Queue</button>
-    <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
     <button class="sidebar-btn" data-view="websitecontact" data-title="Website Contact Requests">Website Contact Requests</button>
     <button class="sidebar-btn" data-view="written" data-title="Written Review Requests">Written Review Requests</button>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-group">Tax Preparation Work Center</div>
+    <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
+    <button class="sidebar-btn" data-view="extensions" data-title="Extension Requests">Extension Requests</button>
+    <button class="sidebar-btn" data-view="taxprepcompleted" data-title="Completed Tax Returns">Completed Tax Returns</button>
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Calendar</div>
@@ -1173,14 +1288,15 @@
 
 
     <div id="taxPrepFilters" class="taxprep-filters">
-      <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Tax Preparation</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="new">New Intakes</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="simple">Individual Form 1040</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="gig">Gig / Self-Employed</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="complex">Investment & Complex</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="business">Business / Entity</button>
+      <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Active Returns</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="portal">Portal Activation</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="documents">Documents Needed</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="ready">Ready to Prepare</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="preparing">In Preparation</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="signature">Client Review / Signature</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="efile">Ready to E-file</button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="submitted">Submitted / Acceptance</button>
       <button class="taxprep-filter-btn" data-taxprep-filter="review">Needs Review</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="completed">Completed</button>
     </div>
 
     <div id="taxPrepAdvancedFilters" class="taxprep-advanced-filters">
@@ -1242,6 +1358,17 @@
       </div>
 
       <div id="taxPrepAdvancedSummary" class="taxprep-advanced-summary"></div>
+    </div>
+
+    <div id="extensionFilters" class="extension-filters">
+      <button class="extension-filter-btn active" data-extension-filter="all">All Open Extensions</button>
+      <button class="extension-filter-btn" data-extension-filter="deadline">Deadline Review</button>
+      <button class="extension-filter-btn" data-extension-filter="payment">Payment Pending</button>
+      <button class="extension-filter-btn" data-extension-filter="review">Paid / Needs Review</button>
+      <button class="extension-filter-btn" data-extension-filter="information">Information Needed</button>
+      <button class="extension-filter-btn" data-extension-filter="ready">Ready to File</button>
+      <button class="extension-filter-btn" data-extension-filter="filed">Filed</button>
+      <button class="extension-filter-btn" data-extension-filter="completed">Completed</button>
     </div>
 
     <div id="contactFilters" class="contact-filters">
@@ -1459,6 +1586,7 @@ let allLeads = [];
 let currentView = "all";
 let currentOfficeQueueTab = "all";
 let currentTaxPrepFilter = "all";
+let currentExtensionFilter = "all";
 let currentContactFilter = "new";
 
 let currentContactMonth = "all";
@@ -2087,9 +2215,25 @@ function updateClosedSummary(count){
 }
 
 function isTaxPreparationLead(lead){
-  return Boolean(lead && lead.taxPreparationIntake) ||
+  const status = String(lead?.status || "").toLowerCase();
+
+  return Boolean(
+    lead &&
+    (
+      lead.taxPreparationIntake ||
+      lead.taxPreparationWork
+    )
+  ) ||
     String(lead?.leadId || "").startsWith("TAXPREP-") ||
-    String(lead?.status || "").toLowerCase().includes("tax preparation intake");
+    status.includes("tax preparation");
+}
+
+function isExtensionLead(lead){
+  const status = String(lead?.status || "").toLowerCase();
+
+  return Boolean(lead && lead.extensionRequest) ||
+    String(lead?.leadId || "").startsWith("EXT-") ||
+    status.includes("extension request");
 }
 
 function isWebsiteContactLead(lead){
@@ -2267,19 +2411,75 @@ function updateContactAdvancedSummary(count){
 
 function getTaxPrepLane(lead){
   const lane = String(
-    lead?.taxPreparationIntake?.recommendedLane || ""
+    lead?.taxPreparationIntake?.recommendedLane ||
+    lead?.taxPreparationWork?.returnType ||
+    ""
   ).trim();
 
   if(lane === "Simple Individual Return"){
     return "Individual Form 1040";
   }
 
-  return lane;
+  return lane || "Tax Preparation";
+}
+
+function getTaxPrepWorkStatus(lead){
+  const work = lead?.taxPreparationWork || {};
+  const status = String(
+    work.workStatus ||
+    lead?.status ||
+    "Needs Professional Review"
+  ).trim();
+
+  return status
+    .replace(/^Tax Preparation\s*-\s*/i, "")
+    .replace(/^Tax Preparation Intake\s*-\s*/i, "");
+}
+
+function getTaxPrepDocumentStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.documentStatus ||
+    (
+      getTaxPrepDocumentCount(lead) > 0
+        ? "Documents Received"
+        : "Documents Needed"
+    )
+  ).trim();
+}
+
+function getTaxPrepPaymentStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.paymentStatus ||
+    "Not Set"
+  ).trim();
+}
+
+function getTaxPrepPortalStatus(lead){
+  const status = String(
+    lead?.clientPortal?.status ||
+    "not-activated"
+  ).trim().toLowerCase();
+
+  if(status === "active") return "Active";
+  if(status === "pending-activation") return "Pending Activation";
+  return "Not Activated";
 }
 
 function getTaxPrepDocumentCount(lead){
-  const value = Number(lead?.taxPreparationIntake?.documentCount || 0);
-  return Number.isFinite(value) ? value : 0;
+  const secureCount = Number(
+    lead?.clientPortal?.documentCenter?.totalDocuments || 0
+  );
+
+  const intakeCount = Number(
+    lead?.taxPreparationIntake?.documentCount || 0
+  );
+
+  const value = Math.max(
+    Number.isFinite(secureCount) ? secureCount : 0,
+    Number.isFinite(intakeCount) ? intakeCount : 0
+  );
+
+  return value;
 }
 
 function getTaxPrepStateDisplay(lead){
@@ -2291,32 +2491,167 @@ function getTaxPrepStateDisplay(lead){
     : (state || "Not provided");
 }
 
-function matchesTaxPrepFilter(lead){
-  const status = String(lead?.status || "").toLowerCase();
-  const lane = getTaxPrepLane(lead).toLowerCase();
-  const isCompleted =
+function isCompletedTaxPreparation(lead){
+  const status = [
+    lead?.status,
+    lead?.taxPreparationWork?.workStatus,
+    lead?.taxPreparationWork?.efileStatus
+  ].join(" ").toLowerCase();
+
+  return (
+    status.includes("accepted") ||
     status.includes("completed") ||
-    status.includes("closed");
+    status.includes("closed")
+  );
+}
 
-  if(currentTaxPrepFilter === "new") return status.includes("ready to schedule");
-  if(currentTaxPrepFilter === "simple") return !isCompleted && (lane.includes("individual form 1040") || lane.includes("simple individual"));
-  if(currentTaxPrepFilter === "gig") return !isCompleted && (lane.includes("gig worker") || lane.includes("self-employed"));
-  if(currentTaxPrepFilter === "complex") return !isCompleted && (lane.includes("investment") || lane.includes("complex"));
-  if(currentTaxPrepFilter === "business") return !isCompleted && (lane.includes("business") || lane.includes("entity"));
-  if(currentTaxPrepFilter === "review") return !isCompleted && (status.includes("needs review") || Boolean(lead?.taxPreparationIntake?.needsProfessionalReview));
-  if(currentTaxPrepFilter === "completed") return isCompleted;
+function matchesTaxPrepFilter(lead){
+  if(isCompletedTaxPreparation(lead)){
+    return false;
+  }
 
-  // "All Tax Preparation" is the active worklist.
-  return !isCompleted;
+  const status = getTaxPrepWorkStatus(lead).toLowerCase();
+  const docs = getTaxPrepDocumentStatus(lead).toLowerCase();
+  const portal = getTaxPrepPortalStatus(lead).toLowerCase();
+
+  if(currentTaxPrepFilter === "portal"){
+    return (
+      portal !== "active" ||
+      status.includes("portal activation")
+    );
+  }
+
+  if(currentTaxPrepFilter === "documents"){
+    return (
+      docs.includes("needed") ||
+      status.includes("documents needed")
+    );
+  }
+
+  if(currentTaxPrepFilter === "ready"){
+    return status.includes("ready to prepare");
+  }
+
+  if(currentTaxPrepFilter === "preparing"){
+    return status.includes("in preparation");
+  }
+
+  if(currentTaxPrepFilter === "signature"){
+    return (
+      status.includes("client review") ||
+      status.includes("signature")
+    );
+  }
+
+  if(currentTaxPrepFilter === "efile"){
+    return status.includes("ready to e-file");
+  }
+
+  if(currentTaxPrepFilter === "submitted"){
+    return (
+      status.includes("submitted") ||
+      status.includes("awaiting acceptance")
+    );
+  }
+
+  if(currentTaxPrepFilter === "review"){
+    return (
+      status.includes("review") ||
+      Boolean(
+        lead?.taxPreparationIntake
+          ?.needsProfessionalReview
+      )
+    );
+  }
+
+  return true;
 }
 
 function getTaxPrepTaxYear(lead){
   return String(
     lead?.taxPreparationIntake?.taxYear ||
+    lead?.taxPreparationWork?.taxYear ||
     lead?.taxData?.taxYear ||
     ""
   ).trim();
 }
+
+function getExtensionWorkStatus(lead){
+  return String(
+    lead?.extensionRequest?.workStatus ||
+    lead?.status ||
+    "New Request"
+  )
+    .replace(/^Extension Request\s*-\s*/i, "")
+    .trim();
+}
+
+function getExtensionPaymentStatus(lead){
+  return String(
+    lead?.extensionRequest?.paymentStatus ||
+    "Payment Pending"
+  ).trim();
+}
+
+function isCompletedExtension(lead){
+  const status = [
+    lead?.status,
+    lead?.extensionRequest?.workStatus,
+    lead?.extensionRequest?.confirmationStatus
+  ].join(" ").toLowerCase();
+
+  return (
+    status.includes("completed") ||
+    status.includes("confirmation delivered") ||
+    status.includes("closed")
+  );
+}
+
+function matchesExtensionFilter(lead){
+  const status = getExtensionWorkStatus(lead).toLowerCase();
+  const payment = getExtensionPaymentStatus(lead).toLowerCase();
+
+  if(currentExtensionFilter === "completed"){
+    return isCompletedExtension(lead);
+  }
+
+  if(isCompletedExtension(lead)){
+    return false;
+  }
+
+  if(currentExtensionFilter === "deadline"){
+    return status.includes("deadline review");
+  }
+
+  if(currentExtensionFilter === "payment"){
+    return (
+      payment.includes("pending") ||
+      status.includes("payment pending")
+    );
+  }
+
+  if(currentExtensionFilter === "review"){
+    return (
+      payment.includes("paid") &&
+      status.includes("review")
+    );
+  }
+
+  if(currentExtensionFilter === "information"){
+    return status.includes("information needed");
+  }
+
+  if(currentExtensionFilter === "ready"){
+    return status.includes("ready to file");
+  }
+
+  if(currentExtensionFilter === "filed"){
+    return status.includes("filed");
+  }
+
+  return true;
+}
+
 
 function matchesTaxPrepAdvancedFilters(lead){
   const enteredAt = getLeadEnteredAt(lead);
@@ -2506,7 +2841,7 @@ function updateTaxPrepAdvancedSummary(count){
   if(!summary) return;
 
   summary.textContent =
-    `Tax Preparation Requests shown: ${count}`;
+    `Active Tax Preparation Requests shown: ${count}`;
 }
 
 function getVisibleLeads(){
@@ -2524,6 +2859,35 @@ function getVisibleLeads(){
       .filter(matchesTaxPrepFilter)
       .filter(matchesTaxPrepAdvancedFilters)
       .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
+  }
+
+  if(currentView==="taxprepcompleted"){
+    return allLeads
+      .filter(isTaxPreparationLead)
+      .filter(isCompletedTaxPreparation)
+      .filter(matchesTaxPrepAdvancedFilters)
+      .sort((a,b) =>
+        new Date(
+          b?.taxPreparationWork?.completedAt ||
+          getLeadClosedAt(b) ||
+          0
+        ) -
+        new Date(
+          a?.taxPreparationWork?.completedAt ||
+          getLeadClosedAt(a) ||
+          0
+        )
+      );
+  }
+
+  if(currentView==="extensions"){
+    return allLeads
+      .filter(isExtensionLead)
+      .filter(matchesExtensionFilter)
+      .sort((a,b) =>
+        new Date(getLeadEnteredAt(b) || 0) -
+        new Date(getLeadEnteredAt(a) || 0)
+      );
   }
 
   if(currentView==="written"){
@@ -4688,41 +5052,8 @@ async function runOpportunityAction(action){
 
       successMessage:
         "Opportunity was closed and removed from active conversion work."
-    },
-
-    "convert-tax-prep": {
-      status:
-        "Tax Preparation Intake - Needs Review",
-
-      Request: {
-        conversionOpportunityStage:
-          "converted_tax_prep",
-
-        convertedToTaxPrepAt:
-          now,
-
-        conversionStageChangedAt:
-          now,
-
-        conversionLastActionAt:
-          now,
-
-        conversionLastAction:
-          "Converted to Tax Preparation Request",
-
-        requestedService:
-          "Get My 1040 Tax Return Prepared",
-
-        conversionActivityHistory:
-          appendHistory(
-            "Converted to Tax Preparation Request",
-            "Tax Prep Request"
-          )
-      },
-
-      successMessage:
-        "Lead was converted and moved to Tax Prep Requests."
     }
+
   };
 
   try{
@@ -4747,6 +5078,12 @@ async function runOpportunityAction(action){
 
             Request:
               update.Request,
+
+            taxPreparationIntake:
+              update.taxPreparationIntake,
+
+            taxPreparationWork:
+              update.taxPreparationWork,
 
             completedAt:
               update.completedAt || "",
@@ -5550,8 +5887,14 @@ function renderLeads(){
     return;
   }
 
-  if(currentView === "taxprep"){
+  if(
+    currentView === "taxprep" ||
+    currentView === "taxprepcompleted"
+  ){
     updateTaxPrepAdvancedSummary(visible.length);
+
+    const completedView =
+      currentView === "taxprepcompleted";
 
     list.innerHTML = `
       <div class="taxprep-table-wrap">
@@ -5559,34 +5902,54 @@ function renderLeads(){
           <thead>
             <tr>
               <th>Client</th>
-              <th>Recommended Service</th>
-              <th>Tax Year</th>
+              <th>Return / Tax Year</th>
+              <th>Portal</th>
               <th>Documents</th>
-              <th>State</th>
-              <th>Submitted</th>
-              <th>Status</th>
+              <th>Work Status</th>
+              <th>Payment</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             ${visible.map((lead, index) => {
-              const intake = lead.taxPreparationIntake || {};
-              const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+              const enteredAt =
+                formatLeadDate(
+                  getLeadEnteredAt(lead)
+                );
+
+              const documentCount =
+                getTaxPrepDocumentCount(lead);
+
               return `
                 <tr>
-                  <td><strong>${lead.contact?.name || "No Name"}</strong><br>${lead.contact?.email || ""}</td>
-                  <td>${intake.recommendedLane || "Not assigned"}</td>
-                  <td>${intake.taxYear || lead.taxData?.taxYear || ""}</td>
-                  <td>${getTaxPrepDocumentCount(lead)}</td>
-                  <td>${getTaxPrepStateDisplay(lead)}</td>
-                  <td>${enteredAt}</td>
-                  <td><span class="status-pill">${lead.status || "New"}</span></td>
                   <td>
-                    <button class="taxprep-open-btn" onclick="openTaxPrepLead(${index})">
-                      ${String(lead.status || "").toLowerCase().includes("completed") ||
-                        String(lead.status || "").toLowerCase().includes("closed")
-                          ? "View Completed"
-                          : "Review Intake"}
+                    <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
+                    ${escapeOfficeHtml(lead.contact?.email || "")}
+                  </td>
+                  <td>
+                    ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
+                    <strong>${escapeOfficeHtml(getTaxPrepTaxYear(lead) || "Tax year not set")}</strong>
+                  </td>
+                  <td>${escapeOfficeHtml(getTaxPrepPortalStatus(lead))}</td>
+                  <td>
+                    ${escapeOfficeHtml(getTaxPrepDocumentStatus(lead))}<br>
+                    ${documentCount} secure ${documentCount === 1 ? "document" : "documents"}
+                  </td>
+                  <td>
+                    <span class="status-pill">
+                      ${escapeOfficeHtml(getTaxPrepWorkStatus(lead))}
+                    </span><br>
+                    <span style="font-size:11px;color:#64748b;">
+                      ${escapeOfficeHtml(enteredAt || "")}
+                    </span>
+                  </td>
+                  <td>${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}</td>
+                  <td>
+                    <button
+                      class="taxprep-open-btn"
+                      onclick="openTaxPrepLead(${index}, ${completedView})"
+                    >
+                      ${completedView ? "Open Completed Return" : "Open Tax Prep Workspace"}
                     </button>
                   </td>
                 </tr>`;
@@ -5596,6 +5959,72 @@ function renderLeads(){
       </div>`;
 
     window.visibleTaxPrepLeads = visible;
+    return;
+  }
+
+  if(currentView === "extensions"){
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Extension</th>
+              <th>Tax Year</th>
+              <th>Price</th>
+              <th>Payment</th>
+              <th>Work Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const request =
+                lead.extensionRequest || {};
+
+              const extensionType =
+                String(request.serviceType || "")
+                  .toLowerCase() === "business"
+                  ? "Business"
+                  : "Individual";
+
+              const stateText =
+                request.stateExtensionRequested
+                  ? ` + ${escapeOfficeHtml(request.stateCode || "State")}`
+                  : "";
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
+                    ${escapeOfficeHtml(lead.contact?.email || "")}
+                  </td>
+                  <td>
+                    ${extensionType} Federal${stateText}
+                  </td>
+                  <td>${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "")}</td>
+                  <td><strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong></td>
+                  <td>${escapeOfficeHtml(getExtensionPaymentStatus(lead))}</td>
+                  <td>
+                    <span class="status-pill">
+                      ${escapeOfficeHtml(getExtensionWorkStatus(lead))}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      class="taxprep-open-btn"
+                      onclick="openExtensionLead(${index})"
+                    >
+                      Open Extension Workspace
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleExtensionLeads = visible;
     return;
   }
 
@@ -6631,9 +7060,542 @@ async function markContactReplied(index, button){
   }
 }
 
+function getTaxPrepWorkStatusOptions(){
+  return [
+    "Portal Activation Needed",
+    "Needs Professional Review",
+    "Documents Needed",
+    "Ready to Prepare",
+    "In Preparation",
+    "Client Review / Signature",
+    "Ready to E-file",
+    "Submitted / Awaiting Acceptance",
+    "Accepted / Completed"
+  ];
+}
+
+function getTaxPrepDocumentStatusOptions(){
+  return [
+    "Documents Needed",
+    "Documents Partially Received",
+    "Documents Received / Reviewing",
+    "Documents Complete",
+    "Final Return Delivered"
+  ];
+}
+
+function getTaxPrepPaymentStatusOptions(){
+  return [
+    "Not Set",
+    "Quote Needed",
+    "Invoice Sent",
+    "Deposit Paid",
+    "Paid in Full",
+    "Extension Fee Credit Applied"
+  ];
+}
+
+function selectOptionsHtml(options, selected){
+  return options
+    .map(value => `
+      <option
+        value="${escapeOfficeHtml(value)}"
+        ${value === selected ? "selected" : ""}
+      >
+        ${escapeOfficeHtml(value)}
+      </option>
+    `)
+    .join("");
+}
+
+function openTaxPreparationWorkspace(lead){
+  const panel =
+    document.getElementById("detailPanel");
+
+  panel.style.display = "block";
+  window.activeTaxPreparationLead = lead;
+
+  const intake =
+    lead.taxPreparationIntake || {};
+  const work =
+    lead.taxPreparationWork || {};
+
+  const portalStatus =
+    getTaxPrepPortalStatus(lead);
+
+  const documentCount =
+    getTaxPrepDocumentCount(lead);
+
+  document.getElementById("dpName").innerText =
+    lead.contact?.name || "Tax Preparation Client";
+
+  document.getElementById("dpEmail").innerText =
+    lead.contact?.email || "No Email";
+
+  document.getElementById("dpStatus").innerText =
+    "Tax Preparation Work Center";
+
+  document.getElementById("dpTaxYear").innerText =
+    "Tax Year: " +
+    (getTaxPrepTaxYear(lead) || "Not set");
+
+  document.getElementById("dpRefund").innerHTML = `
+    <div class="service-workspace">
+      <div class="service-workspace-card">
+        <strong>Client &amp; Return</strong><br>
+        ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
+        State: ${escapeOfficeHtml(getTaxPrepStateDisplay(lead))}<br>
+        Reference: ${escapeOfficeHtml(lead.leadId || "")}
+      </div>
+
+      <div class="service-workspace-card">
+        <strong>Secure Portal</strong><br>
+        Status: ${escapeOfficeHtml(portalStatus)}<br>
+        Secure documents: ${documentCount}<br>
+        Latest upload: ${escapeOfficeHtml(
+          formatLeadDate(
+            lead?.clientPortal?.documentCenter
+              ?.latestUploadAt
+          ) || "None"
+        )}
+      </div>
+
+      <div class="service-workspace-grid">
+        <div class="service-workspace-field full">
+          <label for="taxPrepWorkStatus">Preparation status</label>
+          <select id="taxPrepWorkStatus">
+            ${selectOptionsHtml(
+              getTaxPrepWorkStatusOptions(),
+              getTaxPrepWorkStatus(lead)
+            )}
+          </select>
+        </div>
+
+        <div class="service-workspace-field full">
+          <label for="taxPrepDocumentStatus">Document status</label>
+          <select id="taxPrepDocumentStatus">
+            ${selectOptionsHtml(
+              getTaxPrepDocumentStatusOptions(),
+              getTaxPrepDocumentStatus(lead)
+            )}
+          </select>
+        </div>
+
+        <div class="service-workspace-field full">
+          <label for="taxPrepPaymentStatus">Payment status</label>
+          <select id="taxPrepPaymentStatus">
+            ${selectOptionsHtml(
+              getTaxPrepPaymentStatusOptions(),
+              getTaxPrepPaymentStatus(lead)
+            )}
+          </select>
+        </div>
+
+        <div class="service-workspace-field full">
+          <label for="taxPrepOfficeNote">Office workflow note</label>
+          <textarea
+            id="taxPrepOfficeNote"
+            rows="4"
+            placeholder="Missing records, client question, signature issue, or filing note"
+          >${escapeOfficeHtml(work.officeNote || "")}</textarea>
+        </div>
+      </div>
+
+      <div class="service-workspace-actions">
+        <button
+          type="button"
+          onclick="saveTaxPreparationWorkspace()"
+        >
+          Save Tax Preparation Status
+        </button>
+
+        <a
+          class="secondary"
+          href="/office-document-review"
+        >
+          Open Document Review Queue
+        </a>
+
+        <a
+          class="secondary"
+          href="/client-portal"
+          target="_blank"
+          rel="noopener"
+        >
+          Open Client Portal Sign In
+        </a>
+      </div>
+
+      <div class="service-workspace-note">
+        The existing secure portal is reused. Do not create a second client account. The client's records remain linked by email and tax year.
+      </div>
+    </div>
+  `;
+
+  document.getElementById("dpEntered").innerText =
+    "Entered: " +
+    (
+      formatLeadDate(
+        getLeadEnteredAt(lead)
+      ) ||
+      "Not recorded"
+    );
+
+  document.getElementById("dpClosed").innerText =
+    isCompletedTaxPreparation(lead)
+      ? "Completed: " +
+        (
+          formatLeadDate(
+            work.completedAt ||
+            getLeadClosedAt(lead)
+          ) ||
+          "Date not recorded"
+        )
+      : "";
+}
+
+async function saveTaxPreparationWorkspace(){
+  const lead =
+    window.activeTaxPreparationLead;
+
+  if(!lead?.leadId){
+    alert("Tax Preparation client could not be identified.");
+    return;
+  }
+
+  const workStatus =
+    document.getElementById(
+      "taxPrepWorkStatus"
+    )?.value || "Needs Professional Review";
+
+  const documentStatus =
+    document.getElementById(
+      "taxPrepDocumentStatus"
+    )?.value || "Documents Needed";
+
+  const paymentStatus =
+    document.getElementById(
+      "taxPrepPaymentStatus"
+    )?.value || "Not Set";
+
+  const officeNote =
+    document.getElementById(
+      "taxPrepOfficeNote"
+    )?.value.trim() || "";
+
+  const completed =
+    workStatus === "Accepted / Completed";
+
+  const now =
+    new Date().toISOString();
+
+  const response = await fetch(
+    `/api/leads/${encodeURIComponent(lead.leadId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        status:
+          `Tax Preparation - ${workStatus}`,
+        completedAt:
+          completed ? now : "",
+        closedAt:
+          completed ? now : "",
+        taxPreparationWork: {
+          ...(lead.taxPreparationWork || {}),
+          workStatus,
+          documentStatus,
+          paymentStatus,
+          officeNote,
+          efileStatus:
+            workStatus === "Ready to E-file"
+              ? "Ready to E-file"
+              : workStatus.includes("Submitted")
+                ? "Submitted / Awaiting Acceptance"
+                : workStatus.includes("Accepted")
+                  ? "Accepted"
+                  : (
+                      lead.taxPreparationWork
+                        ?.efileStatus ||
+                      "Not Started"
+                    ),
+          completedAt:
+            completed
+              ? now
+              : (
+                  lead.taxPreparationWork
+                    ?.completedAt ||
+                  ""
+                ),
+          updatedAt: now
+        }
+      })
+    }
+  );
+
+  const data = await response
+    .json()
+    .catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    alert(
+      data.error ||
+      "The Tax Preparation status could not be saved."
+    );
+    return;
+  }
+
+  await loadLeads();
+  clearDetailPanel();
+}
+
+function openExtensionWorkspace(lead){
+  const panel =
+    document.getElementById("detailPanel");
+
+  panel.style.display = "block";
+  window.activeExtensionLead = lead;
+
+  const request =
+    lead.extensionRequest || {};
+
+  const extensionType =
+    String(request.serviceType || "")
+      .toLowerCase() === "business"
+      ? "Business Extension"
+      : "Individual Federal Extension";
+
+  const stateText =
+    request.stateExtensionRequested
+      ? ` + ${request.stateCode || "State"} Extension`
+      : "";
+
+  document.getElementById("dpName").innerText =
+    lead.contact?.name || "Extension Client";
+
+  document.getElementById("dpEmail").innerText =
+    lead.contact?.email || "No Email";
+
+  document.getElementById("dpStatus").innerText =
+    "Extension Requests Workspace";
+
+  document.getElementById("dpTaxYear").innerText =
+    "Tax Year: " +
+    (request.taxYear || lead.taxData?.taxYear || "");
+
+  document.getElementById("dpRefund").innerHTML = `
+    <div class="service-workspace">
+      <div class="service-workspace-card">
+        <strong>${escapeOfficeHtml(extensionType + stateText)}</strong><br>
+        Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
+        Payment: ${escapeOfficeHtml(getExtensionPaymentStatus(lead))}<br>
+        Reference: ${escapeOfficeHtml(lead.leadId || "")}
+      </div>
+
+      <div class="service-workspace-card">
+        <strong>Deadline &amp; Payment Review</strong><br>
+        Deadline situation: ${escapeOfficeHtml(
+          String(request.deadlineStatus || "")
+            .replace(/_/g, " ")
+        )}<br>
+        Estimated tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
+        Payments / withholding: $${Number(request.totalPayments || 0).toLocaleString()}<br>
+        Estimated balance due: $${Number(request.estimatedBalanceDue || 0).toLocaleString()}<br>
+        Planned extension payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
+      </div>
+
+      <div class="service-workspace-grid">
+        <div class="service-workspace-field full">
+          <label for="extensionWorkStatus">Extension work status</label>
+          <select id="extensionWorkStatus">
+            ${selectOptionsHtml(
+              [
+                "Deadline Review Needed",
+                "Payment Pending",
+                "Paid / Needs Review",
+                "Information Needed",
+                "Ready to File",
+                "Filed",
+                "Confirmation Delivered",
+                "Completed"
+              ],
+              getExtensionWorkStatus(lead)
+            )}
+          </select>
+        </div>
+
+        <div class="service-workspace-field full">
+          <label for="extensionConfirmationStatus">Confirmation status</label>
+          <select id="extensionConfirmationStatus">
+            ${selectOptionsHtml(
+              [
+                "Not Delivered",
+                "Preparing Confirmation",
+                "Delivered to Secure Portal",
+                "Delivered by Email"
+              ],
+              request.confirmationStatus ||
+              "Not Delivered"
+            )}
+          </select>
+        </div>
+
+        <div class="service-workspace-field full">
+          <label for="extensionOfficeNote">Office extension note</label>
+          <textarea
+            id="extensionOfficeNote"
+            rows="4"
+            placeholder="Deadline review, missing information, filing confirmation, or state requirement"
+          >${escapeOfficeHtml(request.officeNote || "")}</textarea>
+        </div>
+      </div>
+
+      <div class="service-workspace-actions">
+        <button
+          type="button"
+          onclick="saveExtensionWorkspace()"
+        >
+          Save Extension Status
+        </button>
+
+        <a
+          class="secondary"
+          href="/office-document-review"
+        >
+          Open Document Review Queue
+        </a>
+      </div>
+
+      <div class="service-workspace-note">
+        An extension gives more time to file, not more time to pay. Do not mark the request Filed until filing confirmation is available.
+      </div>
+    </div>
+  `;
+
+  document.getElementById("dpEntered").innerText =
+    "Requested: " +
+    (
+      formatLeadDate(
+        request.requestedAt ||
+        getLeadEnteredAt(lead)
+      ) ||
+      "Not recorded"
+    );
+
+  document.getElementById("dpClosed").innerText =
+    isCompletedExtension(lead)
+      ? "Completed extension request"
+      : "";
+}
+
+async function saveExtensionWorkspace(){
+  const lead =
+    window.activeExtensionLead;
+
+  if(!lead?.leadId){
+    alert("Extension request could not be identified.");
+    return;
+  }
+
+  const workStatus =
+    document.getElementById(
+      "extensionWorkStatus"
+    )?.value || "Paid / Needs Review";
+
+  const confirmationStatus =
+    document.getElementById(
+      "extensionConfirmationStatus"
+    )?.value || "Not Delivered";
+
+  const officeNote =
+    document.getElementById(
+      "extensionOfficeNote"
+    )?.value.trim() || "";
+
+  const completed =
+    workStatus === "Completed";
+
+  const now =
+    new Date().toISOString();
+
+  const response = await fetch(
+    `/api/leads/${encodeURIComponent(lead.leadId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        status:
+          `Extension Request - ${workStatus}`,
+        completedAt:
+          completed ? now : "",
+        closedAt:
+          completed ? now : "",
+        extensionRequest: {
+          ...(lead.extensionRequest || {}),
+          workStatus,
+          confirmationStatus,
+          officeNote,
+          filedAt:
+            workStatus === "Filed" ||
+            workStatus === "Confirmation Delivered" ||
+            completed
+              ? (
+                  lead.extensionRequest?.filedAt ||
+                  now
+                )
+              : (
+                  lead.extensionRequest?.filedAt ||
+                  ""
+                ),
+          completedAt:
+            completed
+              ? now
+              : (
+                  lead.extensionRequest?.completedAt ||
+                  ""
+                ),
+          updatedAt: now
+        }
+      })
+    }
+  );
+
+  const data = await response
+    .json()
+    .catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    alert(
+      data.error ||
+      "The Extension status could not be saved."
+    );
+    return;
+  }
+
+  await loadLeads();
+  clearDetailPanel();
+}
+
 function openTaxPrepLead(index){
-  const lead = (window.visibleTaxPrepLeads || [])[index];
-  if(lead) openPanel(lead);
+  const lead =
+    (window.visibleTaxPrepLeads || [])[index];
+
+  if(lead){
+    openTaxPreparationWorkspace(lead);
+  }
+}
+
+function openExtensionLead(index){
+  const lead =
+    (window.visibleExtensionLeads || [])[index];
+
+  if(lead){
+    openExtensionWorkspace(lead);
+  }
 }
 
 function openClosedLead(index){
@@ -6684,6 +7646,8 @@ document.addEventListener("DOMContentLoaded", () => {
         all: "All Leads",
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
+        extensions: "Extension Requests",
+        taxprepcompleted: "Completed Tax Returns",
         websitecontact: "Website Contact Requests",
         calendar: "Scheduled Consultations",
         calendarclosed: "Closed Calendar",
@@ -6709,7 +7673,21 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("taxPrepAdvancedFilters");
       if(taxPrepAdvancedFilters){
         taxPrepAdvancedFilters.style.display =
-          currentView === "taxprep" ? "flex" : "none";
+          (
+            currentView === "taxprep" ||
+            currentView === "taxprepcompleted"
+          )
+            ? "flex"
+            : "none";
+      }
+
+      const extensionFilters =
+        document.getElementById("extensionFilters");
+      if(extensionFilters){
+        extensionFilters.style.display =
+          currentView === "extensions"
+            ? "flex"
+            : "none";
       }
 
       const contactFilters = document.getElementById("contactFilters");
@@ -6746,6 +7724,9 @@ function clearDetailPanel(){
   if(panel){
     panel.style.display = "none";
   }
+
+  window.activeTaxPreparationLead = null;
+  window.activeExtensionLead = null;
 
   const fields = [
     "dpName",
@@ -6812,6 +7793,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if(typeof clearDetailPanel === "function"){
         clearDetailPanel();
       }
+      renderLeads();
+    });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".extension-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".extension-filter-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+      currentExtensionFilter =
+        btn.dataset.extensionFilter ||
+        "all";
+
+      if(typeof clearDetailPanel === "function"){
+        clearDetailPanel();
+      }
+
       renderLeads();
     });
   });

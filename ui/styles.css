@@ -414,6 +414,36 @@ button { font-family: var(--font-sans); }
   line-height: 1.55;
 }
 
+.welcome-service-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 2px;
+}
+
+.welcome-service-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.welcome-service-links a:hover,
+.welcome-service-links a:focus {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.48);
+  transform: translateY(-1px);
+}
+
 /* Hero card stack */
 .welcome-hero-graphic {
   display: flex;
@@ -3154,6 +3184,13 @@ input.error-field {
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
+}
+
+.btn-extension-secondary {
+  display: block;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
 }
 
 .paid-review-scope-note {

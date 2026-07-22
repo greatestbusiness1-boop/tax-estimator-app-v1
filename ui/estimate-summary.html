@@ -506,6 +506,12 @@
       background: #eff6ff;
     }
 
+    .prep-actions {
+      display: grid;
+      gap: 9px;
+      min-width: 255px;
+    }
+
     .prep-card h3 {
       margin: 0 0 5px;
       color: var(--navy);
@@ -571,6 +577,10 @@
 
       .prep-card {
         grid-template-columns: 1fr;
+      }
+
+      .prep-actions {
+        min-width: 0;
       }
     }
 
@@ -1127,9 +1137,14 @@
             Start a tax-preparation request if you want Greatest Business Solution LLC to review your actual documents and prepare the return. A fit call can be arranged when needed.
           </p>
         </div>
-        <a class="button" href="/start-my-tax-return">
-          Start My Tax Preparation Request
-        </a>
+        <div class="prep-actions">
+          <a class="button" href="/start-my-tax-return">
+            Start My Tax Preparation Request
+          </a>
+          <a class="button outline" href="/request-tax-extension">
+            Request a Tax Extension
+          </a>
+        </div>
       </div>
     </section>
 

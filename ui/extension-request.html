@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request a Tax Extension | Greatest Business Solution LLC</title>
+  <meta
+    name="description"
+    content="Request professional help reviewing, preparing, filing, and confirming an eligible individual or business tax extension."
+  >
+  <style>
+    :root{
+      --navy:#0f2c56;
+      --blue:#28588c;
+      --gold:#c69a37;
+      --orange:#f59e0b;
+      --ink:#12233d;
+      --muted:#52637a;
+      --line:#dbe4f0;
+      --green:#166534;
+      --red:#991b1b;
+      --paper:#ffffff;
+      --bg:#eef3f8;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      color:var(--ink);
+      background:var(--bg);
+    }
+    .topbar{
+      background:var(--navy);
+      color:#fff;
+      padding:16px 22px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .brand img{
+      width:96px;
+      max-height:52px;
+      object-fit:contain;
+      background:#fff;
+      border-radius:8px;
+      padding:5px;
+    }
+    .brand strong{
+      display:block;
+      font-size:17px;
+    }
+    .brand span{
+      display:block;
+      color:#bfdbfe;
+      font-size:12px;
+      margin-top:3px;
+    }
+    .topbar a{
+      color:#fff;
+      font-weight:800;
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:8px;
+      padding:9px 12px;
+    }
+    .wrap{
+      width:min(1080px,calc(100% - 28px));
+      margin:26px auto 46px;
+    }
+    .hero{
+      background:linear-gradient(135deg,#0f2c56,#28588c);
+      color:#fff;
+      border-top:6px solid var(--gold);
+      border-radius:16px;
+      padding:28px;
+      box-shadow:0 18px 42px rgba(15,44,86,.18);
+    }
+    .eyebrow{
+      color:#fde68a;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+    h1{
+      margin:7px 0 8px;
+      font-family:Georgia,serif;
+      font-size:38px;
+      line-height:1.05;
+    }
+    .hero p{
+      max-width:760px;
+      margin:0;
+      color:#e5eef8;
+      line-height:1.6;
+    }
+    .price-row{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin-top:22px;
+    }
+    .price-card{
+      border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.1);
+      padding:15px;
+      border-radius:12px;
+    }
+    .price-card span{
+      display:block;
+      color:#dbeafe;
+      font-size:12px;
+      font-weight:800;
+    }
+    .price-card strong{
+      display:block;
+      margin-top:5px;
+      font-size:25px;
+    }
+    .notice{
+      margin-top:18px;
+      border-left:6px solid var(--orange);
+      background:#fff7ed;
+      color:#7c2d12;
+      padding:16px 18px;
+      border-radius:10px;
+      line-height:1.55;
+      font-weight:700;
+    }
+    .cancelled{
+      display:none;
+      margin-bottom:16px;
+      border:1px solid #fdba74;
+      background:#fff7ed;
+      color:#9a3412;
+      border-radius:10px;
+      padding:14px;
+      font-weight:800;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.55fr) minmax(280px,.65fr);
+      gap:20px;
+      margin-top:20px;
+      align-items:start;
+    }
+    .panel{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:15px;
+      box-shadow:0 14px 34px rgba(15,44,86,.08);
+      overflow:hidden;
+    }
+    .panel-head{
+      padding:18px 20px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--line);
+    }
+    .panel-head h2{
+      margin:0;
+      color:var(--navy);
+      font-size:22px;
+    }
+    .panel-head p{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .panel-body{
+      padding:20px;
+    }
+    .section-title{
+      margin:22px 0 10px;
+      padding-bottom:7px;
+      border-bottom:2px solid #e8edf3;
+      color:var(--navy);
+      font-size:16px;
+    }
+    .section-title:first-child{margin-top:0}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:13px;
+    }
+    .field{
+      display:grid;
+      gap:6px;
+    }
+    .field.full{
+      grid-column:1/-1;
+    }
+    label{
+      color:#263f5d;
+      font-size:13px;
+      font-weight:900;
+    }
+    input,select,textarea{
+      width:100%;
+      border:1px solid #b9c8d9;
+      border-radius:8px;
+      background:#fff;
+      padding:11px 12px;
+      color:var(--ink);
+      font:inherit;
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:3px solid rgba(40,88,140,.16);
+      border-color:var(--blue);
+    }
+    .check{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#f8fafc;
+      padding:12px;
+      line-height:1.45;
+    }
+    .check input{
+      width:18px;
+      height:18px;
+      flex:0 0 auto;
+      margin-top:2px;
+    }
+    .check span{
+      color:#334155;
+      font-size:13px;
+    }
+    .conditional{
+      display:none;
+    }
+    .errors{
+      display:none;
+      margin-top:14px;
+      border:1px solid #fecaca;
+      background:#fef2f2;
+      color:var(--red);
+      border-radius:9px;
+      padding:12px;
+      line-height:1.5;
+    }
+    .success{
+      display:none;
+      margin-top:14px;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      color:var(--green);
+      border-radius:9px;
+      padding:14px;
+      line-height:1.55;
+    }
+    .submit{
+      width:100%;
+      margin-top:16px;
+      border:0;
+      border-radius:10px;
+      background:var(--orange);
+      color:#111827;
+      padding:14px 16px;
+      font-size:16px;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow:0 10px 22px rgba(245,158,11,.25);
+    }
+    .submit[disabled]{
+      opacity:.65;
+      cursor:wait;
+    }
+    .side-card{
+      padding:20px;
+    }
+    .side-card h2{
+      margin:0;
+      color:var(--navy);
+      font-size:21px;
+    }
+    .price-total{
+      margin:13px 0;
+      padding:15px;
+      border-radius:12px;
+      background:#0f2c56;
+      color:#fff;
+    }
+    .price-total span{
+      display:block;
+      color:#bfdbfe;
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .price-total strong{
+      display:block;
+      margin-top:4px;
+      font-size:36px;
+    }
+    .breakdown{
+      display:grid;
+      gap:9px;
+      margin-top:12px;
+    }
+    .breakdown div{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--line);
+      padding-bottom:8px;
+      color:#334155;
+      font-size:13px;
+    }
+    .credit{
+      margin-top:16px;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      color:#166534;
+      border-radius:10px;
+      padding:13px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.45;
+    }
+    .scope{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+    .scope strong{color:var(--navy)}
+    .security{
+      margin-top:16px;
+      border-top:1px solid var(--line);
+      padding-top:14px;
+      color:#475569;
+      font-size:12px;
+      line-height:1.5;
+    }
+    @media(max-width:820px){
+      .layout,.price-row{grid-template-columns:1fr}
+      h1{font-size:31px}
+    }
+    @media(max-width:560px){
+      .grid{grid-template-columns:1fr}
+      .field.full{grid-column:auto}
+      .wrap{width:min(100% - 18px,1080px)}
+      .hero,.panel-body{padding:17px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/logo.png" alt="Greatest Business Solution LLC">
+      <div>
+        <strong>Greatest Business Solution LLC</strong>
+        <span>Professional Tax Extension Service</span>
+      </div>
+    </div>
+    <a href="/">Return to Tax Estimator</a>
+  </header>
+
+  <main class="wrap">
+    <div class="cancelled" id="cancelledMessage">
+      Payment was not completed. Your request remains saved, but it is not marked paid or ready to file.
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow">Professional extension service</div>
+      <h1>Request a Tax Extension</h1>
+      <p>
+        Submit the information needed for Greatest Business Solution LLC to review deadline eligibility, prepare an eligible extension, file it, and provide confirmation. This is a professional service—not an IRS filing fee.
+      </p>
+
+      <div class="price-row">
+        <div class="price-card">
+          <span>Individual Federal Extension</span>
+          <strong>$49</strong>
+        </div>
+        <div class="price-card">
+          <span>State Extension Add-On</span>
+          <strong>$25</strong>
+        </div>
+        <div class="price-card">
+          <span>Business Extension</span>
+          <strong>$99</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="notice">
+      An extension gives additional time to <strong>file</strong> a return. It does not extend the deadline to <strong>pay</strong> tax that may be owed. Deadline eligibility and any estimated payment must be reviewed before filing.
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Extension Request Information</h2>
+          <p>Do not enter Social Security numbers, bank information, passwords, or upload tax documents on this page.</p>
+        </div>
+
+        <form class="panel-body" id="extensionForm" novalidate>
+          <h3 class="section-title">Client Information</h3>
+          <div class="grid">
+            <div class="field full">
+              <label for="clientName">Full name or business contact</label>
+              <input id="clientName" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="clientEmail">Email address</label>
+              <input id="clientEmail" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label for="clientPhone">Phone number</label>
+              <input id="clientPhone" type="tel" autocomplete="tel">
+            </div>
+          </div>
+
+          <h3 class="section-title">Return &amp; Extension Type</h3>
+          <div class="grid">
+            <div class="field">
+              <label for="serviceType">Extension type</label>
+              <select id="serviceType" required>
+                <option value="individual">Individual federal extension — $49</option>
+                <option value="business">Business extension — $99</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="taxYear">Tax year</label>
+              <input id="taxYear" inputmode="numeric" maxlength="4" required>
+            </div>
+
+            <div class="field" id="filingStatusWrap">
+              <label for="filingStatus">Individual filing status</label>
+              <select id="filingStatus">
+                <option value="">Select filing status</option>
+                <option>Single</option>
+                <option>Married Filing Jointly</option>
+                <option>Married Filing Separately</option>
+                <option>Head of Household</option>
+                <option>Qualifying Surviving Spouse</option>
+                <option>Not Sure</option>
+              </select>
+            </div>
+
+            <div class="field conditional" id="entityTypeWrap">
+              <label for="entityType">Business return type</label>
+              <select id="entityType">
+                <option value="">Select return type</option>
+                <option value="Partnership / Form 1065">Partnership / Form 1065</option>
+                <option value="S Corporation / Form 1120-S">S Corporation / Form 1120-S</option>
+                <option value="C Corporation / Form 1120">C Corporation / Form 1120</option>
+                <option value="Trust or Estate / Form 1041">Trust or Estate / Form 1041</option>
+                <option value="Exempt Organization / Form 990">Exempt Organization / Form 990</option>
+                <option value="Other / Needs Review">Other / Needs Review</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="deadlineStatus">Deadline situation</label>
+              <select id="deadlineStatus" required>
+                <option value="">Select the situation that applies</option>
+                <option value="before_due_date">I am submitting before the applicable original filing deadline</option>
+                <option value="relief_or_special_rule">I may qualify for disaster, military, overseas, or another special deadline rule</option>
+                <option value="unsure_or_late">The regular deadline may have passed or I am not sure</option>
+              </select>
+            </div>
+
+            <label class="check field full">
+              <input id="stateExtensionRequested" type="checkbox">
+              <span>Add review and preparation of one state extension for $25 when required and supported.</span>
+            </label>
+
+            <div class="field conditional" id="stateCodeWrap">
+              <label for="stateCode">State abbreviation</label>
+              <input id="stateCode" maxlength="2" placeholder="AZ">
+            </div>
+          </div>
+
+          <h3 class="section-title">Estimated Payment Information</h3>
+          <div class="grid">
+            <div class="field">
+              <label for="estimatedTotalTax">Estimated total tax</label>
+              <input id="estimatedTotalTax" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="totalPayments">Withholding and prior payments</label>
+              <input id="totalPayments" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="estimatedBalanceDue">Estimated balance due</label>
+              <input id="estimatedBalanceDue" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="paymentWithExtension">Amount planned with extension</label>
+              <input id="paymentWithExtension" type="number" min="0" step="1" value="0">
+            </div>
+          </div>
+
+          <h3 class="section-title">Required Acknowledgments</h3>
+
+          <label class="check">
+            <input id="consideringFullPreparation" type="checkbox">
+            <span>I am considering hiring Greatest Business Solution LLC to prepare this full return. The extension service fee will be credited toward preparation of the same return.</span>
+          </label>
+
+          <label class="check" style="margin-top:10px;">
+            <input id="acknowledgmentAccepted" type="checkbox" required>
+            <span>
+              I understand that an extension gives more time to file, not more time to pay; penalties and interest may apply to unpaid tax; filing is subject to deadline eligibility and office review; and this professional service fee is not an IRS filing fee.
+            </span>
+          </label>
+
+          <div class="errors" id="formErrors"></div>
+          <div class="success" id="formSuccess"></div>
+
+          <button class="submit" id="submitButton" type="submit">
+            Save Request &amp; Continue to Secure Payment
+          </button>
+        </form>
+      </section>
+
+      <aside class="panel side-card">
+        <h2>Your Service Price</h2>
+        <div class="price-total">
+          <span>One-time professional fee</span>
+          <strong id="totalPrice">$49</strong>
+        </div>
+
+        <div class="breakdown">
+          <div>
+            <span id="baseLabel">Individual federal extension</span>
+            <strong id="basePrice">$49</strong>
+          </div>
+          <div>
+            <span>State extension add-on</span>
+            <strong id="statePrice">$0</strong>
+          </div>
+        </div>
+
+        <div class="credit">
+          <strong>Preparation credit included:</strong>
+          this extension service fee is credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+        </div>
+
+        <div class="scope">
+          <strong>Service includes:</strong> request review, deadline and return-type review, preparation and filing of an eligible extension, and delivery of confirmation.
+          <br><br>
+          <strong>Not included:</strong> full return preparation, payment of tax, representation, penalty abatement, or a guarantee that a late or ineligible extension will be accepted.
+        </div>
+
+        <div class="security">
+          Use the Secure Client Portal when documents are requested. Do not email or enter Social Security numbers, tax documents, bank details, or passwords here.
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    "use strict";
+
+    const form = document.getElementById("extensionForm");
+    const serviceType = document.getElementById("serviceType");
+    const entityTypeWrap = document.getElementById("entityTypeWrap");
+    const filingStatusWrap = document.getElementById("filingStatusWrap");
+    const stateCheckbox = document.getElementById("stateExtensionRequested");
+    const stateCodeWrap = document.getElementById("stateCodeWrap");
+    const submitButton = document.getElementById("submitButton");
+    const errors = document.getElementById("formErrors");
+    const success = document.getElementById("formSuccess");
+
+    document.getElementById("taxYear").value =
+      String(new Date().getFullYear() - 1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "cancelled") {
+      document.getElementById("cancelledMessage").style.display = "block";
+    }
+
+    function money(value) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      }).format(Number(value || 0));
+    }
+
+    function updateFormDisplay() {
+      const business = serviceType.value === "business";
+      entityTypeWrap.style.display = business ? "grid" : "none";
+      filingStatusWrap.style.display = business ? "none" : "grid";
+      stateCodeWrap.style.display = stateCheckbox.checked ? "grid" : "none";
+
+      const base = business ? 99 : 49;
+      const state = stateCheckbox.checked ? 25 : 0;
+      document.getElementById("baseLabel").textContent =
+        business ? "Business extension" : "Individual federal extension";
+      document.getElementById("basePrice").textContent = money(base);
+      document.getElementById("statePrice").textContent = money(state);
+      document.getElementById("totalPrice").textContent = money(base + state);
+    }
+
+    serviceType.addEventListener("change", updateFormDisplay);
+    stateCheckbox.addEventListener("change", updateFormDisplay);
+    updateFormDisplay();
+
+    function showErrors(messages) {
+      const list = Array.isArray(messages) ? messages : [messages];
+      errors.innerHTML =
+        "<strong>Please correct the following:</strong><ul>" +
+        list.map(item => `<li>${String(item)}</li>`).join("") +
+        "</ul>";
+      errors.style.display = "block";
+      success.style.display = "none";
+      errors.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function showSuccess(message) {
+      success.textContent = message;
+      success.style.display = "block";
+      errors.style.display = "none";
+    }
+
+    async function postJson(url, payload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.ok) {
+        const message =
+          Array.isArray(data.errors)
+            ? data.errors
+            : [data.error || "The request could not be completed."];
+
+        const error = new Error(message.join(" "));
+        error.messages = message;
+        throw error;
+      }
+
+      return data;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errors.style.display = "none";
+      success.style.display = "none";
+
+      const payload = {
+        contact: {
+          name: document.getElementById("clientName").value.trim(),
+          email: document.getElementById("clientEmail").value.trim(),
+          phone: document.getElementById("clientPhone").value.trim()
+        },
+        extension: {
+          serviceType: serviceType.value,
+          taxYear: document.getElementById("taxYear").value.trim(),
+          filingStatus: document.getElementById("filingStatus").value,
+          entityType: document.getElementById("entityType").value,
+          deadlineStatus: document.getElementById("deadlineStatus").value,
+          stateExtensionRequested: stateCheckbox.checked,
+          stateCode: document.getElementById("stateCode").value.trim().toUpperCase(),
+          estimatedTotalTax: Number(document.getElementById("estimatedTotalTax").value || 0),
+          totalPayments: Number(document.getElementById("totalPayments").value || 0),
+          estimatedBalanceDue: Number(document.getElementById("estimatedBalanceDue").value || 0),
+          paymentWithExtension: Number(document.getElementById("paymentWithExtension").value || 0),
+          consideringFullPreparation: document.getElementById("consideringFullPreparation").checked,
+          acknowledgmentAccepted: document.getElementById("acknowledgmentAccepted").checked
+        }
+      };
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving Extension Request...";
+
+      try {
+        const saved = await postJson("/api/extension-request", payload);
+
+        if (!saved.checkoutEligible) {
+          showSuccess(
+            `Request ${saved.leadId} was saved for deadline eligibility review. No payment was charged. The office will contact you before requesting payment.`
+          );
+          submitButton.textContent = "Saved — Deadline Review Needed";
+          return;
+        }
+
+        showSuccess(
+          `Request ${saved.leadId} was saved. Opening secure payment for ${money(saved.totalPrice)}...`
+        );
+
+        submitButton.textContent = "Opening Secure Payment...";
+
+        const checkout = await postJson(
+          "/api/create-extension-checkout",
+          {
+            leadId: saved.leadId,
+            clientEmail: payload.contact.email
+          }
+        );
+
+        window.location.assign(checkout.checkoutUrl);
+      } catch (error) {
+        showErrors(error.messages || error.message);
+        submitButton.disabled = false;
+        submitButton.textContent = "Save Request & Continue to Secure Payment";
+      }
+    });
+  </script>
+</body>
+</html>

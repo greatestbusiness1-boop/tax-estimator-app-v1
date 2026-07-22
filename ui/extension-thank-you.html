@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Extension Request Received</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <style>
+    :root{
+      --navy:#0f2c56;
+      --blue:#28588c;
+      --gold:#c69a37;
+      --green:#166534;
+      --line:#dbe4f0;
+      --muted:#52637a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:#eef3f8;
+      color:#12233d;
+      font-family:Arial,sans-serif;
+    }
+    .card{
+      width:min(760px,100%);
+      background:#fff;
+      border:1px solid var(--line);
+      border-top:7px solid var(--gold);
+      border-radius:16px;
+      box-shadow:0 22px 55px rgba(15,44,86,.16);
+      overflow:hidden;
+    }
+    .head{
+      padding:26px;
+      background:linear-gradient(135deg,var(--navy),var(--blue));
+      color:#fff;
+    }
+    .check{
+      width:54px;
+      height:54px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:#dcfce7;
+      color:var(--green);
+      font-size:30px;
+      font-weight:900;
+    }
+    h1{
+      margin:15px 0 7px;
+      font-family:Georgia,serif;
+      font-size:34px;
+    }
+    .head p{
+      margin:0;
+      color:#dbeafe;
+      line-height:1.55;
+    }
+    .body{
+      padding:26px;
+    }
+    .reference{
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      border-radius:10px;
+      padding:14px;
+      margin-bottom:18px;
+    }
+    .reference span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .reference strong{
+      display:block;
+      margin-top:5px;
+      color:var(--navy);
+      font-size:18px;
+      overflow-wrap:anywhere;
+    }
+    .steps{
+      display:grid;
+      gap:11px;
+      margin:18px 0;
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:14px;
+      line-height:1.5;
+    }
+    .step strong{
+      color:var(--navy);
+    }
+    .warning{
+      border-left:5px solid #f59e0b;
+      background:#fff7ed;
+      color:#7c2d12;
+      padding:14px;
+      border-radius:9px;
+      line-height:1.5;
+      font-weight:700;
+    }
+    .actions{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:20px;
+    }
+    .actions a{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:48px;
+      border-radius:9px;
+      background:var(--navy);
+      color:#fff;
+      padding:11px 14px;
+      text-decoration:none;
+      text-align:center;
+      font-weight:900;
+    }
+    .actions a.secondary{
+      background:#fff;
+      color:var(--navy);
+      border:2px solid var(--navy);
+    }
+    .credit{
+      margin-top:17px;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      color:#166534;
+      padding:13px;
+      border-radius:9px;
+      line-height:1.45;
+      font-weight:800;
+    }
+    @media(max-width:600px){
+      .actions{grid-template-columns:1fr}
+      .head,.body{padding:19px}
+      h1{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <section class="head">
+      <div class="check">✓</div>
+      <h1>Tax Extension Request Received</h1>
+      <p>Your payment was submitted through Stripe. The office will verify the payment and review the request before filing.</p>
+    </section>
+
+    <section class="body">
+      <div class="reference">
+        <span>Client reference number</span>
+        <strong id="referenceNumber">Loading...</strong>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <strong>1. Office review</strong><br>
+          Greatest Business Solution LLC will review deadline eligibility, the return type, estimated payment information, and any state-extension request.
+        </div>
+        <div class="step">
+          <strong>2. Secure document request</strong><br>
+          When documents are needed, use the Secure Client Portal instead of email.
+        </div>
+        <div class="step">
+          <strong>3. Filing confirmation</strong><br>
+          The request is not complete until the office records it as Filed and provides confirmation.
+        </div>
+      </div>
+
+      <div class="warning">
+        An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed. Pay as much as possible by the applicable payment deadline to reduce possible penalties and interest.
+      </div>
+
+      <div class="credit">
+        The extension service fee is credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+      </div>
+
+      <div class="actions">
+        <a id="portalLink" href="/client-portal?activate=1">
+          Activate or Open Secure Portal
+        </a>
+        <a class="secondary" href="/">
+          Return to Tax Estimator
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const leadId = String(params.get("leadId") || "").trim();
+
+    document.getElementById("referenceNumber").textContent =
+      leadId || "Check your confirmation email";
+
+    document.getElementById("portalLink").href =
+      leadId
+        ? `/client-portal?activate=1&leadId=${encodeURIComponent(leadId)}`
+        : "/client-portal?activate=1";
+  </script>
+</body>
+</html>

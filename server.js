@@ -815,6 +815,8 @@ async function appendLead(lead) {
       taxData: lead.taxData,
       estimateSummary: lead.estimateSummary,
       taxPreparationIntake: lead.taxPreparationIntake || null,
+      taxPreparationWork: lead.taxPreparationWork || null,
+      extensionRequest: lead.extensionRequest || null,
       contactRequest: lead.contactRequest || null,
       calendarAppointment: lead.calendarAppointment || null
     },
@@ -1598,6 +1600,16 @@ function mapRowToLead(row) {
       row.taxPreparationIntake ||
       row.tax_preparation_intake ||
       null,
+    taxPreparationWork:
+      estimate.taxPreparationWork ||
+      row.taxPreparationWork ||
+      row.tax_preparation_work ||
+      null,
+    extensionRequest:
+      estimate.extensionRequest ||
+      row.extensionRequest ||
+      row.extension_request ||
+      null,
     contactRequest:
       estimate.contactRequest ||
       row.contactRequest ||
@@ -1996,6 +2008,131 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
 
     return updated;
   });
+}
+
+
+async function applyExtensionPaidUpdate(
+  leadId,
+  paymentInfo = {}
+) {
+  const cleanId =
+    String(leadId || "").trim();
+
+  const current =
+    await findClientPortalLeadById(
+      cleanId
+    );
+
+  const currentLead =
+    current?.lead || {};
+
+  const currentRequest =
+    currentLead.extensionRequest || {};
+
+  const incomingSessionId =
+    String(
+      paymentInfo.sessionId || ""
+    ).trim();
+
+  const existingSessionId =
+    String(
+      currentRequest
+        .stripeCheckoutSessionId ||
+      ""
+    ).trim();
+
+  const alreadyPaid =
+    /paid|verified/i.test(
+      String(
+        currentRequest.paymentStatus ||
+        ""
+      )
+    ) &&
+    (
+      !incomingSessionId ||
+      !existingSessionId ||
+      incomingSessionId ===
+        existingSessionId
+    );
+
+  if (alreadyPaid) {
+    return {
+      ok: true,
+      alreadyPaid: true,
+      source:
+        current?.source ||
+        "existing-record",
+      lead: currentLead
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay =
+    new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(
+    cleanId,
+    function applyExtensionPaid(
+      record = {}
+    ) {
+      const updated = { ...record };
+      const existing =
+        updated.extensionRequest &&
+        typeof updated.extensionRequest ===
+          "object"
+          ? updated.extensionRequest
+          : {};
+
+      const paymentNote =
+        "[" + nowDisplay + "] Stripe confirmed Tax Extension service payment." +
+        (paymentInfo.sessionId
+          ? " Checkout Session: " +
+            paymentInfo.sessionId +
+            "."
+          : "") +
+        (paymentInfo.paymentIntentId
+          ? " Payment Intent: " +
+            paymentInfo.paymentIntentId +
+            "."
+          : "");
+
+      updated.extensionRequest = {
+        ...existing,
+        requested: true,
+        paymentStatus: "Paid / Verified",
+        workStatus: "Paid / Needs Review",
+        paymentVerifiedAt: nowIso,
+        paidAt:
+          existing.paidAt ||
+          nowIso,
+        stripeCheckoutSessionId:
+          paymentInfo.sessionId ||
+          existing.stripeCheckoutSessionId ||
+          "",
+        stripePaymentIntentId:
+          paymentInfo.paymentIntentId ||
+          existing.stripePaymentIntentId ||
+          "",
+        paymentSource: "Stripe Checkout",
+        updatedAt: nowIso
+      };
+
+      updated.status =
+        "Extension Request - Paid / Needs Review";
+      updated.updatedAt = nowIso;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes = oldNotes
+        ? oldNotes + "\n" + paymentNote
+        : paymentNote;
+
+      return updated;
+    }
+  );
 }
 
 // =============================================================================
@@ -2952,6 +3089,87 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         }
       }
 
+      if (
+        service === "tax_extension" &&
+        session.payment_status === "paid"
+      ) {
+        const result = await applyExtensionPaidUpdate(
+          leadId,
+          {
+            sessionId: session.id,
+            paymentIntentId:
+              session.payment_intent
+          }
+        );
+
+        if (!result.ok) {
+          console.error(
+            "[stripe webhook] Could not mark extension request paid:",
+            result.error || result
+          );
+        } else {
+          console.log(
+            result.alreadyPaid
+              ? "[stripe webhook] Extension request was already marked paid:"
+              : "[stripe webhook] Extension request marked paid:",
+            leadId,
+            result.source
+          );
+
+          const paidLead = result.lead || {};
+          const clientEmail =
+            String(
+              paidLead.contact?.email || ""
+            ).trim();
+
+          if (
+            !result.alreadyPaid &&
+            clientEmail &&
+            EMAIL_USER &&
+            EMAIL_APP_PASSWORD
+          ) {
+            const portalUrl =
+              String(APP_BASE_URL || "")
+                .replace(/\/+$/, "") +
+              "/client-portal?activate=1&leadId=" +
+              encodeURIComponent(leadId);
+
+            void transporter.sendMail({
+              from: EMAIL_USER,
+              to: clientEmail,
+              subject:
+                "Your Tax Extension Request Payment Was Received",
+              text:
+`Hello ${paidLead.contact?.name || "Client"},
+
+Your payment for the Tax Extension service was received.
+
+Reference number:
+${leadId}
+
+The office will review the deadline, return type, estimated payment information, and any state-extension request before filing.
+
+An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed.
+
+Use your secure client portal for documents and office updates:
+${portalUrl}
+
+Your extension service fee will be credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+
+Thank you,
+
+Greatest Business Solution LLC`
+            }).catch((emailError) => {
+              console.error(
+                "[stripe webhook] Extension payment confirmation email failed:",
+                leadId,
+                emailError.message || emailError
+              );
+            });
+          }
+        }
+      }
+
       if (service === "written_review" && session.payment_status === "paid") {
         const result = await applyWrittenReviewPaidUpdate(leadId, {
           sessionId: session.id,
@@ -3441,6 +3659,46 @@ async function loadClientPortalLeadCandidates() {
         authoritativeTranscriptRequest
       ).length > 0;
 
+    const asPlainObject = (
+      value
+    ) => (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value)
+        ? value
+        : {}
+    );
+
+    const authoritativeTaxPreparationIntake = {
+      ...asPlainObject(
+        mapped.taxPreparationIntake
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.taxPreparationIntake
+      )
+    };
+
+    const authoritativeTaxPreparationWork = {
+      ...asPlainObject(
+        mapped.taxPreparationWork
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.taxPreparationWork
+      )
+    };
+
+    const authoritativeExtensionRequest = {
+      ...asPlainObject(
+        mapped.extensionRequest
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.extensionRequest
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -3473,6 +3731,24 @@ async function loadClientPortalLeadCandidates() {
           hasTranscriptRequest
             ? authoritativeTranscriptRequest
             : undefined,
+        taxPreparationIntake:
+          Object.keys(
+            authoritativeTaxPreparationIntake
+          ).length
+            ? authoritativeTaxPreparationIntake
+            : null,
+        taxPreparationWork:
+          Object.keys(
+            authoritativeTaxPreparationWork
+          ).length
+            ? authoritativeTaxPreparationWork
+            : null,
+        extensionRequest:
+          Object.keys(
+            authoritativeExtensionRequest
+          ).length
+            ? authoritativeExtensionRequest
+            : null,
         clientPortal:
           sanitizeClientPortalRecord(
             localPortal ||
@@ -3517,6 +3793,10 @@ async function getClientPortalAccessibleLeads(email) {
 }
 
 function getClientPortalServiceLabel(lead = {}) {
+  if (lead.extensionRequest) {
+    return "Tax Extension";
+  }
+
   const transcriptRequest =
     lead.transcriptRequest ||
     lead.Request ||
@@ -3569,6 +3849,12 @@ function normalizeClientPortalServiceLabel(value) {
     lower.includes("review")
   ) {
     return "Written Red Flag Review";
+  }
+
+  if (
+    lower.includes("extension")
+  ) {
+    return "Tax Extension";
   }
 
   if (
@@ -3888,6 +4174,264 @@ function buildClientPortalTranscriptRequestSummary(
   };
 }
 
+
+function getTaxPreparationPortalNextAction(
+  lead = {},
+  work = {}
+) {
+  const workStatus = String(
+    work.workStatus ||
+    lead.status ||
+    ""
+  ).toLowerCase();
+
+  const documentStatus = String(
+    work.documentStatus || ""
+  ).toLowerCase();
+
+  if (
+    workStatus.includes("accepted") ||
+    workStatus.includes("completed")
+  ) {
+    return "Your tax return is complete. Download any available final client copy from the Secure Document Center.";
+  }
+
+  if (
+    workStatus.includes("submitted") ||
+    workStatus.includes("awaiting acceptance")
+  ) {
+    return "Your return was submitted and is awaiting the next filing-status update.";
+  }
+
+  if (
+    workStatus.includes("ready to e-file") ||
+    workStatus.includes("signature")
+  ) {
+    return "Review and complete any signature or authorization step requested by the office.";
+  }
+
+  if (workStatus.includes("in preparation")) {
+    return "Your return is in preparation. The office will contact you if additional information is needed.";
+  }
+
+  if (
+    documentStatus.includes("needed") ||
+    workStatus.includes("documents needed")
+  ) {
+    return "Upload the requested tax documents through the Secure Document Center.";
+  }
+
+  if (workStatus.includes("portal activation")) {
+    return "Your secure portal is ready. Use the Document Center to begin providing tax records.";
+  }
+
+  if (workStatus.includes("review")) {
+    return "The office is reviewing your tax-preparation request and will confirm the next step.";
+  }
+
+  return "The office is reviewing your tax-preparation request.";
+}
+
+function buildClientPortalTaxPreparationSummary(entry) {
+  const lead = entry?.lead || {};
+  const intake = lead.taxPreparationIntake || {};
+  const work = lead.taxPreparationWork || {};
+  const status = String(lead.status || "");
+
+  const isTaxPreparation =
+    Boolean(lead.taxPreparationIntake) ||
+    Boolean(lead.taxPreparationWork) ||
+    String(entry?.leadId || "")
+      .startsWith("TAXPREP-") ||
+    status.toLowerCase()
+      .includes("tax preparation");
+
+  if (!isTaxPreparation) {
+    return null;
+  }
+
+  return {
+    leadId: String(entry.leadId || ""),
+    clientName: String(
+      lead.contact?.name ||
+      getLeadNameValue(entry.raw) ||
+      "Client"
+    ),
+    taxYear: String(
+      intake.taxYear ||
+      lead.taxData?.taxYear ||
+      "Not recorded"
+    ),
+    returnType: String(
+      intake.recommendedLane ||
+      work.returnType ||
+      "Tax Preparation"
+    ),
+    workStatus: String(
+      work.workStatus ||
+      status ||
+      "New Request"
+    ),
+    documentStatus: String(
+      work.documentStatus ||
+      "Documents Needed"
+    ),
+    paymentStatus: String(
+      work.paymentStatus ||
+      "Not Set"
+    ),
+    efileStatus: String(
+      work.efileStatus ||
+      "Not Started"
+    ),
+    finalReturnDeliveryStatus: String(
+      work.finalReturnDeliveryStatus ||
+      "Not Delivered"
+    ),
+    completed:
+      /accepted|completed|closed/i.test(
+        String(
+          work.workStatus ||
+          status
+        )
+      ),
+    nextAction:
+      getTaxPreparationPortalNextAction(
+        lead,
+        work
+      ),
+    updatedAt: String(
+      work.updatedAt ||
+      lead.updatedAt ||
+      lead.timestamp ||
+      ""
+    )
+  };
+}
+
+function getExtensionPortalNextAction(
+  lead = {},
+  request = {}
+) {
+  const workStatus = String(
+    request.workStatus ||
+    lead.status ||
+    ""
+  ).toLowerCase();
+
+  const paymentStatus = String(
+    request.paymentStatus || ""
+  ).toLowerCase();
+
+  if (
+    workStatus.includes("completed") ||
+    workStatus.includes("confirmation delivered")
+  ) {
+    return "Your extension confirmation has been delivered. Keep it with your tax records and complete the full return by the extended filing deadline.";
+  }
+
+  if (workStatus.includes("filed")) {
+    return "Your extension was filed. The office is preparing the filing confirmation for secure delivery.";
+  }
+
+  if (workStatus.includes("ready to file")) {
+    return "Your extension information is complete and ready for filing.";
+  }
+
+  if (
+    workStatus.includes("deadline review") ||
+    workStatus.includes("information needed")
+  ) {
+    return "The office needs to confirm deadline eligibility or additional information before filing.";
+  }
+
+  if (
+    !paymentStatus.includes("paid") &&
+    !paymentStatus.includes("verified")
+  ) {
+    return "Complete the extension-service payment after deadline eligibility is confirmed.";
+  }
+
+  return "The office is reviewing your paid extension request.";
+}
+
+function buildClientPortalExtensionSummary(entry) {
+  const lead = entry?.lead || {};
+  const request = lead.extensionRequest || {};
+  const status = String(lead.status || "");
+
+  const isExtension =
+    Boolean(lead.extensionRequest) ||
+    String(entry?.leadId || "")
+      .startsWith("EXT-") ||
+    status.toLowerCase()
+      .includes("extension request");
+
+  if (!isExtension) {
+    return null;
+  }
+
+  const serviceType =
+    String(request.serviceType || "individual")
+      .toLowerCase() === "business"
+      ? "Business Extension"
+      : "Individual Extension";
+
+  return {
+    leadId: String(entry.leadId || ""),
+    clientName: String(
+      lead.contact?.name ||
+      getLeadNameValue(entry.raw) ||
+      "Client"
+    ),
+    taxYear: String(
+      request.taxYear ||
+      lead.taxData?.taxYear ||
+      "Not recorded"
+    ),
+    serviceType,
+    stateExtensionRequested:
+      request.stateExtensionRequested === true,
+    stateCode: String(
+      request.stateCode || ""
+    ),
+    paymentStatus: String(
+      request.paymentStatus ||
+      "Payment Pending"
+    ),
+    workStatus: String(
+      request.workStatus ||
+      status ||
+      "New Request"
+    ),
+    totalPrice: Number(
+      request.totalPrice || 0
+    ),
+    confirmationStatus: String(
+      request.confirmationStatus ||
+      "Not Delivered"
+    ),
+    completed:
+      /completed|confirmation delivered|closed/i.test(
+        String(
+          request.workStatus ||
+          status
+        )
+      ),
+    nextAction:
+      getExtensionPortalNextAction(
+        lead,
+        request
+      ),
+    updatedAt: String(
+      request.updatedAt ||
+      lead.updatedAt ||
+      lead.timestamp ||
+      ""
+    )
+  };
+}
+
 function getClientPortalRecordDate(lead = {}, planner = {}) {
   const values = [
     planner.syncedAt,
@@ -3906,6 +4450,8 @@ function getClientPortalRecordDate(lead = {}, planner = {}) {
 function getClientPortalTaxYear(lead = {}, planner = {}) {
   return String(
     planner.taxYear ||
+    lead.extensionRequest?.taxYear ||
+    lead.taxPreparationIntake?.taxYear ||
     lead.taxData?.taxYear ||
     lead.taxYear ||
     lead.filingYear ||
@@ -7197,6 +7743,18 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       submittedAt,
       recommendedLane,
       needsProfessionalReview
+    },
+    taxPreparationWork: {
+      version: 1,
+      workStatus: needsProfessionalReview
+        ? "Needs Professional Review"
+        : "Portal Activation Needed",
+      documentStatus: "Documents Needed",
+      paymentStatus: "Not Set",
+      efileStatus: "Not Started",
+      finalReturnDeliveryStatus: "Not Delivered",
+      convertedAt: submittedAt,
+      updatedAt: submittedAt
     }
   };
 
@@ -7214,6 +7772,12 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
 
       const bookingUrl =
         "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+
+      const portalUrl =
+        String(APP_BASE_URL || "")
+          .replace(/\/+$/, "") +
+        "/client-portal?activate=1&leadId=" +
+        encodeURIComponent(leadId);
 
       const nextStepText = needsProfessionalReview
         ? "Your intake includes items that need a professional review before pricing or scheduling. We will review the information and contact you."
@@ -7236,10 +7800,13 @@ ${nextStepText}
 Schedule:
 ${bookingUrl}
 
+Secure client portal:
+${portalUrl}
+
 Reference number:
 ${leadId}
 
-Please do not email Social Security numbers, tax documents, or other sensitive records. Secure document-upload instructions will be provided separately when needed.
+Use the same secure portal for tax-preparation documents and office updates. Please do not email Social Security numbers, tax documents, bank information, or passwords.
 
 Thank you,
 
@@ -7279,6 +7846,323 @@ Greatest Business Solution LLC`
       ok: false,
       errors: [
         "Could not save your tax preparation request. Please try again."
+      ]
+    });
+  }
+});
+
+
+// =============================================================================
+// POST /api/extension-request
+// Creates a deadline-aware Tax Extension request before Stripe checkout.
+// =============================================================================
+
+app.post("/api/extension-request", async (req, res) => {
+  const body = req.body || {};
+  const contact = body.contact || {};
+  const request = body.extension || {};
+  const errors = [];
+
+  const name = String(contact.name || "").trim();
+  const email = normalizeEmail(contact.email || "");
+  const phone = formatPhoneNumber(contact.phone || "");
+  const serviceType =
+    String(request.serviceType || "").trim().toLowerCase();
+  const taxYear =
+    String(request.taxYear || "").trim();
+  const entityType =
+    String(request.entityType || "").trim();
+  const deadlineStatus =
+    String(request.deadlineStatus || "").trim();
+  const stateExtensionRequested =
+    request.stateExtensionRequested === true;
+  const stateCode =
+    String(request.stateCode || "")
+      .trim()
+      .toUpperCase();
+
+  if (!name) {
+    errors.push("Full name is required.");
+  }
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  if (!["individual", "business"].includes(serviceType)) {
+    errors.push("Select an individual or business extension.");
+  }
+
+  const numericTaxYear =
+    Number(taxYear);
+
+  if (
+    !/^\d{4}$/.test(taxYear) ||
+    numericTaxYear < 2000 ||
+    numericTaxYear >
+      new Date().getFullYear()
+  ) {
+    errors.push(
+      "Enter a valid tax year that is not in the future."
+    );
+  }
+
+  if (
+    serviceType === "individual" &&
+    !String(
+      request.filingStatus || ""
+    ).trim()
+  ) {
+    errors.push(
+      "Select the individual filing status."
+    );
+  }
+
+  if (
+    serviceType === "business" &&
+    !entityType
+  ) {
+    errors.push("Select the business return type.");
+  }
+
+  if (
+    ![
+      "before_due_date",
+      "relief_or_special_rule",
+      "unsure_or_late"
+    ].includes(deadlineStatus)
+  ) {
+    errors.push("Select the deadline situation that applies.");
+  }
+
+  if (
+    stateExtensionRequested &&
+    !/^[A-Z]{2}$/.test(stateCode)
+  ) {
+    errors.push("Enter the two-letter state abbreviation.");
+  }
+
+  if (request.acknowledgmentAccepted !== true) {
+    errors.push(
+      "Acknowledge that an extension gives more time to file, not more time to pay."
+    );
+  }
+
+  if (errors.length) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const basePrice =
+    serviceType === "business"
+      ? 99
+      : 49;
+
+  const stateAddOn =
+    stateExtensionRequested
+      ? 25
+      : 0;
+
+  const totalPrice =
+    basePrice + stateAddOn;
+
+  const checkoutEligible =
+    deadlineStatus !== "unsure_or_late";
+
+  const now = new Date().toISOString();
+  const leadId =
+    "EXT-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 7)
+      .toUpperCase();
+
+  const workStatus =
+    checkoutEligible
+      ? "Payment Pending"
+      : "Deadline Review Needed";
+
+  const lead = {
+    leadId,
+    timestamp: now,
+    updatedAt: now,
+    priority:
+      checkoutEligible
+        ? "high"
+        : "critical",
+    status:
+      checkoutEligible
+        ? "Extension Request - Payment Pending"
+        : "Extension Request - Deadline Review Needed",
+    notes:
+      checkoutEligible
+        ? "Tax Extension request submitted and awaiting Stripe payment."
+        : "Tax Extension request submitted for deadline eligibility review before payment.",
+    contact: {
+      name,
+      email,
+      phone: phone || "Not provided"
+    },
+    taxData: {
+      taxYear,
+      stateCode:
+        stateCode || null
+    },
+    estimateSummary: {},
+    extensionRequest: {
+      version: 1,
+      requested: true,
+      requestedAt: now,
+      updatedAt: now,
+      serviceType,
+      entityType:
+        serviceType === "business"
+          ? entityType
+          : "",
+      taxYear,
+      filingStatus:
+        String(request.filingStatus || "").trim(),
+      federalIncluded: true,
+      stateExtensionRequested,
+      stateCode:
+        stateExtensionRequested
+          ? stateCode
+          : "",
+      deadlineStatus,
+      deadlineReviewRequired:
+        !checkoutEligible,
+      checkoutEligible,
+      estimatedTotalTax:
+        Math.max(
+          0,
+          Number(request.estimatedTotalTax || 0)
+        ),
+      totalPayments:
+        Math.max(
+          0,
+          Number(request.totalPayments || 0)
+        ),
+      estimatedBalanceDue:
+        Math.max(
+          0,
+          Number(request.estimatedBalanceDue || 0)
+        ),
+      paymentWithExtension:
+        Math.max(
+          0,
+          Number(request.paymentWithExtension || 0)
+        ),
+      consideringFullPreparation:
+        request.consideringFullPreparation === true,
+      acknowledgmentAccepted: true,
+      feeCreditTowardPreparation: true,
+      basePrice,
+      stateAddOn,
+      totalPrice,
+      totalPriceCents:
+        totalPrice * 100,
+      paymentStatus:
+        checkoutEligible
+          ? "Payment Pending"
+          : "Not Charged - Deadline Review",
+      workStatus,
+      confirmationStatus: "Not Delivered"
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(
+      savedLead.leadId,
+      savedLead
+    );
+
+    let emailSent = false;
+    let emailError = "";
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error(
+          "Email delivery is not configured."
+        );
+      }
+
+      const nextStep = checkoutEligible
+        ? "You may continue to the secure payment page. The office will review your request before filing."
+        : "The regular deadline may have passed or may require a special rule. The office will review eligibility before any payment is requested.";
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject:
+          "We Received Your Tax Extension Request",
+        text:
+`Hello ${name},
+
+We received your Tax Extension request for tax year ${taxYear}.
+
+Service:
+${serviceType === "business" ? "Business Extension" : "Individual Federal Extension"}${stateExtensionRequested ? " + State Extension Add-On (" + stateCode + ")" : ""}
+
+Professional service fee:
+$${totalPrice}
+
+${nextStep}
+
+Important: An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed. The extension fee will be credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords. Use the secure client portal when documents are requested.
+
+Thank you,
+
+Greatest Business Solution LLC`
+      });
+
+      emailSent = true;
+    } catch (emailErr) {
+      emailError =
+        emailErr?.message ||
+        "Confirmation email failed.";
+
+      console.error(
+        "[extension request] Confirmation email failed:",
+        leadId,
+        emailError
+      );
+    }
+
+    return res.status(201).json({
+      ok: true,
+      leadId,
+      checkoutEligible,
+      deadlineReviewRequired:
+        !checkoutEligible,
+      totalPrice,
+      emailSent,
+      emailError:
+        emailSent
+          ? null
+          : emailError
+    });
+  } catch (error) {
+    console.error(
+      "[extension request] Save failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: [
+        "Could not save the Tax Extension request. Please try again."
       ]
     });
   }
@@ -8608,6 +9492,38 @@ app.get(
         ""
       );
 
+    const taxPreparationRequests =
+      accessible
+        .map(
+          buildClientPortalTaxPreparationSummary
+        )
+        .filter(Boolean)
+        .sort(
+          (left, right) =>
+            Date.parse(
+              right.updatedAt || 0
+            ) -
+            Date.parse(
+              left.updatedAt || 0
+            )
+        );
+
+    const extensionRequests =
+      accessible
+        .map(
+          buildClientPortalExtensionSummary
+        )
+        .filter(Boolean)
+        .sort(
+          (left, right) =>
+            Date.parse(
+              right.updatedAt || 0
+            ) -
+            Date.parse(
+              left.updatedAt || 0
+            )
+        );
+
     const transcriptRequests =
       accessible
         .map(
@@ -8649,7 +9565,7 @@ app.get(
     return res.status(200).json({
       ok: true,
       portal: {
-        version: "1.2.0",
+        version: "1.5.0",
         status: "active",
         clientName:
           primary
@@ -8678,6 +9594,8 @@ app.get(
           recordOrganization.totalRawRecords,
         visibleYearLimit:
           recordOrganization.visibleYearLimit,
+        taxPreparationRequests,
+        extensionRequests,
         transcriptRequests,
         documentCenter
       }
@@ -11019,6 +11937,15 @@ app.get("/start-my-tax-return", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "start-my-tax-return.html"));
 });
 
+app.get("/request-tax-extension", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "extension-request.html"));
+});
+
+app.get("/extension-thank-you", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+  res.sendFile(path.join(__dirname, "ui", "extension-thank-you.html"));
+});
+
 app.get("/contact", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "contact.html"));
 });
@@ -11048,9 +11975,22 @@ app.post("/api/leads/:leadId/opportunity-action", async (req, res) => {
   const bookingUrl =
     process.env.CALENDLY_URL ||
     "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
+  const publicBaseUrl =
+    (
+      process.env.PUBLIC_SITE_URL ||
+      APP_BASE_URL ||
+      "https://www.taxestimatereview.com"
+    )
+      .replace(/\/+$/, "");
+
   const taxPrepUrl =
-    (process.env.PUBLIC_SITE_URL || APP_BASE_URL || "https://www.taxestimatereview.com") +
+    publicBaseUrl +
     "/start-my-tax-return";
+
+  const portalActivationUrl =
+    publicBaseUrl +
+    "/client-portal?activate=1&leadId=" +
+    encodeURIComponent(cleanId);
 
   if (!cleanId) {
     return res.status(400).json({ ok: false, error: "Missing lead ID." });
@@ -11371,16 +12311,76 @@ Greatest Business Solution LLC`
     }
 
     if (cleanAction === "convert-tax-prep") {
-      newStatus = "Tax Preparation Intake - Needs Review";
+      newStatus =
+        "Tax Preparation - Portal Activation Needed";
+
+      let portalEmailSent = false;
+      let portalEmailError = "";
+
+      try {
+        await sendClientEmail({
+          subject:
+            "Your Tax Preparation Request and Secure Portal",
+          text:
+`Hello ${name},
+
+Your request has been moved into the Tax Preparation Work Center for professional review.
+
+Secure client portal:
+${portalActivationUrl}
+
+Use your email address and client reference number below to request a six-digit activation code:
+${cleanId}
+
+The same secure portal will be used for tax-preparation documents, office updates, signatures, and any available final client copy. Do not email Social Security numbers, W-2s, 1099s, tax returns, bank information, or passwords.
+
+You may update your Tax Preparation intake here:
+${taxPrepUrl}
+
+Thank you,
+Greatest Business Solution LLC`
+        });
+
+        portalEmailSent = true;
+      } catch (emailError) {
+        portalEmailError =
+          emailError?.message ||
+          "Portal instructions email failed.";
+
+        console.error(
+          "[opportunity-action] Tax Preparation portal email failed:",
+          cleanId,
+          portalEmailError
+        );
+      }
+
       requestUpdate = {
         ...requestUpdate,
-        conversionOpportunityStage: "converted_tax_prep",
+        conversionOpportunityStage:
+          "converted_tax_prep",
         convertedToTaxPrepAt: now,
         conversionStageChangedAt: now,
-        conversionLastAction: "Converted to Tax Preparation Request",
-        requestedService: "Get My 1040 Tax Return Prepared"
+        conversionLastAction:
+          "Converted to Tax Preparation Client",
+        requestedService:
+          "Get My Tax Return Prepared",
+        portalActivationUrl,
+        portalInstructionsEmailSent:
+          portalEmailSent,
+        portalInstructionsEmailSentAt:
+          portalEmailSent
+            ? now
+            : "",
+        portalInstructionsEmailError:
+          portalEmailSent
+            ? ""
+            : portalEmailError
       };
-      responseMessage = "Lead was converted to a Tax Preparation Request.";
+
+      responseMessage =
+        portalEmailSent
+          ? "Lead was converted, moved to Tax Preparation Requests, and sent secure portal instructions."
+          : "Lead was converted and moved to Tax Preparation Requests. Portal instructions email needs office follow-up.";
     }
 
     const stageLabels = {
@@ -11420,6 +12420,58 @@ Greatest Business Solution LLC`
           updatedAt: now
         }
       };
+
+      if (
+        cleanAction ===
+        "convert-tax-prep"
+      ) {
+        updated.taxPreparationIntake = {
+          ...(estimate.taxPreparationIntake || {}),
+          sourceLeadId: cleanId,
+          submittedAt:
+            estimate.taxPreparationIntake
+              ?.submittedAt ||
+            now,
+          taxYear:
+            estimate.taxPreparationIntake
+              ?.taxYear ||
+            lead.taxData?.taxYear ||
+            "",
+          recommendedLane:
+            estimate.taxPreparationIntake
+              ?.recommendedLane ||
+            "Individual Form 1040",
+          needsProfessionalReview: true
+        };
+
+        updated.taxPreparationWork = {
+          ...(estimate.taxPreparationWork || {}),
+          version: 1,
+          workStatus:
+            "Portal Activation Needed",
+          documentStatus:
+            estimate.taxPreparationWork
+              ?.documentStatus ||
+            "Documents Needed",
+          paymentStatus:
+            estimate.taxPreparationWork
+              ?.paymentStatus ||
+            "Not Set",
+          efileStatus:
+            estimate.taxPreparationWork
+              ?.efileStatus ||
+            "Not Started",
+          finalReturnDeliveryStatus:
+            estimate.taxPreparationWork
+              ?.finalReturnDeliveryStatus ||
+            "Not Delivered",
+          convertedAt:
+            estimate.taxPreparationWork
+              ?.convertedAt ||
+            now,
+          updatedAt: now
+        };
+      }
 
       if (completedAt) updated.completedAt = completedAt;
       if (closedAt) updated.closedAt = closedAt;
@@ -11731,6 +12783,9 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     notes,
     Request,
     transcriptRequest,
+    taxPreparationIntake,
+    taxPreparationWork,
+    extensionRequest,
     calendarAppointment,
     completedAt,
     closedAt
@@ -11809,6 +12864,42 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       updatedEstimate.Request =
         mergedTranscriptRequest;
+    }
+
+    if (
+      taxPreparationIntake &&
+      typeof taxPreparationIntake === "object" &&
+      !Array.isArray(taxPreparationIntake)
+    ) {
+      updatedEstimate.taxPreparationIntake = {
+        ...(updatedEstimate.taxPreparationIntake || {}),
+        ...taxPreparationIntake,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      taxPreparationWork &&
+      typeof taxPreparationWork === "object" &&
+      !Array.isArray(taxPreparationWork)
+    ) {
+      updatedEstimate.taxPreparationWork = {
+        ...(updatedEstimate.taxPreparationWork || {}),
+        ...taxPreparationWork,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      extensionRequest &&
+      typeof extensionRequest === "object" &&
+      !Array.isArray(extensionRequest)
+    ) {
+      updatedEstimate.extensionRequest = {
+        ...(updatedEstimate.extensionRequest || {}),
+        ...extensionRequest,
+        updatedAt: new Date().toISOString()
+      };
     }
 
     if (
@@ -11959,6 +13050,42 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof closedAt === "string" && closedAt.trim()) {
         localLead.closedAt = closedAt.trim();
+      }
+
+      if (
+        taxPreparationIntake &&
+        typeof taxPreparationIntake === "object" &&
+        !Array.isArray(taxPreparationIntake)
+      ) {
+        localLead.taxPreparationIntake = {
+          ...(localLead.taxPreparationIntake || {}),
+          ...taxPreparationIntake,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (
+        taxPreparationWork &&
+        typeof taxPreparationWork === "object" &&
+        !Array.isArray(taxPreparationWork)
+      ) {
+        localLead.taxPreparationWork = {
+          ...(localLead.taxPreparationWork || {}),
+          ...taxPreparationWork,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (
+        extensionRequest &&
+        typeof extensionRequest === "object" &&
+        !Array.isArray(extensionRequest)
+      ) {
+        localLead.extensionRequest = {
+          ...(localLead.extensionRequest || {}),
+          ...extensionRequest,
+          updatedAt: new Date().toISOString()
+        };
       }
 
       if (
@@ -12625,6 +13752,224 @@ app.delete("/api/leads/:leadId", (req, res) => {
     return res.status(500).json({
       ok: false,
       error: "Could not delete lead."
+    });
+  }
+});
+
+
+// =============================================================================
+// POST /api/create-extension-checkout
+// Amount is calculated from the saved request, never from browser pricing.
+// =============================================================================
+
+app.post("/api/create-extension-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Stripe secret key is not configured."
+      });
+    }
+
+    const leadId =
+      String(req.body?.leadId || "").trim();
+    const clientEmail =
+      normalizeEmail(
+        req.body?.clientEmail || ""
+      );
+
+    if (!leadId || !clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The extension reference number and client email are required."
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The extension request could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const request =
+      lead.extensionRequest || {};
+
+    if (
+      normalizeEmail(
+        lead.contact?.email ||
+        getLeadEmailValue(candidate.raw)
+      ) !== clientEmail
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The email address does not match the saved extension request."
+      });
+    }
+
+    if (
+      /paid|verified/i.test(
+        String(
+          request.paymentStatus || ""
+        )
+      )
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "This Tax Extension request is already marked paid."
+      });
+    }
+
+    if (
+      request.checkoutEligible !== true ||
+      request.deadlineReviewRequired === true
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Deadline eligibility must be reviewed before payment."
+      });
+    }
+
+    const business =
+      String(request.serviceType || "")
+        .toLowerCase() === "business";
+
+    const hasState =
+      request.stateExtensionRequested === true;
+
+    const expectedAmount =
+      (
+        business
+          ? 9900
+          : 4900
+      ) +
+      (
+        hasState
+          ? 2500
+          : 0
+      );
+
+    const amount =
+      Number(request.totalPriceCents || 0);
+
+    if (
+      !Number.isInteger(amount) ||
+      amount !== expectedAmount
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The saved extension price does not match the selected service."
+      });
+    }
+
+    const serviceName =
+      business
+        ? "Business Tax Extension Service"
+        : "Individual Federal Tax Extension Service";
+
+    const stateText =
+      hasState
+        ? " Includes one state-extension review and filing add-on for " +
+          String(request.stateCode || "the selected state") +
+          "."
+        : "";
+
+    const session =
+      await stripe.checkout.sessions.create({
+        mode: "payment",
+        client_reference_id: leadId,
+        customer_email: clientEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name:
+                  serviceName +
+                  (hasState
+                    ? " + State Add-On"
+                    : ""),
+                description:
+                  "Professional review, preparation, filing, and confirmation of a timely eligible tax extension request." +
+                  stateText +
+                  " This is a professional service fee, not an IRS filing fee. An extension gives more time to file, not more time to pay."
+              },
+              unit_amount: amount
+            },
+            quantity: 1
+          }
+        ],
+        metadata: {
+          leadId,
+          clientName:
+            String(
+              lead.contact?.name || ""
+            ),
+          clientEmail,
+          service: "tax_extension",
+          extensionType:
+            business
+              ? "business"
+              : "individual",
+          taxYear:
+            String(request.taxYear || ""),
+          stateExtensionRequested:
+            hasState
+              ? "yes"
+              : "no",
+          feeCreditTowardPreparation:
+            "yes"
+        },
+        success_url:
+          `${APP_BASE_URL}/extension-thank-you?checkout=success&leadId=${encodeURIComponent(leadId)}`,
+        cancel_url:
+          `${APP_BASE_URL}/request-tax-extension?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
+      });
+
+    await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => ({
+        ...record,
+        extensionRequest: {
+          ...(record.extensionRequest || {}),
+          stripeCheckoutSessionId:
+            session.id,
+          checkoutCreatedAt:
+            new Date().toISOString(),
+          updatedAt:
+            new Date().toISOString()
+        },
+        updatedAt:
+          new Date().toISOString()
+      })
+    );
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url,
+      sessionId: session.id
+    });
+  } catch (error) {
+    console.error(
+      "[create-extension-checkout] Error:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        "Could not create the Tax Extension payment session."
     });
   }
 });
