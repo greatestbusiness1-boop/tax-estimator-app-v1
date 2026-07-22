@@ -8056,6 +8056,15 @@ app.post("/api/extension-request", async (req, res) => {
       deadlineStatus,
       deadlineReviewRequired:
         !checkoutEligible,
+      deadlineDecision:
+        checkoutEligible
+          ? "Eligible"
+          : "Not Reviewed",
+      informationStatus: "Needs Review",
+      stateActionStatus:
+        stateExtensionRequested
+          ? "Not Reviewed"
+          : "Not Applicable",
       checkoutEligible,
       estimatedTotalTax:
         Math.max(
@@ -8092,6 +8101,10 @@ app.post("/api/extension-request", async (req, res) => {
         checkoutEligible
           ? "Payment Pending"
           : "Not Charged - Deadline Review",
+      stripeCheckoutUrl: "",
+      paymentLinkSentAt: "",
+      paymentLinkEmailSent: false,
+      paymentLinkEmailError: "",
       workStatus,
       confirmationStatus: "Not Delivered"
     }
@@ -13780,9 +13793,30 @@ app.delete("/api/leads/:leadId", (req, res) => {
 });
 
 
+function getExtensionServiceLabelForEmail(request = {}) {
+  const business =
+    String(request.serviceType || "")
+      .toLowerCase() === "business";
+  const state =
+    request.stateExtensionRequested === true
+      ? " + " +
+        String(
+          request.stateCode ||
+          "State"
+        ).toUpperCase()
+      : "";
+
+  return (
+    business
+      ? "Business Federal"
+      : "Individual Federal"
+  ) + state;
+}
+
 // =============================================================================
 // POST /api/create-extension-checkout
 // Amount is calculated from the saved request, never from browser pricing.
+// Office requests also save and email the secure payment link to the client.
 // =============================================================================
 
 app.post("/api/create-extension-checkout", async (req, res) => {
@@ -13801,6 +13835,8 @@ app.post("/api/create-extension-checkout", async (req, res) => {
       normalizeEmail(
         req.body?.clientEmail || ""
       );
+    const officeRequest =
+      req.body?.officeRequest === true;
 
     if (!leadId || !clientEmail) {
       return res.status(400).json({
@@ -13960,28 +13996,142 @@ app.post("/api/create-extension-checkout", async (req, res) => {
           `${APP_BASE_URL}/request-tax-extension?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
       });
 
-    await updateLeadAfterStripePayment(
-      leadId,
-      (record = {}) => ({
-        ...record,
-        extensionRequest: {
-          ...(record.extensionRequest || {}),
-          stripeCheckoutSessionId:
-            session.id,
-          checkoutCreatedAt:
-            new Date().toISOString(),
+    let emailSent = false;
+    let emailError = "";
+    const paymentLinkCreatedAt =
+      new Date().toISOString();
+
+    const paymentLinkSave =
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          extensionRequest: {
+            ...(record.extensionRequest || {}),
+            stripeCheckoutSessionId:
+              session.id,
+            stripeCheckoutUrl:
+              session.url,
+            checkoutCreatedAt:
+              paymentLinkCreatedAt,
+            updatedAt:
+              paymentLinkCreatedAt
+          },
           updatedAt:
-            new Date().toISOString()
-        },
-        updatedAt:
-          new Date().toISOString()
-      })
-    );
+            paymentLinkCreatedAt
+        })
+      );
+
+    if (!paymentLinkSave?.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "The secure Stripe link was created, but it could not be saved on the extension card. No payment-link email was sent."
+      });
+    }
+
+    if (officeRequest) {
+      try {
+        if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+          throw new Error(
+            "Email delivery is not configured."
+          );
+        }
+
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: clientEmail,
+          subject:
+            "Your Secure Tax Extension Payment Link",
+          text:
+`Hello ${lead.contact?.name || "Client"},
+
+Your Tax Extension request has been reviewed and is eligible to proceed to the secure payment step.
+
+Service:
+${getExtensionServiceLabelForEmail(request)}
+
+Tax year:
+${String(request.taxYear || "")}
+
+Professional service fee:
+$${Number(request.totalPrice || 0).toLocaleString()}
+
+Use this secure Stripe payment link:
+${session.url}
+
+After Stripe confirms payment, the office will continue the extension review and filing workflow.
+
+Important: An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed.
+
+This is a standalone extension service. You may use any tax professional to prepare the full return.
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords. Use the secure client portal when documents are requested.
+
+Thank you,
+
+Greatest Business Solution LLC`
+        });
+
+        emailSent = true;
+      } catch (emailErr) {
+        emailError =
+          emailErr?.message ||
+          "The payment-link email was not sent.";
+
+        console.error(
+          "[create-extension-checkout] Office payment-link email failed:",
+          leadId,
+          emailError
+        );
+      }
+
+      const deliverySave =
+        await updateLeadAfterStripePayment(
+          leadId,
+          (record = {}) => ({
+            ...record,
+            extensionRequest: {
+              ...(record.extensionRequest || {}),
+              paymentLinkSentAt:
+                paymentLinkCreatedAt,
+              paymentLinkEmailSent:
+                emailSent,
+              paymentLinkEmailError:
+                emailError,
+              updatedAt:
+                new Date().toISOString()
+            },
+            updatedAt:
+              new Date().toISOString()
+          })
+        );
+
+      if (!deliverySave?.ok) {
+        emailError = emailSent
+          ? "The payment link was emailed, but the delivery result could not be saved on the client card."
+          : (
+              emailError ||
+              "The payment-link delivery result could not be saved on the client card."
+            );
+      }
+    }
 
     return res.status(200).json({
       ok: true,
       checkoutUrl: session.url,
-      sessionId: session.id
+      sessionId: session.id,
+      emailSent:
+        officeRequest
+          ? emailSent
+          : null,
+      emailError:
+        officeRequest
+          ? emailError
+          : ""
     });
   } catch (error) {
     console.error(

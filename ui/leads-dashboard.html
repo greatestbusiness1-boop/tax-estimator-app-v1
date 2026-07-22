@@ -1229,8 +1229,241 @@
 
     .extension-card-actions {
       display:flex;
-      justify-content:flex-end;
+      flex-wrap:wrap;
+      justify-content:flex-start;
+      gap:8px;
       margin-top:10px;
+    }
+
+    .extension-client-card {
+      cursor:default;
+    }
+
+    .extension-action-basket {
+      margin-top:12px;
+      border:2px solid #28588c;
+      border-radius:12px;
+      background:#f5f9ff;
+      padding:12px;
+    }
+
+    .extension-basket-heading {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .extension-basket-heading strong {
+      color:#0f2c56;
+      font-size:15px;
+    }
+
+    .extension-basket-heading span {
+      display:block;
+      margin-top:2px;
+      color:#475569;
+      font-size:11px;
+      font-weight:700;
+      line-height:1.4;
+    }
+
+    .extension-required-checklist {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:7px;
+      margin-bottom:10px;
+    }
+
+    .extension-check-item {
+      display:flex;
+      align-items:center;
+      gap:7px;
+      min-height:42px;
+      border:1px solid #d7e2ef;
+      border-radius:9px;
+      background:#ffffff;
+      padding:8px;
+      color:#334155;
+      font-size:11px;
+      font-weight:850;
+      line-height:1.3;
+    }
+
+    .extension-check-dot {
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:#fff7ed;
+      color:#9a3412;
+      border:1px solid #fdba74;
+      font-size:11px;
+      font-weight:950;
+    }
+
+    .extension-check-item.done .extension-check-dot {
+      background:#dcfce7;
+      color:#166534;
+      border-color:#86efac;
+    }
+
+    .extension-check-item.not-applicable .extension-check-dot {
+      background:#e2e8f0;
+      color:#475569;
+      border-color:#cbd5e1;
+    }
+
+    .extension-basket-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .extension-basket-field {
+      display:grid;
+      gap:5px;
+    }
+
+    .extension-basket-field.full {
+      grid-column:1 / -1;
+    }
+
+    .extension-basket-field label {
+      color:#17324d;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .extension-basket-field select,
+    .extension-basket-field textarea {
+      width:100%;
+      border:1px solid #afc2d8;
+      border-radius:8px;
+      background:#ffffff;
+      color:#0f2c56;
+      padding:8px 9px;
+      font:inherit;
+      font-size:12px;
+    }
+
+    .extension-basket-field textarea {
+      min-height:72px;
+      resize:vertical;
+    }
+
+    .extension-basket-button {
+      border:0;
+      border-radius:8px;
+      background:#0f2c56;
+      color:#ffffff;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .extension-basket-button.secondary {
+      background:#28588c;
+    }
+
+    .extension-basket-button.payment {
+      background:#047857;
+    }
+
+    .extension-basket-button.warning {
+      background:#9a3412;
+    }
+
+    .extension-basket-button.light {
+      background:#ffffff;
+      color:#0f2c56;
+      border:1px solid #9fb5ce;
+    }
+
+    .extension-payment-link-status {
+      margin-top:8px;
+      border:1px solid #bbf7d0;
+      border-radius:8px;
+      background:#f0fdf4;
+      padding:8px 10px;
+      color:#166534;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.4;
+    }
+
+    .completed-extension-section {
+      margin-top:16px;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      background:#f8fafc;
+      overflow:hidden;
+    }
+
+    .completed-extension-section > summary {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:11px 13px;
+      cursor:pointer;
+      color:#17324d;
+      font-size:13px;
+      font-weight:950;
+      list-style:none;
+    }
+
+    .completed-extension-section > summary::-webkit-details-marker {
+      display:none;
+    }
+
+    .completed-extension-summary-note {
+      color:#64748b;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .completed-extension-count {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:24px;
+      height:22px;
+      margin-left:6px;
+      padding:0 7px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#17324d;
+      font-size:11px;
+      font-weight:950;
+    }
+
+    .completed-extension-list {
+      display:grid;
+      gap:6px;
+      padding:0 10px 10px;
+    }
+
+    .completed-extension-row {
+      display:grid;
+      grid-template-columns:minmax(160px,1.2fr) minmax(150px,1fr) 90px 130px 100px auto;
+      align-items:center;
+      gap:8px;
+      border:1px solid #dbe4f0;
+      border-radius:8px;
+      background:#ffffff;
+      padding:8px 9px;
+      color:#334155;
+      font-size:11px;
+    }
+
+    .completed-extension-row strong {
+      color:#0f2c56;
     }
 
     .extension-sidebar-count {
@@ -1253,8 +1486,14 @@
     }
 
     @media (max-width: 1180px) {
-      .extension-card-grid {
+      .extension-card-grid,
+      .extension-basket-grid,
+      .extension-required-checklist {
         grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .completed-extension-row {
+        grid-template-columns:repeat(3,minmax(0,1fr));
       }
     }
 
@@ -1268,8 +1507,21 @@
         margin-top:8px;
       }
 
-      .extension-card-grid {
+      .extension-card-grid,
+      .extension-basket-grid,
+      .extension-required-checklist,
+      .completed-extension-row {
         grid-template-columns:1fr;
+      }
+
+      .extension-basket-heading,
+      .completed-extension-section > summary {
+        display:block;
+      }
+
+      .completed-extension-summary-note {
+        display:block;
+        margin-top:4px;
       }
     }
 
@@ -1577,10 +1829,9 @@
       <button class="extension-filter-btn" data-extension-filter="information">Information Needed <span id="extensionInformationCount" class="extension-filter-count">0</span></button>
       <button class="extension-filter-btn" data-extension-filter="ready">Ready to File <span id="extensionReadyCount" class="extension-filter-count">0</span></button>
       <button class="extension-filter-btn" data-extension-filter="filed">Filed <span id="extensionFiledCount" class="extension-filter-count">0</span></button>
-      <button class="extension-filter-btn" data-extension-filter="completed">Completed <span id="extensionCompletedCount" class="extension-filter-count">0</span></button>
     </div>
     <div id="extensionFilterSummary" class="extension-filter-summary">
-      These buttons filter the client cards below. Open the client profile from the card to review or update the request.
+      Each open client card is the Extension Action Basket. The request, payment, required checklist, status controls, office note, and direct document access stay together on that card.
     </div>
 
     <div id="contactFilters" class="contact-filters">
@@ -2805,27 +3056,97 @@ function getExtensionPaymentStatus(lead){
   ).trim();
 }
 
+function extensionPaymentIsPaid(lead){
+  return /paid|verified/i.test(
+    getExtensionPaymentStatus(lead)
+  );
+}
+
+function getExtensionDeadlineDecision(lead){
+  const request = lead?.extensionRequest || {};
+  const saved = String(
+    request.deadlineDecision || ""
+  ).trim();
+
+  if(saved){
+    return saved;
+  }
+
+  if(
+    request.deadlineReviewRequired === true ||
+    getExtensionWorkStatus(lead)
+      .toLowerCase()
+      .includes("deadline review")
+  ){
+    return "Not Reviewed";
+  }
+
+  if(request.checkoutEligible === true){
+    return "Eligible";
+  }
+
+  return "Not Reviewed";
+}
+
+function getExtensionInformationStatus(lead){
+  return String(
+    lead?.extensionRequest?.informationStatus ||
+    "Needs Review"
+  ).trim();
+}
+
+function getExtensionStateActionStatus(lead){
+  const request = lead?.extensionRequest || {};
+
+  if(request.stateExtensionRequested !== true){
+    return "Not Applicable";
+  }
+
+  return String(
+    request.stateActionStatus ||
+    "Not Reviewed"
+  ).trim();
+}
+
+function extensionConfirmationDelivered(lead){
+  const confirmation = String(
+    lead?.extensionRequest?.confirmationStatus || ""
+  ).toLowerCase();
+
+  return (
+    confirmation.includes("delivered") ||
+    getExtensionWorkStatus(lead)
+      .toLowerCase()
+      .includes("completed")
+  );
+}
+
+function extensionWasFiled(lead){
+  const request = lead?.extensionRequest || {};
+  const status = getExtensionWorkStatus(lead).toLowerCase();
+
+  return Boolean(request.filedAt) ||
+    status.includes("filed") ||
+    status.includes("confirmation delivered") ||
+    status.includes("completed");
+}
+
 function isCompletedExtension(lead){
   const status = [
     lead?.status,
-    lead?.extensionRequest?.workStatus,
-    lead?.extensionRequest?.confirmationStatus
+    lead?.extensionRequest?.workStatus
   ].join(" ").toLowerCase();
 
   return (
     status.includes("completed") ||
-    status.includes("confirmation delivered") ||
-    status.includes("closed")
+    status.includes("closed - not eligible") ||
+    status.includes("closed — not eligible")
   );
 }
 
 function matchesExtensionFilter(lead){
   const status = getExtensionWorkStatus(lead).toLowerCase();
   const payment = getExtensionPaymentStatus(lead).toLowerCase();
-
-  if(currentExtensionFilter === "completed"){
-    return isCompletedExtension(lead);
-  }
 
   if(isCompletedExtension(lead)){
     return false;
@@ -2850,7 +3171,12 @@ function matchesExtensionFilter(lead){
   }
 
   if(currentExtensionFilter === "information"){
-    return status.includes("information needed");
+    return (
+      status.includes("information needed") ||
+      getExtensionInformationStatus(lead)
+        .toLowerCase()
+        .includes("information needed")
+    );
   }
 
   if(currentExtensionFilter === "ready"){
@@ -2858,7 +3184,10 @@ function matchesExtensionFilter(lead){
   }
 
   if(currentExtensionFilter === "filed"){
-    return status.includes("filed");
+    return (
+      status.includes("filed") ||
+      status.includes("confirmation delivered")
+    );
   }
 
   return true;
@@ -2904,36 +3233,137 @@ function getExtensionPortalStatus(lead){
 }
 
 function getExtensionNextOfficeAction(lead){
-  const status =
-    getExtensionWorkStatus(lead).toLowerCase();
-  const payment =
-    getExtensionPaymentStatus(lead).toLowerCase();
+  const request = lead?.extensionRequest || {};
+  const status = getExtensionWorkStatus(lead).toLowerCase();
+  const payment = getExtensionPaymentStatus(lead).toLowerCase();
+  const deadlineDecision = getExtensionDeadlineDecision(lead).toLowerCase();
+  const informationStatus = getExtensionInformationStatus(lead).toLowerCase();
+  const stateAction = getExtensionStateActionStatus(lead).toLowerCase();
 
-  if(status.includes("deadline review")){
-    return "Review deadline eligibility before requesting payment.";
+  if(isCompletedExtension(lead)){
+    return "Completed or closed request is stored in the minimized Completed & Closed Extensions section.";
+  }
+
+  if(deadlineDecision.includes("not reviewed") || status.includes("deadline review")){
+    return "Use the Deadline decision in this card. Approve and email payment only after eligibility is confirmed.";
+  }
+
+  if(deadlineDecision.includes("not eligible")){
+    return "Use Close — Not Eligible to save the decision and move the request into the minimized completed section.";
   }
 
   if(status.includes("payment pending") || payment.includes("pending")){
-    return "Confirm payment or follow up with the client before preparation begins.";
+    if(request.stripeCheckoutUrl){
+      return "The secure payment link is saved on this card. Await Stripe confirmation or resend the link from this card.";
+    }
+
+    return "Create and email the secure Stripe payment link from this card.";
+  }
+
+  if(extensionPaymentIsPaid(lead) && informationStatus !== "complete"){
+    return "Review the client information in this card and mark it Complete or Information Needed.";
+  }
+
+  if(
+    request.stateExtensionRequested === true &&
+    stateAction === "not reviewed"
+  ){
+    return "Review the selected state's extension requirement and save the result in this card.";
   }
 
   if(status.includes("paid") || payment.includes("paid")){
-    return "Review the return type, state requirement, estimated payment, and filing deadline.";
+    return "Confirm the return type, state action, estimated payment, and filing deadline, then move the request to Ready to File.";
   }
 
   if(status.includes("information needed")){
-    return "Contact the client for the missing information shown in the office note.";
+    return "Contact the client for the missing information recorded in the office note on this card.";
   }
 
   if(status.includes("ready to file")){
-    return "Prepare and file the eligible extension, then save the filing confirmation.";
+    return "Prepare and file the eligible extension, then save the filing date and confirmation status on this card.";
   }
 
   if(status.includes("filed")){
-    return "Deliver the filing confirmation through the secure portal and mark the request completed.";
+    return "Deliver the filing confirmation, then mark Completed to move the request into the minimized section.";
   }
 
-  return "Open the client profile and review the extension request.";
+  if(status.includes("confirmation delivered")){
+    return "Confirm the card is complete, then select Completed. The request will move into the minimized section below.";
+  }
+
+  return "Use the Extension Action Basket on this card to record the next required step.";
+}
+
+function getExtensionChecklistItems(lead){
+  const request = lead?.extensionRequest || {};
+  const deadlineDecision = getExtensionDeadlineDecision(lead);
+  const informationStatus = getExtensionInformationStatus(lead);
+  const stateAction = getExtensionStateActionStatus(lead);
+  const notEligible = deadlineDecision === "Not Eligible";
+  const paid = extensionPaymentIsPaid(lead);
+  const filed = extensionWasFiled(lead);
+  const delivered = extensionConfirmationDelivered(lead);
+
+  const deadlineDone =
+    deadlineDecision === "Eligible" ||
+    notEligible;
+
+  const informationDone =
+    informationStatus === "Complete" ||
+    notEligible;
+
+  const paymentDone = paid || notEligible;
+
+  const stateNotApplicable =
+    request.stateExtensionRequested !== true;
+
+  const stateDone =
+    stateNotApplicable ||
+    stateAction === "No Separate State Filing Required" ||
+    stateAction === "State Extension Filed" ||
+    notEligible;
+
+  return [
+    {
+      label: "Deadline eligibility decided",
+      done: deadlineDone
+    },
+    {
+      label: "Client information reviewed",
+      done: informationDone
+    },
+    {
+      label: "Service payment confirmed",
+      done: paymentDone
+    },
+    {
+      label: stateNotApplicable
+        ? "State action not applicable"
+        : "State requirement decided",
+      done: stateDone,
+      notApplicable: stateNotApplicable
+    },
+    {
+      label: "Extension filing recorded",
+      done: filed || notEligible
+    },
+    {
+      label: "Confirmation delivered",
+      done: delivered || notEligible
+    }
+  ];
+}
+
+function extensionChecklistHtml(lead){
+  return getExtensionChecklistItems(lead)
+    .map((item) => `
+      <div class="extension-check-item ${item.done ? "done" : ""} ${item.notApplicable ? "not-applicable" : ""}">
+        <span class="extension-check-dot">
+          ${item.notApplicable ? "—" : item.done ? "✓" : "!"}
+        </span>
+        <span>${escapeOfficeHtml(item.label)}</span>
+      </div>`)
+    .join("");
 }
 
 function getExtensionCounts(){
@@ -2963,7 +3393,8 @@ function getExtensionCounts(){
     information: countWhere("information"),
     ready: countWhere("ready"),
     filed: countWhere("filed"),
-    completed: countWhere("completed")
+    completed:
+      extensionLeads.filter(isCompletedExtension).length
   };
 }
 
@@ -2984,7 +3415,6 @@ function updateExtensionRequestCounts(visibleCount){
   setCount("extensionInformationCount", counts.information);
   setCount("extensionReadyCount", counts.ready);
   setCount("extensionFiledCount", counts.filed);
-  setCount("extensionCompletedCount", counts.completed);
   setCount("extensionRequestsSidebarCount", counts.all);
 
   const sidebarCount =
@@ -3000,7 +3430,7 @@ function updateExtensionRequestCounts(visibleCount){
 
     sidebarCount.setAttribute(
       "aria-label",
-      `${counts.all} open extension requests, ${counts.deadline} needing deadline review`
+      `${counts.all} open extension requests, ${counts.deadline} needing deadline review, ${counts.completed} completed or closed`
     );
   }
 
@@ -3017,8 +3447,7 @@ function updateExtensionRequestCounts(visibleCount){
       review: "Paid / Needs Review",
       information: "Information Needed",
       ready: "Ready to File",
-      filed: "Filed",
-      completed: "Completed"
+      filed: "Filed"
     };
 
     const shown =
@@ -3035,10 +3464,9 @@ function updateExtensionRequestCounts(visibleCount){
         : "none";
 
     summary.textContent =
-      `Showing ${shown} ${labels[currentExtensionFilter] || "Extension"} request${shown === 1 ? "" : "s"}. The buttons above filter the client cards. Use Open Client Profile to review and update a request.`;
+      `Showing ${shown} ${labels[currentExtensionFilter] || "Extension"} request${shown === 1 ? "" : "s"}. Each card is the Extension Action Basket: request details, payment, mandatory checklist, status controls, office note, and client documents stay together. ${counts.completed} completed or closed request${counts.completed === 1 ? " is" : "s are"} stored in the minimized section at the bottom.`;
   }
 }
-
 
 function matchesTaxPrepAdvancedFilters(lead){
   const enteredAt = getLeadEnteredAt(lead);
@@ -4470,7 +4898,7 @@ function openOfficeWorkItem(index){
   }
 
   if(isExtensionLead(item.lead)){
-    openExtensionWorkspace(item.lead);
+    openExtensionActionBasketForLead(item.lead);
     return;
   }
 
@@ -5025,7 +5453,7 @@ function appendTaxPlannerCrmToDetail(lead){
 
 function openPanel(lead){
   if(isExtensionLead(lead)){
-    openExtensionWorkspace(lead);
+    openExtensionActionBasketForLead(lead);
     return;
   }
 
@@ -6420,139 +6848,404 @@ function renderLeads(){
   if(currentView === "extensions"){
     updateExtensionRequestCounts(visible.length);
 
-    if(!visible.length){
-      list.innerHTML = `
-        <div class="office-empty">
-          No extension requests match the selected filter.
-        </div>`;
-      window.visibleExtensionLeads = [];
-      return;
-    }
+    const completedExtensionLeads =
+      (allLeads || [])
+        .filter(isExtensionLead)
+        .filter(isCompletedExtension)
+        .sort((a,b) =>
+          new Date(
+            b?.extensionRequest?.completedAt ||
+            getLeadClosedAt(b) ||
+            0
+          ) -
+          new Date(
+            a?.extensionRequest?.completedAt ||
+            getLeadClosedAt(a) ||
+            0
+          )
+        );
 
-    list.innerHTML = `
-      <div class="extension-card-list">
-        ${visible.map((lead, index) => {
-          const request =
-            lead.extensionRequest || {};
-          const workStatus =
-            getExtensionWorkStatus(lead);
-          const paymentStatus =
-            getExtensionPaymentStatus(lead);
-          const deadlineReview =
-            workStatus
-              .toLowerCase()
-              .includes("deadline review");
-          const preparationInterest =
-            request.preparationQuoteRequested === true ||
-            request.consideringFullPreparation === true
-              ? "Tax preparation quote requested"
-              : "Extension service only";
-          const portalStatus =
-            getExtensionPortalStatus(lead);
-          const phone =
-            formatDashboardPhone(
-              lead.contact?.phone || ""
-            ) || "Phone not recorded";
+    const openCards = visible.length
+      ? `
+        <div class="extension-card-list">
+          ${visible.map((lead, index) => {
+            const request =
+              lead.extensionRequest || {};
+            const workStatus =
+              getExtensionWorkStatus(lead);
+            const paymentStatus =
+              getExtensionPaymentStatus(lead);
+            const deadlineReview =
+              getExtensionDeadlineDecision(lead) ===
+                "Not Reviewed" ||
+              workStatus
+                .toLowerCase()
+                .includes("deadline review");
+            const preparationInterest =
+              request.preparationQuoteRequested === true ||
+              request.consideringFullPreparation === true
+                ? "Tax preparation quote requested"
+                : "Extension service only";
+            const portalStatus =
+              getExtensionPortalStatus(lead);
+            const phone =
+              formatDashboardPhone(
+                lead.contact?.phone || ""
+              ) || "Phone not recorded";
+            const deadlineDecision =
+              getExtensionDeadlineDecision(lead);
+            const informationStatus =
+              getExtensionInformationStatus(lead);
+            const stateActionStatus =
+              getExtensionStateActionStatus(lead);
+            const confirmationStatus =
+              request.confirmationStatus ||
+              "Not Delivered";
+            const paymentUrl = String(
+              request.stripeCheckoutUrl || ""
+            ).trim();
+            const paymentLinkSentAt =
+              formatLeadDate(
+                request.paymentLinkSentAt ||
+                request.checkoutCreatedAt ||
+                ""
+              );
 
-          return `
-            <article
-              class="extension-client-card ${deadlineReview ? "urgent" : ""}"
-              onclick="openExtensionLead(${index})"
-            >
-              <div class="extension-card-head">
-                <div>
-                  <div class="extension-client-name">
-                    ${escapeOfficeHtml(lead.contact?.name || "No Name")}
+            return `
+              <article
+                class="extension-client-card ${deadlineReview ? "urgent" : ""}"
+                data-extension-lead-id="${escapeOfficeHtml(lead.leadId || "")}"
+              >
+                <div class="extension-card-head">
+                  <div>
+                    <div class="extension-client-name">
+                      ${escapeOfficeHtml(lead.contact?.name || "No Name")}
+                    </div>
+                    <div class="extension-client-contact">
+                      ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
+                      ${escapeOfficeHtml(phone)}
+                    </div>
                   </div>
-                  <div class="extension-client-contact">
-                    ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
-                    ${escapeOfficeHtml(phone)}
+
+                  <div class="extension-card-badges">
+                    ${deadlineReview
+                      ? `<span class="extension-urgent-badge">Deadline Review Needed</span>`
+                      : ""}
+                    <span class="extension-status-badge">
+                      ${escapeOfficeHtml(workStatus)}
+                    </span>
                   </div>
                 </div>
 
-                <div class="extension-card-badges">
-                  ${deadlineReview
-                    ? `<span class="extension-urgent-badge">Deadline Review Needed</span>`
-                    : ""}
-                  <span class="extension-status-badge">
-                    ${escapeOfficeHtml(workStatus)}
-                  </span>
+                <div class="extension-card-grid">
+                  <div class="extension-card-block">
+                    <span>Request</span>
+                    <strong>${escapeOfficeHtml(getExtensionServiceLabel(lead))}</strong><br>
+                    Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
+                    ${escapeOfficeHtml(
+                      String(
+                        request.entityType ||
+                        request.filingStatus ||
+                        "Return type not recorded"
+                      )
+                    )}
+                  </div>
+
+                  <div class="extension-card-block">
+                    <span>Deadline</span>
+                    <strong>${escapeOfficeHtml(getExtensionDeadlineLabel(lead))}</strong><br>
+                    Decision: ${escapeOfficeHtml(deadlineDecision)}<br>
+                    Requested: ${escapeOfficeHtml(
+                      formatLeadDate(
+                        request.requestedAt ||
+                        getLeadEnteredAt(lead)
+                      ) || "Not recorded"
+                    )}
+                  </div>
+
+                  <div class="extension-card-block">
+                    <span>Fee &amp; Payment</span>
+                    Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
+                    Payment: ${escapeOfficeHtml(paymentStatus)}<br>
+                    Planned tax payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
+                  </div>
+
+                  <div class="extension-card-block">
+                    <span>Tax Estimate</span>
+                    Estimated tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
+                    Withholding / payments: $${Number(request.totalPayments || 0).toLocaleString()}<br>
+                    Estimated balance: <strong>$${Number(request.estimatedBalanceDue || 0).toLocaleString()}</strong>
+                  </div>
+
+                  <div class="extension-card-block">
+                    <span>Client Profile</span>
+                    ${escapeOfficeHtml(preparationInterest)}<br>
+                    Portal: ${escapeOfficeHtml(portalStatus)}<br>
+                    Reference: ${escapeOfficeHtml(lead.leadId || "")}
+                  </div>
+
+                  <div class="extension-card-block">
+                    <span>Office Note</span>
+                    ${escapeOfficeHtml(
+                      request.officeNote ||
+                      "No office note has been entered."
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div class="extension-card-grid">
-                <div class="extension-card-block">
-                  <span>Request</span>
-                  <strong>${escapeOfficeHtml(getExtensionServiceLabel(lead))}</strong><br>
-                  Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
-                  ${escapeOfficeHtml(
-                    String(
-                      request.entityType ||
-                      request.filingStatus ||
-                      "Return type not recorded"
-                    )
-                  )}
+                <div class="extension-next-action">
+                  Next action: ${escapeOfficeHtml(getExtensionNextOfficeAction(lead))}
                 </div>
 
-                <div class="extension-card-block">
-                  <span>Deadline</span>
-                  <strong>${escapeOfficeHtml(getExtensionDeadlineLabel(lead))}</strong><br>
-                  Requested: ${escapeOfficeHtml(
-                    formatLeadDate(
-                      request.requestedAt ||
-                      getLeadEnteredAt(lead)
-                    ) || "Not recorded"
-                  )}
-                </div>
-
-                <div class="extension-card-block">
-                  <span>Fee &amp; Payment</span>
-                  Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
-                  Payment: ${escapeOfficeHtml(paymentStatus)}<br>
-                  Planned tax payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
-                </div>
-
-                <div class="extension-card-block">
-                  <span>Tax Estimate</span>
-                  Estimated tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
-                  Withholding / payments: $${Number(request.totalPayments || 0).toLocaleString()}<br>
-                  Estimated balance: <strong>$${Number(request.estimatedBalanceDue || 0).toLocaleString()}</strong>
-                </div>
-
-                <div class="extension-card-block">
-                  <span>Client Profile</span>
-                  ${escapeOfficeHtml(preparationInterest)}<br>
-                  Portal: ${escapeOfficeHtml(portalStatus)}<br>
-                  Reference: ${escapeOfficeHtml(lead.leadId || "")}
-                </div>
-
-                <div class="extension-card-block">
-                  <span>Office Note</span>
-                  ${escapeOfficeHtml(
-                    request.officeNote ||
-                    "No office note has been entered."
-                  )}
-                </div>
-              </div>
-
-              <div class="extension-next-action">
-                Next action: ${escapeOfficeHtml(getExtensionNextOfficeAction(lead))}
-              </div>
-
-              <div class="extension-card-actions">
-                <button
-                  class="taxprep-open-btn"
-                  type="button"
-                  onclick="event.stopPropagation(); openExtensionLead(${index})"
+                <div
+                  class="extension-action-basket"
+                  onclick="event.stopPropagation()"
                 >
-                  Open Client Profile
-                </button>
-              </div>
-            </article>`;
-        }).join("")}
-      </div>`;
+                  <div class="extension-basket-heading">
+                    <div>
+                      <strong>Extension Action Basket</strong>
+                      <span>Do the routine work here. You should not have to search another page for payment, required decisions, status, notes, or client documents.</span>
+                    </div>
+                    <span>Reference: ${escapeOfficeHtml(lead.leadId || "")}</span>
+                  </div>
+
+                  <div class="extension-required-checklist">
+                    ${extensionChecklistHtml(lead)}
+                  </div>
+
+                  <div class="extension-basket-grid">
+                    <div class="extension-basket-field">
+                      <label for="extensionDeadlineDecision-${index}">1. Deadline decision</label>
+                      <select id="extensionDeadlineDecision-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Reviewed",
+                            "Eligible",
+                            "Not Eligible"
+                          ],
+                          deadlineDecision
+                        )}
+                      </select>
+                    </div>
+
+                    <div class="extension-basket-field">
+                      <label for="extensionInformationStatus-${index}">2. Client information</label>
+                      <select id="extensionInformationStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Needs Review",
+                            "Complete",
+                            "Information Needed"
+                          ],
+                          informationStatus
+                        )}
+                      </select>
+                    </div>
+
+                    ${request.stateExtensionRequested === true
+                      ? `
+                        <div class="extension-basket-field">
+                          <label for="extensionStateActionStatus-${index}">3. ${escapeOfficeHtml(String(request.stateCode || "State").toUpperCase())} state action</label>
+                          <select id="extensionStateActionStatus-${index}">
+                            ${selectOptionsHtml(
+                              [
+                                "Not Reviewed",
+                                "No Separate State Filing Required",
+                                "Separate State Filing Required",
+                                "State Extension Filed"
+                              ],
+                              stateActionStatus
+                            )}
+                          </select>
+                        </div>`
+                      : `
+                        <div class="extension-basket-field">
+                          <label>3. State action</label>
+                          <select disabled>
+                            <option>Not Applicable</option>
+                          </select>
+                        </div>`}
+
+                    <div class="extension-basket-field">
+                      <label for="extensionWorkStatus-${index}">4. Extension work status</label>
+                      <select id="extensionWorkStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Deadline Review Needed",
+                            "Payment Pending",
+                            "Paid / Needs Review",
+                            "Information Needed",
+                            "Ready to File",
+                            "Filed",
+                            "Confirmation Delivered",
+                            "Completed"
+                          ],
+                          workStatus
+                        )}
+                      </select>
+                    </div>
+
+                    <div class="extension-basket-field">
+                      <label for="extensionConfirmationStatus-${index}">5. Confirmation status</label>
+                      <select id="extensionConfirmationStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Delivered",
+                            "Preparing Confirmation",
+                            "Delivered to Secure Portal",
+                            "Delivered by Email"
+                          ],
+                          confirmationStatus
+                        )}
+                      </select>
+                    </div>
+
+                    <div class="extension-basket-field full">
+                      <label for="extensionOfficeNote-${index}">6. Office extension note</label>
+                      <textarea
+                        id="extensionOfficeNote-${index}"
+                        placeholder="Record the deadline decision, missing information, filing result, state requirement, payment follow-up, or client contact here."
+                      >${escapeOfficeHtml(request.officeNote || "")}</textarea>
+                    </div>
+                  </div>
+
+                  ${paymentUrl
+                    ? `
+                      <div class="extension-payment-link-status">
+                        Secure payment link is saved on this card${paymentLinkSentAt ? ` and was last created or sent ${escapeOfficeHtml(paymentLinkSentAt)}` : ""}.
+                      </div>`
+                    : ""}
+
+                  <div class="extension-card-actions">
+                    <button
+                      class="extension-basket-button"
+                      type="button"
+                      onclick="saveExtensionCard(${index})"
+                    >
+                      Save This Card
+                    </button>
+
+                    ${!extensionPaymentIsPaid(lead)
+                      ? `
+                        <button
+                          class="extension-basket-button payment"
+                          type="button"
+                          onclick="approveAndSendExtensionPayment(${index})"
+                        >
+                          Approve &amp; Email Secure Payment Link
+                        </button>`
+                      : ""}
+
+                    ${paymentUrl
+                      ? `
+                        <button
+                          class="extension-basket-button secondary"
+                          type="button"
+                          onclick="copyExtensionPaymentLink(${index})"
+                        >
+                          Copy Payment Link
+                        </button>
+
+                        <button
+                          class="extension-basket-button secondary"
+                          type="button"
+                          onclick="openExtensionPaymentLink(${index})"
+                        >
+                          Open Payment Link
+                        </button>
+
+                        <button
+                          class="extension-basket-button secondary"
+                          type="button"
+                          onclick="openExtensionPaymentEmail(${index})"
+                        >
+                          Open Email to Client
+                        </button>`
+                      : ""}
+
+                    <button
+                      class="extension-basket-button light"
+                      type="button"
+                      onclick="openExtensionDocuments(${index})"
+                    >
+                      Open This Client's Documents
+                    </button>
+
+                    <button
+                      class="extension-basket-button light"
+                      type="button"
+                      onclick="openExtensionLead(${index})"
+                    >
+                      Open Full Client Profile
+                    </button>
+
+                    <button
+                      class="extension-basket-button warning"
+                      type="button"
+                      onclick="closeExtensionNotEligible(${index})"
+                    >
+                      Close — Not Eligible
+                    </button>
+                  </div>
+                </div>
+              </article>`;
+          }).join("")}
+        </div>`
+      : `
+        <div class="office-empty">
+          No open extension requests match the selected filter. Completed and closed requests remain in the minimized section below.
+        </div>`;
+
+    const completedSection = `
+      <details class="completed-extension-section">
+        <summary>
+          <span>
+            Completed &amp; Closed Extensions
+            <span class="completed-extension-count">${completedExtensionLeads.length}</span>
+          </span>
+          <span class="completed-extension-summary-note">Minimized — click this bar only when you need an older completed request</span>
+        </summary>
+        <div class="completed-extension-list">
+          ${completedExtensionLeads.length
+            ? completedExtensionLeads.map((lead, index) => {
+                const request = lead.extensionRequest || {};
+                const completedAt = formatLeadDate(
+                  request.completedAt ||
+                  getLeadClosedAt(lead) ||
+                  request.filedAt ||
+                  ""
+                ) || "Date not recorded";
+
+                return `
+                  <div class="completed-extension-row">
+                    <div>
+                      <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
+                      ${escapeOfficeHtml(lead.contact?.email || "No email")}
+                    </div>
+                    <div>
+                      ${escapeOfficeHtml(getExtensionServiceLabel(lead))}<br>
+                      ${escapeOfficeHtml(getExtensionWorkStatus(lead))}
+                    </div>
+                    <div>Tax year<br><strong>${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}</strong></div>
+                    <div>Completed / closed<br><strong>${escapeOfficeHtml(completedAt)}</strong></div>
+                    <div>Fee<br><strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong></div>
+                    <button
+                      class="extension-basket-button light"
+                      type="button"
+                      onclick="openCompletedExtensionLead(${index})"
+                    >
+                      Open
+                    </button>
+                  </div>`;
+              }).join("")
+            : `<div class="office-empty">No completed or closed extension requests yet.</div>`}
+        </div>
+      </details>`;
+
+    list.innerHTML = openCards + completedSection;
 
     window.visibleExtensionLeads = visible;
+    window.completedExtensionLeads = completedExtensionLeads;
     return;
   }
 
@@ -7878,6 +8571,537 @@ async function saveTaxPreparationWorkspace(){
   clearDetailPanel();
 }
 
+function openExtensionActionBasketForLead(lead){
+  const leadId = String(lead?.leadId || "").trim();
+  const extensionButton = document.getElementById(
+    "extensionRequestsSidebarButton"
+  );
+
+  if(!extensionButton){
+    alert("Extension Requests could not be opened.");
+    return;
+  }
+
+  currentExtensionFilter = "all";
+
+  document
+    .querySelectorAll(".extension-filter-btn")
+    .forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.extensionFilter === "all"
+      );
+    });
+
+  extensionButton.click();
+
+  window.setTimeout(() => {
+    const cards = Array.from(
+      document.querySelectorAll(
+        "[data-extension-lead-id]"
+      )
+    );
+    const card = cards.find(
+      (element) =>
+        element.dataset.extensionLeadId === leadId
+    );
+
+    if(card){
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+      card.style.outline = "4px solid #f59e0b";
+      card.style.outlineOffset = "3px";
+
+      window.setTimeout(() => {
+        card.style.outline = "";
+        card.style.outlineOffset = "";
+      }, 2600);
+    }
+  }, 120);
+}
+
+function extensionLeadByIndex(index){
+  return (window.visibleExtensionLeads || [])[index] || null;
+}
+
+function extensionCardValue(id, index, fallback = ""){
+  return String(
+    document.getElementById(`${id}-${index}`)?.value ||
+    fallback
+  ).trim();
+}
+
+function buildExtensionCardUpdate(lead, index, overrides = {}){
+  const request = lead.extensionRequest || {};
+  const now = new Date().toISOString();
+  const deadlineDecision =
+    overrides.deadlineDecision ||
+    extensionCardValue(
+      "extensionDeadlineDecision",
+      index,
+      getExtensionDeadlineDecision(lead)
+    );
+  const informationStatus =
+    overrides.informationStatus ||
+    extensionCardValue(
+      "extensionInformationStatus",
+      index,
+      getExtensionInformationStatus(lead)
+    );
+  const stateActionStatus =
+    request.stateExtensionRequested === true
+      ? (
+          overrides.stateActionStatus ||
+          extensionCardValue(
+            "extensionStateActionStatus",
+            index,
+            getExtensionStateActionStatus(lead)
+          )
+        )
+      : "Not Applicable";
+  const workStatus =
+    overrides.workStatus ||
+    extensionCardValue(
+      "extensionWorkStatus",
+      index,
+      getExtensionWorkStatus(lead)
+    );
+  const confirmationStatus =
+    overrides.confirmationStatus ||
+    extensionCardValue(
+      "extensionConfirmationStatus",
+      index,
+      request.confirmationStatus ||
+      "Not Delivered"
+    );
+  const officeNote =
+    overrides.officeNote !== undefined
+      ? overrides.officeNote
+      : extensionCardValue(
+          "extensionOfficeNote",
+          index,
+          request.officeNote || ""
+        );
+
+  const eligible = deadlineDecision === "Eligible";
+  const notEligible = deadlineDecision === "Not Eligible";
+  const completed =
+    workStatus === "Completed" ||
+    workStatus === "Closed — Not Eligible";
+  const filed =
+    workStatus === "Filed" ||
+    workStatus === "Confirmation Delivered" ||
+    workStatus === "Completed";
+
+  return {
+    deadlineDecision,
+    informationStatus,
+    stateActionStatus,
+    workStatus,
+    confirmationStatus,
+    officeNote,
+    eligible,
+    notEligible,
+    completed,
+    filed,
+    now,
+    extensionRequest: {
+      ...request,
+      deadlineDecision,
+      informationStatus,
+      stateActionStatus,
+      workStatus,
+      confirmationStatus,
+      officeNote,
+      checkoutEligible:
+        eligible
+          ? true
+          : notEligible
+            ? false
+            : request.checkoutEligible === true,
+      deadlineReviewRequired:
+        deadlineDecision === "Not Reviewed",
+      deadlineReviewedAt:
+        deadlineDecision !== "Not Reviewed"
+          ? (
+              request.deadlineReviewedAt ||
+              now
+            )
+          : (
+              request.deadlineReviewedAt ||
+              ""
+            ),
+      filedAt:
+        filed
+          ? (
+              request.filedAt ||
+              now
+            )
+          : (
+              request.filedAt ||
+              ""
+            ),
+      completedAt:
+        completed
+          ? now
+          : (
+              request.completedAt ||
+              ""
+            ),
+      updatedAt: now
+    }
+  };
+}
+
+function validateExtensionCompletion(lead, update){
+  if(update.workStatus !== "Completed"){
+    return "";
+  }
+
+  if(update.deadlineDecision !== "Eligible"){
+    return "Select Deadline decision: Eligible before marking this request Completed. Use Close — Not Eligible for a request that cannot be filed.";
+  }
+
+  if(!extensionPaymentIsPaid(lead)){
+    return "Stripe payment must show Paid / Verified before this request can be marked Completed.";
+  }
+
+  if(update.informationStatus !== "Complete"){
+    return "Client information must be marked Complete before this request can be marked Completed.";
+  }
+
+  const request = lead.extensionRequest || {};
+
+  if(
+    request.stateExtensionRequested === true &&
+    update.stateActionStatus === "Not Reviewed"
+  ){
+    return "The selected state's extension requirement must be decided before this request can be marked Completed.";
+  }
+
+  if(
+    update.stateActionStatus === "Separate State Filing Required"
+  ){
+    return "Change the state action to State Extension Filed after the required state filing is completed.";
+  }
+
+  if(!extensionWasFiled(lead)){
+    return "Save the work status as Filed before marking this request Completed.";
+  }
+
+  if(!String(update.confirmationStatus).includes("Delivered")){
+    return "The confirmation status must show Delivered before this request can be marked Completed.";
+  }
+
+  return "";
+}
+
+async function patchExtensionLead(lead, update){
+  const response = await fetch(
+    `/api/leads/${encodeURIComponent(lead.leadId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        status:
+          `Extension Request - ${update.workStatus}`,
+        completedAt:
+          update.completed
+            ? update.now
+            : "",
+        closedAt:
+          update.completed
+            ? update.now
+            : "",
+        extensionRequest:
+          update.extensionRequest
+      })
+    }
+  );
+
+  const data = await response
+    .json()
+    .catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    throw new Error(
+      data.error ||
+      "The extension card could not be saved."
+    );
+  }
+
+  return data;
+}
+
+async function saveExtensionCard(index){
+  const lead = extensionLeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The extension request could not be identified.");
+    return;
+  }
+
+  try{
+    const update = buildExtensionCardUpdate(lead, index);
+    const completionError =
+      validateExtensionCompletion(lead, update);
+
+    if(completionError){
+      alert(completionError);
+      return;
+    }
+
+    await patchExtensionLead(lead, update);
+    alert("Extension Action Basket saved. All information remains on this client's card.");
+    await loadLeads();
+  }catch(error){
+    alert(
+      error.message ||
+      "The Extension Action Basket could not be saved."
+    );
+  }
+}
+
+async function approveAndSendExtensionPayment(index){
+  const lead = extensionLeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The extension request could not be identified.");
+    return;
+  }
+
+  if(extensionPaymentIsPaid(lead)){
+    alert("Stripe already shows this extension service as Paid / Verified.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Confirm that you reviewed the deadline and this extension request is eligible to proceed to the secure payment step. The system will create a Stripe payment link, save it on this card, and email it to the client."
+  );
+
+  if(!confirmed){
+    return;
+  }
+
+  try{
+    const update = buildExtensionCardUpdate(
+      lead,
+      index,
+      {
+        deadlineDecision: "Eligible",
+        workStatus: "Payment Pending"
+      }
+    );
+
+    update.extensionRequest.paymentStatus =
+      "Payment Pending";
+    update.extensionRequest.checkoutEligible = true;
+    update.extensionRequest.deadlineReviewRequired = false;
+    update.extensionRequest.deadlineReviewedAt =
+      update.now;
+
+    await patchExtensionLead(lead, update);
+
+    const checkoutResponse = await fetch(
+      "/api/create-extension-checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          leadId: lead.leadId,
+          clientEmail: lead.contact?.email || "",
+          officeRequest: true
+        })
+      }
+    );
+
+    const checkout = await checkoutResponse
+      .json()
+      .catch(() => ({}));
+
+    if(!checkoutResponse.ok || !checkout.ok){
+      throw new Error(
+        checkout.error ||
+        "The secure payment link could not be created."
+      );
+    }
+
+    const deliveryMessage = checkout.emailSent
+      ? "The secure payment link was created, saved on the card, and emailed to the client."
+      : `The secure payment link was created and saved on the card, but the email was not sent. ${checkout.emailError || "Use Copy Payment Link or Open Email to Client on the card."}`;
+
+    alert(deliveryMessage);
+    await loadLeads();
+  }catch(error){
+    alert(
+      error.message ||
+      "The deadline decision or secure payment link could not be completed."
+    );
+    await loadLeads();
+  }
+}
+
+async function closeExtensionNotEligible(index){
+  const lead = extensionLeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The extension request could not be identified.");
+    return;
+  }
+
+  if(extensionPaymentIsPaid(lead)){
+    alert("This request shows a verified payment. Do not close it as Not Eligible until the payment and client resolution are reviewed.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Close this extension request as Not Eligible? No payment will be requested. The card will move into the minimized Completed & Closed Extensions section at the bottom of this page."
+  );
+
+  if(!confirmed){
+    return;
+  }
+
+  try{
+    const update = buildExtensionCardUpdate(
+      lead,
+      index,
+      {
+        deadlineDecision: "Not Eligible",
+        workStatus: "Closed — Not Eligible",
+        confirmationStatus: "Not Delivered"
+      }
+    );
+
+    update.extensionRequest.paymentStatus =
+      "Not Charged - Not Eligible";
+    update.extensionRequest.checkoutEligible = false;
+    update.extensionRequest.deadlineReviewRequired = false;
+    update.extensionRequest.completedAt = update.now;
+    update.completed = true;
+
+    await patchExtensionLead(lead, update);
+    alert("The request was closed as Not Eligible and moved into the minimized Completed & Closed Extensions section.");
+    await loadLeads();
+  }catch(error){
+    alert(
+      error.message ||
+      "The request could not be closed."
+    );
+  }
+}
+
+function extensionPaymentUrl(index){
+  const lead = extensionLeadByIndex(index);
+  return String(
+    lead?.extensionRequest?.stripeCheckoutUrl ||
+    ""
+  ).trim();
+}
+
+async function copyExtensionPaymentLink(index){
+  const url = extensionPaymentUrl(index);
+
+  if(!url){
+    alert("No secure payment link has been created for this card yet.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(url);
+    alert("Secure payment link copied. It remains saved on this client's card.");
+  }catch(error){
+    window.prompt(
+      "Copy this secure payment link:",
+      url
+    );
+  }
+}
+
+function openExtensionPaymentLink(index){
+  const url = extensionPaymentUrl(index);
+
+  if(!url){
+    alert("No secure payment link has been created for this card yet.");
+    return;
+  }
+
+  window.open(url, "_blank", "noopener");
+}
+
+function openExtensionPaymentEmail(index){
+  const lead = extensionLeadByIndex(index);
+  const url = extensionPaymentUrl(index);
+
+  if(!lead || !url){
+    alert("Create the secure payment link before opening the client email.");
+    return;
+  }
+
+  const request = lead.extensionRequest || {};
+  const subject =
+    "Your Secure Tax Extension Payment Link";
+  const body =
+`Hello ${lead.contact?.name || "Client"},
+
+Your Tax Extension request has been reviewed and is ready for the secure payment step.
+
+Service: ${getExtensionServiceLabel(lead)}
+Tax year: ${request.taxYear || lead.taxData?.taxYear || ""}
+Professional service fee: $${Number(request.totalPrice || 0).toLocaleString()}
+
+Secure payment link:
+${url}
+
+An extension provides additional time to file. It does not extend the deadline to pay tax that may be owed.
+
+This is a standalone extension service. You may use any tax professional to prepare the full return.
+
+Reference: ${lead.leadId}
+
+Thank you,
+Greatest Business Solution LLC`;
+
+  window.location.href =
+    `mailto:${encodeURIComponent(lead.contact?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function openExtensionDocuments(index){
+  const lead = extensionLeadByIndex(index);
+
+  if(!lead){
+    alert("The extension request could not be identified.");
+    return;
+  }
+
+  const search =
+    lead.contact?.email ||
+    lead.contact?.name ||
+    lead.leadId ||
+    "";
+
+  window.open(
+    `/office-document-review?search=${encodeURIComponent(search)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+function openCompletedExtensionLead(index){
+  const lead =
+    (window.completedExtensionLeads || [])[index];
+
+  if(lead){
+    openExtensionWorkspace(lead);
+  }
+}
+
 function openExtensionWorkspace(lead){
   const panel =
     document.getElementById("detailPanel");
@@ -7957,70 +9181,24 @@ function openExtensionWorkspace(lead){
         Next action: ${escapeOfficeHtml(nextAction)}
       </div>
 
-      <div class="service-workspace-grid">
-        <div class="service-workspace-field full">
-          <label for="extensionWorkStatus">Extension work status</label>
-          <select id="extensionWorkStatus">
-            ${selectOptionsHtml(
-              [
-                "Deadline Review Needed",
-                "Payment Pending",
-                "Paid / Needs Review",
-                "Information Needed",
-                "Ready to File",
-                "Filed",
-                "Confirmation Delivered",
-                "Completed"
-              ],
-              getExtensionWorkStatus(lead)
-            )}
-          </select>
-        </div>
-
-        <div class="service-workspace-field full">
-          <label for="extensionConfirmationStatus">Confirmation status</label>
-          <select id="extensionConfirmationStatus">
-            ${selectOptionsHtml(
-              [
-                "Not Delivered",
-                "Preparing Confirmation",
-                "Delivered to Secure Portal",
-                "Delivered by Email"
-              ],
-              request.confirmationStatus ||
-              "Not Delivered"
-            )}
-          </select>
-        </div>
-
-        <div class="service-workspace-field full">
-          <label for="extensionOfficeNote">Office extension note</label>
-          <textarea
-            id="extensionOfficeNote"
-            rows="5"
-            placeholder="Record the deadline decision, missing information, filing result, state requirement, or client follow-up here."
-          >${escapeOfficeHtml(request.officeNote || "")}</textarea>
-        </div>
+      <div class="service-workspace-card">
+        <strong>Workflow Location</strong><br>
+        This is the full read-only client profile. Routine extension work now stays on the client's <strong>Extension Action Basket</strong> card under <strong>Tax Preparation Work Center → Extension Requests</strong>. The card contains the deadline decision, secure payment controls, mandatory checklist, client-information status, state action, work status, confirmation status, and office note.
       </div>
 
       <div class="service-workspace-actions">
-        <button
-          type="button"
-          onclick="saveExtensionWorkspace()"
-        >
-          Save Extension Status
-        </button>
-
         <a
           class="secondary"
-          href="/office-document-review"
+          href="/office-document-review?search=${encodeURIComponent(lead.contact?.email || lead.contact?.name || lead.leadId || "")}"
+          target="_blank"
+          rel="noopener"
         >
-          Open Document Review Queue
+          Open This Client's Documents
         </a>
       </div>
 
       <div class="service-workspace-note">
-        This is a standalone extension service. The client may use any tax professional for the full return. An extension gives more time to file, not more time to pay. Do not mark the request Filed until filing confirmation is available.
+        This is a standalone extension service. The client may use any tax professional for the full return. An extension gives more time to file, not more time to pay. Completed and closed requests are stored in the minimized section at the bottom of Extension Requests.
       </div>
     </div>
   `;

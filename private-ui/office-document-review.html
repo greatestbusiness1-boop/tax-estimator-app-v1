@@ -692,6 +692,11 @@
         "documentId"
       ) || "";
 
+    const initialClientSearch =
+      officeReviewQuery.get(
+        "search"
+      ) || "";
+
     let transcriptDeliveryTarget = null;
 
     const transcriptDeliveryLeadId =
@@ -1663,6 +1668,12 @@
       });
       window.location.href = "/office-document-review/sign-in";
     });
+
+    if (initialClientSearch) {
+      document.getElementById(
+        "searchFilter"
+      ).value = initialClientSearch;
+    }
 
     Promise.all([
       loadState(),
