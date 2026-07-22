@@ -857,6 +857,15 @@ function formatPhoneNumber(phone) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
 }
 
+const VALID_US_STATE_CODES = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC",
+  "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+  "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT",
+  "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH",
+  "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT",
+  "VT", "VA", "WA", "WV", "WI", "WY"
+]);
+
 function roundWholeDollar(amount) {
   const n = Number(amount || 0);
   return Math.round(n);
@@ -3154,7 +3163,7 @@ An extension gives additional time to file. It does not extend the deadline to p
 Use your secure client portal for documents and office updates:
 ${portalUrl}
 
-Your extension service fee will be credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+This is a standalone extension service. You may use any tax professional to prepare the full return.
 
 Thank you,
 
@@ -7865,7 +7874,11 @@ app.post("/api/extension-request", async (req, res) => {
 
   const name = String(contact.name || "").trim();
   const email = normalizeEmail(contact.email || "");
-  const phone = formatPhoneNumber(contact.phone || "");
+  const phoneDigits =
+    String(contact.phone || "")
+      .replace(/\D/g, "")
+      .slice(0, 10);
+  const phone = formatPhoneNumber(phoneDigits);
   const serviceType =
     String(request.serviceType || "").trim().toLowerCase();
   const taxYear =
@@ -7889,6 +7902,12 @@ app.post("/api/extension-request", async (req, res) => {
     errors.push("Email address is required.");
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errors.push("Email address format is invalid.");
+  }
+
+  if (phoneDigits.length !== 10) {
+    errors.push(
+      "Enter a 10-digit phone number in the format (623) 570-3934."
+    );
   }
 
   if (!["individual", "business"].includes(serviceType)) {
@@ -7939,9 +7958,9 @@ app.post("/api/extension-request", async (req, res) => {
 
   if (
     stateExtensionRequested &&
-    !/^[A-Z]{2}$/.test(stateCode)
+    !VALID_US_STATE_CODES.has(stateCode)
   ) {
-    errors.push("Enter the two-letter state abbreviation.");
+    errors.push("Select valid two-letter state initials.");
   }
 
   if (request.acknowledgmentAccepted !== true) {
@@ -8007,7 +8026,7 @@ app.post("/api/extension-request", async (req, res) => {
     contact: {
       name,
       email,
-      phone: phone || "Not provided"
+      phone
     },
     taxData: {
       taxYear,
@@ -8060,8 +8079,10 @@ app.post("/api/extension-request", async (req, res) => {
         ),
       consideringFullPreparation:
         request.consideringFullPreparation === true,
+      preparationQuoteRequested:
+        request.consideringFullPreparation === true,
       acknowledgmentAccepted: true,
-      feeCreditTowardPreparation: true,
+      feeCreditTowardPreparation: false,
       basePrice,
       stateAddOn,
       totalPrice,
@@ -8115,7 +8136,9 @@ $${totalPrice}
 
 ${nextStep}
 
-Important: An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed. The extension fee will be credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+Important: An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed.
+
+This is a standalone extension service. You may use any tax professional to prepare the full return.${request.consideringFullPreparation === true ? "\n\nYou asked for tax preparation quote or next-step information. The office will follow up after reviewing the extension request." : ""}
 
 Reference number:
 ${leadId}
@@ -13880,7 +13903,7 @@ app.post("/api/create-extension-checkout", async (req, res) => {
 
     const stateText =
       hasState
-        ? " Includes one state-extension review and filing add-on for " +
+        ? " Includes review of one state's extension rules and preparation or filing when a separate state action is required for " +
           String(request.stateCode || "the selected state") +
           "."
         : "";
@@ -13929,7 +13952,7 @@ app.post("/api/create-extension-checkout", async (req, res) => {
               ? "yes"
               : "no",
           feeCreditTowardPreparation:
-            "yes"
+            "no"
         },
         success_url:
           `${APP_BASE_URL}/extension-thank-you?checkout=success&leadId=${encodeURIComponent(leadId)}`,

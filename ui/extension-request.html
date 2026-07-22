@@ -317,15 +317,42 @@
       color:#334155;
       font-size:13px;
     }
-    .credit{
+    .before-you-begin{
+      margin:0;
+      border-top:1px solid var(--line);
+      background:#f8fbff;
+      padding:15px 20px;
+      color:#334155;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .before-you-begin strong{
+      color:var(--navy);
+      display:block;
+      margin-bottom:5px;
+      font-size:14px;
+    }
+    .before-you-begin ul{
+      margin:0;
+      padding-left:18px;
+      display:grid;
+      gap:3px;
+    }
+    .standalone{
       margin-top:16px;
-      border:1px solid #bbf7d0;
-      background:#f0fdf4;
-      color:#166534;
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      color:#1e3a5f;
       border-radius:10px;
       padding:13px;
       font-size:13px;
       font-weight:800;
+      line-height:1.45;
+    }
+    .service-note{
+      margin-top:7px;
+      color:#475569;
+      font-size:12px;
       line-height:1.45;
     }
     .scope{
@@ -406,6 +433,16 @@
           <p>Do not enter Social Security numbers, bank information, passwords, or upload tax documents on this page.</p>
         </div>
 
+        <div class="before-you-begin">
+          <strong>Before you begin, have this information ready:</strong>
+          <ul>
+            <li>Client or business contact name, email address, and 10-digit phone number</li>
+            <li>Tax year, filing status or business return type, and deadline situation</li>
+            <li>Federal-only or federal-plus-one-state service choice</li>
+            <li>Estimated total tax, withholding or prior payments, estimated balance due, and planned payment</li>
+          </ul>
+        </div>
+
         <form class="panel-body" id="extensionForm" novalidate>
           <h3 class="section-title">Client Information</h3>
           <div class="grid">
@@ -419,18 +456,31 @@
             </div>
             <div class="field">
               <label for="clientPhone">Phone number</label>
-              <input id="clientPhone" type="tel" autocomplete="tel">
+              <input
+                id="clientPhone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                maxlength="14"
+                placeholder="(623) 570-3934"
+                required
+              >
             </div>
           </div>
 
           <h3 class="section-title">Return &amp; Extension Type</h3>
           <div class="grid">
-            <div class="field">
-              <label for="serviceType">Extension type</label>
-              <select id="serviceType" required>
-                <option value="individual">Individual federal extension — $49</option>
-                <option value="business">Business extension — $99</option>
+            <div class="field full">
+              <label for="servicePackage">Extension service</label>
+              <select id="servicePackage" required>
+                <option value="individual-federal">Individual Federal Extension — $49</option>
+                <option value="individual-federal-state">Individual Federal + One State Review/Filing — $74</option>
+                <option value="business-federal">Business Federal Extension — $99</option>
+                <option value="business-federal-state">Business Federal + One State Review/Filing — $124</option>
               </select>
+              <div class="service-note">
+                Choose one package. The $25 state amount covers review of one state's extension rules and preparation or filing when a separate state action is required. The office confirms what applies before filing.
+              </div>
             </div>
 
             <div class="field">
@@ -474,14 +524,62 @@
               </select>
             </div>
 
-            <label class="check field full">
-              <input id="stateExtensionRequested" type="checkbox">
-              <span>Add review and preparation of one state extension for $25 when required and supported.</span>
-            </label>
-
             <div class="field conditional" id="stateCodeWrap">
-              <label for="stateCode">State abbreviation</label>
-              <input id="stateCode" maxlength="2" placeholder="AZ">
+              <label for="stateCode">State initials</label>
+              <select id="stateCode">
+                <option value="">Select state initials</option>
+                <option value="AL">AL</option>
+                <option value="AK">AK</option>
+                <option value="AZ">AZ</option>
+                <option value="AR">AR</option>
+                <option value="CA">CA</option>
+                <option value="CO">CO</option>
+                <option value="CT">CT</option>
+                <option value="DE">DE</option>
+                <option value="DC">DC</option>
+                <option value="FL">FL</option>
+                <option value="GA">GA</option>
+                <option value="HI">HI</option>
+                <option value="ID">ID</option>
+                <option value="IL">IL</option>
+                <option value="IN">IN</option>
+                <option value="IA">IA</option>
+                <option value="KS">KS</option>
+                <option value="KY">KY</option>
+                <option value="LA">LA</option>
+                <option value="ME">ME</option>
+                <option value="MD">MD</option>
+                <option value="MA">MA</option>
+                <option value="MI">MI</option>
+                <option value="MN">MN</option>
+                <option value="MS">MS</option>
+                <option value="MO">MO</option>
+                <option value="MT">MT</option>
+                <option value="NE">NE</option>
+                <option value="NV">NV</option>
+                <option value="NH">NH</option>
+                <option value="NJ">NJ</option>
+                <option value="NM">NM</option>
+                <option value="NY">NY</option>
+                <option value="NC">NC</option>
+                <option value="ND">ND</option>
+                <option value="OH">OH</option>
+                <option value="OK">OK</option>
+                <option value="OR">OR</option>
+                <option value="PA">PA</option>
+                <option value="RI">RI</option>
+                <option value="SC">SC</option>
+                <option value="SD">SD</option>
+                <option value="TN">TN</option>
+                <option value="TX">TX</option>
+                <option value="UT">UT</option>
+                <option value="VT">VT</option>
+                <option value="VA">VA</option>
+                <option value="WA">WA</option>
+                <option value="WV">WV</option>
+                <option value="WI">WI</option>
+                <option value="WY">WY</option>
+              </select>
             </div>
           </div>
 
@@ -508,8 +606,8 @@
           <h3 class="section-title">Required Acknowledgments</h3>
 
           <label class="check">
-            <input id="consideringFullPreparation" type="checkbox">
-            <span>I am considering hiring Greatest Business Solution LLC to prepare this full return. The extension service fee will be credited toward preparation of the same return.</span>
+            <input id="requestPreparationQuote" type="checkbox">
+            <span>I may want Greatest Business Solution LLC to prepare the full return. Please include tax preparation quote or next-step information after the extension review.</span>
           </label>
 
           <label class="check" style="margin-top:10px;">
@@ -541,14 +639,14 @@
             <strong id="basePrice">$49</strong>
           </div>
           <div>
-            <span>State extension add-on</span>
+            <span>One state review / filing</span>
             <strong id="statePrice">$0</strong>
           </div>
         </div>
 
-        <div class="credit">
-          <strong>Preparation credit included:</strong>
-          this extension service fee is credited toward full tax preparation when Greatest Business Solution LLC prepares the same return.
+        <div class="standalone">
+          <strong>Standalone service:</strong>
+          You may use another tax professional for the full return. Purchasing this extension service does not require you to hire Greatest Business Solution LLC for tax preparation.
         </div>
 
         <div class="scope">
@@ -568,11 +666,12 @@
     "use strict";
 
     const form = document.getElementById("extensionForm");
-    const serviceType = document.getElementById("serviceType");
+    const servicePackage = document.getElementById("servicePackage");
     const entityTypeWrap = document.getElementById("entityTypeWrap");
     const filingStatusWrap = document.getElementById("filingStatusWrap");
-    const stateCheckbox = document.getElementById("stateExtensionRequested");
     const stateCodeWrap = document.getElementById("stateCodeWrap");
+    const stateCode = document.getElementById("stateCode");
+    const phoneInput = document.getElementById("clientPhone");
     const submitButton = document.getElementById("submitButton");
     const errors = document.getElementById("formErrors");
     const success = document.getElementById("formSuccess");
@@ -593,23 +692,58 @@
       }).format(Number(value || 0));
     }
 
+    function getServiceSelection() {
+      const value = String(servicePackage.value || "");
+      return {
+        business: value.startsWith("business-"),
+        stateRequested: value.endsWith("-state")
+      };
+    }
+
+    function formatPhoneInput(value) {
+      const digits = String(value || "")
+        .replace(/\D/g, "")
+        .slice(0, 10);
+
+      if (digits.length < 4) {
+        return digits ? `(${digits}` : "";
+      }
+
+      if (digits.length < 7) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+      }
+
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
     function updateFormDisplay() {
-      const business = serviceType.value === "business";
+      const selection = getServiceSelection();
+      const business = selection.business;
+      const stateRequested = selection.stateRequested;
+
       entityTypeWrap.style.display = business ? "grid" : "none";
       filingStatusWrap.style.display = business ? "none" : "grid";
-      stateCodeWrap.style.display = stateCheckbox.checked ? "grid" : "none";
+      stateCodeWrap.style.display = stateRequested ? "grid" : "none";
+
+      if (!stateRequested) {
+        stateCode.value = "";
+      }
 
       const base = business ? 99 : 49;
-      const state = stateCheckbox.checked ? 25 : 0;
+      const state = stateRequested ? 25 : 0;
+
       document.getElementById("baseLabel").textContent =
-        business ? "Business extension" : "Individual federal extension";
+        business ? "Business federal extension" : "Individual federal extension";
       document.getElementById("basePrice").textContent = money(base);
       document.getElementById("statePrice").textContent = money(state);
       document.getElementById("totalPrice").textContent = money(base + state);
     }
 
-    serviceType.addEventListener("change", updateFormDisplay);
-    stateCheckbox.addEventListener("change", updateFormDisplay);
+    phoneInput.addEventListener("input", () => {
+      phoneInput.value = formatPhoneInput(phoneInput.value);
+    });
+
+    servicePackage.addEventListener("change", updateFormDisplay);
     updateFormDisplay();
 
     function showErrors(messages) {
@@ -666,18 +800,18 @@
           phone: document.getElementById("clientPhone").value.trim()
         },
         extension: {
-          serviceType: serviceType.value,
+          serviceType: getServiceSelection().business ? "business" : "individual",
           taxYear: document.getElementById("taxYear").value.trim(),
           filingStatus: document.getElementById("filingStatus").value,
           entityType: document.getElementById("entityType").value,
           deadlineStatus: document.getElementById("deadlineStatus").value,
-          stateExtensionRequested: stateCheckbox.checked,
-          stateCode: document.getElementById("stateCode").value.trim().toUpperCase(),
+          stateExtensionRequested: getServiceSelection().stateRequested,
+          stateCode: stateCode.value,
           estimatedTotalTax: Number(document.getElementById("estimatedTotalTax").value || 0),
           totalPayments: Number(document.getElementById("totalPayments").value || 0),
           estimatedBalanceDue: Number(document.getElementById("estimatedBalanceDue").value || 0),
           paymentWithExtension: Number(document.getElementById("paymentWithExtension").value || 0),
-          consideringFullPreparation: document.getElementById("consideringFullPreparation").checked,
+          consideringFullPreparation: document.getElementById("requestPreparationQuote").checked,
           acknowledgmentAccepted: document.getElementById("acknowledgmentAccepted").checked
         }
       };

@@ -1081,6 +1081,198 @@
       border-color: #17324d;
     }
 
+    .extension-filter-count {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:22px;
+      height:22px;
+      margin-left:5px;
+      padding:0 6px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#17324d;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .extension-filter-btn.active .extension-filter-count {
+      background:#ffffff;
+      color:#17324d;
+    }
+
+    .extension-filter-summary {
+      display:none;
+      margin:-8px 0 16px;
+      border:1px solid #cbd5e1;
+      border-left:5px solid #17324d;
+      border-radius:10px;
+      background:#ffffff;
+      padding:10px 12px;
+      color:#334155;
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .extension-card-list {
+      display:grid;
+      gap:12px;
+    }
+
+    .extension-client-card {
+      border:1px solid #cbd5e1;
+      border-left:6px solid #28588c;
+      border-radius:14px;
+      background:#ffffff;
+      padding:16px;
+      box-shadow:0 8px 20px rgba(15,44,86,.06);
+      cursor:pointer;
+    }
+
+    .extension-client-card.urgent {
+      border-left-color:#c2410c;
+      background:#fffaf5;
+    }
+
+    .extension-card-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:12px;
+    }
+
+    .extension-client-name {
+      color:#0f2c56;
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .extension-client-contact {
+      margin-top:3px;
+      color:#475569;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .extension-card-badges {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:6px;
+    }
+
+    .extension-urgent-badge,
+    .extension-status-badge {
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:6px 9px;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .extension-urgent-badge {
+      background:#ffedd5;
+      color:#9a3412;
+      border:1px solid #fdba74;
+    }
+
+    .extension-status-badge {
+      background:#eaf2fb;
+      color:#17324d;
+      border:1px solid #bfdbfe;
+    }
+
+    .extension-card-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:9px;
+    }
+
+    .extension-card-block {
+      min-height:92px;
+      border:1px solid #dbe4f0;
+      border-radius:10px;
+      background:#f8fafc;
+      padding:10px;
+      color:#334155;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .extension-card-block > span {
+      display:block;
+      margin-bottom:5px;
+      color:#64748b;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .extension-card-block strong {
+      color:#0f2c56;
+    }
+
+    .extension-next-action {
+      margin-top:10px;
+      border:1px solid #fde68a;
+      border-radius:10px;
+      background:#fffbeb;
+      padding:10px 12px;
+      color:#78350f;
+      font-size:12px;
+      font-weight:900;
+      line-height:1.45;
+    }
+
+    .extension-card-actions {
+      display:flex;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+
+    .extension-sidebar-count {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:24px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#17324d;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .extension-sidebar-count.has-deadline-review {
+      background:#ffedd5;
+      color:#9a3412;
+    }
+
+    @media (max-width: 1180px) {
+      .extension-card-grid {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .extension-card-head {
+        display:block;
+      }
+
+      .extension-card-badges {
+        justify-content:flex-start;
+        margin-top:8px;
+      }
+
+      .extension-card-grid {
+        grid-template-columns:1fr;
+      }
+    }
+
     .service-workspace {
       display: grid;
       gap: 12px;
@@ -1199,7 +1391,20 @@
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Tax Preparation Work Center</div>
     <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
-    <button class="sidebar-btn" data-view="extensions" data-title="Extension Requests">Extension Requests</button>
+    <button
+      id="extensionRequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="extensions"
+      data-title="Extension Requests"
+      type="button"
+    >
+      <span>Extension Requests</span>
+      <span
+        id="extensionRequestsSidebarCount"
+        class="extension-sidebar-count"
+        aria-label="0 open extension requests"
+      >0</span>
+    </button>
     <button class="sidebar-btn" data-view="taxprepcompleted" data-title="Completed Tax Returns">Completed Tax Returns</button>
 
     <div class="sidebar-divider"></div>
@@ -1268,6 +1473,10 @@
           <div class="office-command-stat">
             <strong id="officeTaxPrepCount">0</strong>
             <span>Tax Prep Requests</span>
+          </div>
+          <div class="office-command-stat">
+            <strong id="officeExtensionCount">0</strong>
+            <span>Extension Requests</span>
           </div>
           <div class="office-command-stat">
             <strong id="officeTranscriptCount">0</strong>
@@ -1361,14 +1570,17 @@
     </div>
 
     <div id="extensionFilters" class="extension-filters">
-      <button class="extension-filter-btn active" data-extension-filter="all">All Open Extensions</button>
-      <button class="extension-filter-btn" data-extension-filter="deadline">Deadline Review</button>
-      <button class="extension-filter-btn" data-extension-filter="payment">Payment Pending</button>
-      <button class="extension-filter-btn" data-extension-filter="review">Paid / Needs Review</button>
-      <button class="extension-filter-btn" data-extension-filter="information">Information Needed</button>
-      <button class="extension-filter-btn" data-extension-filter="ready">Ready to File</button>
-      <button class="extension-filter-btn" data-extension-filter="filed">Filed</button>
-      <button class="extension-filter-btn" data-extension-filter="completed">Completed</button>
+      <button class="extension-filter-btn active" data-extension-filter="all">All Open Extensions <span id="extensionAllCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="deadline">Deadline Review <span id="extensionDeadlineCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="payment">Payment Pending <span id="extensionPaymentCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="review">Paid / Needs Review <span id="extensionReviewCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="information">Information Needed <span id="extensionInformationCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="ready">Ready to File <span id="extensionReadyCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="filed">Filed <span id="extensionFiledCount" class="extension-filter-count">0</span></button>
+      <button class="extension-filter-btn" data-extension-filter="completed">Completed <span id="extensionCompletedCount" class="extension-filter-count">0</span></button>
+    </div>
+    <div id="extensionFilterSummary" class="extension-filter-summary">
+      These buttons filter the client cards below. Open the client profile from the card to review or update the request.
     </div>
 
     <div id="contactFilters" class="contact-filters">
@@ -2652,6 +2864,181 @@ function matchesExtensionFilter(lead){
   return true;
 }
 
+function getExtensionServiceLabel(lead){
+  const request = lead?.extensionRequest || {};
+  const business =
+    String(request.serviceType || "")
+      .toLowerCase() === "business";
+  const state =
+    request.stateExtensionRequested === true
+      ? ` + ${String(request.stateCode || "State").toUpperCase()}`
+      : "";
+
+  return `${business ? "Business Federal" : "Individual Federal"}${state}`;
+}
+
+function getExtensionDeadlineLabel(lead){
+  const value = String(
+    lead?.extensionRequest?.deadlineStatus || ""
+  );
+
+  const labels = {
+    before_due_date:
+      "Before the original filing deadline",
+    relief_or_special_rule:
+      "Special deadline rule requires review",
+    unsure_or_late:
+      "Deadline may have passed or client is unsure"
+  };
+
+  return labels[value] || "Deadline situation not recorded";
+}
+
+function getExtensionPortalStatus(lead){
+  return String(
+    lead?.clientPortal?.status ||
+    lead?.clientPortal?.activationStatus ||
+    lead?.clientPortal?.portalStatus ||
+    "Not Activated"
+  );
+}
+
+function getExtensionNextOfficeAction(lead){
+  const status =
+    getExtensionWorkStatus(lead).toLowerCase();
+  const payment =
+    getExtensionPaymentStatus(lead).toLowerCase();
+
+  if(status.includes("deadline review")){
+    return "Review deadline eligibility before requesting payment.";
+  }
+
+  if(status.includes("payment pending") || payment.includes("pending")){
+    return "Confirm payment or follow up with the client before preparation begins.";
+  }
+
+  if(status.includes("paid") || payment.includes("paid")){
+    return "Review the return type, state requirement, estimated payment, and filing deadline.";
+  }
+
+  if(status.includes("information needed")){
+    return "Contact the client for the missing information shown in the office note.";
+  }
+
+  if(status.includes("ready to file")){
+    return "Prepare and file the eligible extension, then save the filing confirmation.";
+  }
+
+  if(status.includes("filed")){
+    return "Deliver the filing confirmation through the secure portal and mark the request completed.";
+  }
+
+  return "Open the client profile and review the extension request.";
+}
+
+function getExtensionCounts(){
+  const extensionLeads =
+    (allLeads || []).filter(isExtensionLead);
+
+  const open =
+    extensionLeads.filter(
+      lead => !isCompletedExtension(lead)
+    );
+
+  const countWhere = (filterName) => {
+    const previous = currentExtensionFilter;
+    currentExtensionFilter = filterName;
+    const count = extensionLeads.filter(
+      matchesExtensionFilter
+    ).length;
+    currentExtensionFilter = previous;
+    return count;
+  };
+
+  return {
+    all: open.length,
+    deadline: countWhere("deadline"),
+    payment: countWhere("payment"),
+    review: countWhere("review"),
+    information: countWhere("information"),
+    ready: countWhere("ready"),
+    filed: countWhere("filed"),
+    completed: countWhere("completed")
+  };
+}
+
+function updateExtensionRequestCounts(visibleCount){
+  const counts = getExtensionCounts();
+
+  const setCount = (id, value) => {
+    const element = document.getElementById(id);
+    if(element){
+      element.textContent = String(value);
+    }
+  };
+
+  setCount("extensionAllCount", counts.all);
+  setCount("extensionDeadlineCount", counts.deadline);
+  setCount("extensionPaymentCount", counts.payment);
+  setCount("extensionReviewCount", counts.review);
+  setCount("extensionInformationCount", counts.information);
+  setCount("extensionReadyCount", counts.ready);
+  setCount("extensionFiledCount", counts.filed);
+  setCount("extensionCompletedCount", counts.completed);
+  setCount("extensionRequestsSidebarCount", counts.all);
+
+  const sidebarCount =
+    document.getElementById(
+      "extensionRequestsSidebarCount"
+    );
+
+  if(sidebarCount){
+    sidebarCount.classList.toggle(
+      "has-deadline-review",
+      counts.deadline > 0
+    );
+
+    sidebarCount.setAttribute(
+      "aria-label",
+      `${counts.all} open extension requests, ${counts.deadline} needing deadline review`
+    );
+  }
+
+  const summary =
+    document.getElementById(
+      "extensionFilterSummary"
+    );
+
+  if(summary){
+    const labels = {
+      all: "All Open Extensions",
+      deadline: "Deadline Review",
+      payment: "Payment Pending",
+      review: "Paid / Needs Review",
+      information: "Information Needed",
+      ready: "Ready to File",
+      filed: "Filed",
+      completed: "Completed"
+    };
+
+    const shown =
+      Number.isFinite(Number(visibleCount))
+        ? Number(visibleCount)
+        : (
+            counts[currentExtensionFilter] ||
+            0
+          );
+
+    summary.style.display =
+      currentView === "extensions"
+        ? "block"
+        : "none";
+
+    summary.textContent =
+      `Showing ${shown} ${labels[currentExtensionFilter] || "Extension"} request${shown === 1 ? "" : "s"}. The buttons above filter the client cards. Use Open Client Profile to review and update a request.`;
+  }
+}
+
 
 function matchesTaxPrepAdvancedFilters(lead){
   const enteredAt = getLeadEnteredAt(lead);
@@ -3264,12 +3651,16 @@ function getConversionMetrics(){
   const freeEstimates = activeLeads.filter(isFreeEstimateRootLead);
   const paidReviews = activeLeads.filter(isPaidWrittenReviewLead);
   const taxPrep = activeLeads.filter(isActiveTaxPrepRequest);
+  const extensions = activeLeads
+    .filter(isExtensionLead)
+    .filter(lead => !isCompletedExtension(lead));
   const transcripts = activeLeads.filter(isActiveTranscriptRequest);
   const consults = activeLeads.filter(isActiveScheduledConsult);
 
   const serviceConversions =
     paidReviews.length +
     taxPrep.length +
+    extensions.length +
     transcripts.length +
     consults.length;
 
@@ -3282,6 +3673,7 @@ function getConversionMetrics(){
     freeEstimates,
     paidReviews,
     taxPrep,
+    extensions,
     transcripts,
     consults,
     conversionRate,
@@ -3730,6 +4122,58 @@ function getConversionCommandItems(){
       return;
     }
 
+    if(isExtensionLead(lead) && !isCompletedExtension(lead)){
+      const extensionStatus =
+        getExtensionWorkStatus(lead);
+      const paymentStatus =
+        getExtensionPaymentStatus(lead);
+      const deadlineReview =
+        extensionStatus
+          .toLowerCase()
+          .includes("deadline review");
+      const paid =
+        paymentStatus
+          .toLowerCase()
+          .includes("paid");
+
+      items.push(makeConversionWorkItem(lead, {
+        stage:
+          deadlineReview
+            ? "Needs Attention"
+            : (
+                paid
+                  ? "Paid Work"
+                  : "Hot Lead"
+              ),
+        stageRank:
+          deadlineReview
+            ? 0
+            : (
+                paid
+                  ? 1
+                  : 2
+              ),
+        bucket:
+          paid
+            ? "paid-work"
+            : "follow-up",
+        workType: "Tax Extension",
+        currentStep:
+          `${getExtensionServiceLabel(lead)} — ${extensionStatus}`,
+        nextAction:
+          getExtensionNextOfficeAction(lead),
+        reason:
+          deadlineReview
+            ? "Payment is intentionally blocked until deadline eligibility is reviewed."
+            : "Client submitted a paid or pending Tax Extension request that requires office handling.",
+        status:
+          status ||
+          `Extension Request - ${extensionStatus}`
+      }));
+
+      return;
+    }
+
     if(isActiveTranscriptRequest(lead)){
       const waiting = officeIncludesAny(lower, [
         "waiting",
@@ -3966,6 +4410,7 @@ function updateOfficeCommandSummary(){
   setText("officeFreeEstimateCount", metrics.freeEstimates.length);
   setText("officePaidReviewCount", metrics.paidReviews.length);
   setText("officeTaxPrepCount", metrics.taxPrep.length);
+  setText("officeExtensionCount", metrics.extensions.length);
   setText("officeTranscriptCount", metrics.transcripts.length);
   setText("officeScheduledConsultCount", metrics.consults.length);
   setText("officeConversionRate", `${metrics.conversionRate}%`);
@@ -4021,6 +4466,11 @@ function openOfficeWorkItem(index){
 
   if(!item?.lead){
     alert("Conversion work item could not be identified.");
+    return;
+  }
+
+  if(isExtensionLead(item.lead)){
+    openExtensionWorkspace(item.lead);
     return;
   }
 
@@ -4574,6 +5024,11 @@ function appendTaxPlannerCrmToDetail(lead){
 }
 
 function openPanel(lead){
+  if(isExtensionLead(lead)){
+    openExtensionWorkspace(lead);
+    return;
+  }
+
   const panel=document.getElementById("detailPanel");
   panel.style.display="block";
 
@@ -5963,65 +6418,138 @@ function renderLeads(){
   }
 
   if(currentView === "extensions"){
+    updateExtensionRequestCounts(visible.length);
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="office-empty">
+          No extension requests match the selected filter.
+        </div>`;
+      window.visibleExtensionLeads = [];
+      return;
+    }
+
     list.innerHTML = `
-      <div class="taxprep-table-wrap">
-        <table class="taxprep-table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Extension</th>
-              <th>Tax Year</th>
-              <th>Price</th>
-              <th>Payment</th>
-              <th>Work Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${visible.map((lead, index) => {
-              const request =
-                lead.extensionRequest || {};
+      <div class="extension-card-list">
+        ${visible.map((lead, index) => {
+          const request =
+            lead.extensionRequest || {};
+          const workStatus =
+            getExtensionWorkStatus(lead);
+          const paymentStatus =
+            getExtensionPaymentStatus(lead);
+          const deadlineReview =
+            workStatus
+              .toLowerCase()
+              .includes("deadline review");
+          const preparationInterest =
+            request.preparationQuoteRequested === true ||
+            request.consideringFullPreparation === true
+              ? "Tax preparation quote requested"
+              : "Extension service only";
+          const portalStatus =
+            getExtensionPortalStatus(lead);
+          const phone =
+            formatDashboardPhone(
+              lead.contact?.phone || ""
+            ) || "Phone not recorded";
 
-              const extensionType =
-                String(request.serviceType || "")
-                  .toLowerCase() === "business"
-                  ? "Business"
-                  : "Individual";
+          return `
+            <article
+              class="extension-client-card ${deadlineReview ? "urgent" : ""}"
+              onclick="openExtensionLead(${index})"
+            >
+              <div class="extension-card-head">
+                <div>
+                  <div class="extension-client-name">
+                    ${escapeOfficeHtml(lead.contact?.name || "No Name")}
+                  </div>
+                  <div class="extension-client-contact">
+                    ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
+                    ${escapeOfficeHtml(phone)}
+                  </div>
+                </div>
 
-              const stateText =
-                request.stateExtensionRequested
-                  ? ` + ${escapeOfficeHtml(request.stateCode || "State")}`
-                  : "";
+                <div class="extension-card-badges">
+                  ${deadlineReview
+                    ? `<span class="extension-urgent-badge">Deadline Review Needed</span>`
+                    : ""}
+                  <span class="extension-status-badge">
+                    ${escapeOfficeHtml(workStatus)}
+                  </span>
+                </div>
+              </div>
 
-              return `
-                <tr>
-                  <td>
-                    <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
-                    ${escapeOfficeHtml(lead.contact?.email || "")}
-                  </td>
-                  <td>
-                    ${extensionType} Federal${stateText}
-                  </td>
-                  <td>${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "")}</td>
-                  <td><strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong></td>
-                  <td>${escapeOfficeHtml(getExtensionPaymentStatus(lead))}</td>
-                  <td>
-                    <span class="status-pill">
-                      ${escapeOfficeHtml(getExtensionWorkStatus(lead))}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      class="taxprep-open-btn"
-                      onclick="openExtensionLead(${index})"
-                    >
-                      Open Extension Workspace
-                    </button>
-                  </td>
-                </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
+              <div class="extension-card-grid">
+                <div class="extension-card-block">
+                  <span>Request</span>
+                  <strong>${escapeOfficeHtml(getExtensionServiceLabel(lead))}</strong><br>
+                  Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
+                  ${escapeOfficeHtml(
+                    String(
+                      request.entityType ||
+                      request.filingStatus ||
+                      "Return type not recorded"
+                    )
+                  )}
+                </div>
+
+                <div class="extension-card-block">
+                  <span>Deadline</span>
+                  <strong>${escapeOfficeHtml(getExtensionDeadlineLabel(lead))}</strong><br>
+                  Requested: ${escapeOfficeHtml(
+                    formatLeadDate(
+                      request.requestedAt ||
+                      getLeadEnteredAt(lead)
+                    ) || "Not recorded"
+                  )}
+                </div>
+
+                <div class="extension-card-block">
+                  <span>Fee &amp; Payment</span>
+                  Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
+                  Payment: ${escapeOfficeHtml(paymentStatus)}<br>
+                  Planned tax payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
+                </div>
+
+                <div class="extension-card-block">
+                  <span>Tax Estimate</span>
+                  Estimated tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
+                  Withholding / payments: $${Number(request.totalPayments || 0).toLocaleString()}<br>
+                  Estimated balance: <strong>$${Number(request.estimatedBalanceDue || 0).toLocaleString()}</strong>
+                </div>
+
+                <div class="extension-card-block">
+                  <span>Client Profile</span>
+                  ${escapeOfficeHtml(preparationInterest)}<br>
+                  Portal: ${escapeOfficeHtml(portalStatus)}<br>
+                  Reference: ${escapeOfficeHtml(lead.leadId || "")}
+                </div>
+
+                <div class="extension-card-block">
+                  <span>Office Note</span>
+                  ${escapeOfficeHtml(
+                    request.officeNote ||
+                    "No office note has been entered."
+                  )}
+                </div>
+              </div>
+
+              <div class="extension-next-action">
+                Next action: ${escapeOfficeHtml(getExtensionNextOfficeAction(lead))}
+              </div>
+
+              <div class="extension-card-actions">
+                <button
+                  class="taxprep-open-btn"
+                  type="button"
+                  onclick="event.stopPropagation(); openExtensionLead(${index})"
+                >
+                  Open Client Profile
+                </button>
+              </div>
+            </article>`;
+        }).join("")}
       </div>`;
 
     window.visibleExtensionLeads = visible;
@@ -7090,8 +7618,7 @@ function getTaxPrepPaymentStatusOptions(){
     "Quote Needed",
     "Invoice Sent",
     "Deposit Paid",
-    "Paid in Full",
-    "Extension Fee Credit Applied"
+    "Paid in Full"
   ];
 }
 
@@ -7361,16 +7888,27 @@ function openExtensionWorkspace(lead){
   const request =
     lead.extensionRequest || {};
 
-  const extensionType =
-    String(request.serviceType || "")
-      .toLowerCase() === "business"
-      ? "Business Extension"
-      : "Individual Federal Extension";
+  const phone =
+    formatDashboardPhone(
+      lead.contact?.phone || ""
+    ) || "Not recorded";
 
-  const stateText =
-    request.stateExtensionRequested
-      ? ` + ${request.stateCode || "State"} Extension`
-      : "";
+  const preparationInterest =
+    request.preparationQuoteRequested === true ||
+    request.consideringFullPreparation === true
+      ? "Tax preparation quote requested"
+      : "Extension service only — no preparation quote requested";
+
+  const portalStatus =
+    getExtensionPortalStatus(lead);
+
+  const nextAction =
+    getExtensionNextOfficeAction(lead);
+
+  const returnType =
+    request.entityType ||
+    request.filingStatus ||
+    "Not recorded";
 
   document.getElementById("dpName").innerText =
     lead.contact?.name || "Extension Client";
@@ -7379,7 +7917,7 @@ function openExtensionWorkspace(lead){
     lead.contact?.email || "No Email";
 
   document.getElementById("dpStatus").innerText =
-    "Extension Requests Workspace";
+    "Client Profile — Tax Extension";
 
   document.getElementById("dpTaxYear").innerText =
     "Tax Year: " +
@@ -7388,22 +7926,35 @@ function openExtensionWorkspace(lead){
   document.getElementById("dpRefund").innerHTML = `
     <div class="service-workspace">
       <div class="service-workspace-card">
-        <strong>${escapeOfficeHtml(extensionType + stateText)}</strong><br>
-        Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
-        Payment: ${escapeOfficeHtml(getExtensionPaymentStatus(lead))}<br>
+        <strong>Client Profile</strong><br>
+        Name: ${escapeOfficeHtml(lead.contact?.name || "No Name")}<br>
+        Email: ${escapeOfficeHtml(lead.contact?.email || "No Email")}<br>
+        Phone: ${escapeOfficeHtml(phone)}<br>
+        Secure portal: ${escapeOfficeHtml(portalStatus)}<br>
         Reference: ${escapeOfficeHtml(lead.leadId || "")}
       </div>
 
       <div class="service-workspace-card">
-        <strong>Deadline &amp; Payment Review</strong><br>
-        Deadline situation: ${escapeOfficeHtml(
-          String(request.deadlineStatus || "")
-            .replace(/_/g, " ")
-        )}<br>
-        Estimated tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
-        Payments / withholding: $${Number(request.totalPayments || 0).toLocaleString()}<br>
-        Estimated balance due: $${Number(request.estimatedBalanceDue || 0).toLocaleString()}<br>
-        Planned extension payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
+        <strong>Extension Request</strong><br>
+        Service: ${escapeOfficeHtml(getExtensionServiceLabel(lead))}<br>
+        Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
+        Filing status / return type: ${escapeOfficeHtml(returnType)}<br>
+        Deadline situation: ${escapeOfficeHtml(getExtensionDeadlineLabel(lead))}<br>
+        Preparation interest: ${escapeOfficeHtml(preparationInterest)}
+      </div>
+
+      <div class="service-workspace-card">
+        <strong>Fee, Tax Estimate &amp; Payment Review</strong><br>
+        Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
+        Service payment: ${escapeOfficeHtml(getExtensionPaymentStatus(lead))}<br>
+        Estimated total tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
+        Withholding / prior payments: $${Number(request.totalPayments || 0).toLocaleString()}<br>
+        Estimated balance due: <strong>$${Number(request.estimatedBalanceDue || 0).toLocaleString()}</strong><br>
+        Planned tax payment with extension: $${Number(request.paymentWithExtension || 0).toLocaleString()}
+      </div>
+
+      <div class="extension-next-action">
+        Next action: ${escapeOfficeHtml(nextAction)}
       </div>
 
       <div class="service-workspace-grid">
@@ -7446,8 +7997,8 @@ function openExtensionWorkspace(lead){
           <label for="extensionOfficeNote">Office extension note</label>
           <textarea
             id="extensionOfficeNote"
-            rows="4"
-            placeholder="Deadline review, missing information, filing confirmation, or state requirement"
+            rows="5"
+            placeholder="Record the deadline decision, missing information, filing result, state requirement, or client follow-up here."
           >${escapeOfficeHtml(request.officeNote || "")}</textarea>
         </div>
       </div>
@@ -7469,7 +8020,7 @@ function openExtensionWorkspace(lead){
       </div>
 
       <div class="service-workspace-note">
-        An extension gives more time to file, not more time to pay. Do not mark the request Filed until filing confirmation is available.
+        This is a standalone extension service. The client may use any tax professional for the full return. An extension gives more time to file, not more time to pay. Do not mark the request Filed until filing confirmation is available.
       </div>
     </div>
   `;
@@ -7613,6 +8164,7 @@ async function loadLeads(){
     populateTaxPrepAdvancedFilters();
     populateContactAdvancedFilters();
     populateClosedYearFilter();
+    updateExtensionRequestCounts();
     renderLeads();
 
   }catch(e){
@@ -7687,6 +8239,17 @@ document.addEventListener("DOMContentLoaded", () => {
         extensionFilters.style.display =
           currentView === "extensions"
             ? "flex"
+            : "none";
+      }
+
+      const extensionFilterSummary =
+        document.getElementById(
+          "extensionFilterSummary"
+        );
+      if(extensionFilterSummary){
+        extensionFilterSummary.style.display =
+          currentView === "extensions"
+            ? "block"
             : "none";
       }
 
