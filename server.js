@@ -13853,11 +13853,11 @@ function buildExtensionClosureEmail({
   if (outcome === "not_eligible") {
     return {
       subject:
-        "Update: Your Tax Extension Request Was Closed",
+        "Update on Your Tax Extension Request",
       text:
 `Hello ${name},
 
-We completed the deadline-eligibility review for your Tax Extension request.
+We reviewed the deadline information provided with your Tax Extension request.
 
 Service:
 ${service}
@@ -13865,12 +13865,16 @@ ${service}
 Tax year:
 ${taxYear}
 
-Result:
-The request was closed as Not Eligible for the standard extension filing workflow.
+What happened:
+Based on our review, we did not file a standard extension through this request. A standard federal filing extension generally must be requested by the original tax-return due date.
 
-No extension-service payment was requested or charged through this request.
+Important:
+No extension was filed through this request.
+No extension-service payment was requested or charged.
 
-This closed status does not mean that your tax return has been prepared or filed. You may still need tax-filing or resolution assistance based on your specific circumstances.
+This does not mean that you are disqualified from receiving tax help. It only means that this extension request was closed without filing an extension. You may still need to file the tax return, address a late return, or take another step based on your situation.
+
+Contact Greatest Business Solution LLC if you would like help determining your next step.
 
 Reference number:
 ${reference}

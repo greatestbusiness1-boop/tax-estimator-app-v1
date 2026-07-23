@@ -3123,6 +3123,45 @@ function getExtensionPaymentStatus(lead){
   ).trim();
 }
 
+function getExtensionDisplayWorkStatus(lead){
+  const status = getExtensionWorkStatus(lead);
+
+  if(
+    /closed\s*(?:—|-)\s*not eligible/i.test(
+      status
+    )
+  ){
+    return "Closed — Extension Not Filed";
+  }
+
+  return status;
+}
+
+function extensionDeadlineDecisionOptionsHtml(current){
+  const selected =
+    String(current || "Not Reviewed").trim();
+
+  return `
+    <option
+      value="Not Reviewed"
+      ${selected === "Not Reviewed" ? "selected" : ""}
+    >
+      Not Reviewed
+    </option>
+    <option
+      value="Eligible"
+      ${selected === "Eligible" ? "selected" : ""}
+    >
+      Eligible — Extension May Proceed
+    </option>
+    <option
+      value="Not Eligible"
+      ${selected === "Not Eligible" ? "selected" : ""}
+    >
+      Extension Cannot Be Filed
+    </option>`;
+}
+
 function extensionPaymentIsPaid(lead){
   return /paid|verified/i.test(
     getExtensionPaymentStatus(lead)
@@ -3343,7 +3382,7 @@ function getExtensionNextOfficeAction(lead){
   }
 
   if(deadlineDecision.includes("not eligible")){
-    return "Use Close — Not Eligible to save the decision and move the request to Completed & Closed Extensions.";
+    return "Use Close Request — Extension Cannot Be Filed. No payment will be requested and no extension will be filed.";
   }
 
   if(status.includes("payment pending") || payment.includes("pending")){
@@ -7023,7 +7062,7 @@ function renderLeads(){
 
               <div>
                 ${escapeOfficeHtml(getExtensionServiceLabel(lead))}<br>
-                <strong>${escapeOfficeHtml(getExtensionWorkStatus(lead))}</strong>
+                <strong>${escapeOfficeHtml(getExtensionDisplayWorkStatus(lead))}</strong>
               </div>
 
               <div>
@@ -7245,12 +7284,7 @@ function renderLeads(){
                     <div class="extension-basket-field">
                       <label for="extensionDeadlineDecision-${index}">1. Deadline decision</label>
                       <select id="extensionDeadlineDecision-${index}">
-                        ${selectOptionsHtml(
-                          [
-                            "Not Reviewed",
-                            "Eligible",
-                            "Not Eligible"
-                          ],
+                        ${extensionDeadlineDecisionOptionsHtml(
                           deadlineDecision
                         )}
                       </select>
@@ -7412,7 +7446,7 @@ function renderLeads(){
                       type="button"
                       onclick="closeExtensionNotEligible(${index})"
                     >
-                      Close — Not Eligible
+                      Close Request — Extension Cannot Be Filed
                     </button>
                   </div>
                 </div>
@@ -7452,7 +7486,7 @@ function renderLeads(){
                     </div>
                     <div>
                       ${escapeOfficeHtml(getExtensionServiceLabel(lead))}<br>
-                      ${escapeOfficeHtml(getExtensionWorkStatus(lead))}
+                      ${escapeOfficeHtml(getExtensionDisplayWorkStatus(lead))}
                     </div>
                     <div>Tax year<br><strong>${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}</strong></div>
                     <div>Completed / closed<br><strong>${escapeOfficeHtml(completedAt)}</strong></div>
@@ -8989,7 +9023,7 @@ function validateExtensionCompletion(lead, update){
   }
 
   if(update.deadlineDecision !== "Eligible"){
-    return "Select Deadline decision: Eligible before marking this request Completed. Use Close — Not Eligible for a request that cannot be filed.";
+    return "Select Eligible — Extension May Proceed before marking this request Completed. Use Close Request — Extension Cannot Be Filed when no extension will be filed.";
   }
 
   if(!extensionPaymentIsPaid(lead)){
@@ -9204,12 +9238,12 @@ async function closeExtensionNotEligible(index){
   }
 
   if(extensionPaymentIsPaid(lead)){
-    alert("This request shows a verified payment. Do not close it as Not Eligible until the payment and client resolution are reviewed.");
+    alert("This request shows a verified payment. Do not close it as Extension Cannot Be Filed until the payment and client resolution are reviewed.");
     return;
   }
 
   const confirmed = window.confirm(
-    "Close this extension request as Not Eligible? No payment will be requested. The card will move to Completed & Closed Extensions in the left Tax Lead Center menu, and the client will receive a closure email."
+    "Close this request without filing an extension? No payment will be requested. The record will move to Completed & Closed Extensions, and the client will receive a plain-language email explaining that no extension was filed."
   );
 
   if(!confirmed){
@@ -9228,7 +9262,7 @@ async function closeExtensionNotEligible(index){
     );
 
     update.extensionRequest.paymentStatus =
-      "Not Charged - Not Eligible";
+      "Not Charged - Extension Not Filed";
     update.extensionRequest.checkoutEligible = false;
     update.extensionRequest.deadlineReviewRequired = false;
     update.extensionRequest.completedAt = update.now;
@@ -9243,12 +9277,12 @@ async function closeExtensionNotEligible(index){
       );
 
     if(delivery.emailSent){
-      alert("The request was closed as Not Eligible, moved to Completed & Closed Extensions, and the client closure email was sent.");
+      alert("The request was closed without filing an extension, moved to Completed & Closed Extensions, and the client email was sent.");
     }else if(delivery.alreadySent){
-      alert("The request was closed as Not Eligible and moved to Completed & Closed Extensions. A client closure email was already recorded.");
+      alert("The request was closed without filing an extension and moved to Completed & Closed Extensions. A client email was already recorded.");
     }else{
       alert(
-        `The request was closed as Not Eligible and moved to Completed & Closed Extensions, but the client closure email was not sent. ${delivery.error || "Use the Send Client Closure Email button in Completed & Closed Extensions."}`
+        `The request was closed without filing an extension and moved to Completed & Closed Extensions, but the client email was not sent. ${delivery.error || "Use the Send Client Closure Email button in Completed & Closed Extensions."}`
       );
     }
 
