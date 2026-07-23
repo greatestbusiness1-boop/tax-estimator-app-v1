@@ -24,7 +24,7 @@
           <div class="security-item"><span class="check">✓</span><span>Tax-preparation progress and saved work</span></div>
         </div>
       </div>
-      <div class="brand-foot">Greatest Business Solution LLC<br>Tax Savings Planner™ Secure Client Portal — Version 1.4</div>
+      <div class="brand-foot">Greatest Business Solution LLC<br>Tax Savings Planner™ Secure Client Portal — Version 1.6.0</div>
     </section>
 
     <section class="main">
@@ -32,12 +32,12 @@
         <div class="card-head">
           <div class="eyebrow">Secure Client Access</div>
           <h2>Welcome to your portal</h2>
-          <p>Sign in to continue your saved tax-planning work, or activate access using the email address and client reference number already on file.</p>
+          <p id="portalIntroText">Sign in to continue your saved tax-planning work, or activate access using the email address and client reference number already on file. The same account is used for tax preparation, extensions, transcripts, planning, and secure documents.</p>
         </div>
 
         <div class="tabs">
           <button class="tab active" id="signInTab" type="button">Sign In</button>
-          <button class="tab" id="activateTab" type="button">Activate / Reset Access</button>
+          <button class="tab" id="activateTab" type="button">First Visit / Reset Access</button>
         </div>
 
         <section class="panel" id="signInPanel">
@@ -53,7 +53,7 @@
             </div>
             <button class="button" id="signInButton" type="submit">Sign In Securely</button>
           </form>
-          <div class="support"><strong>Your username is your email address.</strong><br>First visit or forgot your password? Choose <strong>Activate / Reset Access</strong>. A six-digit code will be sent only to the email address already connected to your client reference number.<br><br><strong>For your security, your password is never emailed, displayed, or recoverable by Greatest Business Solution LLC.</strong> You can create a new password without losing your saved portal data.</div>
+          <div class="support"><strong>Your username is your email address.</strong><br>First visit or forgot your password? Choose <strong>First Visit / Reset Access</strong>. A six-digit code will be sent only to the email address already connected to your client reference number.<br><br><strong>You do not create a separate account for tax preparation.</strong> A new tax-preparation request is connected to this same portal by email address.<br><br><strong>For your security, your password is never emailed, displayed, or recoverable by Greatest Business Solution LLC.</strong> You can create a new password without losing your saved portal data.</div>
         </section>
 
         <section class="panel" id="activatePanel" hidden>
@@ -244,6 +244,32 @@
 
     const leadId = params.get("leadId") || "";
     const activationEmail = params.get("email") || "";
+    const isTaxPreparationEntry =
+      params.get("taxPrep") === "1";
+
+    if (isTaxPreparationEntry) {
+      document.querySelector(".card-head h2").textContent =
+        "Access your tax-preparation portal";
+
+      document.getElementById("portalIntroText").textContent =
+        params.get("activate") === "1"
+          ? "Your Start My Tax Return request is connected to this secure portal. Request the six-digit security code below, then create one password for your tax-preparation documents and updates."
+          : "Your Start My Tax Return request was connected to your existing secure portal. Sign in with the same email address and password you already use.";
+
+      if (params.get("activate") === "1") {
+        showMessage(
+          document.getElementById("activationMessage"),
+          "Your tax-preparation request was received. Request your security code to activate this same secure portal account.",
+          "good"
+        );
+      } else {
+        showMessage(
+          document.getElementById("signInMessage"),
+          "Your tax-preparation request is connected. Sign in to view your status and secure document checklist.",
+          "good"
+        );
+      }
+    }
 
     if (leadId) {
       document.getElementById("activationLeadId").value = leadId;
@@ -251,6 +277,7 @@
 
     if (activationEmail) {
       document.getElementById("activationEmail").value = activationEmail;
+      document.getElementById("signInEmail").value = activationEmail;
     }
 
     if (params.get("activate") === "1") {

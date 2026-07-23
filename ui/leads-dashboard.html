@@ -3314,8 +3314,67 @@ function taxPrepMoney(value){
     : "0.00";
 }
 
+const TAX_PREP_INTAKE_LABELS = Object.freeze({
+  individual_federal_state:
+    "Individual tax return — W-2 and/or 1099 income",
+  prior_year_return:
+    "Prior-year or multiple-year return",
+  multiple_states:
+    "Multi-state return",
+  business_return:
+    "Business or entity return",
+  partnership_return:
+    "Partnership return",
+  s_corporation_return:
+    "S corporation return",
+  c_corporation_return:
+    "C corporation return",
+  nonprofit_return:
+    "Nonprofit return",
+  w2_income:
+    "I received a W-2",
+  "1099_nec":
+    "I received a 1099 or 1099-NEC for contractor or self-employment income",
+  "1099_k":
+    "I received a 1099-K from a payment app, platform, or online marketplace",
+  "1099_other":
+    "I received another type of 1099",
+  gig_platform:
+    "Uber, Lyft, DoorDash, Instacart, or other gig-work income",
+  creator_income:
+    "TikTok, YouTube, Twitch, influencer, or creator income",
+  self_employment:
+    "Freelance, consulting, or other self-employment income",
+  minister_clergy:
+    "Minister, clergy, speaker, or housing allowance",
+  stocks_bonds_investments:
+    "Stocks, bonds, mutual funds, or investment sales",
+  interest_dividends:
+    "Interest or dividend income",
+  foreign_tax:
+    "Foreign tax, foreign income, or foreign accounts",
+  estimated_tax_payments:
+    "Federal or state estimated-tax payments",
+  rental_income:
+    "Rental property income or expenses",
+  k1_income:
+    "Schedule K-1 income",
+  retirement_income:
+    "Pension, IRA, or Social Security income",
+  cryptocurrency:
+    "Cryptocurrency activity",
+  other_income:
+    "Other income not listed"
+});
+
 function taxPrepHumanize(value){
-  return String(value || "")
+  const key = String(value || "").trim();
+
+  if(TAX_PREP_INTAKE_LABELS[key]){
+    return TAX_PREP_INTAKE_LABELS[key];
+  }
+
+  return key
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
     .trim();
@@ -3326,6 +3385,20 @@ function taxPrepListDisplay(value){
   return list.length
     ? list.map(taxPrepHumanize).join(", ")
     : "Not provided";
+}
+
+function taxPrepPlainAnswer(value){
+  const text = String(value || "").trim();
+
+  if(!text){
+    return "Not answered";
+  }
+
+  if(text === "not_sure"){
+    return "Not sure";
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function getTaxPrepClientInformationStatus(lead){
@@ -7728,6 +7801,12 @@ function renderLeads(){
                   Services: ${escapeOfficeHtml(requestedServices)}<br>
                   Income / situations: ${escapeOfficeHtml(incomeTypes)}<br>
                   Client documents listed: ${Number(intake.documentCount || 0)}
+                  ${Number(intake.form1099Count || 0) > 0
+                    ? `<br><strong>1099 / 1099-NEC forms:</strong> ${Number(intake.form1099Count || 0)}
+                       <br>Related expenses: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.has1099Expenses))}
+                       <br>Business or trade name: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.usedBusinessName))}
+                       <br>More than one state: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.multiState1099))}`
+                    : ""}
                 </div>
 
                 <div class="taxprep-card-block">

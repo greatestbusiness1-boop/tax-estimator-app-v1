@@ -386,6 +386,65 @@
       background:#f6f1e7;
       line-height:1.5
     }
+    .tax-prep-intake-summary{
+      margin-top:13px;
+      padding:13px 14px;
+      border:1px solid #d7e0e6;
+      background:#fff
+    }
+    .tax-prep-intake-summary h4{
+      margin:0 0 8px;
+      color:var(--navy);
+      font-size:15px
+    }
+    .tax-prep-chip-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:7px
+    }
+    .tax-prep-chip{
+      display:inline-block;
+      border:1px solid #c8d6e2;
+      background:#f2f7fb;
+      color:#24445f;
+      padding:5px 7px;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.25
+    }
+    .tax-prep-1099-details{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:7px;
+      margin-top:10px
+    }
+    .tax-prep-1099-details div{
+      border-left:3px solid var(--gold);
+      background:#faf7ef;
+      padding:7px 9px;
+      font-size:12px;
+      line-height:1.4
+    }
+    .tax-prep-document-checklist{
+      margin-top:13px;
+      padding:13px 14px;
+      border:1px solid #b8d5cb;
+      background:#f4fbf7
+    }
+    .tax-prep-document-checklist h4{
+      margin:0 0 8px;
+      color:var(--green);
+      font-size:15px
+    }
+    .tax-prep-document-checklist ul{
+      margin:0;
+      padding-left:19px
+    }
+    .tax-prep-document-checklist li{
+      margin:5px 0;
+      line-height:1.4
+    }
     .service-portal-actions{
       display:flex;
       flex-direction:column;
@@ -923,7 +982,8 @@
         grid-template-columns:1fr
       }
       .service-status-grid,
-      .transcript-status-grid{
+      .transcript-status-grid,
+      .tax-prep-1099-details{
         grid-template-columns:1fr
       }
       .service-portal-actions,
@@ -943,7 +1003,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.5.0</span>
+        <span>Tax Savings Planner™ Portal — Version 1.6.0</span>
       </div>
     </div>
     <div class="top-actions">
@@ -1028,7 +1088,7 @@
       <div class="section-head">
         <div>
           <h2>My Tax Preparation &amp; Extensions</h2>
-          <p>Track return preparation, document needs, extension work, filing status, and the next required action under the correct tax year.</p>
+          <p>Track return preparation, review the information you submitted, follow your personalized document checklist, and see the next required action under the correct tax year.</p>
         </div>
       </div>
 
@@ -1336,6 +1396,83 @@
         "document-upload-message";
     }
 
+    function taxPrepAnswerLabel(value) {
+      const text =
+        String(value || "").trim();
+
+      if (!text) {
+        return "Not answered";
+      }
+
+      if (text === "not_sure") {
+        return "Not sure";
+      }
+
+      return text.charAt(0).toUpperCase() +
+        text.slice(1);
+    }
+
+    function openTaxPreparationDocumentUpload(
+      taxYear
+    ) {
+      const taxYearSelect =
+        document.getElementById(
+          "documentTaxYear"
+        );
+
+      const categorySelect =
+        document.getElementById(
+          "documentCategory"
+        );
+
+      if (
+        taxYear &&
+        [
+          ...taxYearSelect.options
+        ].some(
+          (option) =>
+            option.value ===
+            String(taxYear)
+        )
+      ) {
+        taxYearSelect.value =
+          String(taxYear);
+      }
+
+      if (
+        [
+          ...categorySelect.options
+        ].some(
+          (option) =>
+            option.value ===
+            "income"
+        )
+      ) {
+        categorySelect.value =
+          "income";
+      }
+
+      document.getElementById(
+        "documentCenter"
+      ).scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      setTimeout(
+        () => {
+          showDocumentMessage(
+            "TAX PREPARATION UPLOAD READY — confirm the tax year and category, choose one document, and click Upload Document Securely."
+          );
+
+          document.getElementById(
+            "documentFile"
+          ).focus();
+        },
+        500
+      );
+    }
+
     function renderTaxPreparationPortal(
       requests = []
     ) {
@@ -1352,11 +1489,38 @@
 
       container.innerHTML =
         requests
-          .map((request) => `
+          .map((request) => {
+            const serviceLabels =
+              Array.isArray(
+                request.serviceLabels
+              )
+                ? request.serviceLabels
+                : [];
+
+            const incomeLabels =
+              Array.isArray(
+                request.incomeLabels
+              )
+                ? request.incomeLabels
+                : [];
+
+            const checklist =
+              Array.isArray(
+                request.documentChecklist
+              )
+                ? request.documentChecklist
+                : [];
+
+            const has1099Details =
+              Number(
+                request.form1099Count || 0
+              ) > 0;
+
+            return `
             <article class="service-portal-card ${request.completed ? "complete" : ""}">
               <div>
                 <h3>
-                  Tax Preparation — ${escapeHtml(request.taxYear || "Tax year not recorded")}
+                  My Tax Preparation — ${escapeHtml(request.taxYear || "Tax year not recorded")}
                 </h3>
 
                 <div class="service-portal-reference">
@@ -1381,14 +1545,101 @@
                   </div>
 
                   <div class="service-status-item">
+                    <span>Signature</span>
+                    <strong>${escapeHtml(request.signatureStatus || "Not Requested")}</strong>
+                  </div>
+
+                  <div class="service-status-item">
                     <span>E-file</span>
                     <strong>${escapeHtml(request.efileStatus || "Not Started")}</strong>
+                  </div>
+
+                  <div class="service-status-item">
+                    <span>Federal / State Acceptance</span>
+                    <strong>${escapeHtml(request.acceptanceStatus || "Not Submitted")}</strong>
                   </div>
 
                   <div class="service-status-item">
                     <span>Final Client Copy</span>
                     <strong>${escapeHtml(request.finalReturnDeliveryStatus || "Not Delivered")}</strong>
                   </div>
+                </div>
+
+                <div class="tax-prep-intake-summary">
+                  <h4>What you told us</h4>
+
+                  <div class="service-portal-reference">
+                    Return services
+                  </div>
+                  <div class="tax-prep-chip-list">
+                    ${
+                      serviceLabels.length
+                        ? serviceLabels
+                            .map(
+                              (label) =>
+                                `<span class="tax-prep-chip">${escapeHtml(label)}</span>`
+                            )
+                            .join("")
+                        : '<span class="tax-prep-chip">Tax Preparation</span>'
+                    }
+                  </div>
+
+                  <div class="service-portal-reference" style="margin-top:10px;">
+                    Income and tax situations
+                  </div>
+                  <div class="tax-prep-chip-list">
+                    ${
+                      incomeLabels.length
+                        ? incomeLabels
+                            .map(
+                              (label) =>
+                                `<span class="tax-prep-chip">${escapeHtml(label)}</span>`
+                            )
+                            .join("")
+                        : '<span class="tax-prep-chip">Not recorded</span>'
+                    }
+                  </div>
+
+                  ${
+                    has1099Details
+                      ? `
+                        <div class="tax-prep-1099-details">
+                          <div>
+                            <strong>1099 or 1099-NEC forms:</strong>
+                            ${Number(request.form1099Count || 0)}
+                          </div>
+                          <div>
+                            <strong>Related expenses:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.has1099Expenses))}
+                          </div>
+                          <div>
+                            <strong>Business or trade name:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.usedBusinessName))}
+                          </div>
+                          <div>
+                            <strong>More than one state:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.multiState1099))}
+                          </div>
+                        </div>
+                      `
+                      : ""
+                  }
+                </div>
+
+                <div class="tax-prep-document-checklist">
+                  <h4>Start with these secure documents</h4>
+                  <ul>
+                    ${
+                      checklist.length
+                        ? checklist
+                            .map(
+                              (item) =>
+                                `<li>${escapeHtml(item)}</li>`
+                            )
+                            .join("")
+                        : "<li>The office will add document instructions after reviewing your intake.</li>"
+                    }
+                  </ul>
                 </div>
 
                 <div class="service-next">
@@ -1400,24 +1651,26 @@
               <div class="service-portal-actions">
                 <button
                   type="button"
-                  onclick="document.getElementById('documentCenter').scrollIntoView({behavior:'smooth'})"
+                  onclick="openTaxPreparationDocumentUpload('${escapeHtml(request.taxYear || "")}')"
                 >
-                  Open Secure Document Center
+                  Upload Tax Documents
                 </button>
 
-                <a
+                <button
+                  type="button"
                   class="secondary"
-                  href="/start-my-tax-return"
+                  onclick="document.getElementById('taxPreparation').scrollIntoView({behavior:'smooth'})"
                 >
-                  Update Tax Preparation Intake
-                </a>
+                  Review My Tax Preparation Status
+                </button>
 
                 <div class="service-portal-note">
-                  Use secure upload instead of email for W-2s, 1099s, identity records, returns, notices, or signature documents.
+                  Your intake and documents are connected to this same secure account. Do not create a second portal or email W-2s, 1099s, Social Security numbers, bank information, or passwords.
                 </div>
               </div>
             </article>
-          `)
+          `;
+          })
           .join("");
     }
 

@@ -4442,6 +4442,266 @@ function buildClientPortalTranscriptRequestSummary(
 }
 
 
+const TAX_PREPARATION_SERVICE_LABELS = Object.freeze({
+  individual_federal_state:
+    "Individual tax return — W-2 and/or 1099 income",
+  prior_year_return:
+    "Prior-year or multiple-year return",
+  multiple_states:
+    "Multi-state return",
+  business_return:
+    "Business or entity return",
+  partnership_return:
+    "Partnership return",
+  s_corporation_return:
+    "S corporation return",
+  c_corporation_return:
+    "C corporation return",
+  nonprofit_return:
+    "Nonprofit return"
+});
+
+const TAX_PREPARATION_INCOME_LABELS = Object.freeze({
+  w2_income:
+    "I received a W-2",
+  "1099_nec":
+    "I received a 1099 or 1099-NEC for contractor or self-employment income",
+  "1099_k":
+    "I received a 1099-K from a payment app, platform, or online marketplace",
+  "1099_other":
+    "I received another type of 1099",
+  gig_platform:
+    "Uber, Lyft, DoorDash, Instacart, or other gig-work income",
+  creator_income:
+    "TikTok, YouTube, Twitch, influencer, or creator income",
+  self_employment:
+    "Freelance, consulting, or other self-employment income",
+  minister_clergy:
+    "Minister, clergy, speaker, or housing allowance",
+  stocks_bonds_investments:
+    "Stocks, bonds, mutual funds, or investment sales",
+  interest_dividends:
+    "Interest or dividend income",
+  foreign_tax:
+    "Foreign tax, foreign income, or foreign accounts",
+  estimated_tax_payments:
+    "Federal or state estimated-tax payments",
+  rental_income:
+    "Rental property income or expenses",
+  k1_income:
+    "Schedule K-1 income",
+  retirement_income:
+    "Pension, IRA, or Social Security income",
+  cryptocurrency:
+    "Cryptocurrency activity",
+  other_income:
+    "Other income not listed"
+});
+
+function taxPreparationLabelList(
+  values,
+  labelMap
+) {
+  const list =
+    Array.isArray(values)
+      ? values
+      : [];
+
+  return list.map(
+    (value) =>
+      labelMap[value] ||
+      String(value || "")
+        .replace(/[_-]+/g, " ")
+        .replace(
+          /\b\w/g,
+          (letter) =>
+            letter.toUpperCase()
+        )
+        .trim()
+  );
+}
+
+function buildTaxPreparationDocumentChecklist(
+  intake = {}
+) {
+  const services =
+    new Set(
+      Array.isArray(intake.serviceTypes)
+        ? intake.serviceTypes
+        : []
+    );
+
+  const incomeTypes =
+    new Set(
+      Array.isArray(intake.incomeTypes)
+        ? intake.incomeTypes
+        : []
+    );
+
+  const checklist = [];
+  const add = (item) => {
+    const text = String(item || "").trim();
+
+    if (
+      text &&
+      !checklist.includes(text)
+    ) {
+      checklist.push(text);
+    }
+  };
+
+  add(
+    "Government-issued photo ID for each taxpayer."
+  );
+
+  add(
+    "Social Security cards or ITIN letters for taxpayers and dependents."
+  );
+
+  add(
+    "Prior-year federal and state tax return, if available."
+  );
+
+  if (incomeTypes.has("w2_income")) {
+    add(
+      "Every W-2 received for the tax year."
+    );
+  }
+
+  if (incomeTypes.has("1099_nec")) {
+    add(
+      "Every 1099 or 1099-NEC received for contractor or self-employment income."
+    );
+
+    add(
+      "Business-income records and a list of related business expenses, even when an expense is not shown on a 1099."
+    );
+  }
+
+  if (incomeTypes.has("1099_k")) {
+    add(
+      "Every 1099-K plus related payment-platform or marketplace statements."
+    );
+
+    add(
+      "Records showing which 1099-K amounts were business income, personal transfers, refunds, or other non-taxable activity."
+    );
+  }
+
+  if (incomeTypes.has("1099_other")) {
+    add(
+      "Every other 1099 received, including any 1099-MISC, 1099-INT, 1099-DIV, 1099-R, or SSA-1099."
+    );
+  }
+
+  if (
+    incomeTypes.has("gig_platform") ||
+    incomeTypes.has("creator_income") ||
+    incomeTypes.has("self_employment")
+  ) {
+    add(
+      "Year-end platform statements, income summaries, and business-expense records."
+    );
+  }
+
+  if (incomeTypes.has("minister_clergy")) {
+    add(
+      "W-2 or 1099 forms, housing-allowance records, and ministry-related expense records."
+    );
+  }
+
+  if (
+    incomeTypes.has("stocks_bonds_investments")
+  ) {
+    add(
+      "Brokerage 1099-B statements, year-end investment statements, and cost-basis information."
+    );
+  }
+
+  if (incomeTypes.has("interest_dividends")) {
+    add(
+      "All 1099-INT and 1099-DIV forms."
+    );
+  }
+
+  if (incomeTypes.has("foreign_tax")) {
+    add(
+      "Foreign-income statements, foreign-tax records, and foreign-account information requested by the office."
+    );
+  }
+
+  if (
+    incomeTypes.has(
+      "estimated_tax_payments"
+    )
+  ) {
+    add(
+      "Federal and state estimated-tax payment confirmations, including payment dates and amounts."
+    );
+  }
+
+  if (incomeTypes.has("rental_income")) {
+    add(
+      "Rental-income and expense records, property information, mortgage statements, and prior depreciation records."
+    );
+  }
+
+  if (incomeTypes.has("k1_income")) {
+    add(
+      "Every Schedule K-1 received."
+    );
+  }
+
+  if (
+    incomeTypes.has(
+      "retirement_income"
+    )
+  ) {
+    add(
+      "All 1099-R and SSA-1099 forms."
+    );
+  }
+
+  if (
+    incomeTypes.has(
+      "cryptocurrency"
+    )
+  ) {
+    add(
+      "Cryptocurrency transaction reports, gain/loss summaries, and wallet or exchange statements."
+    );
+  }
+
+  if (incomeTypes.has("other_income")) {
+    add(
+      "Records supporting the other income described in your intake."
+    );
+  }
+
+  if (
+    services.has("business_return") ||
+    services.has("partnership_return") ||
+    services.has("s_corporation_return") ||
+    services.has("c_corporation_return") ||
+    services.has("nonprofit_return")
+  ) {
+    add(
+      "Prior-year business return, year-end profit-and-loss statement, balance sheet, and entity records."
+    );
+  }
+
+  if (
+    services.has("multiple_states") ||
+    Number(intake.stateCount || 1) > 1
+  ) {
+    add(
+      "Income, withholding, and residency records for every state involved."
+    );
+  }
+
+  return checklist;
+}
+
 function getTaxPreparationPortalNextAction(
   lead = {},
   work = {}
@@ -4564,6 +4824,32 @@ function buildClientPortalTaxPreparationSummary(entry) {
     finalReturnDeliveryStatus: String(
       work.finalReturnDeliveryStatus ||
       "Not Delivered"
+    ),
+    serviceLabels:
+      taxPreparationLabelList(
+        intake.serviceTypes,
+        TAX_PREPARATION_SERVICE_LABELS
+      ),
+    incomeLabels:
+      taxPreparationLabelList(
+        intake.incomeTypes,
+        TAX_PREPARATION_INCOME_LABELS
+      ),
+    documentChecklist:
+      buildTaxPreparationDocumentChecklist(
+        intake
+      ),
+    form1099Count: Number(
+      intake.form1099Count || 0
+    ),
+    has1099Expenses: String(
+      intake.has1099Expenses || ""
+    ),
+    usedBusinessName: String(
+      intake.usedBusinessName || ""
+    ),
+    multiState1099: String(
+      intake.multiState1099 || ""
     ),
     completed:
       /accepted|completed|closed/i.test(
@@ -7896,6 +8182,33 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     errors.push("Email address format is invalid.");
   }
 
+  const phoneDigits = String(
+    contact.phone || ""
+  ).replace(/\D/g, "");
+
+  if (phoneDigits.length !== 10) {
+    errors.push(
+      "Enter a 10-digit phone number in the format (623) 570-3934."
+    );
+  }
+
+  const primaryState = String(
+    intake.primaryState || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (
+    !primaryState ||
+    !VALID_US_STATE_CODES.has(
+      primaryState
+    )
+  ) {
+    errors.push(
+      "Select a valid two-letter state abbreviation."
+    );
+  }
+
   const serviceTypes = Array.isArray(intake.serviceTypes)
     ? intake.serviceTypes.filter(Boolean)
     : [];
@@ -7912,6 +8225,78 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     errors.push("Select at least one income or tax situation.");
   }
 
+  const selected1099Nec =
+    incomeTypes.includes("1099_nec");
+
+  const form1099Count = Math.max(
+    0,
+    Number.parseInt(
+      intake.form1099Count,
+      10
+    ) || 0
+  );
+
+  const has1099Expenses = String(
+    intake.has1099Expenses || ""
+  ).trim();
+
+  const usedBusinessName = String(
+    intake.usedBusinessName || ""
+  ).trim();
+
+  const multiState1099 = String(
+    intake.multiState1099 || ""
+  ).trim();
+
+  if (selected1099Nec) {
+    if (form1099Count < 1) {
+      errors.push(
+        "Enter the number of 1099 or 1099-NEC forms received."
+      );
+    }
+
+    if (
+      ![
+        "yes",
+        "no",
+        "not_sure"
+      ].includes(
+        has1099Expenses
+      )
+    ) {
+      errors.push(
+        "Select whether you had expenses related to the 1099 income."
+      );
+    }
+
+    if (
+      ![
+        "yes",
+        "no"
+      ].includes(
+        usedBusinessName
+      )
+    ) {
+      errors.push(
+        "Select whether you used a business or trade name."
+      );
+    }
+
+    if (
+      ![
+        "yes",
+        "no",
+        "not_sure"
+      ].includes(
+        multiState1099
+      )
+    ) {
+      errors.push(
+        "Select whether the 1099 income involved more than one state."
+      );
+    }
+  }
+
   if (errors.length > 0) {
     return res.status(400).json({
       ok: false,
@@ -7921,7 +8306,8 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
 
   const documentCount = Math.max(
     0,
-    Number.parseInt(intake.documentCount, 10) || 0
+    Number.parseInt(intake.documentCount, 10) || 0,
+    form1099Count
   );
 
   const stateCount = Math.max(
@@ -7986,6 +8372,26 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     recommendedLane = "Gig Worker / Self-Employed Return";
   }
 
+  let activePortalAccount = null;
+
+  try {
+    activePortalAccount =
+      await findActiveClientPortalAccountByEmail(
+        email
+      );
+  } catch (portalLookupError) {
+    console.warn(
+      "[tax preparation intake] Existing portal lookup failed:",
+      portalLookupError?.message ||
+      portalLookupError
+    );
+  }
+
+  const portalAccessMode =
+    activePortalAccount
+      ? "sign-in"
+      : "activate";
+
   const leadId =
     "TAXPREP-" +
     Date.now() +
@@ -8011,11 +8417,33 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     taxData: {
       taxYear: intake.taxYear || null,
       filingStatus: intake.filingStatus || null,
-      stateCode: intake.primaryState || null
+      stateCode: primaryState || null
     },
     estimateSummary: {},
     taxPreparationIntake: {
       ...intake,
+      taxYear: String(intake.taxYear || "").trim(),
+      serviceTypes,
+      incomeTypes,
+      documentCount,
+      stateCount,
+      primaryState,
+      form1099Count:
+        selected1099Nec
+          ? form1099Count
+          : 0,
+      has1099Expenses:
+        selected1099Nec
+          ? has1099Expenses
+          : "",
+      usedBusinessName:
+        selected1099Nec
+          ? usedBusinessName
+          : "",
+      multiState1099:
+        selected1099Nec
+          ? multiState1099
+          : "",
       sourceLeadId: String(body.sourceLeadId || "").trim(),
       submittedAt,
       recommendedLane,
@@ -8023,9 +8451,15 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     },
     taxPreparationWork: {
       version: 1,
+      portalStatus:
+        activePortalAccount
+          ? "Active"
+          : "Activation Needed",
       workStatus: needsProfessionalReview
         ? "Needs Professional Review"
-        : "Portal Activation Needed",
+        : activePortalAccount
+          ? "Documents Needed"
+          : "Portal Activation Needed",
       documentStatus: "Documents Needed",
       clientInformationStatus: "Needs Review",
       paymentStatus: "Quote Needed",
@@ -8061,15 +8495,30 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       const bookingUrl =
         "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
 
-      const portalUrl =
+      const portalBaseUrl =
         String(APP_BASE_URL || "")
           .replace(/\/+$/, "") +
-        "/client-portal?activate=1&leadId=" +
-        encodeURIComponent(leadId);
+        "/client-portal";
+
+      const portalUrl =
+        activePortalAccount
+          ? portalBaseUrl +
+            "?taxPrep=1&email=" +
+            encodeURIComponent(email)
+          : portalBaseUrl +
+            "?activate=1&taxPrep=1&leadId=" +
+            encodeURIComponent(leadId) +
+            "&email=" +
+            encodeURIComponent(email);
 
       const nextStepText = needsProfessionalReview
         ? "Your intake includes items that need a professional review before pricing or scheduling. We will review the information and contact you."
-        : "Your intake is ready for the next step. You may schedule a 15-minute appointment using the link below.";
+        : "Your intake is ready for the next step. You may schedule a Tax Preparation Fit Call using the link below.";
+
+      const portalInstruction =
+        activePortalAccount
+          ? "This request was connected to your existing secure portal. Sign in with the same email address and password you already use."
+          : "Activate your secure portal using the link below. The activation screen will already contain your email address and client reference number. You will create one password for this same portal.";
 
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -8090,6 +8539,8 @@ ${bookingUrl}
 
 Secure client portal:
 ${portalUrl}
+
+${portalInstruction}
 
 Reference number:
 ${leadId}
@@ -8121,6 +8572,19 @@ Greatest Business Solution LLC`
       recommendedLane,
       needsProfessionalReview,
       status,
+      portalAccessMode,
+      portalUrl:
+        activePortalAccount
+          ? "/client-portal?taxPrep=1&email=" +
+            encodeURIComponent(email)
+          : "/client-portal?activate=1&taxPrep=1&leadId=" +
+            encodeURIComponent(leadId) +
+            "&email=" +
+            encodeURIComponent(email),
+      portalActionLabel:
+        activePortalAccount
+          ? "Sign In to My Secure Portal"
+          : "Activate My Secure Client Portal",
       emailSent,
       emailError: emailSent ? null : emailError
     });
@@ -9880,7 +10344,7 @@ app.get(
     return res.status(200).json({
       ok: true,
       portal: {
-        version: "1.5.0",
+        version: "1.6.0",
         status: "active",
         clientName:
           primary

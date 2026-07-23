@@ -117,6 +117,45 @@
       color:#234d72;
       line-height:1.5;
     }
+    .portal-step {
+      margin:0 0 24px;
+      padding:16px 18px;
+      border:1px solid #b8d5cb;
+      border-left:6px solid var(--success);
+      border-radius:10px;
+      background:#effbf7;
+      color:#184f3d;
+      line-height:1.5;
+    }
+    .portal-step strong { color:#0b5c41; }
+    .follow-up {
+      margin-top:18px;
+      padding:18px;
+      border:1px solid #c9d7e5;
+      border-left:6px solid var(--blue);
+      border-radius:12px;
+      background:#f8fbff;
+    }
+    .follow-up[hidden] { display:none; }
+    .follow-up h3 {
+      margin:0 0 6px;
+      color:var(--navy);
+      font-size:18px;
+    }
+    .follow-up p {
+      margin:0 0 14px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .follow-up .grid { gap:12px; }
+    .choice em {
+      display:block;
+      margin-top:3px;
+      color:var(--muted);
+      font-size:12px;
+      font-style:normal;
+      font-weight:500;
+    }
     button {
       width:100%;
       margin-top:26px;
@@ -184,6 +223,11 @@
           This is a planning and intake form—not a request to upload sensitive tax documents. Do not enter Social Security numbers, bank information, or full tax-document images here.
         </div>
 
+        <div class="portal-step">
+          <strong>No account is required before submitting this form.</strong>
+          After your request is received, the system will connect it to your existing Greatest Business Solution LLC secure portal or send you a one-time activation link for the same portal. You will not create a second account or a separate tax-preparation login.
+        </div>
+
         <section>
           <h2>Your Contact Information</h2>
           <div class="grid">
@@ -194,7 +238,13 @@
               <input id="email" type="email" required autocomplete="email" />
             </label>
             <label class="field">Phone
-              <input id="phone" autocomplete="tel" placeholder="(555) 555-5555" />
+              <input
+                id="phone"
+                autocomplete="tel"
+                inputmode="tel"
+                placeholder="(623) 570-3934"
+                required
+              />
             </label>
             <label class="field">Tax year
               <select id="taxYear" required>
@@ -213,7 +263,7 @@
           <h2>What Do You Need Prepared?</h2>
           <p class="hint">Choose everything that applies.</p>
           <div class="choices" id="serviceTypes">
-            <label class="choice"><input type="checkbox" value="individual_federal_state" /> Federal and state individual return</label>
+            <label class="choice"><input type="checkbox" value="individual_federal_state" /> Individual tax return — W-2 and/or 1099 income</label>
             <label class="choice"><input type="checkbox" value="prior_year_return" /> Prior-year or multiple-year return</label>
             <label class="choice"><input type="checkbox" value="multiple_states" /> Multi-state return</label>
             <label class="choice"><input type="checkbox" value="business_return" /> Business or entity return</label>
@@ -228,12 +278,13 @@
           <h2>Income and Tax Situations</h2>
           <p class="hint">Choose all sources and situations that may appear on the return.</p>
           <div class="choices" id="incomeTypes">
-            <label class="choice"><input type="checkbox" value="w2_income" /> W-2 wages</label>
-            <label class="choice"><input type="checkbox" value="1099_nec" /> 1099-NEC contractor income</label>
-            <label class="choice"><input type="checkbox" value="1099_k" /> 1099-K platform or payment income</label>
-            <label class="choice"><input type="checkbox" value="gig_platform" /> Uber, Lyft, DoorDash, Instacart, or other gig work</label>
+            <label class="choice"><input type="checkbox" value="w2_income" /> I received a W-2</label>
+            <label class="choice"><input type="checkbox" value="1099_nec" /> I received a 1099 or 1099-NEC for contractor or self-employment income</label>
+            <label class="choice"><input type="checkbox" value="1099_k" /> I received a 1099-K from a payment app, platform, or online marketplace</label>
+            <label class="choice"><input type="checkbox" value="1099_other" /> I received another type of 1099<em>Examples: 1099-MISC, 1099-INT, 1099-DIV, 1099-R, or SSA-1099</em></label>
+            <label class="choice"><input type="checkbox" value="gig_platform" /> Uber, Lyft, DoorDash, Instacart, or other gig-work income</label>
             <label class="choice"><input type="checkbox" value="creator_income" /> TikTok, YouTube, Twitch, influencer, or creator income</label>
-            <label class="choice"><input type="checkbox" value="self_employment" /> Freelance, consulting, or other self-employment</label>
+            <label class="choice"><input type="checkbox" value="self_employment" /> Freelance, consulting, or other self-employment income</label>
             <label class="choice"><input type="checkbox" value="minister_clergy" /> Minister, clergy, speaker, or housing allowance</label>
             <label class="choice"><input type="checkbox" value="stocks_bonds_investments" /> Stocks, bonds, mutual funds, or investment sales</label>
             <label class="choice"><input type="checkbox" value="interest_dividends" /> Interest or dividend income</label>
@@ -246,6 +297,39 @@
             <label class="choice"><input type="checkbox" value="other_income" /> Other income not listed</label>
           </div>
 
+          <div class="follow-up" id="1099FollowUp" hidden>
+            <h3>Tell us about your 1099 or 1099-NEC</h3>
+            <p>Answer these plain-language questions. You do not need to know whether a Schedule C is required—the office will determine that after reviewing your answers and documents.</p>
+            <div class="grid">
+              <label class="field">How many 1099 or 1099-NEC forms did you receive?
+                <input id="form1099Count" type="number" min="1" max="200" value="1" />
+              </label>
+              <label class="field">Did you have expenses related to this income?
+                <select id="has1099Expenses">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="not_sure">Not sure</option>
+                </select>
+              </label>
+              <label class="field">Did you use a business or trade name?
+                <select id="usedBusinessName">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+              <label class="field">Was this 1099 income connected to more than one state?
+                <select id="multiState1099">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="not_sure">Not sure</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
           <div class="grid three" style="margin-top:18px;">
             <label class="field">Approximate number of income documents
               <input id="documentCount" type="number" min="0" max="200" value="1" />
@@ -254,12 +338,65 @@
               <input id="stateCount" type="number" min="1" max="50" value="1" />
             </label>
             <label class="field">Primary state
-              <input id="primaryState" maxlength="2" placeholder="AZ" />
+              <select id="primaryState" required>
+                <option value="">Select state initials</option>
+                <option value="AL">AL</option>
+                <option value="AK">AK</option>
+                <option value="AZ">AZ</option>
+                <option value="AR">AR</option>
+                <option value="CA">CA</option>
+                <option value="CO">CO</option>
+                <option value="CT">CT</option>
+                <option value="DE">DE</option>
+                <option value="DC">DC</option>
+                <option value="FL">FL</option>
+                <option value="GA">GA</option>
+                <option value="HI">HI</option>
+                <option value="ID">ID</option>
+                <option value="IL">IL</option>
+                <option value="IN">IN</option>
+                <option value="IA">IA</option>
+                <option value="KS">KS</option>
+                <option value="KY">KY</option>
+                <option value="LA">LA</option>
+                <option value="ME">ME</option>
+                <option value="MD">MD</option>
+                <option value="MA">MA</option>
+                <option value="MI">MI</option>
+                <option value="MN">MN</option>
+                <option value="MS">MS</option>
+                <option value="MO">MO</option>
+                <option value="MT">MT</option>
+                <option value="NE">NE</option>
+                <option value="NV">NV</option>
+                <option value="NH">NH</option>
+                <option value="NJ">NJ</option>
+                <option value="NM">NM</option>
+                <option value="NY">NY</option>
+                <option value="NC">NC</option>
+                <option value="ND">ND</option>
+                <option value="OH">OH</option>
+                <option value="OK">OK</option>
+                <option value="OR">OR</option>
+                <option value="PA">PA</option>
+                <option value="RI">RI</option>
+                <option value="SC">SC</option>
+                <option value="SD">SD</option>
+                <option value="TN">TN</option>
+                <option value="TX">TX</option>
+                <option value="UT">UT</option>
+                <option value="VT">VT</option>
+                <option value="VA">VA</option>
+                <option value="WA">WA</option>
+                <option value="WV">WV</option>
+                <option value="WI">WI</option>
+                <option value="WY">WY</option>
+              </select>
             </label>
           </div>
 
           <div class="notice">
-            Have many forms? Enter the approximate count. A customer with 13 separate 1099s should enter 13; the system will route the request as a higher-complexity return without forcing every document to be typed here.
+            Have many forms? Enter the approximate total count. A customer with 13 separate 1099 or 1099-NEC forms should enter 13 in the 1099 section; the system will route the request as a higher-complexity return without forcing every document to be typed here.
           </div>
         </section>
 
@@ -342,6 +479,46 @@
       ).map((input) => input.value);
     }
 
+    function formatPhoneInput(value) {
+      const digits = String(value || "")
+        .replace(/\D/g, "")
+        .slice(0, 10);
+
+      if (digits.length <= 3) {
+        return digits ? `(${digits}` : "";
+      }
+
+      if (digits.length <= 6) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+      }
+
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
+    function update1099FollowUp() {
+      const selected = checkedValues("incomeTypes");
+      const show = selected.includes("1099_nec");
+      const followUp = document.getElementById("1099FollowUp");
+
+      followUp.hidden = !show;
+
+      if (!show) {
+        document.getElementById("form1099Count").value = "1";
+        document.getElementById("has1099Expenses").value = "";
+        document.getElementById("usedBusinessName").value = "";
+        document.getElementById("multiState1099").value = "";
+      }
+    }
+
+    document.getElementById("phone").addEventListener("input", (event) => {
+      event.target.value = formatPhoneInput(event.target.value);
+    });
+
+    document.getElementById("incomeTypes").addEventListener(
+      "change",
+      update1099FollowUp
+    );
+
     async function prefillFromEstimate() {
       if (!sourceLeadId) return;
 
@@ -361,7 +538,7 @@
         document.getElementById("email").value = contact.email || "";
         document.getElementById("phone").value =
           contact.phone && contact.phone !== "Not provided"
-            ? contact.phone
+            ? formatPhoneInput(contact.phone)
             : "";
         document.getElementById("taxYear").value =
           String(taxData.taxYear || "");
@@ -393,6 +570,48 @@
         return;
       }
 
+      const phoneDigits = document.getElementById("phone").value.replace(/\D/g, "");
+
+      if (phoneDigits.length !== 10) {
+        resultBox.className = "error";
+        resultBox.innerHTML =
+          "<div class='result-title'>Enter a complete phone number.</div>" +
+          "Use a 10-digit number such as (623) 570-3934.";
+        return;
+      }
+
+      const selected1099Nec = incomeTypes.includes("1099_nec");
+      const form1099Count = Number.parseInt(
+        document.getElementById("form1099Count").value,
+        10
+      ) || 0;
+      const has1099Expenses =
+        document.getElementById("has1099Expenses").value;
+      const usedBusinessName =
+        document.getElementById("usedBusinessName").value;
+      const multiState1099 =
+        document.getElementById("multiState1099").value;
+
+      if (
+        selected1099Nec &&
+        (
+          form1099Count < 1 ||
+          !has1099Expenses ||
+          !usedBusinessName ||
+          !multiState1099
+        )
+      ) {
+        resultBox.className = "error";
+        resultBox.innerHTML =
+          "<div class='result-title'>Complete the 1099 or 1099-NEC questions.</div>" +
+          "Enter the number of forms and answer the three follow-up questions.";
+        document.getElementById("1099FollowUp").scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+        return;
+      }
+
       const payload = {
         sourceLeadId,
         contact: {
@@ -409,7 +628,11 @@
           primaryState: document.getElementById("primaryState").value.trim().toUpperCase(),
           filingStatus: document.getElementById("filingStatus").value,
           bookkeepingStatus: document.getElementById("bookkeepingStatus").value,
-          comments: document.getElementById("comments").value.trim()
+          comments: document.getElementById("comments").value.trim(),
+          form1099Count: selected1099Nec ? form1099Count : 0,
+          has1099Expenses: selected1099Nec ? has1099Expenses : "",
+          usedBusinessName: selected1099Nec ? usedBusinessName : "",
+          multiState1099: selected1099Nec ? multiState1099 : ""
         }
       };
 
@@ -437,14 +660,26 @@
           ? "Your information includes items that need professional review before pricing or scheduling."
           : "Your request is ready for the next step.";
 
+        const portalMessage =
+          data.portalAccessMode === "sign-in"
+            ? "This request was connected to your existing secure portal account. Sign in with the same email address you already use."
+            : "Your secure portal is ready for activation. Use the activation link and the reference number below to create your password once.";
+
+        const portalActionLabel =
+          data.portalAccessMode === "sign-in"
+            ? "Sign In to My Secure Portal"
+            : "Activate My Secure Client Portal";
+
         resultBox.className = "success";
         resultBox.innerHTML =
           `<div class="result-title">Your request was received.</div>` +
           `<strong>Recommended service:</strong> ${data.recommendedLane}<br>` +
-          `${reviewMessage}<br>` +
+          `${reviewMessage}<br><br>` +
+          `<strong>Secure portal:</strong> ${portalMessage}<br>` +
           `<strong>Reference:</strong> ${data.leadId}` +
           `<div class="actions">` +
-          `<a href="${bookingUrl}" target="_blank" rel="noopener">Schedule a 15-Minute Appointment</a>` +
+          `<a href="${data.portalUrl}">${portalActionLabel}</a>` +
+          `<a href="${bookingUrl}" target="_blank" rel="noopener">Schedule a Tax Preparation Fit Call</a>` +
           `</div>`;
 
         document.getElementById("intakeForm").scrollIntoView({
@@ -464,6 +699,7 @@
 
     applyServicePreset();
     prefillFromEstimate();
+    update1099FollowUp();
   </script>
 </body>
 </html>
