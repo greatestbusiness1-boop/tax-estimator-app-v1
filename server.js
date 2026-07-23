@@ -13813,6 +13813,345 @@ function getExtensionServiceLabelForEmail(request = {}) {
   ) + state;
 }
 
+
+function getExtensionClosureEmailOutcome(request = {}) {
+  const workStatus =
+    String(request.workStatus || "").trim();
+
+  if (
+    /closed\s*(?:—|-)\s*not eligible/i.test(
+      workStatus
+    )
+  ) {
+    return "not_eligible";
+  }
+
+  if (/^completed$/i.test(workStatus)) {
+    return "completed";
+  }
+
+  return "";
+}
+
+function buildExtensionClosureEmail({
+  lead = {},
+  request = {},
+  outcome = ""
+} = {}) {
+  const name =
+    String(
+      lead.contact?.name || "Client"
+    ).trim() || "Client";
+  const taxYear =
+    String(request.taxYear || "").trim() ||
+    "the requested tax year";
+  const service =
+    getExtensionServiceLabelForEmail(request);
+  const reference =
+    String(lead.leadId || "").trim();
+
+  if (outcome === "not_eligible") {
+    return {
+      subject:
+        "Update: Your Tax Extension Request Was Closed",
+      text:
+`Hello ${name},
+
+We completed the deadline-eligibility review for your Tax Extension request.
+
+Service:
+${service}
+
+Tax year:
+${taxYear}
+
+Result:
+The request was closed as Not Eligible for the standard extension filing workflow.
+
+No extension-service payment was requested or charged through this request.
+
+This closed status does not mean that your tax return has been prepared or filed. You may still need tax-filing or resolution assistance based on your specific circumstances.
+
+Reference number:
+${reference}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords. Use the secure client portal when documents are requested.
+
+Thank you,
+
+Greatest Business Solution LLC`
+    };
+  }
+
+  return {
+    subject:
+      "Your Tax Extension Service Is Complete",
+    text:
+`Hello ${name},
+
+Your Tax Extension service has been completed and closed.
+
+Service:
+${service}
+
+Tax year:
+${taxYear}
+
+Status:
+Completed
+
+Please keep the filing confirmation that was delivered for your records.
+
+Important: An extension gives additional time to file the tax return. It does not extend the deadline to pay tax that may be owed, and it does not mean that the full tax return has been prepared or filed.
+
+Reference number:
+${reference}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords. Use the secure client portal when documents are requested.
+
+Thank you,
+
+Greatest Business Solution LLC`
+  };
+}
+
+// =============================================================================
+// POST /api/extension-closure-email
+// Automatically notifies the client when an extension is completed or closed.
+// The endpoint also supports an explicit resend from Completed & Closed
+// Extensions when an older record or delivery exception needs attention.
+// =============================================================================
+
+app.post("/api/extension-closure-email", async (req, res) => {
+  const leadId =
+    String(req.body?.leadId || "").trim();
+  const resend =
+    req.body?.resend === true;
+
+  if (!leadId) {
+    return res.status(400).json({
+      ok: false,
+      emailSent: false,
+      error:
+        "The extension reference number is required."
+    });
+  }
+
+  try {
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        emailSent: false,
+        error:
+          "The completed extension request could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const request =
+      lead.extensionRequest || {};
+    const outcome =
+      getExtensionClosureEmailOutcome(request);
+
+    if (!outcome) {
+      return res.status(409).json({
+        ok: false,
+        emailSent: false,
+        error:
+          "The client closure email can be sent only after the extension is Completed or Closed — Not Eligible."
+      });
+    }
+
+    if (
+      request.closureEmailSentAt &&
+      !resend
+    ) {
+      return res.status(200).json({
+        ok: true,
+        emailSent: false,
+        alreadySent: true,
+        sentAt:
+          request.closureEmailSentAt
+      });
+    }
+
+    const clientEmail =
+      normalizeEmail(
+        lead.contact?.email || ""
+      );
+
+    if (!clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        emailSent: false,
+        error:
+          "The completed extension does not have a client email address."
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      const failureAt =
+        new Date().toISOString();
+      const configurationError =
+        "Email delivery is not configured.";
+
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          extensionRequest: {
+            ...(record.extensionRequest || {}),
+            closureEmailStatus:
+              "Failed",
+            closureEmailError:
+              configurationError,
+            closureEmailLastAttemptAt:
+              failureAt,
+            updatedAt:
+              failureAt
+          },
+          updatedAt:
+            failureAt
+        })
+      );
+
+      return res.status(500).json({
+        ok: false,
+        emailSent: false,
+        error:
+          configurationError
+      });
+    }
+
+    const message =
+      buildExtensionClosureEmail({
+        lead,
+        request,
+        outcome
+      });
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: clientEmail,
+        subject: message.subject,
+        text: message.text
+      });
+    } catch (emailError) {
+      const failureAt =
+        new Date().toISOString();
+      const deliveryError =
+        emailError?.message ||
+        "The client closure email could not be sent.";
+
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          extensionRequest: {
+            ...(record.extensionRequest || {}),
+            closureEmailStatus:
+              "Failed",
+            closureEmailError:
+              deliveryError,
+            closureEmailLastAttemptAt:
+              failureAt,
+            updatedAt:
+              failureAt
+          },
+          updatedAt:
+            failureAt
+        })
+      );
+
+      console.error(
+        "[extension-closure-email] Delivery failed:",
+        leadId,
+        deliveryError
+      );
+
+      return res.status(500).json({
+        ok: false,
+        emailSent: false,
+        error:
+          deliveryError
+      });
+    }
+
+    const sentAt =
+      new Date().toISOString();
+
+    const saveResult =
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          extensionRequest: {
+            ...(record.extensionRequest || {}),
+            closureEmailSentAt:
+              sentAt,
+            closureEmailLastAttemptAt:
+              sentAt,
+            closureEmailStatus:
+              "Sent",
+            closureEmailType:
+              outcome,
+            closureEmailError:
+              "",
+            closureEmailResendCount:
+              Number(
+                record.extensionRequest
+                  ?.closureEmailResendCount ||
+                0
+              ) + (
+                resend
+                  ? 1
+                  : 0
+              ),
+            updatedAt:
+              sentAt
+          },
+          updatedAt:
+            sentAt
+        })
+      );
+
+    if (!saveResult?.ok) {
+      return res.status(500).json({
+        ok: false,
+        emailSent: true,
+        sentAt,
+        error:
+          "The client email was sent, but its delivery record could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      emailSent: true,
+      alreadySent: false,
+      sentAt,
+      outcome
+    });
+  } catch (error) {
+    console.error(
+      "[extension-closure-email] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      emailSent: false,
+      error:
+        error.message ||
+        "The client extension completion or closure email could not be sent."
+    });
+  }
+});
+
 // =============================================================================
 // POST /api/create-extension-checkout
 // Amount is calculated from the saved request, never from browser pricing.

@@ -1466,6 +1466,59 @@
       color:#0f2c56;
     }
 
+    .completed-extension-dedicated-intro {
+      margin:0 0 12px;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
+      background:#f8fafc;
+      padding:11px 13px;
+      color:#334155;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.5;
+    }
+
+    .completed-extension-dedicated-list {
+      padding:0;
+    }
+
+    .completed-extension-dedicated-row {
+      grid-template-columns:
+        minmax(150px,1.1fr)
+        minmax(135px,.95fr)
+        78px
+        112px
+        92px
+        minmax(120px,.9fr)
+        minmax(155px,auto);
+    }
+
+    .completed-extension-email-status {
+      color:#475569;
+      font-size:10px;
+      font-weight:850;
+      line-height:1.35;
+    }
+
+    .completed-extension-email-status.sent {
+      color:#166534;
+    }
+
+    .completed-extension-email-status.failed {
+      color:#b91c1c;
+    }
+
+    .completed-extension-actions {
+      display:grid;
+      gap:5px;
+    }
+
+    .completed-extension-actions .extension-basket-button {
+      width:100%;
+      margin:0;
+      white-space:normal;
+    }
+
     .extension-sidebar-count {
       display:inline-flex;
       align-items:center;
@@ -1655,6 +1708,20 @@
         id="extensionRequestsSidebarCount"
         class="extension-sidebar-count"
         aria-label="0 open extension requests"
+      >0</span>
+    </button>
+    <button
+      id="completedExtensionsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="extensionscompleted"
+      data-title="Completed & Closed Extensions"
+      type="button"
+    >
+      <span>Completed &amp; Closed Extensions</span>
+      <span
+        id="completedExtensionsSidebarCount"
+        class="extension-sidebar-count"
+        aria-label="0 completed or closed extension requests"
       >0</span>
     </button>
     <button class="sidebar-btn" data-view="taxprepcompleted" data-title="Completed Tax Returns">Completed Tax Returns</button>
@@ -3232,6 +3299,33 @@ function getExtensionPortalStatus(lead){
   );
 }
 
+function getExtensionClosureEmailLabel(lead){
+  const request = lead?.extensionRequest || {};
+  const sentAt = formatLeadDate(
+    request.closureEmailSentAt || ""
+  );
+
+  if(sentAt){
+    return `Sent ${sentAt}`;
+  }
+
+  if(
+    String(request.closureEmailStatus || "")
+      .toLowerCase()
+      .includes("failed")
+  ){
+    return "Delivery Failed — Resend Needed";
+  }
+
+  return "Not Sent";
+}
+
+function getExtensionClosureEmailButtonLabel(lead){
+  return lead?.extensionRequest?.closureEmailSentAt
+    ? "Resend Client Closure Email"
+    : "Send Client Closure Email";
+}
+
 function getExtensionNextOfficeAction(lead){
   const request = lead?.extensionRequest || {};
   const status = getExtensionWorkStatus(lead).toLowerCase();
@@ -3241,7 +3335,7 @@ function getExtensionNextOfficeAction(lead){
   const stateAction = getExtensionStateActionStatus(lead).toLowerCase();
 
   if(isCompletedExtension(lead)){
-    return "Completed or closed request is stored in the minimized Completed & Closed Extensions section.";
+    return "Completed or closed request is stored under Completed & Closed Extensions in the left Tax Lead Center menu.";
   }
 
   if(deadlineDecision.includes("not reviewed") || status.includes("deadline review")){
@@ -3249,7 +3343,7 @@ function getExtensionNextOfficeAction(lead){
   }
 
   if(deadlineDecision.includes("not eligible")){
-    return "Use Close — Not Eligible to save the decision and move the request into the minimized completed section.";
+    return "Use Close — Not Eligible to save the decision and move the request to Completed & Closed Extensions.";
   }
 
   if(status.includes("payment pending") || payment.includes("pending")){
@@ -3284,11 +3378,11 @@ function getExtensionNextOfficeAction(lead){
   }
 
   if(status.includes("filed")){
-    return "Deliver the filing confirmation, then mark Completed to move the request into the minimized section.";
+    return "Deliver the filing confirmation, then mark Completed to move the request to Completed & Closed Extensions.";
   }
 
   if(status.includes("confirmation delivered")){
-    return "Confirm the card is complete, then select Completed. The request will move into the minimized section below.";
+    return "Confirm the card is complete, then select Completed. The request will move to Completed & Closed Extensions.";
   }
 
   return "Use the Extension Action Basket on this card to record the next required step.";
@@ -3416,6 +3510,19 @@ function updateExtensionRequestCounts(visibleCount){
   setCount("extensionReadyCount", counts.ready);
   setCount("extensionFiledCount", counts.filed);
   setCount("extensionRequestsSidebarCount", counts.all);
+  setCount("completedExtensionsSidebarCount", counts.completed);
+
+  const completedSidebarCount =
+    document.getElementById(
+      "completedExtensionsSidebarCount"
+    );
+
+  if(completedSidebarCount){
+    completedSidebarCount.setAttribute(
+      "aria-label",
+      `${counts.completed} completed or closed extension request${counts.completed === 1 ? "" : "s"}`
+    );
+  }
 
   const sidebarCount =
     document.getElementById(
@@ -3464,7 +3571,7 @@ function updateExtensionRequestCounts(visibleCount){
         : "none";
 
     summary.textContent =
-      `Showing ${shown} ${labels[currentExtensionFilter] || "Extension"} request${shown === 1 ? "" : "s"}. Each card is the Extension Action Basket: request details, payment, mandatory checklist, status controls, office note, and client documents stay together. ${counts.completed} completed or closed request${counts.completed === 1 ? " is" : "s are"} stored in the minimized section at the bottom.`;
+      `Showing ${shown} ${labels[currentExtensionFilter] || "Extension"} request${shown === 1 ? "" : "s"}. Each card is the Extension Action Basket: request details, payment, mandatory checklist, status controls, office note, and client documents stay together. Use Completed & Closed Extensions in the left menu for finished requests.`;
   }
 }
 
@@ -3702,6 +3809,26 @@ function getVisibleLeads(){
       .sort((a,b) =>
         new Date(getLeadEnteredAt(b) || 0) -
         new Date(getLeadEnteredAt(a) || 0)
+      );
+  }
+
+  if(currentView==="extensionscompleted"){
+    return allLeads
+      .filter(isExtensionLead)
+      .filter(isCompletedExtension)
+      .sort((a,b) =>
+        new Date(
+          b?.extensionRequest?.completedAt ||
+          getLeadClosedAt(b) ||
+          b?.extensionRequest?.filedAt ||
+          0
+        ) -
+        new Date(
+          a?.extensionRequest?.completedAt ||
+          getLeadClosedAt(a) ||
+          a?.extensionRequest?.filedAt ||
+          0
+        )
       );
   }
 
@@ -6845,6 +6972,107 @@ function renderLeads(){
     return;
   }
 
+  if(currentView === "extensionscompleted"){
+    updateExtensionRequestCounts();
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="completed-extension-dedicated-intro">
+          Completed and ineligible extension requests are stored here instead of being mixed with active requests. Client closure emails are sent automatically when an extension is completed or closed. A manual send or resend button remains available for older records or delivery exceptions.
+        </div>
+        <div class="office-empty">
+          No completed or closed extension requests have been recorded yet.
+        </div>`;
+
+      window.completedExtensionLeads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="completed-extension-dedicated-intro">
+        Newest completed or closed extensions appear first. Open the record to review the full history. The client-email column confirms whether the automatic completion or closure email was delivered.
+      </div>
+
+      <div class="completed-extension-list completed-extension-dedicated-list">
+        ${visible.map((lead, index) => {
+          const request = lead.extensionRequest || {};
+          const completedAt = formatLeadDate(
+            request.completedAt ||
+            getLeadClosedAt(lead) ||
+            request.filedAt ||
+            ""
+          ) || "Date not recorded";
+          const closureLabel =
+            getExtensionClosureEmailLabel(lead);
+          const closureClass =
+            request.closureEmailSentAt
+              ? "sent"
+              : String(
+                  request.closureEmailStatus || ""
+                ).toLowerCase().includes("failed")
+                  ? "failed"
+                  : "";
+
+          return `
+            <div class="completed-extension-row completed-extension-dedicated-row">
+              <div>
+                <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
+                ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
+                ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "")}
+              </div>
+
+              <div>
+                ${escapeOfficeHtml(getExtensionServiceLabel(lead))}<br>
+                <strong>${escapeOfficeHtml(getExtensionWorkStatus(lead))}</strong>
+              </div>
+
+              <div>
+                Tax year<br>
+                <strong>${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}</strong>
+              </div>
+
+              <div>
+                Completed / closed<br>
+                <strong>${escapeOfficeHtml(completedAt)}</strong>
+              </div>
+
+              <div>
+                Fee<br>
+                <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong>
+              </div>
+
+              <div>
+                Client closure email<br>
+                <span class="completed-extension-email-status ${closureClass}">
+                  ${escapeOfficeHtml(closureLabel)}
+                </span>
+              </div>
+
+              <div class="completed-extension-actions">
+                <button
+                  class="extension-basket-button light"
+                  type="button"
+                  onclick="openCompletedExtensionLead(${index})"
+                >
+                  Open Closed Extension
+                </button>
+
+                <button
+                  class="extension-basket-button secondary"
+                  type="button"
+                  onclick="sendOrResendCompletedExtensionEmail(${index})"
+                >
+                  ${escapeOfficeHtml(getExtensionClosureEmailButtonLabel(lead))}
+                </button>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>`;
+
+    window.completedExtensionLeads = visible;
+    return;
+  }
+
   if(currentView === "extensions"){
     updateExtensionRequestCounts(visible.length);
 
@@ -7193,7 +7421,7 @@ function renderLeads(){
         </div>`
       : `
         <div class="office-empty">
-          No open extension requests match the selected filter. Completed and closed requests remain in the minimized section below.
+          No open extension requests match the selected filter. Use Completed & Closed Extensions in the left Tax Lead Center menu for finished requests.
         </div>`;
 
     const completedSection = `
@@ -7203,7 +7431,7 @@ function renderLeads(){
             Completed &amp; Closed Extensions
             <span class="completed-extension-count">${completedExtensionLeads.length}</span>
           </span>
-          <span class="completed-extension-summary-note">Minimized — click this bar only when you need an older completed request</span>
+          <span class="completed-extension-summary-note">Backup minimized list — use Completed & Closed Extensions in the left menu for direct access</span>
         </summary>
         <div class="completed-extension-list">
           ${completedExtensionLeads.length
@@ -8856,7 +9084,27 @@ async function saveExtensionCard(index){
     }
 
     await patchExtensionLead(lead, update);
-    alert("Extension Action Basket saved. All information remains on this client's card.");
+
+    if(update.workStatus === "Completed"){
+      const delivery =
+        await requestExtensionClosureEmail(
+          lead,
+          false
+        );
+
+      if(delivery.emailSent){
+        alert("Extension Action Basket saved. The request moved to Completed & Closed Extensions, and the client completion email was sent.");
+      }else if(delivery.alreadySent){
+        alert("Extension Action Basket saved. The request moved to Completed & Closed Extensions. A client completion email was already recorded.");
+      }else{
+        alert(
+          `Extension Action Basket saved and the request moved to Completed & Closed Extensions, but the client completion email was not sent. ${delivery.error || "Use the Send Client Closure Email button in Completed & Closed Extensions."}`
+        );
+      }
+    }else{
+      alert("Extension Action Basket saved. All information remains on this client's card.");
+    }
+
     await loadLeads();
   }catch(error){
     alert(
@@ -8961,7 +9209,7 @@ async function closeExtensionNotEligible(index){
   }
 
   const confirmed = window.confirm(
-    "Close this extension request as Not Eligible? No payment will be requested. The card will move into the minimized Completed & Closed Extensions section at the bottom of this page."
+    "Close this extension request as Not Eligible? No payment will be requested. The card will move to Completed & Closed Extensions in the left Tax Lead Center menu, and the client will receive a closure email."
   );
 
   if(!confirmed){
@@ -8987,7 +9235,23 @@ async function closeExtensionNotEligible(index){
     update.completed = true;
 
     await patchExtensionLead(lead, update);
-    alert("The request was closed as Not Eligible and moved into the minimized Completed & Closed Extensions section.");
+
+    const delivery =
+      await requestExtensionClosureEmail(
+        lead,
+        false
+      );
+
+    if(delivery.emailSent){
+      alert("The request was closed as Not Eligible, moved to Completed & Closed Extensions, and the client closure email was sent.");
+    }else if(delivery.alreadySent){
+      alert("The request was closed as Not Eligible and moved to Completed & Closed Extensions. A client closure email was already recorded.");
+    }else{
+      alert(
+        `The request was closed as Not Eligible and moved to Completed & Closed Extensions, but the client closure email was not sent. ${delivery.error || "Use the Send Client Closure Email button in Completed & Closed Extensions."}`
+      );
+    }
+
     await loadLeads();
   }catch(error){
     alert(
@@ -9091,6 +9355,97 @@ function openExtensionDocuments(index){
     "_blank",
     "noopener"
   );
+}
+
+async function requestExtensionClosureEmail(lead, resend = false){
+  if(!lead?.leadId){
+    return {
+      ok: false,
+      emailSent: false,
+      error:
+        "The extension request could not be identified."
+    };
+  }
+
+  try{
+    const response = await fetch(
+      "/api/extension-closure-email",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          leadId: lead.leadId,
+          resend
+        })
+      }
+    );
+
+    const data = await response
+      .json()
+      .catch(() => ({}));
+
+    return {
+      ok: response.ok && data.ok === true,
+      emailSent: data.emailSent === true,
+      alreadySent: data.alreadySent === true,
+      sentAt: data.sentAt || "",
+      error:
+        data.error ||
+        data.emailError ||
+        ""
+    };
+  }catch(error){
+    return {
+      ok: false,
+      emailSent: false,
+      error:
+        error.message ||
+        "The client closure email could not be sent."
+    };
+  }
+}
+
+async function sendOrResendCompletedExtensionEmail(index){
+  const lead =
+    (window.completedExtensionLeads || [])[index];
+
+  if(!lead){
+    alert("The completed extension request could not be identified.");
+    return;
+  }
+
+  const label =
+    lead?.extensionRequest?.closureEmailSentAt
+      ? "resend"
+      : "send";
+
+  const confirmed = window.confirm(
+    `${label === "resend" ? "Resend" : "Send"} the client ${getExtensionWorkStatus(lead) === "Completed" ? "completion" : "closure"} email to ${lead.contact?.email || "the email address on file"}?`
+  );
+
+  if(!confirmed){
+    return;
+  }
+
+  const delivery =
+    await requestExtensionClosureEmail(
+      lead,
+      true
+    );
+
+  if(delivery.emailSent){
+    alert("The client extension completion or closure email was sent and recorded.");
+    await loadLeads();
+    return;
+  }
+
+  alert(
+    `The extension record remains closed, but the client email was not sent. ${delivery.error || "Review the email configuration and try again."}`
+  );
+
+  await loadLeads();
 }
 
 function openCompletedExtensionLead(index){
@@ -9198,7 +9553,7 @@ function openExtensionWorkspace(lead){
       </div>
 
       <div class="service-workspace-note">
-        This is a standalone extension service. The client may use any tax professional for the full return. An extension gives more time to file, not more time to pay. Completed and closed requests are stored in the minimized section at the bottom of Extension Requests.
+        This is a standalone extension service. The client may use any tax professional for the full return. An extension gives more time to file, not more time to pay. Completed and closed requests are stored under Completed & Closed Extensions in the left Tax Lead Center menu.
       </div>
     </div>
   `;
@@ -9377,6 +9732,7 @@ document.addEventListener("DOMContentLoaded", () => {
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
         extensions: "Extension Requests",
+        extensionscompleted: "Completed & Closed Extensions",
         taxprepcompleted: "Completed Tax Returns",
         websitecontact: "Website Contact Requests",
         calendar: "Scheduled Consultations",
