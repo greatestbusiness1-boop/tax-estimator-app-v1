@@ -1114,6 +1114,335 @@
       font-weight:800;
     }
 
+    .taxprep-card-list {
+      display:grid;
+      gap:14px;
+    }
+
+    .taxprep-client-card {
+      border:1px solid #cbd5e1;
+      border-left:6px solid #0f766e;
+      border-radius:14px;
+      background:#ffffff;
+      padding:16px;
+      box-shadow:0 8px 20px rgba(15,44,86,.06);
+    }
+
+    .taxprep-client-card.needs-attention {
+      border-left-color:#c2410c;
+      background:#fffaf5;
+    }
+
+    .taxprep-client-card.taxprep-highlight {
+      outline:4px solid rgba(14,116,144,.22);
+      scroll-margin-top:18px;
+    }
+
+    .taxprep-card-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:12px;
+    }
+
+    .taxprep-client-name {
+      color:#0f2c56;
+      font-size:19px;
+      font-weight:950;
+    }
+
+    .taxprep-client-contact {
+      margin-top:3px;
+      color:#475569;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .taxprep-card-badges {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:6px;
+    }
+
+    .taxprep-card-badge {
+      display:inline-flex;
+      align-items:center;
+      border:1px solid #99f6e4;
+      border-radius:999px;
+      background:#f0fdfa;
+      color:#115e59;
+      padding:6px 9px;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .taxprep-card-badge.attention {
+      border-color:#fdba74;
+      background:#ffedd5;
+      color:#9a3412;
+    }
+
+    .taxprep-card-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:9px;
+    }
+
+    .taxprep-card-block {
+      min-height:104px;
+      border:1px solid #dbe4f0;
+      border-radius:10px;
+      background:#f8fafc;
+      padding:10px;
+      color:#334155;
+      font-size:12px;
+      line-height:1.48;
+    }
+
+    .taxprep-card-block > span {
+      display:block;
+      margin-bottom:5px;
+      color:#64748b;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .taxprep-card-block strong {
+      color:#0f2c56;
+    }
+
+    .taxprep-next-action {
+      margin-top:10px;
+      border:1px solid #a7f3d0;
+      border-radius:10px;
+      background:#ecfdf5;
+      padding:10px 12px;
+      color:#065f46;
+      font-size:12px;
+      font-weight:900;
+      line-height:1.45;
+    }
+
+    .taxprep-action-basket {
+      margin-top:12px;
+      border:2px solid #0f766e;
+      border-radius:12px;
+      background:#f0fdfa;
+      padding:12px;
+    }
+
+    .taxprep-basket-heading {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .taxprep-basket-heading strong {
+      color:#0f2c56;
+      font-size:15px;
+    }
+
+    .taxprep-basket-heading span {
+      display:block;
+      margin-top:2px;
+      color:#475569;
+      font-size:11px;
+      font-weight:700;
+      line-height:1.4;
+    }
+
+    .taxprep-required-checklist {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px;
+      margin-bottom:10px;
+    }
+
+    .taxprep-check-item {
+      display:flex;
+      align-items:center;
+      gap:7px;
+      min-height:44px;
+      border:1px solid #d7e2ef;
+      border-radius:9px;
+      background:#ffffff;
+      padding:8px;
+      color:#334155;
+      font-size:11px;
+      font-weight:850;
+      line-height:1.3;
+    }
+
+    .taxprep-check-dot {
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:#fff7ed;
+      color:#9a3412;
+      border:1px solid #fdba74;
+      font-size:11px;
+      font-weight:950;
+    }
+
+    .taxprep-check-item.done .taxprep-check-dot {
+      background:#dcfce7;
+      color:#166534;
+      border-color:#86efac;
+    }
+
+    .taxprep-check-item.not-applicable .taxprep-check-dot {
+      background:#e2e8f0;
+      color:#475569;
+      border-color:#cbd5e1;
+    }
+
+    .taxprep-basket-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .taxprep-basket-field {
+      display:grid;
+      gap:5px;
+    }
+
+    .taxprep-basket-field.span-two {
+      grid-column:span 2;
+    }
+
+    .taxprep-basket-field.full {
+      grid-column:1 / -1;
+    }
+
+    .taxprep-basket-field label {
+      color:#17324d;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .taxprep-basket-field input,
+    .taxprep-basket-field select,
+    .taxprep-basket-field textarea {
+      width:100%;
+      border:1px solid #afc2d8;
+      border-radius:8px;
+      background:#ffffff;
+      color:#0f2c56;
+      padding:8px 9px;
+      font:inherit;
+      font-size:12px;
+    }
+
+    .taxprep-basket-field textarea {
+      min-height:74px;
+      resize:vertical;
+    }
+
+    .taxprep-payment-summary {
+      margin-top:8px;
+      border:1px solid #99f6e4;
+      border-radius:9px;
+      background:#ffffff;
+      padding:9px 10px;
+      color:#115e59;
+      font-size:11px;
+      font-weight:850;
+      line-height:1.45;
+    }
+
+    .taxprep-basket-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .taxprep-basket-button {
+      border:0;
+      border-radius:8px;
+      background:#0f2c56;
+      color:#ffffff;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      text-decoration:none;
+    }
+
+    .taxprep-basket-button.payment {
+      background:#047857;
+    }
+
+    .taxprep-basket-button.secondary {
+      background:#28588c;
+    }
+
+    .taxprep-basket-button.light {
+      background:#ffffff;
+      color:#0f2c56;
+      border:1px solid #9fb5ce;
+    }
+
+    .taxprep-completed-intro {
+      margin:0 0 12px;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
+      background:#f8fafc;
+      padding:11px 13px;
+      color:#334155;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.5;
+    }
+
+    .taxprep-completed-list {
+      display:grid;
+      gap:7px;
+    }
+
+    .taxprep-completed-row {
+      display:grid;
+      grid-template-columns:minmax(155px,1.2fr) minmax(145px,1fr) 78px 120px 115px minmax(125px,1fr) minmax(160px,auto);
+      align-items:center;
+      gap:8px;
+      border:1px solid #dbe4f0;
+      border-radius:9px;
+      background:#ffffff;
+      padding:9px 10px;
+      color:#334155;
+      font-size:11px;
+    }
+
+    .taxprep-completed-row strong {
+      color:#0f2c56;
+    }
+
+    .taxprep-sidebar-count,
+    .taxprep-filter-count {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:24px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#17324d;
+      font-size:11px;
+      font-weight:900;
+    }
+
     .extension-card-list {
       display:grid;
       gap:12px;
@@ -1539,19 +1868,24 @@
     }
 
     @media (max-width: 1180px) {
+      .taxprep-card-grid,
+      .taxprep-basket-grid,
+      .taxprep-required-checklist,
       .extension-card-grid,
       .extension-basket-grid,
       .extension-required-checklist {
         grid-template-columns:repeat(2,minmax(0,1fr));
       }
 
-      .completed-extension-row {
+      .completed-extension-row,
+      .taxprep-completed-row {
         grid-template-columns:repeat(3,minmax(0,1fr));
       }
     }
 
     @media (max-width: 700px) {
-      .extension-card-head {
+      .extension-card-head,
+      .taxprep-card-head {
         display:block;
       }
 
@@ -1560,6 +1894,10 @@
         margin-top:8px;
       }
 
+      .taxprep-card-grid,
+      .taxprep-basket-grid,
+      .taxprep-required-checklist,
+      .taxprep-completed-row,
       .extension-card-grid,
       .extension-basket-grid,
       .extension-required-checklist,
@@ -1568,6 +1906,7 @@
       }
 
       .extension-basket-heading,
+      .taxprep-basket-heading,
       .completed-extension-section > summary {
         display:block;
       }
@@ -1695,7 +2034,20 @@
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Tax Preparation Work Center</div>
-    <button class="sidebar-btn" data-view="taxprep" data-title="Tax Preparation Requests">Tax Preparation Requests</button>
+    <button
+      id="taxPrepRequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="taxprep"
+      data-title="Tax Preparation Requests"
+      type="button"
+    >
+      <span>Tax Preparation Requests</span>
+      <span
+        id="taxPrepRequestsSidebarCount"
+        class="taxprep-sidebar-count"
+        aria-label="0 active tax preparation requests"
+      >0</span>
+    </button>
     <button
       id="extensionRequestsSidebarButton"
       class="sidebar-btn transcript-sidebar-link"
@@ -1724,7 +2076,20 @@
         aria-label="0 completed or closed extension requests"
       >0</span>
     </button>
-    <button class="sidebar-btn" data-view="taxprepcompleted" data-title="Completed Tax Returns">Completed Tax Returns</button>
+    <button
+      id="completedTaxReturnsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="taxprepcompleted"
+      data-title="Completed Tax Returns"
+      type="button"
+    >
+      <span>Completed Tax Returns</span>
+      <span
+        id="completedTaxReturnsSidebarCount"
+        class="taxprep-sidebar-count"
+        aria-label="0 completed tax returns"
+      >0</span>
+    </button>
 
     <div class="sidebar-divider"></div>
     <div class="sidebar-group">Calendar</div>
@@ -1816,15 +2181,15 @@
 
 
     <div id="taxPrepFilters" class="taxprep-filters">
-      <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Active Returns</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="portal">Portal Activation</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="documents">Documents Needed</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="ready">Ready to Prepare</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="preparing">In Preparation</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="signature">Client Review / Signature</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="efile">Ready to E-file</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="submitted">Submitted / Acceptance</button>
-      <button class="taxprep-filter-btn" data-taxprep-filter="review">Needs Review</button>
+      <button class="taxprep-filter-btn active" data-taxprep-filter="all">All Active Returns <span id="taxPrepAllCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="portal">Portal Activation <span id="taxPrepPortalCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="documents">Documents Needed <span id="taxPrepDocumentsCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="ready">Ready to Prepare <span id="taxPrepReadyCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="preparing">In Preparation <span id="taxPrepPreparingCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="signature">Client Review / Signature <span id="taxPrepSignatureCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="efile">Ready to E-file <span id="taxPrepEfileCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="submitted">Submitted / Acceptance <span id="taxPrepSubmittedCount" class="taxprep-filter-count">0</span></button>
+      <button class="taxprep-filter-btn" data-taxprep-filter="review">Needs Review <span id="taxPrepReviewCount" class="taxprep-filter-count">0</span></button>
     </div>
 
     <div id="taxPrepAdvancedFilters" class="taxprep-advanced-filters">
@@ -2939,6 +3304,333 @@ function updateContactAdvancedSummary(count){
   summary.textContent = `Website Contact Requests shown: ${count}`;
 }
 
+function taxPrepMoney(value){
+  const amount = Number(value || 0);
+  return Number.isFinite(amount)
+    ? amount.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    : "0.00";
+}
+
+function taxPrepHumanize(value){
+  return String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .trim();
+}
+
+function taxPrepListDisplay(value){
+  const list = Array.isArray(value) ? value : [];
+  return list.length
+    ? list.map(taxPrepHumanize).join(", ")
+    : "Not provided";
+}
+
+function getTaxPrepClientInformationStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.clientInformationStatus ||
+    "Needs Review"
+  ).trim();
+}
+
+function getTaxPrepSignatureStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.signatureStatus ||
+    "Not Requested"
+  ).trim();
+}
+
+function getTaxPrepEfileStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.efileStatus ||
+    "Not Started"
+  ).trim();
+}
+
+function getTaxPrepAcceptanceStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.acceptanceStatus ||
+    "Not Submitted"
+  ).trim();
+}
+
+function getTaxPrepFinalCopyStatus(lead){
+  return String(
+    lead?.taxPreparationWork?.finalReturnDeliveryStatus ||
+    "Not Delivered"
+  ).trim();
+}
+
+function getTaxPrepPaymentRequirement(lead){
+  return String(
+    lead?.taxPreparationWork?.paymentRequirement ||
+    "Required"
+  ).trim();
+}
+
+function getTaxPrepQuotedFee(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.taxPreparationWork?.quotedFee ||
+      0
+    ) || 0
+  );
+}
+
+function getTaxPrepAmountPaid(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.taxPreparationWork?.amountPaid ||
+      0
+    ) || 0
+  );
+}
+
+function getTaxPrepPaymentRequestAmount(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.taxPreparationWork?.paymentRequestAmount ||
+      0
+    ) || 0
+  );
+}
+
+function taxPrepPaymentIsSatisfied(lead){
+  if(
+    getTaxPrepPaymentRequirement(lead) ===
+    "Waived by Office"
+  ){
+    return true;
+  }
+
+  const quote = getTaxPrepQuotedFee(lead);
+  const paid = getTaxPrepAmountPaid(lead);
+
+  return (
+    quote > 0 &&
+    paid >= quote
+  ) || /paid\s*\/\s*verified|paid in full/i.test(
+    getTaxPrepPaymentStatus(lead)
+  );
+}
+
+function getTaxPrepPaymentUrl(lead){
+  return String(
+    lead?.taxPreparationWork?.stripeCheckoutUrl ||
+    ""
+  ).trim();
+}
+
+function taxPrepReturnPrepared(lead){
+  return /client review|signature|ready to e-file|submitted|awaiting acceptance|accepted|completed/i.test(
+    getTaxPrepWorkStatus(lead)
+  );
+}
+
+function taxPrepChecklistItems(lead){
+  const portalDone =
+    getTaxPrepPortalStatus(lead) === "Active";
+  const infoDone =
+    getTaxPrepClientInformationStatus(lead) === "Complete";
+  const docsDone =
+    /documents complete|final return delivered/i.test(
+      getTaxPrepDocumentStatus(lead)
+    );
+  const paymentDone = taxPrepPaymentIsSatisfied(lead);
+  const preparedDone = taxPrepReturnPrepared(lead);
+  const signature = getTaxPrepSignatureStatus(lead);
+  const signatureDone =
+    /signed|complete|not required/i.test(signature);
+  const efile = getTaxPrepEfileStatus(lead);
+  const efileDone =
+    /submitted|not required|paper file/i.test(efile);
+  const acceptance = getTaxPrepAcceptanceStatus(lead);
+  const acceptanceDone =
+    /accepted|not applicable/i.test(acceptance);
+  const finalDone =
+    /delivered/i.test(getTaxPrepFinalCopyStatus(lead));
+
+  return [
+    { label: "Portal activated", done: portalDone },
+    { label: "Client information complete", done: infoDone },
+    { label: "Required documents complete", done: docsDone },
+    {
+      label:
+        getTaxPrepPaymentRequirement(lead) === "Waived by Office"
+          ? "Payment waived by office"
+          : "Fee payment confirmed",
+      done: paymentDone,
+      notApplicable:
+        getTaxPrepPaymentRequirement(lead) === "Waived by Office"
+    },
+    { label: "Return prepared", done: preparedDone },
+    { label: "Client signature complete", done: signatureDone },
+    { label: "Return submitted or paper-file decision", done: efileDone },
+    { label: "Acceptance confirmed", done: acceptanceDone },
+    { label: "Final client copy delivered", done: finalDone }
+  ];
+}
+
+function taxPrepChecklistHtml(lead){
+  return taxPrepChecklistItems(lead)
+    .map((item) => `
+      <div class="taxprep-check-item ${item.done ? "done" : ""} ${item.notApplicable ? "not-applicable" : ""}">
+        <span class="taxprep-check-dot">
+          ${item.done ? "✓" : item.notApplicable ? "—" : "!"}
+        </span>
+        <span>${escapeOfficeHtml(item.label)}</span>
+      </div>
+    `)
+    .join("");
+}
+
+function getTaxPrepNextOfficeAction(lead){
+  if(getTaxPrepPortalStatus(lead) !== "Active"){
+    return "Confirm the client has activated the secure portal. Use the portal link or client email button below if instructions need to be resent.";
+  }
+
+  if(getTaxPrepClientInformationStatus(lead) !== "Complete"){
+    return "Review the client's intake and mark Client information as Complete.";
+  }
+
+  if(!/documents complete|final return delivered/i.test(getTaxPrepDocumentStatus(lead))){
+    return "Review the secure document list and identify any missing records before preparation begins.";
+  }
+
+  if(getTaxPrepPaymentRequirement(lead) !== "Waived by Office"){
+    if(getTaxPrepQuotedFee(lead) <= 0){
+      return "Enter and save the approved Tax Preparation fee quote.";
+    }
+
+    if(!taxPrepPaymentIsSatisfied(lead)){
+      return getTaxPrepPaymentUrl(lead)
+        ? "A secure payment link is on the card. Monitor Stripe or resend the link if needed."
+        : "Enter the amount to collect and create the secure Stripe payment link from this card.";
+    }
+  }
+
+  const status = getTaxPrepWorkStatus(lead).toLowerCase();
+
+  if(status.includes("ready to prepare")){
+    return "Begin the return and change Preparation status to In Preparation.";
+  }
+
+  if(status.includes("in preparation")){
+    return "Complete the return, resolve open questions, and move it to Client Review / Signature.";
+  }
+
+  if(status.includes("client review") || status.includes("signature")){
+    return "Obtain the required client review, signatures, and e-file authorizations.";
+  }
+
+  if(status.includes("ready to e-file")){
+    return "Submit the return and record the e-file status on this card.";
+  }
+
+  if(status.includes("submitted") || status.includes("awaiting acceptance")){
+    return "Monitor federal and state acknowledgments, then record acceptance and deliver the final client copy.";
+  }
+
+  if(/accepted|completed/i.test(status)){
+    return "This return is complete and stored under Completed Tax Returns.";
+  }
+
+  return "Review the request, confirm the scope and fee, and advance the next required status on this card.";
+}
+
+function validateTaxPrepCompletionValues(values){
+  const missing = [];
+
+  if(values.clientInformationStatus !== "Complete"){
+    missing.push("Client information must be Complete");
+  }
+
+  if(!/documents complete|final return delivered/i.test(values.documentStatus)){
+    missing.push("Required documents must be Complete");
+  }
+
+  if(
+    values.paymentRequirement !== "Waived by Office" &&
+    !(values.quotedFee > 0 && values.amountPaid >= values.quotedFee)
+  ){
+    missing.push("The quoted fee must be Paid / Verified or waived by the office");
+  }
+
+  if(!/signed|complete|not required/i.test(values.signatureStatus)){
+    missing.push("Client signature status must be complete or not required");
+  }
+
+  if(!/submitted|not required|paper file/i.test(values.efileStatus)){
+    missing.push("The return must be submitted or marked for paper filing / not required");
+  }
+
+  if(!/accepted|not applicable/i.test(values.acceptanceStatus)){
+    missing.push("Federal and state acceptance must be confirmed or marked not applicable");
+  }
+
+  if(!/delivered/i.test(values.finalReturnDeliveryStatus)){
+    missing.push("The final client copy must be delivered");
+  }
+
+  return missing;
+}
+
+function updateTaxPrepRequestCounts(){
+  const active = (allLeads || [])
+    .filter(isTaxPreparationLead)
+    .filter((lead) => !isCompletedTaxPreparation(lead));
+
+  const completed = (allLeads || [])
+    .filter(isTaxPreparationLead)
+    .filter(isCompletedTaxPreparation);
+
+  const counts = {
+    taxPrepAllCount: active.length,
+    taxPrepPortalCount: active.filter((lead) => {
+      const status = getTaxPrepWorkStatus(lead).toLowerCase();
+      return getTaxPrepPortalStatus(lead) !== "Active" || status.includes("portal activation");
+    }).length,
+    taxPrepDocumentsCount: active.filter((lead) => {
+      const docs = getTaxPrepDocumentStatus(lead).toLowerCase();
+      return docs.includes("needed") || docs.includes("partial");
+    }).length,
+    taxPrepReadyCount: active.filter((lead) => getTaxPrepWorkStatus(lead).toLowerCase().includes("ready to prepare")).length,
+    taxPrepPreparingCount: active.filter((lead) => getTaxPrepWorkStatus(lead).toLowerCase().includes("in preparation")).length,
+    taxPrepSignatureCount: active.filter((lead) => /client review|signature/i.test(getTaxPrepWorkStatus(lead))).length,
+    taxPrepEfileCount: active.filter((lead) => getTaxPrepWorkStatus(lead).toLowerCase().includes("ready to e-file")).length,
+    taxPrepSubmittedCount: active.filter((lead) => /submitted|awaiting acceptance/i.test(getTaxPrepWorkStatus(lead))).length,
+    taxPrepReviewCount: active.filter((lead) => /review/i.test(getTaxPrepWorkStatus(lead)) || lead?.taxPreparationIntake?.needsProfessionalReview === true).length,
+    taxPrepRequestsSidebarCount: active.length,
+    completedTaxReturnsSidebarCount: completed.length
+  };
+
+  Object.entries(counts).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if(element){
+      element.textContent = String(value);
+    }
+  });
+}
+
+function getTaxPrepCompletionEmailLabel(lead){
+  const work = lead?.taxPreparationWork || {};
+
+  if(work.completionEmailSentAt){
+    return "Sent " + (formatLeadDate(work.completionEmailSentAt) || "");
+  }
+
+  if(String(work.completionEmailStatus || "").toLowerCase().includes("failed")){
+    return "Failed — send again";
+  }
+
+  return "Not sent";
+}
+
 function getTaxPrepLane(lead){
   const lane = String(
     lead?.taxPreparationIntake?.recommendedLane ||
@@ -2980,7 +3672,7 @@ function getTaxPrepDocumentStatus(lead){
 function getTaxPrepPaymentStatus(lead){
   return String(
     lead?.taxPreparationWork?.paymentStatus ||
-    "Not Set"
+    "Quote Needed"
   ).trim();
 }
 
@@ -5068,6 +5760,11 @@ function openOfficeWorkItem(index){
     return;
   }
 
+  if(isTaxPreparationLead(item.lead)){
+    openTaxPreparationActionBasketForLead(item.lead);
+    return;
+  }
+
   if(isTranscriptServiceRequest(item.lead)){
     const leadId = String(item.lead.leadId || "").trim();
 
@@ -5618,6 +6315,21 @@ function appendTaxPlannerCrmToDetail(lead){
 }
 
 function openPanel(lead){
+  if(isTaxPreparationLead(lead)){
+    if(isCompletedTaxPreparation(lead)){
+      currentView = "taxprepcompleted";
+      const completedButton = document.getElementById("completedTaxReturnsSidebarButton");
+      if(completedButton) completedButton.click();
+      requestAnimationFrame(() => {
+        const completed = (window.completedTaxPrepLeads || []).findIndex((item) => item.leadId === lead.leadId);
+        if(completed >= 0) openCompletedTaxPreparation(completed);
+      });
+    }else{
+      openTaxPreparationActionBasketForLead(lead);
+    }
+    return;
+  }
+
   if(isExtensionLead(lead)){
     openExtensionActionBasketForLead(lead);
     return;
@@ -6441,6 +7153,7 @@ function updateTranscriptSidebarCount(){
 
 function renderLeads(){
   updateTranscriptSidebarCount();
+  updateTaxPrepRequestCounts();
 
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
@@ -6936,78 +7649,410 @@ function renderLeads(){
     return;
   }
 
-  if(
-    currentView === "taxprep" ||
-    currentView === "taxprepcompleted"
-  ){
+  if(currentView === "taxprep"){
     updateTaxPrepAdvancedSummary(visible.length);
+    updateTaxPrepRequestCounts();
 
-    const completedView =
-      currentView === "taxprepcompleted";
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="taxprep-completed-intro">
+          No active Tax Preparation requests match the selected filters. Completed returns are stored under Completed Tax Returns in the left menu.
+        </div>`;
+      window.visibleTaxPrepLeads = [];
+      return;
+    }
 
     list.innerHTML = `
-      <div class="taxprep-table-wrap">
-        <table class="taxprep-table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Return / Tax Year</th>
-              <th>Portal</th>
-              <th>Documents</th>
-              <th>Work Status</th>
-              <th>Payment</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${visible.map((lead, index) => {
-              const enteredAt =
-                formatLeadDate(
-                  getLeadEnteredAt(lead)
-                );
+      <div class="taxprep-completed-intro">
+        Each client card is the Tax Preparation Action Basket. Client information, portal status, documents, fee quote, Stripe payment, preparation progress, signature, e-file, acceptance, final client copy, and office notes stay together here.
+      </div>
 
-              const documentCount =
-                getTaxPrepDocumentCount(lead);
+      <div class="taxprep-card-list">
+        ${visible.map((lead, index) => {
+          const intake = lead.taxPreparationIntake || {};
+          const work = lead.taxPreparationWork || {};
+          const quote = getTaxPrepQuotedFee(lead);
+          const paid = getTaxPrepAmountPaid(lead);
+          const outstanding = Math.max(0, quote - paid);
+          const paymentUrl = getTaxPrepPaymentUrl(lead);
+          const nextAction = getTaxPrepNextOfficeAction(lead);
+          const needsAttention =
+            getTaxPrepPortalStatus(lead) !== "Active" ||
+            getTaxPrepClientInformationStatus(lead) !== "Complete" ||
+            /needed|partial|review/i.test(getTaxPrepDocumentStatus(lead)) ||
+            (getTaxPrepPaymentRequirement(lead) !== "Waived by Office" && !taxPrepPaymentIsSatisfied(lead));
+          const latestUpload = formatLeadDate(
+            lead?.clientPortal?.documentCenter?.latestUploadAt || ""
+          ) || "None";
+          const requestedServices = taxPrepListDisplay(intake.serviceTypes);
+          const incomeTypes = taxPrepListDisplay(intake.incomeTypes);
 
-              return `
-                <tr>
-                  <td>
-                    <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
-                    ${escapeOfficeHtml(lead.contact?.email || "")}
-                  </td>
-                  <td>
-                    ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
-                    <strong>${escapeOfficeHtml(getTaxPrepTaxYear(lead) || "Tax year not set")}</strong>
-                  </td>
-                  <td>${escapeOfficeHtml(getTaxPrepPortalStatus(lead))}</td>
-                  <td>
-                    ${escapeOfficeHtml(getTaxPrepDocumentStatus(lead))}<br>
-                    ${documentCount} secure ${documentCount === 1 ? "document" : "documents"}
-                  </td>
-                  <td>
-                    <span class="status-pill">
-                      ${escapeOfficeHtml(getTaxPrepWorkStatus(lead))}
-                    </span><br>
-                    <span style="font-size:11px;color:#64748b;">
-                      ${escapeOfficeHtml(enteredAt || "")}
-                    </span>
-                  </td>
-                  <td>${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}</td>
-                  <td>
-                    <button
-                      class="taxprep-open-btn"
-                      onclick="openTaxPrepLead(${index}, ${completedView})"
+          return `
+            <article
+              class="taxprep-client-card ${needsAttention ? "needs-attention" : ""}"
+              data-taxprep-lead-id="${escapeOfficeHtml(lead.leadId || "")}"
+            >
+              <div class="taxprep-card-head">
+                <div>
+                  <div class="taxprep-client-name">
+                    ${escapeOfficeHtml(lead.contact?.name || "No Name")}
+                  </div>
+                  <div class="taxprep-client-contact">
+                    ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
+                    ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "Phone not recorded")}
+                  </div>
+                </div>
+
+                <div class="taxprep-card-badges">
+                  ${needsAttention ? '<span class="taxprep-card-badge attention">Action Needed</span>' : ""}
+                  <span class="taxprep-card-badge">
+                    ${escapeOfficeHtml(getTaxPrepWorkStatus(lead))}
+                  </span>
+                  <span class="taxprep-card-badge">
+                    ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
+                  </span>
+                </div>
+              </div>
+
+              <div class="taxprep-card-grid">
+                <div class="taxprep-card-block">
+                  <span>Client &amp; Return</span>
+                  <strong>${escapeOfficeHtml(getTaxPrepLane(lead))}</strong><br>
+                  Tax year: ${escapeOfficeHtml(getTaxPrepTaxYear(lead) || "Not set")}<br>
+                  Filing status: ${escapeOfficeHtml(taxPrepHumanize(intake.filingStatus) || "Not provided")}<br>
+                  State: ${escapeOfficeHtml(getTaxPrepStateDisplay(lead))}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Requested Scope</span>
+                  Services: ${escapeOfficeHtml(requestedServices)}<br>
+                  Income / situations: ${escapeOfficeHtml(incomeTypes)}<br>
+                  Client documents listed: ${Number(intake.documentCount || 0)}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Secure Portal &amp; Documents</span>
+                  Portal: <strong>${escapeOfficeHtml(getTaxPrepPortalStatus(lead))}</strong><br>
+                  Documents: ${escapeOfficeHtml(getTaxPrepDocumentStatus(lead))}<br>
+                  Secure uploads: ${getTaxPrepDocumentCount(lead)}<br>
+                  Latest upload: ${escapeOfficeHtml(latestUpload)}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Fee &amp; Payment</span>
+                  Total fee quote: <strong>$${taxPrepMoney(quote)}</strong><br>
+                  Amount collected: <strong>$${taxPrepMoney(paid)}</strong><br>
+                  Outstanding: <strong>$${taxPrepMoney(outstanding)}</strong><br>
+                  Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Client Review &amp; Signature</span>
+                  Client information: ${escapeOfficeHtml(getTaxPrepClientInformationStatus(lead))}<br>
+                  Signature: ${escapeOfficeHtml(getTaxPrepSignatureStatus(lead))}<br>
+                  Reference: ${escapeOfficeHtml(lead.leadId || "")}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Filing &amp; Acceptance</span>
+                  E-file: ${escapeOfficeHtml(getTaxPrepEfileStatus(lead))}<br>
+                  Acceptance: ${escapeOfficeHtml(getTaxPrepAcceptanceStatus(lead))}<br>
+                  Final copy: ${escapeOfficeHtml(getTaxPrepFinalCopyStatus(lead))}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Payment Link</span>
+                  ${paymentUrl
+                    ? `Secure link saved on this card.<br>Created: ${escapeOfficeHtml(formatLeadDate(work.checkoutCreatedAt || "") || "Date not recorded")}`
+                    : "No secure payment link has been created."}<br>
+                  ${work.paymentLinkSentAt
+                    ? `Emailed: ${escapeOfficeHtml(formatLeadDate(work.paymentLinkSentAt) || "Date not recorded")}`
+                    : "Email: Not sent"}
+                </div>
+
+                <div class="taxprep-card-block">
+                  <span>Office Note</span>
+                  ${officeNl2br(work.officeNote || "No office note has been entered.")}
+                </div>
+              </div>
+
+              <div class="taxprep-next-action">
+                Next action: ${escapeOfficeHtml(nextAction)}
+              </div>
+
+              <div class="taxprep-action-basket">
+                <div class="taxprep-basket-heading">
+                  <div>
+                    <strong>Tax Preparation Action Basket</strong>
+                    <span>Complete the routine work here. The required checklist, payment, secure documents, preparation stages, filing results, final client copy, and notes remain on this card.</span>
+                  </div>
+                </div>
+
+                <div class="taxprep-required-checklist">
+                  ${taxPrepChecklistHtml(lead)}
+                </div>
+
+                <div class="taxprep-basket-grid">
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepClientInfo-${index}">Client information</label>
+                    <select id="taxPrepClientInfo-${index}">
+                      ${selectOptionsHtml(
+                        ["Needs Review", "Complete"],
+                        getTaxPrepClientInformationStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepDocumentStatus-${index}">Required documents</label>
+                    <select id="taxPrepDocumentStatus-${index}">
+                      ${selectOptionsHtml(
+                        getTaxPrepDocumentStatusOptions(),
+                        getTaxPrepDocumentStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepPaymentRequirement-${index}">Payment requirement</label>
+                    <select id="taxPrepPaymentRequirement-${index}">
+                      ${selectOptionsHtml(
+                        ["Required", "Waived by Office"],
+                        getTaxPrepPaymentRequirement(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepQuotedFee-${index}">Total approved fee quote</label>
+                    <input
+                      id="taxPrepQuotedFee-${index}"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value="${quote.toFixed(2)}"
                     >
-                      ${completedView ? "Open Completed Return" : "Open Tax Prep Workspace"}
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepPaymentAmount-${index}">Amount to collect now</label>
+                    <input
+                      id="taxPrepPaymentAmount-${index}"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value="${getTaxPrepPaymentRequestAmount(lead).toFixed(2)}"
+                    >
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepPaymentPurpose-${index}">Payment purpose</label>
+                    <select id="taxPrepPaymentPurpose-${index}">
+                      ${selectOptionsHtml(
+                        ["Full Payment", "Deposit", "Balance Payment", "Other Tax Preparation Payment"],
+                        work.paymentPurpose || "Full Payment"
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field span-two">
+                    <label for="taxPrepWorkStatus-${index}">Preparation status</label>
+                    <select id="taxPrepWorkStatus-${index}">
+                      ${selectOptionsHtml(
+                        getTaxPrepWorkStatusOptions(),
+                        getTaxPrepWorkStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepSignatureStatus-${index}">Client signature</label>
+                    <select id="taxPrepSignatureStatus-${index}">
+                      ${selectOptionsHtml(
+                        ["Not Requested", "Requested / Waiting", "Signed / Complete", "Not Required"],
+                        getTaxPrepSignatureStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field">
+                    <label for="taxPrepEfileStatus-${index}">E-file / submission</label>
+                    <select id="taxPrepEfileStatus-${index}">
+                      ${selectOptionsHtml(
+                        ["Not Started", "Ready to E-file", "Submitted / Awaiting Acceptance", "Not Required / Paper File"],
+                        getTaxPrepEfileStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field span-two">
+                    <label for="taxPrepAcceptanceStatus-${index}">Federal / state acceptance</label>
+                    <select id="taxPrepAcceptanceStatus-${index}">
+                      ${selectOptionsHtml(
+                        ["Not Submitted", "Awaiting Acceptance", "Federal Accepted", "Federal & State Accepted", "Rejected / Needs Correction", "Not Applicable"],
+                        getTaxPrepAcceptanceStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field span-two">
+                    <label for="taxPrepFinalCopyStatus-${index}">Final client copy</label>
+                    <select id="taxPrepFinalCopyStatus-${index}">
+                      ${selectOptionsHtml(
+                        ["Not Delivered", "Ready to Deliver", "Delivered in Secure Portal"],
+                        getTaxPrepFinalCopyStatus(lead)
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="taxprep-basket-field full">
+                    <label for="taxPrepOfficeNote-${index}">Office tax-preparation note</label>
+                    <textarea
+                      id="taxPrepOfficeNote-${index}"
+                      placeholder="Missing records, pricing decision, client question, preparation issue, signature follow-up, rejection, acceptance, or final-copy note"
+                    >${escapeOfficeHtml(work.officeNote || "")}</textarea>
+                  </div>
+                </div>
+
+                <div class="taxprep-payment-summary">
+                  Payment status: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))} · Collected $${taxPrepMoney(paid)} of $${taxPrepMoney(quote)} · Outstanding $${taxPrepMoney(outstanding)}
+                </div>
+
+                <div class="taxprep-basket-actions">
+                  <button
+                    class="taxprep-basket-button"
+                    type="button"
+                    onclick="saveTaxPreparationBasket(${index})"
+                  >
+                    Save This Card
+                  </button>
+
+                  <button
+                    class="taxprep-basket-button payment"
+                    type="button"
+                    onclick="createTaxPreparationPaymentLink(${index})"
+                  >
+                    Create &amp; Email Secure Payment Link
+                  </button>
+
+                  ${paymentUrl ? `
+                    <button
+                      class="taxprep-basket-button light"
+                      type="button"
+                      onclick="copyTaxPreparationPaymentLink(${index})"
+                    >
+                      Copy Payment Link
                     </button>
-                  </td>
-                </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
+                    <button
+                      class="taxprep-basket-button light"
+                      type="button"
+                      onclick="openTaxPreparationPaymentLink(${index})"
+                    >
+                      Open Payment Link
+                    </button>
+                    <button
+                      class="taxprep-basket-button light"
+                      type="button"
+                      onclick="openTaxPreparationPaymentEmail(${index})"
+                    >
+                      Open Email to Client
+                    </button>
+                  ` : ""}
+
+                  <button
+                    class="taxprep-basket-button secondary"
+                    type="button"
+                    onclick="openTaxPreparationDocuments(${index})"
+                  >
+                    Open This Client's Documents
+                  </button>
+
+                  <button
+                    class="taxprep-basket-button light"
+                    type="button"
+                    onclick="openTaxPreparationPortal(${index})"
+                  >
+                    Open Secure Client Portal
+                  </button>
+                </div>
+              </div>
+            </article>`;
+        }).join("")}
       </div>`;
 
     window.visibleTaxPrepLeads = visible;
+    return;
+  }
+
+  if(currentView === "taxprepcompleted"){
+    updateTaxPrepRequestCounts();
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="taxprep-completed-intro">
+          Completed returns are stored here after all mandatory Action Basket items are finished. No completed Tax Preparation returns have been recorded yet.
+        </div>`;
+      window.completedTaxPrepLeads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="taxprep-completed-intro">
+        Newest completed returns appear first. The compact record keeps the client, return, payment, acceptance, final-copy, and completion-email status easy to find.
+      </div>
+
+      <div class="taxprep-completed-list">
+        ${visible.map((lead, index) => {
+          const work = lead.taxPreparationWork || {};
+          return `
+            <div class="taxprep-completed-row">
+              <div>
+                <strong>${escapeOfficeHtml(lead.contact?.name || "No Name")}</strong><br>
+                ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
+                ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "")}
+              </div>
+              <div>
+                ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
+                <strong>${escapeOfficeHtml(getTaxPrepTaxYear(lead) || "Tax year not set")}</strong>
+              </div>
+              <div>
+                Payment<br>
+                <strong>${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}</strong>
+              </div>
+              <div>
+                Acceptance<br>
+                <strong>${escapeOfficeHtml(getTaxPrepAcceptanceStatus(lead))}</strong>
+              </div>
+              <div>
+                Final copy<br>
+                <strong>${escapeOfficeHtml(getTaxPrepFinalCopyStatus(lead))}</strong>
+              </div>
+              <div>
+                Completed<br>
+                <strong>${escapeOfficeHtml(formatLeadDate(work.completedAt || getLeadClosedAt(lead) || "") || "Date not recorded")}</strong><br>
+                Email: ${escapeOfficeHtml(getTaxPrepCompletionEmailLabel(lead))}
+              </div>
+              <div class="completed-extension-actions">
+                <button
+                  class="taxprep-basket-button light"
+                  type="button"
+                  onclick="openCompletedTaxPreparation(${index})"
+                >
+                  Open Completed Return
+                </button>
+                <button
+                  class="taxprep-basket-button secondary"
+                  type="button"
+                  onclick="sendOrResendTaxPreparationCompletionEmail(${index})"
+                >
+                  ${work.completionEmailSentAt ? "Resend Client Completion Email" : "Send Client Completion Email"}
+                </button>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>`;
+
+    window.completedTaxPrepLeads = visible;
     return;
   }
 
@@ -8569,11 +9614,13 @@ function getTaxPrepDocumentStatusOptions(){
 
 function getTaxPrepPaymentStatusOptions(){
   return [
-    "Not Set",
     "Quote Needed",
-    "Invoice Sent",
-    "Deposit Paid",
-    "Paid in Full"
+    "Payment Link Created",
+    "Payment Link Sent",
+    "Deposit Paid / Verified",
+    "Balance Payment Link Sent",
+    "Paid / Verified",
+    "Waived by Office"
   ];
 }
 
@@ -8590,186 +9637,94 @@ function selectOptionsHtml(options, selected){
     .join("");
 }
 
-function openTaxPreparationWorkspace(lead){
-  const panel =
-    document.getElementById("detailPanel");
-
-  panel.style.display = "block";
-  window.activeTaxPreparationLead = lead;
-
-  const intake =
-    lead.taxPreparationIntake || {};
-  const work =
-    lead.taxPreparationWork || {};
-
-  const portalStatus =
-    getTaxPrepPortalStatus(lead);
-
-  const documentCount =
-    getTaxPrepDocumentCount(lead);
-
-  document.getElementById("dpName").innerText =
-    lead.contact?.name || "Tax Preparation Client";
-
-  document.getElementById("dpEmail").innerText =
-    lead.contact?.email || "No Email";
-
-  document.getElementById("dpStatus").innerText =
-    "Tax Preparation Work Center";
-
-  document.getElementById("dpTaxYear").innerText =
-    "Tax Year: " +
-    (getTaxPrepTaxYear(lead) || "Not set");
-
-  document.getElementById("dpRefund").innerHTML = `
-    <div class="service-workspace">
-      <div class="service-workspace-card">
-        <strong>Client &amp; Return</strong><br>
-        ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
-        State: ${escapeOfficeHtml(getTaxPrepStateDisplay(lead))}<br>
-        Reference: ${escapeOfficeHtml(lead.leadId || "")}
-      </div>
-
-      <div class="service-workspace-card">
-        <strong>Secure Portal</strong><br>
-        Status: ${escapeOfficeHtml(portalStatus)}<br>
-        Secure documents: ${documentCount}<br>
-        Latest upload: ${escapeOfficeHtml(
-          formatLeadDate(
-            lead?.clientPortal?.documentCenter
-              ?.latestUploadAt
-          ) || "None"
-        )}
-      </div>
-
-      <div class="service-workspace-grid">
-        <div class="service-workspace-field full">
-          <label for="taxPrepWorkStatus">Preparation status</label>
-          <select id="taxPrepWorkStatus">
-            ${selectOptionsHtml(
-              getTaxPrepWorkStatusOptions(),
-              getTaxPrepWorkStatus(lead)
-            )}
-          </select>
-        </div>
-
-        <div class="service-workspace-field full">
-          <label for="taxPrepDocumentStatus">Document status</label>
-          <select id="taxPrepDocumentStatus">
-            ${selectOptionsHtml(
-              getTaxPrepDocumentStatusOptions(),
-              getTaxPrepDocumentStatus(lead)
-            )}
-          </select>
-        </div>
-
-        <div class="service-workspace-field full">
-          <label for="taxPrepPaymentStatus">Payment status</label>
-          <select id="taxPrepPaymentStatus">
-            ${selectOptionsHtml(
-              getTaxPrepPaymentStatusOptions(),
-              getTaxPrepPaymentStatus(lead)
-            )}
-          </select>
-        </div>
-
-        <div class="service-workspace-field full">
-          <label for="taxPrepOfficeNote">Office workflow note</label>
-          <textarea
-            id="taxPrepOfficeNote"
-            rows="4"
-            placeholder="Missing records, client question, signature issue, or filing note"
-          >${escapeOfficeHtml(work.officeNote || "")}</textarea>
-        </div>
-      </div>
-
-      <div class="service-workspace-actions">
-        <button
-          type="button"
-          onclick="saveTaxPreparationWorkspace()"
-        >
-          Save Tax Preparation Status
-        </button>
-
-        <a
-          class="secondary"
-          href="/office-document-review"
-        >
-          Open Document Review Queue
-        </a>
-
-        <a
-          class="secondary"
-          href="/client-portal"
-          target="_blank"
-          rel="noopener"
-        >
-          Open Client Portal Sign In
-        </a>
-      </div>
-
-      <div class="service-workspace-note">
-        The existing secure portal is reused. Do not create a second client account. The client's records remain linked by email and tax year.
-      </div>
-    </div>
-  `;
-
-  document.getElementById("dpEntered").innerText =
-    "Entered: " +
-    (
-      formatLeadDate(
-        getLeadEnteredAt(lead)
-      ) ||
-      "Not recorded"
-    );
-
-  document.getElementById("dpClosed").innerText =
-    isCompletedTaxPreparation(lead)
-      ? "Completed: " +
-        (
-          formatLeadDate(
-            work.completedAt ||
-            getLeadClosedAt(lead)
-          ) ||
-          "Date not recorded"
-        )
-      : "";
+function taxPreparationLeadByIndex(index){
+  return (window.visibleTaxPrepLeads || [])[index] || null;
 }
 
-async function saveTaxPreparationWorkspace(){
-  const lead =
-    window.activeTaxPreparationLead;
+function taxPreparationBasketValues(index, lead){
+  const value = (id, fallback = "") =>
+    document.getElementById(`${id}-${index}`)?.value ?? fallback;
+
+  const quotedFee = Math.max(
+    0,
+    Number(value("taxPrepQuotedFee", getTaxPrepQuotedFee(lead))) || 0
+  );
+  const paymentRequestAmount = Math.max(
+    0,
+    Number(value("taxPrepPaymentAmount", getTaxPrepPaymentRequestAmount(lead))) || 0
+  );
+
+  return {
+    clientInformationStatus:
+      value("taxPrepClientInfo", getTaxPrepClientInformationStatus(lead)),
+    documentStatus:
+      value("taxPrepDocumentStatus", getTaxPrepDocumentStatus(lead)),
+    paymentRequirement:
+      value("taxPrepPaymentRequirement", getTaxPrepPaymentRequirement(lead)),
+    quotedFee,
+    quotedFeeCents: Math.round(quotedFee * 100),
+    paymentRequestAmount,
+    paymentRequestAmountCents: Math.round(paymentRequestAmount * 100),
+    paymentPurpose:
+      value("taxPrepPaymentPurpose", lead?.taxPreparationWork?.paymentPurpose || "Full Payment"),
+    workStatus:
+      value("taxPrepWorkStatus", getTaxPrepWorkStatus(lead)),
+    signatureStatus:
+      value("taxPrepSignatureStatus", getTaxPrepSignatureStatus(lead)),
+    efileStatus:
+      value("taxPrepEfileStatus", getTaxPrepEfileStatus(lead)),
+    acceptanceStatus:
+      value("taxPrepAcceptanceStatus", getTaxPrepAcceptanceStatus(lead)),
+    finalReturnDeliveryStatus:
+      value("taxPrepFinalCopyStatus", getTaxPrepFinalCopyStatus(lead)),
+    officeNote:
+      String(value("taxPrepOfficeNote", lead?.taxPreparationWork?.officeNote || "")).trim(),
+    amountPaid: getTaxPrepAmountPaid(lead),
+    amountPaidCents: Math.round(getTaxPrepAmountPaid(lead) * 100)
+  };
+}
+
+async function saveTaxPreparationBasket(index, options = {}){
+  const lead = taxPreparationLeadByIndex(index);
 
   if(!lead?.leadId){
-    alert("Tax Preparation client could not be identified.");
-    return;
+    alert("The Tax Preparation client could not be identified.");
+    return null;
   }
 
-  const workStatus =
-    document.getElementById(
-      "taxPrepWorkStatus"
-    )?.value || "Needs Professional Review";
+  const values = taxPreparationBasketValues(index, lead);
 
-  const documentStatus =
-    document.getElementById(
-      "taxPrepDocumentStatus"
-    )?.value || "Documents Needed";
+  if(values.paymentRequirement === "Required" && values.quotedFee < 0){
+    alert("The approved Tax Preparation fee quote cannot be negative.");
+    return null;
+  }
 
-  const paymentStatus =
-    document.getElementById(
-      "taxPrepPaymentStatus"
-    )?.value || "Not Set";
+  const outstanding = Math.max(
+    0,
+    values.quotedFee - values.amountPaid
+  );
 
-  const officeNote =
-    document.getElementById(
-      "taxPrepOfficeNote"
-    )?.value.trim() || "";
+  if(values.paymentRequestAmount > outstanding + 0.009){
+    alert("The amount to collect now cannot be greater than the unpaid balance on the fee quote.");
+    return null;
+  }
 
-  const completed =
-    workStatus === "Accepted / Completed";
+  const completing =
+    values.workStatus === "Accepted / Completed";
 
-  const now =
-    new Date().toISOString();
+  if(completing){
+    const missing = validateTaxPrepCompletionValues(values);
+
+    if(missing.length){
+      alert(
+        "This return cannot move to Completed Tax Returns yet. Finish these mandatory items:\n\n- " +
+        missing.join("\n- ")
+      );
+      return null;
+    }
+  }
+
+  const now = new Date().toISOString();
 
   const response = await fetch(
     `/api/leads/${encodeURIComponent(lead.leadId)}`,
@@ -8779,58 +9734,421 @@ async function saveTaxPreparationWorkspace(){
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        status:
-          `Tax Preparation - ${workStatus}`,
-        completedAt:
-          completed ? now : "",
-        closedAt:
-          completed ? now : "",
+        status: `Tax Preparation - ${values.workStatus}`,
+        completedAt: completing ? now : "",
+        closedAt: completing ? now : "",
         taxPreparationWork: {
           ...(lead.taxPreparationWork || {}),
-          workStatus,
-          documentStatus,
-          paymentStatus,
-          officeNote,
-          efileStatus:
-            workStatus === "Ready to E-file"
-              ? "Ready to E-file"
-              : workStatus.includes("Submitted")
-                ? "Submitted / Awaiting Acceptance"
-                : workStatus.includes("Accepted")
-                  ? "Accepted"
-                  : (
-                      lead.taxPreparationWork
-                        ?.efileStatus ||
-                      "Not Started"
-                    ),
+          ...values,
+          paymentStatus:
+            values.paymentRequirement === "Waived by Office"
+              ? "Waived by Office"
+              : getTaxPrepPaymentStatus(lead),
           completedAt:
-            completed
+            completing
               ? now
-              : (
-                  lead.taxPreparationWork
-                    ?.completedAt ||
-                  ""
-                ),
+              : (lead.taxPreparationWork?.completedAt || ""),
           updatedAt: now
         }
       })
     }
   );
 
-  const data = await response
-    .json()
-    .catch(() => ({}));
+  const data = await response.json().catch(() => ({}));
 
   if(!response.ok || !data.ok){
     alert(
       data.error ||
-      "The Tax Preparation status could not be saved."
+      "The Tax Preparation Action Basket could not be saved."
     );
+    return null;
+  }
+
+  let completionDelivery = null;
+
+  if(completing){
+    completionDelivery = await requestTaxPreparationCompletionEmail(
+      {
+        ...lead,
+        taxPreparationWork: {
+          ...(lead.taxPreparationWork || {}),
+          ...values,
+          workStatus: values.workStatus,
+          completedAt: now
+        }
+      },
+      false
+    );
+  }
+
+  if(options.reload !== false){
+    await loadLeads();
+  }
+
+  if(!options.quiet){
+    if(completing){
+      if(completionDelivery?.emailSent){
+        alert("The return was moved to Completed Tax Returns and the client completion email was sent.");
+      }else{
+        alert(
+          "The return was moved to Completed Tax Returns, but the client completion email was not sent. " +
+          (completionDelivery?.error || "Use Send Client Completion Email in Completed Tax Returns.")
+        );
+      }
+    }else{
+      alert("Tax Preparation Action Basket saved. All working information remains on this client's card.");
+    }
+  }
+
+  return {
+    ok: true,
+    lead,
+    values,
+    data,
+    completionDelivery
+  };
+}
+
+async function createTaxPreparationPaymentLink(index){
+  const lead = taxPreparationLeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The Tax Preparation client could not be identified.");
+    return;
+  }
+
+  const values = taxPreparationBasketValues(index, lead);
+
+  if(values.paymentRequirement === "Waived by Office"){
+    alert("Payment is marked Waived by Office. Change Payment requirement to Required before creating a link.");
+    return;
+  }
+
+  if(values.quotedFee <= 0){
+    alert("Enter the total approved fee quote first.");
+    return;
+  }
+
+  if(values.paymentRequestAmount <= 0){
+    alert("Enter the amount to collect now first.");
+    return;
+  }
+
+  const saved = await saveTaxPreparationBasket(
+    index,
+    { reload: false, quiet: true }
+  );
+
+  if(!saved) return;
+
+  const response = await fetch(
+    "/api/create-tax-preparation-checkout",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        leadId: lead.leadId,
+        clientEmail: lead.contact?.email || "",
+        officeRequest: true
+      })
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    alert(
+      data.error ||
+      "The secure Tax Preparation payment link could not be created."
+    );
+    await loadLeads();
     return;
   }
 
   await loadLeads();
+
+  if(data.emailSent){
+    alert("The secure Stripe payment link was created, saved on the Tax Preparation card, and emailed to the client.");
+  }else{
+    alert(
+      "The secure Stripe payment link was created and saved on the card, but the automatic email was not sent. Use Copy Payment Link or Open Email to Client. " +
+      (data.emailError || "")
+    );
+  }
+}
+
+function copyTaxPreparationPaymentLink(index){
+  const lead = taxPreparationLeadByIndex(index);
+  const url = getTaxPrepPaymentUrl(lead);
+
+  if(!url){
+    alert("No secure Tax Preparation payment link is saved on this card yet.");
+    return;
+  }
+
+  navigator.clipboard.writeText(url)
+    .then(() => alert("Secure Tax Preparation payment link copied."))
+    .catch(() => window.prompt("Copy this secure payment link:", url));
+}
+
+function openTaxPreparationPaymentLink(index){
+  const lead = taxPreparationLeadByIndex(index);
+  const url = getTaxPrepPaymentUrl(lead);
+
+  if(!url){
+    alert("No secure Tax Preparation payment link is saved on this card yet.");
+    return;
+  }
+
+  window.open(url, "_blank", "noopener");
+}
+
+function openTaxPreparationPaymentEmail(index){
+  const lead = taxPreparationLeadByIndex(index);
+  const url = getTaxPrepPaymentUrl(lead);
+
+  if(!lead || !url){
+    alert("Create the secure payment link before opening the client email.");
+    return;
+  }
+
+  const work = lead.taxPreparationWork || {};
+  const subject = "Your Secure Tax Preparation Payment Link";
+  const body =
+`Hello ${lead.contact?.name || "Client"},
+
+Your Tax Preparation payment link is ready.
+
+Tax year: ${getTaxPrepTaxYear(lead) || "Not recorded"}
+Return type: ${getTaxPrepLane(lead)}
+Payment purpose: ${work.paymentPurpose || "Tax Preparation Payment"}
+Amount due now: $${taxPrepMoney(work.paymentRequestAmount || 0)}
+Total fee quote: $${taxPrepMoney(work.quotedFee || 0)}
+
+Secure payment link:
+${url}
+
+Use your secure client portal for tax documents and office updates.
+
+Reference: ${lead.leadId}
+
+Thank you,
+Greatest Business Solution LLC`;
+
+  window.location.href =
+    `mailto:${encodeURIComponent(lead.contact?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function openTaxPreparationDocuments(index){
+  const lead = taxPreparationLeadByIndex(index);
+
+  if(!lead){
+    alert("The Tax Preparation client could not be identified.");
+    return;
+  }
+
+  const search =
+    lead.contact?.email ||
+    lead.contact?.name ||
+    lead.leadId ||
+    "";
+
+  window.open(
+    `/office-document-review?search=${encodeURIComponent(search)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+function openTaxPreparationPortal(index){
+  const lead = taxPreparationLeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The Tax Preparation client could not be identified.");
+    return;
+  }
+
+  window.open(
+    `/client-portal?activate=1&leadId=${encodeURIComponent(lead.leadId)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+function openTaxPreparationActionBasketForLead(lead){
+  const leadId = String(lead?.leadId || "").trim();
+  const button = document.getElementById("taxPrepRequestsSidebarButton");
+
+  if(!button){
+    alert("Tax Preparation Requests could not be opened.");
+    return;
+  }
+
+  currentView = "taxprep";
+  currentTaxPrepFilter = "all";
   clearDetailPanel();
+
+  document.querySelectorAll(".sidebar-btn").forEach((item) => {
+    item.classList.toggle("active", item === button);
+  });
+
+  document.querySelectorAll(".taxprep-filter-btn").forEach((item) => {
+    item.classList.toggle(
+      "active",
+      item.dataset.taxprepFilter === "all"
+    );
+  });
+
+  const title = document.getElementById("sectionTitle");
+  if(title) title.innerText = "Tax Preparation Requests";
+
+  const taxPrepFilters = document.getElementById("taxPrepFilters");
+  const taxPrepAdvanced = document.getElementById("taxPrepAdvancedFilters");
+  if(taxPrepFilters) taxPrepFilters.style.display = "flex";
+  if(taxPrepAdvanced) taxPrepAdvanced.style.display = "grid";
+
+  [
+    "extensionFilters",
+    "extensionFilterSummary",
+    "contactFilters",
+    "contactAdvancedFilters",
+    "allFilters",
+    "closedFilters",
+    "officeCommandCenter"
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+    if(element) element.style.display = "none";
+  });
+
+  renderLeads();
+
+  requestAnimationFrame(() => {
+    const card = document.querySelector(
+      `[data-taxprep-lead-id="${CSS.escape(leadId)}"]`
+    );
+
+    if(card){
+      card.classList.add("taxprep-highlight");
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => card.classList.remove("taxprep-highlight"), 3500);
+    }
+  });
+}
+
+async function requestTaxPreparationCompletionEmail(lead, resend = false){
+  if(!lead?.leadId){
+    return {
+      ok: false,
+      emailSent: false,
+      error: "The Tax Preparation record could not be identified."
+    };
+  }
+
+  try{
+    const response = await fetch(
+      "/api/tax-preparation-completion-email",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.leadId, resend })
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    return {
+      ok: response.ok && data.ok,
+      emailSent: data.emailSent === true,
+      alreadySent: data.alreadySent === true,
+      sentAt: data.sentAt || "",
+      error: data.error || ""
+    };
+  }catch(error){
+    return {
+      ok: false,
+      emailSent: false,
+      error: error?.message || "The completion email could not be sent."
+    };
+  }
+}
+
+function openCompletedTaxPreparation(index){
+  const lead = (window.completedTaxPrepLeads || [])[index];
+
+  if(!lead){
+    alert("The completed Tax Preparation record could not be identified.");
+    return;
+  }
+
+  const work = lead.taxPreparationWork || {};
+  const panel = document.getElementById("detailPanel");
+  panel.style.display = "block";
+
+  document.getElementById("dpName").innerText =
+    lead.contact?.name || "Tax Preparation Client";
+  document.getElementById("dpEmail").innerText =
+    lead.contact?.email || "No Email";
+  document.getElementById("dpStatus").innerText =
+    "Completed Tax Return";
+  document.getElementById("dpTaxYear").innerText =
+    "Tax Year: " + (getTaxPrepTaxYear(lead) || "Not set");
+  document.getElementById("dpRefund").innerHTML = `
+    <div class="service-workspace">
+      <div class="service-workspace-card">
+        <strong>Return</strong><br>
+        ${escapeOfficeHtml(getTaxPrepLane(lead))}<br>
+        Acceptance: ${escapeOfficeHtml(getTaxPrepAcceptanceStatus(lead))}<br>
+        Final client copy: ${escapeOfficeHtml(getTaxPrepFinalCopyStatus(lead))}
+      </div>
+      <div class="service-workspace-card">
+        <strong>Fee &amp; Payment</strong><br>
+        Fee quote: $${taxPrepMoney(getTaxPrepQuotedFee(lead))}<br>
+        Collected: $${taxPrepMoney(getTaxPrepAmountPaid(lead))}<br>
+        Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
+      </div>
+      <div class="service-workspace-card">
+        <strong>Client Completion Email</strong><br>
+        ${escapeOfficeHtml(getTaxPrepCompletionEmailLabel(lead))}
+      </div>
+      <div class="service-workspace-card">
+        <strong>Office Note</strong><br>
+        ${officeNl2br(work.officeNote || "No office note recorded.")}
+      </div>
+      <div class="service-workspace-actions">
+        <a class="secondary" href="/office-document-review?search=${encodeURIComponent(lead.contact?.email || lead.contact?.name || lead.leadId || "")}" target="_blank" rel="noopener">
+          Open This Client's Documents
+        </a>
+        <a class="secondary" href="/client-portal?activate=1&leadId=${encodeURIComponent(lead.leadId || "")}" target="_blank" rel="noopener">
+          Open Secure Client Portal
+        </a>
+      </div>
+    </div>`;
+  document.getElementById("dpEntered").innerText =
+    "Entered: " + (formatLeadDate(getLeadEnteredAt(lead)) || "Not recorded");
+  document.getElementById("dpClosed").innerText =
+    "Completed: " + (formatLeadDate(work.completedAt || getLeadClosedAt(lead)) || "Not recorded");
+}
+
+async function sendOrResendTaxPreparationCompletionEmail(index){
+  const lead = (window.completedTaxPrepLeads || [])[index];
+
+  if(!lead){
+    alert("The completed Tax Preparation record could not be identified.");
+    return;
+  }
+
+  const resend = Boolean(lead?.taxPreparationWork?.completionEmailSentAt);
+  const result = await requestTaxPreparationCompletionEmail(lead, resend);
+
+  if(result.emailSent){
+    alert(resend ? "The client completion email was resent." : "The client completion email was sent.");
+    await loadLeads();
+    return;
+  }
+
+  alert(result.error || "The client completion email was not sent.");
 }
 
 function openExtensionActionBasketForLead(lead){
@@ -9703,7 +11021,7 @@ function openTaxPrepLead(index){
     (window.visibleTaxPrepLeads || [])[index];
 
   if(lead){
-    openTaxPreparationWorkspace(lead);
+    openTaxPreparationActionBasketForLead(lead);
   }
 }
 

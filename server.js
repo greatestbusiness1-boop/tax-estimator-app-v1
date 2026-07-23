@@ -2144,6 +2144,167 @@ async function applyExtensionPaidUpdate(
   );
 }
 
+
+
+async function applyTaxPreparationPaidUpdate(
+  leadId,
+  paymentInfo = {}
+) {
+  const cleanId = String(leadId || "").trim();
+
+  const current =
+    await findClientPortalLeadById(cleanId);
+
+  const currentLead = current?.lead || {};
+  const currentWork =
+    currentLead.taxPreparationWork || {};
+
+  const incomingSessionId = String(
+    paymentInfo.sessionId || ""
+  ).trim();
+
+  const processedSessions = Array.isArray(
+    currentWork.processedStripeSessions
+  )
+    ? currentWork.processedStripeSessions
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+    : [];
+
+  if (
+    incomingSessionId &&
+    processedSessions.includes(incomingSessionId)
+  ) {
+    return {
+      ok: true,
+      alreadyPaid: true,
+      source: current?.source || "existing-record",
+      lead: currentLead
+    };
+  }
+
+  const paidAmountCents = Math.max(
+    0,
+    Number.parseInt(
+      paymentInfo.amountPaidCents,
+      10
+    ) || 0
+  );
+
+  if (!paidAmountCents) {
+    return {
+      ok: false,
+      error:
+        "Stripe did not provide a valid Tax Preparation payment amount."
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(
+    cleanId,
+    function applyTaxPreparationPaid(record = {}) {
+      const updated = { ...record };
+      const existing =
+        updated.taxPreparationWork &&
+        typeof updated.taxPreparationWork === "object"
+          ? updated.taxPreparationWork
+          : {};
+
+      const currentPaidCents = Math.max(
+        0,
+        Number.parseInt(existing.amountPaidCents, 10) || 0
+      );
+
+      const quotedFeeCents = Math.max(
+        0,
+        Number.parseInt(existing.quotedFeeCents, 10) || 0
+      );
+
+      const newPaidCents =
+        currentPaidCents + paidAmountCents;
+
+      const paymentStatus =
+        quotedFeeCents > 0 &&
+        newPaidCents >= quotedFeeCents
+          ? "Paid / Verified"
+          : "Deposit Paid / Verified";
+
+      const nextWorkStatus = String(
+        existing.workStatus ||
+        "Needs Professional Review"
+      ).trim();
+
+      const paymentNote =
+        "[" + nowDisplay + "] Stripe confirmed a Tax Preparation payment of $" +
+        (paidAmountCents / 100).toFixed(2) + "." +
+        (paymentInfo.paymentPurpose
+          ? " Purpose: " + paymentInfo.paymentPurpose + "."
+          : "") +
+        (incomingSessionId
+          ? " Checkout Session: " + incomingSessionId + "."
+          : "") +
+        (paymentInfo.paymentIntentId
+          ? " Payment Intent: " + paymentInfo.paymentIntentId + "."
+          : "");
+
+      updated.taxPreparationWork = {
+        ...existing,
+        paymentStatus,
+        amountPaidCents: newPaidCents,
+        amountPaid: Number(
+          (newPaidCents / 100).toFixed(2)
+        ),
+        paymentVerifiedAt: nowIso,
+        paidAt:
+          paymentStatus === "Paid / Verified"
+            ? nowIso
+            : (existing.paidAt || ""),
+        lastPaymentAt: nowIso,
+        lastPaymentAmountCents: paidAmountCents,
+        lastPaymentPurpose:
+          String(paymentInfo.paymentPurpose || "").trim(),
+        stripeCheckoutSessionId:
+          incomingSessionId ||
+          existing.stripeCheckoutSessionId ||
+          "",
+        stripePaymentIntentId:
+          paymentInfo.paymentIntentId ||
+          existing.stripePaymentIntentId ||
+          "",
+        processedStripeSessions:
+          incomingSessionId
+            ? Array.from(
+                new Set([
+                  ...processedSessions,
+                  incomingSessionId
+                ])
+              )
+            : processedSessions,
+        paymentSource: "Stripe Checkout",
+        workStatus: nextWorkStatus,
+        updatedAt: nowIso
+      };
+
+      updated.status =
+        "Tax Preparation - " + nextWorkStatus;
+      updated.updatedAt = nowIso;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes = oldNotes
+        ? oldNotes + "\n" + paymentNote
+        : paymentNote;
+
+      return updated;
+    }
+  );
+}
+
 // =============================================================================
 // LOCAL ONLY: Simulate $150 transcript payment without Stripe charge
 // =============================================================================
@@ -3171,6 +3332,103 @@ Greatest Business Solution LLC`
             }).catch((emailError) => {
               console.error(
                 "[stripe webhook] Extension payment confirmation email failed:",
+                leadId,
+                emailError.message || emailError
+              );
+            });
+          }
+        }
+      }
+
+      if (
+        service === "tax_preparation" &&
+        session.payment_status === "paid"
+      ) {
+        const result =
+          await applyTaxPreparationPaidUpdate(
+            leadId,
+            {
+              sessionId: session.id,
+              paymentIntentId:
+                session.payment_intent,
+              amountPaidCents:
+                session.amount_total,
+              paymentPurpose:
+                session.metadata?.paymentPurpose ||
+                "Tax Preparation Payment"
+            }
+          );
+
+        if (!result.ok) {
+          console.error(
+            "[stripe webhook] Could not record Tax Preparation payment:",
+            result.error || result
+          );
+        } else {
+          console.log(
+            result.alreadyPaid
+              ? "[stripe webhook] Tax Preparation payment was already recorded:"
+              : "[stripe webhook] Tax Preparation payment recorded:",
+            leadId,
+            result.source
+          );
+
+          const paidLead = result.lead || {};
+          const clientEmail = String(
+            paidLead.contact?.email || ""
+          ).trim();
+
+          if (
+            !result.alreadyPaid &&
+            clientEmail &&
+            EMAIL_USER &&
+            EMAIL_APP_PASSWORD
+          ) {
+            const work =
+              paidLead.taxPreparationWork || {};
+            const portalUrl =
+              String(APP_BASE_URL || "")
+                .replace(/\/+$/, "") +
+              "/client-portal?activate=1&leadId=" +
+              encodeURIComponent(leadId);
+
+            void transporter.sendMail({
+              from: EMAIL_USER,
+              to: clientEmail,
+              subject:
+                "Your Tax Preparation Payment Was Received",
+              text:
+`Hello ${paidLead.contact?.name || "Client"},
+
+We received your secure Tax Preparation payment.
+
+Amount received:
+$${(Number(session.amount_total || 0) / 100).toFixed(2)}
+
+Payment status:
+${String(work.paymentStatus || "Payment Received")}
+
+Tax year:
+${String(
+  paidLead.taxPreparationIntake?.taxYear ||
+  paidLead.taxData?.taxYear ||
+  "Not recorded"
+)}
+
+Use your secure client portal for documents and office updates:
+${portalUrl}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords.
+
+Thank you,
+
+Greatest Business Solution LLC`
+            }).catch((emailError) => {
+              console.error(
+                "[stripe webhook] Tax Preparation payment confirmation email failed:",
                 leadId,
                 emailError.message || emailError
               );
@@ -4287,7 +4545,17 @@ function buildClientPortalTaxPreparationSummary(entry) {
     ),
     paymentStatus: String(
       work.paymentStatus ||
-      "Not Set"
+      "Quote Needed"
+    ),
+    quotedFee: Number(work.quotedFee || 0),
+    amountPaid: Number(work.amountPaid || 0),
+    signatureStatus: String(
+      work.signatureStatus ||
+      "Not Requested"
+    ),
+    acceptanceStatus: String(
+      work.acceptanceStatus ||
+      "Not Submitted"
     ),
     efileStatus: String(
       work.efileStatus ||
@@ -7759,8 +8027,19 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
         ? "Needs Professional Review"
         : "Portal Activation Needed",
       documentStatus: "Documents Needed",
-      paymentStatus: "Not Set",
+      clientInformationStatus: "Needs Review",
+      paymentStatus: "Quote Needed",
+      paymentRequirement: "Required",
+      quotedFee: 0,
+      quotedFeeCents: 0,
+      amountPaid: 0,
+      amountPaidCents: 0,
+      paymentRequestAmount: 0,
+      paymentRequestAmountCents: 0,
+      paymentPurpose: "Full Payment",
+      signatureStatus: "Not Requested",
       efileStatus: "Not Started",
+      acceptanceStatus: "Not Submitted",
       finalReturnDeliveryStatus: "Not Delivered",
       convertedAt: submittedAt,
       updatedAt: submittedAt
@@ -14152,6 +14431,512 @@ app.post("/api/extension-closure-email", async (req, res) => {
       error:
         error.message ||
         "The client extension completion or closure email could not be sent."
+    });
+  }
+});
+
+
+// =============================================================================
+// POST /api/tax-preparation-completion-email
+// Sends or resends the final client completion message and saves delivery status.
+// =============================================================================
+
+app.post("/api/tax-preparation-completion-email", async (req, res) => {
+  try {
+    const leadId = String(req.body?.leadId || "").trim();
+    const resend = req.body?.resend === true;
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "The Tax Preparation reference number is required."
+      });
+    }
+
+    const candidate = await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error: "The Tax Preparation record could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const work = lead.taxPreparationWork || {};
+    const email = normalizeEmail(
+      lead.contact?.email || getLeadEmailValue(candidate.raw)
+    );
+
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        error: "The client email address is missing."
+      });
+    }
+
+    if (
+      !/accepted|completed/i.test(
+        String(work.workStatus || lead.status || "")
+      )
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "The return must be Accepted / Completed before the completion email is sent."
+      });
+    }
+
+    if (work.completionEmailSentAt && !resend) {
+      return res.status(200).json({
+        ok: true,
+        emailSent: true,
+        alreadySent: true,
+        sentAt: work.completionEmailSentAt
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      throw new Error("Email delivery is not configured.");
+    }
+
+    const portalUrl =
+      String(APP_BASE_URL || "")
+        .replace(/\/+$/, "") +
+      "/client-portal?activate=1&leadId=" +
+      encodeURIComponent(leadId);
+
+    const taxYear = String(
+      lead.taxPreparationIntake?.taxYear ||
+      lead.taxData?.taxYear ||
+      "Not recorded"
+    );
+
+    const returnType = String(
+      lead.taxPreparationIntake?.recommendedLane ||
+      work.returnType ||
+      "Tax Preparation"
+    );
+
+    const sentAt = new Date().toISOString();
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject: "Your Tax Return Is Complete",
+      text:
+`Hello ${lead.contact?.name || "Client"},
+
+Your Tax Preparation work is complete.
+
+Tax year:
+${taxYear}
+
+Return type:
+${returnType}
+
+Filing status:
+${String(work.acceptanceStatus || work.efileStatus || "Completed")}
+
+Final client copy:
+${String(work.finalReturnDeliveryStatus || "Check the secure client portal")}
+
+Use the secure client portal to review available final documents and office updates:
+${portalUrl}
+
+Keep your final return, filing acknowledgments, and supporting records with your tax files. This message is not a replacement for the filed return or official federal or state acceptance records.
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords.
+
+Thank you,
+
+Greatest Business Solution LLC`
+    });
+
+    const saveResult = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => ({
+        ...record,
+        taxPreparationWork: {
+          ...(record.taxPreparationWork || {}),
+          completionEmailSentAt: sentAt,
+          completionEmailStatus: "Sent",
+          completionEmailError: "",
+          completionEmailResendCount:
+            Math.max(
+              0,
+              Number.parseInt(
+                record.taxPreparationWork?.completionEmailResendCount,
+                10
+              ) || 0
+            ) + (resend ? 1 : 0),
+          updatedAt: sentAt
+        },
+        updatedAt: sentAt
+      })
+    );
+
+    if (!saveResult?.ok) {
+      return res.status(500).json({
+        ok: false,
+        emailSent: true,
+        sentAt,
+        error:
+          "The completion email was sent, but the delivery record could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      emailSent: true,
+      alreadySent: false,
+      sentAt
+    });
+  } catch (error) {
+    console.error(
+      "[tax-preparation-completion-email] Failed:",
+      error.message || error
+    );
+
+    const leadId = String(req.body?.leadId || "").trim();
+    const failedAt = new Date().toISOString();
+
+    if (leadId) {
+      try {
+        await updateLeadAfterStripePayment(
+          leadId,
+          (record = {}) => ({
+            ...record,
+            taxPreparationWork: {
+              ...(record.taxPreparationWork || {}),
+              completionEmailStatus: "Failed",
+              completionEmailError:
+                error.message ||
+                "The completion email could not be sent.",
+              completionEmailLastAttemptAt: failedAt,
+              updatedAt: failedAt
+            },
+            updatedAt: failedAt
+          })
+        );
+      } catch (saveError) {
+        console.error(
+          "[tax-preparation-completion-email] Failure status save failed:",
+          saveError.message || saveError
+        );
+      }
+    }
+
+    return res.status(500).json({
+      ok: false,
+      emailSent: false,
+      error:
+        error.message ||
+        "The Tax Preparation completion email could not be sent."
+    });
+  }
+});
+
+// =============================================================================
+// POST /api/create-tax-preparation-checkout
+// The payment amount is read from the office-saved Action Basket.
+// Supports deposits, full payments, and balance payments.
+// =============================================================================
+
+app.post("/api/create-tax-preparation-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "Stripe secret key is not configured."
+      });
+    }
+
+    const leadId = String(req.body?.leadId || "").trim();
+    const clientEmail = normalizeEmail(
+      req.body?.clientEmail || ""
+    );
+    const officeRequest = req.body?.officeRequest === true;
+
+    if (!leadId || !clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The Tax Preparation reference number and client email are required."
+      });
+    }
+
+    const candidate = await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error: "The Tax Preparation request could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const intake = lead.taxPreparationIntake || {};
+    const work = lead.taxPreparationWork || {};
+
+    if (
+      normalizeEmail(
+        lead.contact?.email || getLeadEmailValue(candidate.raw)
+      ) !== clientEmail
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The email address does not match the saved Tax Preparation request."
+      });
+    }
+
+    if (
+      String(work.paymentRequirement || "Required") ===
+      "Waived by Office"
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Payment is marked Waived by Office. Change the requirement before creating a payment link."
+      });
+    }
+
+    const quotedFeeCents = Math.max(
+      0,
+      Number.parseInt(work.quotedFeeCents, 10) || 0
+    );
+    const amountPaidCents = Math.max(
+      0,
+      Number.parseInt(work.amountPaidCents, 10) || 0
+    );
+    const amountCents = Math.max(
+      0,
+      Number.parseInt(work.paymentRequestAmountCents, 10) || 0
+    );
+    const outstandingCents = Math.max(
+      0,
+      quotedFeeCents - amountPaidCents
+    );
+
+    if (quotedFeeCents < 100) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter and save the total Tax Preparation fee quote before creating a payment link."
+      });
+    }
+
+    if (amountCents < 100) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter and save an amount to collect now before creating a payment link."
+      });
+    }
+
+    if (amountCents > outstandingCents) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The amount to collect is greater than the unpaid balance on the saved fee quote."
+      });
+    }
+
+    const paymentPurpose = String(
+      work.paymentPurpose || "Tax Preparation Payment"
+    ).trim();
+    const taxYear = String(
+      intake.taxYear || lead.taxData?.taxYear || ""
+    );
+    const returnType = String(
+      intake.recommendedLane ||
+      work.returnType ||
+      "Tax Preparation"
+    );
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: leadId,
+      customer_email: clientEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name:
+                "Tax Preparation — " +
+                (paymentPurpose || "Payment"),
+              description:
+                "Professional Tax Preparation service payment for tax year " +
+                (taxYear || "not recorded") +
+                ". Return type: " + returnType +
+                ". The final scope and services are based on the office-approved fee quote."
+            },
+            unit_amount: amountCents
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        leadId,
+        clientName: String(lead.contact?.name || ""),
+        clientEmail,
+        service: "tax_preparation",
+        taxYear,
+        returnType,
+        paymentPurpose,
+        quotedFeeCents: String(quotedFeeCents),
+        amountBeforePaymentCents: String(amountPaidCents)
+      },
+      success_url:
+        `${APP_BASE_URL}/client-portal?payment=success&leadId=${encodeURIComponent(leadId)}`,
+      cancel_url:
+        `${APP_BASE_URL}/client-portal?payment=cancelled&leadId=${encodeURIComponent(leadId)}`
+    });
+
+    const createdAt = new Date().toISOString();
+
+    const saveResult = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => ({
+        ...record,
+        taxPreparationWork: {
+          ...(record.taxPreparationWork || {}),
+          stripeCheckoutSessionId: session.id,
+          stripeCheckoutUrl: session.url,
+          checkoutCreatedAt: createdAt,
+          paymentStatus:
+            amountPaidCents > 0
+              ? "Balance Payment Link Created"
+              : "Payment Link Created",
+          updatedAt: createdAt
+        },
+        updatedAt: createdAt
+      })
+    );
+
+    if (!saveResult?.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "The secure Stripe link was created, but it could not be saved on the Tax Preparation card. No payment-link email was sent."
+      });
+    }
+
+    let emailSent = false;
+    let emailError = "";
+
+    if (officeRequest) {
+      try {
+        if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+          throw new Error("Email delivery is not configured.");
+        }
+
+        const portalUrl =
+          String(APP_BASE_URL || "")
+            .replace(/\/+$/, "") +
+          "/client-portal?activate=1&leadId=" +
+          encodeURIComponent(leadId);
+
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: clientEmail,
+          subject: "Your Secure Tax Preparation Payment Link",
+          text:
+`Hello ${lead.contact?.name || "Client"},
+
+Your Tax Preparation payment link is ready.
+
+Tax year:
+${taxYear || "Not recorded"}
+
+Return type:
+${returnType}
+
+Payment purpose:
+${paymentPurpose}
+
+Amount due now:
+$${(amountCents / 100).toFixed(2)}
+
+Total fee quote:
+$${(quotedFeeCents / 100).toFixed(2)}
+
+Use this secure Stripe payment link:
+${session.url}
+
+After Stripe confirms payment, your Tax Preparation Action Basket and secure client portal will update automatically.
+
+Secure client portal:
+${portalUrl}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords.
+
+Thank you,
+
+Greatest Business Solution LLC`
+        });
+
+        emailSent = true;
+      } catch (emailErr) {
+        emailError =
+          emailErr?.message ||
+          "The payment-link email was not sent.";
+
+        console.error(
+          "[create-tax-preparation-checkout] Payment-link email failed:",
+          leadId,
+          emailError
+        );
+      }
+
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          taxPreparationWork: {
+            ...(record.taxPreparationWork || {}),
+            paymentLinkSentAt: createdAt,
+            paymentLinkEmailSent: emailSent,
+            paymentLinkEmailError: emailError,
+            paymentStatus: emailSent
+              ? (amountPaidCents > 0
+                  ? "Balance Payment Link Sent"
+                  : "Payment Link Sent")
+              : (record.taxPreparationWork?.paymentStatus ||
+                  "Payment Link Created"),
+            updatedAt: new Date().toISOString()
+          },
+          updatedAt: new Date().toISOString()
+        })
+      );
+    }
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      emailSent: officeRequest ? emailSent : null,
+      emailError: officeRequest ? emailError : ""
+    });
+  } catch (error) {
+    console.error(
+      "[create-tax-preparation-checkout] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        error.message ||
+        "The secure Tax Preparation payment link could not be created."
     });
   }
 });
