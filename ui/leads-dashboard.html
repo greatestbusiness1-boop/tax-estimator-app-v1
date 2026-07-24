@@ -1185,43 +1185,120 @@
     }
 
     .taxprep-return-summary {
-      margin-bottom:10px;
+      margin-bottom:12px;
       border:1px solid #b9cde2;
-      border-radius:11px;
+      border-radius:12px;
       background:#f8fbff;
-      padding:11px;
+      padding:12px;
     }
 
-    .taxprep-return-summary h3 {
-      margin:0 0 8px;
+    .taxprep-summary-heading {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:9px;
+      padding-bottom:8px;
+      border-bottom:2px solid #d7e4f2;
+    }
+
+    .taxprep-summary-heading h3 {
+      margin:0;
       color:#0f2c56;
-      font-size:14px;
+      font-size:16px;
     }
 
-    .taxprep-return-summary-grid {
+    .taxprep-summary-heading p {
+      margin:3px 0 0;
+      color:#52667d;
+      font-size:11px;
+      line-height:1.35;
+    }
+
+    .taxprep-summary-type {
+      display:inline-flex;
+      align-items:center;
+      border:1px solid #9db8d4;
+      border-radius:999px;
+      background:#ffffff;
+      color:#173f6d;
+      padding:5px 9px;
+      font-size:10.5px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+
+    .taxprep-summary-section {
+      margin-top:8px;
+      border:1px solid #d6e2ee;
+      border-radius:9px;
+      background:#ffffff;
+      overflow:hidden;
+    }
+
+    .taxprep-summary-section-title {
+      margin:0;
+      padding:6px 9px;
+      border-bottom:1px solid #d6e2ee;
+      background:#eaf2fb;
+      color:#0f2c56;
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:.02em;
+    }
+
+    .taxprep-summary-fields {
       display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:6px 12px;
+      grid-template-columns:repeat(3,minmax(0,1fr));
     }
 
-    .taxprep-return-summary-item {
+    .taxprep-summary-field {
+      min-height:43px;
+      padding:7px 9px;
+      border-right:1px solid #e3ebf3;
+      border-bottom:1px solid #e3ebf3;
       color:#334155;
-      font-size:11.5px;
-      line-height:1.4;
+      font-size:11px;
+      line-height:1.35;
       overflow-wrap:anywhere;
     }
 
-    .taxprep-return-summary-item strong {
+    .taxprep-summary-field:nth-child(3n) {
+      border-right:0;
+    }
+
+    .taxprep-summary-field strong {
+      display:block;
+      margin-bottom:2px;
       color:#0f2c56;
       font-weight:950;
     }
 
-    .taxprep-return-summary-item.span-two {
+    .taxprep-summary-field.span-two {
       grid-column:span 2;
     }
 
-    .taxprep-return-summary-item.full {
+    .taxprep-summary-field.full {
       grid-column:1 / -1;
+      border-right:0;
+    }
+
+    .taxprep-summary-field.attention {
+      background:#fff8ed;
+      color:#9a3412;
+    }
+
+    .taxprep-summary-field.attention strong {
+      color:#9a3412;
+    }
+
+    .taxprep-summary-field.confirmed {
+      background:#f0fdf4;
+      color:#166534;
+    }
+
+    .taxprep-summary-field.confirmed strong {
+      color:#166534;
     }
 
     .taxprep-portal-account-active {
@@ -1232,6 +1309,41 @@
     .taxprep-portal-account-needed {
       color:#b45309;
       font-weight:950;
+    }
+
+    @media (max-width:980px) {
+      .taxprep-summary-fields {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .taxprep-summary-field:nth-child(3n) {
+        border-right:1px solid #e3ebf3;
+      }
+
+      .taxprep-summary-field:nth-child(2n) {
+        border-right:0;
+      }
+    }
+
+    @media (max-width:680px) {
+      .taxprep-summary-heading {
+        display:block;
+      }
+
+      .taxprep-summary-type {
+        margin-top:7px;
+      }
+
+      .taxprep-summary-fields {
+        grid-template-columns:1fr;
+      }
+
+      .taxprep-summary-field,
+      .taxprep-summary-field:nth-child(2n),
+      .taxprep-summary-field:nth-child(3n) {
+        grid-column:1;
+        border-right:0;
+      }
     }
 
     .taxprep-card-grid {
@@ -7838,6 +7950,52 @@ function renderLeads(){
             portalStatus === "Active"
               ? "Active — an existing secure portal account is connected"
               : "Activation needed — client has not activated the secure portal";
+          const serviceTypeValues = Array.isArray(
+            intake.serviceTypes
+          )
+            ? intake.serviceTypes.map(
+                (value) => String(value || "").toLowerCase()
+              )
+            : [];
+          const entityTypeValue = String(
+            intake.businessEntityType || ""
+          ).toLowerCase();
+          const separateEntityReturn = serviceTypeValues.some(
+            (value) => [
+              "partnership_return",
+              "s_corporation_return",
+              "c_corporation_return",
+              "nonprofit_return"
+            ].includes(value)
+          );
+          const scheduleCProfile = Boolean(
+            intake.businessProfileApplies
+          ) && !separateEntityReturn && [
+            "",
+            "sole_proprietor",
+            "single_member_llc",
+            "not_sure"
+          ].includes(entityTypeValue);
+          const businessProfileHeading = scheduleCProfile
+            ? "Schedule C Business Profile"
+            : "Business / Entity Profile";
+          const taxComplianceNeedsReview = [
+            "no",
+            "not_sure"
+          ].includes(
+            String(intake.businessTaxStatus || "").toLowerCase()
+          );
+          const contractorNeedsReview =
+            String(
+              intake.contractor1099Requirement || ""
+            ).toLowerCase() === "yes" &&
+            String(
+              intake.contractor1099Filed || ""
+            ).toLowerCase() !== "yes";
+          const multiStateNeedsReview =
+            String(
+              intake.multiState1099 || ""
+            ).toLowerCase() === "not_sure";
 
           return `
             <article
@@ -7867,145 +8025,332 @@ function renderLeads(){
               </div>
 
               <div class="taxprep-return-summary">
-                <h3>Tax Return Intake Summary</h3>
-                <div class="taxprep-return-summary-grid">
-                  <div class="taxprep-return-summary-item">
-                    <strong>Client name:</strong>
-                    ${escapeOfficeHtml(lead.contact?.name || "Not provided")}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>Telephone:</strong>
-                    ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "Not provided")}
-                  </div>
-                  <div class="taxprep-return-summary-item span-two">
-                    <strong>Email address:</strong>
-                    ${escapeOfficeHtml(lead.contact?.email || "Not provided")}
+                <div class="taxprep-summary-heading">
+                  <div>
+                    <h3>Tax Return Intake Summary</h3>
+                    <p>
+                      Organized in the same order the office will
+                      review the return and Schedule C business.
+                    </p>
                   </div>
 
-                  <div class="taxprep-return-summary-item">
-                    <strong>Tax year:</strong>
-                    ${escapeOfficeHtml(getTaxPrepTaxYear(lead) || "Not set")}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>Filing status:</strong>
-                    ${escapeOfficeHtml(taxPrepHumanize(intake.filingStatus) || "Not provided")}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>Primary state:</strong>
-                    ${escapeOfficeHtml(getTaxPrepStateDisplay(lead))}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>Secure portal account:</strong>
-                    <span class="${portalStatus === "Active" ? "taxprep-portal-account-active" : "taxprep-portal-account-needed"}">
-                      ${escapeOfficeHtml(portalAccountDisplay)}
-                    </span>
-                  </div>
-
-                  <div class="taxprep-return-summary-item span-two">
-                    <strong>Return requested:</strong>
-                    ${escapeOfficeHtml(getTaxPrepLane(lead))}
-                  </div>
-                  <div class="taxprep-return-summary-item span-two">
-                    <strong>Services selected:</strong>
-                    ${escapeOfficeHtml(requestedServices)}
-                  </div>
-                  <div class="taxprep-return-summary-item full">
-                    <strong>Income and tax situations:</strong>
-                    ${escapeOfficeHtml(incomeTypes)}
-                  </div>
-
-                  <div class="taxprep-return-summary-item">
-                    <strong>Income documents listed:</strong>
-                    ${Number(intake.documentCount || 0)}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>1099 or 1099-NEC forms:</strong>
-                    ${Number(intake.form1099Count || 0)}
-                  </div>
-                  <div class="taxprep-return-summary-item">
-                    <strong>Related business expenses:</strong>
-                    ${escapeOfficeHtml(taxPrepPlainAnswer(intake.has1099Expenses))}
-                  </div>
-
-                  ${intake.businessProfileApplies
-                    ? `
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Business or trade name:</strong>
-                        ${escapeOfficeHtml(
-                          String(intake.businessTradeName || "").trim() ||
-                          "None reported"
-                        )}
-                      </div>
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Business address:</strong>
-                        ${escapeOfficeHtml(businessAddressDisplay)}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>EIN:</strong>
-                        ${escapeOfficeHtml(einDisplay)}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>LLC:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.llcStatus))}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Business structure:</strong>
-                        ${escapeOfficeHtml(taxPrepHumanize(intake.businessEntityType) || "Not provided")}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Accounting method:</strong>
-                        ${escapeOfficeHtml(taxPrepHumanize(intake.accountingMethod) || "Not provided")}
-                      </div>
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Principal business or profession:</strong>
-                        ${escapeOfficeHtml(intake.principalBusinessProfession || "Not provided")}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Operated or managed during tax year:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.materialParticipation))}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Business started:</strong>
-                        ${escapeOfficeHtml(intake.businessStartYear || "Not recorded")}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Business taxes current:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.businessTaxStatus))}
-                      </div>
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Contractor Forms 1099 may be required:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.contractor1099Requirement))}
-                      </div>
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Required contractor Forms 1099 filed:</strong>
-                        ${escapeOfficeHtml(
-                          String(intake.contractor1099Requirement || "").toLowerCase() === "yes"
-                            ? taxPrepPlainAnswer(intake.contractor1099Filed)
-                            : "Not applicable"
-                        )}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>Business vehicle used:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.businessVehicleUsed))}
-                      </div>
-                      <div class="taxprep-return-summary-item span-two">
-                        <strong>Vehicle first used for business:</strong>
-                        ${escapeOfficeHtml(
-                          intake.vehicleBusinessUseDate ||
-                          (
-                            intake.vehicleBusinessUseDateUnknown
-                              ? "Client does not remember exact date"
-                              : "Not applicable / not recorded"
-                          )
-                        )}
-                      </div>
-                      <div class="taxprep-return-summary-item">
-                        <strong>More than one state:</strong>
-                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.multiState1099))}
-                      </div>
-                    `
-                    : ""}
+                  <span class="taxprep-summary-type">
+                    ${escapeOfficeHtml(
+                      intake.businessProfileApplies
+                        ? businessProfileHeading
+                        : "Individual Return Profile"
+                    )}
+                  </span>
                 </div>
+
+                <section class="taxprep-summary-section">
+                  <h4 class="taxprep-summary-section-title">
+                    1. Client &amp; Return Information
+                  </h4>
+
+                  <div class="taxprep-summary-fields">
+                    <div class="taxprep-summary-field">
+                      <strong>Client name</strong>
+                      ${escapeOfficeHtml(
+                        lead.contact?.name || "Not provided"
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Telephone</strong>
+                      ${escapeOfficeHtml(
+                        formatDashboardPhone(
+                          lead.contact?.phone || ""
+                        ) || "Not provided"
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Email address</strong>
+                      ${escapeOfficeHtml(
+                        lead.contact?.email || "Not provided"
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Tax year</strong>
+                      ${escapeOfficeHtml(
+                        getTaxPrepTaxYear(lead) || "Not set"
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Filing status</strong>
+                      ${escapeOfficeHtml(
+                        taxPrepHumanize(
+                          intake.filingStatus
+                        ) || "Not provided"
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Primary state</strong>
+                      ${escapeOfficeHtml(
+                        getTaxPrepStateDisplay(lead)
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field span-two">
+                      <strong>Return requested</strong>
+                      ${escapeOfficeHtml(
+                        getTaxPrepLane(lead)
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field ${
+                      portalStatus === "Active"
+                        ? "confirmed"
+                        : "attention"
+                    }">
+                      <strong>Secure portal account</strong>
+                      <span class="${
+                        portalStatus === "Active"
+                          ? "taxprep-portal-account-active"
+                          : "taxprep-portal-account-needed"
+                      }">
+                        ${escapeOfficeHtml(
+                          portalAccountDisplay
+                        )}
+                      </span>
+                    </div>
+
+                    <div class="taxprep-summary-field full">
+                      <strong>Services selected</strong>
+                      ${escapeOfficeHtml(
+                        requestedServices
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                ${intake.businessProfileApplies
+                  ? `
+                    <section class="taxprep-summary-section">
+                      <h4 class="taxprep-summary-section-title">
+                        2. ${escapeOfficeHtml(
+                          businessProfileHeading
+                        )} — Identity &amp; Classification
+                      </h4>
+
+                      <div class="taxprep-summary-fields">
+                        <div class="taxprep-summary-field span-two">
+                          <strong>Principal business or profession</strong>
+                          ${escapeOfficeHtml(
+                            intake.principalBusinessProfession ||
+                            "Not provided"
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Business started</strong>
+                          ${escapeOfficeHtml(
+                            intake.businessStartYear ||
+                            "Not recorded"
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field span-two">
+                          <strong>Business or trade name</strong>
+                          ${escapeOfficeHtml(
+                            String(
+                              intake.businessTradeName || ""
+                            ).trim() ||
+                            "No separate business name reported"
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>EIN</strong>
+                          ${escapeOfficeHtml(einDisplay)}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>LLC</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.llcStatus
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Business structure</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepHumanize(
+                              intake.businessEntityType
+                            ) || "Not provided"
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Accounting method</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepHumanize(
+                              intake.accountingMethod
+                            ) || "Not provided"
+                          )}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="taxprep-summary-section">
+                      <h4 class="taxprep-summary-section-title">
+                        3. Business Location &amp; Activity
+                      </h4>
+
+                      <div class="taxprep-summary-fields">
+                        <div class="taxprep-summary-field span-two">
+                          <strong>Business address</strong>
+                          ${escapeOfficeHtml(
+                            businessAddressDisplay
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Operated or managed during tax year</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.materialParticipation
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field ${
+                          multiStateNeedsReview
+                            ? "attention"
+                            : ""
+                        }">
+                          <strong>Business activity in more than one state</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.multiState1099
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Business vehicle used</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.businessVehicleUsed
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field">
+                          <strong>Vehicle first used for business</strong>
+                          ${escapeOfficeHtml(
+                            intake.vehicleBusinessUseDate ||
+                            (
+                              intake.vehicleBusinessUseDateUnknown
+                                ? "Client does not remember exact date"
+                                : "Not applicable / not recorded"
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </section>
+                  `
+                  : ""}
+
+                <section class="taxprep-summary-section">
+                  <h4 class="taxprep-summary-section-title">
+                    ${intake.businessProfileApplies
+                      ? "4. Income, Forms & Documents"
+                      : "2. Income, Forms & Documents"}
+                  </h4>
+
+                  <div class="taxprep-summary-fields">
+                    <div class="taxprep-summary-field">
+                      <strong>Income documents listed</strong>
+                      ${Number(
+                        intake.documentCount || 0
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>1099 or 1099-NEC forms</strong>
+                      ${Number(
+                        intake.form1099Count || 0
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field">
+                      <strong>Related business expenses</strong>
+                      ${escapeOfficeHtml(
+                        taxPrepPlainAnswer(
+                          intake.has1099Expenses
+                        )
+                      )}
+                    </div>
+
+                    <div class="taxprep-summary-field full">
+                      <strong>Income and tax situations</strong>
+                      ${escapeOfficeHtml(incomeTypes)}
+                    </div>
+                  </div>
+                </section>
+
+                ${intake.businessProfileApplies
+                  ? `
+                    <section class="taxprep-summary-section">
+                      <h4 class="taxprep-summary-section-title">
+                        5. Business Tax Compliance
+                      </h4>
+
+                      <div class="taxprep-summary-fields">
+                        <div class="taxprep-summary-field ${
+                          taxComplianceNeedsReview
+                            ? "attention"
+                            : "confirmed"
+                        }">
+                          <strong>Business taxes current</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.businessTaxStatus
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field ${
+                          contractorNeedsReview
+                            ? "attention"
+                            : ""
+                        }">
+                          <strong>Contractor Forms 1099 may be required</strong>
+                          ${escapeOfficeHtml(
+                            taxPrepPlainAnswer(
+                              intake.contractor1099Requirement
+                            )
+                          )}
+                        </div>
+
+                        <div class="taxprep-summary-field ${
+                          contractorNeedsReview
+                            ? "attention"
+                            : ""
+                        }">
+                          <strong>Required contractor Forms 1099 filed</strong>
+                          ${escapeOfficeHtml(
+                            String(
+                              intake.contractor1099Requirement ||
+                              ""
+                            ).toLowerCase() === "yes"
+                              ? taxPrepPlainAnswer(
+                                  intake.contractor1099Filed
+                                )
+                              : "Not applicable"
+                          )}
+                        </div>
+                      </div>
+                    </section>
+                  `
+                  : ""}
               </div>
 
               <div class="taxprep-card-grid">
