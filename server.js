@@ -4842,8 +4842,17 @@ function buildClientPortalTaxPreparationSummary(entry) {
     form1099Count: Number(
       intake.form1099Count || 0
     ),
+    received1099Nec: String(
+      intake.received1099Nec || ""
+    ),
     has1099Expenses: String(
       intake.has1099Expenses || ""
+    ),
+    businessTradeName: String(
+      intake.businessTradeName || ""
+    ),
+    hasEin: String(
+      intake.hasEin || ""
     ),
     usedBusinessName: String(
       intake.usedBusinessName || ""
@@ -8213,9 +8222,45 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     ? intake.serviceTypes.filter(Boolean)
     : [];
 
-  const incomeTypes = Array.isArray(intake.incomeTypes)
+  let incomeTypes = Array.isArray(intake.incomeTypes)
     ? intake.incomeTypes.filter(Boolean)
     : [];
+
+  const received1099Nec = String(
+    intake.received1099Nec ||
+    (
+      incomeTypes.includes("1099_nec")
+        ? "yes"
+        : ""
+    )
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    received1099Nec &&
+    ![
+      "yes",
+      "no"
+    ].includes(received1099Nec)
+  ) {
+    errors.push(
+      "Select Yes or No for the 1099 or 1099-NEC question."
+    );
+  }
+
+  if (received1099Nec === "yes") {
+    if (!incomeTypes.includes("1099_nec")) {
+      incomeTypes = [
+        "1099_nec",
+        ...incomeTypes
+      ];
+    }
+  } else if (received1099Nec === "no") {
+    incomeTypes = incomeTypes.filter(
+      (item) => item !== "1099_nec"
+    );
+  }
 
   if (serviceTypes.length === 0) {
     errors.push("Select at least one tax service needed.");
@@ -8226,6 +8271,7 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
   }
 
   const selected1099Nec =
+    received1099Nec === "yes" ||
     incomeTypes.includes("1099_nec");
 
   const form1099Count = Math.max(
@@ -8240,8 +8286,23 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     intake.has1099Expenses || ""
   ).trim();
 
+  const businessTradeName = String(
+    intake.businessTradeName || ""
+  ).trim();
+
+  const hasEin = String(
+    intake.hasEin || ""
+  )
+    .trim()
+    .toLowerCase();
+
   const usedBusinessName = String(
-    intake.usedBusinessName || ""
+    intake.usedBusinessName ||
+    (
+      businessTradeName
+        ? "yes"
+        : "no"
+    )
   ).trim();
 
   const multiState1099 = String(
@@ -8272,13 +8333,14 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     if (
       ![
         "yes",
-        "no"
+        "no",
+        "not_sure"
       ].includes(
-        usedBusinessName
+        hasEin
       )
     ) {
       errors.push(
-        "Select whether you used a business or trade name."
+        "Select whether you have an EIN."
       );
     }
 
@@ -8428,6 +8490,10 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       documentCount,
       stateCount,
       primaryState,
+      received1099Nec:
+        selected1099Nec
+          ? "yes"
+          : received1099Nec || "no",
       form1099Count:
         selected1099Nec
           ? form1099Count
@@ -8435,6 +8501,14 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       has1099Expenses:
         selected1099Nec
           ? has1099Expenses
+          : "",
+      businessTradeName:
+        selected1099Nec
+          ? businessTradeName
+          : "",
+      hasEin:
+        selected1099Nec
+          ? hasEin
           : "",
       usedBusinessName:
         selected1099Nec

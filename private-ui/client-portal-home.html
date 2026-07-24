@@ -1609,12 +1609,23 @@
                             ${Number(request.form1099Count || 0)}
                           </div>
                           <div>
-                            <strong>Related expenses:</strong>
+                            <strong>Related business expenses:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.has1099Expenses))}
                           </div>
                           <div>
                             <strong>Business or trade name:</strong>
-                            ${escapeHtml(taxPrepAnswerLabel(request.usedBusinessName))}
+                            ${escapeHtml(
+                              String(request.businessTradeName || "").trim() ||
+                              (
+                                String(request.usedBusinessName || "").toLowerCase() === "yes"
+                                  ? "Name not provided"
+                                  : "None reported"
+                              )
+                            )}
+                          </div>
+                          <div>
+                            <strong>Has EIN:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.hasEin))}
                           </div>
                           <div>
                             <strong>More than one state:</strong>

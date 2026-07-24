@@ -148,6 +148,60 @@
       line-height:1.45;
     }
     .follow-up .grid { gap:12px; }
+    .top-information {
+      margin-top:18px;
+      padding:18px;
+      border:1px solid #c9d7e5;
+      border-left:6px solid var(--gold);
+      border-radius:12px;
+      background:#fffdf7;
+    }
+    .top-information h3 {
+      margin:0 0 6px;
+      color:var(--navy);
+      font-size:18px;
+    }
+    .top-information p {
+      margin:0 0 14px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .stepper {
+      display:grid;
+      grid-template-columns:44px minmax(0,1fr) 44px;
+      gap:8px;
+      align-items:center;
+      margin-top:7px;
+    }
+    .stepper input {
+      margin:0;
+      text-align:center;
+      font-weight:800;
+    }
+    .stepper button {
+      width:44px;
+      min-height:43px;
+      margin:0;
+      padding:0;
+      border:1px solid #9fb3c8;
+      border-radius:9px;
+      color:var(--navy);
+      background:#edf4fb;
+      font-size:24px;
+      line-height:1;
+      cursor:pointer;
+    }
+    .stepper button:hover {
+      background:#dfeefa;
+    }
+    .field-note {
+      display:block;
+      margin-top:5px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:500;
+      line-height:1.35;
+    }
     .choice em {
       display:block;
       margin-top:3px;
@@ -218,7 +272,7 @@
         </div>
       </header>
 
-      <form id="intakeForm">
+      <form id="intakeForm" novalidate>
         <div class="intro">
           This is a planning and intake form—not a request to upload sensitive tax documents. Do not enter Social Security numbers, bank information, or full tax-document images here.
         </div>
@@ -228,8 +282,11 @@
           After your request is received, the system will connect it to your existing Greatest Business Solution LLC secure portal or send you a one-time activation link for the same portal. You will not create a second account or a separate tax-preparation login.
         </div>
 
+        <div id="result" aria-live="polite"></div>
+
         <section>
-          <h2>Your Contact Information</h2>
+          <h2>Your Contact &amp; Filing Information</h2>
+          <p class="hint">Enter the basic information first. Do not enter Social Security numbers, bank information, or tax-document images.</p>
           <div class="grid">
             <label class="field">Full name
               <input id="name" required autocomplete="name" />
@@ -256,86 +313,15 @@
                 <option>Prior years</option>
               </select>
             </label>
-          </div>
-        </section>
-
-        <section>
-          <h2>What Do You Need Prepared?</h2>
-          <p class="hint">Choose everything that applies.</p>
-          <div class="choices" id="serviceTypes">
-            <label class="choice"><input type="checkbox" value="individual_federal_state" /> Individual tax return — W-2 and/or 1099 income</label>
-            <label class="choice"><input type="checkbox" value="prior_year_return" /> Prior-year or multiple-year return</label>
-            <label class="choice"><input type="checkbox" value="multiple_states" /> Multi-state return</label>
-            <label class="choice"><input type="checkbox" value="business_return" /> Business or entity return</label>
-            <label class="choice"><input type="checkbox" value="partnership_return" /> Partnership return</label>
-            <label class="choice"><input type="checkbox" value="s_corporation_return" /> S corporation return</label>
-            <label class="choice"><input type="checkbox" value="c_corporation_return" /> C corporation return</label>
-            <label class="choice"><input type="checkbox" value="nonprofit_return" /> Nonprofit return</label>
-          </div>
-        </section>
-
-        <section>
-          <h2>Income and Tax Situations</h2>
-          <p class="hint">Choose all sources and situations that may appear on the return.</p>
-          <div class="choices" id="incomeTypes">
-            <label class="choice"><input type="checkbox" value="w2_income" /> I received a W-2</label>
-            <label class="choice"><input type="checkbox" value="1099_nec" /> I received a 1099 or 1099-NEC for contractor or self-employment income</label>
-            <label class="choice"><input type="checkbox" value="1099_k" /> I received a 1099-K from a payment app, platform, or online marketplace</label>
-            <label class="choice"><input type="checkbox" value="1099_other" /> I received another type of 1099<em>Examples: 1099-MISC, 1099-INT, 1099-DIV, 1099-R, or SSA-1099</em></label>
-            <label class="choice"><input type="checkbox" value="gig_platform" /> Uber, Lyft, DoorDash, Instacart, or other gig-work income</label>
-            <label class="choice"><input type="checkbox" value="creator_income" /> TikTok, YouTube, Twitch, influencer, or creator income</label>
-            <label class="choice"><input type="checkbox" value="self_employment" /> Freelance, consulting, or other self-employment income</label>
-            <label class="choice"><input type="checkbox" value="minister_clergy" /> Minister, clergy, speaker, or housing allowance</label>
-            <label class="choice"><input type="checkbox" value="stocks_bonds_investments" /> Stocks, bonds, mutual funds, or investment sales</label>
-            <label class="choice"><input type="checkbox" value="interest_dividends" /> Interest or dividend income</label>
-            <label class="choice"><input type="checkbox" value="foreign_tax" /> Foreign tax, foreign income, or foreign accounts</label>
-            <label class="choice"><input type="checkbox" value="estimated_tax_payments" /> Federal or state estimated-tax payments</label>
-            <label class="choice"><input type="checkbox" value="rental_income" /> Rental property income or expenses</label>
-            <label class="choice"><input type="checkbox" value="k1_income" /> Schedule K-1 income</label>
-            <label class="choice"><input type="checkbox" value="retirement_income" /> Pension, IRA, or Social Security income</label>
-            <label class="choice"><input type="checkbox" value="cryptocurrency" /> Cryptocurrency activity</label>
-            <label class="choice"><input type="checkbox" value="other_income" /> Other income not listed</label>
-          </div>
-
-          <div class="follow-up" id="1099FollowUp" hidden>
-            <h3>Tell us about your 1099 or 1099-NEC</h3>
-            <p>Answer these plain-language questions. You do not need to know whether a Schedule C is required—the office will determine that after reviewing your answers and documents.</p>
-            <div class="grid">
-              <label class="field">How many 1099 or 1099-NEC forms did you receive?
-                <input id="form1099Count" type="number" min="1" max="200" value="1" />
-              </label>
-              <label class="field">Did you have expenses related to this income?
-                <select id="has1099Expenses">
-                  <option value="">Select</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                  <option value="not_sure">Not sure</option>
-                </select>
-              </label>
-              <label class="field">Did you use a business or trade name?
-                <select id="usedBusinessName">
-                  <option value="">Select</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </label>
-              <label class="field">Was this 1099 income connected to more than one state?
-                <select id="multiState1099">
-                  <option value="">Select</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                  <option value="not_sure">Not sure</option>
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <div class="grid three" style="margin-top:18px;">
-            <label class="field">Approximate number of income documents
-              <input id="documentCount" type="number" min="0" max="200" value="1" />
-            </label>
-            <label class="field">Number of states involved
-              <input id="stateCount" type="number" min="1" max="50" value="1" />
+            <label class="field">Filing status
+              <select id="filingStatus">
+                <option value="">Not sure / select later</option>
+                <option value="single">Single</option>
+                <option value="married_filing_jointly">Married Filing Jointly</option>
+                <option value="married_filing_separately">Married Filing Separately</option>
+                <option value="head_of_household">Head of Household</option>
+                <option value="qualifying_surviving_spouse">Qualifying Surviving Spouse</option>
+              </select>
             </label>
             <label class="field">Primary state
               <select id="primaryState" required>
@@ -393,25 +379,20 @@
                 <option value="WY">WY</option>
               </select>
             </label>
-          </div>
-
-          <div class="notice">
-            Have many forms? Enter the approximate total count. A customer with 13 separate 1099 or 1099-NEC forms should enter 13 in the 1099 section; the system will route the request as a higher-complexity return without forcing every document to be typed here.
-          </div>
-        </section>
-
-        <section>
-          <h2>Filing Details</h2>
-          <div class="grid">
-            <label class="field">Filing status
-              <select id="filingStatus">
-                <option value="">Not sure / select later</option>
-                <option value="single">Single</option>
-                <option value="married_filing_jointly">Married Filing Jointly</option>
-                <option value="married_filing_separately">Married Filing Separately</option>
-                <option value="head_of_household">Head of Household</option>
-                <option value="qualifying_surviving_spouse">Qualifying Surviving Spouse</option>
-              </select>
+            <label class="field">Number of states involved
+              <span class="stepper">
+                <button type="button" data-stepper-target="stateCount" data-step="-1" aria-label="Decrease number of states">−</button>
+                <input id="stateCount" type="number" min="1" max="50" value="1" inputmode="numeric" />
+                <button type="button" data-stepper-target="stateCount" data-step="1" aria-label="Increase number of states">+</button>
+              </span>
+            </label>
+            <label class="field">Approximate number of income documents
+              <span class="stepper">
+                <button type="button" data-stepper-target="documentCount" data-step="-1" aria-label="Decrease number of income documents">−</button>
+                <input id="documentCount" type="number" min="0" max="200" value="1" inputmode="numeric" />
+                <button type="button" data-stepper-target="documentCount" data-step="1" aria-label="Increase number of income documents">+</button>
+              </span>
+              <span class="field-note">Count W-2s, 1099s, K-1s, retirement forms, and other income documents.</span>
             </label>
             <label class="field">Bookkeeping condition
               <select id="bookkeepingStatus">
@@ -424,13 +405,115 @@
             </label>
           </div>
 
-          <label class="field" style="margin-top:16px;">Anything else we should know?
-            <textarea id="comments" placeholder="Examples: 13 separate 1099s, minister housing allowance, stock sales, foreign taxes, estimated payments, multiple businesses, missing documents, or prior-year issues."></textarea>
+          <div class="top-information">
+            <h3>1099 or 1099-NEC Information</h3>
+            <p>Many clients simply know that they received a 1099. Answer this here before moving through the rest of the form.</p>
+
+            <div class="grid">
+              <label class="field">Did you receive a 1099 or 1099-NEC for contractor or self-employment income?
+                <select id="received1099Nec">
+                  <option value="">Select Yes or No</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="follow-up" id="1099FollowUp" hidden>
+              <h3>Your 1099 or 1099-NEC Details</h3>
+              <p>You do not need to know whether a Schedule C is required. The office will determine that after reviewing your answers and documents.</p>
+              <div class="grid">
+                <label class="field">Number of 1099 or 1099-NEC forms
+                  <span class="stepper">
+                    <button type="button" data-stepper-target="form1099Count" data-step="-1" aria-label="Decrease number of 1099 forms">−</button>
+                    <input id="form1099Count" type="number" min="1" max="200" value="1" inputmode="numeric" />
+                    <button type="button" data-stepper-target="form1099Count" data-step="1" aria-label="Increase number of 1099 forms">+</button>
+                  </span>
+                </label>
+                <label class="field">Did you have business expenses related to this income?
+                  <select id="has1099Expenses">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+                <label class="field">Business or trade name
+                  <input id="businessTradeName" placeholder="Enter the name, or leave blank if none" />
+                  <span class="field-note">Do not enter an EIN here.</span>
+                </label>
+                <label class="field">Do you have an EIN?
+                  <select id="hasEin">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                  <span class="field-note">Only tell us whether you have one. Do not enter the EIN on this public form.</span>
+                </label>
+                <label class="field">Was this 1099 income connected to more than one state?
+                  <select id="multiState1099">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>What Do You Need Prepared?</h2>
+          <p class="hint">Choose everything that applies.</p>
+          <div class="choices" id="serviceTypes">
+            <label class="choice"><input type="checkbox" value="individual_federal_state" /> Individual tax return — W-2 and/or 1099 income</label>
+            <label class="choice"><input type="checkbox" value="prior_year_return" /> Prior-year or multiple-year return</label>
+            <label class="choice"><input type="checkbox" value="multiple_states" /> Multi-state return</label>
+            <label class="choice"><input type="checkbox" value="business_return" /> Business or entity return</label>
+            <label class="choice"><input type="checkbox" value="partnership_return" /> Partnership return</label>
+            <label class="choice"><input type="checkbox" value="s_corporation_return" /> S corporation return</label>
+            <label class="choice"><input type="checkbox" value="c_corporation_return" /> C corporation return</label>
+            <label class="choice"><input type="checkbox" value="nonprofit_return" /> Nonprofit return</label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Income and Tax Situations</h2>
+          <p class="hint">Choose all sources and situations that may appear on the return.</p>
+          <div class="choices" id="incomeTypes">
+            <label class="choice"><input type="checkbox" value="w2_income" /> I received a W-2</label>
+            <label class="choice"><input type="checkbox" value="1099_k" /> I received a 1099-K from a payment app, platform, or online marketplace</label>
+            <label class="choice"><input type="checkbox" value="1099_other" /> I received another type of 1099<em>Examples: 1099-MISC, 1099-INT, 1099-DIV, 1099-R, or SSA-1099</em></label>
+            <label class="choice"><input type="checkbox" value="gig_platform" /> Uber, Lyft, DoorDash, Instacart, or other gig-work income</label>
+            <label class="choice"><input type="checkbox" value="creator_income" /> TikTok, YouTube, Twitch, influencer, or creator income</label>
+            <label class="choice"><input type="checkbox" value="self_employment" /> Freelance, consulting, or other self-employment income</label>
+            <label class="choice"><input type="checkbox" value="minister_clergy" /> Minister, clergy, speaker, or housing allowance</label>
+            <label class="choice"><input type="checkbox" value="stocks_bonds_investments" /> Stocks, bonds, mutual funds, or investment sales</label>
+            <label class="choice"><input type="checkbox" value="interest_dividends" /> Interest or dividend income</label>
+            <label class="choice"><input type="checkbox" value="foreign_tax" /> Foreign tax, foreign income, or foreign accounts</label>
+            <label class="choice"><input type="checkbox" value="estimated_tax_payments" /> Federal or state estimated-tax payments</label>
+            <label class="choice"><input type="checkbox" value="rental_income" /> Rental property income or expenses</label>
+            <label class="choice"><input type="checkbox" value="k1_income" /> Schedule K-1 income</label>
+            <label class="choice"><input type="checkbox" value="retirement_income" /> Pension, IRA, or Social Security income</label>
+            <label class="choice"><input type="checkbox" value="cryptocurrency" /> Cryptocurrency activity</label>
+            <label class="choice"><input type="checkbox" value="other_income" /> Other income not listed</label>
+          </div>
+
+          <div class="notice">
+            The 1099 or 1099-NEC question, form count, business name, EIN question, related-expense question, document count, and state information are recorded near the top of this form.
+          </div>
+        </section>
+
+        <section>
+          <h2>Additional Return Information</h2>
+          <label class="field">Anything else we should know?
+            <textarea id="comments" placeholder="Examples: minister housing allowance, stock sales, foreign taxes, estimated payments, multiple businesses, missing documents, or prior-year issues."></textarea>
           </label>
         </section>
 
         <button id="submitButton" type="submit">Submit My Tax Preparation Request</button>
-        <div id="result" aria-live="polite"></div>
       </form>
     </div>
   </main>
@@ -496,8 +579,9 @@
     }
 
     function update1099FollowUp() {
-      const selected = checkedValues("incomeTypes");
-      const show = selected.includes("1099_nec");
+      const received1099Nec =
+        document.getElementById("received1099Nec").value;
+      const show = received1099Nec === "yes";
       const followUp = document.getElementById("1099FollowUp");
 
       followUp.hidden = !show;
@@ -505,19 +589,61 @@
       if (!show) {
         document.getElementById("form1099Count").value = "1";
         document.getElementById("has1099Expenses").value = "";
-        document.getElementById("usedBusinessName").value = "";
+        document.getElementById("businessTradeName").value = "";
+        document.getElementById("hasEin").value = "";
         document.getElementById("multiState1099").value = "";
       }
+    }
+
+    function changeStepperValue(inputId, step) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      const min = Number(input.min || 0);
+      const max = Number(input.max || Number.MAX_SAFE_INTEGER);
+      const current = Number.parseInt(input.value, 10);
+      const safeCurrent = Number.isFinite(current) ? current : min;
+      const next = Math.min(max, Math.max(min, safeCurrent + step));
+
+      input.value = String(next);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function showResult(type, html) {
+      const resultBox = document.getElementById("result");
+      resultBox.className = type;
+      resultBox.innerHTML = html;
+      resultBox.style.display = "block";
+      resultBox.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+
+    function clearResult() {
+      const resultBox = document.getElementById("result");
+      resultBox.className = "";
+      resultBox.innerHTML = "";
+      resultBox.style.removeProperty("display");
     }
 
     document.getElementById("phone").addEventListener("input", (event) => {
       event.target.value = formatPhoneInput(event.target.value);
     });
 
-    document.getElementById("incomeTypes").addEventListener(
+    document.getElementById("received1099Nec").addEventListener(
       "change",
       update1099FollowUp
     );
+
+    document.querySelectorAll("[data-stepper-target]").forEach((button) => {
+      button.addEventListener("click", () => {
+        changeStepperValue(
+          button.dataset.stepperTarget,
+          Number(button.dataset.step || 0)
+        );
+      });
+    });
 
     async function prefillFromEstimate() {
       if (!sourceLeadId) return;
@@ -546,6 +672,34 @@
           String(taxData.filingStatus || "").toLowerCase();
         document.getElementById("primaryState").value =
           String(taxData.stateCode || "").toUpperCase();
+
+        const intake = lead.taxPreparationIntake || {};
+        const received1099Nec =
+          String(
+            intake.received1099Nec ||
+            (
+              Array.isArray(intake.incomeTypes) &&
+              intake.incomeTypes.includes("1099_nec")
+                ? "yes"
+                : ""
+            )
+          ).toLowerCase();
+
+        if (received1099Nec) {
+          document.getElementById("received1099Nec").value =
+            received1099Nec;
+          document.getElementById("form1099Count").value =
+            String(intake.form1099Count || 1);
+          document.getElementById("has1099Expenses").value =
+            String(intake.has1099Expenses || "");
+          document.getElementById("businessTradeName").value =
+            String(intake.businessTradeName || "");
+          document.getElementById("hasEin").value =
+            String(intake.hasEin || "");
+          document.getElementById("multiState1099").value =
+            String(intake.multiState1099 || "");
+          update1099FollowUp();
+        }
       } catch (error) {
         console.warn("Could not prefill tax-return intake:", error);
       }
@@ -554,41 +708,91 @@
     document.getElementById("intakeForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const resultBox = document.getElementById("result");
+      clearResult();
+
       const button = document.getElementById("submitButton");
       const serviceTypes = checkedValues("serviceTypes");
       const incomeTypes = checkedValues("incomeTypes");
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const taxYear = document.getElementById("taxYear").value;
+      const primaryState =
+        document.getElementById("primaryState").value;
+      const received1099Nec =
+        document.getElementById("received1099Nec").value;
 
-      resultBox.className = "";
-      resultBox.style.display = "none";
+      if (
+        !name ||
+        !email ||
+        !taxYear ||
+        !primaryState
+      ) {
+        showResult(
+          "error",
+          "<div class='result-title'>Complete the contact and filing information.</div>" +
+          "Enter the full name, email, tax year, and primary state near the top of the form."
+        );
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showResult(
+          "error",
+          "<div class='result-title'>Enter a valid email address.</div>" +
+          "The email address is needed to connect or activate the secure client portal."
+        );
+        return;
+      }
+
+      if (!received1099Nec) {
+        showResult(
+          "error",
+          "<div class='result-title'>Answer the 1099 or 1099-NEC question.</div>" +
+          "Select Yes or No near the top of the form."
+        );
+        return;
+      }
+
+      const selected1099Nec = received1099Nec === "yes";
+
+      if (
+        selected1099Nec &&
+        !incomeTypes.includes("1099_nec")
+      ) {
+        incomeTypes.unshift("1099_nec");
+      }
 
       if (serviceTypes.length === 0 || incomeTypes.length === 0) {
-        resultBox.className = "error";
-        resultBox.innerHTML =
-          "<div class='result-title'>Please complete the highlighted sections.</div>" +
-          "Select at least one service and at least one income or tax situation.";
+        showResult(
+          "error",
+          "<div class='result-title'>Complete the required selections.</div>" +
+          "Select at least one return type and at least one income or tax situation."
+        );
         return;
       }
 
-      const phoneDigits = document.getElementById("phone").value.replace(/\D/g, "");
+      const phoneDigits =
+        document.getElementById("phone").value.replace(/\D/g, "");
 
       if (phoneDigits.length !== 10) {
-        resultBox.className = "error";
-        resultBox.innerHTML =
+        showResult(
+          "error",
           "<div class='result-title'>Enter a complete phone number.</div>" +
-          "Use a 10-digit number such as (623) 570-3934.";
+          "Use a 10-digit number such as (623) 570-3934."
+        );
         return;
       }
 
-      const selected1099Nec = incomeTypes.includes("1099_nec");
       const form1099Count = Number.parseInt(
         document.getElementById("form1099Count").value,
         10
       ) || 0;
       const has1099Expenses =
         document.getElementById("has1099Expenses").value;
-      const usedBusinessName =
-        document.getElementById("usedBusinessName").value;
+      const businessTradeName =
+        document.getElementById("businessTradeName").value.trim();
+      const hasEin =
+        document.getElementById("hasEin").value;
       const multiState1099 =
         document.getElementById("multiState1099").value;
 
@@ -597,14 +801,15 @@
         (
           form1099Count < 1 ||
           !has1099Expenses ||
-          !usedBusinessName ||
+          !hasEin ||
           !multiState1099
         )
       ) {
-        resultBox.className = "error";
-        resultBox.innerHTML =
-          "<div class='result-title'>Complete the 1099 or 1099-NEC questions.</div>" +
-          "Enter the number of forms and answer the three follow-up questions.";
+        showResult(
+          "error",
+          "<div class='result-title'>Complete the 1099 or 1099-NEC details.</div>" +
+          "Enter the number of forms and answer the business-expense, EIN, and state questions. The business or trade name may be left blank if none was used."
+        );
         document.getElementById("1099FollowUp").scrollIntoView({
           behavior: "smooth",
           block: "center"
@@ -629,9 +834,15 @@
           filingStatus: document.getElementById("filingStatus").value,
           bookkeepingStatus: document.getElementById("bookkeepingStatus").value,
           comments: document.getElementById("comments").value.trim(),
+          received1099Nec,
           form1099Count: selected1099Nec ? form1099Count : 0,
           has1099Expenses: selected1099Nec ? has1099Expenses : "",
-          usedBusinessName: selected1099Nec ? usedBusinessName : "",
+          businessTradeName: selected1099Nec ? businessTradeName : "",
+          hasEin: selected1099Nec ? hasEin : "",
+          usedBusinessName:
+            selected1099Nec
+              ? (businessTradeName ? "yes" : "no")
+              : "",
           multiState1099: selected1099Nec ? multiState1099 : ""
         }
       };
@@ -646,7 +857,18 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+
+        try {
+          data = responseText
+            ? JSON.parse(responseText)
+            : {};
+        } catch (parseError) {
+          throw new Error(
+            "The server returned an unreadable response. Refresh the page and try once more."
+          );
+        }
 
         if (!response.ok || !data.ok) {
           throw new Error(
@@ -670,8 +892,8 @@
             ? "Sign In to My Secure Portal"
             : "Activate My Secure Client Portal";
 
-        resultBox.className = "success";
-        resultBox.innerHTML =
+        showResult(
+          "success",
           `<div class="result-title">Your request was received.</div>` +
           `<strong>Recommended service:</strong> ${data.recommendedLane}<br>` +
           `${reviewMessage}<br><br>` +
@@ -680,17 +902,14 @@
           `<div class="actions">` +
           `<a href="${data.portalUrl}">${portalActionLabel}</a>` +
           `<a href="${bookingUrl}" target="_blank" rel="noopener">Schedule a Tax Preparation Fit Call</a>` +
-          `</div>`;
-
-        document.getElementById("intakeForm").scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+          `</div>`
+        );
       } catch (error) {
-        resultBox.className = "error";
-        resultBox.innerHTML =
+        showResult(
+          "error",
           `<div class="result-title">We could not save your request.</div>` +
-          `${error.message}`;
+          `${error.message}`
+        );
       } finally {
         button.disabled = false;
         button.textContent = "Submit My Tax Preparation Request";
