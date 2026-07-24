@@ -4493,7 +4493,7 @@ const TAX_PREPARATION_INCOME_LABELS = Object.freeze({
   retirement_income:
     "Pension, IRA, or Social Security income",
   cryptocurrency:
-    "Cryptocurrency activity",
+    "Digital asset or cryptocurrency activity",
   other_income:
     "Other income not listed"
 });
@@ -4868,6 +4868,21 @@ function buildClientPortalTaxPreparationSummary(entry) {
     ),
     businessAddress: String(
       intake.businessAddress || ""
+    ),
+    businessAddressStreet: String(
+      intake.businessAddressStreet || ""
+    ),
+    businessAddressCity: String(
+      intake.businessAddressCity || ""
+    ),
+    businessAddressState: String(
+      intake.businessAddressState || ""
+    ),
+    businessAddressZip: String(
+      intake.businessAddressZip || ""
+    ),
+    digitalAssetActivity: String(
+      intake.digitalAssetActivity || ""
     ),
     accountingMethod: String(
       intake.accountingMethod || ""
@@ -8224,6 +8239,37 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     );
   }
 
+  const taxYear = String(
+    intake.taxYear || ""
+  ).trim();
+
+  if (
+    !/^\d{4}$/.test(taxYear) ||
+    Number(taxYear) < 2015 ||
+    Number(taxYear) > new Date().getFullYear()
+  ) {
+    errors.push(
+      "Enter a valid four-digit tax year."
+    );
+  }
+
+  const digitalAssetActivity = String(
+    intake.digitalAssetActivity || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    ![
+      "yes",
+      "no"
+    ].includes(digitalAssetActivity)
+  ) {
+    errors.push(
+      "Select Yes or No for the digital asset question."
+    );
+  }
+
   const primaryState = String(
     intake.primaryState || ""
   )
@@ -8283,6 +8329,16 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     incomeTypes = incomeTypes.filter(
       (item) => item !== "1099_nec"
     );
+  }
+
+  if (
+    digitalAssetActivity === "yes" &&
+    !incomeTypes.includes("cryptocurrency")
+  ) {
+    incomeTypes = [
+      ...incomeTypes,
+      "cryptocurrency"
+    ];
   }
 
   if (serviceTypes.length === 0) {
@@ -8350,9 +8406,36 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     .trim()
     .toLowerCase();
 
-  const businessAddress = String(
-    intake.businessAddress || ""
+  const businessAddressStreet = String(
+    intake.businessAddressStreet || ""
   ).trim();
+
+  const businessAddressCity = String(
+    intake.businessAddressCity || ""
+  ).trim();
+
+  const businessAddressState = String(
+    intake.businessAddressState || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  const businessAddressZip = String(
+    intake.businessAddressZip || ""
+  ).trim();
+
+  const businessAddress = [
+    businessAddressStreet,
+    businessAddressCity,
+    [
+      businessAddressState,
+      businessAddressZip
+    ]
+      .filter(Boolean)
+      .join(" ")
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const accountingMethod = String(
     intake.accountingMethod || ""
@@ -8468,12 +8551,40 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     }
 
     if (
-      businessAddressSameAsHome === "no" &&
-      !businessAddress
+      businessAddressSameAsHome === "no"
     ) {
-      errors.push(
-        "Enter the business address because it is different from the home address."
-      );
+      if (!businessAddressStreet) {
+        errors.push(
+          "Enter the business street address."
+        );
+      }
+
+      if (!businessAddressCity) {
+        errors.push(
+          "Enter the business city."
+        );
+      }
+
+      if (
+        !businessAddressState ||
+        !VALID_US_STATE_CODES.has(
+          businessAddressState
+        )
+      ) {
+        errors.push(
+          "Select a valid two-letter business state."
+        );
+      }
+
+      if (
+        !/^\d{5}(?:-\d{4})?$/.test(
+          businessAddressZip
+        )
+      ) {
+        errors.push(
+          "Enter a valid business ZIP code."
+        );
+      }
     }
 
     if (
@@ -8624,14 +8735,14 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       phone: phone || "Not provided"
     },
     taxData: {
-      taxYear: intake.taxYear || null,
+      taxYear: taxYear || null,
       filingStatus: intake.filingStatus || null,
       stateCode: primaryState || null
     },
     estimateSummary: {},
     taxPreparationIntake: {
       ...intake,
-      taxYear: String(intake.taxYear || "").trim(),
+      taxYear,
       serviceTypes,
       incomeTypes,
       documentCount,
@@ -8674,11 +8785,32 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
         businessProfileApplies
           ? businessAddressSameAsHome
           : "",
+      businessAddressStreet:
+        businessProfileApplies &&
+        businessAddressSameAsHome === "no"
+          ? businessAddressStreet
+          : "",
+      businessAddressCity:
+        businessProfileApplies &&
+        businessAddressSameAsHome === "no"
+          ? businessAddressCity
+          : "",
+      businessAddressState:
+        businessProfileApplies &&
+        businessAddressSameAsHome === "no"
+          ? businessAddressState
+          : "",
+      businessAddressZip:
+        businessProfileApplies &&
+        businessAddressSameAsHome === "no"
+          ? businessAddressZip
+          : "",
       businessAddress:
         businessProfileApplies &&
         businessAddressSameAsHome === "no"
           ? businessAddress
           : "",
+      digitalAssetActivity,
       accountingMethod:
         businessProfileApplies
           ? accountingMethod

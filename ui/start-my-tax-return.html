@@ -75,6 +75,21 @@
       gap:16px;
     }
     .grid.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .field.full { grid-column:1 / -1; }
+    .business-address-grid {
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:2fr 1.2fr .75fr .8fr;
+      gap:12px;
+      align-items:end;
+    }
+    .business-address-grid[hidden] { display:none; }
+    .question-emphasis {
+      display:block;
+      color:var(--navy);
+      font-weight:800;
+      line-height:1.45;
+    }
     label.field { display:block; font-weight:700; font-size:14px; }
     input, select, textarea {
       width:100%;
@@ -255,7 +270,7 @@
     }
     @media(max-width:720px) {
       header { align-items:flex-start; flex-direction:column; }
-      .grid,.grid.three,.choices { grid-template-columns:1fr; }
+      .grid,.grid.three,.choices,.business-address-grid { grid-template-columns:1fr; }
       form { padding:20px; }
       header h1 { font-size:26px; }
     }
@@ -304,14 +319,12 @@
               />
             </label>
             <label class="field">Tax year
-              <select id="taxYear" required>
-                <option value="">Select</option>
-                <option>2025</option>
-                <option>2024</option>
-                <option>2023</option>
-                <option>2022</option>
-                <option>Prior years</option>
-              </select>
+              <span class="stepper">
+                <button type="button" data-stepper-target="taxYear" data-step="-1" aria-label="Decrease tax year">−</button>
+                <input id="taxYear" type="number" min="2015" max="2099" inputmode="numeric" required />
+                <button type="button" data-stepper-target="taxYear" data-step="1" aria-label="Increase tax year">+</button>
+              </span>
+              <span class="field-note">Defaults to the current filing season. Use the arrows to change the year.</span>
             </label>
             <label class="field">Filing status
               <select id="filingStatus">
@@ -401,6 +414,17 @@
                 <option value="some_cleanup">Needs some cleanup</option>
                 <option value="major_cleanup">Needs major cleanup</option>
                 <option value="no_records">I do not have organized records</option>
+              </select>
+            </label>
+
+            <label class="field full">
+              <span class="question-emphasis" id="digitalAssetQuestion">
+                At any time during the selected tax year, did you receive, sell, exchange, gift, or otherwise dispose of a digital asset or a financial interest in a digital asset?
+              </span>
+              <select id="digitalAssetActivity" required>
+                <option value="">Select Yes or No</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
             </label>
           </div>
@@ -493,10 +517,21 @@
                   </select>
                 </label>
 
-                <label class="field" id="businessAddressField" hidden>Business address if different from home
-                  <input id="businessAddress" autocomplete="street-address" placeholder="Street address, city, state, ZIP" />
-                  <span class="field-note">Do not enter an EIN, bank information, or other sensitive numbers.</span>
-                </label>
+                <div class="business-address-grid" id="businessAddressFields" hidden>
+                  <label class="field">Business street address
+                    <input id="businessAddressStreet" autocomplete="address-line1" placeholder="Street address" />
+                  </label>
+                  <label class="field">Business city
+                    <input id="businessAddressCity" autocomplete="address-level2" placeholder="City" />
+                  </label>
+                  <label class="field">Business state
+                    <select id="businessAddressState" autocomplete="address-level1"></select>
+                    <span class="field-note">Starts with the primary state above but can be changed.</span>
+                  </label>
+                  <label class="field">Business ZIP code
+                    <input id="businessAddressZip" autocomplete="postal-code" inputmode="numeric" maxlength="10" placeholder="ZIP code" />
+                  </label>
+                </div>
 
                 <label class="field">Accounting method
                   <select id="accountingMethod">
@@ -549,6 +584,7 @@
           <h2>Income and Tax Situations</h2>
           <p class="hint">Choose all sources and situations that may appear on the return.</p>
           <div class="choices" id="incomeTypes">
+            <label class="choice"><input id="income1099Nec" type="checkbox" value="1099_nec" /> I received a 1099 or 1099-NEC for contractor or self-employment income</label>
             <label class="choice"><input type="checkbox" value="w2_income" /> I received a W-2</label>
             <label class="choice"><input type="checkbox" value="1099_k" /> I received a 1099-K from a payment app, platform, or online marketplace</label>
             <label class="choice"><input type="checkbox" value="1099_other" /> I received another type of 1099<em>Examples: 1099-MISC, 1099-INT, 1099-DIV, 1099-R, or SSA-1099</em></label>
@@ -563,12 +599,12 @@
             <label class="choice"><input type="checkbox" value="rental_income" /> Rental property income or expenses</label>
             <label class="choice"><input type="checkbox" value="k1_income" /> Schedule K-1 income</label>
             <label class="choice"><input type="checkbox" value="retirement_income" /> Pension, IRA, or Social Security income</label>
-            <label class="choice"><input type="checkbox" value="cryptocurrency" /> Cryptocurrency activity</label>
+            <label class="choice"><input type="checkbox" value="cryptocurrency" /> Digital asset or cryptocurrency activity</label>
             <label class="choice"><input type="checkbox" value="other_income" /> Other income not listed</label>
           </div>
 
           <div class="notice">
-            The 1099 or 1099-NEC question, form count, business name, EIN question, related-expense question, document count, and state information are recorded near the top of this form.
+            The exact 1099 or 1099-NEC choice also appears above. Selecting it in either location keeps both answers synchronized and opens the Business Information section.
           </div>
         </section>
 
@@ -626,6 +662,37 @@
       return Array.from(
         document.querySelectorAll(`#${containerId} input:checked`)
       ).map((input) => input.value);
+    }
+
+    function currentTaxSeasonYear() {
+      return new Date().getFullYear() - 1;
+    }
+
+    function initializeTaxYear() {
+      const taxYearInput =
+        document.getElementById("taxYear");
+      const currentSeason =
+        currentTaxSeasonYear();
+
+      taxYearInput.min =
+        String(currentSeason - 10);
+      taxYearInput.max =
+        String(new Date().getFullYear());
+
+      if (!taxYearInput.value) {
+        taxYearInput.value =
+          String(currentSeason);
+      }
+    }
+
+    function initializeBusinessStateOptions() {
+      const primaryState =
+        document.getElementById("primaryState");
+      const businessState =
+        document.getElementById("businessAddressState");
+
+      businessState.innerHTML =
+        primaryState.innerHTML;
     }
 
     function formatPhoneInput(value) {
@@ -689,6 +756,11 @@
         "materialParticipationQuestion"
       ).textContent =
         `During ${taxYear}, did you regularly work in, manage, or make day-to-day decisions for this business?`;
+
+      document.getElementById(
+        "digitalAssetQuestion"
+      ).textContent =
+        `At any time during ${taxYear}, did you: (a) receive a digital asset as a reward, award, or payment for property or services; or (b) sell, exchange, gift, or otherwise dispose of a digital asset or a financial interest in a digital asset?`;
     }
 
     function updateBusinessAddressField() {
@@ -696,19 +768,58 @@
         document.getElementById(
           "businessAddressSameAsHome"
         ).value;
-      const addressField =
+      const addressFields =
         document.getElementById(
-          "businessAddressField"
+          "businessAddressFields"
         );
-      const addressInput =
+      const businessState =
         document.getElementById(
-          "businessAddress"
+          "businessAddressState"
         );
 
-      addressField.hidden = sameAsHome !== "no";
+      addressFields.hidden =
+        sameAsHome !== "no";
 
-      if (sameAsHome !== "no") {
-        addressInput.value = "";
+      if (sameAsHome === "no") {
+        if (!businessState.value) {
+          businessState.value =
+            document.getElementById(
+              "primaryState"
+            ).value;
+        }
+        return;
+      }
+
+      document.getElementById(
+        "businessAddressStreet"
+      ).value = "";
+      document.getElementById(
+        "businessAddressCity"
+      ).value = "";
+      businessState.value = "";
+      document.getElementById(
+        "businessAddressZip"
+      ).value = "";
+    }
+
+    function syncBusinessStateFromPrimary() {
+      const sameAsHome =
+        document.getElementById(
+          "businessAddressSameAsHome"
+        ).value;
+      const businessState =
+        document.getElementById(
+          "businessAddressState"
+        );
+
+      if (
+        sameAsHome === "no" &&
+        !businessState.dataset.changedByClient
+      ) {
+        businessState.value =
+          document.getElementById(
+            "primaryState"
+          ).value;
       }
     }
 
@@ -736,7 +847,11 @@
         document.getElementById("businessEntityType").value = "";
         document.getElementById("principalBusinessProfession").value = "";
         document.getElementById("businessAddressSameAsHome").value = "";
-        document.getElementById("businessAddress").value = "";
+        document.getElementById("businessAddressStreet").value = "";
+        document.getElementById("businessAddressCity").value = "";
+        document.getElementById("businessAddressState").value = "";
+        document.getElementById("businessAddressState").dataset.changedByClient = "";
+        document.getElementById("businessAddressZip").value = "";
         document.getElementById("accountingMethod").value = "";
         document.getElementById("materialParticipation").value = "";
         document.getElementById("multiState1099").value = "";
@@ -781,7 +896,24 @@
 
     document.getElementById("received1099Nec").addEventListener(
       "change",
-      update1099FollowUp
+      (event) => {
+        document.getElementById(
+          "income1099Nec"
+        ).checked = event.target.value === "yes";
+        update1099FollowUp();
+      }
+    );
+
+    document.getElementById("income1099Nec").addEventListener(
+      "change",
+      (event) => {
+        document.getElementById(
+          "received1099Nec"
+        ).value = event.target.checked
+          ? "yes"
+          : "no";
+        update1099FollowUp();
+      }
     );
 
     document.getElementById("taxYear").addEventListener(
@@ -790,10 +922,29 @@
     );
 
     document.getElementById(
+      "primaryState"
+    ).addEventListener(
+      "change",
+      syncBusinessStateFromPrimary
+    );
+
+    document.getElementById(
+      "businessAddressState"
+    ).addEventListener(
+      "change",
+      (event) => {
+        event.target.dataset.changedByClient = "1";
+      }
+    );
+
+    document.getElementById(
       "businessAddressSameAsHome"
     ).addEventListener(
       "change",
-      updateBusinessAddressField
+      () => {
+        updateBusinessAddressField();
+        syncBusinessStateFromPrimary();
+      }
     );
 
     document.querySelectorAll(
@@ -836,13 +987,22 @@
             ? formatPhoneInput(contact.phone)
             : "";
         document.getElementById("taxYear").value =
-          String(taxData.taxYear || "");
+          String(
+            taxData.taxYear ||
+            document.getElementById("taxYear").value ||
+            currentTaxSeasonYear()
+          );
         document.getElementById("filingStatus").value =
           String(taxData.filingStatus || "").toLowerCase();
         document.getElementById("primaryState").value =
           String(taxData.stateCode || "").toUpperCase();
 
         const intake = lead.taxPreparationIntake || {};
+
+        document.getElementById(
+          "digitalAssetActivity"
+        ).value =
+          String(intake.digitalAssetActivity || "");
 
         const savedServiceTypes = Array.isArray(
           intake.serviceTypes
@@ -904,6 +1064,8 @@
         ) {
           document.getElementById("received1099Nec").value =
             received1099Nec || "no";
+          document.getElementById("income1099Nec").checked =
+            received1099Nec === "yes";
           document.getElementById("form1099Count").value =
             String(intake.form1099Count || 1);
           document.getElementById("has1099Expenses").value =
@@ -920,8 +1082,31 @@
             String(intake.principalBusinessProfession || "");
           document.getElementById("businessAddressSameAsHome").value =
             String(intake.businessAddressSameAsHome || "");
-          document.getElementById("businessAddress").value =
-            String(intake.businessAddress || "");
+          document.getElementById("businessAddressStreet").value =
+            String(
+              intake.businessAddressStreet ||
+              ""
+            );
+          document.getElementById("businessAddressCity").value =
+            String(
+              intake.businessAddressCity ||
+              ""
+            );
+          document.getElementById("businessAddressState").value =
+            String(
+              intake.businessAddressState ||
+              intake.primaryState ||
+              ""
+            ).toUpperCase();
+          document.getElementById("businessAddressState").dataset.changedByClient =
+            intake.businessAddressState
+              ? "1"
+              : "";
+          document.getElementById("businessAddressZip").value =
+            String(
+              intake.businessAddressZip ||
+              ""
+            );
           document.getElementById("accountingMethod").value =
             String(intake.accountingMethod || "");
           document.getElementById("materialParticipation").value =
@@ -975,6 +1160,20 @@
         return;
       }
 
+      const digitalAssetActivity =
+        document.getElementById(
+          "digitalAssetActivity"
+        ).value;
+
+      if (!digitalAssetActivity) {
+        showResult(
+          "error",
+          "<div class='result-title'>Answer the digital asset question.</div>" +
+          "Select Yes or No in Your Contact & Filing Information."
+        );
+        return;
+      }
+
       if (!received1099Nec) {
         showResult(
           "error",
@@ -991,6 +1190,13 @@
         !incomeTypes.includes("1099_nec")
       ) {
         incomeTypes.unshift("1099_nec");
+      }
+
+      if (
+        digitalAssetActivity === "yes" &&
+        !incomeTypes.includes("cryptocurrency")
+      ) {
+        incomeTypes.push("cryptocurrency");
       }
 
       if (serviceTypes.length === 0 || incomeTypes.length === 0) {
@@ -1039,9 +1245,21 @@
         document.getElementById(
           "businessAddressSameAsHome"
         ).value;
-      const businessAddress =
+      const businessAddressStreet =
         document.getElementById(
-          "businessAddress"
+          "businessAddressStreet"
+        ).value.trim();
+      const businessAddressCity =
+        document.getElementById(
+          "businessAddressCity"
+        ).value.trim();
+      const businessAddressState =
+        document.getElementById(
+          "businessAddressState"
+        ).value.trim().toUpperCase();
+      const businessAddressZip =
+        document.getElementById(
+          "businessAddressZip"
         ).value.trim();
       const accountingMethod =
         document.getElementById("accountingMethod").value;
@@ -1079,7 +1297,12 @@
           !businessAddressSameAsHome ||
           (
             businessAddressSameAsHome === "no" &&
-            !businessAddress
+            (
+              !businessAddressStreet ||
+              !businessAddressCity ||
+              !businessAddressState ||
+              !businessAddressZip
+            )
           ) ||
           !accountingMethod ||
           !materialParticipation ||
@@ -1089,7 +1312,7 @@
         showResult(
           "error",
           "<div class='result-title'>Complete the Business Information section.</div>" +
-          "Answer the expense, EIN, LLC, business structure, principal business, address, accounting method, participation, and state questions. Enter the business address when it differs from the home address. Type None for the business name if no name was used."
+          "Answer the expense, EIN, LLC, business structure, principal business, address, accounting method, participation, and state questions. When the business address differs from home, enter the street, city, state, and ZIP code. Type None for the business name if no name was used."
         );
         document.getElementById("1099FollowUp").scrollIntoView({
           behavior: "smooth",
@@ -1136,11 +1359,39 @@
             businessProfileApplies
               ? businessAddressSameAsHome
               : "",
+          businessAddressStreet:
+            businessProfileApplies &&
+            businessAddressSameAsHome === "no"
+              ? businessAddressStreet
+              : "",
+          businessAddressCity:
+            businessProfileApplies &&
+            businessAddressSameAsHome === "no"
+              ? businessAddressCity
+              : "",
+          businessAddressState:
+            businessProfileApplies &&
+            businessAddressSameAsHome === "no"
+              ? businessAddressState
+              : "",
+          businessAddressZip:
+            businessProfileApplies &&
+            businessAddressSameAsHome === "no"
+              ? businessAddressZip
+              : "",
           businessAddress:
             businessProfileApplies &&
             businessAddressSameAsHome === "no"
-              ? businessAddress
+              ? [
+                  businessAddressStreet,
+                  businessAddressCity,
+                  [
+                    businessAddressState,
+                    businessAddressZip
+                  ].filter(Boolean).join(" ")
+                ].filter(Boolean).join(", ")
               : "",
+          digitalAssetActivity,
           accountingMethod:
             businessProfileApplies
               ? accountingMethod
@@ -1200,8 +1451,8 @@
 
         const portalMessage =
           data.portalAccessMode === "sign-in"
-            ? "This request was connected to your existing secure portal account. Sign in with the same email address you already use."
-            : "Your secure portal is ready for activation. Use the activation link and the reference number below to create your password once.";
+            ? "You already have a Greatest Business Solution LLC Secure Client Portal account connected to this email. Do not create another account. Sign in with the same email address and password you previously used."
+            : "A Greatest Business Solution LLC Secure Client Portal account has been reserved for this request. Use the activation link and reference number below to create your password once.";
 
         const portalActionLabel =
           data.portalAccessMode === "sign-in"
@@ -1232,8 +1483,11 @@
       }
     });
 
+    initializeTaxYear();
+    initializeBusinessStateOptions();
     applyServicePreset();
     prefillFromEstimate();
+    updateBusinessProfileTaxYear();
     update1099FollowUp();
   </script>
 </body>

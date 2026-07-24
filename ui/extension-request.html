@@ -215,6 +215,32 @@
       outline:3px solid rgba(40,88,140,.16);
       border-color:var(--blue);
     }
+    .year-stepper{
+      display:grid;
+      grid-template-columns:42px minmax(0,1fr) 42px;
+      gap:7px;
+      align-items:center;
+    }
+    .year-stepper input{
+      text-align:center;
+      font-weight:900;
+    }
+    .year-stepper button{
+      width:42px;
+      min-height:42px;
+      border:1px solid #9fb4cc;
+      border-radius:8px;
+      background:#eef5fb;
+      color:var(--navy);
+      font-size:22px;
+      font-weight:950;
+      cursor:pointer;
+    }
+    .year-note{
+      color:#64748b;
+      font-size:11px;
+      line-height:1.35;
+    }
     .check{
       display:flex;
       align-items:flex-start;
@@ -485,7 +511,12 @@
 
             <div class="field">
               <label for="taxYear">Tax year</label>
-              <input id="taxYear" inputmode="numeric" maxlength="4" required>
+              <div class="year-stepper">
+                <button type="button" id="taxYearDown" aria-label="Decrease tax year">−</button>
+                <input id="taxYear" type="number" inputmode="numeric" min="2015" max="2099" required>
+                <button type="button" id="taxYearUp" aria-label="Increase tax year">+</button>
+              </div>
+              <div class="year-note">Defaults to the current filing season. Use the arrows to change it.</div>
             </div>
 
             <div class="field" id="filingStatusWrap">
@@ -676,8 +707,64 @@
     const errors = document.getElementById("formErrors");
     const success = document.getElementById("formSuccess");
 
-    document.getElementById("taxYear").value =
-      String(new Date().getFullYear() - 1);
+    const taxYearInput =
+      document.getElementById("taxYear");
+    const currentTaxSeason =
+      new Date().getFullYear() - 1;
+
+    taxYearInput.min =
+      String(currentTaxSeason - 10);
+    taxYearInput.max =
+      String(new Date().getFullYear());
+    taxYearInput.value =
+      String(currentTaxSeason);
+
+    function changeTaxYear(step) {
+      const current =
+        Number.parseInt(
+          taxYearInput.value,
+          10
+        );
+      const minimum =
+        Number.parseInt(
+          taxYearInput.min,
+          10
+        );
+      const maximum =
+        Number.parseInt(
+          taxYearInput.max,
+          10
+        );
+      const safeCurrent =
+        Number.isFinite(current)
+          ? current
+          : currentTaxSeason;
+
+      taxYearInput.value =
+        String(
+          Math.min(
+            maximum,
+            Math.max(
+              minimum,
+              safeCurrent + step
+            )
+          )
+        );
+    }
+
+    document.getElementById(
+      "taxYearDown"
+    ).addEventListener(
+      "click",
+      () => changeTaxYear(-1)
+    );
+
+    document.getElementById(
+      "taxYearUp"
+    ).addEventListener(
+      "click",
+      () => changeTaxYear(1)
+    );
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "cancelled") {

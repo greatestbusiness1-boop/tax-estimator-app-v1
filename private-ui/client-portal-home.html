@@ -1517,6 +1517,33 @@
                 request.form1099Count || 0
               ) > 0;
 
+            const businessAddressDisplay = [
+              request.businessAddressStreet,
+              request.businessAddressCity,
+              [
+                request.businessAddressState,
+                request.businessAddressZip
+              ]
+                .filter(
+                  (value) =>
+                    String(value || "").trim()
+                )
+                .join(" ")
+            ]
+              .filter(
+                (value) =>
+                  String(value || "").trim()
+              )
+              .join(", ") ||
+              String(request.businessAddress || "").trim() ||
+              (
+                String(
+                  request.businessAddressSameAsHome || ""
+                ).toLowerCase() === "yes"
+                  ? "Same as home address"
+                  : "Not recorded"
+              );
+
             return `
             <article class="service-portal-card ${request.completed ? "complete" : ""}">
               <div>
@@ -1527,6 +1554,11 @@
                 <div class="service-portal-reference">
                   ${escapeHtml(request.returnType || "Tax Preparation")} ·
                   Reference ${escapeHtml(request.leadId || "Not recorded")}
+                </div>
+
+                <div class="service-portal-note">
+                  <strong>Your secure portal account is active.</strong>
+                  This Tax Preparation request is connected to the account you are currently signed into. Do not create another account.
                 </div>
 
                 <div class="service-status-grid">
@@ -1601,6 +1633,13 @@
                     }
                   </div>
 
+                  <div class="tax-prep-1099-details">
+                    <div>
+                      <strong>Digital asset question:</strong>
+                      ${escapeHtml(taxPrepAnswerLabel(request.digitalAssetActivity))}
+                    </div>
+                  </div>
+
                   ${
                     has1099Details
                       ? `
@@ -1631,8 +1670,12 @@
                             )}
                           </div>
                           <div>
-                            <strong>Has EIN:</strong>
-                            ${escapeHtml(taxPrepAnswerLabel(request.hasEin))}
+                            <strong>EIN:</strong>
+                            ${
+                              String(request.hasEin || "").toLowerCase() === "yes"
+                                ? "Yes — provide the actual number only through the secure portal or directly to the office."
+                                : escapeHtml(taxPrepAnswerLabel(request.hasEin))
+                            }
                           </div>
                           <div>
                             <strong>LLC:</strong>
@@ -1653,16 +1696,10 @@
                             <strong>Business address same as home:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.businessAddressSameAsHome))}
                           </div>
-                          ${
-                            String(request.businessAddress || "").trim()
-                              ? `
-                                <div>
-                                  <strong>Business address:</strong>
-                                  ${escapeHtml(request.businessAddress)}
-                                </div>
-                              `
-                              : ""
-                          }
+                          <div>
+                            <strong>Business address:</strong>
+                            ${escapeHtml(businessAddressDisplay)}
+                          </div>
                           <div>
                             <strong>Accounting method:</strong>
                             ${escapeHtml(
