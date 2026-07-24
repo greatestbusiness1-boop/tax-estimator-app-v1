@@ -4854,6 +4854,29 @@ function buildClientPortalTaxPreparationSummary(entry) {
     hasEin: String(
       intake.hasEin || ""
     ),
+    llcStatus: String(
+      intake.llcStatus || ""
+    ),
+    businessEntityType: String(
+      intake.businessEntityType || ""
+    ),
+    principalBusinessProfession: String(
+      intake.principalBusinessProfession || ""
+    ),
+    businessAddressSameAsHome: String(
+      intake.businessAddressSameAsHome || ""
+    ),
+    businessAddress: String(
+      intake.businessAddress || ""
+    ),
+    accountingMethod: String(
+      intake.accountingMethod || ""
+    ),
+    materialParticipation: String(
+      intake.materialParticipation || ""
+    ),
+    businessProfileApplies:
+      intake.businessProfileApplies === true,
     usedBusinessName: String(
       intake.usedBusinessName || ""
     ),
@@ -8305,56 +8328,180 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     )
   ).trim();
 
-  const multiState1099 = String(
-    intake.multiState1099 || ""
+  const llcStatus = String(
+    intake.llcStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const businessEntityType = String(
+    intake.businessEntityType || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const principalBusinessProfession = String(
+    intake.principalBusinessProfession || ""
   ).trim();
 
-  if (selected1099Nec) {
-    if (form1099Count < 1) {
+  const businessAddressSameAsHome = String(
+    intake.businessAddressSameAsHome || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const businessAddress = String(
+    intake.businessAddress || ""
+  ).trim();
+
+  const accountingMethod = String(
+    intake.accountingMethod || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const materialParticipation = String(
+    intake.materialParticipation || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const multiState1099 = String(
+    intake.multiState1099 || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const businessProfileServiceValues = new Set([
+    "business_return",
+    "partnership_return",
+    "s_corporation_return",
+    "c_corporation_return",
+    "nonprofit_return"
+  ]);
+
+  const businessProfileIncomeValues = new Set([
+    "1099_k",
+    "gig_platform",
+    "creator_income",
+    "self_employment",
+    "rental_income",
+    "k1_income"
+  ]);
+
+  const businessProfileApplies =
+    intake.businessProfileApplies === true ||
+    selected1099Nec ||
+    serviceTypes.some(
+      (item) => businessProfileServiceValues.has(item)
+    ) ||
+    incomeTypes.some(
+      (item) => businessProfileIncomeValues.has(item)
+    );
+
+  if (
+    selected1099Nec &&
+    form1099Count < 1
+  ) {
+    errors.push(
+      "Enter the number of 1099 or 1099-NEC forms received."
+    );
+  }
+
+  if (businessProfileApplies) {
+    const yesNoNotSure = [
+      "yes",
+      "no",
+      "not_sure"
+    ];
+
+    if (!yesNoNotSure.includes(has1099Expenses)) {
       errors.push(
-        "Enter the number of 1099 or 1099-NEC forms received."
+        "Select whether the business had related expenses."
       );
     }
 
-    if (
-      ![
-        "yes",
-        "no",
-        "not_sure"
-      ].includes(
-        has1099Expenses
-      )
-    ) {
-      errors.push(
-        "Select whether you had expenses related to the 1099 income."
-      );
-    }
-
-    if (
-      ![
-        "yes",
-        "no",
-        "not_sure"
-      ].includes(
-        hasEin
-      )
-    ) {
+    if (!yesNoNotSure.includes(hasEin)) {
       errors.push(
         "Select whether you have an EIN."
       );
     }
 
+    if (!yesNoNotSure.includes(llcStatus)) {
+      errors.push(
+        "Select whether the business is an LLC."
+      );
+    }
+
     if (
       ![
-        "yes",
-        "no",
+        "sole_proprietor",
+        "single_member_llc",
+        "multi_member_llc",
+        "partnership",
+        "s_corporation",
+        "c_corporation",
+        "nonprofit",
+        "other",
         "not_sure"
-      ].includes(
-        multiState1099
+      ].includes(businessEntityType)
+    ) {
+      errors.push(
+        "Select the business structure."
+      );
+    }
+
+    if (!principalBusinessProfession) {
+      errors.push(
+        "Enter the principal business or profession."
+      );
+    }
+
+    if (
+      !yesNoNotSure.includes(
+        businessAddressSameAsHome
       )
     ) {
       errors.push(
-        "Select whether the 1099 income involved more than one state."
+        "Select whether the business address is the same as the home address."
+      );
+    }
+
+    if (
+      businessAddressSameAsHome === "no" &&
+      !businessAddress
+    ) {
+      errors.push(
+        "Enter the business address because it is different from the home address."
+      );
+    }
+
+    if (
+      ![
+        "cash",
+        "accrual",
+        "other",
+        "not_sure"
+      ].includes(accountingMethod)
+    ) {
+      errors.push(
+        "Select the accounting method."
+      );
+    }
+
+    if (
+      !yesNoNotSure.includes(
+        materialParticipation
+      )
+    ) {
+      errors.push(
+        "Select whether you regularly worked in or managed the business during the selected tax year."
+      );
+    }
+
+    if (!yesNoNotSure.includes(multiState1099)) {
+      errors.push(
+        "Select whether the business or 1099 income involved more than one state."
       );
     }
   }
@@ -8498,24 +8645,54 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
         selected1099Nec
           ? form1099Count
           : 0,
+      businessProfileApplies,
       has1099Expenses:
-        selected1099Nec
+        businessProfileApplies
           ? has1099Expenses
           : "",
       businessTradeName:
-        selected1099Nec
+        businessProfileApplies
           ? businessTradeName
           : "",
       hasEin:
-        selected1099Nec
+        businessProfileApplies
           ? hasEin
           : "",
+      llcStatus:
+        businessProfileApplies
+          ? llcStatus
+          : "",
+      businessEntityType:
+        businessProfileApplies
+          ? businessEntityType
+          : "",
+      principalBusinessProfession:
+        businessProfileApplies
+          ? principalBusinessProfession
+          : "",
+      businessAddressSameAsHome:
+        businessProfileApplies
+          ? businessAddressSameAsHome
+          : "",
+      businessAddress:
+        businessProfileApplies &&
+        businessAddressSameAsHome === "no"
+          ? businessAddress
+          : "",
+      accountingMethod:
+        businessProfileApplies
+          ? accountingMethod
+          : "",
+      materialParticipation:
+        businessProfileApplies
+          ? materialParticipation
+          : "",
       usedBusinessName:
-        selected1099Nec
+        businessProfileApplies
           ? usedBusinessName
           : "",
       multiState1099:
-        selected1099Nec
+        businessProfileApplies
           ? multiState1099
           : "",
       sourceLeadId: String(body.sourceLeadId || "").trim(),

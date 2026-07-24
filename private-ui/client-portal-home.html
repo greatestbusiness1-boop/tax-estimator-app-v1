@@ -1512,6 +1512,7 @@
                 : [];
 
             const has1099Details =
+              request.businessProfileApplies === true ||
               Number(
                 request.form1099Count || 0
               ) > 0;
@@ -1604,10 +1605,16 @@
                     has1099Details
                       ? `
                         <div class="tax-prep-1099-details">
-                          <div>
-                            <strong>1099 or 1099-NEC forms:</strong>
-                            ${Number(request.form1099Count || 0)}
-                          </div>
+                          ${
+                            Number(request.form1099Count || 0) > 0
+                              ? `
+                                <div>
+                                  <strong>1099 or 1099-NEC forms:</strong>
+                                  ${Number(request.form1099Count || 0)}
+                                </div>
+                              `
+                              : ""
+                          }
                           <div>
                             <strong>Related business expenses:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.has1099Expenses))}
@@ -1626,6 +1633,46 @@
                           <div>
                             <strong>Has EIN:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.hasEin))}
+                          </div>
+                          <div>
+                            <strong>LLC:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.llcStatus))}
+                          </div>
+                          <div>
+                            <strong>Business structure:</strong>
+                            ${escapeHtml(
+                              String(request.businessEntityType || "Not recorded")
+                                .replaceAll("_", " ")
+                            )}
+                          </div>
+                          <div>
+                            <strong>Principal business or profession:</strong>
+                            ${escapeHtml(request.principalBusinessProfession || "Not recorded")}
+                          </div>
+                          <div>
+                            <strong>Business address same as home:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.businessAddressSameAsHome))}
+                          </div>
+                          ${
+                            String(request.businessAddress || "").trim()
+                              ? `
+                                <div>
+                                  <strong>Business address:</strong>
+                                  ${escapeHtml(request.businessAddress)}
+                                </div>
+                              `
+                              : ""
+                          }
+                          <div>
+                            <strong>Accounting method:</strong>
+                            ${escapeHtml(
+                              String(request.accountingMethod || "Not recorded")
+                                .replaceAll("_", " ")
+                            )}
+                          </div>
+                          <div>
+                            <strong>Worked in or managed business for tax year:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.materialParticipation))}
                           </div>
                           <div>
                             <strong>More than one state:</strong>

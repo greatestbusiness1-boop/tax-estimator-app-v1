@@ -7801,8 +7801,10 @@ function renderLeads(){
                   Services: ${escapeOfficeHtml(requestedServices)}<br>
                   Income / situations: ${escapeOfficeHtml(incomeTypes)}<br>
                   Client documents listed: ${Number(intake.documentCount || 0)}
-                  ${Number(intake.form1099Count || 0) > 0
-                    ? `<br><strong>1099 / 1099-NEC forms:</strong> ${Number(intake.form1099Count || 0)}
+                  ${intake.businessProfileApplies || Number(intake.form1099Count || 0) > 0
+                    ? `${Number(intake.form1099Count || 0) > 0
+                         ? `<br><strong>1099 / 1099-NEC forms:</strong> ${Number(intake.form1099Count || 0)}`
+                         : ""}
                        <br>Related business expenses: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.has1099Expenses))}
                        <br>Business or trade name: ${escapeOfficeHtml(
                          String(intake.businessTradeName || "").trim() ||
@@ -7813,6 +7815,15 @@ function renderLeads(){
                          )
                        )}
                        <br>Has EIN: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.hasEin))}
+                       <br>LLC: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.llcStatus))}
+                       <br>Business structure: ${escapeOfficeHtml(taxPrepHumanize(intake.businessEntityType) || "Not provided")}
+                       <br>Principal business or profession: ${escapeOfficeHtml(intake.principalBusinessProfession || "Not provided")}
+                       <br>Business address same as home: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.businessAddressSameAsHome))}
+                       ${String(intake.businessAddress || "").trim()
+                         ? `<br>Business address: ${escapeOfficeHtml(intake.businessAddress)}`
+                         : ""}
+                       <br>Accounting method: ${escapeOfficeHtml(taxPrepHumanize(intake.accountingMethod) || "Not provided")}
+                       <br>Worked in or managed business for tax year: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.materialParticipation))}
                        <br>More than one state: ${escapeOfficeHtml(taxPrepPlainAnswer(intake.multiState1099))}`
                     : ""}
                 </div>

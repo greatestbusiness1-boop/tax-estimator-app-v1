@@ -420,17 +420,19 @@
             </div>
 
             <div class="follow-up" id="1099FollowUp" hidden>
-              <h3>Your 1099 or 1099-NEC Details</h3>
-              <p>You do not need to know whether a Schedule C is required. The office will determine that after reviewing your answers and documents.</p>
+              <h3>Business Information for Tax Year <span id="businessProfileTaxYear">the selected year</span></h3>
+              <p>Answer the basic business questions you normally discuss with the office. If information is already available from the connected client record, it will be filled in automatically; review it and change anything that is not correct. Do not enter an actual EIN. Enter the business address only when it is different from your home address.</p>
+
               <div class="grid">
-                <label class="field">Number of 1099 or 1099-NEC forms
+                <label class="field" id="form1099CountField">Number of 1099 or 1099-NEC forms
                   <span class="stepper">
                     <button type="button" data-stepper-target="form1099Count" data-step="-1" aria-label="Decrease number of 1099 forms">−</button>
                     <input id="form1099Count" type="number" min="1" max="200" value="1" inputmode="numeric" />
                     <button type="button" data-stepper-target="form1099Count" data-step="1" aria-label="Increase number of 1099 forms">+</button>
                   </span>
                 </label>
-                <label class="field">Did you have business expenses related to this income?
+
+                <label class="field">Did you have business expenses related to this income or business?
                   <select id="has1099Expenses">
                     <option value="">Select</option>
                     <option value="yes">Yes</option>
@@ -438,10 +440,12 @@
                     <option value="not_sure">Not sure</option>
                   </select>
                 </label>
+
                 <label class="field">Business or trade name
-                  <input id="businessTradeName" placeholder="Enter the name, or leave blank if none" />
+                  <input id="businessTradeName" placeholder="Enter the name, or type None" />
                   <span class="field-note">Do not enter an EIN here.</span>
                 </label>
+
                 <label class="field">Do you have an EIN?
                   <select id="hasEin">
                     <option value="">Select</option>
@@ -451,7 +455,69 @@
                   </select>
                   <span class="field-note">Only tell us whether you have one. Do not enter the EIN on this public form.</span>
                 </label>
-                <label class="field">Was this 1099 income connected to more than one state?
+
+                <label class="field">Do you have an LLC?
+                  <select id="llcStatus">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <label class="field">Business structure
+                  <select id="businessEntityType">
+                    <option value="">Select</option>
+                    <option value="sole_proprietor">Sole proprietor / no separate entity</option>
+                    <option value="single_member_llc">Single-member LLC</option>
+                    <option value="multi_member_llc">Multi-member LLC</option>
+                    <option value="partnership">Partnership</option>
+                    <option value="s_corporation">S corporation</option>
+                    <option value="c_corporation">C corporation</option>
+                    <option value="nonprofit">Nonprofit</option>
+                    <option value="other">Other</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <label class="field">Principal business or profession
+                  <input id="principalBusinessProfession" placeholder="Example: trucking, hair stylist, tax preparation, construction, consulting" />
+                </label>
+
+                <label class="field">Is the business address the same as your home address?
+                  <select id="businessAddressSameAsHome">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <label class="field" id="businessAddressField" hidden>Business address if different from home
+                  <input id="businessAddress" autocomplete="street-address" placeholder="Street address, city, state, ZIP" />
+                  <span class="field-note">Do not enter an EIN, bank information, or other sensitive numbers.</span>
+                </label>
+
+                <label class="field">Accounting method
+                  <select id="accountingMethod">
+                    <option value="">Select</option>
+                    <option value="cash">Cash</option>
+                    <option value="accrual">Accrual</option>
+                    <option value="other">Other</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <label class="field"><span id="materialParticipationQuestion">During the selected tax year, did you regularly work in, manage, or make day-to-day decisions for this business?</span>
+                  <select id="materialParticipation">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <label class="field">Was this business or 1099 income connected to more than one state?
                   <select id="multiState1099">
                     <option value="">Select</option>
                     <option value="yes">Yes</option>
@@ -578,19 +644,101 @@
       return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
     }
 
+    function selectedBusinessProfileApplies() {
+      const received1099Nec =
+        document.getElementById("received1099Nec").value;
+
+      const businessServiceValues = new Set([
+        "business_return",
+        "partnership_return",
+        "s_corporation_return",
+        "c_corporation_return",
+        "nonprofit_return"
+      ]);
+
+      const businessIncomeValues = new Set([
+        "1099_k",
+        "gig_platform",
+        "creator_income",
+        "self_employment",
+        "rental_income",
+        "k1_income"
+      ]);
+
+      return (
+        received1099Nec === "yes" ||
+        checkedValues("serviceTypes").some(
+          (value) => businessServiceValues.has(value)
+        ) ||
+        checkedValues("incomeTypes").some(
+          (value) => businessIncomeValues.has(value)
+        )
+      );
+    }
+
+    function updateBusinessProfileTaxYear() {
+      const taxYear =
+        document.getElementById("taxYear").value ||
+        "the selected year";
+
+      document.getElementById(
+        "businessProfileTaxYear"
+      ).textContent = taxYear;
+
+      document.getElementById(
+        "materialParticipationQuestion"
+      ).textContent =
+        `During ${taxYear}, did you regularly work in, manage, or make day-to-day decisions for this business?`;
+    }
+
+    function updateBusinessAddressField() {
+      const sameAsHome =
+        document.getElementById(
+          "businessAddressSameAsHome"
+        ).value;
+      const addressField =
+        document.getElementById(
+          "businessAddressField"
+        );
+      const addressInput =
+        document.getElementById(
+          "businessAddress"
+        );
+
+      addressField.hidden = sameAsHome !== "no";
+
+      if (sameAsHome !== "no") {
+        addressInput.value = "";
+      }
+    }
+
     function update1099FollowUp() {
       const received1099Nec =
         document.getElementById("received1099Nec").value;
-      const show = received1099Nec === "yes";
+      const show = selectedBusinessProfileApplies();
       const followUp = document.getElementById("1099FollowUp");
+      const countField = document.getElementById("form1099CountField");
 
       followUp.hidden = !show;
+      countField.hidden = received1099Nec !== "yes";
+      updateBusinessProfileTaxYear();
+      updateBusinessAddressField();
+
+      if (received1099Nec !== "yes") {
+        document.getElementById("form1099Count").value = "1";
+      }
 
       if (!show) {
-        document.getElementById("form1099Count").value = "1";
         document.getElementById("has1099Expenses").value = "";
         document.getElementById("businessTradeName").value = "";
         document.getElementById("hasEin").value = "";
+        document.getElementById("llcStatus").value = "";
+        document.getElementById("businessEntityType").value = "";
+        document.getElementById("principalBusinessProfession").value = "";
+        document.getElementById("businessAddressSameAsHome").value = "";
+        document.getElementById("businessAddress").value = "";
+        document.getElementById("accountingMethod").value = "";
+        document.getElementById("materialParticipation").value = "";
         document.getElementById("multiState1099").value = "";
       }
     }
@@ -636,6 +784,27 @@
       update1099FollowUp
     );
 
+    document.getElementById("taxYear").addEventListener(
+      "change",
+      updateBusinessProfileTaxYear
+    );
+
+    document.getElementById(
+      "businessAddressSameAsHome"
+    ).addEventListener(
+      "change",
+      updateBusinessAddressField
+    );
+
+    document.querySelectorAll(
+      "#serviceTypes input, #incomeTypes input"
+    ).forEach((input) => {
+      input.addEventListener(
+        "change",
+        update1099FollowUp
+      );
+    });
+
     document.querySelectorAll("[data-stepper-target]").forEach((button) => {
       button.addEventListener("click", () => {
         changeStepperValue(
@@ -674,6 +843,50 @@
           String(taxData.stateCode || "").toUpperCase();
 
         const intake = lead.taxPreparationIntake || {};
+
+        const savedServiceTypes = Array.isArray(
+          intake.serviceTypes
+        )
+          ? intake.serviceTypes
+          : [];
+
+        const savedIncomeTypes = Array.isArray(
+          intake.incomeTypes
+        )
+          ? intake.incomeTypes
+          : [];
+
+        document.querySelectorAll(
+          "#serviceTypes input"
+        ).forEach((input) => {
+          input.checked = savedServiceTypes.includes(
+            input.value
+          );
+        });
+
+        document.querySelectorAll(
+          "#incomeTypes input"
+        ).forEach((input) => {
+          input.checked = savedIncomeTypes.includes(
+            input.value
+          );
+        });
+
+        if (intake.documentCount !== undefined) {
+          document.getElementById("documentCount").value =
+            String(intake.documentCount || 0);
+        }
+
+        if (intake.stateCount !== undefined) {
+          document.getElementById("stateCount").value =
+            String(intake.stateCount || 1);
+        }
+
+        if (intake.bookkeepingStatus !== undefined) {
+          document.getElementById("bookkeepingStatus").value =
+            String(intake.bookkeepingStatus || "");
+        }
+
         const received1099Nec =
           String(
             intake.received1099Nec ||
@@ -685,9 +898,12 @@
             )
           ).toLowerCase();
 
-        if (received1099Nec) {
+        if (
+          received1099Nec ||
+          intake.businessProfileApplies
+        ) {
           document.getElementById("received1099Nec").value =
-            received1099Nec;
+            received1099Nec || "no";
           document.getElementById("form1099Count").value =
             String(intake.form1099Count || 1);
           document.getElementById("has1099Expenses").value =
@@ -696,9 +912,24 @@
             String(intake.businessTradeName || "");
           document.getElementById("hasEin").value =
             String(intake.hasEin || "");
+          document.getElementById("llcStatus").value =
+            String(intake.llcStatus || "");
+          document.getElementById("businessEntityType").value =
+            String(intake.businessEntityType || "");
+          document.getElementById("principalBusinessProfession").value =
+            String(intake.principalBusinessProfession || "");
+          document.getElementById("businessAddressSameAsHome").value =
+            String(intake.businessAddressSameAsHome || "");
+          document.getElementById("businessAddress").value =
+            String(intake.businessAddress || "");
+          document.getElementById("accountingMethod").value =
+            String(intake.accountingMethod || "");
+          document.getElementById("materialParticipation").value =
+            String(intake.materialParticipation || "");
           document.getElementById("multiState1099").value =
             String(intake.multiState1099 || "");
           update1099FollowUp();
+          updateBusinessAddressField();
         }
       } catch (error) {
         console.warn("Could not prefill tax-return intake:", error);
@@ -783,6 +1014,9 @@
         return;
       }
 
+      const businessProfileApplies =
+        selectedBusinessProfileApplies();
+
       const form1099Count = Number.parseInt(
         document.getElementById("form1099Count").value,
         10
@@ -793,22 +1027,69 @@
         document.getElementById("businessTradeName").value.trim();
       const hasEin =
         document.getElementById("hasEin").value;
+      const llcStatus =
+        document.getElementById("llcStatus").value;
+      const businessEntityType =
+        document.getElementById("businessEntityType").value;
+      const principalBusinessProfession =
+        document.getElementById(
+          "principalBusinessProfession"
+        ).value.trim();
+      const businessAddressSameAsHome =
+        document.getElementById(
+          "businessAddressSameAsHome"
+        ).value;
+      const businessAddress =
+        document.getElementById(
+          "businessAddress"
+        ).value.trim();
+      const accountingMethod =
+        document.getElementById("accountingMethod").value;
+      const materialParticipation =
+        document.getElementById(
+          "materialParticipation"
+        ).value;
       const multiState1099 =
         document.getElementById("multiState1099").value;
 
       if (
         selected1099Nec &&
+        form1099Count < 1
+      ) {
+        showResult(
+          "error",
+          "<div class='result-title'>Enter the number of 1099 or 1099-NEC forms.</div>" +
+          "Use the minus and plus buttons or type the number directly."
+        );
+        document.getElementById("1099FollowUp").scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+        return;
+      }
+
+      if (
+        businessProfileApplies &&
         (
-          form1099Count < 1 ||
           !has1099Expenses ||
           !hasEin ||
+          !llcStatus ||
+          !businessEntityType ||
+          !principalBusinessProfession ||
+          !businessAddressSameAsHome ||
+          (
+            businessAddressSameAsHome === "no" &&
+            !businessAddress
+          ) ||
+          !accountingMethod ||
+          !materialParticipation ||
           !multiState1099
         )
       ) {
         showResult(
           "error",
-          "<div class='result-title'>Complete the 1099 or 1099-NEC details.</div>" +
-          "Enter the number of forms and answer the business-expense, EIN, and state questions. The business or trade name may be left blank if none was used."
+          "<div class='result-title'>Complete the Business Information section.</div>" +
+          "Answer the expense, EIN, LLC, business structure, principal business, address, accounting method, participation, and state questions. Enter the business address when it differs from the home address. Type None for the business name if no name was used."
         );
         document.getElementById("1099FollowUp").scrollIntoView({
           behavior: "smooth",
@@ -835,15 +1116,50 @@
           bookkeepingStatus: document.getElementById("bookkeepingStatus").value,
           comments: document.getElementById("comments").value.trim(),
           received1099Nec,
+          businessProfileApplies,
           form1099Count: selected1099Nec ? form1099Count : 0,
-          has1099Expenses: selected1099Nec ? has1099Expenses : "",
-          businessTradeName: selected1099Nec ? businessTradeName : "",
-          hasEin: selected1099Nec ? hasEin : "",
-          usedBusinessName:
-            selected1099Nec
-              ? (businessTradeName ? "yes" : "no")
+          has1099Expenses:
+            businessProfileApplies ? has1099Expenses : "",
+          businessTradeName:
+            businessProfileApplies ? businessTradeName : "",
+          hasEin:
+            businessProfileApplies ? hasEin : "",
+          llcStatus:
+            businessProfileApplies ? llcStatus : "",
+          businessEntityType:
+            businessProfileApplies ? businessEntityType : "",
+          principalBusinessProfession:
+            businessProfileApplies
+              ? principalBusinessProfession
               : "",
-          multiState1099: selected1099Nec ? multiState1099 : ""
+          businessAddressSameAsHome:
+            businessProfileApplies
+              ? businessAddressSameAsHome
+              : "",
+          businessAddress:
+            businessProfileApplies &&
+            businessAddressSameAsHome === "no"
+              ? businessAddress
+              : "",
+          accountingMethod:
+            businessProfileApplies
+              ? accountingMethod
+              : "",
+          materialParticipation:
+            businessProfileApplies
+              ? materialParticipation
+              : "",
+          usedBusinessName:
+            businessProfileApplies
+              ? (
+                  businessTradeName &&
+                  businessTradeName.toLowerCase() !== "none"
+                    ? "yes"
+                    : "no"
+                )
+              : "",
+          multiState1099:
+            businessProfileApplies ? multiState1099 : ""
         }
       };
 
