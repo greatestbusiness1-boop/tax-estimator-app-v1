@@ -181,6 +181,42 @@
       color:var(--muted);
       line-height:1.45;
     }
+    .business-profile-launch {
+      margin-top:18px;
+      padding:18px;
+      border:2px solid #1f5f99;
+      border-radius:12px;
+      background:#eef6ff;
+    }
+    .business-profile-launch h3 {
+      margin:0 0 8px;
+      color:var(--navy);
+      font-size:20px;
+    }
+    .business-profile-launch p {
+      margin:0 0 10px;
+      color:#243a55;
+      line-height:1.48;
+    }
+    .business-profile-launch ul {
+      margin:8px 0 16px;
+      padding-left:22px;
+      line-height:1.45;
+    }
+    .business-profile-launch button {
+      width:100%;
+      min-height:48px;
+      border:0;
+      border-radius:10px;
+      background:var(--navy);
+      color:#fff;
+      font-weight:800;
+      font-size:16px;
+      cursor:pointer;
+    }
+    .business-profile-launch button:hover {
+      background:#0c2e58;
+    }
     .stepper {
       display:grid;
       grid-template-columns:44px minmax(0,1fr) 44px;
@@ -437,10 +473,60 @@
               <label class="field">Did you receive a 1099 or 1099-NEC for contractor or self-employment income?
                 <select id="received1099Nec">
                   <option value="">Select Yes or No</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
+                  <option value="yes">Yes — open Business Information</option>
+                  <option value="no">No — no 1099 or 1099-NEC</option>
                 </select>
               </label>
+            </div>
+
+            <input
+              id="businessProfileManualOpen"
+              type="hidden"
+              value="no"
+            />
+
+            <div
+              class="business-profile-launch"
+              id="businessProfileLaunch"
+            >
+              <h3>
+                Business Information for Tax Year
+                <span id="businessProfileLaunchTaxYear">
+                  the selected year
+                </span>
+              </h3>
+
+              <p>
+                Complete this section when the return includes a
+                1099 or 1099-NEC, gig work, freelance or
+                self-employment income, an LLC, a business or
+                entity return, rental activity, or Schedule K-1
+                income.
+              </p>
+
+              <p>
+                The complete section includes:
+              </p>
+
+              <ul>
+                <li>Business or trade name and business address</li>
+                <li>EIN status and LLC status</li>
+                <li>Business structure</li>
+                <li>Principal business or profession</li>
+                <li>Accounting method</li>
+                <li>Business expenses and 1099 count</li>
+                <li>
+                  Whether the client operated or managed the
+                  business during the selected tax year
+                </li>
+              </ul>
+
+              <button
+                type="button"
+                id="openBusinessProfileButton"
+              >
+                Open Business Information
+              </button>
             </div>
 
             <div class="follow-up" id="1099FollowUp" hidden>
@@ -732,7 +818,13 @@
         "k1_income"
       ]);
 
+      const manuallyOpened =
+        document.getElementById(
+          "businessProfileManualOpen"
+        ).value === "yes";
+
       return (
+        manuallyOpened ||
         received1099Nec === "yes" ||
         checkedValues("serviceTypes").some(
           (value) => businessServiceValues.has(value)
@@ -750,6 +842,10 @@
 
       document.getElementById(
         "businessProfileTaxYear"
+      ).textContent = taxYear;
+
+      document.getElementById(
+        "businessProfileLaunchTaxYear"
       ).textContent = taxYear;
 
       document.getElementById(
@@ -828,9 +924,13 @@
         document.getElementById("received1099Nec").value;
       const show = selectedBusinessProfileApplies();
       const followUp = document.getElementById("1099FollowUp");
+      const launcher = document.getElementById(
+        "businessProfileLaunch"
+      );
       const countField = document.getElementById("form1099CountField");
 
       followUp.hidden = !show;
+      launcher.hidden = show;
       countField.hidden = received1099Nec !== "yes";
       updateBusinessProfileTaxYear();
       updateBusinessAddressField();
@@ -894,12 +994,42 @@
       event.target.value = formatPhoneInput(event.target.value);
     });
 
+    document.getElementById(
+      "openBusinessProfileButton"
+    ).addEventListener(
+      "click",
+      () => {
+        document.getElementById(
+          "businessProfileManualOpen"
+        ).value = "yes";
+
+        update1099FollowUp();
+
+        document.getElementById(
+          "1099FollowUp"
+        ).scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    );
+
     document.getElementById("received1099Nec").addEventListener(
       "change",
       (event) => {
+        const received1099 =
+          event.target.value === "yes";
+
         document.getElementById(
           "income1099Nec"
-        ).checked = event.target.value === "yes";
+        ).checked = received1099;
+
+        if (received1099) {
+          document.getElementById(
+            "businessProfileManualOpen"
+          ).value = "yes";
+        }
+
         update1099FollowUp();
       }
     );
@@ -912,6 +1042,13 @@
         ).value = event.target.checked
           ? "yes"
           : "no";
+
+        if (event.target.checked) {
+          document.getElementById(
+            "businessProfileManualOpen"
+          ).value = "yes";
+        }
+
         update1099FollowUp();
       }
     );
@@ -952,7 +1089,33 @@
     ).forEach((input) => {
       input.addEventListener(
         "change",
-        update1099FollowUp
+        () => {
+          const businessTriggerValues = new Set([
+            "business_return",
+            "partnership_return",
+            "s_corporation_return",
+            "c_corporation_return",
+            "nonprofit_return",
+            "1099_nec",
+            "1099_k",
+            "gig_platform",
+            "creator_income",
+            "self_employment",
+            "rental_income",
+            "k1_income"
+          ]);
+
+          if (
+            input.checked &&
+            businessTriggerValues.has(input.value)
+          ) {
+            document.getElementById(
+              "businessProfileManualOpen"
+            ).value = "yes";
+          }
+
+          update1099FollowUp();
+        }
       );
     });
 
