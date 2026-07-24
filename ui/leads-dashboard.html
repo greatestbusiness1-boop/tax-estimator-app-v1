@@ -1116,26 +1116,195 @@
 
     .taxprep-card-list {
       display:grid;
-      gap:14px;
+      gap:8px;
+    }
+
+    .taxprep-compact-table-head,
+    .taxprep-compact-row {
+      display:grid;
+      grid-template-columns:
+        minmax(170px,1.3fr)
+        minmax(130px,.9fr)
+        minmax(130px,.9fr)
+        minmax(125px,.85fr)
+        minmax(130px,.9fr)
+        minmax(190px,1.45fr)
+        132px;
+      gap:0;
+      align-items:stretch;
+    }
+
+    .taxprep-compact-table-head {
+      position:sticky;
+      top:0;
+      z-index:4;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
+      background:#eaf0f7;
+      color:#17324d;
+      overflow:hidden;
+      box-shadow:0 4px 10px rgba(15,44,86,.05);
+    }
+
+    .taxprep-compact-table-head span {
+      padding:9px 10px;
+      border-right:1px solid #d6e0eb;
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.045em;
+      text-transform:uppercase;
+    }
+
+    .taxprep-compact-table-head span:last-child {
+      border-right:0;
+      text-align:center;
     }
 
     .taxprep-client-card {
       border:1px solid #cbd5e1;
       border-left:6px solid #0f766e;
-      border-radius:14px;
+      border-radius:11px;
       background:#ffffff;
-      padding:16px;
-      box-shadow:0 8px 20px rgba(15,44,86,.06);
+      padding:0;
+      overflow:hidden;
+      box-shadow:0 5px 14px rgba(15,44,86,.05);
+    }
+
+    .taxprep-compact-row {
+      min-height:66px;
+      background:#ffffff;
+    }
+
+    .taxprep-client-card.needs-attention .taxprep-compact-row {
+      background:#fffaf5;
+    }
+
+    .taxprep-compact-cell {
+      min-width:0;
+      padding:9px 10px;
+      border-right:1px solid #e2e8f0;
+      color:#334155;
+      font-size:11px;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+
+    .taxprep-compact-cell:last-child {
+      border-right:0;
+    }
+
+    .taxprep-compact-cell strong {
+      display:block;
+      margin-bottom:2px;
+      color:#0f2c56;
+      font-size:12px;
+      font-weight:950;
+    }
+
+    .taxprep-compact-cell small {
+      display:block;
+      color:#64748b;
+      font-size:10.5px;
+      line-height:1.35;
+    }
+
+    .taxprep-compact-cell.attention {
+      color:#9a3412;
+      background:#fff7ed;
+    }
+
+    .taxprep-compact-cell.attention strong {
+      color:#9a3412;
+    }
+
+    .taxprep-compact-action {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+    }
+
+    .taxprep-compact-open-btn {
+      width:100%;
+      min-height:38px;
+      border:1px solid #1d4f82;
+      border-radius:8px;
+      background:#285f99;
+      color:#ffffff;
+      padding:7px 8px;
+      font-size:10.5px;
+      font-weight:950;
+      line-height:1.2;
+      cursor:pointer;
+    }
+
+    .taxprep-compact-open-btn:hover {
+      background:#173f6d;
+    }
+
+    .taxprep-compact-open-btn.open {
+      border-color:#64748b;
+      background:#ffffff;
+      color:#17324d;
+    }
+
+    .taxprep-expanded-body {
+      border-top:2px solid #d7e4f2;
+      padding:13px;
+      background:#ffffff;
+    }
+
+    .taxprep-expanded-body[hidden] {
+      display:none !important;
+    }
+
+    .taxprep-client-card.taxprep-highlight {
+      outline:4px solid rgba(14,116,144,.22);
+      scroll-margin-top:80px;
+    }
+
+    @media (max-width:1120px) {
+      .taxprep-compact-table-head {
+        display:none;
+      }
+
+      .taxprep-compact-row {
+        grid-template-columns:repeat(3,minmax(0,1fr));
+      }
+
+      .taxprep-compact-cell:nth-child(3n) {
+        border-right:0;
+      }
+
+      .taxprep-compact-action {
+        grid-column:1 / -1;
+        border-top:1px solid #e2e8f0;
+      }
+
+      .taxprep-compact-open-btn {
+        max-width:260px;
+      }
+    }
+
+    @media (max-width:680px) {
+      .taxprep-compact-row {
+        grid-template-columns:1fr;
+      }
+
+      .taxprep-compact-cell,
+      .taxprep-compact-cell:nth-child(3n) {
+        border-right:0;
+        border-bottom:1px solid #e2e8f0;
+      }
+
+      .taxprep-compact-action {
+        grid-column:1;
+      }
     }
 
     .taxprep-client-card.needs-attention {
       border-left-color:#c2410c;
       background:#fffaf5;
-    }
-
-    .taxprep-client-card.taxprep-highlight {
-      outline:4px solid rgba(14,116,144,.22);
-      scroll-margin-top:18px;
     }
 
     .taxprep-card-head {
@@ -7901,10 +8070,20 @@ function renderLeads(){
 
     list.innerHTML = `
       <div class="taxprep-completed-intro">
-        Each client card is the Tax Preparation Action Basket. Client information, portal status, documents, fee quote, Stripe payment, preparation progress, signature, e-file, acceptance, final client copy, and office notes stay together here.
+        Active clients are minimized into compact worklist rows. Click Open Action Basket only for the client you are working on. The full intake profile, documents, fee quote, Stripe payment, preparation progress, signature, e-file, acceptance, final client copy, and office notes remain attached to that row.
       </div>
 
       <div class="taxprep-card-list">
+        <div class="taxprep-compact-table-head" aria-hidden="true">
+          <span>Client</span>
+          <span>Return / Tax Year</span>
+          <span>Portal / Documents</span>
+          <span>Payment</span>
+          <span>Preparation Status</span>
+          <span>Next Required Action</span>
+          <span>Action</span>
+        </div>
+
         ${visible.map((lead, index) => {
           const intake = lead.taxPreparationIntake || {};
           const work = lead.taxPreparationWork || {};
@@ -7996,35 +8175,139 @@ function renderLeads(){
             String(
               intake.multiState1099 || ""
             ).toLowerCase() === "not_sure";
+          const leadId = String(lead.leadId || "").trim();
+          const cardOpen =
+            window.openTaxPrepCardLeadIds instanceof Set &&
+            window.openTaxPrepCardLeadIds.has(leadId);
+          const compactDocumentStatus =
+            getTaxPrepDocumentStatus(lead);
+          const compactPaymentStatus =
+            getTaxPrepPaymentStatus(lead);
+          const compactWorkStatus =
+            getTaxPrepWorkStatus(lead);
+          const compactPortalStatus =
+            getTaxPrepPortalStatus(lead);
 
           return `
             <article
               class="taxprep-client-card ${needsAttention ? "needs-attention" : ""}"
-              data-taxprep-lead-id="${escapeOfficeHtml(lead.leadId || "")}"
+              data-taxprep-lead-id="${escapeOfficeHtml(leadId)}"
             >
-              <div class="taxprep-card-head">
-                <div>
-                  <div class="taxprep-client-name">
-                    ${escapeOfficeHtml(lead.contact?.name || "No Name")}
-                  </div>
-                  <div class="taxprep-client-contact">
-                    ${escapeOfficeHtml(lead.contact?.email || "No email")}<br>
-                    ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "Phone not recorded")}
-                  </div>
+              <div class="taxprep-compact-row">
+                <div class="taxprep-compact-cell">
+                  <strong>
+                    ${escapeOfficeHtml(
+                      lead.contact?.name || "No Name"
+                    )}
+                  </strong>
+                  <small>
+                    ${escapeOfficeHtml(
+                      lead.contact?.email || "No email"
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      formatDashboardPhone(
+                        lead.contact?.phone || ""
+                      ) || "Phone not recorded"
+                    )}
+                  </small>
                 </div>
 
-                <div class="taxprep-card-badges">
-                  ${needsAttention ? '<span class="taxprep-card-badge attention">Action Needed</span>' : ""}
-                  <span class="taxprep-card-badge">
-                    ${escapeOfficeHtml(getTaxPrepWorkStatus(lead))}
-                  </span>
-                  <span class="taxprep-card-badge">
-                    ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
-                  </span>
+                <div class="taxprep-compact-cell">
+                  <strong>
+                    ${escapeOfficeHtml(
+                      getTaxPrepLane(lead)
+                    )}
+                  </strong>
+                  <small>
+                    Tax year:
+                    ${escapeOfficeHtml(
+                      getTaxPrepTaxYear(lead) || "Not set"
+                    )}
+                  </small>
+                </div>
+
+                <div class="taxprep-compact-cell ${
+                  compactPortalStatus !== "Active" ||
+                  /needed|partial|review/i.test(
+                    compactDocumentStatus
+                  )
+                    ? "attention"
+                    : ""
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(compactDocumentStatus)}
+                  </strong>
+                  <small>
+                    Portal: ${escapeOfficeHtml(compactPortalStatus)}<br>
+                    Uploads: ${getTaxPrepDocumentCount(lead)}
+                  </small>
+                </div>
+
+                <div class="taxprep-compact-cell ${
+                  taxPrepPaymentIsSatisfied(lead) ||
+                  getTaxPrepPaymentRequirement(lead) ===
+                    "Waived by Office"
+                    ? ""
+                    : "attention"
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(compactPaymentStatus)}
+                  </strong>
+                  <small>
+                    Quote: $${taxPrepMoney(quote)}<br>
+                    Collected: $${taxPrepMoney(paid)}
+                  </small>
+                </div>
+
+                <div class="taxprep-compact-cell ${
+                  needsAttention ? "attention" : ""
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(compactWorkStatus)}
+                  </strong>
+                  <small>
+                    ${needsAttention
+                      ? "Action needed"
+                      : "No immediate exception"}
+                  </small>
+                </div>
+
+                <div class="taxprep-compact-cell ${
+                  needsAttention ? "attention" : ""
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(nextAction)}
+                  </strong>
+                  <small>
+                    Full details and controls remain attached
+                    to this client row.
+                  </small>
+                </div>
+
+                <div class="taxprep-compact-action">
+                  <button
+                    id="taxPrepToggle-${index}"
+                    class="taxprep-compact-open-btn ${
+                      cardOpen ? "open" : ""
+                    }"
+                    type="button"
+                    aria-expanded="${cardOpen ? "true" : "false"}"
+                    aria-controls="taxPrepCardBody-${index}"
+                    onclick="toggleTaxPreparationActionBasket(${index})"
+                  >
+                    ${cardOpen
+                      ? "Minimize Action Basket"
+                      : "Open Action Basket"}
+                  </button>
                 </div>
               </div>
 
-              <div class="taxprep-return-summary">
+              <div
+                id="taxPrepCardBody-${index}"
+                class="taxprep-expanded-body"
+                ${cardOpen ? "" : "hidden"}
+              >
+                <div class="taxprep-return-summary">
                 <div class="taxprep-summary-heading">
                   <div>
                     <h3>Tax Return Intake Summary</h3>
@@ -8599,6 +8882,7 @@ function renderLeads(){
                     Open Secure Client Portal
                   </button>
                 </div>
+              </div>
               </div>
             </article>`;
         }).join("")}
@@ -10261,8 +10545,59 @@ function selectOptionsHtml(options, selected){
     .join("");
 }
 
+window.openTaxPrepCardLeadIds =
+  window.openTaxPrepCardLeadIds instanceof Set
+    ? window.openTaxPrepCardLeadIds
+    : new Set();
+
 function taxPreparationLeadByIndex(index){
   return (window.visibleTaxPrepLeads || [])[index] || null;
+}
+
+function setTaxPreparationActionBasketOpen(index, shouldOpen){
+  const lead = taxPreparationLeadByIndex(index);
+  const leadId = String(lead?.leadId || "").trim();
+  const body = document.getElementById(
+    `taxPrepCardBody-${index}`
+  );
+  const button = document.getElementById(
+    `taxPrepToggle-${index}`
+  );
+
+  if(!lead || !body || !button){
+    alert("The Tax Preparation Action Basket could not be opened.");
+    return;
+  }
+
+  if(shouldOpen){
+    window.openTaxPrepCardLeadIds.add(leadId);
+    body.hidden = false;
+    button.classList.add("open");
+    button.textContent = "Minimize Action Basket";
+    button.setAttribute("aria-expanded", "true");
+  }else{
+    window.openTaxPrepCardLeadIds.delete(leadId);
+    body.hidden = true;
+    button.classList.remove("open");
+    button.textContent = "Open Action Basket";
+    button.setAttribute("aria-expanded", "false");
+  }
+}
+
+function toggleTaxPreparationActionBasket(index){
+  const body = document.getElementById(
+    `taxPrepCardBody-${index}`
+  );
+
+  if(!body){
+    alert("The Tax Preparation Action Basket could not be opened.");
+    return;
+  }
+
+  setTaxPreparationActionBasketOpen(
+    index,
+    body.hidden
+  );
 }
 
 function taxPreparationBasketValues(index, lead){
@@ -10645,6 +10980,12 @@ function openTaxPreparationActionBasketForLead(lead){
     const element = document.getElementById(id);
     if(element) element.style.display = "none";
   });
+
+  if(!(window.openTaxPrepCardLeadIds instanceof Set)){
+    window.openTaxPrepCardLeadIds = new Set();
+  }
+
+  window.openTaxPrepCardLeadIds.add(leadId);
 
   renderLeads();
 
