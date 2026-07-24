@@ -7915,10 +7915,6 @@ function renderLeads(){
                   </div>
 
                   <div class="taxprep-return-summary-item">
-                    <strong>Digital asset question:</strong>
-                    ${escapeOfficeHtml(taxPrepPlainAnswer(intake.digitalAssetActivity))}
-                  </div>
-                  <div class="taxprep-return-summary-item">
                     <strong>Income documents listed:</strong>
                     ${Number(intake.documentCount || 0)}
                   </div>
@@ -7967,6 +7963,41 @@ function renderLeads(){
                       <div class="taxprep-return-summary-item">
                         <strong>Operated or managed during tax year:</strong>
                         ${escapeOfficeHtml(taxPrepPlainAnswer(intake.materialParticipation))}
+                      </div>
+                      <div class="taxprep-return-summary-item">
+                        <strong>Business started:</strong>
+                        ${escapeOfficeHtml(intake.businessStartYear || "Not recorded")}
+                      </div>
+                      <div class="taxprep-return-summary-item">
+                        <strong>Business taxes current:</strong>
+                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.businessTaxStatus))}
+                      </div>
+                      <div class="taxprep-return-summary-item span-two">
+                        <strong>Contractor Forms 1099 may be required:</strong>
+                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.contractor1099Requirement))}
+                      </div>
+                      <div class="taxprep-return-summary-item span-two">
+                        <strong>Required contractor Forms 1099 filed:</strong>
+                        ${escapeOfficeHtml(
+                          String(intake.contractor1099Requirement || "").toLowerCase() === "yes"
+                            ? taxPrepPlainAnswer(intake.contractor1099Filed)
+                            : "Not applicable"
+                        )}
+                      </div>
+                      <div class="taxprep-return-summary-item">
+                        <strong>Business vehicle used:</strong>
+                        ${escapeOfficeHtml(taxPrepPlainAnswer(intake.businessVehicleUsed))}
+                      </div>
+                      <div class="taxprep-return-summary-item span-two">
+                        <strong>Vehicle first used for business:</strong>
+                        ${escapeOfficeHtml(
+                          intake.vehicleBusinessUseDate ||
+                          (
+                            intake.vehicleBusinessUseDateUnknown
+                              ? "Client does not remember exact date"
+                              : "Not applicable / not recorded"
+                          )
+                        )}
                       </div>
                       <div class="taxprep-return-summary-item">
                         <strong>More than one state:</strong>
@@ -11745,17 +11776,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -84,6 +84,27 @@
       align-items:end;
     }
     .business-address-grid[hidden] { display:none; }
+    .business-subsection {
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+      padding:14px;
+      border:1px solid #c9d7e5;
+      border-radius:10px;
+      background:#ffffff;
+    }
+    .business-subsection[hidden] { display:none; }
+    .business-subsection .field.full { grid-column:1 / -1; }
+    .inline-check {
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      margin-top:10px;
+      font-weight:700;
+      line-height:1.4;
+    }
+    .inline-check input { width:auto; margin:2px 0 0; }
     .question-emphasis {
       display:block;
       color:var(--navy);
@@ -452,17 +473,6 @@
                 <option value="no_records">I do not have organized records</option>
               </select>
             </label>
-
-            <label class="field full">
-              <span class="question-emphasis" id="digitalAssetQuestion">
-                At any time during the selected tax year, did you receive, sell, exchange, gift, or otherwise dispose of a digital asset or a financial interest in a digital asset?
-              </span>
-              <select id="digitalAssetActivity" required>
-                <option value="">Select Yes or No</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </label>
           </div>
 
           <div class="top-information">
@@ -515,6 +525,10 @@
                 <li>Principal business or profession</li>
                 <li>Accounting method</li>
                 <li>Business expenses and 1099 count</li>
+                <li>Year the business started</li>
+                <li>Whether required business tax filings and payments are current</li>
+                <li>Contractor payments and required Forms 1099</li>
+                <li>Business vehicle use and the first business-use date</li>
                 <li>
                   Whether the client operated or managed the
                   business during the selected tax year
@@ -637,6 +651,66 @@
                     <option value="not_sure">Not sure</option>
                   </select>
                 </label>
+
+                <label class="field">What year did you start this business?
+                  <span class="stepper">
+                    <button type="button" data-stepper-target="businessStartYear" data-step="-1" aria-label="Decrease business start year">−</button>
+                    <input id="businessStartYear" type="number" min="1900" max="2099" inputmode="numeric" placeholder="Example: 2018" />
+                    <button type="button" data-stepper-target="businessStartYear" data-step="1" aria-label="Increase business start year">+</button>
+                  </span>
+                  <span class="field-note">Type the year directly or use the arrows. Choose your best answer if you are not certain.</span>
+                </label>
+
+                <label class="field"><span id="businessTaxStatusQuestion">Are all required federal, state, and local business tax returns filed and payments current through the selected tax year?</span>
+                  <select id="businessTaxStatus">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                    <option value="new_business">Business started during this tax year</option>
+                  </select>
+                </label>
+
+                <label class="field"><span id="contractor1099Question">During the selected tax year, did the business make payments to contractors or other nonemployees that may require filing Forms 1099?</span>
+                  <select id="contractor1099Requirement">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <div class="business-subsection" id="contractor1099FollowUp" hidden>
+                  <label class="field full">Were all required contractor Forms 1099 filed?
+                    <select id="contractor1099Filed">
+                      <option value="">Select</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                      <option value="not_sure">Not sure</option>
+                      <option value="not_due_yet">Not due yet</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="field"><span id="businessVehicleQuestion">Did you use a car, truck, or van for this business during the selected tax year?</span>
+                  <select id="businessVehicleUsed">
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="not_sure">Not sure</option>
+                  </select>
+                </label>
+
+                <div class="business-subsection" id="businessVehicleFollowUp" hidden>
+                  <label class="field full">When did you first use your primary vehicle for business?
+                    <input id="vehicleBusinessUseDate" type="date" />
+                    <span class="field-note">Enter the best date you remember. The office can collect information for additional vehicles later.</span>
+                    <label class="inline-check">
+                      <input id="vehicleBusinessUseDateUnknown" type="checkbox" />
+                      I do not remember the exact date.
+                    </label>
+                  </label>
+                </div>
 
                 <label class="field">Was this business or 1099 income connected to more than one state?
                   <select id="multiState1099">
@@ -854,9 +928,22 @@
         `During ${taxYear}, did you regularly work in, manage, or make day-to-day decisions for this business?`;
 
       document.getElementById(
-        "digitalAssetQuestion"
+        "businessTaxStatusQuestion"
       ).textContent =
-        `At any time during ${taxYear}, did you: (a) receive a digital asset as a reward, award, or payment for property or services; or (b) sell, exchange, gift, or otherwise dispose of a digital asset or a financial interest in a digital asset?`;
+        `Are all required federal, state, and local business tax returns filed and payments current through ${taxYear}?`;
+
+      document.getElementById(
+        "contractor1099Question"
+      ).textContent =
+        `During ${taxYear}, did the business make payments to contractors or other nonemployees that may require filing Forms 1099?`;
+
+      document.getElementById(
+        "businessVehicleQuestion"
+      ).textContent =
+        `Did you use a car, truck, or van for this business during ${taxYear}?`;
+
+      const startYearField = document.getElementById("businessStartYear");
+      if (/^\d{4}$/.test(taxYear)) startYearField.max = taxYear;
     }
 
     function updateBusinessAddressField() {
@@ -919,6 +1006,24 @@
       }
     }
 
+    function updateContractor1099Fields() {
+      const requirement = document.getElementById("contractor1099Requirement").value;
+      const followUp = document.getElementById("contractor1099FollowUp");
+      followUp.hidden = requirement !== "yes";
+      if (requirement !== "yes") document.getElementById("contractor1099Filed").value = "";
+    }
+
+    function updateBusinessVehicleFields() {
+      const vehicleUsed = document.getElementById("businessVehicleUsed").value;
+      const followUp = document.getElementById("businessVehicleFollowUp");
+      followUp.hidden = vehicleUsed !== "yes";
+      if (vehicleUsed !== "yes") {
+        document.getElementById("vehicleBusinessUseDate").value = "";
+        document.getElementById("vehicleBusinessUseDateUnknown").checked = false;
+        document.getElementById("vehicleBusinessUseDate").disabled = false;
+      }
+    }
+
     function update1099FollowUp() {
       const received1099Nec =
         document.getElementById("received1099Nec").value;
@@ -934,6 +1039,8 @@
       countField.hidden = received1099Nec !== "yes";
       updateBusinessProfileTaxYear();
       updateBusinessAddressField();
+      updateContractor1099Fields();
+      updateBusinessVehicleFields();
 
       if (received1099Nec !== "yes") {
         document.getElementById("form1099Count").value = "1";
@@ -954,6 +1061,13 @@
         document.getElementById("businessAddressZip").value = "";
         document.getElementById("accountingMethod").value = "";
         document.getElementById("materialParticipation").value = "";
+        document.getElementById("businessStartYear").value = "";
+        document.getElementById("businessTaxStatus").value = "";
+        document.getElementById("contractor1099Requirement").value = "";
+        document.getElementById("contractor1099Filed").value = "";
+        document.getElementById("businessVehicleUsed").value = "";
+        document.getElementById("vehicleBusinessUseDate").value = "";
+        document.getElementById("vehicleBusinessUseDateUnknown").checked = false;
         document.getElementById("multiState1099").value = "";
       }
     }
@@ -965,7 +1079,11 @@
       const min = Number(input.min || 0);
       const max = Number(input.max || Number.MAX_SAFE_INTEGER);
       const current = Number.parseInt(input.value, 10);
-      const safeCurrent = Number.isFinite(current) ? current : min;
+      let safeCurrent = Number.isFinite(current) ? current : min;
+      if (inputId === "businessStartYear" && !Number.isFinite(current)) {
+        const selectedTaxYear = Number.parseInt(document.getElementById("taxYear").value, 10);
+        if (Number.isFinite(selectedTaxYear)) safeCurrent = step > 0 ? selectedTaxYear - 1 : selectedTaxYear;
+      }
       const next = Math.min(max, Math.max(min, safeCurrent + step));
 
       input.value = String(next);
@@ -1084,6 +1202,14 @@
       }
     );
 
+    document.getElementById("contractor1099Requirement").addEventListener("change", updateContractor1099Fields);
+    document.getElementById("businessVehicleUsed").addEventListener("change", updateBusinessVehicleFields);
+    document.getElementById("vehicleBusinessUseDateUnknown").addEventListener("change", (event) => {
+      const dateField = document.getElementById("vehicleBusinessUseDate");
+      dateField.disabled = event.target.checked;
+      if (event.target.checked) dateField.value = "";
+    });
+
     document.querySelectorAll(
       "#serviceTypes input, #incomeTypes input"
     ).forEach((input) => {
@@ -1162,10 +1288,6 @@
 
         const intake = lead.taxPreparationIntake || {};
 
-        document.getElementById(
-          "digitalAssetActivity"
-        ).value =
-          String(intake.digitalAssetActivity || "");
 
         const savedServiceTypes = Array.isArray(
           intake.serviceTypes
@@ -1274,10 +1396,19 @@
             String(intake.accountingMethod || "");
           document.getElementById("materialParticipation").value =
             String(intake.materialParticipation || "");
-          document.getElementById("multiState1099").value =
-            String(intake.multiState1099 || "");
+          document.getElementById("businessStartYear").value = String(intake.businessStartYear || "");
+          document.getElementById("businessTaxStatus").value = String(intake.businessTaxStatus || "");
+          document.getElementById("contractor1099Requirement").value = String(intake.contractor1099Requirement || "");
+          document.getElementById("contractor1099Filed").value = String(intake.contractor1099Filed || "");
+          document.getElementById("businessVehicleUsed").value = String(intake.businessVehicleUsed || "");
+          document.getElementById("vehicleBusinessUseDate").value = String(intake.vehicleBusinessUseDate || "");
+          document.getElementById("vehicleBusinessUseDateUnknown").checked = intake.vehicleBusinessUseDateUnknown === true || String(intake.vehicleBusinessUseDateUnknown || "").toLowerCase() === "yes";
+          document.getElementById("multiState1099").value = String(intake.multiState1099 || "");
           update1099FollowUp();
           updateBusinessAddressField();
+          updateContractor1099Fields();
+          updateBusinessVehicleFields();
+          document.getElementById("vehicleBusinessUseDate").disabled = document.getElementById("vehicleBusinessUseDateUnknown").checked;
         }
       } catch (error) {
         console.warn("Could not prefill tax-return intake:", error);
@@ -1323,19 +1454,6 @@
         return;
       }
 
-      const digitalAssetActivity =
-        document.getElementById(
-          "digitalAssetActivity"
-        ).value;
-
-      if (!digitalAssetActivity) {
-        showResult(
-          "error",
-          "<div class='result-title'>Answer the digital asset question.</div>" +
-          "Select Yes or No in Your Contact & Filing Information."
-        );
-        return;
-      }
 
       if (!received1099Nec) {
         showResult(
@@ -1355,12 +1473,6 @@
         incomeTypes.unshift("1099_nec");
       }
 
-      if (
-        digitalAssetActivity === "yes" &&
-        !incomeTypes.includes("cryptocurrency")
-      ) {
-        incomeTypes.push("cryptocurrency");
-      }
 
       if (serviceTypes.length === 0 || incomeTypes.length === 0) {
         showResult(
@@ -1426,12 +1538,15 @@
         ).value.trim();
       const accountingMethod =
         document.getElementById("accountingMethod").value;
-      const materialParticipation =
-        document.getElementById(
-          "materialParticipation"
-        ).value;
-      const multiState1099 =
-        document.getElementById("multiState1099").value;
+      const materialParticipation = document.getElementById("materialParticipation").value;
+      const businessStartYear = document.getElementById("businessStartYear").value.trim();
+      const businessTaxStatus = document.getElementById("businessTaxStatus").value;
+      const contractor1099Requirement = document.getElementById("contractor1099Requirement").value;
+      const contractor1099Filed = document.getElementById("contractor1099Filed").value;
+      const businessVehicleUsed = document.getElementById("businessVehicleUsed").value;
+      const vehicleBusinessUseDate = document.getElementById("vehicleBusinessUseDate").value;
+      const vehicleBusinessUseDateUnknown = document.getElementById("vehicleBusinessUseDateUnknown").checked;
+      const multiState1099 = document.getElementById("multiState1099").value;
 
       if (
         selected1099Nec &&
@@ -1469,13 +1584,21 @@
           ) ||
           !accountingMethod ||
           !materialParticipation ||
+          !/^\d{4}$/.test(businessStartYear) ||
+          Number(businessStartYear) < 1900 ||
+          Number(businessStartYear) > Number(taxYear) ||
+          !businessTaxStatus ||
+          !contractor1099Requirement ||
+          (contractor1099Requirement === "yes" && !contractor1099Filed) ||
+          !businessVehicleUsed ||
+          (businessVehicleUsed === "yes" && !vehicleBusinessUseDate && !vehicleBusinessUseDateUnknown) ||
           !multiState1099
         )
       ) {
         showResult(
           "error",
           "<div class='result-title'>Complete the Business Information section.</div>" +
-          "Answer the expense, EIN, LLC, business structure, principal business, address, accounting method, participation, and state questions. When the business address differs from home, enter the street, city, state, and ZIP code. Type None for the business name if no name was used."
+          "Answer the expense, EIN, LLC, business structure, principal business, address, accounting method, business start year, business-tax status, contractor 1099, vehicle-use, participation, and state questions. When the business address differs from home, enter the street, city, state, and ZIP code. If a business vehicle was used, enter the first business-use date or check that the exact date is not remembered. Type None for the business name if no name was used."
         );
         document.getElementById("1099FollowUp").scrollIntoView({
           behavior: "smooth",
@@ -1554,15 +1677,26 @@
                   ].filter(Boolean).join(" ")
                 ].filter(Boolean).join(", ")
               : "",
-          digitalAssetActivity,
           accountingMethod:
             businessProfileApplies
               ? accountingMethod
               : "",
           materialParticipation:
-            businessProfileApplies
-              ? materialParticipation
-              : "",
+            businessProfileApplies ? materialParticipation : "",
+          businessStartYear:
+            businessProfileApplies ? businessStartYear : "",
+          businessTaxStatus:
+            businessProfileApplies ? businessTaxStatus : "",
+          contractor1099Requirement:
+            businessProfileApplies ? contractor1099Requirement : "",
+          contractor1099Filed:
+            businessProfileApplies && contractor1099Requirement === "yes" ? contractor1099Filed : "",
+          businessVehicleUsed:
+            businessProfileApplies ? businessVehicleUsed : "",
+          vehicleBusinessUseDate:
+            businessProfileApplies && businessVehicleUsed === "yes" && !vehicleBusinessUseDateUnknown ? vehicleBusinessUseDate : "",
+          vehicleBusinessUseDateUnknown:
+            businessProfileApplies && businessVehicleUsed === "yes" ? vehicleBusinessUseDateUnknown : false,
           usedBusinessName:
             businessProfileApplies
               ? (
@@ -1652,6 +1786,8 @@
     prefillFromEstimate();
     updateBusinessProfileTaxYear();
     update1099FollowUp();
+    updateContractor1099Fields();
+    updateBusinessVehicleFields();
   </script>
 </body>
 </html>

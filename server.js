@@ -4694,9 +4694,16 @@ function buildTaxPreparationDocumentChecklist(
     services.has("multiple_states") ||
     Number(intake.stateCount || 1) > 1
   ) {
-    add(
-      "Income, withholding, and residency records for every state involved."
-    );
+    add("Income, withholding, and residency records for every state involved.");
+  }
+  if (String(intake.contractor1099Requirement || "").toLowerCase() === "yes") {
+    add("Contractor payment totals, W-9 forms, and copies of any Forms 1099 filed or still needing review.");
+  }
+  if (String(intake.businessVehicleUsed || "").toLowerCase() === "yes") {
+    add("Business mileage log, vehicle purchase or lease information, and the date the vehicle was first used for business.");
+  }
+  if (["no", "not_sure"].includes(String(intake.businessTaxStatus || "").toLowerCase())) {
+    add("Business-tax notices, prior filings, and payment records for any federal, state, or local business taxes that may not be current.");
   }
 
   return checklist;
@@ -4890,6 +4897,13 @@ function buildClientPortalTaxPreparationSummary(entry) {
     materialParticipation: String(
       intake.materialParticipation || ""
     ),
+    businessStartYear: String(intake.businessStartYear || ""),
+    businessTaxStatus: String(intake.businessTaxStatus || ""),
+    contractor1099Requirement: String(intake.contractor1099Requirement || ""),
+    contractor1099Filed: String(intake.contractor1099Filed || ""),
+    businessVehicleUsed: String(intake.businessVehicleUsed || ""),
+    vehicleBusinessUseDate: String(intake.vehicleBusinessUseDate || ""),
+    vehicleBusinessUseDateUnknown: intake.vehicleBusinessUseDateUnknown === true || String(intake.vehicleBusinessUseDateUnknown || "").toLowerCase() === "yes",
     businessProfileApplies:
       intake.businessProfileApplies === true,
     usedBusinessName: String(
@@ -8253,22 +8267,6 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     );
   }
 
-  const digitalAssetActivity = String(
-    intake.digitalAssetActivity || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  if (
-    ![
-      "yes",
-      "no"
-    ].includes(digitalAssetActivity)
-  ) {
-    errors.push(
-      "Select Yes or No for the digital asset question."
-    );
-  }
 
   const primaryState = String(
     intake.primaryState || ""
@@ -8331,15 +8329,6 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     );
   }
 
-  if (
-    digitalAssetActivity === "yes" &&
-    !incomeTypes.includes("cryptocurrency")
-  ) {
-    incomeTypes = [
-      ...incomeTypes,
-      "cryptocurrency"
-    ];
-  }
 
   if (serviceTypes.length === 0) {
     errors.push("Select at least one tax service needed.");
@@ -8449,11 +8438,14 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     .trim()
     .toLowerCase();
 
-  const multiState1099 = String(
-    intake.multiState1099 || ""
-  )
-    .trim()
-    .toLowerCase();
+  const multiState1099 = String(intake.multiState1099 || "").trim().toLowerCase();
+  const businessStartYear = String(intake.businessStartYear || "").trim();
+  const businessTaxStatus = String(intake.businessTaxStatus || "").trim().toLowerCase();
+  const contractor1099Requirement = String(intake.contractor1099Requirement || "").trim().toLowerCase();
+  const contractor1099Filed = String(intake.contractor1099Filed || "").trim().toLowerCase();
+  const businessVehicleUsed = String(intake.businessVehicleUsed || "").trim().toLowerCase();
+  const vehicleBusinessUseDate = String(intake.vehicleBusinessUseDate || "").trim();
+  const vehicleBusinessUseDateUnknown = intake.vehicleBusinessUseDateUnknown === true || String(intake.vehicleBusinessUseDateUnknown || "").toLowerCase() === "yes";
 
   const businessProfileServiceValues = new Set([
     "business_return",
@@ -8610,10 +8602,29 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       );
     }
 
+    if (!/^\d{4}$/.test(businessStartYear) || Number(businessStartYear) < 1900 || Number(businessStartYear) > Number(taxYear)) {
+      errors.push("Enter the year the business started. It cannot be later than the selected tax year.");
+    }
+    if (!["yes", "no", "not_sure", "new_business"].includes(businessTaxStatus)) {
+      errors.push("Select whether required business tax returns and payments are current.");
+    }
+    if (!yesNoNotSure.includes(contractor1099Requirement)) {
+      errors.push("Select whether the business made contractor or nonemployee payments that may require Forms 1099.");
+    }
+    if (contractor1099Requirement === "yes" && !["yes", "no", "not_sure", "not_due_yet"].includes(contractor1099Filed)) {
+      errors.push("Select whether all required contractor Forms 1099 were filed.");
+    }
+    if (!yesNoNotSure.includes(businessVehicleUsed)) {
+      errors.push("Select whether a car, truck, or van was used for the business.");
+    }
+    if (businessVehicleUsed === "yes" && !vehicleBusinessUseDate && !vehicleBusinessUseDateUnknown) {
+      errors.push("Enter when the primary vehicle was first used for business, or indicate that the exact date is not remembered.");
+    }
+    if (vehicleBusinessUseDate && !/^\d{4}-\d{2}-\d{2}$/.test(vehicleBusinessUseDate)) {
+      errors.push("Enter a valid first business-use date for the vehicle.");
+    }
     if (!yesNoNotSure.includes(multiState1099)) {
-      errors.push(
-        "Select whether the business or 1099 income involved more than one state."
-      );
+      errors.push("Select whether the business or 1099 income involved more than one state.");
     }
   }
 
@@ -8673,8 +8684,11 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     stateCount > 1 ||
     incomeTypes.some((item) => complexSignals.includes(item));
 
-  const hasGig =
-    incomeTypes.some((item) => gigSignals.includes(item));
+  const hasGig = incomeTypes.some((item) => gigSignals.includes(item));
+  const businessComplianceReviewNeeded = businessProfileApplies && (
+    ["no", "not_sure"].includes(businessTaxStatus) ||
+    (contractor1099Requirement === "yes" && ["no", "not_sure"].includes(contractor1099Filed))
+  );
 
   let recommendedLane = "Individual Form 1040";
   let status = "Tax Preparation Intake - Ready to Schedule";
@@ -8690,6 +8704,10 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     needsProfessionalReview = true;
   } else if (hasGig) {
     recommendedLane = "Gig Worker / Self-Employed Return";
+  }
+  if (businessComplianceReviewNeeded) {
+    status = "Tax Preparation Intake - Needs Review";
+    needsProfessionalReview = true;
   }
 
   let activePortalAccount = null;
@@ -8810,15 +8828,18 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
         businessAddressSameAsHome === "no"
           ? businessAddress
           : "",
-      digitalAssetActivity,
       accountingMethod:
         businessProfileApplies
           ? accountingMethod
           : "",
-      materialParticipation:
-        businessProfileApplies
-          ? materialParticipation
-          : "",
+      materialParticipation: businessProfileApplies ? materialParticipation : "",
+      businessStartYear: businessProfileApplies ? businessStartYear : "",
+      businessTaxStatus: businessProfileApplies ? businessTaxStatus : "",
+      contractor1099Requirement: businessProfileApplies ? contractor1099Requirement : "",
+      contractor1099Filed: businessProfileApplies && contractor1099Requirement === "yes" ? contractor1099Filed : "",
+      businessVehicleUsed: businessProfileApplies ? businessVehicleUsed : "",
+      vehicleBusinessUseDate: businessProfileApplies && businessVehicleUsed === "yes" && !vehicleBusinessUseDateUnknown ? vehicleBusinessUseDate : "",
+      vehicleBusinessUseDateUnknown: businessProfileApplies && businessVehicleUsed === "yes" ? vehicleBusinessUseDateUnknown : false,
       usedBusinessName:
         businessProfileApplies
           ? usedBusinessName

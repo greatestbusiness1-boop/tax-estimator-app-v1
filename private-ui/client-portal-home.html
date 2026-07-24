@@ -1633,13 +1633,6 @@
                     }
                   </div>
 
-                  <div class="tax-prep-1099-details">
-                    <div>
-                      <strong>Digital asset question:</strong>
-                      ${escapeHtml(taxPrepAnswerLabel(request.digitalAssetActivity))}
-                    </div>
-                  </div>
-
                   ${
                     has1099Details
                       ? `
@@ -1710,6 +1703,41 @@
                           <div>
                             <strong>Worked in or managed business for tax year:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.materialParticipation))}
+                          </div>
+                          <div>
+                            <strong>Business started:</strong>
+                            ${escapeHtml(request.businessStartYear || "Not recorded")}
+                          </div>
+                          <div>
+                            <strong>Business taxes current:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.businessTaxStatus))}
+                          </div>
+                          <div>
+                            <strong>Contractor Forms 1099 may be required:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.contractor1099Requirement))}
+                          </div>
+                          <div>
+                            <strong>Required contractor Forms 1099 filed:</strong>
+                            ${escapeHtml(
+                              String(request.contractor1099Requirement || "").toLowerCase() === "yes"
+                                ? taxPrepAnswerLabel(request.contractor1099Filed)
+                                : "Not applicable"
+                            )}
+                          </div>
+                          <div>
+                            <strong>Business vehicle used:</strong>
+                            ${escapeHtml(taxPrepAnswerLabel(request.businessVehicleUsed))}
+                          </div>
+                          <div>
+                            <strong>Vehicle first used for business:</strong>
+                            ${escapeHtml(
+                              request.vehicleBusinessUseDate ||
+                              (
+                                request.vehicleBusinessUseDateUnknown
+                                  ? "Exact date not remembered"
+                                  : "Not applicable / not recorded"
+                              )
+                            )}
                           </div>
                           <div>
                             <strong>More than one state:</strong>
