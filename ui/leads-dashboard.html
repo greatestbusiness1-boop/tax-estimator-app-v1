@@ -2760,6 +2760,16 @@
       resize:vertical;
     }
 
+    .c1099-office-note {
+      font-size:13px;
+    }
+
+    .c1099-office-note textarea {
+      min-height:100px;
+      font-size:14px;
+      line-height:1.5;
+    }
+
     .c1099-payment-summary {
       grid-column:1 / -1;
       border:1px solid #9fd7c8;
@@ -10098,7 +10108,7 @@ function renderLeads(){
                       </select>
                     </label>
 
-                    <label class="c1099-field full">
+                    <label class="c1099-field full c1099-office-note">
                       Office Contractor 1099 note
                       <textarea
                         id="c1099OfficeNote-${index}"
