@@ -4381,22 +4381,23 @@ function contractor1099NextAction(lead){
     return "Monitor IRS acceptance and any state filing acknowledgments.";
   }
 
-  if(
-    acceptance.includes("accepted") &&
-    !/delivered/i.test(
+  const recipientCopiesDelivered =
+    /^delivered$/i.test(
       String(
         work.recipientCopyStatus ||
         ""
-      )
-    )
+      ).trim()
+    );
+
+  if(
+    acceptance.includes("accepted") &&
+    !recipientCopiesDelivered
   ){
     return "Deliver or confirm recipient copies before completing the service.";
   }
 
   if(
-    /delivered/i.test(
-      String(work.recipientCopyStatus || "")
-    ) &&
+    recipientCopiesDelivered &&
     !/^delivered$/i.test(
       getContractor1099FilingConfirmationStatus(lead)
     )
@@ -9544,10 +9545,10 @@ function renderLeads(){
               )
             );
           const copiesDone =
-            /delivered/i.test(
+            /^delivered$/i.test(
               String(
                 work.recipientCopyStatus || ""
-              )
+              ).trim()
             );
           const confirmationDone =
             /^delivered$/i.test(
@@ -11967,7 +11968,7 @@ function ensureManualAppointmentModal(){
           <label style="display:flex;flex-direction:column;gap:5px;font-weight:700;">
             Phone
             <input id="manualApptPhone" inputmode="tel" maxlength="14"
-              placeholder="(623) 570-3934"
+              placeholder="(555) 555-0123"
               style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
           </label>
 

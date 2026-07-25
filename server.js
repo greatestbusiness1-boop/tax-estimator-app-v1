@@ -9256,7 +9256,7 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
 
   if (phoneDigits.length !== 10) {
     errors.push(
-      "Enter a 10-digit phone number in the format (623) 570-3934."
+      "Enter a 10-digit phone number in the format (555) 555-0123."
     );
   }
 
@@ -10328,7 +10328,7 @@ app.post("/api/contractor-1099-request", async (req, res) => {
 
   if (phoneDigits.length !== 10) {
     errors.push(
-      "Enter a 10-digit phone number in the format (623) 570-3934."
+      "Enter a 10-digit phone number in the format (555) 555-0123."
     );
   }
 
@@ -10890,7 +10890,7 @@ app.post("/api/extension-request", async (req, res) => {
 
   if (phoneDigits.length !== 10) {
     errors.push(
-      "Enter a 10-digit phone number in the format (623) 570-3934."
+      "Enter a 10-digit phone number in the format (555) 555-0123."
     );
   }
 
