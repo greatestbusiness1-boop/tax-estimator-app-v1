@@ -4262,6 +4262,26 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativeContractor1099Request = {
+      ...asPlainObject(
+        mapped.contractor1099Request
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.contractor1099Request
+      )
+    };
+
+    const authoritativeContractor1099Work = {
+      ...asPlainObject(
+        mapped.contractor1099Work
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.contractor1099Work
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -4311,6 +4331,18 @@ async function loadClientPortalLeadCandidates() {
             authoritativeExtensionRequest
           ).length
             ? authoritativeExtensionRequest
+            : null,
+        contractor1099Request:
+          Object.keys(
+            authoritativeContractor1099Request
+          ).length
+            ? authoritativeContractor1099Request
+            : null,
+        contractor1099Work:
+          Object.keys(
+            authoritativeContractor1099Work
+          ).length
+            ? authoritativeContractor1099Work
             : null,
         clientPortal:
           sanitizeClientPortalRecord(
@@ -5783,7 +5815,7 @@ function buildClientPortalContractor1099Summary(entry) {
     w9Status: contractor1099Label(
       request.w9Status
     ),
-    contractorInformationStatus:
+    contractorInformationReadiness:
       contractor1099Label(
         request.contractorInformationStatus
       ),
@@ -12104,9 +12136,9 @@ app.post(
       subject:
         "Your Secure Tax Portal Is Active",
       headline:
-        "Your Tax Savings Planner Secure Client Portal is active.",
+        "Your Secure Client Portal is active.",
       message:
-        "Your password was created or updated successfully. Your saved tax-planning data remains connected to your client profile."
+        "Your password was created or updated successfully. Your tax-service records, planning records, and secure documents remain connected to your client profile."
     });
 
     console.log(

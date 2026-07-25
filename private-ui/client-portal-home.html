@@ -1003,11 +1003,12 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Tax Savings Planner™ Portal — Version 1.6.0</span>
+        <span>Secure Tax Services Portal — Version 1.6.1</span>
       </div>
     </div>
     <div class="top-actions">
       <a class="top-link" href="#taxPreparation">Tax Preparation</a>
+      <a class="top-link" href="#contractor1099">Contractor 1099</a>
       <a class="top-link" href="#transcriptHelp">Transcript Help</a>
       <a class="top-link" href="#documentCenter">Documents</a>
       <a class="top-link" href="#accountSecurity">Account &amp; Security</a>
@@ -1020,11 +1021,11 @@
       <div>
         <div class="eyebrow">Welcome back</div>
         <h1 id="clientName">Your secure tax portal</h1>
-        <p>Your Tax Savings Planner progress, tax-year records, and future document history stay connected to your client profile—even when you change your password.</p>
+        <p>Your tax preparation, transcript services, Contractor Forms 1099 filings, Tax Savings Planner records, and secure document history stay connected to your client profile—even when you change your password.</p>
       </div>
       <div class="security-box">
         <strong>Private portal session</strong>
-        <span>Your sign-in session is stored in an HttpOnly cookie and automatically expires. Sign out when using a shared computer.</span>
+        <span>Your secure sign-in session is protected and automatically expires. Sign out when using a shared or public computer.</span>
       </div>
     </section>
 
@@ -1095,7 +1096,7 @@
       <div class="section-body">
         <div class="home-rule">
           <strong>One secure portal:</strong>
-          Tax preparation, extensions, uploaded documents, and final client copies stay connected to this same account. Do not create a second portal profile.
+          Tax preparation, extensions, IRS transcript help, Contractor Forms 1099, tax planning, uploaded documents, and final client copies stay connected to this same account. Do not create a second portal profile.
         </div>
 
         <h3 class="archive-title">Tax Preparation</h3>
@@ -1103,7 +1104,7 @@
           <div class="empty">Loading your tax-preparation status...</div>
         </div>
 
-        <h3 class="archive-title" style="margin-top:24px;">Contractor Forms 1099</h3>
+        <h3 class="archive-title" id="contractor1099" style="margin-top:24px;">Contractor Forms 1099</h3>
         <div class="service-portal-list" id="contractor1099PortalList">
           <div class="empty">Loading your Contractor Forms 1099 status...</div>
         </div>
@@ -2021,7 +2022,7 @@
                     </div>
                     <div>
                       <strong>Contractor-information readiness:</strong>
-                      ${escapeHtml(request.contractorInformationStatus || "Not recorded")}
+                      ${escapeHtml(request.contractorInformationReadiness || request.contractorInformationStatus || "Not recorded")}
                     </div>
                     <div>
                       <strong>Payment-record readiness:</strong>
