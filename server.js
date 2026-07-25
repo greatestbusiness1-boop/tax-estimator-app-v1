@@ -832,6 +832,8 @@ async function appendLead(lead) {
       estimateSummary: lead.estimateSummary,
       taxPreparationIntake: lead.taxPreparationIntake || null,
       taxPreparationWork: lead.taxPreparationWork || null,
+      contractor1099Request: lead.contractor1099Request || null,
+      contractor1099Work: lead.contractor1099Work || null,
       extensionRequest: lead.extensionRequest || null,
       contactRequest: lead.contactRequest || null,
       calendarAppointment: lead.calendarAppointment || null
@@ -1630,6 +1632,16 @@ function mapRowToLead(row) {
       row.taxPreparationWork ||
       row.tax_preparation_work ||
       null,
+    contractor1099Request:
+      estimate.contractor1099Request ||
+      row.contractor1099Request ||
+      row.contractor_1099_request ||
+      null,
+    contractor1099Work:
+      estimate.contractor1099Work ||
+      row.contractor1099Work ||
+      row.contractor_1099_work ||
+      null,
     extensionRequest:
       estimate.extensionRequest ||
       row.extensionRequest ||
@@ -2320,6 +2332,172 @@ async function applyTaxPreparationPaidUpdate(
     }
   );
 }
+
+
+async function applyContractor1099PaidUpdate(
+  leadId,
+  paymentInfo = {}
+) {
+  const cleanId = String(leadId || "").trim();
+
+  const current =
+    await findClientPortalLeadById(cleanId);
+
+  const currentLead = current?.lead || {};
+  const currentWork =
+    currentLead.contractor1099Work || {};
+
+  const incomingSessionId = String(
+    paymentInfo.sessionId || ""
+  ).trim();
+
+  const processedSessions = Array.isArray(
+    currentWork.processedStripeSessions
+  )
+    ? currentWork.processedStripeSessions
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+    : [];
+
+  if (
+    incomingSessionId &&
+    processedSessions.includes(incomingSessionId)
+  ) {
+    return {
+      ok: true,
+      alreadyPaid: true,
+      source: current?.source || "existing-record",
+      lead: currentLead
+    };
+  }
+
+  const paidAmountCents = Math.max(
+    0,
+    Number.parseInt(
+      paymentInfo.amountPaidCents,
+      10
+    ) || 0
+  );
+
+  if (!paidAmountCents) {
+    return {
+      ok: false,
+      error:
+        "Stripe did not provide a valid Contractor 1099 payment amount."
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(
+    cleanId,
+    function applyContractor1099Paid(record = {}) {
+      const updated = { ...record };
+      const existing =
+        updated.contractor1099Work &&
+        typeof updated.contractor1099Work === "object"
+          ? updated.contractor1099Work
+          : {};
+
+      const currentPaidCents = Math.max(
+        0,
+        Number.parseInt(existing.amountPaidCents, 10) || 0
+      );
+
+      const quotedFeeCents = Math.max(
+        0,
+        Number.parseInt(existing.quotedFeeCents, 10) || 0
+      );
+
+      const newPaidCents =
+        currentPaidCents + paidAmountCents;
+
+      const paymentStatus =
+        quotedFeeCents > 0 &&
+        newPaidCents >= quotedFeeCents
+          ? "Paid / Verified"
+          : "Deposit Paid / Verified";
+
+      const currentWorkStatus = String(
+        existing.workStatus ||
+        "Needs Professional Review"
+      ).trim();
+
+      const nextWorkStatus =
+        /quote needed|payment pending/i.test(currentWorkStatus)
+          ? "Paid / Needs Review"
+          : currentWorkStatus;
+
+      const paymentNote =
+        "[" + nowDisplay + "] Stripe confirmed a Contractor Forms 1099 service payment of $" +
+        (paidAmountCents / 100).toFixed(2) + "." +
+        (paymentInfo.paymentPurpose
+          ? " Purpose: " + paymentInfo.paymentPurpose + "."
+          : "") +
+        (incomingSessionId
+          ? " Checkout Session: " + incomingSessionId + "."
+          : "") +
+        (paymentInfo.paymentIntentId
+          ? " Payment Intent: " + paymentInfo.paymentIntentId + "."
+          : "");
+
+      updated.contractor1099Work = {
+        ...existing,
+        paymentStatus,
+        amountPaidCents: newPaidCents,
+        amountPaid: Number(
+          (newPaidCents / 100).toFixed(2)
+        ),
+        paymentVerifiedAt: nowIso,
+        paidAt:
+          paymentStatus === "Paid / Verified"
+            ? nowIso
+            : (existing.paidAt || ""),
+        lastPaymentAt: nowIso,
+        lastPaymentAmountCents: paidAmountCents,
+        lastPaymentPurpose:
+          String(paymentInfo.paymentPurpose || "").trim(),
+        stripeCheckoutSessionId:
+          incomingSessionId ||
+          existing.stripeCheckoutSessionId ||
+          "",
+        stripePaymentIntentId:
+          paymentInfo.paymentIntentId ||
+          existing.stripePaymentIntentId ||
+          "",
+        processedStripeSessions:
+          incomingSessionId
+            ? Array.from(
+                new Set([
+                  ...processedSessions,
+                  incomingSessionId
+                ])
+              )
+            : processedSessions,
+        paymentSource: "Stripe Checkout",
+        workStatus: nextWorkStatus,
+        updatedAt: nowIso
+      };
+
+      updated.status =
+        "Contractor 1099 - " + nextWorkStatus;
+      updated.updatedAt = nowIso;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes = oldNotes
+        ? oldNotes + "\n" + paymentNote
+        : paymentNote;
+
+      return updated;
+    }
+  );
+}
+
 
 // =============================================================================
 // LOCAL ONLY: Simulate $150 transcript payment without Stripe charge
@@ -3453,6 +3631,108 @@ Greatest Business Solution LLC`
         }
       }
 
+      if (
+        service === "contractor_1099" &&
+        session.payment_status === "paid"
+      ) {
+        const result =
+          await applyContractor1099PaidUpdate(
+            leadId,
+            {
+              sessionId: session.id,
+              paymentIntentId:
+                session.payment_intent,
+              amountPaidCents:
+                session.amount_total,
+              paymentPurpose:
+                session.metadata?.paymentPurpose ||
+                "Contractor 1099 Service Payment"
+            }
+          );
+
+        if (!result.ok) {
+          console.error(
+            "[stripe webhook] Could not record Contractor 1099 payment:",
+            result.error || result
+          );
+        } else {
+          console.log(
+            result.alreadyPaid
+              ? "[stripe webhook] Contractor 1099 payment was already recorded:"
+              : "[stripe webhook] Contractor 1099 payment recorded:",
+            leadId,
+            result.source
+          );
+
+          const paidLead =
+            result.lead || {};
+          const clientEmail =
+            String(
+              paidLead.contact?.email || ""
+            ).trim();
+
+          if (
+            !result.alreadyPaid &&
+            clientEmail &&
+            EMAIL_USER &&
+            EMAIL_APP_PASSWORD
+          ) {
+            const work =
+              paidLead.contractor1099Work || {};
+            const portalUrl =
+              String(APP_BASE_URL || "")
+                .replace(/\/+$/, "") +
+              "/client-portal?contractor1099=1&leadId=" +
+              encodeURIComponent(leadId);
+
+            void transporter.sendMail({
+              from: EMAIL_USER,
+              to: clientEmail,
+              subject:
+                "Your Contractor 1099 Service Payment Was Received",
+              text:
+`Hello ${paidLead.contact?.name || "Client"},
+
+We received your secure Contractor Forms 1099 service payment.
+
+Amount received:
+$${(Number(session.amount_total || 0) / 100).toFixed(2)}
+
+Payment status:
+${String(
+  work.paymentStatus ||
+  "Payment Received"
+)}
+
+Reporting year:
+${String(
+  paidLead.contractor1099Request?.taxYear ||
+  paidLead.taxData?.taxYear ||
+  "Not recorded"
+)}
+
+Use the Secure Client Portal for W-9s, payee information, payment totals, and office updates:
+${portalUrl}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, contractor EINs, W-9s, bank information, or detailed payment records.
+
+Thank you,
+
+Greatest Business Solution LLC`
+            }).catch((emailError) => {
+              console.error(
+                "[stripe webhook] Contractor 1099 payment confirmation email failed:",
+                leadId,
+                emailError.message || emailError
+              );
+            });
+          }
+        }
+      }
+
       if (service === "written_review" && session.payment_status === "paid") {
         const result = await applyWrittenReviewPaidUpdate(leadId, {
           sessionId: session.id,
@@ -4076,6 +4356,10 @@ async function getClientPortalAccessibleLeads(email) {
 }
 
 function getClientPortalServiceLabel(lead = {}) {
+  if (lead.contractor1099Request) {
+    return "Contractor Forms 1099";
+  }
+
   if (lead.extensionRequest) {
     return "Tax Extension";
   }
@@ -4132,6 +4416,13 @@ function normalizeClientPortalServiceLabel(value) {
     lower.includes("review")
   ) {
     return "Written Red Flag Review";
+  }
+
+  if (
+    lower.includes("contractor") &&
+    lower.includes("1099")
+  ) {
+    return "Contractor Forms 1099";
   }
 
   if (
@@ -4949,6 +5240,333 @@ function buildClientPortalTaxPreparationSummary(entry) {
   };
 }
 
+
+function contractor1099Label(value) {
+  const labels = {
+    original_1099_nec:
+      "Original Form 1099-NEC",
+    original_1099_misc:
+      "Original Form 1099-MISC",
+    correction:
+      "Correction",
+    late_filing:
+      "Late / Past-Due Filing",
+    recipient_copies:
+      "Recipient Copies",
+    not_sure:
+      "Form Type Not Sure",
+    all_collected:
+      "W-9 collected for every payee",
+    some_missing:
+      "Some W-9s are missing",
+    none_collected:
+      "No W-9s collected",
+    complete:
+      "Complete",
+    partial:
+      "Partial",
+    not_ready:
+      "Not Ready",
+    on_time:
+      "Original / On-Time Filing",
+    late:
+      "Deadline May Have Passed",
+    primary_state_only:
+      "Primary State Only",
+    multiple_states:
+      "Multiple States",
+    secure_electronic:
+      "Secure Electronic Delivery",
+    paper_mail:
+      "Paper / Mail Delivery",
+    client_handles:
+      "Business Delivers Recipient Copies",
+    office_recommendation:
+      "Office Recommendation"
+  };
+
+  const key = String(value || "").trim();
+
+  return labels[key] ||
+    key
+      .replace(/[_-]+/g, " ")
+      .replace(
+        /\b\w/g,
+        (letter) => letter.toUpperCase()
+      )
+      .trim();
+}
+
+function buildContractor1099DocumentChecklist(
+  request = {}
+) {
+  const checklist = [];
+  const add = (value) => {
+    const text = String(value || "").trim();
+
+    if (text && !checklist.includes(text)) {
+      checklist.push(text);
+    }
+  };
+
+  add(
+    "Business legal name, mailing address, and taxpayer identification information for the payer."
+  );
+
+  add(
+    "A completed Form W-9 or equivalent payee information for every contractor or other recipient."
+  );
+
+  add(
+    "Year-end payment total for each payee, separated by payment type when needed."
+  );
+
+  if (
+    Array.isArray(request.serviceTypes) &&
+    request.serviceTypes.includes("correction")
+  ) {
+    add(
+      "Copy of every original Form 1099 that needs correction plus the exact corrected name, TIN, address, or amount."
+    );
+  }
+
+  if (
+    Array.isArray(request.serviceTypes) &&
+    request.serviceTypes.includes("late_filing")
+  ) {
+    add(
+      "Any prior filing confirmation, IRS or state notice, and the date the missing form was discovered."
+    );
+  }
+
+  if (
+    Number(request.stateCount || 1) > 1 ||
+    request.stateFilingStatus === "multiple_states"
+  ) {
+    add(
+      "State allocation details and any state withholding for each payee."
+    );
+  }
+
+  if (
+    request.backupWithholdingStatus === "yes" ||
+    request.backupWithholdingStatus === "not_sure"
+  ) {
+    add(
+      "Backup-withholding records, deposit confirmations, and any Form 945 information available."
+    );
+  }
+
+  add(
+    "Prior-year payer copies or filing confirmation when available."
+  );
+
+  return checklist;
+}
+
+function getContractor1099PortalNextAction(
+  lead = {},
+  work = {}
+) {
+  const status = String(
+    work.workStatus ||
+    lead.status ||
+    ""
+  ).toLowerCase();
+
+  if (
+    status.includes("completed") ||
+    status.includes("closed")
+  ) {
+    return "The Contractor Forms 1099 service is complete. Keep filing confirmations and recipient copies with the business records.";
+  }
+
+  if (
+    status.includes("filed") ||
+    status.includes("awaiting acceptance")
+  ) {
+    return "The forms were submitted. The office is monitoring acceptance and recipient-copy delivery.";
+  }
+
+  if (
+    String(work.payeeInformationStatus || "")
+      .toLowerCase()
+      .includes("needed") ||
+    String(work.documentStatus || "")
+      .toLowerCase()
+      .includes("needed")
+  ) {
+    return "Upload missing W-9s, payee information, and payment totals through the Secure Document Center.";
+  }
+
+  if (
+    !String(work.paymentStatus || "")
+      .toLowerCase()
+      .includes("paid") &&
+    String(work.paymentRequirement || "Required") !==
+      "Waived by Office"
+  ) {
+    return "The office is reviewing the request and will send a secure payment link after the service quote is approved.";
+  }
+
+  if (status.includes("ready to prepare")) {
+    return "The request is ready for the office to prepare the forms.";
+  }
+
+  if (status.includes("preparing")) {
+    return "The office is preparing the Contractor Forms 1099 and will contact you if a payer or payee record needs correction.";
+  }
+
+  return "The office is reviewing the request, W-9 readiness, filing timing, and service quote.";
+}
+
+function buildClientPortalContractor1099Summary(entry) {
+  const lead = entry?.lead || {};
+  const request = lead.contractor1099Request || {};
+  const work = lead.contractor1099Work || {};
+  const status = String(lead.status || "");
+
+  const isContractor1099 =
+    Boolean(lead.contractor1099Request) ||
+    Boolean(lead.contractor1099Work) ||
+    String(entry?.leadId || "")
+      .startsWith("C1099-") ||
+    status.toLowerCase()
+      .includes("contractor 1099");
+
+  if (!isContractor1099) {
+    return null;
+  }
+
+  return {
+    leadId: String(entry.leadId || ""),
+    clientName: String(
+      lead.contact?.name ||
+      getLeadNameValue(entry.raw) ||
+      "Client"
+    ),
+    businessLegalName: String(
+      request.businessLegalName || ""
+    ),
+    businessTradeName: String(
+      request.businessTradeName || ""
+    ),
+    taxYear: String(
+      request.taxYear ||
+      lead.taxData?.taxYear ||
+      "Not recorded"
+    ),
+    serviceLabels:
+      Array.isArray(request.serviceTypes)
+        ? request.serviceTypes.map(
+            contractor1099Label
+          )
+        : [],
+    recipientCount: Number(
+      request.recipientCount || 0
+    ),
+    totalInformationReturns: Number(
+      request.totalInformationReturns || 0
+    ),
+    electronicFilingReview:
+      request.electronicFilingReview === true,
+    w9Status: contractor1099Label(
+      request.w9Status
+    ),
+    paymentRecordsStatus:
+      contractor1099Label(
+        request.paymentRecordsStatus
+      ),
+    deadlineStatus: contractor1099Label(
+      request.deadlineStatus
+    ),
+    primaryState: String(
+      request.primaryState || ""
+    ),
+    stateCount: Number(
+      request.stateCount || 1
+    ),
+    stateFilingStatus:
+      contractor1099Label(
+        request.stateFilingStatus
+      ),
+    recipientCopyMethod:
+      contractor1099Label(
+        request.recipientCopyMethod
+      ),
+    workStatus: String(
+      work.workStatus ||
+      status ||
+      "New Request"
+    ),
+    documentStatus: String(
+      work.documentStatus ||
+      "Documents Needed"
+    ),
+    payerInformationStatus: String(
+      work.payerInformationStatus ||
+      "Needs Review"
+    ),
+    payeeInformationStatus: String(
+      work.payeeInformationStatus ||
+      "W-9s Needed"
+    ),
+    paymentStatus: String(
+      work.paymentStatus ||
+      "Quote Needed"
+    ),
+    quotedFee: Number(
+      work.quotedFee || 0
+    ),
+    amountPaid: Number(
+      work.amountPaid || 0
+    ),
+    preparationStatus: String(
+      work.preparationStatus ||
+      "Not Started"
+    ),
+    filingStatus: String(
+      work.filingStatus ||
+      "Not Started"
+    ),
+    irsAcceptanceStatus: String(
+      work.irsAcceptanceStatus ||
+      "Not Submitted"
+    ),
+    stateFilingWorkStatus: String(
+      work.stateFilingWorkStatus ||
+      "Not Reviewed"
+    ),
+    recipientCopyStatus: String(
+      work.recipientCopyStatus ||
+      "Not Delivered"
+    ),
+    documentChecklist:
+      buildContractor1099DocumentChecklist(
+        request
+      ),
+    completed:
+      /completed|closed/i.test(
+        String(
+          work.workStatus ||
+          status
+        )
+      ),
+    nextAction:
+      getContractor1099PortalNextAction(
+        lead,
+        work
+      ),
+    updatedAt: String(
+      work.updatedAt ||
+      lead.updatedAt ||
+      lead.timestamp ||
+      ""
+    )
+  };
+}
+
+
 function getExtensionPortalNextAction(
   lead = {},
   request = {}
@@ -5090,6 +5708,7 @@ function getClientPortalRecordDate(lead = {}, planner = {}) {
 function getClientPortalTaxYear(lead = {}, planner = {}) {
   return String(
     planner.taxYear ||
+    lead.contractor1099Request?.taxYear ||
     lead.extensionRequest?.taxYear ||
     lead.taxPreparationIntake?.taxYear ||
     lead.taxData?.taxYear ||
@@ -9165,6 +9784,626 @@ Greatest Business Solution LLC`
 
 
 // =============================================================================
+// POST /api/contractor-1099-request
+// Creates a separate business filing request for Forms 1099 issued to
+// contractors or other payees. Sensitive payer/payee data is collected later
+// through the Secure Client Portal.
+// =============================================================================
+
+app.post("/api/contractor-1099-request", async (req, res) => {
+  const body = req.body || {};
+  const contact = body.contact || {};
+  const request = body.request || {};
+  const errors = [];
+
+  const name = String(contact.name || "").trim();
+  const email = normalizeEmail(contact.email || "");
+  const phoneDigits = String(
+    contact.phone || ""
+  )
+    .replace(/\D/g, "")
+    .slice(0, 10);
+  const phone = formatPhoneNumber(phoneDigits);
+
+  const businessLegalName = String(
+    request.businessLegalName || ""
+  ).trim();
+
+  const businessTradeName = String(
+    request.businessTradeName || ""
+  ).trim();
+
+  const hasEin = String(
+    request.hasEin || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const taxYear = String(
+    request.taxYear || ""
+  ).trim();
+
+  const primaryState = String(
+    request.primaryState || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  const stateCount = Math.max(
+    1,
+    Number.parseInt(request.stateCount, 10) || 1
+  );
+
+  const serviceTypes = Array.isArray(
+    request.serviceTypes
+  )
+    ? Array.from(
+        new Set(
+          request.serviceTypes
+            .map((value) =>
+              String(value || "")
+                .trim()
+                .toLowerCase()
+            )
+            .filter(Boolean)
+        )
+      )
+    : [];
+
+  const allowedServiceTypes = new Set([
+    "original_1099_nec",
+    "original_1099_misc",
+    "correction",
+    "late_filing",
+    "recipient_copies",
+    "not_sure"
+  ]);
+
+  const recipientCount = Math.max(
+    0,
+    Number.parseInt(
+      request.recipientCount,
+      10
+    ) || 0
+  );
+
+  const totalInformationReturns = Math.max(
+    0,
+    Number.parseInt(
+      request.totalInformationReturns,
+      10
+    ) || 0
+  );
+
+  const w9Status = String(
+    request.w9Status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const paymentRecordsStatus = String(
+    request.paymentRecordsStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const deadlineStatus = String(
+    request.deadlineStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const backupWithholdingStatus = String(
+    request.backupWithholdingStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const stateFilingStatus = String(
+    request.stateFilingStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const recipientCopyMethod = String(
+    request.recipientCopyMethod || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const taxPreparationConnection = String(
+    request.taxPreparationConnection || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const portalAccountKnown = String(
+    request.portalAccountKnown || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const clientNotes = String(
+    request.notes || ""
+  )
+    .trim()
+    .slice(0, 1500);
+
+  if (!name) {
+    errors.push("Contact name is required.");
+  }
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  if (phoneDigits.length !== 10) {
+    errors.push(
+      "Enter a 10-digit phone number in the format (623) 570-3934."
+    );
+  }
+
+  if (!businessLegalName) {
+    errors.push("Business legal name is required.");
+  }
+
+  if (!["yes", "no", "not_sure"].includes(hasEin)) {
+    errors.push("Select whether the business has an EIN.");
+  }
+
+  if (
+    !/^\d{4}$/.test(taxYear) ||
+    Number(taxYear) < 2015 ||
+    Number(taxYear) > new Date().getFullYear()
+  ) {
+    errors.push(
+      "Enter a valid four-digit reporting year."
+    );
+  }
+
+  if (!VALID_US_STATE_CODES.has(primaryState)) {
+    errors.push(
+      "Select a valid two-letter primary business state."
+    );
+  }
+
+  if (
+    !serviceTypes.length ||
+    serviceTypes.some(
+      (value) => !allowedServiceTypes.has(value)
+    )
+  ) {
+    errors.push(
+      "Select at least one valid Contractor 1099 service."
+    );
+  }
+
+  if (recipientCount < 1) {
+    errors.push(
+      "Enter the number of contractors or other payees that may need a form."
+    );
+  }
+
+  if (
+    totalInformationReturns < recipientCount
+  ) {
+    errors.push(
+      "Total W-2 and 1099 forms cannot be less than the number of payees in this request."
+    );
+  }
+
+  if (![
+    "all_collected",
+    "some_missing",
+    "none_collected",
+    "not_sure"
+  ].includes(w9Status)) {
+    errors.push("Select the W-9 collection status.");
+  }
+
+  if (![
+    "complete",
+    "partial",
+    "not_ready",
+    "not_sure"
+  ].includes(paymentRecordsStatus)) {
+    errors.push(
+      "Select the contractor payment-record status."
+    );
+  }
+
+  if (![
+    "on_time",
+    "late",
+    "correction",
+    "not_sure"
+  ].includes(deadlineStatus)) {
+    errors.push(
+      "Select the filing deadline or correction situation."
+    );
+  }
+
+  if (![
+    "yes",
+    "no",
+    "not_sure"
+  ].includes(backupWithholdingStatus)) {
+    errors.push(
+      "Select the backup-withholding status."
+    );
+  }
+
+  if (![
+    "primary_state_only",
+    "multiple_states",
+    "not_sure"
+  ].includes(stateFilingStatus)) {
+    errors.push(
+      "Select the state-filing situation."
+    );
+  }
+
+  if (![
+    "secure_electronic",
+    "paper_mail",
+    "client_handles",
+    "office_recommendation"
+  ].includes(recipientCopyMethod)) {
+    errors.push(
+      "Select the preferred recipient-copy method."
+    );
+  }
+
+  if (![
+    "yes",
+    "no",
+    "not_sure"
+  ].includes(taxPreparationConnection)) {
+    errors.push(
+      "Select whether this service is connected to a tax return we are preparing."
+    );
+  }
+
+  if (![
+    "yes",
+    "no",
+    "not_sure"
+  ].includes(portalAccountKnown)) {
+    errors.push(
+      "Select whether you already use the Secure Client Portal."
+    );
+  }
+
+  if (errors.length) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const activePortalAccount =
+    await findActiveClientPortalAccountByEmail(email);
+
+  const submittedAt = new Date().toISOString();
+  const leadId =
+    "C1099-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 7)
+      .toUpperCase();
+
+  const electronicFilingReview =
+    totalInformationReturns >= 10;
+
+  const needsProfessionalReview =
+    serviceTypes.includes("correction") ||
+    serviceTypes.includes("late_filing") ||
+    serviceTypes.includes("not_sure") ||
+    ["late", "correction", "not_sure"].includes(
+      deadlineStatus
+    ) ||
+    w9Status !== "all_collected" ||
+    paymentRecordsStatus !== "complete" ||
+    backupWithholdingStatus !== "no" ||
+    stateCount > 1 ||
+    stateFilingStatus !== "primary_state_only" ||
+    electronicFilingReview ||
+    hasEin !== "yes";
+
+  const workStatus =
+    needsProfessionalReview
+      ? "Needs Professional Review"
+      : activePortalAccount
+        ? "Documents Needed"
+        : "Portal Activation Needed";
+
+  const status =
+    "Contractor 1099 - " + workStatus;
+
+  const serviceLabels = {
+    original_1099_nec:
+      "Original Form 1099-NEC",
+    original_1099_misc:
+      "Original Form 1099-MISC",
+    correction:
+      "Correction",
+    late_filing:
+      "Late / Past-Due Filing",
+    recipient_copies:
+      "Recipient Copies",
+    not_sure:
+      "Form Type Not Sure"
+  };
+
+  const lead = {
+    leadId,
+    timestamp: submittedAt,
+    updatedAt: submittedAt,
+    priority:
+      needsProfessionalReview
+        ? "high"
+        : "medium",
+    status,
+    notes:
+      "Contractor Forms 1099 service request submitted." +
+      (
+        clientNotes
+          ? "\nClient note: " + clientNotes
+          : ""
+      ),
+    contact: {
+      name,
+      email,
+      phone
+    },
+    taxData: {
+      taxYear,
+      stateCode: primaryState
+    },
+    contractor1099Request: {
+      version: 1,
+      submittedAt,
+      taxYear,
+      businessLegalName,
+      businessTradeName,
+      hasEin,
+      primaryState,
+      stateCount,
+      serviceTypes,
+      serviceLabels: serviceTypes.map(
+        (value) =>
+          serviceLabels[value] || value
+      ),
+      recipientCount,
+      totalInformationReturns,
+      electronicFilingReview,
+      w9Status,
+      paymentRecordsStatus,
+      deadlineStatus,
+      backupWithholdingStatus,
+      stateFilingStatus,
+      recipientCopyMethod,
+      taxPreparationConnection,
+      portalAccountKnown,
+      clientNotes,
+      source: "Public Contractor 1099 Intake"
+    },
+    contractor1099Work: {
+      version: 1,
+      portalStatus:
+        activePortalAccount
+          ? "Active"
+          : "Activation Needed",
+      workStatus,
+      documentStatus: "Documents Needed",
+      payerInformationStatus: "Needs Review",
+      payeeInformationStatus:
+        w9Status === "all_collected"
+          ? "Needs Review"
+          : "W-9s Needed",
+      paymentStatus: "Quote Needed",
+      paymentRequirement: "Required",
+      quotedFee: 0,
+      quotedFeeCents: 0,
+      amountPaid: 0,
+      amountPaidCents: 0,
+      paymentRequestAmount: 0,
+      paymentRequestAmountCents: 0,
+      paymentPurpose: "Full Payment",
+      preparationStatus: "Not Started",
+      filingStatus: "Not Started",
+      irsAcceptanceStatus: "Not Submitted",
+      stateFilingWorkStatus: "Not Reviewed",
+      recipientCopyStatus: "Not Delivered",
+      correctionStatus:
+        serviceTypes.includes("correction")
+          ? "Correction Review Needed"
+          : "Not Applicable",
+      officeNote: "",
+      convertedAt: submittedAt,
+      updatedAt: submittedAt
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(savedLead.leadId, savedLead);
+
+    let officeEmailSent = false;
+    let clientEmailSent = false;
+    let emailError = "";
+
+    const portalBaseUrl =
+      String(APP_BASE_URL || "")
+        .replace(/\/+$/, "") +
+      "/client-portal";
+
+    const portalUrl =
+      activePortalAccount
+        ? portalBaseUrl +
+          "?contractor1099=1&email=" +
+          encodeURIComponent(email)
+        : portalBaseUrl +
+          "?activate=1&contractor1099=1&leadId=" +
+          encodeURIComponent(leadId) +
+          "&email=" +
+          encodeURIComponent(email);
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error("Email delivery is not configured.");
+      }
+
+      const businessRecipient =
+        process.env.CONTACT_EMAIL ||
+        "greatestbusiness1@gmail.com";
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: businessRecipient,
+        replyTo: email,
+        subject:
+          "New Contractor Forms 1099 Request - " +
+          businessLegalName,
+        text:
+`A new Contractor Forms 1099 request was submitted.
+
+Contact:
+${name}
+${email}
+${phone}
+
+Business:
+${businessLegalName}
+${businessTradeName || "No separate trade name reported"}
+
+Reporting year:
+${taxYear}
+
+Services:
+${serviceTypes.map(
+  (value) => serviceLabels[value] || value
+).join(", ")}
+
+Potential payees:
+${recipientCount}
+
+W-9 status:
+${w9Status}
+
+Deadline situation:
+${deadlineStatus}
+
+Reference number:
+${leadId}
+
+Open Tax Lead Center > Contractor 1099 Requests.`
+      });
+
+      officeEmailSent = true;
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject:
+          "We Received Your Contractor Forms 1099 Request",
+        text:
+`Hello ${name},
+
+We received your Contractor Forms 1099 service request for ${businessLegalName}.
+
+Reporting year:
+${taxYear}
+
+Potential contractors or other payees:
+${recipientCount}
+
+Current status:
+${workStatus}
+
+The office will review the form type, W-9 readiness, payment records, filing timing, state requirements, and service quote. No payment was charged by this intake.
+
+Secure Client Portal:
+${portalUrl}
+
+${activePortalAccount
+  ? "This request is connected to your existing portal. Sign in with the same email and password. Do not create another account."
+  : "Activate the secure portal using the link above. Sensitive W-9s, taxpayer identification numbers, payment totals, and filing records must be provided through the portal."}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, contractor EINs, W-9s, bank information, or detailed payment records.
+
+Thank you,
+
+Greatest Business Solution LLC`
+      });
+
+      clientEmailSent = true;
+    } catch (emailErr) {
+      emailError =
+        emailErr?.message ||
+        "Email delivery failed.";
+
+      console.error(
+        "[contractor 1099 request] Email failed:",
+        leadId,
+        emailError
+      );
+    }
+
+    return res.status(201).json({
+      ok: true,
+      leadId,
+      status: workStatus,
+      needsProfessionalReview,
+      electronicFilingReview,
+      portalAccessMode:
+        activePortalAccount
+          ? "existing"
+          : "activation",
+      portalUrl:
+        activePortalAccount
+          ? "/client-portal?contractor1099=1&email=" +
+            encodeURIComponent(email)
+          : "/client-portal?activate=1&contractor1099=1&leadId=" +
+            encodeURIComponent(leadId) +
+            "&email=" +
+            encodeURIComponent(email),
+      portalActionLabel:
+        activePortalAccount
+          ? "Sign In to My Secure Portal"
+          : "Activate My Secure Client Portal",
+      officeEmailSent,
+      clientEmailSent,
+      emailError:
+        officeEmailSent && clientEmailSent
+          ? null
+          : emailError
+    });
+  } catch (err) {
+    console.error(
+      "[contractor 1099 request] Save failed:",
+      err.message || err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: [
+        "Could not save your Contractor 1099 request. Please try again."
+      ]
+    });
+  }
+});
+
+
+
+// =============================================================================
 // POST /api/extension-request
 // Creates a deadline-aware Tax Extension request before Stripe checkout.
 // =============================================================================
@@ -10847,6 +12086,22 @@ app.get(
             )
         );
 
+    const contractor1099Requests =
+      accessible
+        .map(
+          buildClientPortalContractor1099Summary
+        )
+        .filter(Boolean)
+        .sort(
+          (left, right) =>
+            Date.parse(
+              right.updatedAt || 0
+            ) -
+            Date.parse(
+              left.updatedAt || 0
+            )
+        );
+
     const extensionRequests =
       accessible
         .map(
@@ -10934,6 +12189,7 @@ app.get(
         visibleYearLimit:
           recordOrganization.visibleYearLimit,
         taxPreparationRequests,
+        contractor1099Requests,
         extensionRequests,
         transcriptRequests,
         documentCenter
@@ -13280,6 +14536,10 @@ app.get("/request-tax-extension", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "extension-request.html"));
 });
 
+app.get("/contractor-1099-service", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "contractor-1099-service.html"));
+});
+
 app.get("/extension-thank-you", (req, res) => {
   res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "extension-thank-you.html"));
@@ -14124,6 +15384,8 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     transcriptRequest,
     taxPreparationIntake,
     taxPreparationWork,
+    contractor1099Request,
+    contractor1099Work,
     extensionRequest,
     calendarAppointment,
     completedAt,
@@ -14225,6 +15487,30 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.taxPreparationWork = {
         ...(updatedEstimate.taxPreparationWork || {}),
         ...taxPreparationWork,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      contractor1099Request &&
+      typeof contractor1099Request === "object" &&
+      !Array.isArray(contractor1099Request)
+    ) {
+      updatedEstimate.contractor1099Request = {
+        ...(updatedEstimate.contractor1099Request || {}),
+        ...contractor1099Request,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      contractor1099Work &&
+      typeof contractor1099Work === "object" &&
+      !Array.isArray(contractor1099Work)
+    ) {
+      updatedEstimate.contractor1099Work = {
+        ...(updatedEstimate.contractor1099Work || {}),
+        ...contractor1099Work,
         updatedAt: new Date().toISOString()
       };
     }
@@ -14411,6 +15697,30 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         localLead.taxPreparationWork = {
           ...(localLead.taxPreparationWork || {}),
           ...taxPreparationWork,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (
+        contractor1099Request &&
+        typeof contractor1099Request === "object" &&
+        !Array.isArray(contractor1099Request)
+      ) {
+        localLead.contractor1099Request = {
+          ...(localLead.contractor1099Request || {}),
+          ...contractor1099Request,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (
+        contractor1099Work &&
+        typeof contractor1099Work === "object" &&
+        !Array.isArray(contractor1099Work)
+      ) {
+        localLead.contractor1099Work = {
+          ...(localLead.contractor1099Work || {}),
+          ...contractor1099Work,
           updatedAt: new Date().toISOString()
         };
       }
@@ -15461,6 +16771,236 @@ app.post("/api/extension-closure-email", async (req, res) => {
 
 
 // =============================================================================
+// POST /api/contractor-1099-completion-email
+// Sends or resends the final service-completion message.
+// =============================================================================
+
+app.post("/api/contractor-1099-completion-email", async (req, res) => {
+  try {
+    const leadId = String(req.body?.leadId || "").trim();
+    const resend = req.body?.resend === true;
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The Contractor 1099 reference number is required."
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The Contractor 1099 record could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const request =
+      lead.contractor1099Request || {};
+    const work =
+      lead.contractor1099Work || {};
+    const email = normalizeEmail(
+      lead.contact?.email ||
+      getLeadEmailValue(candidate.raw)
+    );
+
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The client email address is missing."
+      });
+    }
+
+    if (
+      !/completed|closed/i.test(
+        String(
+          work.workStatus ||
+          lead.status ||
+          ""
+        )
+      )
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "The Contractor 1099 service must be Completed before the completion email is sent."
+      });
+    }
+
+    if (
+      work.completionEmailSentAt &&
+      !resend
+    ) {
+      return res.status(200).json({
+        ok: true,
+        emailSent: true,
+        alreadySent: true,
+        sentAt: work.completionEmailSentAt
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      throw new Error(
+        "Email delivery is not configured."
+      );
+    }
+
+    const portalUrl =
+      String(APP_BASE_URL || "")
+        .replace(/\/+$/, "") +
+      "/client-portal?contractor1099=1&leadId=" +
+      encodeURIComponent(leadId);
+
+    const services =
+      Array.isArray(request.serviceLabels)
+        ? request.serviceLabels.join(", ")
+        : "Contractor Forms 1099 Service";
+
+    const sentAt = new Date().toISOString();
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject:
+        "Your Contractor Forms 1099 Service Is Complete",
+      text:
+`Hello ${lead.contact?.name || "Client"},
+
+Your Contractor Forms 1099 service is complete.
+
+Business:
+${request.businessLegalName || "Not recorded"}
+
+Reporting year:
+${request.taxYear || "Not recorded"}
+
+Services:
+${services}
+
+Federal filing status:
+${work.filingStatus || "Completed"}
+
+IRS acceptance:
+${work.irsAcceptanceStatus || "Check the secure portal"}
+
+State filing:
+${work.stateFilingWorkStatus || "Not reviewed"}
+
+Recipient copies:
+${work.recipientCopyStatus || "Check the secure portal"}
+
+Use the Secure Client Portal to review filing confirmations, recipient-copy information, and office updates:
+${portalUrl}
+
+Keep the payer copy, filing acknowledgment, recipient-delivery records, W-9s, and supporting payment records with the business files.
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, contractor EINs, W-9s, bank information, or detailed payment records.
+
+Thank you,
+
+Greatest Business Solution LLC`
+    });
+
+    const saveResult =
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          contractor1099Work: {
+            ...(record.contractor1099Work || {}),
+            completionEmailSentAt: sentAt,
+            completionEmailStatus: "Sent",
+            completionEmailError: "",
+            completionEmailResendCount:
+              Math.max(
+                0,
+                Number.parseInt(
+                  record.contractor1099Work
+                    ?.completionEmailResendCount,
+                  10
+                ) || 0
+              ) + (resend ? 1 : 0),
+            updatedAt: sentAt
+          },
+          updatedAt: sentAt
+        })
+      );
+
+    if (!saveResult?.ok) {
+      return res.status(500).json({
+        ok: false,
+        emailSent: true,
+        sentAt,
+        error:
+          "The completion email was sent, but the delivery record could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      emailSent: true,
+      alreadySent: false,
+      sentAt
+    });
+  } catch (error) {
+    console.error(
+      "[contractor-1099-completion-email] Failed:",
+      error.message || error
+    );
+
+    const leadId =
+      String(req.body?.leadId || "").trim();
+    const failedAt =
+      new Date().toISOString();
+
+    if (leadId) {
+      try {
+        await updateLeadAfterStripePayment(
+          leadId,
+          (record = {}) => ({
+            ...record,
+            contractor1099Work: {
+              ...(record.contractor1099Work || {}),
+              completionEmailStatus: "Failed",
+              completionEmailError:
+                error.message ||
+                "The completion email could not be sent.",
+              completionEmailLastAttemptAt:
+                failedAt,
+              updatedAt: failedAt
+            },
+            updatedAt: failedAt
+          })
+        );
+      } catch (saveError) {
+        console.error(
+          "[contractor-1099-completion-email] Failure status save failed:",
+          saveError.message || saveError
+        );
+      }
+    }
+
+    return res.status(500).json({
+      ok: false,
+      emailSent: false,
+      error:
+        error.message ||
+        "The Contractor 1099 completion email could not be sent."
+    });
+  }
+});
+
+
+// =============================================================================
 // POST /api/tax-preparation-completion-email
 // Sends or resends the final client completion message and saves delivery status.
 // =============================================================================
@@ -15964,6 +17504,375 @@ Greatest Business Solution LLC`
     });
   }
 });
+
+// =============================================================================
+// POST /api/create-contractor-1099-checkout
+// The amount is read from the office-saved Contractor 1099 Action Basket.
+// =============================================================================
+
+app.post("/api/create-contractor-1099-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Stripe secret key is not configured."
+      });
+    }
+
+    const leadId =
+      String(req.body?.leadId || "").trim();
+    const clientEmail =
+      normalizeEmail(
+        req.body?.clientEmail || ""
+      );
+    const officeRequest =
+      req.body?.officeRequest === true;
+
+    if (!leadId || !clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The Contractor 1099 reference number and client email are required."
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The Contractor 1099 request could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const request =
+      lead.contractor1099Request || {};
+    const work =
+      lead.contractor1099Work || {};
+
+    if (
+      normalizeEmail(
+        lead.contact?.email ||
+        getLeadEmailValue(candidate.raw)
+      ) !== clientEmail
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The email address does not match the saved Contractor 1099 request."
+      });
+    }
+
+    if (
+      String(
+        work.paymentRequirement || "Required"
+      ) === "Waived by Office"
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Payment is marked Waived by Office. Change the requirement before creating a payment link."
+      });
+    }
+
+    const quotedFeeCents = Math.max(
+      0,
+      Number.parseInt(
+        work.quotedFeeCents,
+        10
+      ) || 0
+    );
+
+    const amountPaidCents = Math.max(
+      0,
+      Number.parseInt(
+        work.amountPaidCents,
+        10
+      ) || 0
+    );
+
+    const amountCents = Math.max(
+      0,
+      Number.parseInt(
+        work.paymentRequestAmountCents,
+        10
+      ) || 0
+    );
+
+    const outstandingCents = Math.max(
+      0,
+      quotedFeeCents - amountPaidCents
+    );
+
+    if (quotedFeeCents < 100) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter and save the total Contractor 1099 service quote before creating a payment link."
+      });
+    }
+
+    if (amountCents < 100) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter and save an amount to collect now before creating a payment link."
+      });
+    }
+
+    if (amountCents > outstandingCents) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The amount to collect is greater than the unpaid balance on the saved service quote."
+      });
+    }
+
+    const paymentPurpose = String(
+      work.paymentPurpose ||
+      "Contractor 1099 Service Payment"
+    ).trim();
+
+    const taxYear = String(
+      request.taxYear ||
+      lead.taxData?.taxYear ||
+      ""
+    );
+
+    const recipientCount = Math.max(
+      0,
+      Number.parseInt(
+        request.recipientCount,
+        10
+      ) || 0
+    );
+
+    const session =
+      await stripe.checkout.sessions.create({
+        mode: "payment",
+        client_reference_id: leadId,
+        customer_email: clientEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name:
+                  "Contractor Forms 1099 — " +
+                  paymentPurpose,
+                description:
+                  "Professional preparation and filing service for reporting year " +
+                  (taxYear || "not recorded") +
+                  ". Estimated payees: " +
+                  recipientCount +
+                  ". Final scope is based on the office-approved quote."
+              },
+              unit_amount: amountCents
+            },
+            quantity: 1
+          }
+        ],
+        metadata: {
+          leadId,
+          clientName:
+            String(
+              lead.contact?.name || ""
+            ),
+          clientEmail,
+          service: "contractor_1099",
+          taxYear,
+          recipientCount:
+            String(recipientCount),
+          paymentPurpose,
+          quotedFeeCents:
+            String(quotedFeeCents),
+          amountBeforePaymentCents:
+            String(amountPaidCents)
+        },
+        success_url:
+          `${APP_BASE_URL}/client-portal?contractor1099=1&payment=success&leadId=${encodeURIComponent(leadId)}`,
+        cancel_url:
+          `${APP_BASE_URL}/client-portal?contractor1099=1&payment=cancelled&leadId=${encodeURIComponent(leadId)}`
+      });
+
+    const createdAt =
+      new Date().toISOString();
+
+    const saveResult =
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          contractor1099Work: {
+            ...(record.contractor1099Work || {}),
+            stripeCheckoutSessionId:
+              session.id,
+            stripeCheckoutUrl:
+              session.url,
+            checkoutCreatedAt:
+              createdAt,
+            paymentStatus:
+              amountPaidCents > 0
+                ? "Balance Payment Link Created"
+                : "Payment Link Created",
+            updatedAt: createdAt
+          },
+          updatedAt: createdAt
+        })
+      );
+
+    if (!saveResult?.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "The Stripe link was created, but it could not be saved on the Contractor 1099 card. No payment-link email was sent."
+      });
+    }
+
+    let emailSent = false;
+    let emailError = "";
+
+    if (officeRequest) {
+      try {
+        if (
+          !EMAIL_USER ||
+          !EMAIL_APP_PASSWORD
+        ) {
+          throw new Error(
+            "Email delivery is not configured."
+          );
+        }
+
+        const portalUrl =
+          String(APP_BASE_URL || "")
+            .replace(/\/+$/, "") +
+          "/client-portal?contractor1099=1&leadId=" +
+          encodeURIComponent(leadId);
+
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: clientEmail,
+          subject:
+            "Your Secure Contractor 1099 Service Payment Link",
+          text:
+`Hello ${lead.contact?.name || "Client"},
+
+Your Contractor Forms 1099 service payment link is ready.
+
+Business:
+${request.businessLegalName || "Not recorded"}
+
+Reporting year:
+${taxYear || "Not recorded"}
+
+Estimated payees:
+${recipientCount}
+
+Payment purpose:
+${paymentPurpose}
+
+Amount due now:
+$${(amountCents / 100).toFixed(2)}
+
+Total approved service quote:
+$${(quotedFeeCents / 100).toFixed(2)}
+
+Secure Stripe payment link:
+${session.url}
+
+After Stripe confirms payment, the Contractor 1099 Action Basket and Secure Client Portal will update automatically.
+
+Secure Client Portal:
+${portalUrl}
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, contractor EINs, W-9s, bank information, or detailed payment records.
+
+Thank you,
+
+Greatest Business Solution LLC`
+        });
+
+        emailSent = true;
+      } catch (emailErr) {
+        emailError =
+          emailErr?.message ||
+          "The payment-link email was not sent.";
+
+        console.error(
+          "[create-contractor-1099-checkout] Payment-link email failed:",
+          leadId,
+          emailError
+        );
+      }
+
+      await updateLeadAfterStripePayment(
+        leadId,
+        (record = {}) => ({
+          ...record,
+          contractor1099Work: {
+            ...(record.contractor1099Work || {}),
+            paymentLinkSentAt:
+              createdAt,
+            paymentLinkEmailSent:
+              emailSent,
+            paymentLinkEmailError:
+              emailError,
+            paymentStatus:
+              emailSent
+                ? (
+                    amountPaidCents > 0
+                      ? "Balance Payment Link Sent"
+                      : "Payment Link Sent"
+                  )
+                : (
+                    record.contractor1099Work
+                      ?.paymentStatus ||
+                    "Payment Link Created"
+                  ),
+            updatedAt:
+              new Date().toISOString()
+          },
+          updatedAt:
+            new Date().toISOString()
+        })
+      );
+    }
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      emailSent:
+        officeRequest
+          ? emailSent
+          : null,
+      emailError:
+        officeRequest
+          ? emailError
+          : ""
+    });
+  } catch (error) {
+    console.error(
+      "[create-contractor-1099-checkout] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        error.message ||
+        "The secure Contractor 1099 payment link could not be created."
+    });
+  }
+});
+
 
 // =============================================================================
 // POST /api/create-extension-checkout

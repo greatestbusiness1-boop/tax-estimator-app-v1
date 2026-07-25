@@ -2457,6 +2457,380 @@
       }
     }
 
+    .c1099-filters {
+      display:none;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:0 0 12px;
+    }
+
+    .c1099-filter-btn {
+      border:1px solid #b9c9da;
+      border-radius:999px;
+      background:#ffffff;
+      color:#153858;
+      padding:8px 12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .c1099-filter-btn.active {
+      background:#163e69;
+      color:#ffffff;
+      border-color:#163e69;
+    }
+
+    .c1099-filter-count,
+    .c1099-sidebar-count {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:23px;
+      min-height:20px;
+      margin-left:5px;
+      border-radius:999px;
+      background:#e6edf5;
+      color:#163e69;
+      padding:2px 6px;
+      font-size:10px;
+      font-weight:950;
+    }
+
+    .c1099-filter-btn.active .c1099-filter-count {
+      background:#ffffff;
+    }
+
+    .c1099-intro {
+      margin-bottom:10px;
+      border:1px solid #c8d7e6;
+      border-left:5px solid #1c6798;
+      border-radius:9px;
+      background:#f7fbff;
+      padding:10px 12px;
+      color:#17324d;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.45;
+    }
+
+    .c1099-list {
+      display:grid;
+      gap:8px;
+    }
+
+    .c1099-head,
+    .c1099-row {
+      display:grid;
+      grid-template-columns:
+        minmax(170px,1.35fr)
+        minmax(145px,1fr)
+        minmax(120px,.8fr)
+        minmax(130px,.9fr)
+        minmax(135px,.9fr)
+        minmax(190px,1.5fr)
+        130px;
+      align-items:stretch;
+    }
+
+    .c1099-head {
+      border:1px solid #cbd7e4;
+      border-radius:9px;
+      background:#eaf1f8;
+      overflow:hidden;
+    }
+
+    .c1099-head span {
+      padding:9px;
+      border-right:1px solid #d5e0eb;
+      color:#183b5d;
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .c1099-card {
+      border:1px solid #cbd7e4;
+      border-left:6px solid #1c6798;
+      border-radius:10px;
+      background:#ffffff;
+      overflow:hidden;
+      box-shadow:0 5px 14px rgba(15,44,86,.05);
+    }
+
+    .c1099-card.attention {
+      border-left-color:#c2410c;
+    }
+
+    .c1099-cell {
+      min-width:0;
+      min-height:66px;
+      padding:9px 10px;
+      border-right:1px solid #e2e8f0;
+      color:#334155;
+      font-size:11px;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+
+    .c1099-cell strong {
+      display:block;
+      margin-bottom:2px;
+      color:#0f2c56;
+      font-size:12px;
+      font-weight:950;
+    }
+
+    .c1099-cell small {
+      display:block;
+      color:#64748b;
+      font-size:10.5px;
+      line-height:1.35;
+    }
+
+    .c1099-cell.attention {
+      background:#fff7ed;
+      color:#9a3412;
+    }
+
+    .c1099-cell.attention strong {
+      color:#9a3412;
+    }
+
+    .c1099-action {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+    }
+
+    .c1099-open-btn,
+    .c1099-action-btn {
+      min-height:38px;
+      border:1px solid #1d4f82;
+      border-radius:8px;
+      background:#285f99;
+      color:#ffffff;
+      padding:8px 10px;
+      font-size:11px;
+      font-weight:950;
+      cursor:pointer;
+    }
+
+    .c1099-open-btn {
+      width:100%;
+    }
+
+    .c1099-open-btn.open,
+    .c1099-action-btn.light {
+      background:#ffffff;
+      color:#17324d;
+    }
+
+    .c1099-action-btn.payment {
+      background:#087f5b;
+      border-color:#087f5b;
+    }
+
+    .c1099-action-btn.warning {
+      background:#b45309;
+      border-color:#b45309;
+    }
+
+    .c1099-body {
+      border-top:2px solid #d7e4f2;
+      padding:13px;
+      background:#ffffff;
+    }
+
+    .c1099-body[hidden] {
+      display:none !important;
+    }
+
+    .c1099-summary {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .c1099-summary-block {
+      min-height:58px;
+      border:1px solid #d4e0ec;
+      border-radius:8px;
+      background:#f8fbff;
+      padding:9px;
+      color:#334155;
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .c1099-summary-block strong {
+      display:block;
+      margin-bottom:3px;
+      color:#0f2c56;
+      font-weight:950;
+    }
+
+    .c1099-summary-block.full {
+      grid-column:1 / -1;
+    }
+
+    .c1099-basket {
+      border:2px solid #0f766e;
+      border-radius:11px;
+      background:#effbf8;
+      padding:12px;
+    }
+
+    .c1099-basket h3 {
+      margin:0 0 4px;
+      color:#0d514b;
+    }
+
+    .c1099-basket > p {
+      margin:0 0 12px;
+      color:#42655f;
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .c1099-checklist {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px;
+      margin-bottom:12px;
+    }
+
+    .c1099-check {
+      border:1px solid #b9d5cf;
+      border-radius:8px;
+      background:#ffffff;
+      padding:8px;
+      color:#365b55;
+      font-size:10.5px;
+      font-weight:850;
+      line-height:1.35;
+    }
+
+    .c1099-check.done {
+      border-color:#86c7aa;
+      background:#ecfdf5;
+      color:#166534;
+    }
+
+    .c1099-fields {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:9px;
+    }
+
+    .c1099-field {
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      font-size:11px;
+      font-weight:900;
+      color:#17324d;
+    }
+
+    .c1099-field.span-two {
+      grid-column:span 2;
+    }
+
+    .c1099-field.full {
+      grid-column:1 / -1;
+    }
+
+    .c1099-field input,
+    .c1099-field select,
+    .c1099-field textarea {
+      width:100%;
+      min-height:40px;
+      border:1px solid #abc1d6;
+      border-radius:7px;
+      background:#ffffff;
+      padding:8px;
+      font:inherit;
+      font-weight:500;
+    }
+
+    .c1099-field textarea {
+      min-height:84px;
+      resize:vertical;
+    }
+
+    .c1099-payment-summary {
+      grid-column:1 / -1;
+      border:1px solid #9fd7c8;
+      border-radius:8px;
+      background:#ffffff;
+      padding:9px;
+      color:#075e54;
+      font-size:11px;
+      font-weight:950;
+    }
+
+    .c1099-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .c1099-completed-row {
+      display:grid;
+      grid-template-columns:
+        minmax(160px,1.3fr)
+        minmax(140px,1fr)
+        90px
+        minmax(130px,1fr)
+        minmax(130px,1fr)
+        125px;
+      gap:8px;
+      align-items:center;
+      border:1px solid #ccd8e5;
+      border-radius:9px;
+      background:#ffffff;
+      padding:9px;
+      font-size:11px;
+    }
+
+    .c1099-card.c1099-highlight {
+      outline:4px solid rgba(28,103,152,.22);
+      scroll-margin-top:80px;
+    }
+
+    @media(max-width:1100px){
+      .c1099-head{display:none}
+      .c1099-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .c1099-action{grid-column:1/-1}
+      .c1099-checklist{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media(max-width:720px){
+      .c1099-row,
+      .c1099-summary,
+      .c1099-fields,
+      .c1099-checklist,
+      .c1099-completed-row {
+        grid-template-columns:1fr;
+      }
+
+      .c1099-cell,
+      .c1099-action {
+        border-right:0;
+        border-bottom:1px solid #e2e8f0;
+      }
+
+      .c1099-field.span-two,
+      .c1099-field.full,
+      .c1099-summary-block.full,
+      .c1099-action {
+        grid-column:1;
+      }
+    }
+
   </style>
 </head>
 
@@ -2488,6 +2862,34 @@
         id="taxPrepRequestsSidebarCount"
         class="taxprep-sidebar-count"
         aria-label="0 active tax preparation requests"
+      >0</span>
+    </button>
+    <button
+      id="contractor1099RequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="contractor1099"
+      data-title="Contractor 1099 Requests"
+      type="button"
+    >
+      <span>Contractor 1099 Requests</span>
+      <span
+        id="contractor1099RequestsSidebarCount"
+        class="c1099-sidebar-count"
+        aria-label="0 open Contractor 1099 requests"
+      >0</span>
+    </button>
+    <button
+      id="completedContractor1099SidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="contractor1099completed"
+      data-title="Completed Contractor 1099 Filings"
+      type="button"
+    >
+      <span>Completed Contractor 1099 Filings</span>
+      <span
+        id="completedContractor1099SidebarCount"
+        class="c1099-sidebar-count"
+        aria-label="0 completed Contractor 1099 filings"
       >0</span>
     </button>
     <button
@@ -2693,6 +3095,19 @@
       </div>
 
       <div id="taxPrepAdvancedSummary" class="taxprep-advanced-summary"></div>
+    </div>
+
+    <div id="contractor1099Filters" class="c1099-filters">
+      <button class="c1099-filter-btn active" data-c1099-filter="all">All Open <span id="c1099AllCount" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="review">Needs Review <span id="c1099ReviewCount" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="w9">W-9s / Payee Info <span id="c1099W9Count" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="quote">Quote Needed <span id="c1099QuoteCount" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="payment">Payment Pending <span id="c1099PaymentCount" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="prepare">Paid / Prepare <span id="c1099PrepareCount" class="c1099-filter-count">0</span></button>
+      <button class="c1099-filter-btn" data-c1099-filter="file">Ready / Filed <span id="c1099FileCount" class="c1099-filter-count">0</span></button>
+    </div>
+    <div id="contractor1099FilterSummary" class="c1099-intro" style="display:none;">
+      Each business appears as one compact row. Open the Contractor 1099 Action Basket for W-9 readiness, payer and payee records, quote, payment, preparation, filing, acceptance, recipient copies, and completion.
     </div>
 
     <div id="extensionFilters" class="extension-filters">
@@ -2924,6 +3339,7 @@ let allLeads = [];
 let currentView = "all";
 let currentOfficeQueueTab = "all";
 let currentTaxPrepFilter = "all";
+let currentContractor1099Filter = "all";
 let currentExtensionFilter = "all";
 let currentContactFilter = "new";
 
@@ -3118,6 +3534,13 @@ function getAllLeadTypeKey(lead){
   }
 
   if(
+    isContractor1099Lead(lead) ||
+    status.includes("contractor 1099")
+  ){
+    return "contractor-1099";
+  }
+
+  if(
     isTaxPreparationLead(lead) ||
     status.includes("tax preparation")
   ){
@@ -3158,6 +3581,7 @@ function getAllLeadTypeKey(lead){
 function getAllLeadTypeLabel(lead){
   const labels = {
     "written-review": "Written Review",
+    "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
     "website-contact": "Website Contact",
     "transcript": "Transcript Help",
@@ -3412,6 +3836,13 @@ function getClosedServiceKey(lead){
   }
 
   if(
+    isContractor1099Lead(lead) ||
+    status.includes("contractor 1099")
+  ){
+    return "contractor-1099";
+  }
+
+  if(
     isTaxPreparationLead(lead) ||
     status.includes("tax preparation")
   ){
@@ -3439,6 +3870,7 @@ function getClosedServiceKey(lead){
 function getClosedServiceLabel(lead){
   const labels = {
     "written-review": "Written Review",
+    "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
     "website-contact": "Website Contact",
     "transcript": "Transcript",
@@ -3550,6 +3982,609 @@ function updateClosedSummary(count){
 
   summary.textContent =
     `Closed in ${period}: ${count} ${count === 1 ? "lead" : "leads"}`;
+}
+
+
+const CONTRACTOR_1099_LABELS = Object.freeze({
+  original_1099_nec:
+    "Original Form 1099-NEC",
+  original_1099_misc:
+    "Original Form 1099-MISC",
+  correction:
+    "Correction",
+  late_filing:
+    "Late / Past-Due Filing",
+  recipient_copies:
+    "Recipient Copies",
+  not_sure:
+    "Form Type Not Sure",
+  all_collected:
+    "All W-9s Collected",
+  some_missing:
+    "Some W-9s Missing",
+  none_collected:
+    "No W-9s Collected",
+  complete:
+    "Complete",
+  partial:
+    "Partial",
+  not_ready:
+    "Not Ready",
+  on_time:
+    "Original / On-Time",
+  late:
+    "Deadline May Have Passed",
+  primary_state_only:
+    "Primary State Only",
+  multiple_states:
+    "Multiple States",
+  secure_electronic:
+    "Secure Electronic Delivery",
+  paper_mail:
+    "Paper / Mail Delivery",
+  client_handles:
+    "Business Delivers Copies",
+  office_recommendation:
+    "Office Recommendation"
+});
+
+function contractor1099Humanize(value){
+  const key = String(value || "").trim();
+
+  return (
+    CONTRACTOR_1099_LABELS[key] ||
+    key
+      .replace(/[_-]+/g, " ")
+      .replace(
+        /\b\w/g,
+        (letter) => letter.toUpperCase()
+      )
+      .trim()
+  );
+}
+
+function contractor1099ListDisplay(values){
+  const list = Array.isArray(values)
+    ? values
+    : [];
+
+  return list.length
+    ? list
+        .map(contractor1099Humanize)
+        .join(", ")
+    : "Not provided";
+}
+
+function contractor1099Money(value){
+  const amount = Number(value || 0);
+
+  return Number.isFinite(amount)
+    ? amount.toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }
+      )
+    : "0.00";
+}
+
+function isContractor1099Lead(lead){
+  const status = String(
+    lead?.status || ""
+  ).toLowerCase();
+
+  return Boolean(
+    lead &&
+    (
+      lead.contractor1099Request ||
+      lead.contractor1099Work
+    )
+  ) ||
+    String(
+      lead?.leadId || ""
+    ).startsWith("C1099-") ||
+    status.includes("contractor 1099");
+}
+
+function getContractor1099WorkStatus(lead){
+  return String(
+    lead?.contractor1099Work?.workStatus ||
+    lead?.status ||
+    "Needs Professional Review"
+  )
+    .replace(
+      /^Contractor 1099\s*-\s*/i,
+      ""
+    )
+    .trim();
+}
+
+function getContractor1099DocumentStatus(lead){
+  return String(
+    lead?.contractor1099Work?.documentStatus ||
+    "Documents Needed"
+  ).trim();
+}
+
+function getContractor1099PaymentStatus(lead){
+  return String(
+    lead?.contractor1099Work?.paymentStatus ||
+    "Quote Needed"
+  ).trim();
+}
+
+function getContractor1099QuotedFee(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.contractor1099Work?.quotedFee ||
+      0
+    ) || 0
+  );
+}
+
+function getContractor1099AmountPaid(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.contractor1099Work?.amountPaid ||
+      0
+    ) || 0
+  );
+}
+
+function getContractor1099PaymentUrl(lead){
+  return String(
+    lead?.contractor1099Work
+      ?.stripeCheckoutUrl ||
+    ""
+  ).trim();
+}
+
+function getContractor1099PortalStatus(lead){
+  const portalStatus = String(
+    lead?.clientPortal?.status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if(portalStatus === "active"){
+    return "Active";
+  }
+
+  if(portalStatus === "pending-activation"){
+    return "Pending Activation";
+  }
+
+  return String(
+    lead?.contractor1099Work?.portalStatus ||
+    "Not Activated"
+  ).trim();
+}
+
+function getContractor1099TaxYear(lead){
+  return String(
+    lead?.contractor1099Request?.taxYear ||
+    lead?.taxData?.taxYear ||
+    ""
+  ).trim();
+}
+
+function getContractor1099BusinessName(lead){
+  return String(
+    lead?.contractor1099Request
+      ?.businessLegalName ||
+    lead?.contact?.name ||
+    "Business not recorded"
+  ).trim();
+}
+
+function getContractor1099RecipientCount(lead){
+  return Math.max(
+    0,
+    Number.parseInt(
+      lead?.contractor1099Request
+        ?.recipientCount,
+      10
+    ) || 0
+  );
+}
+
+function contractor1099PaymentSatisfied(lead){
+  const work =
+    lead?.contractor1099Work || {};
+
+  if(
+    String(
+      work.paymentRequirement ||
+      "Required"
+    ) === "Waived by Office"
+  ){
+    return true;
+  }
+
+  const quote =
+    getContractor1099QuotedFee(lead);
+  const paid =
+    getContractor1099AmountPaid(lead);
+
+  return quote > 0 && paid >= quote;
+}
+
+function isCompletedContractor1099(lead){
+  const status = [
+    lead?.status,
+    lead?.contractor1099Work?.workStatus
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    status.includes("completed") ||
+    status.includes("closed")
+  );
+}
+
+function contractor1099NextAction(lead){
+  const request =
+    lead?.contractor1099Request || {};
+  const work =
+    lead?.contractor1099Work || {};
+
+  if(isCompletedContractor1099(lead)){
+    return "Completed filing is stored under Completed Contractor 1099 Filings.";
+  }
+
+  if(getContractor1099PortalStatus(lead) !== "Active"){
+    return "Activate or confirm the Secure Client Portal before requesting sensitive W-9 and payee information.";
+  }
+
+  if(
+    String(
+      work.payerInformationStatus ||
+      "Needs Review"
+    ) !== "Complete"
+  ){
+    return "Review the payer business information and mark it Complete.";
+  }
+
+  if(
+    String(
+      work.payeeInformationStatus ||
+      "W-9s Needed"
+    ) !== "Complete"
+  ){
+    return "Collect and review every W-9, payee name, TIN, address, and payment total through the secure portal.";
+  }
+
+  if(
+    !/complete/i.test(
+      getContractor1099DocumentStatus(lead)
+    )
+  ){
+    return "Review the secure documents and mark the required records Complete.";
+  }
+
+  if(
+    String(
+      work.paymentRequirement ||
+      "Required"
+    ) !== "Waived by Office"
+  ){
+    if(
+      getContractor1099QuotedFee(lead) <= 0
+    ){
+      return "Enter and save the approved Contractor 1099 service quote.";
+    }
+
+    if(!contractor1099PaymentSatisfied(lead)){
+      return getContractor1099PaymentUrl(lead)
+        ? "A secure payment link is saved on this card. Monitor Stripe or resend the link."
+        : "Enter the amount to collect and create the secure Stripe payment link.";
+    }
+  }
+
+  const preparation = String(
+    work.preparationStatus ||
+    "Not Started"
+  ).toLowerCase();
+
+  const filing = String(
+    work.filingStatus ||
+    "Not Started"
+  ).toLowerCase();
+
+  const acceptance = String(
+    work.irsAcceptanceStatus ||
+    "Not Submitted"
+  ).toLowerCase();
+
+  if(preparation.includes("not started")){
+    return "Prepare the Forms 1099 and change Preparation status to In Progress.";
+  }
+
+  if(preparation.includes("in progress")){
+    return "Finish the forms, resolve corrections, and mark them Ready for Client Review or Ready to File.";
+  }
+
+  if(
+    filing.includes("ready")
+  ){
+    return "Electronically file or record the approved paper-filing method.";
+  }
+
+  if(
+    filing.includes("filed") &&
+    !acceptance.includes("accepted")
+  ){
+    return "Monitor IRS acceptance and any state filing acknowledgments.";
+  }
+
+  if(
+    acceptance.includes("accepted") &&
+    !/delivered/i.test(
+      String(
+        work.recipientCopyStatus ||
+        ""
+      )
+    )
+  ){
+    return "Deliver or confirm recipient copies, then complete the service.";
+  }
+
+  return "Review the request and advance the next required status in this Action Basket.";
+}
+
+function matchesContractor1099Filter(lead){
+  if(isCompletedContractor1099(lead)){
+    return false;
+  }
+
+  const work =
+    lead?.contractor1099Work || {};
+  const workStatus =
+    getContractor1099WorkStatus(lead)
+      .toLowerCase();
+  const paymentStatus =
+    getContractor1099PaymentStatus(lead)
+      .toLowerCase();
+  const payeeStatus =
+    String(
+      work.payeeInformationStatus ||
+      ""
+    ).toLowerCase();
+  const filingStatus =
+    String(
+      work.filingStatus ||
+      ""
+    ).toLowerCase();
+
+  if(currentContractor1099Filter === "review"){
+    return (
+      workStatus.includes("review") ||
+      lead?.contractor1099Request
+        ?.electronicFilingReview === true ||
+      ["late","correction","not_sure"].includes(
+        String(
+          lead?.contractor1099Request
+            ?.deadlineStatus || ""
+        ).toLowerCase()
+      )
+    );
+  }
+
+  if(currentContractor1099Filter === "w9"){
+    return (
+      payeeStatus.includes("needed") ||
+      payeeStatus.includes("partial") ||
+      String(
+        lead?.contractor1099Request
+          ?.w9Status || ""
+      ) !== "all_collected"
+    );
+  }
+
+  if(currentContractor1099Filter === "quote"){
+    return (
+      getContractor1099QuotedFee(lead) <= 0 ||
+      paymentStatus.includes("quote")
+    );
+  }
+
+  if(currentContractor1099Filter === "payment"){
+    return (
+      getContractor1099QuotedFee(lead) > 0 &&
+      !contractor1099PaymentSatisfied(lead)
+    );
+  }
+
+  if(currentContractor1099Filter === "prepare"){
+    return (
+      contractor1099PaymentSatisfied(lead) &&
+      !filingStatus.includes("filed") &&
+      !filingStatus.includes("accepted")
+    );
+  }
+
+  if(currentContractor1099Filter === "file"){
+    return (
+      filingStatus.includes("ready") ||
+      filingStatus.includes("filed") ||
+      filingStatus.includes("accepted")
+    );
+  }
+
+  return true;
+}
+
+function updateContractor1099Counts(){
+  const active = (allLeads || [])
+    .filter(isContractor1099Lead)
+    .filter(
+      (lead) =>
+        !isCompletedContractor1099(lead)
+    );
+
+  const completed = (allLeads || [])
+    .filter(isContractor1099Lead)
+    .filter(isCompletedContractor1099);
+
+  const countByFilter = (filterName) => {
+    const previous =
+      currentContractor1099Filter;
+
+    currentContractor1099Filter =
+      filterName;
+
+    const count = active
+      .filter(matchesContractor1099Filter)
+      .length;
+
+    currentContractor1099Filter =
+      previous;
+
+    return count;
+  };
+
+  const counts = {
+    c1099AllCount: active.length,
+    c1099ReviewCount:
+      countByFilter("review"),
+    c1099W9Count:
+      countByFilter("w9"),
+    c1099QuoteCount:
+      countByFilter("quote"),
+    c1099PaymentCount:
+      countByFilter("payment"),
+    c1099PrepareCount:
+      countByFilter("prepare"),
+    c1099FileCount:
+      countByFilter("file"),
+    contractor1099RequestsSidebarCount:
+      active.length,
+    completedContractor1099SidebarCount:
+      completed.length
+  };
+
+  Object.entries(counts).forEach(
+    ([id, value]) => {
+      const element =
+        document.getElementById(id);
+
+      if(element){
+        element.textContent =
+          String(value);
+      }
+    }
+  );
+}
+
+function getContractor1099CompletionEmailLabel(lead){
+  const work = lead?.contractor1099Work || {};
+
+  if(work.completionEmailSentAt){
+    return "Sent " +
+      (formatLeadDate(work.completionEmailSentAt) || "");
+  }
+
+  if(
+    String(work.completionEmailStatus || "")
+      .toLowerCase()
+      .includes("failed")
+  ){
+    return "Failed — send again";
+  }
+
+  return "Not sent";
+}
+
+function validateContractor1099Completion(values){
+  const missing = [];
+
+  if(
+    values.payerInformationStatus !==
+    "Complete"
+  ){
+    missing.push(
+      "Payer information must be Complete"
+    );
+  }
+
+  if(
+    values.payeeInformationStatus !==
+    "Complete"
+  ){
+    missing.push(
+      "Payee information and W-9 review must be Complete"
+    );
+  }
+
+  if(
+    !/complete/i.test(
+      values.documentStatus
+    )
+  ){
+    missing.push(
+      "Required documents must be Complete"
+    );
+  }
+
+  if(
+    values.paymentRequirement !==
+      "Waived by Office" &&
+    !(
+      values.quotedFee > 0 &&
+      values.amountPaid >=
+        values.quotedFee
+    )
+  ){
+    missing.push(
+      "The service quote must be Paid / Verified or waived by the office"
+    );
+  }
+
+  if(
+    !/accepted|not required/i.test(
+      values.irsAcceptanceStatus
+    )
+  ){
+    missing.push(
+      "IRS acceptance must be confirmed or marked Not Required"
+    );
+  }
+
+  if(
+    !/filed|accepted|not required/i.test(
+      values.filingStatus
+    )
+  ){
+    missing.push(
+      "Federal filing status must be Filed, Accepted, or Not Required"
+    );
+  }
+
+  if(
+    !/filed|accepted|not required/i.test(
+      values.stateFilingWorkStatus
+    )
+  ){
+    missing.push(
+      "State filing must be completed or marked Not Required"
+    );
+  }
+
+  if(
+    !/delivered/i.test(
+      values.recipientCopyStatus
+    )
+  ){
+    missing.push(
+      "Recipient copies must be delivered"
+    );
+  }
+
+  return missing;
 }
 
 function isTaxPreparationLead(lead){
@@ -5022,6 +6057,42 @@ function getVisibleLeads(){
       .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
   }
 
+  if(currentView==="contractor1099"){
+    return allLeads
+      .filter(isContractor1099Lead)
+      .filter(matchesContractor1099Filter)
+      .sort(
+        (a,b) =>
+          new Date(
+            getLeadEnteredAt(b) || 0
+          ) -
+          new Date(
+            getLeadEnteredAt(a) || 0
+          )
+      );
+  }
+
+  if(currentView==="contractor1099completed"){
+    return allLeads
+      .filter(isContractor1099Lead)
+      .filter(isCompletedContractor1099)
+      .sort(
+        (a,b) =>
+          new Date(
+            b?.contractor1099Work
+              ?.completedAt ||
+            getLeadClosedAt(b) ||
+            0
+          ) -
+          new Date(
+            a?.contractor1099Work
+              ?.completedAt ||
+            getLeadClosedAt(a) ||
+            0
+          )
+      );
+  }
+
   if(currentView==="taxprep"){
     return allLeads
       .filter(isTaxPreparationLead)
@@ -5418,6 +6489,14 @@ function isActiveTaxPrepRequest(lead){
   return isTaxPrepServiceRequest(lead) && !isConversionClosedLead(lead);
 }
 
+function isActiveContractor1099Request(lead){
+  return (
+    isContractor1099Lead(lead) &&
+    !isCompletedContractor1099(lead) &&
+    !isConversionClosedLead(lead)
+  );
+}
+
 function isActiveTranscriptRequest(lead){
   return isTranscriptServiceRequest(lead) && !isConversionClosedLead(lead);
 }
@@ -5453,6 +6532,9 @@ function getConversionMetrics(){
   const freeEstimates = activeLeads.filter(isFreeEstimateRootLead);
   const paidReviews = activeLeads.filter(isPaidWrittenReviewLead);
   const taxPrep = activeLeads.filter(isActiveTaxPrepRequest);
+  const contractor1099 = activeLeads.filter(
+    isActiveContractor1099Request
+  );
   const extensions = activeLeads
     .filter(isExtensionLead)
     .filter(lead => !isCompletedExtension(lead));
@@ -5462,6 +6544,7 @@ function getConversionMetrics(){
   const serviceConversions =
     paidReviews.length +
     taxPrep.length +
+    contractor1099.length +
     extensions.length +
     transcripts.length +
     consults.length;
@@ -5475,6 +6558,7 @@ function getConversionMetrics(){
     freeEstimates,
     paidReviews,
     taxPrep,
+    contractor1099,
     extensions,
     transcripts,
     consults,
@@ -5506,6 +6590,7 @@ function getConversionWorkType(lead){
   if(isActiveScheduledConsult(lead)) return "Scheduled Consult";
   if(isPaidWrittenReviewLead(lead)) return "Paid Written Review";
   if(isTranscriptServiceRequest(lead)) return "Transcript Help";
+  if(isContractor1099Lead(lead)) return "Contractor Forms 1099";
   if(isTaxPrepServiceRequest(lead)) return "Tax Preparation";
   if(isWrittenReviewServiceRequest(lead)) return "Written Red Flag Review";
   if(isFreeEstimateRootLead(lead)) return "Free Estimate Lead";
@@ -6001,6 +7086,65 @@ function getConversionCommandItems(){
       return;
     }
 
+    if(isActiveContractor1099Request(lead)){
+      const work = lead.contractor1099Work || {};
+      const paid = contractor1099PaymentSatisfied(lead);
+      const missingClientRecords =
+        !/complete/i.test(
+          String(work.payerInformationStatus || "")
+        ) ||
+        !/complete/i.test(
+          String(work.payeeInformationStatus || "")
+        ) ||
+        !/complete/i.test(
+          getContractor1099DocumentStatus(lead)
+        );
+      const urgentReview =
+        lead.contractor1099Request
+          ?.electronicFilingReview === true ||
+        /late|correction|rejected|review/i.test(
+          [
+            lead.contractor1099Request?.deadlineStatus,
+            work.workStatus,
+            work.filingStatus,
+            work.irsAcceptanceStatus
+          ].join(" ")
+        );
+
+      items.push(makeConversionWorkItem(lead, {
+        stage: urgentReview
+          ? "Needs Attention"
+          : (
+              paid
+                ? "Paid Work"
+                : (
+                    missingClientRecords
+                      ? "Waiting on Client"
+                      : "Hot Lead"
+                  )
+            ),
+        stageRank: urgentReview
+          ? 0
+          : (paid ? 1 : (missingClientRecords ? 6 : 2)),
+        bucket: paid ? "paid-work" : "tax-prep",
+        workType: "Contractor Forms 1099",
+        currentStep: getContractor1099WorkStatus(lead),
+        nextAction: contractor1099NextAction(lead),
+        reason: urgentReview
+          ? "The Contractor 1099 request has a timing, correction, filing, or acceptance issue requiring office review."
+          : (
+              paid
+                ? "The client has paid for Contractor Forms 1099 preparation."
+                : "The business submitted a Contractor Forms 1099 service request."
+            ),
+        status:
+          String(lead.status || "") ||
+          "Contractor 1099 Request"
+      }));
+
+      return;
+    }
+
     if(isActiveTaxPrepRequest(lead)){
       const lane =
         getTaxPrepLane(lead) ||
@@ -6245,6 +7389,10 @@ function getOfficeServiceLabel(lead){
     return getCalendarService(lead);
   }
 
+  if(isContractor1099Lead(lead)){
+    return "Contractor Forms 1099";
+  }
+
   if(isTaxPreparationLead(lead)){
     return getTaxPrepLane(lead) || "Tax Preparation";
   }
@@ -6273,6 +7421,11 @@ function openOfficeWorkItem(index){
 
   if(isExtensionLead(item.lead)){
     openExtensionActionBasketForLead(item.lead);
+    return;
+  }
+
+  if(isContractor1099Lead(item.lead)){
+    openContractor1099ActionBasketForLead(item.lead);
     return;
   }
 
@@ -6831,6 +7984,25 @@ function appendTaxPlannerCrmToDetail(lead){
 }
 
 function openPanel(lead){
+  if(isContractor1099Lead(lead)){
+    if(isCompletedContractor1099(lead)){
+      currentView = "contractor1099completed";
+      const completedButton =
+        document.getElementById(
+          "completedContractor1099SidebarButton"
+        );
+
+      if(completedButton){
+        completedButton.click();
+      }
+    }else{
+      openContractor1099ActionBasketForLead(
+        lead
+      );
+    }
+    return;
+  }
+
   if(isTaxPreparationLead(lead)){
     if(isCompletedTaxPreparation(lead)){
       currentView = "taxprepcompleted";
@@ -7670,6 +8842,7 @@ function updateTranscriptSidebarCount(){
 function renderLeads(){
   updateTranscriptSidebarCount();
   updateTaxPrepRequestCounts();
+  updateContractor1099Counts();
 
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
@@ -8162,6 +9335,817 @@ function renderLeads(){
       </div>`;
 
     window.visibleClosedLeads = visible;
+    return;
+  }
+
+  if(currentView === "contractor1099"){
+    updateContractor1099Counts();
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="c1099-intro">
+          No open Contractor 1099 requests match the selected filter. Finished services are stored under Completed Contractor 1099 Filings in the left menu.
+        </div>`;
+      window.visibleContractor1099Leads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="c1099-intro">
+        Each business is minimized into one row. Open the Contractor 1099 Action Basket only for the request you are working on.
+      </div>
+
+      <div class="c1099-list">
+        <div class="c1099-head" aria-hidden="true">
+          <span>Business / Contact</span>
+          <span>Service / Year</span>
+          <span>Payees / W-9s</span>
+          <span>Payment</span>
+          <span>Filing Status</span>
+          <span>Next Required Action</span>
+          <span>Action</span>
+        </div>
+
+        ${visible.map((lead, index) => {
+          const request =
+            lead.contractor1099Request || {};
+          const work =
+            lead.contractor1099Work || {};
+          const quote =
+            getContractor1099QuotedFee(lead);
+          const paid =
+            getContractor1099AmountPaid(lead);
+          const outstanding =
+            Math.max(0, quote - paid);
+          const nextAction =
+            contractor1099NextAction(lead);
+          const workStatus =
+            getContractor1099WorkStatus(lead);
+          const paymentStatus =
+            getContractor1099PaymentStatus(lead);
+          const filingStatus =
+            String(
+              work.filingStatus ||
+              "Not Started"
+            );
+          const needsAttention =
+            /review|needed|missing|late|correction|rejected/i.test(
+              [
+                workStatus,
+                work.payeeInformationStatus,
+                request.deadlineStatus,
+                filingStatus,
+                work.irsAcceptanceStatus
+              ].join(" ")
+            ) ||
+            request.electronicFilingReview === true;
+          const leadId =
+            String(lead.leadId || "").trim();
+          const cardOpen =
+            window.openContractor1099LeadIds
+              instanceof Set &&
+            window.openContractor1099LeadIds
+              .has(leadId);
+          const portalDone =
+            getContractor1099PortalStatus(lead) ===
+            "Active";
+          const payerDone =
+            String(
+              work.payerInformationStatus || ""
+            ) === "Complete";
+          const payeeDone =
+            String(
+              work.payeeInformationStatus || ""
+            ) === "Complete";
+          const docsDone =
+            /complete/i.test(
+              getContractor1099DocumentStatus(lead)
+            );
+          const paymentDone =
+            contractor1099PaymentSatisfied(lead);
+          const preparedDone =
+            /ready|complete/i.test(
+              String(
+                work.preparationStatus || ""
+              )
+            );
+          const filedDone =
+            /filed|accepted|not required/i.test(
+              filingStatus
+            );
+          const acceptedDone =
+            /accepted|not required/i.test(
+              String(
+                work.irsAcceptanceStatus || ""
+              )
+            );
+          const copiesDone =
+            /delivered/i.test(
+              String(
+                work.recipientCopyStatus || ""
+              )
+            );
+
+          return `
+            <article
+              class="c1099-card ${needsAttention ? "attention" : ""}"
+              data-c1099-lead-id="${escapeOfficeHtml(leadId)}"
+            >
+              <div class="c1099-row">
+                <div class="c1099-cell">
+                  <strong>
+                    ${escapeOfficeHtml(
+                      getContractor1099BusinessName(lead)
+                    )}
+                  </strong>
+                  <small>
+                    ${escapeOfficeHtml(
+                      lead.contact?.name ||
+                      "Contact not recorded"
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      lead.contact?.email ||
+                      "Email not recorded"
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      formatDashboardPhone(
+                        lead.contact?.phone || ""
+                      ) ||
+                      "Phone not recorded"
+                    )}
+                  </small>
+                </div>
+
+                <div class="c1099-cell">
+                  <strong>
+                    ${escapeOfficeHtml(
+                      contractor1099ListDisplay(
+                        request.serviceTypes
+                      )
+                    )}
+                  </strong>
+                  <small>
+                    Reporting year:
+                    ${escapeOfficeHtml(
+                      getContractor1099TaxYear(lead) ||
+                      "Not set"
+                    )}
+                  </small>
+                </div>
+
+                <div class="c1099-cell ${
+                  String(
+                    request.w9Status || ""
+                  ) === "all_collected"
+                    ? ""
+                    : "attention"
+                }">
+                  <strong>
+                    ${getContractor1099RecipientCount(lead)}
+                    payee${getContractor1099RecipientCount(lead) === 1 ? "" : "s"}
+                  </strong>
+                  <small>
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.w9Status
+                      ) ||
+                      "W-9 status not recorded"
+                    )}
+                  </small>
+                </div>
+
+                <div class="c1099-cell ${
+                  paymentDone ? "" : "attention"
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(paymentStatus)}
+                  </strong>
+                  <small>
+                    Quote: $${contractor1099Money(quote)}<br>
+                    Paid: $${contractor1099Money(paid)}
+                  </small>
+                </div>
+
+                <div class="c1099-cell ${
+                  /rejected|needed|review/i.test(
+                    filingStatus
+                  )
+                    ? "attention"
+                    : ""
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(filingStatus)}
+                  </strong>
+                  <small>
+                    IRS: ${escapeOfficeHtml(
+                      work.irsAcceptanceStatus ||
+                      "Not Submitted"
+                    )}<br>
+                    State: ${escapeOfficeHtml(
+                      work.stateFilingWorkStatus ||
+                      "Not Reviewed"
+                    )}
+                  </small>
+                </div>
+
+                <div class="c1099-cell ${
+                  needsAttention ? "attention" : ""
+                }">
+                  <strong>
+                    ${escapeOfficeHtml(nextAction)}
+                  </strong>
+                  <small>
+                    Full controls stay attached to this row.
+                  </small>
+                </div>
+
+                <div class="c1099-action">
+                  <button
+                    id="c1099Toggle-${index}"
+                    class="c1099-open-btn ${cardOpen ? "open" : ""}"
+                    type="button"
+                    aria-expanded="${cardOpen ? "true" : "false"}"
+                    aria-controls="c1099Body-${index}"
+                    onclick="toggleContractor1099ActionBasket(${index})"
+                  >
+                    ${cardOpen
+                      ? "Minimize Action Basket"
+                      : "Open Action Basket"}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="c1099Body-${index}"
+                class="c1099-body"
+                ${cardOpen ? "" : "hidden"}
+              >
+                <div class="c1099-summary">
+                  <div class="c1099-summary-block">
+                    <strong>Payer business</strong>
+                    ${escapeOfficeHtml(
+                      request.businessLegalName ||
+                      "Not provided"
+                    )}<br>
+                    Trade name:
+                    ${escapeOfficeHtml(
+                      request.businessTradeName ||
+                      "None reported"
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Business contact</strong>
+                    ${escapeOfficeHtml(
+                      lead.contact?.name ||
+                      "Not provided"
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      lead.contact?.email ||
+                      ""
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      formatDashboardPhone(
+                        lead.contact?.phone || ""
+                      )
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Reporting year / state</strong>
+                    ${escapeOfficeHtml(
+                      request.taxYear ||
+                      "Not provided"
+                    )}<br>
+                    ${escapeOfficeHtml(
+                      request.primaryState ||
+                      "State not provided"
+                    )}
+                    ${Number(request.stateCount || 1) > 1
+                      ? ` + ${Number(request.stateCount || 1) - 1} more`
+                      : ""}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Service requested</strong>
+                    ${escapeOfficeHtml(
+                      contractor1099ListDisplay(
+                        request.serviceTypes
+                      )
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Payees / information returns</strong>
+                    Potential payees:
+                    ${Number(request.recipientCount || 0)}<br>
+                    Total W-2 and 1099 forms:
+                    ${Number(
+                      request.totalInformationReturns ||
+                      0
+                    )}
+                    ${request.electronicFilingReview
+                      ? "<br><strong>Electronic-filing review required</strong>"
+                      : ""}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Records reported by client</strong>
+                    W-9s:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.w9Status
+                      )
+                    )}<br>
+                    Payment totals:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.paymentRecordsStatus
+                      )
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Filing situation</strong>
+                    Deadline:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.deadlineStatus
+                      )
+                    )}<br>
+                    State:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.stateFilingStatus
+                      )
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Recipient copies</strong>
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.recipientCopyMethod
+                      )
+                    )}<br>
+                    Current status:
+                    ${escapeOfficeHtml(
+                      work.recipientCopyStatus ||
+                      "Not Delivered"
+                    )}
+                  </div>
+
+                  <div class="c1099-summary-block">
+                    <strong>Secure portal</strong>
+                    ${escapeOfficeHtml(
+                      getContractor1099PortalStatus(lead)
+                    )}<br>
+                    Documents:
+                    ${escapeOfficeHtml(
+                      getContractor1099DocumentStatus(lead)
+                    )}
+                  </div>
+
+                  ${request.clientNotes
+                    ? `
+                      <div class="c1099-summary-block full">
+                        <strong>Client note</strong>
+                        ${officeNl2br(
+                          escapeOfficeHtml(
+                            request.clientNotes
+                          )
+                        )}
+                      </div>
+                    `
+                    : ""}
+                </div>
+
+                <div class="c1099-basket">
+                  <h3>Contractor 1099 Action Basket</h3>
+                  <p>
+                    Payer information, W-9 and payee readiness, documents, quote, Stripe payment, preparation, filing, acceptance, state action, recipient copies, and office notes remain in this basket.
+                  </p>
+
+                  <div class="c1099-checklist">
+                    ${[
+                      ["Portal active", portalDone],
+                      ["Payer information complete", payerDone],
+                      ["Payee information / W-9s complete", payeeDone],
+                      ["Required documents complete", docsDone],
+                      ["Payment complete or waived", paymentDone],
+                      ["Forms prepared", preparedDone],
+                      ["Forms filed", filedDone],
+                      ["IRS accepted", acceptedDone],
+                      ["Recipient copies delivered", copiesDone]
+                    ].map(([label, done]) => `
+                      <div class="c1099-check ${done ? "done" : ""}">
+                        ${done ? "✓" : "○"} ${escapeOfficeHtml(label)}
+                      </div>
+                    `).join("")}
+                  </div>
+
+                  <div class="c1099-fields">
+                    <label class="c1099-field">
+                      Work status
+                      <select id="c1099WorkStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Needs Professional Review",
+                            "Portal Activation Needed",
+                            "Documents Needed",
+                            "Quote Needed",
+                            "Payment Pending",
+                            "Paid / Needs Review",
+                            "Ready to Prepare",
+                            "Preparing Forms",
+                            "Client Review",
+                            "Ready to File",
+                            "Filed / Awaiting Acceptance",
+                            "Accepted / Recipient Copies Needed",
+                            "Completed",
+                            "Closed / No Filing"
+                          ],
+                          work.workStatus ||
+                          "Needs Professional Review"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Required documents
+                      <select id="c1099DocumentStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Documents Needed",
+                            "Partial Documents Received",
+                            "Documents Complete"
+                          ],
+                          work.documentStatus ||
+                          "Documents Needed"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Payer information
+                      <select id="c1099PayerStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Needs Review",
+                            "Information Needed",
+                            "Complete"
+                          ],
+                          work.payerInformationStatus ||
+                          "Needs Review"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Payee information / W-9s
+                      <select id="c1099PayeeStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "W-9s Needed",
+                            "Partial",
+                            "Needs Review",
+                            "Complete"
+                          ],
+                          work.payeeInformationStatus ||
+                          "W-9s Needed"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Payment requirement
+                      <select id="c1099PaymentRequirement-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Required",
+                            "Waived by Office"
+                          ],
+                          work.paymentRequirement ||
+                          "Required"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Total approved service quote
+                      <input
+                        id="c1099Quote-${index}"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="${quote.toFixed(2)}"
+                      >
+                    </label>
+
+                    <label class="c1099-field">
+                      Amount to collect now
+                      <input
+                        id="c1099Collect-${index}"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="${Number(
+                          work.paymentRequestAmount || 0
+                        ).toFixed(2)}"
+                      >
+                    </label>
+
+                    <label class="c1099-field">
+                      Payment purpose
+                      <select id="c1099PaymentPurpose-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Full Payment",
+                            "Deposit",
+                            "Balance Payment",
+                            "Correction Fee",
+                            "Late Filing Service",
+                            "Other Contractor 1099 Payment"
+                          ],
+                          work.paymentPurpose ||
+                          "Full Payment"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Preparation status
+                      <select id="c1099PreparationStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Started",
+                            "In Progress",
+                            "Client Review",
+                            "Ready to File",
+                            "Complete"
+                          ],
+                          work.preparationStatus ||
+                          "Not Started"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Federal filing
+                      <select id="c1099FilingStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Started",
+                            "Ready to File",
+                            "Filed",
+                            "Accepted",
+                            "Rejected / Correction Needed",
+                            "Not Required"
+                          ],
+                          work.filingStatus ||
+                          "Not Started"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      IRS acceptance
+                      <select id="c1099AcceptanceStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Submitted",
+                            "Awaiting Acceptance",
+                            "Accepted",
+                            "Rejected / Correction Needed",
+                            "Not Required"
+                          ],
+                          work.irsAcceptanceStatus ||
+                          "Not Submitted"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      State filing
+                      <select id="c1099StateStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Reviewed",
+                            "Information Needed",
+                            "Ready to File",
+                            "Filed",
+                            "Accepted",
+                            "Not Required"
+                          ],
+                          work.stateFilingWorkStatus ||
+                          "Not Reviewed"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Recipient copies
+                      <select id="c1099RecipientCopies-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Delivered",
+                            "Ready for Delivery",
+                            "Delivered"
+                          ],
+                          work.recipientCopyStatus ||
+                          "Not Delivered"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field full">
+                      Office Contractor 1099 note
+                      <textarea
+                        id="c1099OfficeNote-${index}"
+                        placeholder="Missing W-9, payer correction, payee correction, amount issue, state requirement, rejection, delivery, or filing note"
+                      >${escapeOfficeHtml(
+                        work.officeNote || ""
+                      )}</textarea>
+                    </label>
+
+                    <div class="c1099-payment-summary">
+                      Payment status:
+                      ${escapeOfficeHtml(paymentStatus)}
+                      · Collected $${contractor1099Money(paid)}
+                      of $${contractor1099Money(quote)}
+                      · Outstanding $${contractor1099Money(outstanding)}
+                    </div>
+                  </div>
+
+                  <div class="c1099-actions">
+                    <button
+                      class="c1099-action-btn"
+                      type="button"
+                      onclick="saveContractor1099Card(${index})"
+                    >
+                      Save This Card
+                    </button>
+
+                    <button
+                      class="c1099-action-btn payment"
+                      type="button"
+                      onclick="createContractor1099PaymentLink(${index})"
+                    >
+                      Create &amp; Email Secure Payment Link
+                    </button>
+
+                    ${getContractor1099PaymentUrl(lead)
+                      ? `
+                        <button
+                          class="c1099-action-btn light"
+                          type="button"
+                          onclick="copyContractor1099PaymentLink(${index})"
+                        >
+                          Copy Payment Link
+                        </button>
+
+                        <button
+                          class="c1099-action-btn light"
+                          type="button"
+                          onclick="openContractor1099PaymentLink(${index})"
+                        >
+                          Open Payment Link
+                        </button>
+
+                        <button
+                          class="c1099-action-btn light"
+                          type="button"
+                          onclick="openContractor1099PaymentEmail(${index})"
+                        >
+                          Open Email to Client
+                        </button>
+                      `
+                      : ""}
+
+                    <button
+                      class="c1099-action-btn light"
+                      type="button"
+                      onclick="openContractor1099Documents(${index})"
+                    >
+                      Open This Client's Documents
+                    </button>
+
+                    <button
+                      class="c1099-action-btn light"
+                      type="button"
+                      onclick="openContractor1099Portal(${index})"
+                    >
+                      Open Secure Client Portal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>`;
+
+    window.visibleContractor1099Leads =
+      visible;
+    return;
+  }
+
+  if(currentView === "contractor1099completed"){
+    updateContractor1099Counts();
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="c1099-intro">
+          No completed Contractor 1099 filings are stored yet.
+        </div>`;
+      window.completedContractor1099Leads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="c1099-intro">
+        Newest completed Contractor 1099 services appear first. Open documents or resend the client completion email only when needed.
+      </div>
+
+      <div class="c1099-list">
+        ${visible.map((lead, index) => {
+          const request =
+            lead.contractor1099Request || {};
+          const work =
+            lead.contractor1099Work || {};
+
+          return `
+            <div class="c1099-completed-row">
+              <div>
+                <strong>
+                  ${escapeOfficeHtml(
+                    getContractor1099BusinessName(lead)
+                  )}
+                </strong><br>
+                ${escapeOfficeHtml(
+                  lead.contact?.email || ""
+                )}
+              </div>
+
+              <div>
+                ${escapeOfficeHtml(
+                  contractor1099ListDisplay(
+                    request.serviceTypes
+                  )
+                )}
+              </div>
+
+              <div>
+                Year
+                ${escapeOfficeHtml(
+                  request.taxYear ||
+                  "—"
+                )}
+              </div>
+
+              <div>
+                ${escapeOfficeHtml(
+                  work.irsAcceptanceStatus ||
+                  work.filingStatus ||
+                  "Completed"
+                )}
+              </div>
+
+              <div>
+                Client email:
+                ${escapeOfficeHtml(
+                  getContractor1099CompletionEmailLabel(
+                    lead
+                  )
+                )}
+              </div>
+
+              <div class="c1099-actions" style="margin:0;">
+                <button
+                  class="c1099-action-btn light"
+                  type="button"
+                  onclick="openCompletedContractor1099Documents(${index})"
+                >
+                  Documents
+                </button>
+
+                <button
+                  class="c1099-action-btn"
+                  type="button"
+                  onclick="sendCompletedContractor1099Email(${index})"
+                >
+                  ${work.completionEmailSentAt
+                    ? "Resend Email"
+                    : "Send Completion Email"}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>`;
+
+    window.completedContractor1099Leads =
+      visible;
     return;
   }
 
@@ -11021,6 +13005,601 @@ async function markTaxPrepBusinessCodeReview(index){
   );
 }
 
+window.openContractor1099LeadIds =
+  window.openContractor1099LeadIds instanceof Set
+    ? window.openContractor1099LeadIds
+    : new Set();
+
+function contractor1099LeadByIndex(index){
+  return (
+    window.visibleContractor1099Leads || []
+  )[index] || null;
+}
+
+function toggleContractor1099ActionBasket(index){
+  const lead = contractor1099LeadByIndex(index);
+  const leadId = String(lead?.leadId || "").trim();
+  const body = document.getElementById(
+    `c1099Body-${index}`
+  );
+  const button = document.getElementById(
+    `c1099Toggle-${index}`
+  );
+
+  if(!lead || !body || !button){
+    alert("The Contractor 1099 Action Basket could not be opened.");
+    return;
+  }
+
+  const opening = body.hidden;
+  body.hidden = !opening;
+  button.classList.toggle("open", opening);
+  button.textContent = opening
+    ? "Minimize Action Basket"
+    : "Open Action Basket";
+  button.setAttribute(
+    "aria-expanded",
+    opening ? "true" : "false"
+  );
+
+  if(opening){
+    window.openContractor1099LeadIds.add(leadId);
+  }else{
+    window.openContractor1099LeadIds.delete(leadId);
+  }
+}
+
+function contractor1099CardValues(index, lead){
+  const value = (id, fallback = "") =>
+    document.getElementById(`${id}-${index}`)?.value ?? fallback;
+  const work = lead?.contractor1099Work || {};
+  const quotedFee = Math.max(
+    0,
+    Number(
+      value(
+        "c1099Quote",
+        getContractor1099QuotedFee(lead)
+      )
+    ) || 0
+  );
+  const paymentRequestAmount = Math.max(
+    0,
+    Number(
+      value(
+        "c1099Collect",
+        work.paymentRequestAmount || 0
+      )
+    ) || 0
+  );
+
+  return {
+    workStatus: value(
+      "c1099WorkStatus",
+      getContractor1099WorkStatus(lead)
+    ),
+    documentStatus: value(
+      "c1099DocumentStatus",
+      getContractor1099DocumentStatus(lead)
+    ),
+    payerInformationStatus: value(
+      "c1099PayerStatus",
+      work.payerInformationStatus || "Needs Review"
+    ),
+    payeeInformationStatus: value(
+      "c1099PayeeStatus",
+      work.payeeInformationStatus || "W-9s Needed"
+    ),
+    paymentRequirement: value(
+      "c1099PaymentRequirement",
+      work.paymentRequirement || "Required"
+    ),
+    quotedFee,
+    quotedFeeCents: Math.round(quotedFee * 100),
+    paymentRequestAmount,
+    paymentRequestAmountCents:
+      Math.round(paymentRequestAmount * 100),
+    paymentPurpose: value(
+      "c1099PaymentPurpose",
+      work.paymentPurpose || "Full Payment"
+    ),
+    preparationStatus: value(
+      "c1099PreparationStatus",
+      work.preparationStatus || "Not Started"
+    ),
+    filingStatus: value(
+      "c1099FilingStatus",
+      work.filingStatus || "Not Started"
+    ),
+    irsAcceptanceStatus: value(
+      "c1099AcceptanceStatus",
+      work.irsAcceptanceStatus || "Not Submitted"
+    ),
+    stateFilingWorkStatus: value(
+      "c1099StateStatus",
+      work.stateFilingWorkStatus || "Not Reviewed"
+    ),
+    recipientCopyStatus: value(
+      "c1099RecipientCopies",
+      work.recipientCopyStatus || "Not Delivered"
+    ),
+    officeNote: String(
+      value(
+        "c1099OfficeNote",
+        work.officeNote || ""
+      )
+    ).trim(),
+    amountPaid: getContractor1099AmountPaid(lead),
+    amountPaidCents:
+      Math.round(getContractor1099AmountPaid(lead) * 100)
+  };
+}
+
+async function requestContractor1099CompletionEmail(
+  lead,
+  resend = false
+){
+  if(!lead?.leadId){
+    return {
+      ok: false,
+      emailSent: false,
+      error: "The Contractor 1099 record could not be identified."
+    };
+  }
+
+  try{
+    const response = await fetch(
+      "/api/contractor-1099-completion-email",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: lead.leadId,
+          resend
+        })
+      }
+    );
+    const data = await response.json().catch(() => ({}));
+
+    return {
+      ok: response.ok && data.ok,
+      emailSent: data.emailSent === true,
+      alreadySent: data.alreadySent === true,
+      sentAt: data.sentAt || "",
+      error: data.error || ""
+    };
+  }catch(error){
+    return {
+      ok: false,
+      emailSent: false,
+      error:
+        error?.message ||
+        "The Contractor 1099 completion email could not be sent."
+    };
+  }
+}
+
+async function saveContractor1099Card(index, options = {}){
+  const lead = contractor1099LeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The Contractor 1099 client could not be identified.");
+    return null;
+  }
+
+  const values = contractor1099CardValues(index, lead);
+  const outstanding = Math.max(
+    0,
+    values.quotedFee - values.amountPaid
+  );
+
+  if(values.paymentRequestAmount > outstanding + 0.009){
+    alert(
+      "The amount to collect now cannot be greater than the unpaid balance on the approved service quote."
+    );
+    return null;
+  }
+
+  const completing = values.workStatus === "Completed";
+  const closing = values.workStatus === "Closed / No Filing";
+
+  if(completing){
+    const missing = validateContractor1099Completion(values);
+
+    if(missing.length){
+      alert(
+        "This service cannot move to Completed Contractor 1099 Filings yet. Finish these mandatory items:\n\n- " +
+        missing.join("\n- ")
+      );
+      return null;
+    }
+  }
+
+  if(closing && contractor1099PaymentSatisfied(lead)){
+    const proceed = window.confirm(
+      "This request shows a completed or waived payment requirement. Close it without filing only after reviewing the client resolution. Continue?"
+    );
+
+    if(!proceed) return null;
+  }
+
+  const now = new Date().toISOString();
+  const response = await fetch(
+    `/api/leads/${encodeURIComponent(lead.leadId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: `Contractor 1099 - ${values.workStatus}`,
+        completedAt: completing || closing ? now : "",
+        closedAt: completing || closing ? now : "",
+        contractor1099Work: {
+          ...(lead.contractor1099Work || {}),
+          ...values,
+          paymentStatus:
+            values.paymentRequirement === "Waived by Office"
+              ? "Waived by Office"
+              : getContractor1099PaymentStatus(lead),
+          completedAt: completing
+            ? now
+            : (lead.contractor1099Work?.completedAt || ""),
+          closedAt: closing
+            ? now
+            : (lead.contractor1099Work?.closedAt || ""),
+          updatedAt: now
+        }
+      })
+    }
+  );
+  const data = await response.json().catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    alert(
+      data.error ||
+      "The Contractor 1099 Action Basket could not be saved."
+    );
+    return null;
+  }
+
+  let completionDelivery = null;
+
+  if(completing){
+    completionDelivery =
+      await requestContractor1099CompletionEmail(
+        {
+          ...lead,
+          contractor1099Work: {
+            ...(lead.contractor1099Work || {}),
+            ...values,
+            workStatus: "Completed",
+            completedAt: now
+          }
+        },
+        false
+      );
+  }
+
+  if(options.reload !== false){
+    await loadLeads();
+  }
+
+  if(!options.quiet){
+    if(completing){
+      alert(
+        completionDelivery?.emailSent
+          ? "The service moved to Completed Contractor 1099 Filings and the client completion email was sent."
+          : "The service moved to Completed Contractor 1099 Filings, but the completion email was not sent. Use the email button in the completed list. " +
+            (completionDelivery?.error || "")
+      );
+    }else if(closing){
+      alert(
+        "The request was closed without filing and moved to Completed Contractor 1099 Filings. No completion email was sent."
+      );
+    }else{
+      alert(
+        "Contractor 1099 Action Basket saved. All work remains attached to this client row."
+      );
+    }
+  }
+
+  return { ok: true, lead, values, data, completionDelivery };
+}
+
+async function createContractor1099PaymentLink(index){
+  const lead = contractor1099LeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The Contractor 1099 client could not be identified.");
+    return;
+  }
+
+  const saved = await saveContractor1099Card(index, {
+    quiet: true,
+    reload: false
+  });
+
+  if(!saved) return;
+
+  if(saved.values.paymentRequirement === "Waived by Office"){
+    alert("Payment is marked Waived by Office. No Stripe link is needed.");
+    return;
+  }
+
+  if(saved.values.quotedFee <= 0){
+    alert("Enter and save the approved Contractor 1099 service quote first.");
+    return;
+  }
+
+  if(saved.values.paymentRequestAmount <= 0){
+    alert("Enter the amount to collect now before creating the secure payment link.");
+    return;
+  }
+
+  const response = await fetch(
+    "/api/create-contractor-1099-checkout",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: lead.leadId,
+        clientEmail: lead.contact?.email || "",
+        officeRequest: true
+      })
+    }
+  );
+  const data = await response.json().catch(() => ({}));
+
+  if(!response.ok || !data.ok){
+    alert(
+      data.error ||
+      "The secure Contractor 1099 payment link could not be created."
+    );
+    await loadLeads();
+    return;
+  }
+
+  await loadLeads();
+
+  alert(
+    data.emailSent
+      ? "The secure Stripe payment link was created, saved on the Contractor 1099 card, and emailed to the client."
+      : "The secure Stripe payment link was created and saved on the card, but the automatic email was not sent. Use Copy Payment Link or Open Email to Client. " +
+        (data.emailError || "")
+  );
+}
+
+function copyContractor1099PaymentLink(index){
+  const lead = contractor1099LeadByIndex(index);
+  const url = getContractor1099PaymentUrl(lead);
+
+  if(!url){
+    alert("No secure Contractor 1099 payment link is saved on this card yet.");
+    return;
+  }
+
+  navigator.clipboard.writeText(url)
+    .then(() => alert("Secure Contractor 1099 payment link copied."))
+    .catch(() => window.prompt("Copy this secure payment link:", url));
+}
+
+function openContractor1099PaymentLink(index){
+  const lead = contractor1099LeadByIndex(index);
+  const url = getContractor1099PaymentUrl(lead);
+
+  if(!url){
+    alert("No secure Contractor 1099 payment link is saved on this card yet.");
+    return;
+  }
+
+  window.open(url, "_blank", "noopener");
+}
+
+function openContractor1099PaymentEmail(index){
+  const lead = contractor1099LeadByIndex(index);
+  const url = getContractor1099PaymentUrl(lead);
+
+  if(!lead || !url){
+    alert("Create the secure payment link before opening the client email.");
+    return;
+  }
+
+  const work = lead.contractor1099Work || {};
+  const subject = "Your Secure Contractor 1099 Service Payment Link";
+  const body =
+`Hello ${lead.contact?.name || "Client"},
+
+Your Contractor Forms 1099 service payment link is ready.
+
+Business: ${getContractor1099BusinessName(lead)}
+Reporting year: ${getContractor1099TaxYear(lead) || "Not recorded"}
+Payment purpose: ${work.paymentPurpose || "Contractor 1099 Service Payment"}
+Amount due now: $${contractor1099Money(work.paymentRequestAmount || 0)}
+Total service quote: $${contractor1099Money(work.quotedFee || 0)}
+
+Secure payment link:
+${url}
+
+Use your Secure Client Portal for W-9s, payer information, payee information, and payment records.
+
+Reference: ${lead.leadId}
+
+Thank you,
+Greatest Business Solution LLC`;
+
+  window.location.href =
+    `mailto:${encodeURIComponent(lead.contact?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function openContractor1099Documents(index){
+  const lead = contractor1099LeadByIndex(index);
+
+  if(!lead){
+    alert("The Contractor 1099 client could not be identified.");
+    return;
+  }
+
+  const search =
+    lead.contact?.email ||
+    getContractor1099BusinessName(lead) ||
+    lead.leadId ||
+    "";
+
+  window.open(
+    `/office-document-review?search=${encodeURIComponent(search)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+function openContractor1099Portal(index){
+  const lead = contractor1099LeadByIndex(index);
+
+  if(!lead?.leadId){
+    alert("The Contractor 1099 client could not be identified.");
+    return;
+  }
+
+  window.open(
+    `/client-portal?activate=1&contractor1099=1&leadId=${encodeURIComponent(lead.leadId)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+function openContractor1099ActionBasketForLead(lead){
+  const leadId = String(lead?.leadId || "").trim();
+  const button = document.getElementById(
+    "contractor1099RequestsSidebarButton"
+  );
+
+  if(!button){
+    alert("Contractor 1099 Requests could not be opened.");
+    return;
+  }
+
+  currentView = "contractor1099";
+  currentContractor1099Filter = "all";
+  clearDetailPanel();
+
+  document.querySelectorAll(".sidebar-btn").forEach((item) => {
+    item.classList.toggle("active", item === button);
+  });
+  document.querySelectorAll(".c1099-filter-btn").forEach((item) => {
+    item.classList.toggle(
+      "active",
+      item.dataset.c1099Filter === "all"
+    );
+  });
+
+  const title = document.getElementById("viewTitle");
+  if(title) title.innerText = "Contractor 1099 Requests";
+
+  [
+    "taxPrepFilters",
+    "taxPrepAdvancedFilters",
+    "extensionFilters",
+    "extensionFilterSummary",
+    "contactFilters",
+    "contactAdvancedFilters",
+    "allFilters",
+    "closedFilters",
+    "officeCommandCenter"
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+    if(element) element.style.display = "none";
+  });
+
+  const filters = document.getElementById("contractor1099Filters");
+  const summary = document.getElementById("contractor1099FilterSummary");
+  if(filters) filters.style.display = "flex";
+  if(summary) summary.style.display = "block";
+
+  window.openContractor1099LeadIds.add(leadId);
+  renderLeads();
+
+  requestAnimationFrame(() => {
+    const card = document.querySelector(
+      `[data-c1099-lead-id="${CSS.escape(leadId)}"]`
+    );
+
+    if(card){
+      card.classList.add("c1099-highlight");
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(
+        () => card.classList.remove("c1099-highlight"),
+        3500
+      );
+    }
+  });
+}
+
+function openCompletedContractor1099Documents(index){
+  const lead = (
+    window.completedContractor1099Leads || []
+  )[index];
+
+  if(!lead){
+    alert("The completed Contractor 1099 record could not be identified.");
+    return;
+  }
+
+  const search =
+    lead.contact?.email ||
+    getContractor1099BusinessName(lead) ||
+    lead.leadId ||
+    "";
+
+  window.open(
+    `/office-document-review?search=${encodeURIComponent(search)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+async function sendCompletedContractor1099Email(index){
+  const lead = (
+    window.completedContractor1099Leads || []
+  )[index];
+
+  if(!lead){
+    alert("The completed Contractor 1099 record could not be identified.");
+    return;
+  }
+
+  if(
+    String(lead.contractor1099Work?.workStatus || "") ===
+    "Closed / No Filing"
+  ){
+    alert(
+      "This request was closed without filing. A service-completion email should not be sent from this button."
+    );
+    return;
+  }
+
+  const resend = Boolean(
+    lead.contractor1099Work?.completionEmailSentAt
+  );
+  const result =
+    await requestContractor1099CompletionEmail(
+      lead,
+      resend
+    );
+
+  if(result.emailSent){
+    alert(
+      resend
+        ? "The Contractor 1099 completion email was resent."
+        : "The Contractor 1099 completion email was sent."
+    );
+    await loadLeads();
+    return;
+  }
+
+  alert(
+    result.error ||
+    "The Contractor 1099 completion email was not sent."
+  );
+}
+
 window.openTaxPrepCardLeadIds =
   window.openTaxPrepCardLeadIds instanceof Set
     ? window.openTaxPrepCardLeadIds
@@ -12536,6 +15115,7 @@ async function loadLeads(){
     populateContactAdvancedFilters();
     populateClosedYearFilter();
     updateExtensionRequestCounts();
+    updateContractor1099Counts();
     renderLeads();
 
   }catch(e){
@@ -12569,6 +15149,8 @@ document.addEventListener("DOMContentLoaded", () => {
         all: "All Leads",
         written: "Written Review Requests",
         taxprep: "Tax Preparation Requests",
+        contractor1099: "Contractor 1099 Requests",
+        contractor1099completed: "Completed Contractor 1099 Filings",
         extensions: "Extension Requests",
         extensionscompleted: "Completed & Closed Extensions",
         taxprepcompleted: "Completed Tax Returns",
@@ -12602,6 +15184,26 @@ document.addEventListener("DOMContentLoaded", () => {
             currentView === "taxprepcompleted"
           )
             ? "flex"
+            : "none";
+      }
+
+      const contractor1099Filters =
+        document.getElementById("contractor1099Filters");
+      if(contractor1099Filters){
+        contractor1099Filters.style.display =
+          currentView === "contractor1099"
+            ? "flex"
+            : "none";
+      }
+
+      const contractor1099FilterSummary =
+        document.getElementById(
+          "contractor1099FilterSummary"
+        );
+      if(contractor1099FilterSummary){
+        contractor1099FilterSummary.style.display =
+          currentView === "contractor1099"
+            ? "block"
             : "none";
       }
 

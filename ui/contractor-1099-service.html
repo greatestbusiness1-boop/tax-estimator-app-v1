@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contractor Forms 1099 Service | Greatest Business Solution LLC</title>
+  <style>
+    :root{
+      --navy:#103763;
+      --blue:#285f99;
+      --pale:#eef5fb;
+      --border:#cbd9e7;
+      --gold:#d5a62f;
+      --text:#12243b;
+      --muted:#5b6d82;
+      --green:#087f5b;
+      --red:#b42318;
+      --orange:#a94f00;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      color:var(--text);
+      background:#edf3f8;
+    }
+    .page{
+      width:min(1040px,calc(100% - 24px));
+      margin:16px auto 40px;
+      background:#fff;
+      border:1px solid #d9e3ee;
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 16px 40px rgba(16,55,99,.09);
+    }
+    .hero{
+      display:flex;
+      align-items:center;
+      gap:20px;
+      padding:28px 36px;
+      background:var(--navy);
+      color:#fff;
+    }
+    .hero img{
+      width:180px;
+      max-height:78px;
+      object-fit:contain;
+      background:#fff;
+      border-radius:12px;
+      padding:10px;
+    }
+    .hero h1{margin:0 0 8px;font-size:31px;line-height:1.1}
+    .hero p{margin:0;line-height:1.48;font-size:16px}
+    .content{padding:28px 34px 36px}
+    .notice{
+      margin-bottom:18px;
+      padding:15px 18px;
+      border-left:6px solid var(--gold);
+      border-radius:10px;
+      background:#fff8e8;
+      line-height:1.48;
+    }
+    .notice.secure{
+      border-left-color:var(--green);
+      background:#eefbf6;
+    }
+    .notice strong{color:#0b513d}
+    section{
+      margin-top:22px;
+      padding-top:22px;
+      border-top:1px solid #dbe5ef;
+    }
+    section:first-of-type{margin-top:0;padding-top:0;border-top:0}
+    h2{margin:0 0 5px;color:#0d2f58;font-size:22px}
+    .section-intro{margin:0 0 16px;color:var(--muted);line-height:1.45}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+    .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field{display:flex;flex-direction:column;gap:7px;font-weight:800;font-size:14px}
+    .field.full{grid-column:1/-1}
+    input,select,textarea{
+      width:100%;
+      min-height:44px;
+      border:1px solid #b8caDC;
+      border-radius:9px;
+      background:#fff;
+      color:#15263c;
+      padding:10px 12px;
+      font:inherit;
+      font-weight:500;
+    }
+    textarea{min-height:108px;resize:vertical}
+    input:focus,select:focus,textarea:focus{outline:3px solid rgba(40,95,153,.16);border-color:var(--blue)}
+    .help{font-size:12px;font-weight:500;color:var(--muted);line-height:1.4}
+    .stepper{display:grid;grid-template-columns:46px 1fr 46px;gap:8px;align-items:center}
+    .stepper button{
+      min-height:44px;
+      border:1px solid #9eb6d0;
+      border-radius:9px;
+      background:#edf5fc;
+      color:#103763;
+      font-size:22px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .stepper input{text-align:center;font-weight:900}
+    .options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .option{
+      display:flex;
+      gap:9px;
+      align-items:flex-start;
+      min-height:58px;
+      padding:12px;
+      border:1px solid #cbd9e7;
+      border-radius:10px;
+      background:#f7fafc;
+      font-weight:800;
+      line-height:1.35;
+      cursor:pointer;
+    }
+    .option input{width:auto;min-height:0;margin-top:2px}
+    .deadline-box{
+      padding:14px 16px;
+      border:1px solid #f1c46a;
+      border-radius:10px;
+      background:#fff9ed;
+      color:#6f3b00;
+      line-height:1.45;
+    }
+    .acknowledge{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin-top:18px;
+      padding:14px;
+      border:1px solid #b8caDC;
+      border-radius:10px;
+      background:#f5f9fd;
+      font-weight:700;
+      line-height:1.45;
+    }
+    .acknowledge input{width:auto;min-height:0;margin-top:3px}
+    .submit{
+      width:100%;
+      min-height:54px;
+      margin-top:20px;
+      border:0;
+      border-radius:11px;
+      background:var(--blue);
+      color:#fff;
+      font-size:18px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .submit:disabled{opacity:.6;cursor:wait}
+    .result{
+      display:none;
+      margin-top:18px;
+      padding:16px;
+      border-radius:10px;
+      border:1px solid #9fc7b7;
+      background:#effbf6;
+      line-height:1.5;
+    }
+    .result.error{border-color:#efb2ae;background:#fff2f1;color:#7f1d1d}
+    .result h3{margin:0 0 8px}
+    .result a{
+      display:inline-block;
+      margin-top:12px;
+      padding:11px 16px;
+      border-radius:8px;
+      background:var(--navy);
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+    }
+    @media(max-width:760px){
+      .hero{display:block;padding:24px}
+      .hero img{width:150px;margin-bottom:16px}
+      .content{padding:22px 18px 28px}
+      .grid,.grid.three,.options{grid-template-columns:1fr}
+      .field.full{grid-column:1}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img src="/logo.png" alt="Greatest Business Solution LLC">
+      <div>
+        <h1>Contractor Forms 1099 Service</h1>
+        <p>Tell us how many contractors or other payees your business needs to report. We will review the filing type, deadline, W-9 records, state requirements, and service quote.</p>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="notice">
+        <strong>This service is for businesses that need to prepare or correct Forms 1099 for contractors or other payees.</strong><br>
+        It is different from telling us that you personally received a 1099 as income.
+      </div>
+
+      <div class="notice secure">
+        <strong>Do not enter Social Security numbers, contractor EINs, complete W-9 information, bank information, or payment-by-payment details on this public form.</strong>
+        Sensitive payer and recipient records will be requested through the Secure Client Portal after the request is submitted.
+      </div>
+
+      <form id="contractor1099Form" novalidate>
+        <section>
+          <h2>Business Contact Information</h2>
+          <p class="section-intro">Enter the person the office should contact and the business issuing the forms.</p>
+          <div class="grid">
+            <label class="field">Contact name
+              <input id="contactName" autocomplete="name" required>
+            </label>
+            <label class="field">Email address
+              <input id="contactEmail" type="email" autocomplete="email" required>
+            </label>
+            <label class="field">Phone number
+              <input id="contactPhone" inputmode="tel" autocomplete="tel" placeholder="(623) 570-3934" required>
+            </label>
+            <label class="field">Business legal name
+              <input id="businessLegalName" autocomplete="organization" required>
+            </label>
+            <label class="field">Business or trade name <span class="help">(optional)</span>
+              <input id="businessTradeName" autocomplete="organization">
+            </label>
+            <label class="field">Does the business have an EIN?
+              <select id="hasEin" required>
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+              <span class="help">Do not enter the actual EIN here.</span>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Reporting Year &amp; State</h2>
+          <p class="section-intro">The year defaults to the current information-return filing season. Use the arrows for a prior-year filing or correction.</p>
+          <div class="grid three">
+            <label class="field">Reporting year
+              <span class="stepper">
+                <button type="button" data-stepper-target="taxYear" data-step="-1" aria-label="Decrease reporting year">−</button>
+                <input id="taxYear" type="number" min="2015" max="2099" required>
+                <button type="button" data-stepper-target="taxYear" data-step="1" aria-label="Increase reporting year">+</button>
+              </span>
+            </label>
+            <label class="field">Primary business state
+              <select id="primaryState" required>
+                <option value="">Select state initials</option>
+              </select>
+            </label>
+            <label class="field">Number of states involved
+              <span class="stepper">
+                <button type="button" data-stepper-target="stateCount" data-step="-1" aria-label="Decrease states">−</button>
+                <input id="stateCount" type="number" min="1" max="51" value="1" required>
+                <button type="button" data-stepper-target="stateCount" data-step="1" aria-label="Increase states">+</button>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>What 1099 Work Do You Need?</h2>
+          <p class="section-intro">Choose every service that may apply. The office will confirm the correct form before pricing or filing.</p>
+          <div class="options" id="serviceTypes">
+            <label class="option"><input type="checkbox" value="original_1099_nec">Prepare and file original Form 1099-NEC for contractors or nonemployees</label>
+            <label class="option"><input type="checkbox" value="original_1099_misc">Prepare and file original Form 1099-MISC</label>
+            <label class="option"><input type="checkbox" value="correction">Correct a Form 1099 that was already filed</label>
+            <label class="option"><input type="checkbox" value="late_filing">Prepare a late or past-due Form 1099 filing</label>
+            <label class="option"><input type="checkbox" value="recipient_copies">Prepare or deliver recipient copies</label>
+            <label class="option"><input type="checkbox" value="not_sure">I am not sure which Form 1099 service is needed</label>
+          </div>
+          <div class="deadline-box" style="margin-top:14px;">
+            Form 1099-NEC and Form 1099-MISC have different filing rules and deadlines. The office will review the reporting year, form type, and whether the request is original, late, or corrective before filing.
+          </div>
+        </section>
+
+        <section>
+          <h2>Contractors, W-9s &amp; Payment Records</h2>
+          <p class="section-intro">Give us the counts and readiness status. The actual contractor names, TINs, addresses, and payment totals belong in the secure portal.</p>
+          <div class="grid">
+            <label class="field">Number of contractors or other payees that may need a form
+              <span class="stepper">
+                <button type="button" data-stepper-target="recipientCount" data-step="-1" aria-label="Decrease recipient count">−</button>
+                <input id="recipientCount" type="number" min="1" max="5000" value="1" required>
+                <button type="button" data-stepper-target="recipientCount" data-step="1" aria-label="Increase recipient count">+</button>
+              </span>
+            </label>
+            <label class="field">Total W-2 and 1099 forms the business expects to file
+              <span class="stepper">
+                <button type="button" data-stepper-target="totalInformationReturns" data-step="-1" aria-label="Decrease total information returns">−</button>
+                <input id="totalInformationReturns" type="number" min="1" max="10000" value="1" required>
+                <button type="button" data-stepper-target="totalInformationReturns" data-step="1" aria-label="Increase total information returns">+</button>
+              </span>
+              <span class="help">This helps the office review electronic-filing requirements.</span>
+            </label>
+            <label class="field">W-9 status
+              <select id="w9Status" required>
+                <option value="">Select</option>
+                <option value="all_collected">W-9 collected for every payee</option>
+                <option value="some_missing">Some W-9s are missing</option>
+                <option value="none_collected">No W-9s have been collected</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">Payment records by contractor
+              <select id="paymentRecordsStatus" required>
+                <option value="">Select</option>
+                <option value="complete">Complete totals are ready for every payee</option>
+                <option value="partial">Some payment totals are missing</option>
+                <option value="not_ready">Records are not organized yet</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">Deadline or filing situation
+              <select id="deadlineStatus" required>
+                <option value="">Select</option>
+                <option value="on_time">Planning an original filing before the deadline</option>
+                <option value="late">The filing deadline may have passed</option>
+                <option value="correction">A previously filed form needs correction</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">Were any payments subject to federal backup withholding?
+              <select id="backupWithholdingStatus" required>
+                <option value="">Select</option>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Filing &amp; Recipient-Copy Preferences</h2>
+          <div class="grid">
+            <label class="field">State filing situation
+              <select id="stateFilingStatus" required>
+                <option value="">Select</option>
+                <option value="primary_state_only">Only the primary state appears involved</option>
+                <option value="multiple_states">More than one state may be involved</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">Preferred recipient-copy method
+              <select id="recipientCopyMethod" required>
+                <option value="">Select</option>
+                <option value="secure_electronic">Secure electronic delivery</option>
+                <option value="paper_mail">Paper or mail delivery</option>
+                <option value="client_handles">Business will deliver recipient copies</option>
+                <option value="office_recommendation">Let the office recommend the safest method</option>
+              </select>
+            </label>
+            <label class="field">Is this connected to a tax return we are preparing?
+              <select id="taxPreparationConnection" required>
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">Do you already use our Secure Client Portal?
+              <select id="portalAccountKnown" required>
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field full">Anything else the office should know?
+              <textarea id="notes" maxlength="1500" placeholder="Examples: missing W-9s, late forms, corrected names or amounts, multiple businesses, state filing concerns, or recipient-copy needs."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <label class="acknowledge">
+          <input id="acknowledgment" type="checkbox">
+          <span>I understand this public request does not collect contractor Social Security numbers, EINs, complete W-9 data, or detailed payment records. I will use the Secure Client Portal when the office requests sensitive information.</span>
+        </label>
+
+        <button class="submit" id="submitButton" type="submit">Submit My Contractor 1099 Request</button>
+        <div class="result" id="result" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const STATES = [
+      "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"
+    ];
+
+    function currentInformationReturnYear(){
+      return new Date().getFullYear() - 1;
+    }
+
+    function formatPhone(value){
+      const digits = String(value || "").replace(/\D/g, "").slice(0,10);
+      if(!digits) return "";
+      if(digits.length < 4) return `(${digits}`;
+      if(digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+
+    function checkedValues(containerId){
+      return Array.from(
+        document.querySelectorAll(`#${containerId} input:checked`)
+      ).map((input) => input.value);
+    }
+
+    function showResult(message, isError = false, portalUrl = "", portalLabel = ""){
+      const box = document.getElementById("result");
+      box.className = isError ? "result error" : "result";
+      box.innerHTML = message + (
+        portalUrl
+          ? `<br><a href="${portalUrl}">${portalLabel || "Open Secure Client Portal"}</a>`
+          : ""
+      );
+      box.style.display = "block";
+      box.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+
+    const stateSelect = document.getElementById("primaryState");
+    STATES.forEach((state) => {
+      const option = document.createElement("option");
+      option.value = state;
+      option.textContent = state;
+      stateSelect.appendChild(option);
+    });
+
+    document.getElementById("taxYear").value = currentInformationReturnYear();
+
+    document.getElementById("contactPhone").addEventListener("input", (event) => {
+      event.target.value = formatPhone(event.target.value);
+    });
+
+    document.querySelectorAll("[data-stepper-target]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.stepperTarget);
+        const step = Number(button.dataset.step || 0);
+        const min = Number(input.min || -Infinity);
+        const max = Number(input.max || Infinity);
+        const current = Number(input.value || 0);
+        input.value = Math.min(max, Math.max(min, current + step));
+        input.dispatchEvent(new Event("change", {bubbles:true}));
+      });
+    });
+
+    document.getElementById("recipientCount").addEventListener("change", (event) => {
+      const total = document.getElementById("totalInformationReturns");
+      if(Number(total.value || 0) < Number(event.target.value || 0)){
+        total.value = event.target.value;
+      }
+    });
+
+    document.getElementById("contractor1099Form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitButton = document.getElementById("submitButton");
+      const errors = [];
+      const serviceTypes = checkedValues("serviceTypes");
+      const phoneDigits = document.getElementById("contactPhone").value.replace(/\D/g, "");
+
+      if(!document.getElementById("contactName").value.trim()) errors.push("Enter the contact name.");
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById("contactEmail").value.trim())) errors.push("Enter a valid email address.");
+      if(phoneDigits.length !== 10) errors.push("Enter a 10-digit phone number.");
+      if(!document.getElementById("businessLegalName").value.trim()) errors.push("Enter the business legal name.");
+      if(!document.getElementById("hasEin").value) errors.push("Select whether the business has an EIN.");
+      if(!document.getElementById("primaryState").value) errors.push("Select the primary business state.");
+      if(serviceTypes.length === 0) errors.push("Select at least one Contractor 1099 service.");
+      ["w9Status","paymentRecordsStatus","deadlineStatus","backupWithholdingStatus","stateFilingStatus","recipientCopyMethod","taxPreparationConnection","portalAccountKnown"].forEach((id) => {
+        if(!document.getElementById(id).value) errors.push(`Complete the ${document.querySelector(`label[for='${id}']`)?.textContent || id} question.`);
+      });
+      if(!document.getElementById("acknowledgment").checked) errors.push("Confirm the secure-document acknowledgment.");
+
+      if(errors.length){
+        showResult(`<h3>Please complete the following:</h3><ul>${errors.map((error) => `<li>${error}</li>`).join("")}</ul>`, true);
+        return;
+      }
+
+      const payload = {
+        contact: {
+          name: document.getElementById("contactName").value.trim(),
+          email: document.getElementById("contactEmail").value.trim(),
+          phone: document.getElementById("contactPhone").value
+        },
+        request: {
+          businessLegalName: document.getElementById("businessLegalName").value.trim(),
+          businessTradeName: document.getElementById("businessTradeName").value.trim(),
+          hasEin: document.getElementById("hasEin").value,
+          taxYear: document.getElementById("taxYear").value,
+          primaryState: document.getElementById("primaryState").value,
+          stateCount: Number(document.getElementById("stateCount").value || 1),
+          serviceTypes,
+          recipientCount: Number(document.getElementById("recipientCount").value || 0),
+          totalInformationReturns: Number(document.getElementById("totalInformationReturns").value || 0),
+          w9Status: document.getElementById("w9Status").value,
+          paymentRecordsStatus: document.getElementById("paymentRecordsStatus").value,
+          deadlineStatus: document.getElementById("deadlineStatus").value,
+          backupWithholdingStatus: document.getElementById("backupWithholdingStatus").value,
+          stateFilingStatus: document.getElementById("stateFilingStatus").value,
+          recipientCopyMethod: document.getElementById("recipientCopyMethod").value,
+          taxPreparationConnection: document.getElementById("taxPreparationConnection").value,
+          portalAccountKnown: document.getElementById("portalAccountKnown").value,
+          notes: document.getElementById("notes").value.trim()
+        }
+      };
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving Request...";
+
+      try{
+        const response = await fetch("/api/contractor-1099-request", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if(!response.ok || !data.ok){
+          const messages = Array.isArray(data.errors) ? data.errors : [data.error || "The request could not be saved."];
+          showResult(`<h3>Request not submitted</h3><ul>${messages.map((message) => `<li>${message}</li>`).join("")}</ul>`, true);
+          return;
+        }
+
+        showResult(
+          `<h3>Your Contractor 1099 request was received.</h3>
+           <strong>Reference:</strong> ${data.leadId}<br>
+           <strong>Status:</strong> ${data.status}<br>
+           <strong>Next step:</strong> The office will review the form type, W-9 readiness, filing timing, number of payees, and service quote. No payment was charged by this intake.<br><br>
+           ${data.portalAccessMode === "existing" ? "This request was connected to your existing Secure Client Portal. Do not create another account." : "Activate the same Secure Client Portal that will hold W-9s, payee records, filing confirmations, and recipient-copy information."}`,
+          false,
+          data.portalUrl,
+          data.portalActionLabel
+        );
+        document.getElementById("contractor1099Form").reset();
+        document.getElementById("taxYear").value = currentInformationReturnYear();
+        document.getElementById("stateCount").value = 1;
+        document.getElementById("recipientCount").value = 1;
+        document.getElementById("totalInformationReturns").value = 1;
+      }catch(error){
+        showResult(`<h3>Request not submitted</h3>The server could not be reached. Please try again.`, true);
+      }finally{
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit My Contractor 1099 Request";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1103,6 +1103,11 @@
           <div class="empty">Loading your tax-preparation status...</div>
         </div>
 
+        <h3 class="archive-title" style="margin-top:24px;">Contractor Forms 1099</h3>
+        <div class="service-portal-list" id="contractor1099PortalList">
+          <div class="empty">Loading your Contractor Forms 1099 status...</div>
+        </div>
+
         <h3 class="archive-title" style="margin-top:24px;">Tax Extensions</h3>
         <div class="service-portal-list" id="extensionPortalList">
           <div class="empty">Loading your extension status...</div>
@@ -1820,6 +1825,260 @@
           `;
           })
           .join("");
+    }
+
+    function openContractor1099DocumentUpload(
+      taxYear
+    ) {
+      const taxYearSelect =
+        document.getElementById(
+          "documentTaxYear"
+        );
+      const categorySelect =
+        document.getElementById(
+          "documentCategory"
+        );
+      const note =
+        document.getElementById(
+          "documentNote"
+        );
+
+      if (
+        taxYear &&
+        [...taxYearSelect.options].some(
+          (option) =>
+            option.value === String(taxYear)
+        )
+      ) {
+        taxYearSelect.value = String(taxYear);
+      }
+
+      const preferredCategories = [
+        "business",
+        "income",
+        "other"
+      ];
+
+      const category =
+        preferredCategories.find(
+          (candidate) =>
+            [...categorySelect.options].some(
+              (option) =>
+                option.value === candidate
+            )
+        );
+
+      if (category) {
+        categorySelect.value = category;
+      }
+
+      if (note) {
+        note.value =
+          "Contractor Forms 1099 service — W-9, payer information, payee information, payment total, correction, or filing record.";
+      }
+
+      document.getElementById(
+        "documentCenter"
+      ).scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      setTimeout(() => {
+        showDocumentMessage(
+          "CONTRACTOR 1099 UPLOAD READY — confirm the reporting year and category, choose one document, and click Upload Document Securely."
+        );
+        document.getElementById(
+          "documentFile"
+        ).focus();
+      }, 500);
+    }
+
+    function renderContractor1099Portal(
+      requests = []
+    ) {
+      const container =
+        document.getElementById(
+          "contractor1099PortalList"
+        );
+
+      if (!container) {
+        return;
+      }
+
+      if (!requests.length) {
+        container.innerHTML = `
+          <div class="empty">
+            No Contractor Forms 1099 service request is connected to this portal yet.
+            <br><br>
+            <a class="button secondary" href="/contractor-1099-service">
+              Start a Contractor 1099 Request
+            </a>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = requests
+        .map((request) => {
+          const services =
+            Array.isArray(request.serviceLabels)
+              ? request.serviceLabels
+              : [];
+          const checklist =
+            Array.isArray(request.documentChecklist)
+              ? request.documentChecklist
+              : [];
+          const quote = Number(request.quotedFee || 0);
+          const paid = Number(request.amountPaid || 0);
+          const outstanding = Math.max(0, quote - paid);
+
+          return `
+            <article class="service-portal-card ${request.completed ? "complete" : ""}">
+              <div>
+                <h3>
+                  Contractor Forms 1099 — ${escapeHtml(request.taxYear || "Reporting year not recorded")}
+                </h3>
+
+                <div class="service-portal-reference">
+                  ${escapeHtml(request.businessLegalName || request.businessTradeName || "Business name not recorded")} ·
+                  Reference ${escapeHtml(request.leadId || "Not recorded")}
+                </div>
+
+                <div class="service-portal-note">
+                  <strong>Your secure portal account is active.</strong>
+                  Upload W-9s, payer details, payee details, and payment records here. Do not email Social Security numbers, contractor EINs, or W-9s.
+                </div>
+
+                <div class="service-status-grid">
+                  <div class="service-status-item">
+                    <span>Work Status</span>
+                    <strong>${escapeHtml(request.workStatus || "New Request")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Documents</span>
+                    <strong>${escapeHtml(request.documentStatus || "Documents Needed")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Payer Information</span>
+                    <strong>${escapeHtml(request.payerInformationStatus || "Needs Review")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Payee Information / W-9s</span>
+                    <strong>${escapeHtml(request.payeeInformationStatus || "W-9s Needed")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Payment</span>
+                    <strong>${escapeHtml(request.paymentStatus || "Quote Needed")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Preparation</span>
+                    <strong>${escapeHtml(request.preparationStatus || "Not Started")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Federal Filing</span>
+                    <strong>${escapeHtml(request.filingStatus || "Not Started")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>IRS Acceptance</span>
+                    <strong>${escapeHtml(request.irsAcceptanceStatus || "Not Submitted")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>State Filing</span>
+                    <strong>${escapeHtml(request.stateFilingWorkStatus || "Not Reviewed")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>Recipient Copies</span>
+                    <strong>${escapeHtml(request.recipientCopyStatus || "Not Delivered")}</strong>
+                  </div>
+                </div>
+
+                <div class="tax-prep-intake-summary">
+                  <h4>Request Summary</h4>
+                  <div class="tax-prep-1099-details">
+                    <div>
+                      <strong>Services:</strong>
+                      ${escapeHtml(services.length ? services.join(", ") : "Office review needed")}
+                    </div>
+                    <div>
+                      <strong>Payees / recipients:</strong>
+                      ${Number(request.recipientCount || 0)}
+                    </div>
+                    <div>
+                      <strong>Total information returns:</strong>
+                      ${Number(request.totalInformationReturns || 0)}
+                    </div>
+                    <div>
+                      <strong>W-9 readiness:</strong>
+                      ${escapeHtml(request.w9Status || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>Payment-record readiness:</strong>
+                      ${escapeHtml(request.paymentRecordsStatus || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>Filing timing:</strong>
+                      ${escapeHtml(request.deadlineStatus || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>State filing:</strong>
+                      ${escapeHtml(request.stateFilingStatus || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>Recipient-copy method:</strong>
+                      ${escapeHtml(request.recipientCopyMethod || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>Service quote:</strong>
+                      ${quote > 0 ? "$" + quote.toFixed(2) : "Quote Needed"}
+                    </div>
+                    <div>
+                      <strong>Amount paid:</strong>
+                      $${paid.toFixed(2)}
+                    </div>
+                    <div>
+                      <strong>Outstanding:</strong>
+                      $${outstanding.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tax-prep-document-checklist">
+                  <h4>Secure documents and information needed</h4>
+                  <ul>
+                    ${
+                      checklist.length
+                        ? checklist.map(
+                            (item) => `<li>${escapeHtml(item)}</li>`
+                          ).join("")
+                        : "<li>The office will add document instructions after reviewing the request.</li>"
+                    }
+                  </ul>
+                </div>
+
+                <div class="service-next">
+                  <strong>Next required action</strong><br>
+                  ${escapeHtml(request.nextAction || "The office is reviewing your request.")}
+                </div>
+              </div>
+
+              <div class="service-portal-actions">
+                <button
+                  type="button"
+                  onclick="openContractor1099DocumentUpload('${escapeHtml(request.taxYear || "")}')"
+                >
+                  Upload Contractor 1099 Documents
+                </button>
+
+                <a
+                  class="button secondary"
+                  href="/contractor-1099-service"
+                >
+                  Start Another Contractor 1099 Request
+                </a>
+              </div>
+            </article>`;
+        })
+        .join("");
     }
 
     function renderExtensionPortal(
@@ -2971,6 +3230,10 @@
 
       renderTaxPreparationPortal(
         portal.taxPreparationRequests || []
+      );
+
+      renderContractor1099Portal(
+        portal.contractor1099Requests || []
       );
 
       renderExtensionPortal(
