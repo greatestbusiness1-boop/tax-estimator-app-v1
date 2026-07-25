@@ -5282,7 +5282,19 @@ function contractor1099Label(value) {
     client_handles:
       "Business Delivers Recipient Copies",
     office_recommendation:
-      "Office Recommendation"
+      "Office Recommendation",
+    not_expected:
+      "No State Filing Expected",
+    information_missing:
+      "Some Contractor Information Is Missing",
+    resolved:
+      "Resolved",
+    not_required:
+      "Not Required",
+    yes:
+      "Yes",
+    no:
+      "No"
   };
 
   const key = String(value || "").trim();
@@ -5295,6 +5307,272 @@ function contractor1099Label(value) {
         (letter) => letter.toUpperCase()
       )
       .trim();
+}
+
+const CONTRACTOR_1099_STRIPE_OWNED_WORK_FIELDS = new Set([
+  "paymentStatus",
+  "amountPaid",
+  "amountPaidCents",
+  "paymentVerifiedAt",
+  "paidAt",
+  "lastPaymentAt",
+  "lastPaymentAmountCents",
+  "lastPaymentPurpose",
+  "stripeCheckoutSessionId",
+  "stripeCheckoutUrl",
+  "stripePaymentIntentId",
+  "checkoutCreatedAt",
+  "processedStripeSessions",
+  "paymentSource",
+  "paymentLinkSentAt",
+  "paymentLinkEmailSent",
+  "paymentLinkEmailError",
+  "completionEmailSentAt",
+  "completionEmailStatus",
+  "completionEmailError",
+  "completionEmailResendCount"
+]);
+
+function mergeContractor1099OfficeWork(
+  existingWork = {},
+  incomingWork = {}
+) {
+  const existing =
+    existingWork &&
+    typeof existingWork === "object" &&
+    !Array.isArray(existingWork)
+      ? existingWork
+      : {};
+
+  const incoming =
+    incomingWork &&
+    typeof incomingWork === "object" &&
+    !Array.isArray(incomingWork)
+      ? incomingWork
+      : {};
+
+  const merged = {
+    ...existing,
+    ...incoming
+  };
+
+  for (const field of
+    CONTRACTOR_1099_STRIPE_OWNED_WORK_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(existing, field)) {
+      merged[field] = existing[field];
+    } else {
+      delete merged[field];
+    }
+  }
+
+  if (
+    String(merged.paymentRequirement || "Required") ===
+    "Waived by Office"
+  ) {
+    merged.paymentStatus = "Waived by Office";
+  } else if (
+    !merged.paymentStatus ||
+    merged.paymentStatus === "Waived by Office"
+  ) {
+    const quotedFeeCents = Math.max(
+      0,
+      Number.parseInt(merged.quotedFeeCents, 10) || 0
+    );
+
+    const amountPaidCents = Math.max(
+      0,
+      Number.parseInt(merged.amountPaidCents, 10) || 0
+    );
+
+    merged.paymentStatus =
+      quotedFeeCents > 0 &&
+      amountPaidCents >= quotedFeeCents
+        ? "Paid / Verified"
+        : quotedFeeCents > 0
+          ? "Payment Pending"
+          : "Quote Needed";
+  }
+
+  return merged;
+}
+
+function contractor1099CompletionRequested(
+  status = "",
+  work = {}
+) {
+  const workStatus = String(
+    work?.workStatus || ""
+  ).trim();
+
+  const leadStatus = String(status || "").trim();
+
+  return (
+    /^completed$/i.test(workStatus) ||
+    /^contractor 1099\s*-\s*completed$/i.test(
+      leadStatus
+    )
+  );
+}
+
+function getContractor1099CompletionMissing(
+  lead = {}
+) {
+  const work =
+    lead.contractor1099Work &&
+    typeof lead.contractor1099Work === "object"
+      ? lead.contractor1099Work
+      : {};
+
+  const missing = [];
+
+  const legacyPayeeComplete =
+    String(work.payeeInformationStatus || "") ===
+    "Complete";
+
+  const contractorInformationStatus = String(
+    work.contractorInformationStatus ||
+    (legacyPayeeComplete
+      ? "Complete"
+      : "Information Needed")
+  );
+
+  const w9RequirementStatus = String(
+    work.w9RequirementStatus ||
+    (legacyPayeeComplete
+      ? "Resolved"
+      : "W-9s Needed")
+  );
+
+  const quotedFeeCents = Math.max(
+    0,
+    Number.parseInt(work.quotedFeeCents, 10) ||
+    Math.round(
+      Math.max(0, Number(work.quotedFee || 0)) *
+      100
+    )
+  );
+
+  const amountPaidCents = Math.max(
+    0,
+    Number.parseInt(work.amountPaidCents, 10) || 0
+  );
+
+  if (
+    String(work.payerInformationStatus || "") !==
+    "Complete"
+  ) {
+    missing.push(
+      "Client and payer business information must be reviewed and marked Complete"
+    );
+  }
+
+  if (contractorInformationStatus !== "Complete") {
+    missing.push(
+      "Contractor or payee information must be Complete"
+    );
+  }
+
+  if (
+    !/^(resolved|not required)$/i.test(
+      w9RequirementStatus
+    )
+  ) {
+    missing.push(
+      "The W-9 requirement must be Resolved or Not Required"
+    );
+  }
+
+  if (
+    !/complete/i.test(
+      String(work.documentStatus || "")
+    )
+  ) {
+    missing.push(
+      "Required secure documents must be Complete"
+    );
+  }
+
+  if (
+    String(work.paymentRequirement || "Required") !==
+      "Waived by Office" &&
+    !(
+      quotedFeeCents > 0 &&
+      amountPaidCents >= quotedFeeCents
+    )
+  ) {
+    missing.push(
+      "Stripe must verify full payment, or the office must waive payment"
+    );
+  }
+
+  if (
+    !/^(complete|ready to file)$/i.test(
+      String(work.preparationStatus || "")
+    )
+  ) {
+    missing.push(
+      "Forms must be prepared and marked Complete or Ready to File"
+    );
+  }
+
+  if (
+    !/^(filed|accepted|not required)$/i.test(
+      String(work.filingStatus || "")
+    ) ||
+    !/^(accepted|not required)$/i.test(
+      String(work.irsAcceptanceStatus || "")
+    )
+  ) {
+    missing.push(
+      "Federal filing and IRS acceptance must be recorded, or marked Not Required"
+    );
+  }
+
+  if (
+    !/^(filed|accepted|not required)$/i.test(
+      String(work.stateFilingWorkStatus || "")
+    )
+  ) {
+    missing.push(
+      "State filing must be completed or marked Not Required"
+    );
+  }
+
+  if (
+    !/^delivered$/i.test(
+      String(work.recipientCopyStatus || "")
+    )
+  ) {
+    missing.push(
+      "Recipient copies must be Delivered"
+    );
+  }
+
+  if (
+    !/^delivered$/i.test(
+      String(work.filingConfirmationStatus || "")
+    )
+  ) {
+    missing.push(
+      "The filing confirmation must be Delivered to the client"
+    );
+  }
+
+  return missing;
+}
+
+function contractor1099CompletionError(missing = []) {
+  const error = new Error(
+    "This Contractor 1099 service cannot be completed until every mandatory item is finished."
+  );
+
+  error.code =
+    "CONTRACTOR_1099_COMPLETION_BLOCKED";
+  error.missing = Array.isArray(missing)
+    ? missing
+    : [];
+
+  return error;
 }
 
 function buildContractor1099DocumentChecklist(
@@ -5388,15 +5666,34 @@ function getContractor1099PortalNextAction(
     return "The forms were submitted. The office is monitoring acceptance and recipient-copy delivery.";
   }
 
+  const legacyPayeeComplete =
+    String(work.payeeInformationStatus || "") ===
+    "Complete";
+
+  const contractorInformationStatus = String(
+    work.contractorInformationStatus ||
+    (legacyPayeeComplete
+      ? "Complete"
+      : "Information Needed")
+  );
+
+  const w9RequirementStatus = String(
+    work.w9RequirementStatus ||
+    (legacyPayeeComplete
+      ? "Resolved"
+      : "W-9s Needed")
+  );
+
   if (
-    String(work.payeeInformationStatus || "")
-      .toLowerCase()
-      .includes("needed") ||
+    contractorInformationStatus !== "Complete" ||
+    !/^(resolved|not required)$/i.test(
+      w9RequirementStatus
+    ) ||
     String(work.documentStatus || "")
       .toLowerCase()
       .includes("needed")
   ) {
-    return "Upload missing W-9s, payee information, and payment totals through the Secure Document Center.";
+    return "Upload missing W-9s, contractor information, and payment totals through the Secure Document Center.";
   }
 
   if (
@@ -5415,6 +5712,19 @@ function getContractor1099PortalNextAction(
 
   if (status.includes("preparing")) {
     return "The office is preparing the Contractor Forms 1099 and will contact you if a payer or payee record needs correction.";
+  }
+
+  if (
+    /accepted|filed/i.test(
+      String(work.irsAcceptanceStatus || "") +
+      " " +
+      String(work.filingStatus || "")
+    ) &&
+    !/^delivered$/i.test(
+      String(work.filingConfirmationStatus || "")
+    )
+  ) {
+    return "The office must deliver the filing confirmation before the service can be completed.";
   }
 
   return "The office is reviewing the request, W-9 readiness, filing timing, and service quote.";
@@ -5473,6 +5783,14 @@ function buildClientPortalContractor1099Summary(entry) {
     w9Status: contractor1099Label(
       request.w9Status
     ),
+    contractorInformationStatus:
+      contractor1099Label(
+        request.contractorInformationStatus
+      ),
+    federalFilingNeeded:
+      contractor1099Label(
+        request.federalFilingNeeded
+      ),
     paymentRecordsStatus:
       contractor1099Label(
         request.paymentRecordsStatus
@@ -5511,6 +5829,24 @@ function buildClientPortalContractor1099Summary(entry) {
       work.payeeInformationStatus ||
       "W-9s Needed"
     ),
+    contractorInformationStatus: String(
+      work.contractorInformationStatus ||
+      (
+        String(work.payeeInformationStatus || "") ===
+        "Complete"
+          ? "Complete"
+          : "Information Needed"
+      )
+    ),
+    w9RequirementStatus: String(
+      work.w9RequirementStatus ||
+      (
+        String(work.payeeInformationStatus || "") ===
+        "Complete"
+          ? "Resolved"
+          : "W-9s Needed"
+      )
+    ),
     paymentStatus: String(
       work.paymentStatus ||
       "Quote Needed"
@@ -5539,6 +5875,10 @@ function buildClientPortalContractor1099Summary(entry) {
     ),
     recipientCopyStatus: String(
       work.recipientCopyStatus ||
+      "Not Delivered"
+    ),
+    filingConfirmationStatus: String(
+      work.filingConfirmationStatus ||
       "Not Delivered"
     ),
     documentChecklist:
@@ -9881,8 +10221,20 @@ app.post("/api/contractor-1099-request", async (req, res) => {
     .trim()
     .toLowerCase();
 
+  const contractorInformationStatus = String(
+    request.contractorInformationStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
   const paymentRecordsStatus = String(
     request.paymentRecordsStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const federalFilingNeeded = String(
+    request.federalFilingNeeded || ""
   )
     .trim()
     .toLowerCase();
@@ -9922,6 +10274,9 @@ app.post("/api/contractor-1099-request", async (req, res) => {
   )
     .trim()
     .toLowerCase();
+
+  const acknowledgedSecurePortal =
+    request.acknowledgedSecurePortal === true;
 
   const clientNotes = String(
     request.notes || ""
@@ -10005,12 +10360,33 @@ app.post("/api/contractor-1099-request", async (req, res) => {
 
   if (![
     "complete",
+    "information_missing",
+    "not_ready",
+    "not_sure"
+  ].includes(contractorInformationStatus)) {
+    errors.push(
+      "Select whether any contractor or payee information is missing."
+    );
+  }
+
+  if (![
+    "complete",
     "partial",
     "not_ready",
     "not_sure"
   ].includes(paymentRecordsStatus)) {
     errors.push(
       "Select the contractor payment-record status."
+    );
+  }
+
+  if (![
+    "yes",
+    "no",
+    "not_sure"
+  ].includes(federalFilingNeeded)) {
+    errors.push(
+      "Select whether federal filing is needed."
     );
   }
 
@@ -10036,6 +10412,7 @@ app.post("/api/contractor-1099-request", async (req, res) => {
   }
 
   if (![
+    "not_expected",
     "primary_state_only",
     "multiple_states",
     "not_sure"
@@ -10076,6 +10453,21 @@ app.post("/api/contractor-1099-request", async (req, res) => {
     );
   }
 
+  if (!acknowledgedSecurePortal) {
+    errors.push(
+      "Confirm that sensitive contractor information will be provided only through the Secure Client Portal."
+    );
+  }
+
+  const sensitivePublicNumberPattern =
+    /(?:\b\d{3}[- ]?\d{2}[- ]?\d{4}\b)|(?:\b\d{2}[- ]?\d{7}\b)/;
+
+  if (sensitivePublicNumberPattern.test(clientNotes)) {
+    errors.push(
+      "Remove Social Security numbers and EIN-style taxpayer identification numbers from General Notes. Provide them only through the Secure Client Portal."
+    );
+  }
+
   if (errors.length) {
     return res.status(400).json({
       ok: false,
@@ -10107,7 +10499,9 @@ app.post("/api/contractor-1099-request", async (req, res) => {
       deadlineStatus
     ) ||
     w9Status !== "all_collected" ||
+    contractorInformationStatus !== "complete" ||
     paymentRecordsStatus !== "complete" ||
+    federalFilingNeeded !== "yes" ||
     backupWithholdingStatus !== "no" ||
     stateCount > 1 ||
     stateFilingStatus !== "primary_state_only" ||
@@ -10165,7 +10559,7 @@ app.post("/api/contractor-1099-request", async (req, res) => {
       stateCode: primaryState
     },
     contractor1099Request: {
-      version: 1,
+      version: 2,
       submittedAt,
       taxYear,
       businessLegalName,
@@ -10182,13 +10576,16 @@ app.post("/api/contractor-1099-request", async (req, res) => {
       totalInformationReturns,
       electronicFilingReview,
       w9Status,
+      contractorInformationStatus,
       paymentRecordsStatus,
+      federalFilingNeeded,
       deadlineStatus,
       backupWithholdingStatus,
       stateFilingStatus,
       recipientCopyMethod,
       taxPreparationConnection,
       portalAccountKnown,
+      acknowledgedSecurePortal,
       clientNotes,
       source: "Public Contractor 1099 Intake"
     },
@@ -10201,8 +10598,17 @@ app.post("/api/contractor-1099-request", async (req, res) => {
       workStatus,
       documentStatus: "Documents Needed",
       payerInformationStatus: "Needs Review",
-      payeeInformationStatus:
+      contractorInformationStatus:
+        contractorInformationStatus === "complete"
+          ? "Needs Review"
+          : "Information Needed",
+      w9RequirementStatus:
         w9Status === "all_collected"
+          ? "Needs Review"
+          : "W-9s Needed",
+      payeeInformationStatus:
+        w9Status === "all_collected" &&
+        contractorInformationStatus === "complete"
           ? "Needs Review"
           : "W-9s Needed",
       paymentStatus: "Quote Needed",
@@ -10217,8 +10623,12 @@ app.post("/api/contractor-1099-request", async (req, res) => {
       preparationStatus: "Not Started",
       filingStatus: "Not Started",
       irsAcceptanceStatus: "Not Submitted",
-      stateFilingWorkStatus: "Not Reviewed",
+      stateFilingWorkStatus:
+        stateFilingStatus === "not_expected"
+          ? "Not Required"
+          : "Not Reviewed",
       recipientCopyStatus: "Not Delivered",
+      filingConfirmationStatus: "Not Delivered",
       correctionStatus:
         serviceTypes.includes("correction")
           ? "Correction Review Needed"
@@ -15509,8 +15919,10 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       !Array.isArray(contractor1099Work)
     ) {
       updatedEstimate.contractor1099Work = {
-        ...(updatedEstimate.contractor1099Work || {}),
-        ...contractor1099Work,
+        ...mergeContractor1099OfficeWork(
+          updatedEstimate.contractor1099Work || {},
+          contractor1099Work
+        ),
         updatedAt: new Date().toISOString()
       };
     }
@@ -15537,6 +15949,24 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         ...calendarAppointment,
         updatedAt: new Date().toISOString()
       };
+    }
+
+    if (
+      contractor1099CompletionRequested(
+        updatedEstimate.status,
+        updatedEstimate.contractor1099Work || {}
+      )
+    ) {
+      const missing =
+        getContractor1099CompletionMissing(
+          updatedEstimate
+        );
+
+      if (missing.length) {
+        throw contractor1099CompletionError(
+          missing
+        );
+      }
     }
 
     return updatedEstimate;
@@ -15637,6 +16067,17 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         }
       }
     } catch (supabaseErr) {
+      if (
+        supabaseErr?.code ===
+        "CONTRACTOR_1099_COMPLETION_BLOCKED"
+      ) {
+        return res.status(409).json({
+          ok: false,
+          error: supabaseErr.message,
+          missing: supabaseErr.missing || []
+        });
+      }
+
       console.error(
         "[PATCH /api/leads] Supabase update failed:",
         supabaseErr.message || supabaseErr
@@ -15719,8 +16160,10 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         !Array.isArray(contractor1099Work)
       ) {
         localLead.contractor1099Work = {
-          ...(localLead.contractor1099Work || {}),
-          ...contractor1099Work,
+          ...mergeContractor1099OfficeWork(
+            localLead.contractor1099Work || {},
+            contractor1099Work
+          ),
           updatedAt: new Date().toISOString()
         };
       }
@@ -15774,6 +16217,27 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
         localLead.Request =
           mergedTranscriptRequest;
+      }
+
+      if (
+        contractor1099CompletionRequested(
+          localLead.status,
+          localLead.contractor1099Work || {}
+        )
+      ) {
+        const missing =
+          getContractor1099CompletionMissing(
+            localLead
+          );
+
+        if (missing.length) {
+          return res.status(409).json({
+            ok: false,
+            error:
+              "This Contractor 1099 service cannot be completed until every mandatory item is finished.",
+            missing
+          });
+        }
       }
 
       localLeads[localIndex] = localLead;
@@ -16818,18 +17282,27 @@ app.post("/api/contractor-1099-completion-email", async (req, res) => {
     }
 
     if (
-      !/completed|closed/i.test(
-        String(
-          work.workStatus ||
-          lead.status ||
-          ""
-        )
+      !contractor1099CompletionRequested(
+        lead.status,
+        work
       )
     ) {
       return res.status(409).json({
         ok: false,
         error:
           "The Contractor 1099 service must be Completed before the completion email is sent."
+      });
+    }
+
+    const missingCompletionItems =
+      getContractor1099CompletionMissing(lead);
+
+    if (missingCompletionItems.length) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "The completion email cannot be sent until every mandatory Contractor 1099 item is finished.",
+        missing: missingCompletionItems
       });
     }
 

@@ -1963,8 +1963,12 @@
                     <strong>${escapeHtml(request.payerInformationStatus || "Needs Review")}</strong>
                   </div>
                   <div class="service-status-item">
-                    <span>Payee Information / W-9s</span>
-                    <strong>${escapeHtml(request.payeeInformationStatus || "W-9s Needed")}</strong>
+                    <span>Contractor / Payee Information</span>
+                    <strong>${escapeHtml(request.contractorInformationStatus || request.payeeInformationStatus || "Information Needed")}</strong>
+                  </div>
+                  <div class="service-status-item">
+                    <span>W-9 Requirement</span>
+                    <strong>${escapeHtml(request.w9RequirementStatus || "W-9s Needed")}</strong>
                   </div>
                   <div class="service-status-item">
                     <span>Payment</span>
@@ -1990,6 +1994,10 @@
                     <span>Recipient Copies</span>
                     <strong>${escapeHtml(request.recipientCopyStatus || "Not Delivered")}</strong>
                   </div>
+                  <div class="service-status-item">
+                    <span>Filing Confirmation</span>
+                    <strong>${escapeHtml(request.filingConfirmationStatus || "Not Delivered")}</strong>
+                  </div>
                 </div>
 
                 <div class="tax-prep-intake-summary">
@@ -2012,8 +2020,16 @@
                       ${escapeHtml(request.w9Status || "Not recorded")}
                     </div>
                     <div>
+                      <strong>Contractor-information readiness:</strong>
+                      ${escapeHtml(request.contractorInformationStatus || "Not recorded")}
+                    </div>
+                    <div>
                       <strong>Payment-record readiness:</strong>
                       ${escapeHtml(request.paymentRecordsStatus || "Not recorded")}
+                    </div>
+                    <div>
+                      <strong>Federal filing needed:</strong>
+                      ${escapeHtml(request.federalFilingNeeded || "Not recorded")}
                     </div>
                     <div>
                       <strong>Filing timing:</strong>

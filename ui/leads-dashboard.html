@@ -4108,9 +4108,53 @@ function getContractor1099DocumentStatus(lead){
 }
 
 function getContractor1099PaymentStatus(lead){
+  if(
+    String(
+      lead?.contractor1099Work?.paymentRequirement ||
+      "Required"
+    ) === "Waived by Office"
+  ){
+    return "Waived by Office";
+  }
+
   return String(
     lead?.contractor1099Work?.paymentStatus ||
     "Quote Needed"
+  ).trim();
+}
+
+function getContractor1099ContractorInformationStatus(lead){
+  const work = lead?.contractor1099Work || {};
+
+  return String(
+    work.contractorInformationStatus ||
+    (
+      String(work.payeeInformationStatus || "") ===
+      "Complete"
+        ? "Complete"
+        : "Information Needed"
+    )
+  ).trim();
+}
+
+function getContractor1099W9RequirementStatus(lead){
+  const work = lead?.contractor1099Work || {};
+
+  return String(
+    work.w9RequirementStatus ||
+    (
+      String(work.payeeInformationStatus || "") ===
+      "Complete"
+        ? "Resolved"
+        : "W-9s Needed"
+    )
+  ).trim();
+}
+
+function getContractor1099FilingConfirmationStatus(lead){
+  return String(
+    lead?.contractor1099Work?.filingConfirmationStatus ||
+    "Not Delivered"
   ).trim();
 }
 
@@ -4250,12 +4294,18 @@ function contractor1099NextAction(lead){
   }
 
   if(
-    String(
-      work.payeeInformationStatus ||
-      "W-9s Needed"
-    ) !== "Complete"
+    getContractor1099ContractorInformationStatus(lead) !==
+    "Complete"
   ){
-    return "Collect and review every W-9, payee name, TIN, address, and payment total through the secure portal.";
+    return "Collect and review every contractor or payee name, TIN, address, and payment total through the secure portal.";
+  }
+
+  if(
+    !/^(resolved|not required)$/i.test(
+      getContractor1099W9RequirementStatus(lead)
+    )
+  ){
+    return "Resolve every required W-9 through the Secure Client Portal.";
   }
 
   if(
@@ -4330,7 +4380,18 @@ function contractor1099NextAction(lead){
       )
     )
   ){
-    return "Deliver or confirm recipient copies, then complete the service.";
+    return "Deliver or confirm recipient copies before completing the service.";
+  }
+
+  if(
+    /delivered/i.test(
+      String(work.recipientCopyStatus || "")
+    ) &&
+    !/^delivered$/i.test(
+      getContractor1099FilingConfirmationStatus(lead)
+    )
+  ){
+    return "Deliver the federal and state filing confirmation to the client before completing the service.";
   }
 
   return "Review the request and advance the next required status in this Action Basket.";
@@ -4507,16 +4568,26 @@ function validateContractor1099Completion(values){
     "Complete"
   ){
     missing.push(
-      "Payer information must be Complete"
+      "Client and payer business information must be reviewed and marked Complete"
     );
   }
 
   if(
-    values.payeeInformationStatus !==
+    values.contractorInformationStatus !==
     "Complete"
   ){
     missing.push(
-      "Payee information and W-9 review must be Complete"
+      "Contractor or payee information must be Complete"
+    );
+  }
+
+  if(
+    !/^(resolved|not required)$/i.test(
+      values.w9RequirementStatus
+    )
+  ){
+    missing.push(
+      "The W-9 requirement must be Resolved or Not Required"
     );
   }
 
@@ -4526,7 +4597,7 @@ function validateContractor1099Completion(values){
     )
   ){
     missing.push(
-      "Required documents must be Complete"
+      "Required secure documents must be Complete"
     );
   }
 
@@ -4540,32 +4611,35 @@ function validateContractor1099Completion(values){
     )
   ){
     missing.push(
-      "The service quote must be Paid / Verified or waived by the office"
+      "Stripe must verify full payment, or the office must waive payment"
     );
   }
 
   if(
-    !/accepted|not required/i.test(
+    !/^(complete|ready to file)$/i.test(
+      values.preparationStatus
+    )
+  ){
+    missing.push(
+      "Forms must be prepared and marked Complete or Ready to File"
+    );
+  }
+
+  if(
+    !/^(filed|accepted|not required)$/i.test(
+      values.filingStatus
+    ) ||
+    !/^(accepted|not required)$/i.test(
       values.irsAcceptanceStatus
     )
   ){
     missing.push(
-      "IRS acceptance must be confirmed or marked Not Required"
+      "Federal filing and IRS acceptance must be recorded, or marked Not Required"
     );
   }
 
   if(
-    !/filed|accepted|not required/i.test(
-      values.filingStatus
-    )
-  ){
-    missing.push(
-      "Federal filing status must be Filed, Accepted, or Not Required"
-    );
-  }
-
-  if(
-    !/filed|accepted|not required/i.test(
+    !/^(filed|accepted|not required)$/i.test(
       values.stateFilingWorkStatus
     )
   ){
@@ -4575,12 +4649,22 @@ function validateContractor1099Completion(values){
   }
 
   if(
-    !/delivered/i.test(
+    !/^delivered$/i.test(
       values.recipientCopyStatus
     )
   ){
     missing.push(
-      "Recipient copies must be delivered"
+      "Recipient copies must be Delivered"
+    );
+  }
+
+  if(
+    !/^delivered$/i.test(
+      values.filingConfirmationStatus
+    )
+  ){
+    missing.push(
+      "The filing confirmation must be Delivered to the client"
     );
   }
 
@@ -9392,7 +9476,8 @@ function renderLeads(){
             /review|needed|missing|late|correction|rejected/i.test(
               [
                 workStatus,
-                work.payeeInformationStatus,
+                getContractor1099ContractorInformationStatus(lead),
+                getContractor1099W9RequirementStatus(lead),
                 request.deadlineStatus,
                 filingStatus,
                 work.irsAcceptanceStatus
@@ -9413,10 +9498,13 @@ function renderLeads(){
             String(
               work.payerInformationStatus || ""
             ) === "Complete";
-          const payeeDone =
-            String(
-              work.payeeInformationStatus || ""
-            ) === "Complete";
+          const contractorInfoDone =
+            getContractor1099ContractorInformationStatus(lead) ===
+            "Complete";
+          const w9Done =
+            /^(resolved|not required)$/i.test(
+              getContractor1099W9RequirementStatus(lead)
+            );
           const docsDone =
             /complete/i.test(
               getContractor1099DocumentStatus(lead)
@@ -9439,11 +9527,21 @@ function renderLeads(){
                 work.irsAcceptanceStatus || ""
               )
             );
+          const stateDone =
+            /filed|accepted|not required/i.test(
+              String(
+                work.stateFilingWorkStatus || ""
+              )
+            );
           const copiesDone =
             /delivered/i.test(
               String(
                 work.recipientCopyStatus || ""
               )
+            );
+          const confirmationDone =
+            /^delivered$/i.test(
+              getContractor1099FilingConfirmationStatus(lead)
             );
 
           return `
@@ -9569,8 +9667,8 @@ function renderLeads(){
                     onclick="toggleContractor1099ActionBasket(${index})"
                   >
                     ${cardOpen
-                      ? "Minimize Action Basket"
-                      : "Open Action Basket"}
+                      ? "Minimize 1099 Action Basket"
+                      : "Open 1099 Action Basket"}
                   </button>
                 </div>
               </div>
@@ -9657,6 +9755,12 @@ function renderLeads(){
                         request.w9Status
                       )
                     )}<br>
+                    Contractor information:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.contractorInformationStatus
+                      )
+                    )}<br>
                     Payment totals:
                     ${escapeOfficeHtml(
                       contractor1099Humanize(
@@ -9667,6 +9771,12 @@ function renderLeads(){
 
                   <div class="c1099-summary-block">
                     <strong>Filing situation</strong>
+                    Federal filing needed:
+                    ${escapeOfficeHtml(
+                      contractor1099Humanize(
+                        request.federalFilingNeeded
+                      )
+                    )}<br>
                     Deadline:
                     ${escapeOfficeHtml(
                       contractor1099Humanize(
@@ -9728,15 +9838,16 @@ function renderLeads(){
 
                   <div class="c1099-checklist">
                     ${[
-                      ["Portal active", portalDone],
-                      ["Payer information complete", payerDone],
-                      ["Payee information / W-9s complete", payeeDone],
-                      ["Required documents complete", docsDone],
-                      ["Payment complete or waived", paymentDone],
+                      ["Client / payer information reviewed", payerDone],
+                      ["Contractor / payee information complete", contractorInfoDone],
+                      ["W-9 requirement resolved", w9Done],
+                      ["Required secure documents complete", docsDone],
+                      ["Stripe payment verified or waived", paymentDone],
                       ["Forms prepared", preparedDone],
-                      ["Forms filed", filedDone],
-                      ["IRS accepted", acceptedDone],
-                      ["Recipient copies delivered", copiesDone]
+                      ["Federal filing and IRS acceptance recorded", filedDone && acceptedDone],
+                      ["State filing decided", stateDone],
+                      ["Recipient copies delivered", copiesDone],
+                      ["Filing confirmation delivered", confirmationDone]
                     ].map(([label, done]) => `
                       <div class="c1099-check ${done ? "done" : ""}">
                         ${done ? "✓" : "○"} ${escapeOfficeHtml(label)}
@@ -9787,7 +9898,7 @@ function renderLeads(){
                     </label>
 
                     <label class="c1099-field">
-                      Payer information
+                      Client / payer information reviewed
                       <select id="c1099PayerStatus-${index}">
                         ${selectOptionsHtml(
                           [
@@ -9802,17 +9913,32 @@ function renderLeads(){
                     </label>
 
                     <label class="c1099-field">
-                      Payee information / W-9s
-                      <select id="c1099PayeeStatus-${index}">
+                      Contractor / payee information
+                      <select id="c1099ContractorInfoStatus-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Information Needed",
+                            "Partial",
+                            "Needs Review",
+                            "Complete"
+                          ],
+                          getContractor1099ContractorInformationStatus(lead)
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      W-9 requirement
+                      <select id="c1099W9RequirementStatus-${index}">
                         ${selectOptionsHtml(
                           [
                             "W-9s Needed",
                             "Partial",
                             "Needs Review",
-                            "Complete"
+                            "Resolved",
+                            "Not Required"
                           ],
-                          work.payeeInformationStatus ||
-                          "W-9s Needed"
+                          getContractor1099W9RequirementStatus(lead)
                         )}
                       </select>
                     </label>
@@ -9954,6 +10080,20 @@ function renderLeads(){
                           ],
                           work.recipientCopyStatus ||
                           "Not Delivered"
+                        )}
+                      </select>
+                    </label>
+
+                    <label class="c1099-field">
+                      Filing confirmation delivered to client
+                      <select id="c1099FilingConfirmation-${index}">
+                        ${selectOptionsHtml(
+                          [
+                            "Not Delivered",
+                            "Ready for Delivery",
+                            "Delivered"
+                          ],
+                          getContractor1099FilingConfirmationStatus(lead)
                         )}
                       </select>
                     </label>
@@ -13035,8 +13175,8 @@ function toggleContractor1099ActionBasket(index){
   body.hidden = !opening;
   button.classList.toggle("open", opening);
   button.textContent = opening
-    ? "Minimize Action Basket"
-    : "Open Action Basket";
+    ? "Minimize 1099 Action Basket"
+    : "Open 1099 Action Basket";
   button.setAttribute(
     "aria-expanded",
     opening ? "true" : "false"
@@ -13071,6 +13211,14 @@ function contractor1099CardValues(index, lead){
       )
     ) || 0
   );
+  const contractorInformationStatus = value(
+    "c1099ContractorInfoStatus",
+    getContractor1099ContractorInformationStatus(lead)
+  );
+  const w9RequirementStatus = value(
+    "c1099W9RequirementStatus",
+    getContractor1099W9RequirementStatus(lead)
+  );
 
   return {
     workStatus: value(
@@ -13085,10 +13233,15 @@ function contractor1099CardValues(index, lead){
       "c1099PayerStatus",
       work.payerInformationStatus || "Needs Review"
     ),
-    payeeInformationStatus: value(
-      "c1099PayeeStatus",
-      work.payeeInformationStatus || "W-9s Needed"
-    ),
+    contractorInformationStatus,
+    w9RequirementStatus,
+    payeeInformationStatus:
+      contractorInformationStatus === "Complete" &&
+      /^(resolved|not required)$/i.test(
+        w9RequirementStatus
+      )
+        ? "Complete"
+        : "W-9s Needed",
     paymentRequirement: value(
       "c1099PaymentRequirement",
       work.paymentRequirement || "Required"
@@ -13121,6 +13274,10 @@ function contractor1099CardValues(index, lead){
     recipientCopyStatus: value(
       "c1099RecipientCopies",
       work.recipientCopyStatus || "Not Delivered"
+    ),
+    filingConfirmationStatus: value(
+      "c1099FilingConfirmation",
+      getContractor1099FilingConfirmationStatus(lead)
     ),
     officeNote: String(
       value(

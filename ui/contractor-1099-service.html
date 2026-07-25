@@ -65,6 +65,15 @@
       background:#eefbf6;
     }
     .notice strong{color:#0b513d}
+    .before-begin{
+      margin:18px 0 24px;
+      padding:18px 20px;
+      border:1px solid #b8caDC;
+      border-radius:12px;
+      background:#f5f9fd;
+    }
+    .before-begin h2{margin-bottom:10px}
+    .before-begin ul{margin:0;padding-left:22px;line-height:1.55}
     section{
       margin-top:22px;
       padding-top:22px;
@@ -203,6 +212,16 @@
         Sensitive payer and recipient records will be requested through the Secure Client Portal after the request is submitted.
       </div>
 
+      <div class="before-begin">
+        <h2>Before You Begin</h2>
+        <ul>
+          <li>Know the reporting year and the approximate number of contractors or other payees.</li>
+          <li>Know whether completed Forms W-9 and year-end payment totals are available.</li>
+          <li>Know whether any payee information is missing, whether the deadline may have passed, and whether federal or state filing may be needed.</li>
+          <li>Do not enter taxpayer identification numbers or upload documents here. Those items belong in the Secure Client Portal.</li>
+        </ul>
+      </div>
+
       <form id="contractor1099Form" novalidate>
         <section>
           <h2>Business Contact Information</h2>
@@ -305,6 +324,15 @@
                 <option value="not_sure">Not sure</option>
               </select>
             </label>
+            <label class="field">Is any contractor or payee information missing?
+              <select id="contractorInformationStatus" required>
+                <option value="">Select</option>
+                <option value="complete">All contractor information appears complete</option>
+                <option value="information_missing">Some names, addresses, TINs, or other details are missing</option>
+                <option value="not_ready">Contractor information has not been organized</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
             <label class="field">Payment records by contractor
               <select id="paymentRecordsStatus" required>
                 <option value="">Select</option>
@@ -337,11 +365,20 @@
         <section>
           <h2>Filing &amp; Recipient-Copy Preferences</h2>
           <div class="grid">
-            <label class="field">State filing situation
+            <label class="field">Is federal filing needed?
+              <select id="federalFilingNeeded" required>
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No — preparation or recipient copies only</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+            </label>
+            <label class="field">May state filing be needed?
               <select id="stateFilingStatus" required>
                 <option value="">Select</option>
-                <option value="primary_state_only">Only the primary state appears involved</option>
-                <option value="multiple_states">More than one state may be involved</option>
+                <option value="not_expected">No state filing is expected</option>
+                <option value="primary_state_only">The primary state may require filing</option>
+                <option value="multiple_states">More than one state may require filing</option>
                 <option value="not_sure">Not sure</option>
               </select>
             </label>
@@ -469,9 +506,13 @@
       if(!document.getElementById("hasEin").value) errors.push("Select whether the business has an EIN.");
       if(!document.getElementById("primaryState").value) errors.push("Select the primary business state.");
       if(serviceTypes.length === 0) errors.push("Select at least one Contractor 1099 service.");
-      ["w9Status","paymentRecordsStatus","deadlineStatus","backupWithholdingStatus","stateFilingStatus","recipientCopyMethod","taxPreparationConnection","portalAccountKnown"].forEach((id) => {
+      ["w9Status","contractorInformationStatus","paymentRecordsStatus","federalFilingNeeded","deadlineStatus","backupWithholdingStatus","stateFilingStatus","recipientCopyMethod","taxPreparationConnection","portalAccountKnown"].forEach((id) => {
         if(!document.getElementById(id).value) errors.push(`Complete the ${document.querySelector(`label[for='${id}']`)?.textContent || id} question.`);
       });
+      const notes = document.getElementById("notes").value.trim();
+      const sensitivePublicNumberPattern = /(?:\b\d{3}[- ]?\d{2}[- ]?\d{4}\b)|(?:\b\d{2}[- ]?\d{7}\b)/;
+
+      if(sensitivePublicNumberPattern.test(notes)) errors.push("Remove Social Security numbers and EIN-style taxpayer identification numbers from General Notes. Use the Secure Client Portal for those details.");
       if(!document.getElementById("acknowledgment").checked) errors.push("Confirm the secure-document acknowledgment.");
 
       if(errors.length){
@@ -496,14 +537,17 @@
           recipientCount: Number(document.getElementById("recipientCount").value || 0),
           totalInformationReturns: Number(document.getElementById("totalInformationReturns").value || 0),
           w9Status: document.getElementById("w9Status").value,
+          contractorInformationStatus: document.getElementById("contractorInformationStatus").value,
           paymentRecordsStatus: document.getElementById("paymentRecordsStatus").value,
+          federalFilingNeeded: document.getElementById("federalFilingNeeded").value,
           deadlineStatus: document.getElementById("deadlineStatus").value,
           backupWithholdingStatus: document.getElementById("backupWithholdingStatus").value,
           stateFilingStatus: document.getElementById("stateFilingStatus").value,
           recipientCopyMethod: document.getElementById("recipientCopyMethod").value,
           taxPreparationConnection: document.getElementById("taxPreparationConnection").value,
           portalAccountKnown: document.getElementById("portalAccountKnown").value,
-          notes: document.getElementById("notes").value.trim()
+          acknowledgedSecurePortal: document.getElementById("acknowledgment").checked,
+          notes
         }
       };
 
@@ -525,7 +569,7 @@
         }
 
         showResult(
-          `<h3>Your Contractor 1099 request was received.</h3>
+          `<h3>We Received Your Contractor 1099 Service Request</h3>
            <strong>Reference:</strong> ${data.leadId}<br>
            <strong>Status:</strong> ${data.status}<br>
            <strong>Next step:</strong> The office will review the form type, W-9 readiness, filing timing, number of payees, and service quote. No payment was charged by this intake.<br><br>
