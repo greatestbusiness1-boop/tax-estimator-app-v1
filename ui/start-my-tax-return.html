@@ -238,6 +238,84 @@
     .business-profile-launch button:hover {
       background:#0c2e58;
     }
+    .schedule-c-code-center {
+      grid-column:1 / -1;
+      margin:4px 0 2px;
+      padding:16px;
+      border:2px solid #b58a3a;
+      border-radius:12px;
+      background:#fffaf0;
+    }
+    .schedule-c-code-center[hidden] { display:none; }
+    .schedule-c-code-center h4 {
+      margin:0 0 6px;
+      color:var(--navy);
+      font-size:18px;
+    }
+    .schedule-c-code-center p {
+      margin:0 0 12px;
+      color:#4b5563;
+      line-height:1.45;
+    }
+    .schedule-c-code-controls {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:end;
+    }
+    .schedule-c-code-controls button,
+    .schedule-c-code-result button {
+      border:0;
+      border-radius:8px;
+      background:var(--navy);
+      color:#fff;
+      padding:11px 14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .schedule-c-code-results {
+      display:grid;
+      gap:7px;
+      margin-top:10px;
+    }
+    .schedule-c-code-result {
+      display:grid;
+      grid-template-columns:82px minmax(0,1fr) auto;
+      gap:9px;
+      align-items:center;
+      border:1px solid #d7c18b;
+      border-radius:9px;
+      background:#fff;
+      padding:9px;
+    }
+    .schedule-c-code-result strong {
+      color:#0f2f59;
+    }
+    .schedule-c-code-result small {
+      display:block;
+      margin-top:2px;
+      color:#657084;
+    }
+    .schedule-c-code-selected {
+      margin-top:10px;
+      border:1px solid #86b7a4;
+      border-radius:9px;
+      background:#effbf7;
+      padding:10px;
+      line-height:1.4;
+    }
+    .schedule-c-code-office-review {
+      display:flex;
+      gap:9px;
+      align-items:flex-start;
+      margin-top:11px;
+      font-weight:700;
+      line-height:1.4;
+    }
+    .schedule-c-code-office-review input {
+      width:auto;
+      margin-top:3px;
+    }
     .stepper {
       display:grid;
       grid-template-columns:44px minmax(0,1fr) 44px;
@@ -608,6 +686,69 @@
                   <input id="principalBusinessProfession" placeholder="Example: trucking, hair stylist, tax preparation, construction, consulting" />
                 </label>
 
+                <section
+                  class="schedule-c-code-center"
+                  id="scheduleCCodeCenter"
+                  hidden
+                >
+                  <h4>
+                    IRS Schedule C Business Code Research &amp; Suggestion Center
+                  </h4>
+                  <p>
+                    For Schedule C filers only. Search the official
+                    IRS list using the business description above,
+                    select the closest activity, or ask the tax
+                    preparer to choose it. The office will confirm
+                    the final six-digit code before filing.
+                  </p>
+
+                  <div class="schedule-c-code-controls">
+                    <label class="field">
+                      Search by business activity or enter a known six-digit code
+                      <input
+                        id="businessCodeSearch"
+                        placeholder="Example: local delivery, bookkeeping, hair stylist, 492000"
+                        autocomplete="off"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      id="businessCodeSearchButton"
+                    >
+                      Find IRS Code Suggestions
+                    </button>
+                  </div>
+
+                  <div
+                    class="schedule-c-code-results"
+                    id="businessCodeResults"
+                  ></div>
+
+                  <div
+                    class="schedule-c-code-selected"
+                    id="businessCodeSelected"
+                  >
+                    <strong>No IRS business code selected yet.</strong>
+                  </div>
+
+                  <label class="schedule-c-code-office-review">
+                    <input
+                      id="businessCodeOfficeReview"
+                      type="checkbox"
+                    />
+                    <span>
+                      I am not sure which code applies. Let the tax
+                      preparer research and select the final code.
+                    </span>
+                  </label>
+
+                  <input id="businessActivityCode" type="hidden" />
+                  <input id="businessActivityDescription" type="hidden" />
+                  <input id="businessActivityCodeYear" type="hidden" />
+                  <input id="businessActivityCodeStatus" type="hidden" />
+                </section>
+
                 <label class="field">Is the business address the same as your home address?
                   <select id="businessAddressSameAsHome">
                     <option value="">Select</option>
@@ -780,6 +921,7 @@
     </div>
   </main>
 
+  <script src="/data/schedule-c-code-search.js"></script>
   <script>
     const bookingUrl = "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
     const params = new URLSearchParams(window.location.search);
@@ -869,6 +1011,193 @@
       }
 
       return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
+    function scheduleCCodeCenterApplies() {
+      const entityType = String(
+        document.getElementById("businessEntityType").value || ""
+      ).toLowerCase();
+      const separateEntityServices = new Set([
+        "partnership_return",
+        "s_corporation_return",
+        "c_corporation_return",
+        "nonprofit_return"
+      ]);
+      const selectedServices = checkedValues("serviceTypes");
+
+      return (
+        selectedBusinessProfileApplies() &&
+        !selectedServices.some(
+          (value) => separateEntityServices.has(value)
+        ) &&
+        ![
+          "multi_member_llc",
+          "partnership",
+          "s_corporation",
+          "c_corporation",
+          "nonprofit"
+        ].includes(entityType)
+      );
+    }
+
+    function clearBusinessCodeSelection({
+      officeReview = false
+    } = {}) {
+      document.getElementById(
+        "businessActivityCode"
+      ).value = "";
+      document.getElementById(
+        "businessActivityDescription"
+      ).value = "";
+      document.getElementById(
+        "businessActivityCodeYear"
+      ).value = "";
+      document.getElementById(
+        "businessActivityCodeStatus"
+      ).value = officeReview
+        ? "office_review_needed"
+        : "";
+
+      document.getElementById(
+        "businessCodeSelected"
+      ).innerHTML = officeReview
+        ? "<strong>Office review requested.</strong><br>The tax preparer will research and confirm the final IRS Schedule C business code."
+        : "<strong>No IRS business code selected yet.</strong>";
+    }
+
+    function updateScheduleCCodeCenterVisibility() {
+      const center = document.getElementById(
+        "scheduleCCodeCenter"
+      );
+      const applies = scheduleCCodeCenterApplies();
+
+      center.hidden = !applies;
+
+      if (!applies) {
+        clearBusinessCodeSelection();
+        document.getElementById(
+          "businessCodeOfficeReview"
+        ).checked = false;
+        document.getElementById(
+          "businessCodeResults"
+        ).innerHTML = "";
+        return;
+      }
+
+      const description = document.getElementById(
+        "principalBusinessProfession"
+      ).value.trim();
+      const search = document.getElementById(
+        "businessCodeSearch"
+      );
+
+      if (!search.value.trim() && description) {
+        search.value = description;
+      }
+    }
+
+    function selectClientBusinessCode(entry, sourceYear) {
+      document.getElementById(
+        "businessActivityCode"
+      ).value = String(entry.code || "");
+      document.getElementById(
+        "businessActivityDescription"
+      ).value = String(entry.description || "");
+      document.getElementById(
+        "businessActivityCodeYear"
+      ).value = String(sourceYear || "");
+      document.getElementById(
+        "businessActivityCodeStatus"
+      ).value = "client_selected";
+      document.getElementById(
+        "businessCodeOfficeReview"
+      ).checked = false;
+
+      document.getElementById(
+        "businessCodeSelected"
+      ).innerHTML =
+        `<strong>Selected IRS code: ${entry.code}</strong><br>` +
+        `${entry.description}<br>` +
+        `<small>Client selected from the ${sourceYear} IRS Schedule C list. Office confirmation is still required.</small>`;
+
+      document.getElementById(
+        "businessCodeResults"
+      ).innerHTML = "";
+    }
+
+    async function searchClientBusinessCodes() {
+      const taxYear = document.getElementById(
+        "taxYear"
+      ).value;
+      const query = document.getElementById(
+        "businessCodeSearch"
+      ).value.trim();
+      const resultsBox = document.getElementById(
+        "businessCodeResults"
+      );
+
+      if (!query) {
+        showResult(
+          "error",
+          "<div class='result-title'>Enter a business activity.</div>" +
+          "Use the principal business description, a common term such as local delivery, or a known six-digit code."
+        );
+        return;
+      }
+
+      resultsBox.innerHTML =
+        "<div class='notice'>Searching the official IRS Schedule C code list...</div>";
+
+      try {
+        const response =
+          await window.IrsScheduleCCodeCenter.search(
+            query,
+            taxYear,
+            8
+          );
+
+        if (response.results.length === 0) {
+          resultsBox.innerHTML =
+            "<div class='notice'>No close match was found. Change the search words or select Office Review Needed below.</div>";
+          return;
+        }
+
+        resultsBox.innerHTML = response.results
+          .map(
+            (entry, index) => `
+              <div class="schedule-c-code-result">
+                <strong>${entry.code}</strong>
+                <div>
+                  ${entry.description}
+                  <small>${entry.sector}</small>
+                </div>
+                <button
+                  type="button"
+                  data-business-code-result="${index}"
+                >
+                  Select
+                </button>
+              </div>`
+          )
+          .join("");
+
+        resultsBox.querySelectorAll(
+          "[data-business-code-result]"
+        ).forEach((button) => {
+          button.addEventListener("click", () => {
+            const entry = response.results[
+              Number(button.dataset.businessCodeResult)
+            ];
+            selectClientBusinessCode(
+              entry,
+              response.metadata.taxYear
+            );
+          });
+        });
+      } catch (error) {
+        resultsBox.innerHTML =
+          `<div class='notice'>${error.message}</div>`;
+      }
     }
 
     function selectedBusinessProfileApplies() {
@@ -1041,6 +1370,7 @@
       updateBusinessAddressField();
       updateContractor1099Fields();
       updateBusinessVehicleFields();
+      updateScheduleCCodeCenterVisibility();
 
       if (received1099Nec !== "yes") {
         document.getElementById("form1099Count").value = "1";
@@ -1365,6 +1695,34 @@
             String(intake.businessEntityType || "");
           document.getElementById("principalBusinessProfession").value =
             String(intake.principalBusinessProfession || "");
+          document.getElementById("businessActivityCode").value =
+            String(intake.businessActivityCode || "");
+          document.getElementById("businessActivityDescription").value =
+            String(intake.businessActivityDescription || "");
+          document.getElementById("businessActivityCodeYear").value =
+            String(intake.businessActivityCodeYear || "");
+          document.getElementById("businessActivityCodeStatus").value =
+            String(intake.businessActivityCodeStatus || "");
+          document.getElementById("businessCodeOfficeReview").checked =
+            String(intake.businessActivityCodeStatus || "") ===
+            "office_review_needed";
+          if (intake.businessActivityCode) {
+            document.getElementById("businessCodeSelected").innerHTML =
+              `<strong>Selected IRS code: ${intake.businessActivityCode}</strong><br>` +
+              `${intake.businessActivityDescription || "Description not recorded"}<br>` +
+              `<small>Status: ${
+                String(intake.businessActivityCodeStatus || "")
+                  .replaceAll("_", " ") ||
+                "office review required"
+              }</small>`;
+          } else if (
+            String(intake.businessActivityCodeStatus || "") ===
+            "office_review_needed"
+          ) {
+            clearBusinessCodeSelection({
+              officeReview: true
+            });
+          }
           document.getElementById("businessAddressSameAsHome").value =
             String(intake.businessAddressSameAsHome || "");
           document.getElementById("businessAddressStreet").value =
@@ -1414,6 +1772,72 @@
         console.warn("Could not prefill tax-return intake:", error);
       }
     }
+
+    document.getElementById(
+      "businessCodeSearchButton"
+    ).addEventListener(
+      "click",
+      searchClientBusinessCodes
+    );
+
+    document.getElementById(
+      "businessCodeSearch"
+    ).addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          searchClientBusinessCodes();
+        }
+      }
+    );
+
+    document.getElementById(
+      "businessCodeOfficeReview"
+    ).addEventListener(
+      "change",
+      (event) => {
+        clearBusinessCodeSelection({
+          officeReview: event.target.checked
+        });
+      }
+    );
+
+    document.getElementById(
+      "principalBusinessProfession"
+    ).addEventListener(
+      "input",
+      (event) => {
+        const search = document.getElementById(
+          "businessCodeSearch"
+        );
+        const selectedCode = document.getElementById(
+          "businessActivityCode"
+        ).value;
+
+        if (selectedCode) {
+          clearBusinessCodeSelection();
+          document.getElementById(
+            "businessCodeOfficeReview"
+          ).checked = false;
+        }
+
+        if (
+          !document.getElementById(
+            "businessCodeOfficeReview"
+          ).checked
+        ) {
+          search.value = event.target.value;
+        }
+      }
+    );
+
+    document.getElementById(
+      "businessEntityType"
+    ).addEventListener(
+      "change",
+      updateScheduleCCodeCenterVisibility
+    );
 
     document.getElementById("intakeForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1516,6 +1940,24 @@
         document.getElementById(
           "principalBusinessProfession"
         ).value.trim();
+      const businessActivityCode =
+        document.getElementById(
+          "businessActivityCode"
+        ).value.trim();
+      const businessActivityDescription =
+        document.getElementById(
+          "businessActivityDescription"
+        ).value.trim();
+      const businessActivityCodeYear =
+        document.getElementById(
+          "businessActivityCodeYear"
+        ).value.trim();
+      const businessActivityCodeStatus =
+        document.getElementById(
+          "businessActivityCodeStatus"
+        ).value.trim();
+      const scheduleCCodeApplies =
+        scheduleCCodeCenterApplies();
       const businessAddressSameAsHome =
         document.getElementById(
           "businessAddressSameAsHome"
@@ -1558,6 +2000,36 @@
           "Use the minus and plus buttons or type the number directly."
         );
         document.getElementById("1099FollowUp").scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+        return;
+      }
+
+      if (
+        businessProfileApplies &&
+        scheduleCCodeApplies &&
+        !(
+          (
+            /^\d{6}$/.test(businessActivityCode) &&
+            businessActivityDescription &&
+            [
+              "client_selected",
+              "office_confirmed"
+            ].includes(businessActivityCodeStatus) &&
+            businessActivityCodeYear === taxYear
+          ) ||
+          businessActivityCodeStatus === "office_review_needed"
+        )
+      ) {
+        showResult(
+          "error",
+          "<div class='result-title'>Choose how the Schedule C business code will be handled.</div>" +
+          "Search and select the closest official IRS code, enter a known code through the search box, or check that the tax preparer should research it."
+        );
+        document.getElementById(
+          "scheduleCCodeCenter"
+        ).scrollIntoView({
           behavior: "smooth",
           block: "center"
         });
@@ -1640,6 +2112,36 @@
           principalBusinessProfession:
             businessProfileApplies
               ? principalBusinessProfession
+              : "",
+          businessActivityCode:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? businessActivityCode
+              : "",
+          businessActivityDescription:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? businessActivityDescription
+              : "",
+          businessActivityCodeYear:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? businessActivityCodeYear
+              : "",
+          businessActivityCodeStatus:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? businessActivityCodeStatus
+              : "",
+          businessActivitySourceTitle:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? "IRS Schedule C Principal Business or Professional Activity Codes"
+              : "",
+          businessActivitySourceUrl:
+            businessProfileApplies &&
+            scheduleCCodeApplies
+              ? "https://www.irs.gov/instructions/i1040sc"
               : "",
           businessAddressSameAsHome:
             businessProfileApplies

@@ -1686,6 +1686,31 @@
                             ${escapeHtml(request.principalBusinessProfession || "Not recorded")}
                           </div>
                           <div>
+                            <strong>IRS Schedule C business code:</strong>
+                            ${escapeHtml(
+                              request.businessActivityCode
+                                ? (
+                                    request.businessActivityCode +
+                                    " — " +
+                                    (
+                                      request.businessActivityDescription ||
+                                      "Description not recorded"
+                                    )
+                                  )
+                                : "Office review needed"
+                            )}
+                          </div>
+                          <div>
+                            <strong>Business code status:</strong>
+                            ${escapeHtml(
+                              String(
+                                request.businessActivityCodeStatus ||
+                                "office_review_needed"
+                              )
+                                .replaceAll("_", " ")
+                            )}
+                          </div>
+                          <div>
                             <strong>Business address same as home:</strong>
                             ${escapeHtml(taxPrepAnswerLabel(request.businessAddressSameAsHome))}
                           </div>

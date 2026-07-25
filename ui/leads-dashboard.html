@@ -1114,6 +1114,115 @@
       font-weight:800;
     }
 
+    .taxprep-business-code-panel {
+      margin:12px 0;
+      border:2px solid #b58a3a;
+      border-radius:11px;
+      background:#fffaf0;
+      padding:12px;
+    }
+
+    .taxprep-business-code-panel h4 {
+      margin:0 0 5px;
+      color:#0f2c56;
+      font-size:14px;
+    }
+
+    .taxprep-business-code-panel p {
+      margin:0 0 10px;
+      color:#52667d;
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .taxprep-code-search-row {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:end;
+    }
+
+    .taxprep-code-search-row label {
+      display:block;
+      color:#0f2c56;
+      font-size:11px;
+      font-weight:950;
+    }
+
+    .taxprep-code-search-row input {
+      width:100%;
+      margin-top:4px;
+      border:1px solid #b8c7d8;
+      border-radius:7px;
+      padding:9px;
+      font-size:12px;
+    }
+
+    .taxprep-code-button {
+      min-height:38px;
+      border:0;
+      border-radius:7px;
+      background:#285f99;
+      color:#ffffff;
+      padding:8px 11px;
+      font-size:11px;
+      font-weight:950;
+      cursor:pointer;
+    }
+
+    .taxprep-code-button.confirm {
+      background:#047857;
+    }
+
+    .taxprep-code-button.review {
+      background:#9a3412;
+    }
+
+    .taxprep-code-results {
+      display:grid;
+      gap:6px;
+      margin-top:9px;
+    }
+
+    .taxprep-code-result {
+      display:grid;
+      grid-template-columns:74px minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+      border:1px solid #d8c28d;
+      border-radius:7px;
+      background:#ffffff;
+      padding:7px;
+      font-size:11px;
+    }
+
+    .taxprep-code-result strong {
+      color:#0f2c56;
+    }
+
+    .taxprep-code-result small {
+      display:block;
+      color:#64748b;
+      margin-top:2px;
+    }
+
+    .taxprep-code-current {
+      margin-top:9px;
+      border:1px solid #c7d4e3;
+      border-radius:7px;
+      background:#ffffff;
+      padding:9px;
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .taxprep-code-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      margin-top:9px;
+    }
+
     .taxprep-card-list {
       display:grid;
       gap:8px;
@@ -2809,6 +2918,7 @@
 
 
 
+<script src="/data/schedule-c-code-search.js"></script>
 <script>
 let allLeads = [];
 let currentView = "all";
@@ -8158,6 +8268,27 @@ function renderLeads(){
           const businessProfileHeading = scheduleCProfile
             ? "Schedule C Business Profile"
             : "Business / Entity Profile";
+          const businessActivityCode = String(
+            intake.businessActivityCode || ""
+          ).trim();
+          const businessActivityDescription = String(
+            intake.businessActivityDescription || ""
+          ).trim();
+          const businessActivityCodeYear = String(
+            intake.businessActivityCodeYear || ""
+          ).trim();
+          const businessActivityCodeStatus = String(
+            intake.businessActivityCodeStatus || ""
+          ).trim();
+          const businessActivityCodeStatusDisplay =
+            businessActivityCodeStatus === "office_confirmed"
+              ? "Office Confirmed"
+              : businessActivityCodeStatus === "client_selected"
+                ? "Client Selected — Office Confirmation Required"
+                : businessActivityCodeStatus ===
+                    "office_selected_pending_confirmation"
+                  ? "Office Selected — Confirmation Required"
+                  : "Office Review Needed";
           const taxComplianceNeedsReview = [
             "no",
             "not_sure"
@@ -8429,6 +8560,45 @@ function renderLeads(){
                           )}
                         </div>
 
+                        ${scheduleCProfile
+                          ? `
+                            <div class="taxprep-summary-field span-two ${
+                              businessActivityCodeStatus ===
+                              "office_confirmed"
+                                ? "confirmed"
+                                : "attention"
+                            }">
+                              <strong>IRS Schedule C business code — Line B</strong>
+                              ${businessActivityCode
+                                ? `
+                                  ${escapeOfficeHtml(
+                                    businessActivityCode
+                                  )} —
+                                  ${escapeOfficeHtml(
+                                    businessActivityDescription ||
+                                    "Description not recorded"
+                                  )}`
+                                : "Not selected"}
+                            </div>
+
+                            <div class="taxprep-summary-field ${
+                              businessActivityCodeStatus ===
+                              "office_confirmed"
+                                ? "confirmed"
+                                : "attention"
+                            }">
+                              <strong>Business code status</strong>
+                              ${escapeOfficeHtml(
+                                businessActivityCodeStatusDisplay
+                              )}
+                              ${businessActivityCodeYear
+                                ? `<br>IRS list: ${escapeOfficeHtml(
+                                    businessActivityCodeYear
+                                  )}`
+                                : ""}
+                            </div>
+                          `
+                          : ""}
                         <div class="taxprep-summary-field">
                           <strong>Business started</strong>
                           ${escapeOfficeHtml(
@@ -8635,6 +8805,120 @@ function renderLeads(){
                   `
                   : ""}
               </div>
+
+              ${scheduleCProfile
+                ? `
+                  <section class="taxprep-business-code-panel">
+                    <h4>
+                      IRS Schedule C Business Code Research &amp; Confirmation Center
+                    </h4>
+                    <p>
+                      Search the official ${escapeOfficeHtml(
+                        getTaxPrepTaxYear(lead) || "selected-year"
+                      )} IRS Schedule C list. A client selection is
+                      only a suggestion until the office confirms
+                      the final six-digit Line B code.
+                    </p>
+
+                    <div class="taxprep-code-search-row">
+                      <label>
+                        Search business activity or known code
+                        <input
+                          id="taxPrepBusinessCodeSearch-${index}"
+                          value="${escapeOfficeHtml(
+                            intake.principalBusinessProfession ||
+                            businessActivityDescription ||
+                            ""
+                          )}"
+                          placeholder="Example: local delivery, bookkeeping, 492000"
+                        />
+                      </label>
+
+                      <button
+                        class="taxprep-code-button"
+                        type="button"
+                        onclick="searchTaxPrepBusinessCodes(${index})"
+                      >
+                        Search Official IRS Codes
+                      </button>
+                    </div>
+
+                    <div
+                      class="taxprep-code-results"
+                      id="taxPrepBusinessCodeResults-${index}"
+                    ></div>
+
+                    <div
+                      class="taxprep-code-current"
+                      id="taxPrepBusinessCodeCurrent-${index}"
+                    >
+                      <strong>Current selection:</strong><br>
+                      ${businessActivityCode
+                        ? `
+                          ${escapeOfficeHtml(
+                            businessActivityCode
+                          )} —
+                          ${escapeOfficeHtml(
+                            businessActivityDescription ||
+                            "Description not recorded"
+                          )}<br>
+                          Status:
+                          ${escapeOfficeHtml(
+                            businessActivityCodeStatusDisplay
+                          )}`
+                        : "No code selected. Search the official list or mark Office Review Needed."}
+                    </div>
+
+                    <input
+                      id="taxPrepBusinessCode-${index}"
+                      type="hidden"
+                      value="${escapeOfficeHtml(
+                        businessActivityCode
+                      )}"
+                    />
+                    <input
+                      id="taxPrepBusinessCodeDescription-${index}"
+                      type="hidden"
+                      value="${escapeOfficeHtml(
+                        businessActivityDescription
+                      )}"
+                    />
+                    <input
+                      id="taxPrepBusinessCodeYear-${index}"
+                      type="hidden"
+                      value="${escapeOfficeHtml(
+                        businessActivityCodeYear
+                      )}"
+                    />
+                    <input
+                      id="taxPrepBusinessCodeStatus-${index}"
+                      type="hidden"
+                      value="${escapeOfficeHtml(
+                        businessActivityCodeStatus ||
+                        "office_review_needed"
+                      )}"
+                    />
+
+                    <div class="taxprep-code-actions">
+                      <button
+                        class="taxprep-code-button confirm"
+                        type="button"
+                        onclick="confirmTaxPrepBusinessCode(${index})"
+                      >
+                        Confirm Selected IRS Code
+                      </button>
+
+                      <button
+                        class="taxprep-code-button review"
+                        type="button"
+                        onclick="markTaxPrepBusinessCodeReview(${index})"
+                      >
+                        Mark Office Review Needed
+                      </button>
+                    </div>
+                  </section>
+                `
+                : ""}
 
               <div class="taxprep-card-grid">
                 <div class="taxprep-card-block">
@@ -10545,6 +10829,198 @@ function selectOptionsHtml(options, selected){
     .join("");
 }
 
+async function searchTaxPrepBusinessCodes(index){
+  const lead = taxPreparationLeadByIndex(index);
+
+  if(!lead){
+    alert("The Tax Preparation client could not be identified.");
+    return;
+  }
+
+  const taxYear = getTaxPrepTaxYear(lead);
+  const input = document.getElementById(
+    `taxPrepBusinessCodeSearch-${index}`
+  );
+  const resultsBox = document.getElementById(
+    `taxPrepBusinessCodeResults-${index}`
+  );
+  const query = String(input?.value || "").trim();
+
+  if(!query){
+    alert("Enter the business activity or a known six-digit code.");
+    return;
+  }
+
+  resultsBox.innerHTML =
+    "<div class='taxprep-code-current'>Searching the official IRS Schedule C code list...</div>";
+
+  try{
+    const response =
+      await window.IrsScheduleCCodeCenter.search(
+        query,
+        taxYear,
+        10
+      );
+
+    if(response.results.length === 0){
+      resultsBox.innerHTML =
+        "<div class='taxprep-code-current'>No close match was found. Change the search words or mark Office Review Needed.</div>";
+      return;
+    }
+
+    resultsBox.innerHTML = response.results
+      .map(
+        (entry, resultIndex) => `
+          <div class="taxprep-code-result">
+            <strong>${escapeOfficeHtml(entry.code)}</strong>
+            <div>
+              ${escapeOfficeHtml(entry.description)}
+              <small>${escapeOfficeHtml(entry.sector)}</small>
+            </div>
+            <button
+              class="taxprep-code-button"
+              type="button"
+              onclick="selectTaxPrepBusinessCode(${index}, ${resultIndex})"
+            >
+              Select
+            </button>
+          </div>`
+      )
+      .join("");
+
+    window.taxPrepBusinessCodeSearchResults =
+      window.taxPrepBusinessCodeSearchResults || {};
+    window.taxPrepBusinessCodeSearchResults[index] = {
+      results: response.results,
+      taxYear: response.metadata.taxYear
+    };
+  }catch(error){
+    resultsBox.innerHTML =
+      `<div class='taxprep-code-current'>${escapeOfficeHtml(
+        error.message ||
+        "The official code list could not be loaded."
+      )}</div>`;
+  }
+}
+
+function selectTaxPrepBusinessCode(index, resultIndex){
+  const searchState =
+    window.taxPrepBusinessCodeSearchResults?.[index];
+  const entry = searchState?.results?.[resultIndex];
+
+  if(!entry){
+    alert("The selected IRS code could not be read.");
+    return;
+  }
+
+  document.getElementById(
+    `taxPrepBusinessCode-${index}`
+  ).value = entry.code;
+  document.getElementById(
+    `taxPrepBusinessCodeDescription-${index}`
+  ).value = entry.description;
+  document.getElementById(
+    `taxPrepBusinessCodeYear-${index}`
+  ).value = String(searchState.taxYear || "");
+  document.getElementById(
+    `taxPrepBusinessCodeStatus-${index}`
+  ).value = "office_selected_pending_confirmation";
+
+  document.getElementById(
+    `taxPrepBusinessCodeCurrent-${index}`
+  ).innerHTML =
+    `<strong>Current selection:</strong><br>` +
+    `${escapeOfficeHtml(entry.code)} — ` +
+    `${escapeOfficeHtml(entry.description)}<br>` +
+    `Status: Office Selected — Confirmation Required`;
+
+  document.getElementById(
+    `taxPrepBusinessCodeResults-${index}`
+  ).innerHTML = "";
+}
+
+async function confirmTaxPrepBusinessCode(index){
+  const lead = taxPreparationLeadByIndex(index);
+  const code = String(
+    document.getElementById(
+      `taxPrepBusinessCode-${index}`
+    )?.value || ""
+  ).replace(/\\D/g, "");
+  const description = String(
+    document.getElementById(
+      `taxPrepBusinessCodeDescription-${index}`
+    )?.value || ""
+  ).trim();
+  const sourceYear = String(
+    document.getElementById(
+      `taxPrepBusinessCodeYear-${index}`
+    )?.value || ""
+  ).trim();
+
+  if(!lead || !/^\\d{6}$/.test(code) || !description){
+    alert("Search the official IRS list and select a code before confirming it.");
+    return;
+  }
+
+  if(sourceYear !== getTaxPrepTaxYear(lead)){
+    alert("The IRS code-list year must match the client's tax year.");
+    return;
+  }
+
+  document.getElementById(
+    `taxPrepBusinessCodeStatus-${index}`
+  ).value = "office_confirmed";
+
+  document.getElementById(
+    `taxPrepBusinessCodeCurrent-${index}`
+  ).innerHTML =
+    `<strong>Office-confirmed IRS Schedule C code:</strong><br>` +
+    `${escapeOfficeHtml(code)} — ` +
+    `${escapeOfficeHtml(description)}<br>` +
+    `IRS list: ${escapeOfficeHtml(sourceYear)}`;
+
+  await saveTaxPreparationBasket(index, {
+    quiet: true
+  });
+
+  alert(
+    "The IRS Schedule C business code was confirmed and saved on the client's Tax Preparation Action Basket."
+  );
+}
+
+async function markTaxPrepBusinessCodeReview(index){
+  const codeInput = document.getElementById(
+    `taxPrepBusinessCode-${index}`
+  );
+  const descriptionInput = document.getElementById(
+    `taxPrepBusinessCodeDescription-${index}`
+  );
+  const yearInput = document.getElementById(
+    `taxPrepBusinessCodeYear-${index}`
+  );
+  const statusInput = document.getElementById(
+    `taxPrepBusinessCodeStatus-${index}`
+  );
+
+  codeInput.value = "";
+  descriptionInput.value = "";
+  yearInput.value = "";
+  statusInput.value = "office_review_needed";
+
+  document.getElementById(
+    `taxPrepBusinessCodeCurrent-${index}`
+  ).innerHTML =
+    "<strong>Office review needed.</strong><br>No final IRS Schedule C business code has been confirmed.";
+
+  await saveTaxPreparationBasket(index, {
+    quiet: true
+  });
+
+  alert(
+    "The business code was marked Office Review Needed and saved on the client card."
+  );
+}
+
 window.openTaxPrepCardLeadIds =
   window.openTaxPrepCardLeadIds instanceof Set
     ? window.openTaxPrepCardLeadIds
@@ -10604,6 +11080,7 @@ function taxPreparationBasketValues(index, lead){
   const value = (id, fallback = "") =>
     document.getElementById(`${id}-${index}`)?.value ?? fallback;
 
+  const intake = lead?.taxPreparationIntake || {};
   const quotedFee = Math.max(
     0,
     Number(value("taxPrepQuotedFee", getTaxPrepQuotedFee(lead))) || 0
@@ -10638,6 +11115,35 @@ function taxPreparationBasketValues(index, lead){
       value("taxPrepFinalCopyStatus", getTaxPrepFinalCopyStatus(lead)),
     officeNote:
       String(value("taxPrepOfficeNote", lead?.taxPreparationWork?.officeNote || "")).trim(),
+    businessActivityCode:
+      String(
+        value(
+          "taxPrepBusinessCode",
+          intake.businessActivityCode || ""
+        )
+      ).replace(/\D/g, "").slice(0, 6),
+    businessActivityDescription:
+      String(
+        value(
+          "taxPrepBusinessCodeDescription",
+          intake.businessActivityDescription || ""
+        )
+      ).trim(),
+    businessActivityCodeYear:
+      String(
+        value(
+          "taxPrepBusinessCodeYear",
+          intake.businessActivityCodeYear || ""
+        )
+      ).trim(),
+    businessActivityCodeStatus:
+      String(
+        value(
+          "taxPrepBusinessCodeStatus",
+          intake.businessActivityCodeStatus ||
+          "office_review_needed"
+        )
+      ).trim(),
     amountPaid: getTaxPrepAmountPaid(lead),
     amountPaidCents: Math.round(getTaxPrepAmountPaid(lead) * 100)
   };
@@ -10696,6 +11202,21 @@ async function saveTaxPreparationBasket(index, options = {}){
         status: `Tax Preparation - ${values.workStatus}`,
         completedAt: completing ? now : "",
         closedAt: completing ? now : "",
+        taxPreparationIntake: {
+          ...(lead.taxPreparationIntake || {}),
+          businessActivityCode:
+            values.businessActivityCode,
+          businessActivityDescription:
+            values.businessActivityDescription,
+          businessActivityCodeYear:
+            values.businessActivityCodeYear,
+          businessActivityCodeStatus:
+            values.businessActivityCodeStatus,
+          businessActivitySourceTitle:
+            "IRS Schedule C Principal Business or Professional Activity Codes",
+          businessActivitySourceUrl:
+            "https://www.irs.gov/instructions/i1040sc"
+        },
         taxPreparationWork: {
           ...(lead.taxPreparationWork || {}),
           ...values,

@@ -21,6 +21,22 @@ const {
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
+const scheduleCCodes2025 = require(
+  "./ui/data/schedule-c-codes-2025.json"
+);
+const scheduleCCodeMaps = new Map([
+  [
+    "2025",
+    new Map(
+      (scheduleCCodes2025.codes || []).map(
+        (entry) => [
+          String(entry.code || ""),
+          entry
+        ]
+      )
+    )
+  ]
+]);
 const nodemailer = require("nodemailer");
 const PDFDocument = require("pdfkit");
 const { estimate } = require("./taxEstimator");
@@ -8389,6 +8405,26 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     intake.principalBusinessProfession || ""
   ).trim();
 
+  const businessActivityCode = String(
+    intake.businessActivityCode || ""
+  )
+    .replace(/\D/g, "")
+    .slice(0, 6);
+
+  const businessActivityDescription = String(
+    intake.businessActivityDescription || ""
+  ).trim();
+
+  const businessActivityCodeYear = String(
+    intake.businessActivityCodeYear || ""
+  ).trim();
+
+  const businessActivityCodeStatus = String(
+    intake.businessActivityCodeStatus || ""
+  )
+    .trim()
+    .toLowerCase();
+
   const businessAddressSameAsHome = String(
     intake.businessAddressSameAsHome || ""
   )
@@ -8474,6 +8510,37 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       (item) => businessProfileIncomeValues.has(item)
     );
 
+  const separateEntityServiceValues = new Set([
+    "partnership_return",
+    "s_corporation_return",
+    "c_corporation_return",
+    "nonprofit_return"
+  ]);
+
+  const scheduleCCodeApplies =
+    businessProfileApplies &&
+    !serviceTypes.some(
+      (item) => separateEntityServiceValues.has(item)
+    ) &&
+    ![
+      "multi_member_llc",
+      "partnership",
+      "s_corporation",
+      "c_corporation",
+      "nonprofit"
+    ].includes(businessEntityType);
+
+  const scheduleCCodeMap =
+    scheduleCCodeMaps.get(taxYear) || null;
+
+  const officialScheduleCCodeEntry =
+    scheduleCCodeMap &&
+    businessActivityCode
+      ? scheduleCCodeMap.get(
+          businessActivityCode
+        ) || null
+      : null;
+
   if (
     selected1099Nec &&
     form1099Count < 1
@@ -8530,6 +8597,55 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       errors.push(
         "Enter the principal business or profession."
       );
+    }
+
+    if (scheduleCCodeApplies) {
+      if (
+        ![
+          "client_selected",
+          "office_review_needed",
+          "office_confirmed"
+        ].includes(businessActivityCodeStatus)
+      ) {
+        errors.push(
+          "Select an official Schedule C business code or request office review."
+        );
+      }
+
+      if (
+        businessActivityCodeStatus ===
+        "office_review_needed"
+      ) {
+        if (businessActivityCode) {
+          errors.push(
+            "Clear the Schedule C business code when requesting office review."
+          );
+        }
+      } else {
+        if (!/^\d{6}$/.test(businessActivityCode)) {
+          errors.push(
+            "Enter or select a valid six-digit Schedule C business code."
+          );
+        }
+
+        if (
+          businessActivityCodeYear !== taxYear
+        ) {
+          errors.push(
+            "The Schedule C business-code source year must match the selected tax year."
+          );
+        }
+
+        if (!scheduleCCodeMap) {
+          errors.push(
+            "The official Schedule C business-code list for the selected tax year is not loaded. Request office review."
+          );
+        } else if (!officialScheduleCCodeEntry) {
+          errors.push(
+            "The selected Schedule C business code is not in the official IRS list for the selected tax year."
+          );
+        }
+      }
     }
 
     if (
@@ -8690,6 +8806,11 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
     (contractor1099Requirement === "yes" && ["no", "not_sure"].includes(contractor1099Filed))
   );
 
+  const businessCodeReviewNeeded =
+    scheduleCCodeApplies &&
+    businessActivityCodeStatus !==
+      "office_confirmed";
+
   let recommendedLane = "Individual Form 1040";
   let status = "Tax Preparation Intake - Ready to Schedule";
   let needsProfessionalReview = false;
@@ -8705,7 +8826,10 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
   } else if (hasGig) {
     recommendedLane = "Gig Worker / Self-Employed Return";
   }
-  if (businessComplianceReviewNeeded) {
+  if (
+    businessComplianceReviewNeeded ||
+    businessCodeReviewNeeded
+  ) {
     status = "Tax Preparation Intake - Needs Review";
     needsProfessionalReview = true;
   }
@@ -8798,6 +8922,38 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
       principalBusinessProfession:
         businessProfileApplies
           ? principalBusinessProfession
+          : "",
+      businessActivityCode:
+        scheduleCCodeApplies &&
+        officialScheduleCCodeEntry
+          ? businessActivityCode
+          : "",
+      businessActivityDescription:
+        scheduleCCodeApplies &&
+        officialScheduleCCodeEntry
+          ? officialScheduleCCodeEntry.description
+          : "",
+      businessActivitySector:
+        scheduleCCodeApplies &&
+        officialScheduleCCodeEntry
+          ? officialScheduleCCodeEntry.sector
+          : "",
+      businessActivityCodeYear:
+        scheduleCCodeApplies &&
+        officialScheduleCCodeEntry
+          ? businessActivityCodeYear
+          : "",
+      businessActivityCodeStatus:
+        scheduleCCodeApplies
+          ? businessActivityCodeStatus
+          : "",
+      businessActivitySourceTitle:
+        scheduleCCodeApplies
+          ? scheduleCCodes2025.sourceTitle
+          : "",
+      businessActivitySourceUrl:
+        scheduleCCodeApplies
+          ? scheduleCCodes2025.sourceUrl
           : "",
       businessAddressSameAsHome:
         businessProfileApplies
