@@ -190,6 +190,17 @@
       .field.full{grid-column:1}
     }
   </style>
+
+  <style id="SERVICE-RETURN-NAVIGATION-STYLES">
+    .service-return-shell{width:min(1180px,calc(100% - 28px));margin:14px auto 0;position:relative;z-index:20}
+    .service-return-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 13px;border:1px solid #cbd9e6;border-radius:12px;background:#ffffff;box-shadow:0 8px 22px rgba(15,47,89,.08)}
+    .service-return-nav a,.service-return-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border-radius:9px;text-decoration:none;font-weight:850;line-height:1.25}
+    .service-return-nav a:first-child,.service-return-actions a:first-child{background:#123a5b;color:#fff;border:1px solid #123a5b}
+    .service-return-nav a:last-child,.service-return-actions a:last-child{background:#fff;color:#123a5b;border:1px solid #123a5b}
+    .service-return-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    @media(max-width:650px){.service-return-shell{width:calc(100% - 16px);margin-top:8px}.service-return-nav a,.service-return-actions a{width:100%}}
+  </style>
+
 </head>
 <body>
   <main class="page">
@@ -454,7 +465,9 @@
         portalUrl
           ? `<br><a href="${portalUrl}">${portalLabel || "Open Secure Client Portal"}</a>`
           : ""
-      );
+      ) + (!isError && window.serviceReturnActionHtml
+        ? window.serviceReturnActionHtml()
+        : "");
       box.style.display = "block";
       box.scrollIntoView({behavior:"smooth",block:"center"});
     }
@@ -591,5 +604,51 @@
       }
     });
   </script>
+
+<script id="SERVICE-RETURN-NAVIGATION">
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const source = String(params.get("return") || "").trim();
+  const destinations = {
+    "plans-pricing": {
+      href: "/plans-pricing",
+      label: "Return to Plans & Pricing"
+    },
+    "professional-tax-services": {
+      href: "/professional-tax-services",
+      label: "Return to Professional Tax Services"
+    },
+    "portal-professional-services": {
+      href: "/client-portal/home#professional-tax-services",
+      label: "Return to Professional Tax Services"
+    }
+  };
+  const primary = destinations[source] || {
+    href: "/professional-tax-services",
+    label: "Return to Professional Tax Services"
+  };
+
+  function escapeAttribute(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  }
+
+  window.serviceReturnActionHtml = function () {
+    return `<div class="service-return-actions"><a href="${escapeAttribute(primary.href)}">${primary.label}</a><a href="/">Return to Home Page</a></div>`;
+  };
+
+  const shell = document.createElement("div");
+  shell.className = "service-return-shell";
+  shell.innerHTML = `<nav class="service-return-nav" aria-label="Return navigation"><a href="${escapeAttribute(primary.href)}">${primary.label}</a><a href="/">Home Page</a></nav>`;
+  document.body.insertBefore(shell, document.body.firstChild);
+
+  document.querySelectorAll("[data-service-return-primary]").forEach((link) => {
+    link.href = primary.href;
+    link.textContent = primary.label;
+  });
+
+  window.serviceReturnSource = source;
+})();
+</script>
+
 </body>
 </html>

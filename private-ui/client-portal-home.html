@@ -1670,6 +1670,39 @@
       .cx-explore-card{min-height:0}
     }
 
+
+    /* Client Experience V2.2.1 navigation behavior */
+    .portal-top-navigation .portal-submenu{
+      display:block;
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transform:translateY(-7px);
+      background:#f7fbff;
+      transition:opacity .14s ease,transform .14s ease,visibility .14s ease;
+    }
+    .portal-top-navigation .portal-submenu.is-open{
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
+      transform:translateY(0);
+    }
+    .portal-top-navigation .portal-submenu button.is-active{
+      background:#dceef8!important;
+      color:#0a527f!important;
+      box-shadow:none;
+    }
+    @media(max-width:800px){
+      .portal-top-navigation .portal-submenu{
+        display:none;
+        opacity:1;
+        visibility:visible;
+        pointer-events:auto;
+        transform:none;
+      }
+      .portal-top-navigation .portal-submenu.is-open{display:block}
+    }
+
   </style>
 </head>
 <body>
@@ -1678,7 +1711,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.2.0</span>
+        <span>Client Experience V2 — Portal 2.2.1</span>
       </div>
     </div>
     <div class="top-actions">
@@ -1809,7 +1842,7 @@
           <h2>My Tax Records &amp; Planning</h2>
           <p>Duplicate service entries are grouped under the correct tax year instead of appearing as separate home-page cards.</p>
         </div>
-        <button class="archive-toggle" id="olderRecordsButton" type="button" hidden>View Older Tax Years</button></div>
+        <button class="archive-toggle" id="olderRecordsButton" type="button" hidden>View Older Tax Years</button>
       </div>
       <div class="section-body">
         <div class="home-rule">
@@ -4269,7 +4302,7 @@
             "Secure document uploads and saved progress",
             "Clear next steps from intake through completion"
           ],
-          href: "/start-my-tax-return",
+          href: "/start-my-tax-return?return=portal-professional-services",
           active: activeNames.has("Tax Preparation")
         },
         {
@@ -4283,7 +4316,7 @@
             "Secure delivery when records are available",
             "Timing depends on IRS availability; no false speed promises"
           ],
-          href: "/transcript-help.html",
+          href: "/transcript-help.html?return=portal-professional-services",
           active: activeNames.has("IRS Transcript Help")
         },
         {
@@ -4297,7 +4330,7 @@
             "Recipient-copy delivery tracking",
             "Secure documents, quote, payment, and completion record"
           ],
-          href: "/contractor-1099-service",
+          href: "/contractor-1099-service?return=portal-professional-services",
           active: activeNames.has("Contractor Forms 1099")
         },
         {
@@ -4311,7 +4344,7 @@
             "Filing status and confirmation tracking",
             "Return-preparation follow-up when you are ready"
           ],
-          href: "/request-tax-extension",
+          href: "/request-tax-extension?return=portal-professional-services",
           active: activeNames.has("Tax Extension")
         }
       ].filter((service) => !service.active);
@@ -4496,25 +4529,77 @@
       if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    function closePortalSubmenus(exceptId = "") {
+      document.querySelectorAll("[data-submenu-toggle]").forEach((toggle) => {
+        const submenuId = toggle.dataset.submenuToggle;
+        if (submenuId === exceptId) return;
+        const submenu = document.getElementById(submenuId);
+        if (submenu) submenu.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function setPortalSubmenu(toggle, open) {
+      const submenuId = toggle.dataset.submenuToggle;
+      const submenu = document.getElementById(submenuId);
+      if (!submenu) return;
+      closePortalSubmenus(open ? submenuId : "");
+      submenu.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    }
+
     function initializePortalNavigation() {
+      const navigation = document.getElementById("portalNavigation");
+      const hoverCapable = window.matchMedia("(hover: hover) and (pointer: fine)");
+
       document.addEventListener("click", (event) => {
         const openButton = event.target.closest("[data-portal-open]");
         if (openButton) {
           event.preventDefault();
+          closePortalSubmenus();
           openPortalView(openButton.dataset.portalOpen);
           return;
         }
 
         const toggle = event.target.closest("[data-submenu-toggle]");
         if (toggle) {
+          event.preventDefault();
           const submenu = document.getElementById(toggle.dataset.submenuToggle);
-          const opening = !submenu.classList.contains("is-open");
-          submenu.classList.toggle("is-open", opening);
-          toggle.setAttribute("aria-expanded", String(opening));
+          const shouldOpen = hoverCapable.matches
+            ? true
+            : !submenu?.classList.contains("is-open");
+          setPortalSubmenu(toggle, shouldOpen);
+          return;
+        }
+
+        if (navigation && !navigation.contains(event.target)) {
+          closePortalSubmenus();
         }
       });
 
+      document.querySelectorAll(".portal-nav-group").forEach((group) => {
+        const toggle = group.querySelector("[data-submenu-toggle]");
+        if (!toggle) return;
+
+        group.addEventListener("mouseenter", () => {
+          if (hoverCapable.matches) setPortalSubmenu(toggle, true);
+        });
+
+        group.addEventListener("mouseleave", () => {
+          if (hoverCapable.matches) setPortalSubmenu(toggle, false);
+        });
+
+        group.addEventListener("focusout", (event) => {
+          if (!group.contains(event.relatedTarget)) setPortalSubmenu(toggle, false);
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closePortalSubmenus();
+      });
+
       window.addEventListener("hashchange", () => {
+        closePortalSubmenus();
         openPortalView(portalViewFromHash(), { updateHash: false });
       });
 
