@@ -3968,3 +3968,267 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
     flex: 1;
   }
 }
+
+
+/* Client Experience V2.3 public pricing refinement */
+.home-pricing-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: end;
+}
+
+.home-billing-switch {
+  background: #123a5b;
+  border: 1px solid #123a5b;
+  box-shadow: 0 12px 28px rgba(18, 58, 91, 0.18);
+}
+
+.pricing-journey-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin: 32px 0 10px;
+  padding: 20px 24px;
+  border: 1px solid #cad9e7;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 32px rgba(20, 54, 82, 0.07);
+}
+
+.pricing-journey-step {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+}
+
+.pricing-journey-step > span,
+.dedicated-pricing-journey > div > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #123a5b;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.pricing-journey-step strong,
+.dedicated-pricing-journey strong {
+  display: block;
+  color: #123650;
+  font-size: 16px;
+}
+
+.pricing-journey-step small,
+.dedicated-pricing-journey small {
+  display: block;
+  margin-top: 3px;
+  color: #5d7184;
+  line-height: 1.4;
+}
+
+.pricing-journey-arrow {
+  color: #c08b22;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.home-plan-step {
+  color: #526a7e;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pinnacle-plan .home-plan-step {
+  color: #c8d9e8;
+}
+
+.home-plan-status,
+.dedicated-plan-status {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 10px 0 12px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home-plan-status.available,
+.dedicated-plan-status.available {
+  background: #e4f5eb;
+  color: #176943;
+}
+
+.home-plan-status.planned,
+.dedicated-plan-status.planned {
+  background: #fff0ca;
+  color: #7a5310;
+}
+
+.pinnacle-plan .home-plan-status.planned,
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-status.planned {
+  background: rgba(240, 207, 131, 0.16);
+  color: #f5d98f;
+  border: 1px solid rgba(240, 207, 131, 0.34);
+}
+
+.home-plan-best-for {
+  margin: 0 0 18px;
+  padding: 13px 14px;
+  border-left: 4px solid #3b88b8;
+  border-radius: 0 10px 10px 0;
+  background: #f2f7fb;
+  color: #405a70;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.watch-plan .home-plan-best-for {
+  border-left-color: #c08b22;
+  background: #fff8e7;
+}
+
+.pinnacle-plan .home-plan-best-for {
+  border-left-color: #f0cf83;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5eff7;
+}
+
+.home-plan-footnote,
+.dedicated-plan-footnote {
+  margin-top: 10px;
+  color: #64788a;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.pinnacle-plan .home-plan-footnote,
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-footnote {
+  color: #d7e4ef;
+}
+
+.home-pricing-outcomes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 26px;
+}
+
+.home-pricing-outcomes > div {
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #d0dde8;
+  box-shadow: 0 10px 24px rgba(18, 52, 80, 0.06);
+}
+
+.home-pricing-outcomes strong,
+.home-pricing-outcomes span {
+  display: block;
+}
+
+.home-pricing-outcomes strong {
+  color: #123650;
+  margin-bottom: 7px;
+}
+
+.home-pricing-outcomes span {
+  color: #5a7084;
+  line-height: 1.5;
+}
+
+.dedicated-pricing-journey {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr) 40px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: -8px 0 30px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  border: 1px solid #cddbe7;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(20, 54, 82, 0.07);
+}
+
+.dedicated-pricing-journey > div:not(.journey-line) {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+}
+
+.dedicated-pricing-journey > div > strong,
+.dedicated-pricing-journey > div > small {
+  grid-column: 2;
+}
+
+.journey-line {
+  height: 2px;
+  background: linear-gradient(90deg, #7ba8c5, #d5a435);
+}
+
+.membership-availability-note {
+  margin: 30px 0 0;
+  padding: 17px 20px;
+  border: 1px solid #dfc57e;
+  border-radius: 14px;
+  background: #fff9e9;
+  color: #5d4a1a;
+  line-height: 1.6;
+}
+
+.membership-availability-note strong {
+  color: #3e3214;
+}
+
+@media (max-width: 980px) {
+  .home-pricing-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .home-billing-switch {
+    justify-self: start;
+  }
+
+  .pricing-journey-strip,
+  .dedicated-pricing-journey {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-journey-arrow,
+  .journey-line {
+    display: none;
+  }
+
+  .home-pricing-outcomes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-pricing-toolbar,
+  .pricing-journey-strip,
+  .dedicated-pricing-journey {
+    gap: 14px;
+  }
+
+  .home-billing-switch {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .home-billing-switch .billing-choice {
+    flex: 1;
+  }
+}
