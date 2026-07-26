@@ -4232,3 +4232,22 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
     flex: 1;
   }
 }
+
+/* Client Experience V2.3.1 Pinnacle readability */
+.home-plan-card.pinnacle-plan ul li,
+.dedicated-plan-card.pinnacle-plan ul li {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  font-weight: 800;
+  line-height: 1.55;
+  opacity: 1 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
+  border-bottom-color: rgba(255, 255, 255, 0.22);
+}
+
+.home-plan-card.pinnacle-plan ul li::before,
+.dedicated-plan-card.pinnacle-plan ul li::before {
+  color: #ffd36f !important;
+  font-size: 18px;
+  font-weight: 900;
+}
