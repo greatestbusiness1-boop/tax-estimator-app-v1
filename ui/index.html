@@ -119,7 +119,7 @@
   <section class="public-dedicated-page plans-dedicated-page" aria-labelledby="plansPageTitle">
     <div class="dedicated-page-shell">
       <div class="dedicated-page-topline">
-        <a class="dedicated-return" href="/">&larr; Return to Free Tax Estimator</a>
+        <a class="dedicated-return" href="/" data-context-return="true">&larr; Return to Free Tax Estimator</a>
         <a class="dedicated-portal" href="/client-portal">Secure Client Portal</a>
       </div>
 
@@ -260,7 +260,7 @@
       </section>
 
       <div class="dedicated-page-bottom-actions">
-        <a class="dedicated-return" href="/">Return to Free Tax Estimator</a>
+        <a class="dedicated-return" href="/" data-context-return="true">Return to Free Tax Estimator</a>
         <a class="dedicated-secondary" href="/professional-tax-services">See Professional Tax Services</a>
       </div>
     </div>
@@ -269,7 +269,7 @@
   <section class="public-dedicated-page professional-dedicated-page" aria-labelledby="professionalPageTitle">
     <div class="dedicated-page-shell">
       <div class="dedicated-page-topline">
-        <a class="dedicated-return" href="/">&larr; Return to Free Tax Estimator</a>
+        <a class="dedicated-return" href="/" data-context-return="true">&larr; Return to Free Tax Estimator</a>
         <a class="dedicated-portal" href="/client-portal">Secure Client Portal</a>
       </div>
 
@@ -378,7 +378,7 @@
       </div>
 
       <div class="dedicated-page-bottom-actions">
-        <a class="dedicated-return" href="/">Return to Free Tax Estimator</a>
+        <a class="dedicated-return" href="/" data-context-return="true">Return to Free Tax Estimator</a>
         <a class="dedicated-secondary" href="/plans-pricing">See Plans &amp; Pricing</a>
       </div>
     </div>
@@ -1145,7 +1145,7 @@
                 <li>Track your estimate throughout the year</li>
                 <li>Get reminders when your information needs an update</li>
               </ul>
-              <a class="personalized-upgrade-button tax-watch-button" href="/plans-pricing#tax-watch-plan">
+              <a class="personalized-upgrade-button tax-watch-button" href="/plans-pricing#tax-watch-plan" data-estimator-return-link="true">
                 Explore Tax Watch Pro
               </a>
             </article>
@@ -1161,7 +1161,7 @@
                 <li>Plan for multiple jobs or gig income</li>
                 <li>Choose a refund or balance-due goal</li>
               </ul>
-              <a class="personalized-upgrade-button pinnacle-button" href="/plans-pricing#pinnacle-plan">
+              <a class="personalized-upgrade-button pinnacle-button" href="/plans-pricing#pinnacle-plan" data-estimator-return-link="true">
                 Explore the Pinnacle Plan
               </a>
             </article>
@@ -1169,7 +1169,7 @@
 
           <div class="personalized-upgrade-note">
             Tax Watch Pro and the Pinnacle Tax Action Plan are planned memberships. Exploring a plan does not start a subscription or charge you.
-            <a href="/plans-pricing">Compare all plans and benefits</a>
+            <a href="/plans-pricing" data-estimator-return-link="true">Compare all plans and benefits</a>
           </div>
         </section>
 
@@ -1502,6 +1502,90 @@
       <div class="footer-disclaimer">Estimates are for planning purposes and are not filed tax returns.</div>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var storageKey = "tspEstimatorReturnContext";
+      var returnLinks = Array.from(
+        document.querySelectorAll("[data-context-return]")
+      );
+
+      if (!returnLinks.length) return;
+
+      var context = null;
+      try {
+        context = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+      } catch {
+        context = null;
+      }
+
+      var contextIsCurrent =
+        context &&
+        context.screen === "results" &&
+        Number(context.savedAt || 0) > Date.now() - (4 * 60 * 60 * 1000);
+
+      var referrerUrl = null;
+      try {
+        referrerUrl = document.referrer
+          ? new URL(document.referrer)
+          : null;
+      } catch {
+        referrerUrl = null;
+      }
+
+      var hasSameOriginReferrer =
+        referrerUrl &&
+        referrerUrl.origin === window.location.origin;
+
+      function returnLabel() {
+        if (contextIsCurrent) {
+          return "\u2190 Return to My Tax Estimate";
+        }
+
+        if (!hasSameOriginReferrer) {
+          return "\u2190 Return to Free Tax Estimator";
+        }
+
+        var previousPath = String(referrerUrl.pathname || "");
+
+        if (previousPath.indexOf("/client-portal") === 0) {
+          return "\u2190 Return to Secure Client Portal";
+        }
+
+        if (previousPath === "/plans-pricing") {
+          return "\u2190 Return to Plans & Pricing";
+        }
+
+        if (previousPath === "/professional-tax-services") {
+          return "\u2190 Return to Professional Tax Services";
+        }
+
+        return "\u2190 Return to Previous Page";
+      }
+
+      returnLinks.forEach(function (link) {
+        link.textContent = returnLabel();
+
+        link.addEventListener("click", function (event) {
+          if (contextIsCurrent || hasSameOriginReferrer) {
+            event.preventDefault();
+
+            if (window.history.length > 1) {
+              window.history.back();
+              return;
+            }
+
+            if (contextIsCurrent) {
+              window.location.href = "/?restoreEstimate=1";
+              return;
+            }
+          }
+
+          window.location.href = link.getAttribute("href") || "/";
+        });
+      });
+    })();
+  </script>
 
   <script>
     (function () {

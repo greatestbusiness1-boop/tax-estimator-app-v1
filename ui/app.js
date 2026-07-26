@@ -49,6 +49,132 @@ const DEPENDENT_FILING_THRESHOLDS = {
 // =============================================================================
 
 const SCREENS = ["welcome", "form", "results"];
+const ESTIMATOR_RETURN_CONTEXT_KEY = "tspEstimatorReturnContext";
+const ESTIMATOR_RETURN_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+
+function updateNewsletterVisibility(screenId) {
+  const newsletter = document.querySelector(".footer-newsletter-shell");
+  if (!newsletter) return;
+
+  const dedicatedPublicPage =
+    document.documentElement.hasAttribute("data-public-page");
+
+  newsletter.hidden =
+    dedicatedPublicPage ||
+    screenId !== "welcome";
+}
+
+function saveEstimatorReturnContext() {
+  if (!_lastTaxInput || !_lastEstimate || !_leadGatewayContact) {
+    return;
+  }
+
+  const context = {
+    screen: "results",
+    savedAt: Date.now(),
+    scrollY: Math.max(0, Number(window.scrollY || 0)),
+    taxInput: _lastTaxInput,
+    estimate: _lastEstimate,
+    contact: _leadGatewayContact
+  };
+
+  try {
+    sessionStorage.setItem(
+      ESTIMATOR_RETURN_CONTEXT_KEY,
+      JSON.stringify(context)
+    );
+
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set("restoreEstimate", "1");
+
+    window.history.replaceState(
+      { restoreEstimate: true },
+      "",
+      currentUrl.pathname +
+        currentUrl.search +
+        currentUrl.hash
+    );
+  } catch (error) {
+    console.warn("Could not save the temporary estimate return context.", error);
+  }
+}
+
+function restoreEstimatorReturnContext() {
+  const currentUrl = new URL(window.location.href);
+
+  if (
+    currentUrl.pathname !== "/" ||
+    currentUrl.searchParams.get("restoreEstimate") !== "1"
+  ) {
+    return false;
+  }
+
+  let context = null;
+
+  try {
+    context = JSON.parse(
+      sessionStorage.getItem(ESTIMATOR_RETURN_CONTEXT_KEY) || "null"
+    );
+  } catch {
+    context = null;
+  }
+
+  const contextIsCurrent =
+    context &&
+    context.screen === "results" &&
+    Number(context.savedAt || 0) >
+      Date.now() - ESTIMATOR_RETURN_MAX_AGE_MS &&
+    context.taxInput &&
+    context.estimate &&
+    context.contact;
+
+  if (!contextIsCurrent) {
+    currentUrl.searchParams.delete("restoreEstimate");
+    window.history.replaceState(
+      {},
+      "",
+      currentUrl.pathname +
+        currentUrl.search +
+        currentUrl.hash
+    );
+    return false;
+  }
+
+  _lastTaxInput = context.taxInput;
+  _lastEstimate = context.estimate;
+  _leadGatewayContact = context.contact;
+  _leadGatewayUnlocked = true;
+
+  renderResults(_lastEstimate, _lastTaxInput);
+  goToScreen("results");
+
+  window.setTimeout(() => {
+    window.scrollTo({
+      top: Math.max(0, Number(context.scrollY || 0)),
+      behavior: "auto"
+    });
+  }, 0);
+
+  currentUrl.searchParams.delete("restoreEstimate");
+  window.history.replaceState(
+    {},
+    "",
+    currentUrl.pathname +
+      currentUrl.search +
+      currentUrl.hash
+  );
+
+  sessionStorage.removeItem(ESTIMATOR_RETURN_CONTEXT_KEY);
+  return true;
+}
+
+function initializeEstimatorReturnLinks() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("[data-estimator-return-link]");
+    if (!link) return;
+    saveEstimatorReturnContext();
+  });
+}
 
 function goToScreen(id) {
   SCREENS.forEach((s) => {
@@ -63,6 +189,7 @@ function goToScreen(id) {
   }
 
   updateProgress(id);
+  updateNewsletterVisibility(id);
 }
 
 function updateProgress(activeId) {
@@ -2415,7 +2542,39 @@ if (document.readyState === "loading") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  goToScreen("welcome");
+  initializeEstimatorReturnLinks();
+
+  if (!restoreEstimatorReturnContext()) {
+    goToScreen("welcome");
+  }
+});
+
+window.addEventListener("pageshow", () => {
+  const currentUrl = new URL(window.location.href);
+
+  if (
+    currentUrl.pathname === "/" &&
+    currentUrl.searchParams.get("restoreEstimate") === "1" &&
+    document.getElementById("screen-results")?.classList.contains("active")
+  ) {
+    currentUrl.searchParams.delete("restoreEstimate");
+    window.history.replaceState(
+      {},
+      "",
+      currentUrl.pathname +
+        currentUrl.search +
+        currentUrl.hash
+    );
+    sessionStorage.removeItem(ESTIMATOR_RETURN_CONTEXT_KEY);
+  }
+
+  const activeScreen = SCREENS.find((screenId) =>
+    document
+      .getElementById("screen-" + screenId)
+      ?.classList.contains("active")
+  );
+
+  updateNewsletterVisibility(activeScreen || "welcome");
 });
 
 
