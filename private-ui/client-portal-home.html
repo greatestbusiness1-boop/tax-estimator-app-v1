@@ -1713,6 +1713,86 @@
       .portal-top-navigation .portal-submenu.is-open{display:block}
     }
 
+
+    /* Tax Watch Pro foundation — Client Experience V2.6.0 */
+    .tax-watch-page{background:#f5f9fc}
+    .tax-watch-hero{
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(260px,.65fr);
+      gap:22px;
+      padding:30px;
+      background:linear-gradient(135deg,#0c365d 0%,#0d567a 62%,#137a72 100%);
+      color:#fff;
+      border-radius:22px;
+      margin:0 0 22px;
+      box-shadow:0 16px 38px rgba(13,54,93,.18);
+    }
+    .tax-watch-hero h2{margin:6px 0 12px;font-size:36px;line-height:1.08;color:#fff}
+    .tax-watch-hero p{margin:0;color:#e2f2f6;font-size:16px;line-height:1.65;max-width:760px}
+    .tax-watch-badge{
+      align-self:center;
+      padding:20px;
+      border:1px solid rgba(255,255,255,.3);
+      background:rgba(255,255,255,.12);
+      border-radius:18px;
+    }
+    .tax-watch-badge span{display:block;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#f9d77a}
+    .tax-watch-badge strong{display:block;margin-top:8px;font-size:22px;line-height:1.25;color:#fff}
+    .tax-watch-panel{
+      border:1px solid #cbdce7;
+      background:#fff;
+      border-radius:20px;
+      padding:24px;
+      box-shadow:0 10px 26px rgba(15,47,89,.08);
+      margin-bottom:20px;
+    }
+    .tax-watch-panel h3{margin:0 0 8px;color:#0f2f59;font-size:25px}
+    .tax-watch-panel p{color:#486276;line-height:1.6}
+    .tax-watch-setup-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.45fr);gap:18px;margin-top:20px}
+    .tax-watch-field label{display:block;margin-bottom:8px;color:#163d61;font-size:14px;font-weight:900}
+    .tax-watch-field select,.tax-watch-field input{
+      width:100%;box-sizing:border-box;border:1px solid #a9c2d3;border-radius:12px;padding:13px 14px;font-size:16px;background:#fff;color:#17354e
+    }
+    .tax-watch-action-button{
+      border:0;border-radius:12px;padding:14px 20px;background:#0c6f5b;color:#fff;font-weight:900;font-size:15px;cursor:pointer
+    }
+    .tax-watch-action-button.secondary{background:#0f2f59}
+    .tax-watch-action-button:disabled{opacity:.62;cursor:wait}
+    .tax-watch-message{display:none;margin:14px 0 0;padding:12px 14px;border-radius:10px;font-weight:800}
+    .tax-watch-message.show{display:block}
+    .tax-watch-message.success{background:#e8f8f1;color:#116149;border:1px solid #9dd8c4}
+    .tax-watch-message.error{background:#fff0f0;color:#9a2525;border:1px solid #eab0b0}
+    .tax-watch-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0}
+    .tax-watch-stat{background:#f7fbfd;border:1px solid #cbdce7;border-radius:14px;padding:16px}
+    .tax-watch-stat span{display:block;color:#62798b;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+    .tax-watch-stat strong{display:block;margin-top:7px;color:#0f2f59;font-size:20px;line-height:1.25}
+    .tax-watch-result-refund{color:#08785c!important}
+    .tax-watch-result-due{color:#b53b2f!important}
+    .tax-watch-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+    .tax-watch-callout{border-left:5px solid #c69328;background:#faf6ec;border-radius:0 14px 14px 0;padding:18px}
+    .tax-watch-callout strong{display:block;color:#0f2f59;font-size:17px;margin-bottom:7px}
+    .tax-watch-callout p{margin:0;color:#314e64}
+    .tax-watch-change-list{margin:12px 0 0;padding:0;list-style:none}
+    .tax-watch-change-list li{position:relative;padding:11px 0 11px 27px;border-bottom:1px solid #e2eaf0;color:#28465e;line-height:1.5;font-weight:700}
+    .tax-watch-change-list li:before{content:'✓';position:absolute;left:0;color:#0c8069;font-weight:1000}
+    .tax-watch-history{width:100%;border-collapse:collapse;margin-top:14px}
+    .tax-watch-history th,.tax-watch-history td{padding:12px 10px;text-align:left;border-bottom:1px solid #dce6ed;color:#2a465b}
+    .tax-watch-history th{background:#edf5f9;color:#163d61;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+    .tax-watch-history td strong{color:#0f2f59}
+    .tax-watch-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .tax-watch-empty{padding:22px;border:1px dashed #9eb9ca;border-radius:14px;background:#f7fbfd;color:#35566f}
+    .cx-explore-card:nth-child(2) button{background:#b47d10;border-color:#b47d10;color:#fff;cursor:pointer}
+    .tax-watch-hidden{display:none!important}
+    @media(max-width:900px){
+      .tax-watch-hero,.tax-watch-setup-grid,.tax-watch-columns{grid-template-columns:1fr}
+      .tax-watch-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:560px){
+      .tax-watch-summary-grid{grid-template-columns:1fr}
+      .tax-watch-hero{padding:22px 18px}
+      .tax-watch-hero h2{font-size:30px}
+    }
+
   </style>
 </head>
 <body>
@@ -1721,7 +1801,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.2.2</span>
+        <span>Client Experience V2 — Portal 2.6.0</span>
       </div>
     </div>
     <div class="top-actions">
@@ -2078,6 +2158,100 @@
             <button class="button" id="portalQuestionButton" type="submit">Send My Question</button>
           </div>
         </form>
+      </div>
+    </section>
+
+
+    <section class="section portal-view tax-watch-page" id="taxWatchPro" data-portal-view="tax-watch">
+      <div class="tax-watch-hero">
+        <div>
+          <div class="eyebrow">Year-Round Tax Tracking</div>
+          <h2>Tax Watch Pro</h2>
+          <p>Save a starting estimate, choose your tax goal, and see what changed when you update your income, withholding, gig work, or family information.</p>
+        </div>
+        <div class="tax-watch-badge">
+          <span>Foundation Preview</span>
+          <strong>No subscription or payment is started during this test.</strong>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="tax-watch-panel" id="taxWatchSetupPanel">
+          <h3>Choose What You Want Tax Watch Pro to Help You Track</h3>
+          <p>Your most recent Free Tax Estimator result becomes the starting point. You can change your goal later.</p>
+          <div class="tax-watch-empty" id="taxWatchNoEstimate" hidden>
+            No saved Free Tax Estimator result is connected to this portal email yet. Complete the estimator using the same email address, then return here.
+          </div>
+          <div id="taxWatchSetupFormWrap">
+            <div class="tax-watch-setup-grid">
+              <div class="tax-watch-field">
+                <label for="taxWatchObjective">My main tax goal</label>
+                <select id="taxWatchObjective">
+                  <option value="track_changes">Track changes throughout the year</option>
+                  <option value="avoid_owing">Avoid owing at tax time</option>
+                  <option value="target_refund">Target a specific refund</option>
+                  <option value="increase_take_home">Increase take-home pay</option>
+                  <option value="self_employment">Prepare for self-employment taxes</option>
+                  <option value="quarterly_payments">Save for quarterly payments</option>
+                </select>
+              </div>
+              <div class="tax-watch-field" id="taxWatchTargetField" hidden>
+                <label for="taxWatchTargetAmount">Refund target</label>
+                <input id="taxWatchTargetAmount" type="number" min="0" step="50" inputmode="decimal" placeholder="Example: 1000">
+              </div>
+            </div>
+            <div class="tax-watch-actions">
+              <button class="tax-watch-action-button" id="startTaxWatchButton" type="button">Start My Tax Watch Pro Preview</button>
+              <a class="portal-back-button" href="/" target="_blank" rel="noopener">Update My Free Tax Estimate</a>
+              <button class="portal-back-button" type="button" data-portal-open="plans">Return to Plans &amp; Pricing</button>
+            </div>
+          </div>
+          <div class="tax-watch-message" id="taxWatchMessage" role="status" aria-live="polite"></div>
+        </div>
+
+        <div id="taxWatchDashboard" hidden>
+          <div class="tax-watch-summary-grid">
+            <div class="tax-watch-stat"><span>Current projection</span><strong id="taxWatchCurrentResult">—</strong></div>
+            <div class="tax-watch-stat"><span>My objective</span><strong id="taxWatchObjectiveLabel">—</strong></div>
+            <div class="tax-watch-stat"><span>Tax year</span><strong id="taxWatchTaxYear">—</strong></div>
+            <div class="tax-watch-stat"><span>Saved updates</span><strong id="taxWatchUpdateCount">0</strong></div>
+          </div>
+
+          <div class="tax-watch-columns">
+            <div class="tax-watch-panel">
+              <h3>What Changed and Why</h3>
+              <p>Tax Watch Pro compares your newest saved estimate with the one before it.</p>
+              <ul class="tax-watch-change-list" id="taxWatchChangeList"></ul>
+            </div>
+            <div class="tax-watch-panel">
+              <h3>Your Next Step</h3>
+              <div class="tax-watch-callout">
+                <strong>Recommended next action</strong>
+                <p id="taxWatchNextAction">—</p>
+              </div>
+              <div class="tax-watch-actions">
+                <a class="tax-watch-action-button secondary" href="/" target="_blank" rel="noopener">Update My Free Tax Estimate</a>
+                <button class="portal-back-button" id="changeTaxWatchObjectiveButton" type="button">Change My Objective</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tax-watch-panel">
+            <h3>Estimate Update History</h3>
+            <p>Use the same portal email each time you update the Free Tax Estimator. New saved estimates will appear here after you refresh the portal.</p>
+            <div style="overflow-x:auto">
+              <table class="tax-watch-history">
+                <thead><tr><th>Saved</th><th>Tax year</th><th>Income entered</th><th>Withholding</th><th>Projected result</th></tr></thead>
+                <tbody id="taxWatchHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cx-page-actions">
+            <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+            <button class="portal-primary-link" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -4099,6 +4273,20 @@
         });
       });
 
+      if (portal.taxWatch?.active) {
+        add({
+          key: `tax-watch:${portal.taxWatch.profileLeadId || "profile"}`,
+          service: "Tax Watch Pro",
+          title: `Tax Watch Pro — ${portal.taxWatch.current?.taxYear || "Current year"}`,
+          status: "Preview Active",
+          payment: "No charge during preview",
+          nextAction: portal.taxWatch.recommendedNextAction || "Review your latest estimate update.",
+          target: "tax-watch",
+          updatedAt: portal.taxWatch.updatedAt || portal.taxWatch.current?.recordedAt || "",
+          completed: false
+        });
+      }
+
       [...(portal.records || []), ...(portal.olderRecords || [])]
         .forEach((record) => {
           const services = Array.isArray(record.services)
@@ -4214,6 +4402,12 @@
       const membershipGrid = document.getElementById("membershipPlanGrid");
       const comparison = document.getElementById("membershipComparison");
       const additionalGrid = document.getElementById("additionalServiceGrid");
+      const taxWatch = portal.taxWatch || {};
+      const taxWatchAction = taxWatch.active
+        ? `<button type="button" data-portal-open="tax-watch">Open Tax Watch Pro</button>`
+        : taxWatch.available
+          ? `<button type="button" data-portal-open="tax-watch">Start Tax Watch Pro Preview</button>`
+          : `<a href="/" target="_blank" rel="noopener">Create My Free Tax Estimate</a>`;
 
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
@@ -4249,7 +4443,7 @@
             <li>Alerts when your estimate changes by a meaningful amount</li>
             <li>One clear next step after each update</li>
           </ul>
-          <a href="/contact?service=Tax%20Watch%20Pro&amp;return=plans-pricing" target="_blank" rel="noopener">Ask About Tax Watch Pro</a>
+          ${taxWatchAction}
         </article>
 
         <article class="cx-explore-card featured">
@@ -4401,6 +4595,113 @@
       setBilling("monthly");
     }
 
+
+    function taxWatchMoney(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      }).format(Number.isFinite(number) ? number : 0);
+    }
+
+    function renderTaxWatchPro(taxWatch = {}) {
+      const setupPanel = document.getElementById("taxWatchSetupPanel");
+      const setupWrap = document.getElementById("taxWatchSetupFormWrap");
+      const noEstimate = document.getElementById("taxWatchNoEstimate");
+      const dashboard = document.getElementById("taxWatchDashboard");
+      const objective = document.getElementById("taxWatchObjective");
+      const target = document.getElementById("taxWatchTargetAmount");
+
+      setupPanel.hidden = Boolean(taxWatch.active);
+      dashboard.hidden = !taxWatch.active;
+      noEstimate.hidden = Boolean(taxWatch.available);
+      setupWrap.hidden = !taxWatch.available;
+
+      if (objective) objective.value = taxWatch.objective || "track_changes";
+      if (target) target.value = Number(taxWatch.targetAmount || 0) || "";
+      updateTaxWatchTargetVisibility();
+
+      if (!taxWatch.active) return;
+
+      const current = taxWatch.current || {};
+      const currentResult = document.getElementById("taxWatchCurrentResult");
+      currentResult.textContent = taxWatch.currentResult || "No saved estimate yet";
+      currentResult.className = current.combinedNet > 0
+        ? "tax-watch-result-refund"
+        : current.combinedNet < 0
+          ? "tax-watch-result-due"
+          : "";
+
+      document.getElementById("taxWatchObjectiveLabel").textContent = taxWatch.objectiveLabel || "Track changes throughout the year";
+      document.getElementById("taxWatchTaxYear").textContent = current.taxYear || "Not recorded";
+      document.getElementById("taxWatchUpdateCount").textContent = Number((taxWatch.history || []).length);
+      document.getElementById("taxWatchNextAction").textContent = taxWatch.recommendedNextAction || "Update your estimate after a meaningful change.";
+
+      const changeList = document.getElementById("taxWatchChangeList");
+      changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+
+      const history = document.getElementById("taxWatchHistoryBody");
+      const rows = taxWatch.history || [];
+      history.innerHTML = rows.length
+        ? rows.map((snapshot) => {
+            const totalIncome = Number(snapshot.w2Income || 0) + Number(snapshot.otherIncome || 0) + Number(snapshot.selfEmploymentIncome || 0);
+            const totalWithholding = Number(snapshot.federalWithheld || 0) + Number(snapshot.stateWithheld || 0) + Number(snapshot.estimatedTaxPayments || 0);
+            const result = Number(snapshot.combinedNet || 0) > 0
+              ? `Refund ${taxWatchMoney(snapshot.combinedNet)}`
+              : Number(snapshot.combinedNet || 0) < 0
+                ? `Balance due ${taxWatchMoney(Math.abs(snapshot.combinedNet))}`
+                : "Near break-even";
+            return `<tr>
+              <td><strong>${escapeHtml(formatDate(snapshot.recordedAt, true))}</strong></td>
+              <td>${escapeHtml(snapshot.taxYear || "—")}</td>
+              <td>${escapeHtml(taxWatchMoney(totalIncome))}</td>
+              <td>${escapeHtml(taxWatchMoney(totalWithholding))}</td>
+              <td>${escapeHtml(result)}</td>
+            </tr>`;
+          }).join("")
+        : `<tr><td colspan="5">No saved estimate history is available yet.</td></tr>`;
+    }
+
+    function updateTaxWatchTargetVisibility() {
+      const objective = document.getElementById("taxWatchObjective");
+      const field = document.getElementById("taxWatchTargetField");
+      if (!objective || !field) return;
+      field.hidden = objective.value !== "target_refund";
+    }
+
+    function showTaxWatchMessage(text, type = "") {
+      const message = document.getElementById("taxWatchMessage");
+      message.textContent = text;
+      message.className = `tax-watch-message show ${type}`.trim();
+    }
+
+    async function saveTaxWatchProfile() {
+      const button = document.getElementById("startTaxWatchButton");
+      const objective = document.getElementById("taxWatchObjective").value;
+      const targetAmount = Number(document.getElementById("taxWatchTargetAmount").value || 0);
+
+      button.disabled = true;
+      button.textContent = "Saving Tax Watch Pro...";
+
+      try {
+        const data = await postJson("/api/client-portal/tax-watch", {
+          objective,
+          targetAmount
+        });
+        showTaxWatchMessage(data.message || "Tax Watch Pro was saved.", "success");
+        await loadPortal();
+        openPortalView("tax-watch", { scroll: false });
+      } catch (error) {
+        showTaxWatchMessage(error.message || "Tax Watch Pro could not be saved.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Start My Tax Watch Pro Preview";
+      }
+    }
+
     function renderClientExperienceV2(portal = {}) {
       const clientName = portal.clientName || "Client";
       document.getElementById("sidebarClientName").textContent = clientName;
@@ -4418,9 +4719,11 @@
 
       document.getElementById("dashboardDocumentAwaiting").textContent = awaiting;
       document.getElementById("currentAccessLevel").textContent =
-        (portal.records || []).length || (portal.olderRecords || []).length
-          ? "Free Tax Estimator"
-          : "Secure Portal";
+        portal.taxWatch?.active
+          ? "Tax Watch Pro Preview"
+          : (portal.records || []).length || (portal.olderRecords || []).length
+            ? "Free Tax Estimator"
+            : "Secure Portal";
 
       setClientExperienceGroupVisibility(
         "taxPreparationServiceGroup",
@@ -4456,6 +4759,7 @@
       );
 
       renderClientExperienceExplore(portal, serviceState);
+      renderTaxWatchPro(portal.taxWatch || {});
     }
 
 
@@ -4463,6 +4767,7 @@
     const portalViewHashes = {
       dashboard: "dashboard",
       "active-services": "active-services",
+      "tax-watch": "tax-watch",
       "tax-preparation": "tax-preparation",
       "contractor-1099": "contractor-1099",
       "tax-extension": "tax-extension",
@@ -5133,6 +5438,18 @@
         }
       }
     );
+
+
+    document.getElementById("taxWatchObjective")?.addEventListener("change", updateTaxWatchTargetVisibility);
+    document.getElementById("startTaxWatchButton")?.addEventListener("click", saveTaxWatchProfile);
+    document.getElementById("changeTaxWatchObjectiveButton")?.addEventListener("click", () => {
+      const panel = document.getElementById("taxWatchSetupPanel");
+      const dashboard = document.getElementById("taxWatchDashboard");
+      panel.hidden = false;
+      dashboard.hidden = true;
+      document.getElementById("startTaxWatchButton").textContent = "Save My Tax Watch Pro Objective";
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
     document.getElementById("portalQuestionForm").addEventListener("submit", async (event) => {
       event.preventDefault();

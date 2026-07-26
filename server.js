@@ -1702,6 +1702,11 @@ function mapRowToLead(row) {
       row.taxSavingsPlanner ||
       row.tax_savings_planner ||
       null,
+    taxWatchProfile:
+      estimate.taxWatchProfile ||
+      row.taxWatchProfile ||
+      row.tax_watch_profile ||
+      null,
     clientPortal: sanitizeClientPortalRecord(
       estimate.clientPortal ||
       row.clientPortal ||
@@ -4393,6 +4398,16 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativeTaxWatchProfile = {
+      ...asPlainObject(
+        mapped.taxWatchProfile
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.taxWatchProfile
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -4411,6 +4426,12 @@ async function loadClientPortalLeadCandidates() {
         taxSavingsPlanner:
           mapped.taxSavingsPlanner ||
           existing.lead?.taxSavingsPlanner,
+        taxWatchProfile:
+          Object.keys(
+            authoritativeTaxWatchProfile
+          ).length
+            ? authoritativeTaxWatchProfile
+            : null,
         status:
           existing.lead?.status ||
           mapped.status,
@@ -6246,6 +6267,335 @@ function buildClientPortalLeadSummary(entry) {
       summary.nextAction ||
       "Continue your tax planning profile."
     ).slice(0, 500)
+  };
+}
+
+
+function getTaxWatchNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function getTaxWatchSnapshot(entry = {}) {
+  const lead = entry.lead || {};
+  const summary = lead.estimateSummary || {};
+  const federal = summary.federal || {};
+  const state = summary.state || {};
+  const taxData = lead.taxData || {};
+
+  const hasEstimate =
+    Boolean(summary.taxYear) ||
+    Boolean(summary.combined) ||
+    Number.isFinite(Number(federal.net)) ||
+    Number.isFinite(Number(state.net));
+
+  if (!hasEstimate) return null;
+
+  const federalNet = getTaxWatchNumber(federal.net);
+  const stateNet = getTaxWatchNumber(state.net);
+  const combinedNet = federalNet + stateNet;
+  const recordedAt = String(
+    lead.updatedAt ||
+    lead.timestamp ||
+    entry.raw?.created_at ||
+    ""
+  );
+
+  return {
+    leadId: String(entry.leadId || lead.leadId || ""),
+    taxYear: String(
+      summary.taxYear ||
+      taxData.taxYear ||
+      "Not recorded"
+    ),
+    recordedAt,
+    filingStatus: String(
+      summary.filingStatus ||
+      taxData.filingStatus ||
+      "Not recorded"
+    ),
+    stateCode: String(
+      summary.stateCode ||
+      taxData.stateCode ||
+      ""
+    ),
+    federalNet,
+    stateNet,
+    combinedNet,
+    projectedResult:
+      combinedNet > 0
+        ? "refund"
+        : combinedNet < 0
+          ? "balance-due"
+          : "break-even",
+    projectedAmount: Math.abs(combinedNet),
+    w2Income: getTaxWatchNumber(taxData.w2Income),
+    otherIncome: getTaxWatchNumber(taxData.otherIncome),
+    selfEmploymentIncome: getTaxWatchNumber(
+      taxData.selfEmploymentIncome
+    ),
+    businessExpenses: getTaxWatchNumber(
+      taxData.businessExpenses
+    ),
+    federalWithheld: getTaxWatchNumber(
+      taxData.federalWithheld ??
+      federal.federalWithheld
+    ),
+    stateWithheld: getTaxWatchNumber(
+      taxData.stateWithheld ??
+      state.stateWithheld
+    ),
+    estimatedTaxPayments: getTaxWatchNumber(
+      taxData.estimatedTaxPayments ??
+      federal.estimatedTaxPayments
+    ),
+    dependents: getTaxWatchNumber(
+      taxData.numberOfDependents
+    )
+  };
+}
+
+function getTaxWatchObjectiveLabel(value) {
+  const labels = {
+    avoid_owing: "Avoid owing at tax time",
+    target_refund: "Target a specific refund",
+    increase_take_home: "Increase take-home pay",
+    self_employment: "Prepare for self-employment taxes",
+    quarterly_payments: "Save for quarterly payments",
+    track_changes: "Track changes throughout the year"
+  };
+
+  return labels[String(value || "")] || labels.track_changes;
+}
+
+function getTaxWatchResultText(snapshot = {}) {
+  const amount = Math.round(
+    Math.abs(getTaxWatchNumber(snapshot.combinedNet))
+  ).toLocaleString("en-US");
+
+  if (snapshot.combinedNet > 0) {
+    return `Projected refund: $${amount}`;
+  }
+
+  if (snapshot.combinedNet < 0) {
+    return `Projected balance due: $${amount}`;
+  }
+
+  return "Projected result: Near break-even";
+}
+
+function getTaxWatchChangeDetails(previous, current) {
+  if (!current) return [];
+
+  if (!previous) {
+    return [
+      "Your first saved estimate is now the starting point for future comparisons."
+    ];
+  }
+
+  const details = [];
+  const addMoneyChange = (label, before, after) => {
+    const difference = getTaxWatchNumber(after) - getTaxWatchNumber(before);
+    if (Math.abs(difference) < 1) return;
+
+    details.push(
+      `${label} ${difference > 0 ? "increased" : "decreased"} by $${Math.abs(Math.round(difference)).toLocaleString("en-US")}.`
+    );
+  };
+
+  addMoneyChange(
+    "W-2 income",
+    previous.w2Income,
+    current.w2Income
+  );
+  addMoneyChange(
+    "Other income",
+    previous.otherIncome,
+    current.otherIncome
+  );
+  addMoneyChange(
+    "Gig or self-employment income",
+    previous.selfEmploymentIncome,
+    current.selfEmploymentIncome
+  );
+  addMoneyChange(
+    "Business expenses",
+    previous.businessExpenses,
+    current.businessExpenses
+  );
+  addMoneyChange(
+    "Federal withholding",
+    previous.federalWithheld,
+    current.federalWithheld
+  );
+  addMoneyChange(
+    "State withholding",
+    previous.stateWithheld,
+    current.stateWithheld
+  );
+  addMoneyChange(
+    "Estimated tax payments",
+    previous.estimatedTaxPayments,
+    current.estimatedTaxPayments
+  );
+
+  const dependentDifference =
+    getTaxWatchNumber(current.dependents) -
+    getTaxWatchNumber(previous.dependents);
+
+  if (dependentDifference) {
+    details.push(
+      `The number of dependents ${dependentDifference > 0 ? "increased" : "decreased"} by ${Math.abs(dependentDifference)}.`
+    );
+  }
+
+  const resultDifference =
+    getTaxWatchNumber(current.combinedNet) -
+    getTaxWatchNumber(previous.combinedNet);
+
+  if (Math.abs(resultDifference) >= 1) {
+    const direction = resultDifference > 0
+      ? "improved"
+      : "moved toward a larger balance due";
+
+    details.unshift(
+      `Your combined estimate ${direction} by $${Math.abs(Math.round(resultDifference)).toLocaleString("en-US")} since the previous update.`
+    );
+  }
+
+  return details.length
+    ? details
+    : [
+        "The information entered did not create a meaningful change from the previous saved estimate."
+      ];
+}
+
+function getTaxWatchRecommendedNextAction(profile = {}, current = null) {
+  if (!current) {
+    return "Complete the Free Tax Estimator using the same email address as this portal account.";
+  }
+
+  const objective = String(
+    profile.objective || "track_changes"
+  );
+  const targetAmount = Math.max(
+    0,
+    getTaxWatchNumber(profile.targetAmount)
+  );
+
+  if (objective === "avoid_owing") {
+    return current.combinedNet < 0
+      ? "Review your income and withholding, then update the estimator after any paycheck or income change."
+      : "Your current estimate is not showing a balance due. Keep tracking income and withholding changes.";
+  }
+
+  if (objective === "target_refund") {
+    if (!targetAmount) {
+      return "Enter the refund amount you want to target, then compare it with your current projection.";
+    }
+
+    const difference = current.combinedNet - targetAmount;
+    return Math.abs(difference) < 100
+      ? "Your current projection is close to your selected refund target. Keep the estimate updated."
+      : difference > 0
+        ? "Your projected refund is above your target. The future Action Plan can help compare take-home pay and refund choices."
+        : "Your projected refund is below your target. Update income and withholding whenever they change.";
+  }
+
+  if (objective === "increase_take_home") {
+    return current.combinedNet > 1500
+      ? "Your projected refund may indicate extra withholding. Keep tracking it before considering any paycheck change."
+      : "Keep your estimate updated before changing withholding so you do not create an unexpected balance due.";
+  }
+
+  if (
+    objective === "self_employment" ||
+    objective === "quarterly_payments"
+  ) {
+    return current.selfEmploymentIncome > 0
+      ? "Update gig or business income and expenses regularly so your projected tax position stays current."
+      : "Add your gig or business income when it begins so Tax Watch Pro can track the effect.";
+  }
+
+  return "Update your estimate after a new job, gig, withholding change, or family change to see what moved and why.";
+}
+
+function buildClientPortalTaxWatchSummary(
+  accessible = [],
+  accountLeadId = ""
+) {
+  const snapshots = accessible
+    .map(getTaxWatchSnapshot)
+    .filter(Boolean)
+    .sort(
+      (left, right) =>
+        Date.parse(left.recordedAt || 0) -
+        Date.parse(right.recordedAt || 0)
+    );
+
+  const deduped = [];
+  const seen = new Set();
+
+  snapshots.forEach((snapshot) => {
+    if (!snapshot.leadId || seen.has(snapshot.leadId)) return;
+    seen.add(snapshot.leadId);
+    deduped.push(snapshot);
+  });
+
+  const profileEntry =
+    accessible.find(
+      (entry) =>
+        entry.lead?.taxWatchProfile &&
+        String(entry.lead.taxWatchProfile.status || "")
+          .toLowerCase()
+          .match(/preview|active/)
+    ) || null;
+
+  const profile =
+    profileEntry?.lead?.taxWatchProfile || {};
+  const current = deduped[deduped.length - 1] || null;
+  const previous = deduped[deduped.length - 2] || null;
+  const baseline = profile.baselineSnapshot || deduped[0] || null;
+  const isActive = Boolean(profileEntry);
+
+  return {
+    available: Boolean(current),
+    active: isActive,
+    status: isActive
+      ? String(profile.status || "preview")
+      : "not-started",
+    planName: "Tax Watch Pro",
+    accessLabel: isActive
+      ? "Preview access — no subscription charge"
+      : "Not started",
+    profileLeadId: String(
+      profileEntry?.leadId ||
+      accountLeadId ||
+      current?.leadId ||
+      ""
+    ),
+    objective: String(
+      profile.objective || "track_changes"
+    ),
+    objectiveLabel: getTaxWatchObjectiveLabel(
+      profile.objective
+    ),
+    targetAmount: Math.max(
+      0,
+      getTaxWatchNumber(profile.targetAmount)
+    ),
+    activatedAt: String(profile.activatedAt || ""),
+    updatedAt: String(profile.updatedAt || ""),
+    baseline,
+    previous,
+    current,
+    currentResult: current
+      ? getTaxWatchResultText(current)
+      : "No saved estimate yet",
+    changes: getTaxWatchChangeDetails(previous, current),
+    recommendedNextAction:
+      getTaxWatchRecommendedNextAction(profile, current),
+    history: [...deduped].reverse().slice(0, 12)
   };
 }
 
@@ -13053,6 +13403,12 @@ app.get(
             )
         );
 
+    const taxWatch =
+      buildClientPortalTaxWatchSummary(
+        accessible,
+        accountLeadId
+      );
+
     const transcriptRequests =
       accessible
         .map(
@@ -13127,8 +13483,145 @@ app.get(
         contractor1099Requests,
         extensionRequests,
         transcriptRequests,
+        taxWatch,
         documentCenter
       }
+    });
+  }
+);
+
+
+app.post(
+  "/api/client-portal/tax-watch",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const allowedObjectives = new Set([
+      "avoid_owing",
+      "target_refund",
+      "increase_take_home",
+      "self_employment",
+      "quarterly_payments",
+      "track_changes"
+    ]);
+
+    const objective = String(
+      req.body?.objective || "track_changes"
+    ).trim();
+
+    if (!allowedObjectives.has(objective)) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Choose one of the available Tax Watch Pro objectives."
+      });
+    }
+
+    const targetAmount = Math.max(
+      0,
+      getTaxWatchNumber(req.body?.targetAmount)
+    );
+
+    const session = req.clientPortalSession;
+    const accessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    const currentSummary =
+      buildClientPortalTaxWatchSummary(
+        accessible,
+        session.payload.accountLeadId
+      );
+
+    if (!currentSummary.current) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Complete the Free Tax Estimator with this portal email before starting Tax Watch Pro."
+      });
+    }
+
+    const targetLeadId = String(
+      currentSummary.profileLeadId ||
+      session.payload.accountLeadId ||
+      currentSummary.current.leadId ||
+      ""
+    ).trim();
+
+    if (!targetLeadId) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "A portal record could not be selected for Tax Watch Pro."
+      });
+    }
+
+    const now = new Date().toISOString();
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        targetLeadId,
+        (record = {}) => {
+          const existing =
+            record.taxWatchProfile &&
+            typeof record.taxWatchProfile === "object" &&
+            !Array.isArray(record.taxWatchProfile)
+              ? record.taxWatchProfile
+              : {};
+
+          return {
+            ...record,
+            taxWatchProfile: {
+              ...existing,
+              version: 1,
+              planName: "Tax Watch Pro",
+              status: "preview",
+              objective,
+              targetAmount:
+                objective === "target_refund"
+                  ? targetAmount
+                  : 0,
+              baselineLeadId:
+                existing.baselineLeadId ||
+                currentSummary.current.leadId,
+              baselineSnapshot:
+                existing.baselineSnapshot ||
+                currentSummary.current,
+              activatedAt:
+                existing.activatedAt || now,
+              updatedAt: now
+            },
+            updatedAt: now
+          };
+        }
+      );
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "Tax Watch Pro could not be saved."
+      });
+    }
+
+    const refreshedAccessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        currentSummary.active
+          ? "Your Tax Watch Pro objective was updated."
+          : "Your Tax Watch Pro preview is ready.",
+      taxWatch:
+        buildClientPortalTaxWatchSummary(
+          refreshedAccessible,
+          session.payload.accountLeadId
+        )
     });
   }
 );
