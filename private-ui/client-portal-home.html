@@ -4405,9 +4405,7 @@
       const taxWatch = portal.taxWatch || {};
       const taxWatchAction = taxWatch.active
         ? `<button type="button" data-portal-open="tax-watch">Open Tax Watch Pro</button>`
-        : taxWatch.available
-          ? `<button type="button" data-portal-open="tax-watch">Start Tax Watch Pro Preview</button>`
-          : `<a href="/" target="_blank" rel="noopener">Create My Free Tax Estimate</a>`;
+        : `<button type="button" data-portal-open="tax-watch">Start Tax Watch Pro Preview</button>`;
 
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
