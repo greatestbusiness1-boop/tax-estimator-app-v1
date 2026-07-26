@@ -9159,11 +9159,24 @@ app.post("/api/calendar-appointment", async (req, res) => {
 // TAX UPDATES THAT MATTER - MONTHLY NEWSLETTER SIGNUP
 // =============================================================================
 
+function getNewsletterSourcePageLabel(sourcePage) {
+  const normalizedPath = String(sourcePage || "/").trim() || "/";
+  const sourceLabels = {
+    "/": "Free Tax Estimator Home Page",
+    "/plans-pricing": "Plans & Pricing",
+    "/professional-tax-services": "Professional Tax Services",
+    "/client-portal": "Secure Client Portal"
+  };
+
+  return sourceLabels[normalizedPath] || normalizedPath;
+}
+
 app.post("/api/newsletter-signup", async (req, res) => {
   const body = req.body || {};
   const email = normalizeEmail(body.email || "");
   const consent = body.consent === true;
   const sourcePage = String(body.sourcePage || "/").trim().slice(0, 200);
+  const sourcePageLabel = getNewsletterSourcePageLabel(sourcePage);
   const errors = [];
 
   if (!email) {
@@ -9221,6 +9234,7 @@ app.post("/api/newsletter-signup", async (req, res) => {
           consentAt: submittedAt,
           resubscribedAt: submittedAt,
           sourcePage,
+          sourcePageLabel,
           unsubscribeToken
         };
 
@@ -9274,6 +9288,7 @@ app.post("/api/newsletter-signup", async (req, res) => {
       frequency: "monthly",
       consentAt: submittedAt,
       sourcePage,
+      sourcePageLabel,
       unsubscribeToken
     };
 
@@ -9358,7 +9373,7 @@ Email:
 ${email}
 
 Source page:
-${sourcePage}
+${sourcePageLabel}
 
 Frequency:
 Once per month
