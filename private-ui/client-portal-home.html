@@ -36,7 +36,7 @@
       gap:20px;
       position:sticky;
       top:0;
-      z-index:10;
+      z-index:100;
       box-shadow:0 6px 22px rgba(0,0,0,.18)
     }
     .brand{
@@ -1448,8 +1448,8 @@
     }
     .portal-top-navigation{
       position:sticky;
-      top:72px;
-      z-index:30;
+      top:var(--portal-sticky-offset,0px);
+      z-index:90;
       display:flex;
       align-items:stretch;
       width:100%;
@@ -1504,7 +1504,7 @@
     .portal-top-navigation .portal-nav-group{position:relative;display:flex}
     .portal-top-navigation .portal-submenu{
       position:absolute;
-      top:calc(100% + 7px);
+      top:100%;
       left:0;
       z-index:50;
       min-width:245px;
@@ -1525,6 +1525,16 @@
       color:#0b5685;
     }
     .portal-top-navigation .portal-active-nav{display:grid}
+    .portal-top-navigation{isolation:isolate}
+    .portal-top-navigation .portal-nav-group::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:100%;
+      height:8px;
+      pointer-events:none;
+    }
     .portal-layout>.wrap{width:100%;max-width:none;margin:0;padding:0}
     .portal-view.is-active{animation:cxPageIn .18s ease-out}
     @keyframes cxPageIn{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -1711,7 +1721,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.2.1</span>
+        <span>Client Experience V2 — Portal 2.2.2</span>
       </div>
     </div>
     <div class="top-actions">
@@ -4548,6 +4558,38 @@
       toggle.setAttribute("aria-expanded", String(open));
     }
 
+    let portalSubmenuCloseTimer = 0;
+
+    function cancelPortalSubmenuClose() {
+      if (!portalSubmenuCloseTimer) return;
+      window.clearTimeout(portalSubmenuCloseTimer);
+      portalSubmenuCloseTimer = 0;
+    }
+
+    function schedulePortalSubmenuClose(delay = 240) {
+      cancelPortalSubmenuClose();
+      portalSubmenuCloseTimer = window.setTimeout(() => {
+        closePortalSubmenus();
+        portalSubmenuCloseTimer = 0;
+      }, delay);
+    }
+
+    function syncPortalNavigationOffset() {
+      const topbar = document.querySelector(".topbar");
+      const navigation = document.querySelector(".portal-top-navigation");
+      if (!navigation) return;
+
+      const offset =
+        window.innerWidth > 1280 && topbar
+          ? Math.ceil(topbar.getBoundingClientRect().height)
+          : 0;
+
+      document.documentElement.style.setProperty(
+        "--portal-sticky-offset",
+        `${offset}px`
+      );
+    }
+
     function initializePortalNavigation() {
       const navigation = document.getElementById("portalNavigation");
       const hoverCapable = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -4568,6 +4610,7 @@
           const shouldOpen = hoverCapable.matches
             ? true
             : !submenu?.classList.contains("is-open");
+          cancelPortalSubmenuClose();
           setPortalSubmenu(toggle, shouldOpen);
           return;
         }
@@ -4581,22 +4624,33 @@
         const toggle = group.querySelector("[data-submenu-toggle]");
         if (!toggle) return;
 
+        const submenu = document.getElementById(toggle.dataset.submenuToggle);
+
         group.addEventListener("mouseenter", () => {
+          cancelPortalSubmenuClose();
           if (hoverCapable.matches) setPortalSubmenu(toggle, true);
         });
 
         group.addEventListener("mouseleave", () => {
-          if (hoverCapable.matches) setPortalSubmenu(toggle, false);
+          if (hoverCapable.matches) schedulePortalSubmenuClose();
+        });
+
+        submenu?.addEventListener("mouseenter", cancelPortalSubmenuClose);
+        submenu?.addEventListener("mouseleave", () => {
+          if (hoverCapable.matches) schedulePortalSubmenuClose();
         });
 
         group.addEventListener("focusout", (event) => {
-          if (!group.contains(event.relatedTarget)) setPortalSubmenu(toggle, false);
+          if (!group.contains(event.relatedTarget)) schedulePortalSubmenuClose(80);
         });
       });
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closePortalSubmenus();
       });
+
+      syncPortalNavigationOffset();
+      window.addEventListener("resize", syncPortalNavigationOffset);
 
       window.addEventListener("hashchange", () => {
         closePortalSubmenus();
