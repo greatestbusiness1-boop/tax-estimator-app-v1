@@ -1339,44 +1339,188 @@
   </main>
 
   <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-top">
+    <div class="footer-newsletter-shell">
+      <div class="footer-newsletter-copy">
+        <div class="footer-newsletter-badge">One useful email each month</div>
+        <h2 id="taxUpdatesTitle">Tax Updates That Matter</h2>
+        <p class="footer-newsletter-lead">
+          Get tax deadlines, one money-saving idea, one common myth explained, and one practical step you can take now.
+          We verify changing dates and dollar amounts before each edition.
+        </p>
+
+        <div class="footer-newsletter-preview" aria-label="What each monthly edition includes">
+          <div>
+            <strong>The One Thing to Know</strong>
+            <span>The month&rsquo;s most useful tax change or warning in plain English.</span>
+          </div>
+          <div>
+            <strong>Dates That Matter</strong>
+            <span>Upcoming federal and state deadlines that may affect you.</span>
+          </div>
+          <div>
+            <strong>Myth vs. Reality</strong>
+            <span>One tax belief people repeat &mdash; and the truth behind it.</span>
+          </div>
+          <div>
+            <strong>Quick Win</strong>
+            <span>One specific action you can take that month.</span>
+          </div>
+        </div>
+      </div>
+
+      <form class="footer-newsletter-form" id="taxUpdatesForm" novalidate>
+        <div class="footer-newsletter-form-heading">Join the monthly list</div>
+        <label for="taxUpdatesEmail">Email address</label>
+        <div class="footer-newsletter-input-row">
+          <input
+            id="taxUpdatesEmail"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          >
+          <button type="submit" id="taxUpdatesSubmit">Send Me Tax Updates</button>
+        </div>
+        <label class="footer-newsletter-consent" for="taxUpdatesConsent">
+          <input id="taxUpdatesConsent" name="consent" type="checkbox" required>
+          <span>Yes, send me <strong>Tax Updates That Matter</strong> once per month. I can unsubscribe at any time.</span>
+        </label>
+        <p class="footer-newsletter-status" id="taxUpdatesStatus" role="status" aria-live="polite"></p>
+        <p class="footer-newsletter-privacy">
+          Educational tax information and paid service offers are clearly separated. No daily messages. No selling your email address.
+        </p>
+      </form>
+    </div>
+
+    <div class="footer-inner footer-main-grid">
+      <div class="footer-company-column">
         <div class="footer-brand-block">
           <div class="footer-logo">G</div>
           <div>
             <div class="footer-brand-name">Greatest Business Solution LLC</div>
-            <div class="footer-brand-tagline">Tax &amp; Financial Services</div>
+            <div class="footer-brand-tagline">Tax guidance, preparation, and secure client support</div>
           </div>
         </div>
-        <div class="footer-links">
-          <div class="footer-link-group">
-            <div class="footer-link-title">Services</div>
-            <a class="footer-link" href="/start-my-tax-return">Individual Tax Return Preparation</a>
-            <a class="footer-link" href="/start-my-tax-return?service=gig">Gig &amp; Self-Employed Tax Returns</a>
-            <a class="footer-link" href="/start-my-tax-return?service=investment">Investment &amp; Complex Tax Returns</a>
-            <a class="footer-link" href="/start-my-tax-return?service=business">Business &amp; Entity Tax Returns</a>
-            <a class="footer-link" href="/contractor-1099-service">Contractor Forms 1099 Preparation</a>
-            <a class="footer-link" href="/contact">Request IRS Transcript Help</a>
-            <a class="footer-link" href="/plans-pricing">Plans &amp; Pricing</a>
-            <a class="footer-link" href="/professional-tax-services">Professional Tax Services</a>
-            <a class="footer-link" href="/">Free Tax Estimator &amp; Written Review</a>
-            <a class="footer-link" href="/client-portal">Secure Client Portal</a>
-          </div>
-          <div class="footer-link-group">
-            <div class="footer-link-title">Support</div>
-            <a class="footer-link" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes">Schedule a Consultation</a>
-            <a class="footer-link" href="/contact">Contact Us</a>
-            <a class="footer-link" href="/privacy">Privacy Policy</a>
-            <a class="footer-link" href="/terms">Terms of Use</a>
-          </div>
+        <p>
+          Understand where your taxes are heading, what changed, and what to do next &mdash; without being buried in tax jargon.
+        </p>
+        <div class="footer-company-details">
+          <span>Litchfield Park, Arizona</span>
+          <span>Serving Phoenix&rsquo;s West Valley and remote clients nationwide</span>
+          <a href="mailto:greatestbusiness1@gmail.com">greatestbusiness1@gmail.com</a>
         </div>
       </div>
-      <div class="footer-bottom">
-        <div class="footer-legal">&copy; 2026 Greatest Business Solution LLC. All rights reserved.</div>
-        <div class="footer-disclaimer">Estimates are for planning purposes and are not filed tax returns.</div>
+
+      <div class="footer-link-group">
+        <div class="footer-link-title">Plans</div>
+        <a class="footer-link" href="/">Free Tax Estimator</a>
+        <a class="footer-link" href="/plans-pricing">Tax Watch Pro</a>
+        <a class="footer-link" href="/plans-pricing">Pinnacle Tax Action Plan</a>
+        <a class="footer-link" href="/plans-pricing">Compare Plans &amp; Pricing</a>
+      </div>
+
+      <div class="footer-link-group">
+        <div class="footer-link-title">Professional Tax Services</div>
+        <a class="footer-link" href="/start-my-tax-return">Tax Return Preparation</a>
+        <a class="footer-link" href="/professional-tax-services">Written Tax Review</a>
+        <a class="footer-link" href="/transcript-help.html?return=professional-tax-services">IRS Transcript Help</a>
+        <a class="footer-link" href="/contractor-1099-service?return=professional-tax-services">Contractor Forms 1099</a>
+        <a class="footer-link" href="/request-tax-extension?return=professional-tax-services">Tax Extension Requests</a>
+        <a class="footer-link" href="/professional-tax-services">Tax Planning &amp; Business Support</a>
+      </div>
+
+      <div class="footer-link-group">
+        <div class="footer-link-title">Client Resources</div>
+        <a class="footer-link" href="/client-portal">Secure Client Portal</a>
+        <a class="footer-link" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes">Schedule a Consultation</a>
+        <a class="footer-link" href="/contact">Questions or Comments</a>
+        <a class="footer-link" href="/privacy">Privacy Policy</a>
+        <a class="footer-link" href="/terms">Terms of Use</a>
       </div>
     </div>
+
+    <div class="footer-inner footer-bottom">
+      <div class="footer-legal">&copy; 2026 Greatest Business Solution LLC. All rights reserved.</div>
+      <div class="footer-disclaimer">Estimates are for planning purposes and are not filed tax returns.</div>
+    </div>
   </footer>
+
+  <script>
+    (function () {
+      var form = document.getElementById("taxUpdatesForm");
+      var emailInput = document.getElementById("taxUpdatesEmail");
+      var consentInput = document.getElementById("taxUpdatesConsent");
+      var submitButton = document.getElementById("taxUpdatesSubmit");
+      var statusBox = document.getElementById("taxUpdatesStatus");
+
+      if (!form || !emailInput || !consentInput || !submitButton || !statusBox) return;
+
+      function showStatus(message, kind) {
+        statusBox.textContent = message;
+        statusBox.className = "footer-newsletter-status" + (kind ? " " + kind : "");
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        var email = String(emailInput.value || "").trim();
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showStatus("Enter a valid email address.", "error");
+          emailInput.focus();
+          return;
+        }
+
+        if (!consentInput.checked) {
+          showStatus("Please confirm that you want the once-per-month email.", "error");
+          consentInput.focus();
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Adding You...";
+        showStatus("", "");
+
+        try {
+          var response = await fetch("/api/newsletter-signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email,
+              consent: true,
+              sourcePage: window.location.pathname || "/"
+            })
+          });
+
+          var data = await response.json().catch(function () { return {}; });
+
+          if (!response.ok || !data.ok) {
+            var message = Array.isArray(data.errors) && data.errors.length
+              ? data.errors[0]
+              : (data.error || "We could not add you right now. Please try again.");
+            throw new Error(message);
+          }
+
+          if (data.alreadySubscribed) {
+            showStatus("You are already on the monthly Tax Updates That Matter list.", "success");
+          } else if (data.confirmationSent === false) {
+            showStatus("You are on the list, but the confirmation email could not be sent. Your signup was still saved.", "warning");
+          } else {
+            showStatus("You are on the list. Check your email for confirmation.", "success");
+          }
+
+          form.reset();
+        } catch (error) {
+          showStatus(error.message || "We could not add you right now. Please try again.", "error");
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Send Me Tax Updates";
+        }
+      });
+    })();
+  </script>
 
   <script>
     (function () {

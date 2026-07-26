@@ -1712,6 +1712,116 @@ function mapRowToLead(row) {
   };
 }
 
+
+function getNewsletterSubscriptionRecord(lead = {}) {
+  const contactRequest =
+    lead.contactRequest &&
+    typeof lead.contactRequest === "object"
+      ? lead.contactRequest
+      : {};
+
+  const request =
+    lead.Request &&
+    typeof lead.Request === "object"
+      ? lead.Request
+      : {};
+
+  const candidate =
+    /tax updates that matter newsletter/i.test(
+      String(contactRequest.service || "")
+    )
+      ? contactRequest
+      : (
+          /tax updates that matter newsletter/i.test(
+            String(request.service || request.type || "")
+          )
+            ? request
+            : null
+        );
+
+  return candidate;
+}
+
+function isNewsletterSubscriptionLead(lead = {}) {
+  return Boolean(
+    getNewsletterSubscriptionRecord(lead)
+  );
+}
+
+function isNewsletterOnlyLead(lead = {}) {
+  if (!isNewsletterSubscriptionLead(lead)) {
+    return false;
+  }
+
+  return !(
+    lead.taxPreparationIntake ||
+    lead.taxPreparationWork ||
+    lead.contractor1099Request ||
+    lead.contractor1099Work ||
+    lead.extensionRequest ||
+    lead.calendarAppointment ||
+    lead.writtenReview ||
+    lead.taxSavingsPlanner ||
+    lead.transcriptRequest
+  );
+}
+
+async function findNewsletterSubscription({
+  email = "",
+  leadId = ""
+} = {}) {
+  const cleanEmail = normalizeEmail(email);
+  const cleanLeadId = String(leadId || "").trim();
+  const byId = new Map();
+
+  function consider(rawLead) {
+    const mapped = mapRowToLead(rawLead || {});
+
+    if (!isNewsletterSubscriptionLead(mapped)) {
+      return;
+    }
+
+    const mappedId = String(mapped.leadId || "").trim();
+    const mappedEmail = normalizeEmail(
+      mapped.contact?.email || ""
+    );
+
+    if (cleanLeadId && mappedId !== cleanLeadId) {
+      return;
+    }
+
+    if (cleanEmail && mappedEmail !== cleanEmail) {
+      return;
+    }
+
+    if (mappedId) {
+      byId.set(mappedId, mapped);
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    (data || []).forEach(consider);
+  } catch (error) {
+    console.warn(
+      "[newsletter] Supabase lookup unavailable:",
+      error.message || error
+    );
+  }
+
+  readLeads().forEach(consider);
+
+  return Array.from(byId.values())[0] || null;
+}
+
 function buildLeadEmailMessages(lead) {
   const priority = lead.priority || "low";
   const name = lead.contact?.name || "Client";
@@ -4166,13 +4276,14 @@ async function loadClientPortalLeadCandidates() {
 
     (data || []).forEach((row) => {
       const leadId = getLeadIdValue(row);
+      const mappedLead = mapRowToLead(row);
 
-      if (!leadId) return;
+      if (!leadId || isNewsletterOnlyLead(mappedLead)) return;
 
       byId.set(leadId, {
         leadId,
         raw: row,
-        lead: mapRowToLead(row),
+        lead: mappedLead,
         portal: getClientPortalRecord(row),
         source: "supabase"
       });
@@ -4186,11 +4297,11 @@ async function loadClientPortalLeadCandidates() {
 
   readLeads().forEach((row) => {
     const leadId = getLeadIdValue(row);
+    const mapped = mapRowToLead(row);
 
-    if (!leadId) return;
+    if (!leadId || isNewsletterOnlyLead(mapped)) return;
 
     const existing = byId.get(leadId);
-    const mapped = mapRowToLead(row);
     const localPortal = getClientPortalRecord(row);
 
     if (!existing) {
@@ -9042,6 +9153,373 @@ app.post("/api/calendar-appointment", async (req, res) => {
       errors: ["Could not save the appointment. Please try again."]
     });
   }
+});
+
+// =============================================================================
+// TAX UPDATES THAT MATTER - MONTHLY NEWSLETTER SIGNUP
+// =============================================================================
+
+app.post("/api/newsletter-signup", async (req, res) => {
+  const body = req.body || {};
+  const email = normalizeEmail(body.email || "");
+  const consent = body.consent === true;
+  const sourcePage = String(body.sourcePage || "/").trim().slice(0, 200);
+  const errors = [];
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Enter a valid email address.");
+  }
+
+  if (!consent) {
+    errors.push("Please confirm that you want the once-per-month email.");
+  }
+
+  if (errors.length) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const submittedAt = new Date().toISOString();
+  const existing = await findNewsletterSubscription({ email });
+
+  if (existing) {
+    const currentRequest = getNewsletterSubscriptionRecord(existing) || {};
+    const currentStatus = String(
+      currentRequest.newsletterStatus || "active"
+    ).trim().toLowerCase();
+
+    if (currentStatus === "active") {
+      return res.status(200).json({
+        ok: true,
+        alreadySubscribed: true
+      });
+    }
+
+    const unsubscribeToken =
+      String(currentRequest.unsubscribeToken || "").trim() ||
+      crypto.randomBytes(24).toString("hex");
+
+    const updateResult = await updateLeadAfterStripePayment(
+      existing.leadId,
+      (record = {}) => {
+        const updated = { ...record };
+        const contactRequest = {
+          ...(
+            updated.contactRequest ||
+            updated.Request ||
+            {}
+          ),
+          service: "Tax Updates That Matter Newsletter",
+          preferredContact: "Email",
+          message: "Monthly newsletter opt-in.",
+          newsletterStatus: "active",
+          frequency: "monthly",
+          consentAt: submittedAt,
+          resubscribedAt: submittedAt,
+          sourcePage,
+          unsubscribeToken
+        };
+
+        updated.status = "Newsletter Subscriber - Active";
+        updated.updatedAt = submittedAt;
+        updated.contact = {
+          ...(updated.contact || {}),
+          name:
+            String(updated.contact?.name || "").trim() ||
+            "Tax Updates Subscriber",
+          email,
+          phone: ""
+        };
+        updated.contactRequest = contactRequest;
+        updated.Request = {
+          ...contactRequest,
+          type: "Newsletter Subscription"
+        };
+
+        return updated;
+      }
+    );
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        errors: ["We could not reactivate the monthly email right now. Please try again."]
+      });
+    }
+  }
+
+  let savedLead = existing;
+  let unsubscribeToken = String(
+    getNewsletterSubscriptionRecord(existing || {})?.unsubscribeToken || ""
+  ).trim();
+
+  if (!savedLead) {
+    unsubscribeToken = crypto.randomBytes(24).toString("hex");
+
+    const leadId =
+      "NEWS-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).slice(2, 7).toUpperCase();
+
+    const contactRequest = {
+      service: "Tax Updates That Matter Newsletter",
+      preferredContact: "Email",
+      message: "Monthly newsletter opt-in.",
+      newsletterStatus: "active",
+      frequency: "monthly",
+      consentAt: submittedAt,
+      sourcePage,
+      unsubscribeToken
+    };
+
+    const lead = {
+      leadId,
+      timestamp: submittedAt,
+      updatedAt: submittedAt,
+      priority: "low",
+      status: "Newsletter Subscriber - Active",
+      source: "Tax Updates That Matter",
+      notes:
+        "Subscriber requested one Tax Updates That Matter email per month.",
+      contact: {
+        name: "Tax Updates Subscriber",
+        email,
+        phone: ""
+      },
+      taxData: {},
+      estimateSummary: {},
+      contactRequest,
+      Request: {
+        ...contactRequest,
+        type: "Newsletter Subscription"
+      }
+    };
+
+    try {
+      savedLead = await appendLead(lead);
+      recentLeads.set(savedLead.leadId, savedLead);
+    } catch (error) {
+      console.error(
+        "[newsletter] Save failed:",
+        error.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        errors: ["We could not add you right now. Please try again."]
+      });
+    }
+  }
+
+  const configuredNewsletterBaseUrl =
+    String(APP_BASE_URL || "").trim();
+  const newsletterBaseUrl =
+    !configuredNewsletterBaseUrl ||
+    /tax-estimator-app-v1\.onrender\.com/i.test(
+      configuredNewsletterBaseUrl
+    )
+      ? "https://www.taxestimatereview.com"
+      : configuredNewsletterBaseUrl.replace(/\/+$/, "");
+
+  const unsubscribeUrl =
+    newsletterBaseUrl +
+    "/newsletter/unsubscribe?leadId=" +
+    encodeURIComponent(savedLead.leadId || existing?.leadId || "") +
+    "&token=" +
+    encodeURIComponent(unsubscribeToken);
+
+  let confirmationSent = false;
+  let notificationSent = false;
+  let emailError = "";
+
+  try {
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      throw new Error("Email delivery is not configured.");
+    }
+
+    const businessRecipient =
+      process.env.CONTACT_EMAIL ||
+      "greatestbusiness1@gmail.com";
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: businessRecipient,
+      replyTo: email,
+      subject: "New Tax Updates That Matter Subscriber",
+      text:
+`A new subscriber joined the once-per-month Tax Updates That Matter list.
+
+Email:
+${email}
+
+Source page:
+${sourcePage}
+
+Frequency:
+Once per month
+
+Educational content and paid service offers will remain clearly separated.`
+    });
+
+    notificationSent = true;
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject: "You’re on the Tax Updates That Matter List",
+      text:
+`Thank you for joining Tax Updates That Matter from Greatest Business Solution LLC.
+
+You will receive one useful email per month with:
+- The one tax update to know
+- Important upcoming deadlines
+- One common tax myth explained
+- One quick action you can take
+- A clearly labeled service offer only when it connects to that month’s topic
+
+Changing dates and dollar amounts will be checked against current official sources before each edition.
+
+Unsubscribe at any time:
+${unsubscribeUrl}
+
+Please do not email Social Security numbers, tax documents, bank information, or passwords.
+
+Greatest Business Solution LLC`
+    });
+
+    confirmationSent = true;
+  } catch (error) {
+    emailError = error.message || "Email delivery failed.";
+    console.error(
+      "[newsletter] Email failed:",
+      emailError
+    );
+  }
+
+  return res.status(existing ? 200 : 201).json({
+    ok: true,
+    alreadySubscribed: false,
+    confirmationSent,
+    notificationSent,
+    emailError:
+      confirmationSent && notificationSent
+        ? null
+        : emailError
+  });
+});
+
+app.get("/newsletter/unsubscribe", async (req, res) => {
+  const leadId = String(req.query.leadId || "").trim();
+  const token = String(req.query.token || "").trim();
+
+  function renderPage(title, message, statusCode = 200) {
+    return res.status(statusCode).send(
+`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${title}</title>
+</head>
+<body style="margin:0;background:#eef4f7;color:#163550;font-family:Arial,sans-serif;">
+  <main style="max-width:680px;margin:70px auto;padding:34px;background:#fff;border:1px solid #d7e1e8;border-radius:18px;box-shadow:0 18px 42px rgba(18,54,80,.12);">
+    <p style="color:#9a6d00;font-weight:800;text-transform:uppercase;letter-spacing:.08em;">Tax Updates That Matter</p>
+    <h1 style="font-family:Georgia,serif;font-size:36px;line-height:1.1;margin:8px 0 16px;">${title}</h1>
+    <p style="font-size:17px;line-height:1.7;">${message}</p>
+    <a href="/" style="display:inline-block;margin-top:12px;padding:13px 18px;border-radius:9px;background:#123a5c;color:#fff;text-decoration:none;font-weight:800;">Return to Home Page</a>
+  </main>
+</body>
+</html>`
+    );
+  }
+
+  if (!leadId || !token) {
+    return renderPage(
+      "We Could Not Find That Unsubscribe Request",
+      "The unsubscribe link is incomplete. Please use the full link from your email.",
+      400
+    );
+  }
+
+  const existing = await findNewsletterSubscription({ leadId });
+  const currentRequest = getNewsletterSubscriptionRecord(existing || {}) || {};
+
+  const expectedToken = String(
+    currentRequest.unsubscribeToken || ""
+  );
+  const expectedTokenBuffer = Buffer.from(expectedToken);
+  const suppliedTokenBuffer = Buffer.from(token);
+  const tokenMatches =
+    expectedTokenBuffer.length > 0 &&
+    expectedTokenBuffer.length === suppliedTokenBuffer.length &&
+    crypto.timingSafeEqual(
+      expectedTokenBuffer,
+      suppliedTokenBuffer
+    );
+
+  if (!existing || !tokenMatches) {
+    return renderPage(
+      "We Could Not Verify That Link",
+      "The unsubscribe link is invalid or no longer active.",
+      400
+    );
+  }
+
+  if (
+    String(currentRequest.newsletterStatus || "")
+      .trim()
+      .toLowerCase() === "inactive"
+  ) {
+    return renderPage(
+      "You Are Already Unsubscribed",
+      "No more Tax Updates That Matter emails will be sent to this address."
+    );
+  }
+
+  const unsubscribedAt = new Date().toISOString();
+  const updateResult = await updateLeadAfterStripePayment(
+    existing.leadId,
+    (record = {}) => {
+      const updated = { ...record };
+      const request = {
+        ...(
+          updated.contactRequest ||
+          updated.Request ||
+          {}
+        ),
+        newsletterStatus: "inactive",
+        unsubscribedAt
+      };
+
+      updated.status = "Newsletter Subscriber - Unsubscribed";
+      updated.updatedAt = unsubscribedAt;
+      updated.contactRequest = request;
+      updated.Request = {
+        ...request,
+        type: "Newsletter Subscription"
+      };
+
+      return updated;
+    }
+  );
+
+  if (!updateResult.ok) {
+    return renderPage(
+      "We Could Not Complete That Request",
+      "Please try the unsubscribe link again later.",
+      500
+    );
+  }
+
+  return renderPage(
+    "You Have Been Unsubscribed",
+    "You will not receive future Tax Updates That Matter emails. You may join again from the home page whenever you choose."
+  );
 });
 
 // =============================================================================
@@ -16602,7 +17080,9 @@ app.get("/api/leads", async (req, res) => {
       throw error;
     }
 
-    const supabaseLeads = (data || []).map(mapRowToLead);
+    const supabaseLeads = (data || [])
+      .map(mapRowToLead)
+      .filter((lead) => !isNewsletterOnlyLead(lead));
 
     if (!includeLocal) {
       const leads =
@@ -16618,7 +17098,8 @@ app.get("/api/leads", async (req, res) => {
       });
     }
 
-    const localLeads = readLeads();
+    const localLeads = readLeads()
+      .filter((lead) => !isNewsletterOnlyLead(mapRowToLead(lead)));
     const mergedById = new Map();
 
     supabaseLeads.forEach((lead) => {
@@ -16733,7 +17214,9 @@ app.get("/api/leads", async (req, res) => {
 
     const leads =
       await hydrateLeadsWithSecureDocumentSummaries(
-        readLeads()
+        readLeads().filter(
+          (lead) => !isNewsletterOnlyLead(mapRowToLead(lead))
+        )
       );
 
     return res.status(200).json({
