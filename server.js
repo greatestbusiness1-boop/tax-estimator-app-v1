@@ -9002,7 +9002,8 @@ app.post("/api/lead", async (req, res) => {
     taxData,
     estimateSummary,
     status,
-    notes
+    notes,
+    taxWatchUpdate
   } = req.body || {};
 
   const errors = [];
@@ -9038,7 +9039,23 @@ app.post("/api/lead", async (req, res) => {
       phone: formattedPhone || null
     },
     taxData: taxData || null,
-    estimateSummary: estimateSummary || {}
+    estimateSummary: estimateSummary || {},
+    taxWatchUpdate:
+      taxWatchUpdate &&
+      typeof taxWatchUpdate === "object" &&
+      !Array.isArray(taxWatchUpdate)
+        ? {
+            sourceLeadId: String(taxWatchUpdate.sourceLeadId || "").trim(),
+            sourceCount: Math.max(
+              0,
+              Math.min(2, Number(taxWatchUpdate.sourceCount || 0))
+            ),
+            updateReason: String(
+              taxWatchUpdate.updateReason || "Tax Watch Pro estimate update"
+            ).slice(0, 200),
+            recordedAt: new Date().toISOString()
+          }
+        : null
   };
 
   if (lead.estimateSummary) {
@@ -13622,6 +13639,69 @@ app.post(
           refreshedAccessible,
           session.payload.accountLeadId
         )
+    });
+  }
+);
+
+
+
+app.get(
+  "/api/client-portal/tax-watch/update-context",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session = req.clientPortalSession;
+    const accessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    const candidates = accessible
+      .map((entry) => ({
+        entry,
+        snapshot: getTaxWatchSnapshot(entry)
+      }))
+      .filter((item) => item.snapshot)
+      .sort(
+        (left, right) =>
+          Date.parse(right.snapshot.recordedAt || 0) -
+          Date.parse(left.snapshot.recordedAt || 0)
+      );
+
+    const latest = candidates[0] || null;
+
+    if (!latest) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "No saved Free Tax Estimator result is connected to this portal email yet."
+      });
+    }
+
+    const lead = latest.entry.lead || {};
+    const taxData =
+      lead.taxData &&
+      typeof lead.taxData === "object" &&
+      !Array.isArray(lead.taxData)
+        ? lead.taxData
+        : {};
+
+    return res.status(200).json({
+      ok: true,
+      context: {
+        version: 1,
+        sourceLeadId: latest.snapshot.leadId,
+        clientName:
+          lead.contact?.name ||
+          getLeadNameValue(latest.entry.raw) ||
+          "Client",
+        email: session.email,
+        taxData,
+        startingSnapshot: latest.snapshot,
+        sourceLimit: 2,
+        createdAt: new Date().toISOString()
+      }
     });
   }
 );

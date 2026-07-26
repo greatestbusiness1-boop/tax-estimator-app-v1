@@ -4917,3 +4917,86 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
   font-size: 13px;
   font-weight: 900;
 }
+
+
+/* Tax Watch Pro estimate update workflow — V2.7.0 */
+.tax-watch-update-banner,
+.tax-watch-return-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px auto;
+  padding: 18px 20px;
+  border: 2px solid #0f766e;
+  border-radius: 16px;
+  background: #ecfdf5;
+  color: #064e3b;
+  max-width: 1120px;
+  box-sizing: border-box;
+}
+.tax-watch-update-banner[hidden] { display: none !important; }
+.tax-watch-update-banner div,
+.tax-watch-return-banner div {
+  display: grid;
+  gap: 4px;
+}
+.tax-watch-update-banner strong,
+.tax-watch-return-banner strong {
+  font-size: 18px;
+  font-weight: 950;
+}
+.tax-watch-update-banner span,
+.tax-watch-return-banner span {
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.tax-watch-update-banner a,
+.tax-watch-return-banner a {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: #0f2c56;
+  color: #ffffff;
+  font-weight: 900;
+  text-decoration: none;
+}
+.tax-watch-source-note {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-left: 5px solid #d59a20;
+  background: #fff8e7;
+  color: #5f3d00;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.tax-watch-source-card {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 15px;
+  background: #f8fafc;
+}
+.tax-watch-source-title {
+  margin-bottom: 12px;
+  color: #0f2c56;
+  font-size: 17px;
+  font-weight: 950;
+}
+.tax-watch-source-title span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  .tax-watch-update-banner,
+  .tax-watch-return-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

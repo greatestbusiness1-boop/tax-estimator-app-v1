@@ -9,6 +9,7 @@ let _lastEstimate = null;
 let _leadGatewayUnlocked = false;
 let _leadGatewayContact = null;
 let _workingChildCounter = 0;
+let _taxWatchUpdateContext = null;
 
 const QUALIFYING_RELATIVE_GROSS_INCOME_LIMITS = {
   2022: 4400,
@@ -1116,26 +1117,37 @@ function readForm() {
     return Number.isNaN(n) ? 0 : Math.max(0, n);
   };
 
-  const selfEmploymentStreams = Array.from(
-    document.querySelectorAll("#selfEmploymentStreams .stream-row")
-  )
-    .map((row) => ({
-      source: row.querySelector(".stream-source")?.value?.trim() || "",
-      income: parseFloat(row.querySelector(".stream-income")?.value || "0") || 0,
-      expenses: parseFloat(row.querySelector(".stream-expenses")?.value || "0") || 0,
-    }))
-    .filter((stream) => stream.source || stream.income || stream.expenses);
+  const selfEmploymentStreams = [
+    {
+      source:
+        String(getVal("businessSource1Name") || "").trim() ||
+        "Gig or business source 1",
+      income: numVal("selfEmploymentIncome"),
+      expenses: numVal("businessExpenses")
+    },
+    {
+      source:
+        String(getVal("businessSource2Name") || "").trim() ||
+        "Gig or business source 2",
+      income: numVal("businessSource2Income"),
+      expenses: numVal("businessSource2Expenses")
+    }
+  ].filter(
+    (stream) =>
+      stream.income > 0 ||
+      stream.expenses > 0 ||
+      !/^Gig or business source [12]$/.test(stream.source)
+  );
 
-  const fallbackSelfEmploymentIncome = numVal("selfEmploymentIncome");
-  const fallbackBusinessExpenses = numVal("businessExpenses");
+  const totalSelfEmploymentIncome = selfEmploymentStreams.reduce(
+    (sum, stream) => sum + Number(stream.income || 0),
+    0
+  );
 
-  const totalSelfEmploymentIncome = selfEmploymentStreams.length > 0
-    ? selfEmploymentStreams.reduce((sum, s) => sum + s.income, 0)
-    : fallbackSelfEmploymentIncome;
-
-  const totalBusinessExpenses = selfEmploymentStreams.length > 0
-    ? selfEmploymentStreams.reduce((sum, s) => sum + s.expenses, 0)
-    : fallbackBusinessExpenses;
+  const totalBusinessExpenses = selfEmploymentStreams.reduce(
+    (sum, stream) => sum + Number(stream.expenses || 0),
+    0
+  );
 
   return {
     taxYear: parseInt(getVal("taxYear"), 10) || 2024,
@@ -1440,6 +1452,16 @@ function showLeadGateway(input, result) {
 
   document.body.appendChild(overlay);
 
+  if (_taxWatchUpdateContext) {
+    const nameInput = document.getElementById("gatewayFullName");
+    const emailInput = document.getElementById("gatewayEmail");
+    if (nameInput) nameInput.value = _taxWatchUpdateContext.clientName || "";
+    if (emailInput) {
+      emailInput.value = _taxWatchUpdateContext.email || "";
+      emailInput.readOnly = true;
+    }
+  }
+
   const btn = document.getElementById("gatewayUnlockBtn");
   if (btn) {
     btn.addEventListener("click", () => submitLeadGateway(input, result));
@@ -1585,6 +1607,15 @@ async function submitLeadGateway(input, result) {
           : "low",
         taxData: input || null,
         estimateSummary: estimateSummary || null,
+        taxWatchUpdate: _taxWatchUpdateContext
+          ? {
+              sourceLeadId: _taxWatchUpdateContext.sourceLeadId || "",
+              sourceCount: Array.isArray(input?.selfEmploymentStreams)
+                ? Math.min(2, input.selfEmploymentStreams.length)
+                : 0,
+              updateReason: "Tax Watch Pro estimate update"
+            }
+          : null,
       }),
     });
 
@@ -1619,6 +1650,11 @@ async function submitLeadGateway(input, result) {
     if (leadEmailInput) leadEmailInput.value = email;
     renderResults(result, input);
     goToScreen("results");
+
+    if (_taxWatchUpdateContext) {
+      localStorage.removeItem(TAX_WATCH_UPDATE_CONTEXT_KEY);
+      ensureTaxWatchReturnBanner();
+    }
   } catch (err) {
     if (errorBox) {
       errorBox.textContent = err.message || "Could not unlock your estimate. Please try again.";
@@ -2525,6 +2561,113 @@ function renderResults(result, input) {
   if (ctaCtx) ctaCtx.textContent = "The $29 Written Red Flag Review includes the Tax Savings Planner bonus. A Tax Preparation Fit Call is available only for taxpayers considering paid return preparation.";
 }
 
+
+const TAX_WATCH_UPDATE_CONTEXT_KEY = "tspTaxWatchUpdateContextV1";
+
+function setEstimatorFieldValue(id, value) {
+  const element = document.getElementById(id);
+  if (!element || value === undefined || value === null) return;
+  element.value = String(value);
+  element.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function setEstimatorRadioValue(name, value) {
+  const normalized = value === true ? "yes" : value === false ? "no" : String(value || "");
+  const radio = document.querySelector(
+    `input[name="${name}"][value="${normalized}"]`
+  );
+  if (radio) {
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+function loadTaxWatchUpdateContext() {
+  const url = new URL(window.location.href);
+
+  if (url.searchParams.get("taxWatchUpdate") !== "1") {
+    return false;
+  }
+
+  let context = null;
+
+  try {
+    context = JSON.parse(
+      localStorage.getItem(TAX_WATCH_UPDATE_CONTEXT_KEY) || "null"
+    );
+  } catch {
+    context = null;
+  }
+
+  if (!context || !context.taxData || !context.email) {
+    return false;
+  }
+
+  _taxWatchUpdateContext = context;
+  const taxData = context.taxData || {};
+  const streams = Array.isArray(taxData.selfEmploymentStreams)
+    ? taxData.selfEmploymentStreams.slice(0, 2)
+    : [];
+
+  setEstimatorFieldValue("taxYear", taxData.taxYear);
+  setEstimatorFieldValue("filingStatus", taxData.filingStatus);
+  setEstimatorFieldValue("age", taxData.age);
+  setEstimatorRadioValue("isFullTimeStudent", Boolean(taxData.isFullTimeStudent));
+  setEstimatorRadioValue("canBeClaimedAsDependent", Boolean(taxData.canBeClaimedAsDependent));
+  setEstimatorFieldValue("stateCode", taxData.stateCode);
+  setEstimatorFieldValue("numberOfDependents", taxData.numberOfDependents);
+  setEstimatorFieldValue("w2Income", taxData.w2Income);
+  setEstimatorFieldValue("otherIncome", taxData.otherIncome);
+  setEstimatorFieldValue("scholarships", taxData.scholarships);
+  setEstimatorFieldValue("educationExpenses", taxData.educationExpenses);
+  setEstimatorFieldValue("federalWithheld", taxData.federalWithheld);
+  setEstimatorFieldValue("stateWithheld", taxData.stateWithheld);
+  setEstimatorFieldValue("businessMileage", taxData.businessMileage);
+  setEstimatorFieldValue("estimatedTaxPayments", taxData.estimatedTaxPayments);
+
+  const source1 = streams[0] || {
+    source: "",
+    income: taxData.selfEmploymentIncome || 0,
+    expenses: taxData.businessExpenses || 0
+  };
+  const source2 = streams[1] || {};
+
+  setEstimatorFieldValue("businessSource1Name", source1.source || "");
+  setEstimatorFieldValue("selfEmploymentIncome", source1.income || 0);
+  setEstimatorFieldValue("businessExpenses", source1.expenses || 0);
+  setEstimatorFieldValue("businessSource2Name", source2.source || "");
+  setEstimatorFieldValue("businessSource2Income", source2.income || 0);
+  setEstimatorFieldValue("businessSource2Expenses", source2.expenses || 0);
+
+  const banner = document.getElementById("taxWatchUpdateBanner");
+  if (banner) banner.hidden = false;
+
+  goToScreen("form");
+  window.scrollTo({ top: 0, behavior: "auto" });
+  return true;
+}
+
+function ensureTaxWatchReturnBanner() {
+  if (!_taxWatchUpdateContext) return;
+
+  const results = document.getElementById("screen-results");
+  if (!results || document.getElementById("taxWatchReturnBanner")) return;
+
+  const banner = document.createElement("div");
+  banner.id = "taxWatchReturnBanner";
+  banner.className = "tax-watch-return-banner";
+  banner.innerHTML = `
+    <div>
+      <strong>Your Tax Watch Pro update was saved.</strong>
+      <span>Return to the portal to compare this estimate with your starting estimate.</span>
+    </div>
+    <a href="/client-portal#tax-watch">Return to Tax Watch Pro</a>
+  `;
+
+  results.prepend(banner);
+}
+
+
 // =============================================================================
 // INIT
 // =============================================================================
@@ -2545,7 +2688,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeEstimatorReturnLinks();
 
   if (!restoreEstimatorReturnContext()) {
-    goToScreen("welcome");
+    if (!loadTaxWatchUpdateContext()) {
+      goToScreen("welcome");
+    }
   }
 });
 

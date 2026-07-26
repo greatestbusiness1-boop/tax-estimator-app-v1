@@ -704,6 +704,13 @@
     </section>
 
     <section class="screen" id="screen-form">
+      <div id="taxWatchUpdateBanner" class="tax-watch-update-banner" hidden>
+        <div>
+          <strong>Tax Watch Pro Estimate Update</strong>
+          <span>Your latest saved estimate is loaded below. Change only what is new, then calculate and save the updated result.</span>
+        </div>
+        <a href="/client-portal#tax-watch">Return to Tax Watch Pro</a>
+      </div>
       <div class="form-wrap">
 
         <div class="form-page-header">
@@ -976,18 +983,50 @@
             </div>
 
             <div class="form-section-body">
-              <div class="field-row cols-2">
+              <div class="tax-watch-source-note">
+                <strong>Tax Watch Pro:</strong> Track up to 2 jobs, gigs, or business income sources. Examples include Uber, Lyft, DoorDash, Amazon, Instagram income, food-truck activity, freelancing, and other small businesses.
+              </div>
+
+              <div class="tax-watch-source-card">
+                <div class="tax-watch-source-title">Gig or Business Source 1</div>
                 <div class="field-group">
-                  <label class="field-label">1099 / Business Income</label>
-                  <div class="dollar-input">
-                    <input type="number" id="selfEmploymentIncome" placeholder="0" />
+                  <label class="field-label" for="businessSource1Name">Source name</label>
+                  <input type="text" id="businessSource1Name" placeholder="Example: DoorDash or My Food Truck" maxlength="80" />
+                </div>
+                <div class="field-row cols-2">
+                  <div class="field-group">
+                    <label class="field-label" for="selfEmploymentIncome">Income received</label>
+                    <div class="dollar-input">
+                      <input type="number" id="selfEmploymentIncome" placeholder="0" min="0" />
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="businessExpenses">Business expenses</label>
+                    <div class="dollar-input">
+                      <input type="number" id="businessExpenses" placeholder="0" min="0" />
+                    </div>
                   </div>
                 </div>
+              </div>
 
+              <div class="tax-watch-source-card">
+                <div class="tax-watch-source-title">Gig or Business Source 2 <span>Optional</span></div>
                 <div class="field-group">
-                  <label class="field-label">Business Expenses</label>
-                  <div class="dollar-input">
-                    <input type="number" id="businessExpenses" placeholder="0" />
+                  <label class="field-label" for="businessSource2Name">Source name</label>
+                  <input type="text" id="businessSource2Name" placeholder="Example: Amazon Flex or Instagram income" maxlength="80" />
+                </div>
+                <div class="field-row cols-2">
+                  <div class="field-group">
+                    <label class="field-label" for="businessSource2Income">Income received</label>
+                    <div class="dollar-input">
+                      <input type="number" id="businessSource2Income" placeholder="0" min="0" />
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="businessSource2Expenses">Business expenses</label>
+                    <div class="dollar-input">
+                      <input type="number" id="businessSource2Expenses" placeholder="0" min="0" />
+                    </div>
                   </div>
                 </div>
               </div>

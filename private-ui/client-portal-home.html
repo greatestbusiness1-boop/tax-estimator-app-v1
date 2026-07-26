@@ -2230,7 +2230,7 @@
                 <p id="taxWatchNextAction">—</p>
               </div>
               <div class="tax-watch-actions">
-                <a class="tax-watch-action-button secondary" href="/" target="_blank" rel="noopener">Update My Free Tax Estimate</a>
+                <button class="tax-watch-action-button secondary" id="beginTaxWatchUpdateButton" type="button">Update My Tax Watch Estimate</button>
                 <button class="portal-back-button" id="changeTaxWatchObjectiveButton" type="button">Change My Objective</button>
               </div>
             </div>
@@ -2238,7 +2238,7 @@
 
           <div class="tax-watch-panel">
             <h3>Estimate Update History</h3>
-            <p>Use the same portal email each time you update the Free Tax Estimator. New saved estimates will appear here after you refresh the portal.</p>
+            <p>Update the estimate with the same portal email. Tax Watch Pro can track up to <strong>2 jobs, gigs, or business income sources</strong> in this plan. New saved estimates appear here after you return to the portal.</p>
             <div style="overflow-x:auto">
               <table class="tax-watch-history">
                 <thead><tr><th>Saved</th><th>Tax year</th><th>Income entered</th><th>Withholding</th><th>Projected result</th></tr></thead>
@@ -4700,6 +4700,56 @@
       }
     }
 
+
+    async function beginTaxWatchEstimateUpdate() {
+      const button = document.getElementById("beginTaxWatchUpdateButton");
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Preparing Your Update...";
+      }
+
+      try {
+        const response = await fetch(
+          "/api/client-portal/tax-watch/update-context",
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json"
+            },
+            credentials: "same-origin"
+          }
+        );
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok || !data.context) {
+          throw new Error(
+            data.error ||
+            "Your Tax Watch Pro update could not be prepared."
+          );
+        }
+
+        localStorage.setItem(
+          "tspTaxWatchUpdateContextV1",
+          JSON.stringify(data.context)
+        );
+
+        window.location.href = "/?taxWatchUpdate=1";
+      } catch (error) {
+        showTaxWatchMessage(
+          error.message ||
+          "Your Tax Watch Pro update could not be prepared.",
+          "error"
+        );
+
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Update My Tax Watch Estimate";
+        }
+      }
+    }
+
+
     function renderClientExperienceV2(portal = {}) {
       const clientName = portal.clientName || "Client";
       document.getElementById("sidebarClientName").textContent = clientName;
@@ -5438,6 +5488,7 @@
     );
 
 
+    document.getElementById("beginTaxWatchUpdateButton")?.addEventListener("click", beginTaxWatchEstimateUpdate);
     document.getElementById("taxWatchObjective")?.addEventListener("change", updateTaxWatchTargetVisibility);
     document.getElementById("startTaxWatchButton")?.addEventListener("click", saveTaxWatchProfile);
     document.getElementById("changeTaxWatchObjectiveButton")?.addEventListener("click", () => {
