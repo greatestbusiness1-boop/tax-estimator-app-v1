@@ -4263,6 +4263,10 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
   overflow: hidden;
 }
 
+.footer-newsletter-shell[hidden] {
+  display: none !important;
+}
+
 .footer-newsletter-shell {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
@@ -4867,4 +4871,49 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
     margin-left: 18px;
     margin-right: 18px;
   }
+}
+
+
+/* Client Experience V2.5.2 upgrade-value clarity */
+.personalized-upgrade-value-line {
+  margin: 14px 0 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eef8f5;
+  border: 1px solid #a9d8ca;
+  display: grid;
+  gap: 3px;
+}
+
+.personalized-upgrade-value-line strong,
+.personalized-upgrade-value-line span {
+  display: block;
+}
+
+.personalized-upgrade-value-line strong {
+  color: #0b5e50;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.personalized-upgrade-value-line span {
+  color: #183d38;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pinnacle-upgrade-card .personalized-upgrade-value-line {
+  background: rgba(255, 211, 111, 0.14);
+  border-color: rgba(255, 211, 111, 0.72);
+}
+
+.pinnacle-upgrade-card .personalized-upgrade-value-line strong,
+.pinnacle-upgrade-card .personalized-upgrade-value-line span {
+  color: #ffffff;
+}
+
+.personalized-upgrade-example-label {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 900;
 }
