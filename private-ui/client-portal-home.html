@@ -20,7 +20,6 @@
       --shadow:0 12px 35px rgba(16,43,70,.12)
     }
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
     body{
       margin:0;
       background:#eef2f4;
@@ -998,7 +997,6 @@
 
 
     /* Client Experience V2 foundation */
-    html{scroll-behavior:smooth}
     body{background:#f5f7fb}
     .portal-layout{
       width:min(1500px,calc(100% - 28px));
@@ -1328,6 +1326,119 @@
       .top-actions .cx-top-secondary{display:none}
     }
 
+
+
+    /* Client Experience V2.1 page-style portal */
+    .portal-view{display:none!important}
+    .portal-view.is-active{display:block!important}
+    .hero.portal-view.is-active{display:grid!important}
+    .metrics.portal-view.is-active{display:grid!important}
+    .portal-nav-item{justify-content:space-between!important}
+    .portal-nav-item.is-active,
+    .portal-submenu button.is-active{
+      background:#e5f2fa!important;
+      color:#0a527f!important;
+      box-shadow:inset 3px 0 0 #1d78a8;
+    }
+    .portal-nav-group{display:block}
+    .portal-submenu{display:none;padding:2px 0 7px 12px}
+    .portal-submenu.is-open{display:block}
+    .portal-submenu button{
+      width:100%;
+      display:block;
+      border:0;
+      border-radius:10px;
+      background:transparent;
+      color:#50657a;
+      padding:9px 11px;
+      text-align:left;
+      font:inherit;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .portal-active-nav{display:grid;gap:2px}
+    .portal-back-button{
+      flex:0 0 auto;
+      border:1px solid #b9cad9;
+      border-radius:10px;
+      background:#fff;
+      color:#155d8a;
+      padding:9px 12px;
+      font:inherit;
+      font-size:13px;
+      font-weight:850;
+      cursor:pointer;
+    }
+    .section-head-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+    .document-center-grid.upload-only{grid-template-columns:minmax(0,780px)}
+    .document-center-grid.upload-only .document-history-card{display:none}
+    .document-center-grid.history-only{grid-template-columns:1fr}
+    .document-center-grid.history-only .document-upload-card{display:none}
+    .portal-question-card{
+      max-width:820px;
+      border:1px solid #dce4ed;
+      border-radius:16px;
+      background:#fffdf8;
+      padding:22px;
+    }
+    .portal-question-message{display:none;margin-bottom:14px;padding:12px;border-radius:10px;font-weight:800;line-height:1.5}
+    .portal-question-message.show{display:block}
+    .portal-question-message.good{background:#e9f7ef;border:1px solid #9bd0b1;color:#155d38}
+    .portal-question-message.bad{background:#fff0f0;border:1px solid #e5aaaa;color:#982d2d}
+    .cx-plan-comparison{
+      margin-top:24px;
+      border:1px solid #dce4ed;
+      border-radius:18px;
+      overflow:auto;
+      background:#fff;
+    }
+    .cx-plan-comparison table{width:100%;border-collapse:collapse;min-width:760px}
+    .cx-plan-comparison th,
+    .cx-plan-comparison td{padding:13px 14px;border-bottom:1px solid #e7edf3;text-align:center;font-size:13px}
+    .cx-plan-comparison th:first-child,
+    .cx-plan-comparison td:first-child{text-align:left;font-weight:800;color:#24364a}
+    .cx-plan-comparison thead th{background:#123a5b;color:#fff;font-size:14px}
+    .cx-plan-comparison tbody tr:last-child td{border-bottom:0}
+    .cx-plan-check{color:#176344;font-weight:950}
+    .cx-plan-dash{color:#9aa7b5}
+    .professional-services-intro{max-width:900px;color:#536579;line-height:1.65;margin:8px 0 18px}
+    .cx-explore-card ul{padding-left:20px}
+    .cx-explore-card li{margin-bottom:6px}
+    .cx-pinnacle-badge{
+      display:inline-flex;
+      align-self:flex-start;
+      border-radius:999px;
+      background:#102b46;
+      color:#fff;
+      padding:6px 10px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      margin-bottom:9px;
+    }
+    .cx-service-actions button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:41px;
+      border:0;
+      border-radius:11px;
+      padding:9px 14px;
+      background:#155d8a;
+      color:#fff;
+      font:inherit;
+      font-size:13px;
+      font-weight:850;
+      cursor:pointer;
+    }
+    @media(max-width:1080px){
+      .portal-nav{display:block}
+      .portal-nav-label,.portal-nav .nav-divider{display:none}
+      .portal-active-nav{display:grid}
+    }
+
   </style>
 </head>
 <body>
@@ -1336,13 +1447,10 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Foundation 2.0.0</span>
+        <span>Client Experience V2 — Portal 2.1.0</span>
       </div>
     </div>
     <div class="top-actions">
-      <a class="top-link cx-top-secondary" href="#myDashboard">My Dashboard</a>
-      <a class="top-link cx-top-secondary" href="#documentCenter">My Documents</a>
-      <a class="top-link cx-top-secondary" href="#accountSecurity">Account &amp; Security</a>
       <button class="signout" id="signOutButton" type="button">Sign Out</button>
     </div>
   </header>
@@ -1353,20 +1461,38 @@
         <span>Your secure workspace</span>
         <strong id="sidebarClientName">My Client Portal</strong>
       </div>
-      <nav class="portal-nav">
-        <a href="#myDashboard">My Dashboard</a>
-        <div class="portal-nav-label">My Active Services</div>
-        <div class="portal-active-nav" id="activeServiceNav"></div>
-        <div class="nav-divider"></div>
-        <a href="#documentCenter">My Documents</a>
-        <a href="#serviceHistorySection">Completed Services</a>
-        <a href="#exploreAdditionalServices">Explore Additional Services</a>
-        <a href="#accountSecurity">Account &amp; Security</a>
+      <nav class="portal-nav" id="portalNavigation">
+        <button class="portal-nav-item" type="button" data-portal-open="dashboard">My Dashboard</button>
+
+        <div class="portal-nav-group">
+          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="true">
+            <span>My Active Services</span><span aria-hidden="true">▾</span>
+          </button>
+          <div class="portal-submenu is-open" id="activeServicesMenu">
+            <button type="button" data-portal-open="active-services">Active Service Summary</button>
+            <div class="portal-active-nav" id="activeServiceNav"></div>
+          </div>
+        </div>
+
+        <div class="portal-nav-group">
+          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="documentsMenu" aria-expanded="false">
+            <span>My Documents</span><span aria-hidden="true">▾</span>
+          </button>
+          <div class="portal-submenu" id="documentsMenu">
+            <button type="button" data-portal-open="document-upload">Upload My Documents</button>
+            <button type="button" data-portal-open="document-history">My Uploaded Documents</button>
+          </div>
+        </div>
+
+        <button class="portal-nav-item" type="button" data-portal-open="questions">Questions &amp; Comments</button>
+        <button class="portal-nav-item" type="button" data-portal-open="completed">Completed Services</button>
+        <button class="portal-nav-item" type="button" data-portal-open="explore">Explore Additional Services</button>
+        <button class="portal-nav-item" type="button" data-portal-open="account">Account &amp; Security</button>
       </nav>
     </aside>
 
   <main class="wrap">
-    <section class="hero">
+    <section class="hero portal-view" data-portal-view="dashboard">
       <div>
         <div class="eyebrow">Welcome back</div>
         <h1 id="clientName">Your secure tax portal</h1>
@@ -1378,12 +1504,12 @@
       </div>
     </section>
 
-    <section class="cx-dashboard" id="myDashboard">
+    <section class="cx-dashboard portal-view" id="myDashboard" data-portal-view="dashboard">
       <div class="cx-dashboard-hero">
         <div>
           <div class="eyebrow">My Dashboard</div>
           <h2 id="dashboardGreeting">Here is what needs your attention</h2>
-          <p id="dashboardSummary">Your requested services, documents, and next steps are organized here. Services you have not requested stay in a separate Explore area.</p>
+          <p id="dashboardSummary">See what is active, what needs your attention, and what is already finished. Services you have not chosen stay on a separate Explore page.</p>
         </div>
         <div class="cx-next-step" id="dashboardNextStep">
           <span>Next thing to do</span>
@@ -1411,12 +1537,13 @@
       </div>
     </section>
 
-    <section class="section cx-active-section" id="myActiveServices">
+    <section class="section cx-active-section portal-view" id="myActiveServices" data-portal-view="active-services">
       <div class="section-head">
         <div>
           <h2>My Active Services</h2>
-          <p>Only services you requested, purchased, or activated appear here. Open a service to see its full details and next step.</p>
+          <p>Only services you asked for or purchased appear here. Choose one service to open its own page and see the next step.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
       <div class="section-body">
         <div class="cx-active-grid" id="activeServicesGrid">
@@ -1425,7 +1552,7 @@
       </div>
     </section>
 
-    <section class="metrics" id="portalAccountMetrics">
+    <section class="metrics portal-view" id="portalAccountMetrics" data-portal-view="dashboard">
       <div class="metric">
         <span>Portal Status</span>
         <strong id="portalStatus">Active</strong>
@@ -1444,13 +1571,13 @@
       </div>
     </section>
 
-    <section class="section" id="taxRecordsSection">
+    <section class="section portal-view" id="taxRecordsSection" data-portal-view="tax-records">
       <div class="section-head">
         <div>
           <h2>My Tax Records &amp; Planning</h2>
           <p>Duplicate service entries are grouped under the correct tax year instead of appearing as separate home-page cards.</p>
         </div>
-        <button class="archive-toggle" id="olderRecordsButton" type="button" hidden>View Older Tax Years</button>
+        <button class="archive-toggle" id="olderRecordsButton" type="button" hidden>View Older Tax Years</button></div>
       </div>
       <div class="section-body">
         <div class="home-rule">
@@ -1467,12 +1594,13 @@
       </div>
     </section>
 
-    <section class="section" id="serviceHistorySection">
+    <section class="section portal-view" id="serviceHistorySection" data-portal-view="completed">
       <div class="section-head">
         <div>
           <h2>Completed Services &amp; Request History</h2>
-          <p>Repeated requests are summarized here so your home page stays clear and easy to use.</p>
+          <p>See services that are finished and older requests that remain part of your account history.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
       <div class="section-body">
         <div class="history-grid" id="serviceHistory">
@@ -1481,12 +1609,13 @@
       </div>
     </section>
 
-    <section class="section" id="taxPreparation">
+    <section class="section portal-view" id="taxPreparation" data-portal-view="tax-preparation contractor-1099 tax-extension">
       <div class="section-head">
         <div>
-          <h2>My Tax Preparation &amp; Extensions</h2>
+          <h2 id="taxPreparationPageTitle">My Tax Preparation &amp; Extensions</h2>
           <p>Track return preparation, review the information you submitted, follow your personalized document checklist, and see the next required action under the correct tax year.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
 
       <div class="section-body">
@@ -1518,12 +1647,13 @@
       </div>
     </section>
 
-    <section class="section" id="transcriptHelp">
+    <section class="section portal-view" id="transcriptHelp" data-portal-view="transcript-help">
       <div class="section-head">
         <div>
           <h2>IRS Transcript Help</h2>
           <p>Track payment, Form 8821 authorization, transcript processing, and secure delivery under the correct request.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
 
       <div class="section-body">
@@ -1538,12 +1668,13 @@
       </div>
     </section>
 
-    <section class="section" id="documentCenter">
+    <section class="section portal-view" id="documentCenter" data-portal-view="document-upload document-history">
       <div class="section-head">
         <div>
-          <h2>Secure Document Center</h2>
-          <p>Upload supporting records to your client profile and the correct tax year. Your upload history and office-review status remain available here.</p>
+          <h2 id="documentCenterPageTitle">Secure Document Center</h2>
+          <p>Use the My Documents menu to upload a file or review files you already sent.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
 
       <div class="section-body">
@@ -1639,26 +1770,66 @@
       </div>
     </section>
 
-    <section class="section" id="exploreAdditionalServices">
+    <section class="section portal-view" id="questionsComments" data-portal-view="questions">
+      <div class="section-head">
+        <div>
+          <h2>Questions &amp; Comments</h2>
+          <p>Send a short question to the office without leaving your secure portal.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+      </div>
+      <div class="section-body">
+        <form class="portal-question-card" id="portalQuestionForm">
+          <div class="portal-question-message" id="portalQuestionMessage" role="status" aria-live="polite"></div>
+          <div class="document-field">
+            <label for="portalQuestionTopic">What is your question about?</label>
+            <select id="portalQuestionTopic" required>
+              <option value="Question about an active service">An active service</option>
+              <option value="Question about a document">A document</option>
+              <option value="Question about a payment">A payment</option>
+              <option value="Question about another tax service">Another tax service</option>
+              <option value="General portal question">Something else</option>
+            </select>
+          </div>
+          <div class="document-field">
+            <label for="portalQuestionText">Your question or comment</label>
+            <textarea id="portalQuestionText" maxlength="1500" required placeholder="Tell us what you need help with. Do not enter Social Security numbers, bank information, passwords, or tax document numbers."></textarea>
+          </div>
+          <div class="document-privacy-note">
+            <strong>Keep sensitive information out of this message.</strong>
+            Use My Documents when the office asks you to send a tax record, W-9, IRS notice, or identification document.
+          </div>
+          <div class="form-actions">
+            <button class="button" id="portalQuestionButton" type="submit">Send My Question</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="section portal-view" id="exploreAdditionalServices" data-portal-view="explore">
       <div class="section-head">
         <div>
           <h2>Explore Additional Services</h2>
-          <p>These options are separate from your active work. Nothing here becomes part of your account unless you choose to start or purchase it.</p>
+          <p>Compare each level and see what you receive before you choose. Nothing is added to your account until you start or purchase it.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
       <div class="section-body">
         <div class="cx-explore-grid" id="membershipPlanGrid"></div>
-        <h3 class="archive-title" style="margin-top:26px;">Professional Tax Services</h3>
+        <div class="cx-plan-comparison" id="membershipComparison"></div>
+        <h3 class="archive-title" style="margin-top:30px;">Professional Tax Services</h3>
+        <p class="professional-services-intro">When you need more than an estimate, our office can help with preparation, IRS records, filing deadlines, contractor forms, and tax planning. Each service stays connected to this same secure portal.</p>
         <div class="cx-explore-grid" id="additionalServiceGrid"></div>
       </div>
     </section>
 
-    <section class="section" id="accountSecurity">
+    <section class="section portal-view" id="accountSecurity" data-portal-view="account">
       <div class="section-head">
         <div>
           <h2>Account &amp; Security</h2>
-          <p>View your username, change your password, or reset access without losing your saved information.</p>
+          <p>Manage your username, password, and secure access on this page.</p>
         </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
 
       <div class="section-body security-grid">
@@ -1875,12 +2046,7 @@
           "income";
       }
 
-      document.getElementById(
-        "documentCenter"
-      ).scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      openPortalView('document-upload');
 
       setTimeout(
         () => {
@@ -2230,7 +2396,7 @@
                 <button
                   type="button"
                   class="secondary"
-                  onclick="document.getElementById('taxPreparation').scrollIntoView({behavior:'smooth'})"
+                  onclick="openPortalView('tax-preparation')"
                 >
                   Review My Tax Preparation Status
                 </button>
@@ -2295,12 +2461,7 @@
           "Contractor Forms 1099 service — W-9, payer information, payee information, payment total, correction, or filing record.";
       }
 
-      document.getElementById(
-        "documentCenter"
-      ).scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      openPortalView('document-upload');
 
       setTimeout(() => {
         showDocumentMessage(
@@ -2581,7 +2742,7 @@
                 <div class="service-portal-actions">
                   <button
                     type="button"
-                    onclick="document.getElementById('documentCenter').scrollIntoView({behavior:'smooth'})"
+                    onclick="openPortalView('document-upload')"
                   >
                     Open Secure Document Center
                   </button>
@@ -2746,7 +2907,7 @@
                     <button
                       class="secondary"
                       type="button"
-                      onclick="document.getElementById('documentCenter').scrollIntoView({behavior:'smooth'})"
+                      onclick="openPortalView('document-upload')"
                     >
                       Open Secure Document Center
                     </button>
@@ -2816,14 +2977,7 @@
       note.value =
         "Signed Form 8821 backup upload for IRS Transcript Help.";
 
-      document
-        .getElementById(
-          "documentCenter"
-        )
-        .scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+      openPortalView('document-upload');
 
       window.setTimeout(
         () => {
@@ -2896,14 +3050,7 @@
       note.value =
         "Identity verification document for IRS Transcript Help.";
 
-      document
-        .getElementById(
-          "documentCenter"
-        )
-        .scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+      openPortalView('document-upload');
 
       window.setTimeout(
         () => {
@@ -3601,7 +3748,7 @@
           status: request.workStatus || "New Request",
           payment: request.paymentStatus || "Quote Needed",
           nextAction: request.nextAction || "Review your Tax Preparation service.",
-          target: "#taxPreparation",
+          target: "tax-preparation",
           updatedAt: request.updatedAt || "",
           completed: Boolean(request.completed)
         });
@@ -3615,7 +3762,7 @@
           status: request.workStatus || "New Request",
           payment: request.paymentStatus || "Quote Needed",
           nextAction: request.nextAction || "Review your Contractor Forms 1099 service.",
-          target: "#contractor1099",
+          target: "contractor-1099",
           updatedAt: request.updatedAt || "",
           completed: Boolean(request.completed)
         });
@@ -3629,7 +3776,7 @@
           status: request.workStatus || "New Request",
           payment: request.paymentStatus || "Payment Pending",
           nextAction: request.nextAction || "Review your Tax Extension request.",
-          target: "#taxPreparation",
+          target: "tax-extension",
           updatedAt: request.updatedAt || "",
           completed: Boolean(request.completed)
         });
@@ -3645,7 +3792,7 @@
             : (request.internalStatus || "Open"),
           payment: request.paymentStatus || "Need Payment",
           nextAction: request.nextAction || "Review your IRS Transcript Help request.",
-          target: "#transcriptHelp",
+          target: "transcript-help",
           updatedAt: request.updatedAt || "",
           completed: Boolean(request.completed)
         });
@@ -3675,7 +3822,7 @@
               status: record.status || "Available",
               payment: isWrittenReview ? "Service on file" : "Planner access",
               nextAction: record.nextAction || "Open your saved tax-planning record.",
-              target: "#taxRecordsSection",
+              target: "tax-records",
               updatedAt: record.recordDate || record.plannerSyncedAt || "",
               completed: clientExperienceStatusComplete(record.status)
             });
@@ -3723,13 +3870,13 @@
               ${escapeHtml(item.nextAction)}
             </div>
             <div class="cx-service-actions">
-              <a href="${escapeHtml(item.target)}">Open This Service</a>
+              <button type="button" data-portal-open="${escapeHtml(item.target)}">Open This Service</button>
             </div>
           </article>
         `).join("");
 
         nav.innerHTML = activeItems.map((item) => `
-          <a href="${escapeHtml(item.target)}">${escapeHtml(item.service)}</a>
+          <button type="button" data-portal-open="${escapeHtml(item.target)}">${escapeHtml(item.service)}</button>
         `).join("");
       }
 
@@ -3764,71 +3911,148 @@
       const activeNames = new Set(allItems.map((item) => item.service));
       const hasTaxRecord = (portal.records || []).length > 0 || (portal.olderRecords || []).length > 0;
       const membershipGrid = document.getElementById("membershipPlanGrid");
+      const comparison = document.getElementById("membershipComparison");
       const additionalGrid = document.getElementById("additionalServiceGrid");
 
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
-          <div class="cx-plan-kicker">${hasTaxRecord ? "Included Access" : "Free Starting Point"}</div>
+          <div class="cx-plan-kicker">Free Starting Point</div>
           <h3>Free Tax Snapshot</h3>
           <div class="cx-plan-price">$0</div>
-          <p>See a current federal and state estimate, understand the direction of your result, and save your progress.</p>
+          <p><strong>Best for:</strong> Someone who wants to know whether a refund or tax bill may be coming.</p>
           <ul>
+            <li>Current federal and state estimate</li>
             <li>Refund or balance-due direction</li>
-            <li>Basic explanation of major drivers</li>
-            <li>Saved client progress</li>
+            <li>Plain-language explanation of the main reasons</li>
+            <li>Saved progress in your secure portal</li>
+            <li>Limited updates for major life changes</li>
+            <li>Secure access to your tax snapshot</li>
+            <li>Clear next step when professional help may be useful</li>
           </ul>
-          <a href="/">${hasTaxRecord ? "Update My Tax Snapshot" : "Start My Free Tax Snapshot"}</a>
+          <a href="/" target="_blank" rel="noopener">${hasTaxRecord ? "Update My Tax Snapshot" : "Start My Free Tax Snapshot"}</a>
         </article>
 
         <article class="cx-explore-card featured">
           <div class="cx-plan-kicker">Year-Round Tracking</div>
           <h3>Tax Watch</h3>
-          <div class="cx-plan-price">Planned: $8.99/month or $89/year</div>
-          <p>Track how income, withholding, dependents, and new gig work change your estimate during the year.</p>
+          <div class="cx-plan-price">$8.99 monthly or $89 annually</div>
+          <p><strong>Best for:</strong> Someone whose income, job, gig work, withholding, or family may change during the year.</p>
           <ul>
-            <li>What changed and why</li>
-            <li>Estimate-change history</li>
-            <li>Quarterly reminders and alerts</li>
+            <li>Everything in Free Tax Snapshot</li>
+            <li>Update income and withholding throughout the year</li>
+            <li>Track a new job, side gig, or dependent</li>
+            <li>See what changed and why</li>
+            <li>View estimate-change history</li>
+            <li>Choose a tax goal, such as avoiding a tax bill</li>
+            <li>Quarterly reminders to review your numbers</li>
+            <li>Alerts when your estimate changes by a meaningful amount</li>
+            <li>One clear next step after each update</li>
           </ul>
-          <button type="button" disabled>Membership Coming Next</button>
+          <button type="button" disabled>Tax Watch Enrollment Coming Next</button>
         </article>
 
-        <article class="cx-explore-card">
-          <div class="cx-plan-kicker">Adjustment Guidance</div>
+        <article class="cx-explore-card featured">
+          <div class="cx-pinnacle-badge">Pinnacle Level</div>
+          <div class="cx-plan-kicker">Tax Adjustment Guidance</div>
           <h3>Tax Action Plan</h3>
-          <div class="cx-plan-price">Planned: $19.99/month or $199/year</div>
-          <p>Turn actual paycheck and gig-income numbers into clear withholding, savings, and quarterly-payment guidance.</p>
+          <div class="cx-plan-price">$19.99 monthly or $199 annually</div>
+          <p><strong>Best for:</strong> Someone who wants to know what to change per paycheck, save each month, or pay quarterly.</p>
           <ul>
-            <li>Per-paycheck adjustment estimate</li>
-            <li>Monthly tax set-aside estimate</li>
-            <li>Before-and-after scenarios</li>
+            <li>Everything in Tax Watch</li>
+            <li>Use actual weekly, biweekly, twice-monthly, monthly, or annual pay</li>
+            <li>Track more than one job or income source</li>
+            <li>Add gig and self-employment income</li>
+            <li>Enter year-to-date pay and withholding</li>
+            <li>See expected annual income and withholding</li>
+            <li>Estimate an adjustment for each paycheck</li>
+            <li>Estimate how much to set aside each month</li>
+            <li>Estimate quarterly tax payments</li>
+            <li>Choose a refund or balance-due goal</li>
+            <li>Compare before-and-after choices</li>
+            <li>Run what-if examples for a new job, gig, or child</li>
+            <li>Download a Tax Adjustment Plan</li>
+            <li>Complete a year-end tax readiness check</li>
           </ul>
-          <button type="button" disabled>Planner Coming Next</button>
+          <button type="button" disabled>Tax Action Plan Enrollment Coming Next</button>
         </article>
+      `;
+
+      comparison.innerHTML = `
+        <table aria-label="Tax membership comparison">
+          <thead>
+            <tr><th>What you receive</th><th>Free Tax Snapshot</th><th>Tax Watch</th><th>Tax Action Plan</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Federal and state estimate</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Saved progress</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Year-round updates</td><td>Limited</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>What changed and why</td><td>Basic</td><td class="cx-plan-check">Detailed</td><td class="cx-plan-check">Detailed</td></tr>
+            <tr><td>Estimate-change history</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Tax goals and alerts</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Actual paycheck calculations</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Per-paycheck adjustment estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Monthly tax set-aside estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Quarterly payment estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>What-if examples</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Downloadable action plan</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+          </tbody>
+        </table>
       `;
 
       const professionalServices = [
         {
           name: "Tax Preparation",
-          description: "Professional individual, self-employed, investment, and business tax-return preparation.",
+          description: "Get more than a completed form. We organize the process, keep your documents in one secure place, explain what is needed, and show the status of your return.",
+          benefits: [
+            "Individual and family tax returns",
+            "Gig worker and self-employed returns",
+            "Investment and more complex individual returns",
+            "Business and entity returns",
+            "Secure document uploads and saved progress",
+            "Clear next steps from intake through completion"
+          ],
           href: "/start-my-tax-return",
           active: activeNames.has("Tax Preparation")
         },
         {
           name: "IRS Transcript Help",
-          description: "Secure help obtaining and reviewing IRS transcript records.",
+          description: "You do not have to guess which IRS record to request or how to track it. We help identify the transcript type, manage the authorization step, track the request, and deliver available records through the secure portal.",
+          benefits: [
+            "Wage and Income, Account, Return, and other transcript support",
+            "Form 8821 authorization guidance",
+            "Status tracking in your portal",
+            "Missing-information follow-up",
+            "Secure delivery when records are available",
+            "Timing depends on IRS availability; no false speed promises"
+          ],
           href: "/transcript-help.html",
           active: activeNames.has("IRS Transcript Help")
         },
         {
           name: "Contractor Forms 1099",
-          description: "Preparation, correction, recipient delivery, and filing support for contractor information returns.",
+          description: "For businesses that paid contractors or other nonemployees and need help preparing, correcting, delivering, or filing Forms 1099.",
+          benefits: [
+            "Form 1099-NEC and Form 1099-MISC support",
+            "Corrected and late-filing review",
+            "W-9 and contractor-information checklist",
+            "Federal and possible state filing review",
+            "Recipient-copy delivery tracking",
+            "Secure documents, quote, payment, and completion record"
+          ],
           href: "/contractor-1099-service",
           active: activeNames.has("Contractor Forms 1099")
         },
         {
           name: "Tax Extension",
-          description: "Professional review and filing of an eligible individual or business tax extension.",
+          description: "Get help reviewing and filing an eligible extension when more time is needed to complete the return. An extension gives more time to file, not more time to pay tax that may be due.",
+          benefits: [
+            "Individual or business extension review",
+            "Correct tax year and return-type review",
+            "Deadline and payment-due explanation",
+            "Secure information collection",
+            "Filing status and confirmation tracking",
+            "Return-preparation follow-up when you are ready"
+          ],
           href: "/request-tax-extension",
           active: activeNames.has("Tax Extension")
         }
@@ -3837,10 +4061,11 @@
       additionalGrid.innerHTML = professionalServices.length
         ? professionalServices.map((service) => `
             <article class="cx-explore-card">
-              <div class="cx-plan-kicker">Professional Service</div>
+              <div class="cx-plan-kicker">Professional Tax Service</div>
               <h3>${escapeHtml(service.name)}</h3>
               <p>${escapeHtml(service.description)}</p>
-              <a href="${escapeHtml(service.href)}">Learn More</a>
+              <ul>${service.benefits.map((benefit) => `<li>${escapeHtml(benefit)}</li>`).join("")}</ul>
+              <a href="${escapeHtml(service.href)}" target="_blank" rel="noopener">Learn More — Opens a New Page</a>
             </article>
           `).join("")
         : '<div class="cx-empty-active">All currently available professional services are already connected to your profile.</div>';
@@ -3904,6 +4129,116 @@
     }
 
 
+
+    const portalViewHashes = {
+      dashboard: "dashboard",
+      "active-services": "active-services",
+      "tax-preparation": "tax-preparation",
+      "contractor-1099": "contractor-1099",
+      "tax-extension": "tax-extension",
+      "transcript-help": "transcript-help",
+      "tax-records": "tax-records",
+      "document-upload": "documents-upload",
+      "document-history": "uploaded-documents",
+      questions: "questions-comments",
+      completed: "completed-services",
+      explore: "explore-services",
+      account: "account-security"
+    };
+
+    const portalHashViews = Object.fromEntries(
+      Object.entries(portalViewHashes).map(([view, hash]) => [hash, view])
+    );
+
+    let currentPortalIdentity = { name: "Client", email: "" };
+
+    function portalViewFromHash() {
+      const hash = String(window.location.hash || "").replace(/^#/, "");
+      return portalHashViews[hash] || "dashboard";
+    }
+
+    function configurePortalServiceView(view) {
+      const title = document.getElementById("taxPreparationPageTitle");
+      const taxPreparationGroup = document.getElementById("taxPreparationServiceGroup");
+      const contractorGroup = document.getElementById("contractor1099ServiceGroup");
+      const extensionGroup = document.getElementById("extensionServiceGroup");
+
+      if (!["tax-preparation", "contractor-1099", "tax-extension"].includes(view)) return;
+
+      taxPreparationGroup.classList.toggle("cx-hidden", view !== "tax-preparation");
+      contractorGroup.classList.toggle("cx-hidden", view !== "contractor-1099");
+      extensionGroup.classList.toggle("cx-hidden", view !== "tax-extension");
+
+      if (view === "tax-preparation") title.textContent = "My Tax Preparation";
+      if (view === "contractor-1099") title.textContent = "My Contractor Forms 1099 Service";
+      if (view === "tax-extension") title.textContent = "My Tax Extension";
+    }
+
+    function configureDocumentView(view) {
+      const grid = document.querySelector("#documentCenter .document-center-grid");
+      const title = document.getElementById("documentCenterPageTitle");
+      if (!grid || !["document-upload", "document-history"].includes(view)) return;
+
+      grid.classList.toggle("upload-only", view === "document-upload");
+      grid.classList.toggle("history-only", view === "document-history");
+      title.textContent = view === "document-upload" ? "Upload My Documents" : "My Uploaded Documents";
+    }
+
+    function openPortalView(view, options = {}) {
+      const { updateHash = true, scroll = true } = options;
+      const requestedView = portalViewHashes[view] ? view : "dashboard";
+
+      document.querySelectorAll("[data-portal-view]").forEach((element) => {
+        const views = String(element.dataset.portalView || "").split(/\s+/).filter(Boolean);
+        element.classList.toggle("is-active", views.includes(requestedView));
+      });
+
+      document.querySelectorAll("[data-portal-open]").forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
+      });
+
+      configurePortalServiceView(requestedView);
+      configureDocumentView(requestedView);
+
+      if (updateHash) {
+        const nextHash = `#${portalViewHashes[requestedView]}`;
+        if (window.location.hash !== nextHash) history.pushState(null, "", nextHash);
+      }
+
+      if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function initializePortalNavigation() {
+      document.addEventListener("click", (event) => {
+        const openButton = event.target.closest("[data-portal-open]");
+        if (openButton) {
+          event.preventDefault();
+          openPortalView(openButton.dataset.portalOpen);
+          return;
+        }
+
+        const toggle = event.target.closest("[data-submenu-toggle]");
+        if (toggle) {
+          const submenu = document.getElementById(toggle.dataset.submenuToggle);
+          const opening = !submenu.classList.contains("is-open");
+          submenu.classList.toggle("is-open", opening);
+          toggle.setAttribute("aria-expanded", String(opening));
+        }
+      });
+
+      window.addEventListener("hashchange", () => {
+        openPortalView(portalViewFromHash(), { updateHash: false });
+      });
+
+      openPortalView(portalViewFromHash(), { updateHash: false, scroll: false });
+    }
+
+    function showPortalQuestionMessage(text, type = "") {
+      const message = document.getElementById("portalQuestionMessage");
+      message.textContent = text;
+      message.className = `portal-question-message show ${type}`.trim();
+    }
+
     async function loadPortal() {
       const response = await fetch(
         "/api/client-portal/session",
@@ -3932,6 +4267,10 @@
       }
 
       const portal = data.portal || {};
+      currentPortalIdentity = {
+        name: portal.clientName || "Client",
+        email: portal.email || portal.username || ""
+      };
       const visibleRecords =
         portal.records || [];
       const olderRecords =
@@ -4024,6 +4363,8 @@
       renderDocumentCenter(
         portal.documentCenter || {}
       );
+
+      openPortalView(portalViewFromHash(), { updateHash: false, scroll: false });
     }
 
     document.getElementById(
@@ -4366,6 +4707,49 @@
       }
     );
 
+    document.getElementById("portalQuestionForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const topic = document.getElementById("portalQuestionTopic").value;
+      const question = document.getElementById("portalQuestionText").value.trim();
+      const button = document.getElementById("portalQuestionButton");
+
+      if (!question) {
+        showPortalQuestionMessage("Please enter your question or comment.", "bad");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Sending...";
+
+      try {
+        const response = await fetch("/api/contact-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            name: currentPortalIdentity.name,
+            email: currentPortalIdentity.email,
+            phone: "",
+            preferredContact: "Email",
+            service: topic,
+            message: `[Secure Client Portal] ${question}`
+          })
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) throw new Error(data.error || "Your message could not be sent.");
+
+        document.getElementById("portalQuestionText").value = "";
+        showPortalQuestionMessage(data.message || "Your question was sent to the office.", "good");
+      } catch (error) {
+        showPortalQuestionMessage(error.message || "Your message could not be sent.", "bad");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Send My Question";
+      }
+    });
+
     document.getElementById(
       "signOutButton"
     ).addEventListener(
@@ -4389,6 +4773,8 @@
         }
       }
     );
+
+    initializePortalNavigation();
 
     loadPortal().catch((error) => {
       document.getElementById(
