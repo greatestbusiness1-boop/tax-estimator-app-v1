@@ -4634,3 +4634,237 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
 .footer-newsletter-status.warning {
   color: #ffe5a0;
 }
+
+
+/* Client Experience V2.5 personalized upgrade offer after the Free Tax Estimator */
+.personalized-upgrade-section {
+  border: 2px solid #d8e3ef;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(221, 173, 65, 0.16), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+  box-shadow: 0 18px 42px rgba(15, 48, 77, 0.12);
+  overflow: hidden;
+}
+
+.personalized-upgrade-section[hidden] {
+  display: none !important;
+}
+
+.personalized-upgrade-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: 24px;
+  align-items: center;
+  padding: 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #d8e3ef;
+}
+
+.personalized-upgrade-eyebrow,
+.personalized-upgrade-card-label {
+  color: #8b5a00;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.personalized-upgrade-header h3 {
+  margin: 7px 0 9px;
+  color: #102f4d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(25px, 3vw, 37px);
+  line-height: 1.08;
+}
+
+.personalized-upgrade-header p {
+  margin: 0;
+  color: #344d63;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.personalized-upgrade-amount-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 150px;
+  justify-content: center;
+  padding: 20px 22px;
+  border: 1px solid #cbd9e7;
+  border-radius: 18px;
+  background: #f7fafc;
+  text-align: center;
+}
+
+.personalized-upgrade-amount-card span {
+  color: #405b72;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.personalized-upgrade-amount-card strong {
+  color: #0f5f4b;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.personalized-upgrade-amount-card strong.owed {
+  color: #a62d2d;
+}
+
+.personalized-upgrade-amount-card strong.even {
+  color: #163c5f;
+}
+
+.personalized-upgrade-amount-card small {
+  color: #60758a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.personalized-upgrade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 24px 28px 18px;
+}
+
+.personalized-upgrade-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 24px;
+  border: 1px solid #cfdae6;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 48, 77, 0.08);
+}
+
+.personalized-upgrade-card h4 {
+  margin: 7px 0 9px;
+  color: #102f4d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  line-height: 1.12;
+}
+
+.personalized-upgrade-card p {
+  margin: 0 0 15px;
+  color: #385269;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.personalized-upgrade-card ul {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+}
+
+.personalized-upgrade-card li {
+  position: relative;
+  padding-left: 25px;
+  color: #203c54;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.personalized-upgrade-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #b47b08;
+  font-weight: 950;
+}
+
+.pinnacle-upgrade-card {
+  border-color: #b98b32;
+  background: linear-gradient(145deg, #123b5d 0%, #0d2c47 100%);
+}
+
+.pinnacle-upgrade-card .personalized-upgrade-card-label,
+.pinnacle-upgrade-card h4,
+.pinnacle-upgrade-card p,
+.pinnacle-upgrade-card li {
+  color: #ffffff;
+}
+
+.pinnacle-upgrade-card li::before {
+  color: #ffd36c;
+}
+
+.personalized-upgrade-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  margin-top: auto;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
+.tax-watch-button {
+  border: 2px solid #0f6655;
+  background: #0f6655;
+  color: #ffffff;
+}
+
+.pinnacle-button {
+  border: 2px solid #ffd36c;
+  background: #ffd36c;
+  color: #102f4d;
+}
+
+.personalized-upgrade-button:hover,
+.personalized-upgrade-button:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+}
+
+.personalized-upgrade-note {
+  margin: 0 28px 26px;
+  padding: 14px 16px;
+  border-left: 4px solid #c6942b;
+  background: #fff8e8;
+  color: #4f4a3c;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.personalized-upgrade-note a {
+  color: #0e527f;
+  font-weight: 900;
+}
+
+@media (max-width: 800px) {
+  .personalized-upgrade-header,
+  .personalized-upgrade-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .personalized-upgrade-header,
+  .personalized-upgrade-grid {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .personalized-upgrade-note {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+}

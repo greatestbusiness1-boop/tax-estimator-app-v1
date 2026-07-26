@@ -2137,6 +2137,74 @@ function renderClientEstimateSummaryLink() {
   host.parentNode.insertBefore(box, host.nextSibling);
 }
 
+
+function renderPersonalizedUpgradeOffer(combined, meta) {
+  const section = document.getElementById("personalizedUpgradeSection");
+  const title = document.getElementById("personalizedUpgradeTitle");
+  const body = document.getElementById("personalizedUpgradeBody");
+  const amountLabel = document.getElementById("personalizedUpgradeAmountLabel");
+  const amount = document.getElementById("personalizedUpgradeAmount");
+  const watchReason = document.getElementById("taxWatchUpgradeReason");
+  const pinnacleReason = document.getElementById("pinnacleUpgradeReason");
+
+  if (!section || !title || !body || !amountLabel || !amount) return;
+
+  const taxYear = meta?.taxYear ? ` for tax year ${meta.taxYear}` : "";
+  let amountValue = "$0";
+
+  if (combined?.isRefund) {
+    amountValue = fmt(combined.refundAmount || 0);
+    amountLabel.textContent = "Current estimated refund";
+    title.textContent = "Keep the refund—or see how future changes may affect it.";
+    body.textContent =
+      `Your current combined estimate${taxYear} shows a possible refund of ${amountValue}. ` +
+      "A new job, different withholding, gig income, or a family change could move that number.";
+    if (watchReason) {
+      watchReason.textContent =
+        "Track how income, withholding, dependents, and life changes affect your projected refund.";
+    }
+    if (pinnacleReason) {
+      pinnacleReason.textContent =
+        "Compare keeping a larger refund with possible paycheck or savings adjustments during the year.";
+    }
+  } else if (combined?.isOwed) {
+    amountValue = fmt(combined.owedAmount || 0);
+    amountLabel.textContent = "Current estimated balance due";
+    title.textContent = "You may owe. See what changed and prepare before tax season.";
+    body.textContent =
+      `Your current combined estimate${taxYear} shows a possible balance due of ${amountValue}. ` +
+      "Year-round tracking can help you see when the number changes instead of finding out at filing time.";
+    if (watchReason) {
+      watchReason.textContent =
+        "Track new income, withholding, dependents, and business changes that may increase or reduce what you owe.";
+    }
+    if (pinnacleReason) {
+      pinnacleReason.textContent =
+        "Build toward paycheck, monthly savings, or quarterly-payment guidance based on your selected goal.";
+    }
+  } else {
+    amountLabel.textContent = "Current estimated result";
+    title.textContent = "You are near break-even. Keep it that way as life changes.";
+    body.textContent =
+      `Your current combined estimate${taxYear} is close to $0. ` +
+      "A job change, extra income, different withholding, or a new dependent could change the result.";
+    if (watchReason) {
+      watchReason.textContent =
+        "Watch your estimate during the year so a change does not become a surprise at tax time.";
+    }
+    if (pinnacleReason) {
+      pinnacleReason.textContent =
+        "Set a refund or balance-due goal and compare future paycheck or savings options.";
+    }
+  }
+
+  amount.textContent = amountValue;
+  amount.className =
+    "personalized-upgrade-amount " +
+    (combined?.isRefund ? "refund" : combined?.isOwed ? "owed" : "even");
+  section.hidden = false;
+}
+
 function renderResults(result, input) {
   const { meta, federal, state, combined, clientExperience } = result;
   const fed = federal.summary;
@@ -2168,6 +2236,8 @@ function renderResults(result, input) {
         ? "Estimated combined balance due - you may owe this amount"
         : "You appear to be near break-even this year";
   }
+
+  renderPersonalizedUpgradeOffer(combined, meta);
 
   const completeness = getEstimateCompleteness(input);
   const confScore = document.getElementById("confidenceScore");
