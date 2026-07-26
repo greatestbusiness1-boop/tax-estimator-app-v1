@@ -14982,6 +14982,14 @@ app.get("/contractor-1099-service", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "contractor-1099-service.html"));
 });
 
+app.get("/plans-pricing", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "index.html"));
+});
+
+app.get("/professional-tax-services", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "index.html"));
+});
+
 app.get("/extension-thank-you", (req, res) => {
   res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "extension-thank-you.html"));

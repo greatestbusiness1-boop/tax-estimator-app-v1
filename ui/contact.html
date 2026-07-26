@@ -133,6 +133,11 @@
             <option>Business or Entity Return</option>
             <option>Written Red Flag Review</option>
             <option>IRS Transcript Help</option>
+            <option>Contractor Forms 1099</option>
+            <option>Tax Extension</option>
+            <option>Professional Tax Planning</option>
+            <option>Tax Watch Pro</option>
+            <option>Pinnacle Tax Action Plan</option>
             <option>General Question</option>
           </select>
         </div>
@@ -150,7 +155,7 @@
       <div class="actions">
         <button id="submitButton" type="submit">Send Contact Request</button>
         <a class="button secondary" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes" target="_blank" rel="noopener">Schedule a 15-Minute Consultation</a>
-        <a class="button secondary" href="/">Return to Free Tax Estimator</a>
+        <a class="button secondary" id="returnServicePageLink" href="/">Return to Free Tax Estimator</a>
       </div>
 
       <div id="formMessage" class="message" role="status" aria-live="polite"></div>
@@ -162,6 +167,16 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const serviceFromUrl = params.get("service");
+    const returnFromUrl = params.get("return") || "";
+    const returnLink = document.getElementById("returnServicePageLink");
+
+    if (returnLink && returnFromUrl === "plans-pricing") {
+      returnLink.href = "/plans-pricing";
+      returnLink.textContent = "Return to Plans & Pricing";
+    } else if (returnLink && returnFromUrl === "professional-tax-services") {
+      returnLink.href = "/professional-tax-services";
+      returnLink.textContent = "Return to Professional Tax Services";
+    }
     const serviceSelect = document.getElementById("service");
     const phoneInput = document.getElementById("phone");
 

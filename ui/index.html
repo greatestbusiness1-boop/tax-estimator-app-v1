@@ -10,6 +10,18 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap"
     rel="stylesheet" />
+  <script>
+    (function () {
+      var path = String(window.location.pathname || "").replace(/\/+$/, "") || "/";
+      if (path === "/plans-pricing") {
+        document.documentElement.setAttribute("data-public-page", "plans");
+        document.title = "Plans & Pricing - Greatest Business Solution LLC";
+      } else if (path === "/professional-tax-services") {
+        document.documentElement.setAttribute("data-public-page", "professional-services");
+        document.title = "Professional Tax Services - Greatest Business Solution LLC";
+      }
+    })();
+  </script>
 
 <style id="footer-link-fix">
   .footer-link {
@@ -76,7 +88,7 @@
       <div class="header-right">
         <div class="header-contact">
           <span class="header-contact-label">Questions?</span>
-          <span class="header-contact-link">Contact a Tax Professional</span>
+          <a class="header-contact-link" href="/professional-tax-services">Contact a Tax Professional</a>
         </div>
         <div class="header-badge">Tax Estimator Portal</div>
       </div>
@@ -101,6 +113,258 @@
       </div>
     </div>
   </nav>
+
+
+
+  <section class="public-dedicated-page plans-dedicated-page" aria-labelledby="plansPageTitle">
+    <div class="dedicated-page-shell">
+      <div class="dedicated-page-topline">
+        <a class="dedicated-return" href="/">&larr; Return to Free Tax Estimator</a>
+        <a class="dedicated-portal" href="/client-portal">Secure Client Portal</a>
+      </div>
+
+      <div class="dedicated-page-hero pricing-hero">
+        <div>
+          <div class="dedicated-eyebrow">Plans &amp; Pricing</div>
+          <h1 id="plansPageTitle">Start Free. Get More Guidance When You Need It.</h1>
+          <p>Choose the level that fits your life. Every plan explains where your taxes may be heading. Higher plans add year-round tracking and clear adjustment numbers.</p>
+        </div>
+        <div class="billing-switch" aria-label="Choose monthly or annual pricing">
+          <button class="billing-choice active" type="button" data-public-billing="monthly">Monthly</button>
+          <button class="billing-choice" type="button" data-public-billing="annual">Annual <span>Save about 17%</span></button>
+        </div>
+      </div>
+
+      <div class="dedicated-pricing-grid">
+        <article class="dedicated-plan-card free-plan" id="free-tax-estimator">
+          <div class="dedicated-plan-label">Free Starting Point</div>
+          <h2>Free Tax Estimator</h2>
+          <div class="dedicated-plan-price"><strong>$0</strong><span>no monthly fee</span></div>
+          <p class="dedicated-plan-summary">Best for someone who wants a clear estimate before deciding what help is needed.</p>
+          <ul>
+            <li>Federal and state tax estimate</li>
+            <li>Refund or balance-due direction</li>
+            <li>Main reasons behind the estimate</li>
+            <li>Plain-language estimate summary</li>
+            <li>Saved progress and secure portal access</li>
+            <li>Limited updates for major life changes</li>
+            <li>Professional service suggestions when useful</li>
+          </ul>
+          <a class="dedicated-plan-cta" href="/">Start My Free Tax Estimate</a>
+        </article>
+
+        <article class="dedicated-plan-card watch-plan" id="tax-watch-pro">
+          <div class="dedicated-plan-badge">Most Popular</div>
+          <div class="dedicated-plan-label">Year-Round Tracking</div>
+          <h2>Tax Watch Pro</h2>
+          <div class="dedicated-plan-price">
+            <strong data-monthly-price="$8.99" data-annual-price="$89">$8.99</strong>
+            <span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span>
+          </div>
+          <p class="dedicated-plan-summary">Best for people whose pay, job, gig work, withholding, or family may change during the year.</p>
+          <ul>
+            <li>Everything in Free Tax Estimator</li>
+            <li>Year-round estimate updates</li>
+            <li>Income and withholding updates</li>
+            <li>New job, side gig, and dependent updates</li>
+            <li>Estimate-change history</li>
+            <li>See what changed and why</li>
+            <li>Choose a tax goal, such as avoiding a tax bill</li>
+            <li>Quarterly reminders</li>
+            <li>Important change alerts</li>
+            <li>One clear next step after each update</li>
+          </ul>
+          <a class="dedicated-plan-cta" href="/contact?service=Tax%20Watch%20Pro&amp;return=plans-pricing">Ask About Tax Watch Pro</a>
+        </article>
+
+        <article class="dedicated-plan-card pinnacle-plan" id="pinnacle-plan">
+          <div class="dedicated-plan-badge pinnacle">Pinnacle Level</div>
+          <div class="dedicated-plan-label">Paycheck &amp; Tax Adjustment Guidance</div>
+          <h2>Pinnacle Tax Action Plan</h2>
+          <div class="dedicated-plan-price">
+            <strong data-monthly-price="$19.99" data-annual-price="$199">$19.99</strong>
+            <span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span>
+          </div>
+          <p class="dedicated-plan-summary">Best for people who want to know what to change per paycheck, save monthly, or prepare to pay quarterly.</p>
+          <ul>
+            <li>Everything in Tax Watch Pro</li>
+            <li>Weekly pay calculations</li>
+            <li>Every-two-weeks pay calculations</li>
+            <li>Twice-monthly pay calculations</li>
+            <li>Monthly and annual pay views</li>
+            <li>Multiple jobs and income sources</li>
+            <li>Gig and self-employment income</li>
+            <li>Year-to-date pay and withholding</li>
+            <li>Remaining-pay-period calculations</li>
+            <li>Suggested additional withholding per paycheck</li>
+            <li>Monthly tax set-aside estimate</li>
+            <li>Quarterly estimated-payment projection</li>
+            <li>Refund-target planning</li>
+            <li>Before-and-after comparisons</li>
+            <li>What-if examples for a new job, gig, or child</li>
+            <li>Downloadable Tax Adjustment Plan</li>
+            <li>Year-end readiness report</li>
+          </ul>
+          <a class="dedicated-plan-cta" href="/contact?service=Pinnacle%20Tax%20Action%20Plan&amp;return=plans-pricing">Ask About the Pinnacle Plan</a>
+        </article>
+      </div>
+
+      <section class="plan-comparison-section" aria-labelledby="comparisonTitle">
+        <div class="comparison-heading">
+          <div>
+            <div class="dedicated-eyebrow">Side-by-Side Comparison</div>
+            <h2 id="comparisonTitle">See Why Each Level Is More Valuable</h2>
+          </div>
+        </div>
+        <div class="public-plan-comparison">
+          <table>
+            <thead>
+              <tr><th>What you receive</th><th>Free Tax Estimator</th><th>Tax Watch Pro</th><th>Pinnacle Tax Action Plan</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Federal and state estimate</td><td>Included</td><td>Included</td><td>Included</td></tr>
+              <tr><td>Saved progress and secure portal</td><td>Included</td><td>Included</td><td>Included</td></tr>
+              <tr><td>Year-round estimate updates</td><td>Limited</td><td>Included</td><td>Included</td></tr>
+              <tr><td>Estimate-change history</td><td>&mdash;</td><td>Included</td><td>Included</td></tr>
+              <tr><td>What changed and why</td><td>Basic</td><td>Detailed</td><td>Detailed</td></tr>
+              <tr><td>Tax goals and important alerts</td><td>&mdash;</td><td>Included</td><td>Included</td></tr>
+              <tr><td>Weekly, biweekly, twice-monthly, and monthly pay views</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+              <tr><td>Multiple jobs, gig work, and self-employment income</td><td>&mdash;</td><td>Track changes</td><td>Full calculations</td></tr>
+              <tr><td>Suggested adjustment per paycheck</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+              <tr><td>Monthly tax set-aside estimate</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+              <tr><td>Quarterly estimated-payment projection</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+              <tr><td>Refund-target planning and what-if examples</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+              <tr><td>Downloadable Tax Adjustment Plan</td><td>&mdash;</td><td>&mdash;</td><td>Included</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="dedicated-page-bottom-actions">
+        <a class="dedicated-return" href="/">Return to Free Tax Estimator</a>
+        <a class="dedicated-secondary" href="/professional-tax-services">See Professional Tax Services</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="public-dedicated-page professional-dedicated-page" aria-labelledby="professionalPageTitle">
+    <div class="dedicated-page-shell">
+      <div class="dedicated-page-topline">
+        <a class="dedicated-return" href="/">&larr; Return to Free Tax Estimator</a>
+        <a class="dedicated-portal" href="/client-portal">Secure Client Portal</a>
+      </div>
+
+      <div class="dedicated-page-hero professional-hero">
+        <div>
+          <div class="dedicated-eyebrow">Professional Tax Services</div>
+          <h1 id="professionalPageTitle">Real Help When an Estimate Is Not Enough</h1>
+          <p>Choose a service when you need document review, tax preparation, IRS records, filing help, or professional guidance. Every request stays connected to the same secure portal.</p>
+        </div>
+        <div class="professional-hero-note">
+          <strong>Why work with us?</strong>
+          <span>Clear steps, secure documents, visible status, and one client record from request through completion.</span>
+        </div>
+      </div>
+
+      <div class="professional-service-grid">
+        <article class="professional-service-card">
+          <div class="professional-service-number">01</div>
+          <h2>Tax Preparation</h2>
+          <p>We organize the process, explain what is needed, securely collect documents, and show the status of the return from intake through completion.</p>
+          <ul>
+            <li>Individual and family returns</li>
+            <li>Gig worker and self-employed returns</li>
+            <li>Investment and complex individual returns</li>
+            <li>Business and entity returns</li>
+            <li>Secure document checklist and saved progress</li>
+            <li>Clear next steps and completion history</li>
+          </ul>
+          <a href="/start-my-tax-return">Start My Tax Preparation Request</a>
+        </article>
+
+        <article class="professional-service-card">
+          <div class="professional-service-number">02</div>
+          <h2>Written Tax Estimate Review</h2>
+          <p>Get a professional written review of the estimate, possible red flags, withholding concerns, dependent issues, and practical next steps.</p>
+          <ul>
+            <li>Professional written analysis</li>
+            <li>Key estimate drivers explained</li>
+            <li>Possible missing information identified</li>
+            <li>Withholding and dependent concerns reviewed</li>
+            <li>Tax Savings Planner bonus included</li>
+            <li>One-time price shown before payment</li>
+          </ul>
+          <a href="/">Start with the Free Tax Estimator</a>
+        </article>
+
+        <article class="professional-service-card">
+          <div class="professional-service-number">03</div>
+          <h2>IRS Transcript Help</h2>
+          <p>You do not have to guess which IRS record to request. We help identify the transcript, guide the authorization step, track the request, and securely deliver available records.</p>
+          <ul>
+            <li>Wage and Income transcript support</li>
+            <li>Account and Return transcript support</li>
+            <li>Authorization guidance</li>
+            <li>Portal status tracking</li>
+            <li>Missing-information follow-up</li>
+            <li>Secure delivery when the IRS makes records available</li>
+          </ul>
+          <a href="/transcript-help.html">Learn About IRS Transcript Help</a>
+        </article>
+
+        <article class="professional-service-card">
+          <div class="professional-service-number">04</div>
+          <h2>Contractor Forms 1099</h2>
+          <p>For businesses that paid contractors or other nonemployees and need help preparing, correcting, delivering, or filing Forms 1099.</p>
+          <ul>
+            <li>Form 1099-NEC and 1099-MISC support</li>
+            <li>Corrected and late-filing review</li>
+            <li>W-9 and contractor-information checklist</li>
+            <li>Federal and possible state filing review</li>
+            <li>Recipient-copy tracking</li>
+            <li>Quote shown before payment</li>
+          </ul>
+          <a href="/contractor-1099-service">Request Contractor Forms 1099 Service</a>
+        </article>
+
+        <article class="professional-service-card">
+          <div class="professional-service-number">05</div>
+          <h2>Tax Extension</h2>
+          <p>Get help reviewing and filing an eligible extension when more time is needed to complete the return. An extension gives more time to file, not more time to pay.</p>
+          <ul>
+            <li>Individual or business extension review</li>
+            <li>Correct tax year and return-type review</li>
+            <li>Deadline and payment-due explanation</li>
+            <li>Secure information collection</li>
+            <li>Filing status and confirmation tracking</li>
+            <li>Return-preparation follow-up when ready</li>
+          </ul>
+          <a href="/request-tax-extension">Request a Tax Extension</a>
+        </article>
+
+        <article class="professional-service-card">
+          <div class="professional-service-number">06</div>
+          <h2>Tax Planning &amp; Business Support</h2>
+          <p>Get help understanding tax choices, organizing business information, preparing for estimated payments, or deciding which professional service fits your situation.</p>
+          <ul>
+            <li>Professional tax-planning review</li>
+            <li>Self-employment and business support</li>
+            <li>Quarterly-payment planning</li>
+            <li>Bookkeeping and record-organization support</li>
+            <li>Secure questions and document requests</li>
+            <li>Pricing or quote explained before work begins</li>
+          </ul>
+          <a href="/contact?service=Professional%20Tax%20Planning&amp;return=professional-tax-services">Ask About Tax Planning</a>
+        </article>
+      </div>
+
+      <div class="dedicated-page-bottom-actions">
+        <a class="dedicated-return" href="/">Return to Free Tax Estimator</a>
+        <a class="dedicated-secondary" href="/plans-pricing">See Plans &amp; Pricing</a>
+      </div>
+    </div>
+  </section>
+
 
   <main class="main-content">
 
@@ -141,6 +405,12 @@
                 </a>
                 <a href="/request-tax-extension">
                   Request a Tax Extension
+                </a>
+                <a href="/plans-pricing">
+                  Plans &amp; Pricing
+                </a>
+                <a href="/professional-tax-services">
+                  Professional Tax Services
                 </a>
                 <a href="/client-portal">
                   Secure Client Portal
@@ -254,6 +524,74 @@
               <div class="why-desc">From individual filers to small business owners, our clients trust us with their
                 most important financial documents.</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="home-pricing-section" id="homePlans">
+        <div class="home-pricing-inner">
+          <div class="section-label-row centered">
+            <div class="section-overline">Start Free. Add More Help When You Need It.</div>
+            <h2 class="section-heading">Choose How Much Tax Guidance You Want</h2>
+            <p class="section-subhead">Begin with a free estimate. Move up when you want year-round tracking or a clear paycheck and tax adjustment plan.</p>
+          </div>
+
+          <div class="home-pricing-grid">
+            <article class="home-plan-card free-plan">
+              <div class="home-plan-label">Free Starting Point</div>
+              <h3>Free Tax Estimator</h3>
+              <div class="home-plan-price"><strong>$0</strong><span>no monthly fee</span></div>
+              <p>See whether you may receive a refund or owe taxes and understand the main reasons why.</p>
+              <ul>
+                <li>Federal and state estimate</li>
+                <li>Refund or balance-due direction</li>
+                <li>Main reasons behind the estimate</li>
+                <li>Saved progress and secure portal access</li>
+                <li>Limited updates for major life changes</li>
+              </ul>
+              <button class="home-plan-button" type="button" onclick="goToScreen('form')">Start My Free Tax Estimate</button>
+            </article>
+
+            <article class="home-plan-card watch-plan">
+              <div class="home-plan-ribbon">Most Popular</div>
+              <div class="home-plan-label">Year-Round Tracking</div>
+              <h3>Tax Watch Pro</h3>
+              <div class="home-plan-price"><strong>$8.99</strong><span>monthly or $89 annually</span></div>
+              <p>Keep your estimate updated when your income, job, gig work, withholding, or family changes.</p>
+              <ul>
+                <li>Everything in Free Tax Estimator</li>
+                <li>Year-round estimate updates</li>
+                <li>Estimate-change history</li>
+                <li>New job, gig, and dependent updates</li>
+                <li>Alerts explaining what changed and why</li>
+                <li>Quarterly reminders and clear next steps</li>
+              </ul>
+              <a class="home-plan-button" href="/plans-pricing#tax-watch-pro">Explore Tax Watch Pro</a>
+            </article>
+
+            <article class="home-plan-card pinnacle-plan">
+              <div class="home-plan-ribbon pinnacle">Pinnacle Level</div>
+              <div class="home-plan-label">Tax Adjustment Guidance</div>
+              <h3>Pinnacle Tax Action Plan</h3>
+              <div class="home-plan-price"><strong>$19.99</strong><span>monthly or $199 annually</span></div>
+              <p>See what to adjust per paycheck, save each month, or prepare to pay quarterly.</p>
+              <ul>
+                <li>Everything in Tax Watch Pro</li>
+                <li>Weekly, biweekly, twice-monthly, and monthly pay views</li>
+                <li>Multiple jobs, gig work, and self-employment income</li>
+                <li>Suggested paycheck withholding adjustment</li>
+                <li>Monthly tax set-aside and quarterly-payment estimates</li>
+                <li>Refund goals, what-if examples, and downloadable plan</li>
+              </ul>
+              <a class="home-plan-button" href="/plans-pricing#pinnacle-plan">Explore the Pinnacle Plan</a>
+            </article>
+          </div>
+
+          <div class="home-pricing-actions">
+            <a class="btn-primary" href="/plans-pricing">Compare Every Plan and Benefit</a>
+            <a class="btn-secondary-link" href="/professional-tax-services">See Professional Tax Services</a>
           </div>
         </div>
       </div>
@@ -943,7 +1281,9 @@
             <a class="footer-link" href="/start-my-tax-return?service=business">Business &amp; Entity Tax Returns</a>
             <a class="footer-link" href="/contractor-1099-service">Contractor Forms 1099 Preparation</a>
             <a class="footer-link" href="/contact">Request IRS Transcript Help</a>
-            <a class="footer-link" href="/">Tax Estimate, Written Review &amp; Tax Planning</a>
+            <a class="footer-link" href="/plans-pricing">Plans &amp; Pricing</a>
+            <a class="footer-link" href="/professional-tax-services">Professional Tax Services</a>
+            <a class="footer-link" href="/">Free Tax Estimator &amp; Written Review</a>
             <a class="footer-link" href="/client-portal">Secure Client Portal</a>
           </div>
           <div class="footer-link-group">
@@ -961,6 +1301,39 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var choices = Array.from(document.querySelectorAll("[data-public-billing]"));
+      if (!choices.length) return;
+
+      function setBilling(mode) {
+        choices.forEach(function (button) {
+          button.classList.toggle("active", button.getAttribute("data-public-billing") === mode);
+        });
+
+        document.querySelectorAll("[data-monthly-price]").forEach(function (price) {
+          price.textContent = mode === "annual"
+            ? price.getAttribute("data-annual-price")
+            : price.getAttribute("data-monthly-price");
+        });
+
+        document.querySelectorAll("[data-monthly-copy]").forEach(function (copy) {
+          copy.textContent = mode === "annual"
+            ? copy.getAttribute("data-annual-copy")
+            : copy.getAttribute("data-monthly-copy");
+        });
+      }
+
+      choices.forEach(function (button) {
+        button.addEventListener("click", function () {
+          setBilling(button.getAttribute("data-public-billing"));
+        });
+      });
+
+      setBilling("monthly");
+    })();
+  </script>
 
   <script src="app.js"></script>
 </body>

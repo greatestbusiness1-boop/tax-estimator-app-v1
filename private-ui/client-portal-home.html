@@ -1439,6 +1439,237 @@
       .portal-active-nav{display:grid}
     }
 
+
+    /* Client Experience V2.2 full-width navigation and separated offer pages */
+    .portal-layout{
+      display:block;
+      width:min(1540px,calc(100% - 24px));
+      margin:16px auto 48px;
+    }
+    .portal-top-navigation{
+      position:sticky;
+      top:72px;
+      z-index:30;
+      display:flex;
+      align-items:stretch;
+      width:100%;
+      border-radius:18px;
+      overflow:visible;
+      background:#102f4f;
+      border:1px solid #244e70;
+      box-shadow:0 14px 36px rgba(12,38,62,.18);
+      margin-bottom:20px;
+    }
+    .portal-top-navigation .portal-sidebar-head{
+      flex:0 0 220px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:13px 18px;
+      border-radius:17px 0 0 17px;
+      background:linear-gradient(145deg,#0a2947,#164c74);
+    }
+    .portal-top-navigation .portal-sidebar-head span{margin:0 0 3px;font-size:10px}
+    .portal-top-navigation .portal-sidebar-head strong{font-size:16px}
+    .portal-top-navigation .portal-nav{
+      flex:1;
+      display:flex;
+      align-items:stretch;
+      gap:2px;
+      padding:7px;
+      overflow:visible;
+    }
+    .portal-top-navigation .portal-nav>.portal-nav-item,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item{
+      width:auto;
+      min-height:48px;
+      padding:10px 12px;
+      color:#eef7ff;
+      white-space:nowrap;
+      border-radius:10px;
+      justify-content:center!important;
+    }
+    .portal-top-navigation .portal-nav>.portal-nav-item:hover,
+    .portal-top-navigation .portal-nav>.portal-nav-item:focus,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item:hover,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item:focus{
+      background:#1e527a;
+      color:#fff;
+    }
+    .portal-top-navigation .portal-nav-item.is-active{
+      background:#fff!important;
+      color:#0b4d75!important;
+      box-shadow:none;
+    }
+    .portal-top-navigation .portal-nav-group{position:relative;display:flex}
+    .portal-top-navigation .portal-submenu{
+      position:absolute;
+      top:calc(100% + 7px);
+      left:0;
+      z-index:50;
+      min-width:245px;
+      max-width:340px;
+      padding:8px;
+      border:1px solid #cfdbe6;
+      border-radius:14px;
+      background:#fff;
+      box-shadow:0 18px 42px rgba(13,38,61,.2);
+    }
+    .portal-top-navigation .portal-submenu button{
+      color:#354f66;
+      padding:10px 11px;
+    }
+    .portal-top-navigation .portal-submenu button:hover,
+    .portal-top-navigation .portal-submenu button:focus{
+      background:#edf6fb;
+      color:#0b5685;
+    }
+    .portal-top-navigation .portal-active-nav{display:grid}
+    .portal-layout>.wrap{width:100%;max-width:none;margin:0;padding:0}
+    .portal-view.is-active{animation:cxPageIn .18s ease-out}
+    @keyframes cxPageIn{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+    .cx-page-hero{
+      display:grid;
+      grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);
+      gap:24px;
+      align-items:center;
+      padding:30px 32px;
+      border-radius:22px 22px 0 0;
+      background:linear-gradient(135deg,#0e3253,#17618c);
+      color:#fff;
+    }
+    .cx-page-hero h2{margin:5px 0 10px;font-size:32px;line-height:1.16;color:#fff}
+    .cx-page-hero p{margin:0;color:#dbeaf5;font-size:15px;line-height:1.65}
+    .cx-offer-page{overflow:hidden;border-radius:22px;box-shadow:0 18px 46px rgba(13,41,66,.09)}
+    .cx-offer-page>.section-body{border-radius:0 0 22px 22px}
+    .cx-offer-body{padding:25px!important}
+    .cx-billing-toggle{
+      justify-self:end;
+      display:inline-flex;
+      gap:6px;
+      padding:6px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+    }
+    .cx-billing-toggle button{
+      border:0;
+      border-radius:999px;
+      padding:10px 14px;
+      background:transparent;
+      color:#fff;
+      font:inherit;
+      font-size:13px;
+      font-weight:850;
+      cursor:pointer;
+    }
+    .cx-billing-toggle button span{display:block;font-size:9px;color:#ecd28f;margin-top:2px}
+    .cx-billing-toggle button.active{background:#fff;color:#123a5b}
+    .cx-billing-toggle button.active span{color:#805c13}
+    .cx-explore-grid{gap:20px;align-items:stretch}
+    .cx-explore-card{
+      min-height:650px;
+      padding:25px;
+      border-radius:22px;
+      box-shadow:0 14px 35px rgba(14,45,72,.08);
+    }
+    .cx-explore-card:first-child{border-top:8px solid #438fbd}
+    .cx-explore-card:nth-child(2){border:2px solid #d1a039;border-top:8px solid #d1a039;background:linear-gradient(155deg,#fffdf6,#fff)}
+    .cx-explore-card:nth-child(3){border-top:8px solid #e2bd68;background:linear-gradient(155deg,#0b2d4d,#174a72);color:#fff}
+    .cx-explore-card:nth-child(3) h3{color:#fff}
+    .cx-explore-card:nth-child(3) p,
+    .cx-explore-card:nth-child(3) li{color:#dce9f5}
+    .cx-explore-card:nth-child(3) .cx-plan-price{color:#f0cf83}
+    .cx-explore-card h3{font-size:27px;font-family:Georgia,serif}
+    .cx-plan-price strong{font-size:33px}
+    .cx-plan-price span{font-size:12px;font-weight:800;color:#66798a}
+    .cx-explore-card:nth-child(3) .cx-plan-price span{color:#dce9f5}
+    .cx-explore-card li{padding:6px 0;line-height:1.45;border-bottom:1px solid rgba(142,160,177,.17)}
+    .cx-explore-card a{min-height:49px;background:#123a5b;color:#fff;border-color:#123a5b}
+    .cx-explore-card:nth-child(2) a{background:#b47d10;border-color:#b47d10}
+    .cx-explore-card:nth-child(3) a{background:#f0cf83;color:#102d47;border-color:#f0cf83}
+    .cx-plan-comparison{margin-top:28px;border-radius:20px}
+    .cx-plan-comparison thead th:nth-child(3){background:#a9730c}
+    .cx-plan-comparison thead th:nth-child(4){background:#0b2d4d;color:#f0cf83}
+    .cx-professional-promise{
+      padding:20px;
+      border:1px solid rgba(255,255,255,.24);
+      border-radius:17px;
+      background:rgba(255,255,255,.11);
+    }
+    .cx-professional-promise strong,.cx-professional-promise span{display:block}
+    .cx-professional-promise strong{font-size:18px;margin-bottom:6px}
+    .cx-professional-promise span{color:#dbeaf5;line-height:1.55}
+    .cx-professional-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .cx-professional-card{
+      display:flex;
+      flex-direction:column;
+      min-height:450px;
+      padding:23px;
+      border:1px solid #d8e2eb;
+      border-radius:20px;
+      background:#fff;
+      box-shadow:0 12px 30px rgba(14,45,72,.07);
+    }
+    .cx-professional-card h3{margin:5px 0 10px;color:#173c5a;font-size:23px;font-family:Georgia,serif}
+    .cx-professional-card p{color:#566a7c;line-height:1.6;margin:0 0 12px}
+    .cx-professional-card ul{margin:0 0 18px;padding-left:20px;color:#40586d;line-height:1.5}
+    .cx-professional-card li{margin-bottom:6px}
+    .cx-professional-card a{
+      margin-top:auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:47px;
+      padding:10px 13px;
+      border-radius:11px;
+      background:#123a5b;
+      color:#fff;
+      font-size:13px;
+      font-weight:850;
+      text-align:center;
+      text-decoration:none;
+    }
+    .cx-service-number{color:#2b729b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .cx-page-actions{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-top:25px}
+    .portal-primary-link{
+      border:0;
+      border-radius:10px;
+      background:#123a5b;
+      color:#fff;
+      padding:10px 14px;
+      font:inherit;
+      font-size:13px;
+      font-weight:850;
+      cursor:pointer;
+    }
+
+    .section-head h2,
+    .archive-title{font-family:Georgia,serif}
+    .section-head{background:linear-gradient(90deg,#f7fbff,#fffaf0)}
+    .home-rule,.next-action,.contractor1099-next-action{font-size:14px;line-height:1.6}
+
+    @media(max-width:1280px){
+      .portal-top-navigation{display:block;position:static}
+      .portal-top-navigation .portal-sidebar-head{border-radius:17px 17px 0 0}
+      .portal-top-navigation .portal-nav{display:flex;flex-wrap:wrap}
+      .portal-top-navigation .portal-nav>.portal-nav-item,
+      .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item{flex:1 1 170px}
+      .cx-professional-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:800px){
+      .portal-layout{width:calc(100% - 12px);margin-top:8px}
+      .portal-top-navigation .portal-nav{display:grid;grid-template-columns:1fr 1fr}
+      .portal-top-navigation .portal-nav-group{display:block}
+      .portal-top-navigation .portal-submenu{position:static;min-width:0;max-width:none;margin-top:4px}
+      .cx-page-hero{grid-template-columns:1fr;padding:24px 18px}
+      .cx-billing-toggle{justify-self:start;width:100%}
+      .cx-billing-toggle button{flex:1}
+      .cx-professional-grid{grid-template-columns:1fr}
+      .cx-explore-card{min-height:0}
+    }
+
   </style>
 </head>
 <body>
@@ -1447,7 +1678,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.1.0</span>
+        <span>Client Experience V2 — Portal 2.2.0</span>
       </div>
     </div>
     <div class="top-actions">
@@ -1456,19 +1687,19 @@
   </header>
 
   <div class="portal-layout">
-    <aside class="portal-sidebar" aria-label="Secure portal navigation">
+    <aside class="portal-sidebar portal-top-navigation" aria-label="Secure portal navigation">
       <div class="portal-sidebar-head">
-        <span>Your secure workspace</span>
+        <span>Secure workspace</span>
         <strong id="sidebarClientName">My Client Portal</strong>
       </div>
       <nav class="portal-nav" id="portalNavigation">
-        <button class="portal-nav-item" type="button" data-portal-open="dashboard">My Dashboard</button>
+        <button class="portal-nav-item" type="button" data-portal-open="dashboard">Dashboard</button>
 
         <div class="portal-nav-group">
-          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="true">
+          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="false">
             <span>My Active Services</span><span aria-hidden="true">▾</span>
           </button>
-          <div class="portal-submenu is-open" id="activeServicesMenu">
+          <div class="portal-submenu" id="activeServicesMenu">
             <button type="button" data-portal-open="active-services">Active Service Summary</button>
             <div class="portal-active-nav" id="activeServiceNav"></div>
           </div>
@@ -1476,17 +1707,18 @@
 
         <div class="portal-nav-group">
           <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="documentsMenu" aria-expanded="false">
-            <span>My Documents</span><span aria-hidden="true">▾</span>
+            <span>Documents</span><span aria-hidden="true">▾</span>
           </button>
           <div class="portal-submenu" id="documentsMenu">
-            <button type="button" data-portal-open="document-upload">Upload My Documents</button>
-            <button type="button" data-portal-open="document-history">My Uploaded Documents</button>
+            <button type="button" data-portal-open="document-upload">Upload Documents</button>
+            <button type="button" data-portal-open="document-history">Uploaded Documents</button>
           </div>
         </div>
 
         <button class="portal-nav-item" type="button" data-portal-open="questions">Questions &amp; Comments</button>
         <button class="portal-nav-item" type="button" data-portal-open="completed">Completed Services</button>
-        <button class="portal-nav-item" type="button" data-portal-open="explore">Explore Additional Services</button>
+        <button class="portal-nav-item" type="button" data-portal-open="plans">Plans &amp; Pricing</button>
+        <button class="portal-nav-item" type="button" data-portal-open="professional-services">Professional Tax Services</button>
         <button class="portal-nav-item" type="button" data-portal-open="account">Account &amp; Security</button>
       </nav>
     </aside>
@@ -1509,7 +1741,7 @@
         <div>
           <div class="eyebrow">My Dashboard</div>
           <h2 id="dashboardGreeting">Here is what needs your attention</h2>
-          <p id="dashboardSummary">See what is active, what needs your attention, and what is already finished. Services you have not chosen stay on a separate Explore page.</p>
+          <p id="dashboardSummary">See what is active, what needs your attention, and what is already finished. Plans and professional services you have not chosen stay on their own pages.</p>
         </div>
         <div class="cx-next-step" id="dashboardNextStep">
           <span>Next thing to do</span>
@@ -1806,20 +2038,46 @@
       </div>
     </section>
 
-    <section class="section portal-view" id="exploreAdditionalServices" data-portal-view="explore">
-      <div class="section-head">
+    <section class="section portal-view cx-offer-page" id="plansPricing" data-portal-view="plans">
+      <div class="cx-page-hero cx-plans-hero">
         <div>
-          <h2>Explore Additional Services</h2>
-          <p>Compare each level and see what you receive before you choose. Nothing is added to your account until you start or purchase it.</p>
+          <div class="eyebrow">Plans &amp; Pricing</div>
+          <h2>Start Free. Add More Guidance When You Need It.</h2>
+          <p>Compare the Free Tax Estimator, Tax Watch Pro, and the Pinnacle Tax Action Plan. Nothing is added to your account until you choose it.</p>
         </div>
-        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+        <div class="cx-billing-toggle" aria-label="Choose monthly or annual pricing">
+          <button class="active" type="button" data-portal-billing="monthly">Monthly</button>
+          <button type="button" data-portal-billing="annual">Annual <span>Save about 17%</span></button>
+        </div>
       </div>
-      <div class="section-body">
+      <div class="section-body cx-offer-body">
         <div class="cx-explore-grid" id="membershipPlanGrid"></div>
         <div class="cx-plan-comparison" id="membershipComparison"></div>
-        <h3 class="archive-title" style="margin-top:30px;">Professional Tax Services</h3>
-        <p class="professional-services-intro">When you need more than an estimate, our office can help with preparation, IRS records, filing deadlines, contractor forms, and tax planning. Each service stays connected to this same secure portal.</p>
-        <div class="cx-explore-grid" id="additionalServiceGrid"></div>
+        <div class="cx-page-actions">
+          <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+          <button class="portal-primary-link" type="button" data-portal-open="professional-services">See Professional Tax Services</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section portal-view cx-offer-page" id="professionalTaxServices" data-portal-view="professional-services">
+      <div class="cx-page-hero cx-professional-hero">
+        <div>
+          <div class="eyebrow">Professional Tax Services</div>
+          <h2>Real Help When an Estimate Is Not Enough</h2>
+          <p>Choose a service when you need document review, return preparation, IRS records, filing help, contractor forms, or professional tax guidance.</p>
+        </div>
+        <div class="cx-professional-promise">
+          <strong>Why work with us?</strong>
+          <span>Clear steps, secure documents, visible status, and one client record from request through completion.</span>
+        </div>
+      </div>
+      <div class="section-body cx-offer-body">
+        <div class="cx-professional-grid" id="additionalServiceGrid"></div>
+        <div class="cx-page-actions">
+          <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+          <button class="portal-primary-link" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
+        </div>
       </div>
     </section>
 
@@ -3850,7 +4108,7 @@
         grid.innerHTML = `
           <div class="cx-empty-active">
             <strong>No active service needs attention right now.</strong><br>
-            Your completed records remain available below. New services stay in Explore Additional Services until you choose them.
+            Your completed records remain available below. New plans and professional services stay on their own pages until you choose them.
           </div>
         `;
         nav.innerHTML = "";
@@ -3917,7 +4175,7 @@
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
           <div class="cx-plan-kicker">Free Starting Point</div>
-          <h3>Free Tax Snapshot</h3>
+          <h3>Free Tax Estimator</h3>
           <div class="cx-plan-price">$0</div>
           <p><strong>Best for:</strong> Someone who wants to know whether a refund or tax bill may be coming.</p>
           <ul>
@@ -3929,16 +4187,16 @@
             <li>Secure access to your tax snapshot</li>
             <li>Clear next step when professional help may be useful</li>
           </ul>
-          <a href="/" target="_blank" rel="noopener">${hasTaxRecord ? "Update My Tax Snapshot" : "Start My Free Tax Snapshot"}</a>
+          <a href="/" target="_blank" rel="noopener">${hasTaxRecord ? "Update My Free Tax Estimate" : "Start My Free Tax Estimator"}</a>
         </article>
 
         <article class="cx-explore-card featured">
           <div class="cx-plan-kicker">Year-Round Tracking</div>
-          <h3>Tax Watch</h3>
-          <div class="cx-plan-price">$8.99 monthly or $89 annually</div>
+          <h3>Tax Watch Pro</h3>
+          <div class="cx-plan-price"><strong data-portal-monthly-price="$8.99" data-portal-annual-price="$89">$8.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
           <p><strong>Best for:</strong> Someone whose income, job, gig work, withholding, or family may change during the year.</p>
           <ul>
-            <li>Everything in Free Tax Snapshot</li>
+            <li>Everything in Free Tax Estimator</li>
             <li>Update income and withholding throughout the year</li>
             <li>Track a new job, side gig, or dependent</li>
             <li>See what changed and why</li>
@@ -3948,17 +4206,17 @@
             <li>Alerts when your estimate changes by a meaningful amount</li>
             <li>One clear next step after each update</li>
           </ul>
-          <button type="button" disabled>Tax Watch Enrollment Coming Next</button>
+          <a href="/contact?service=Tax%20Watch%20Pro&amp;return=plans-pricing" target="_blank" rel="noopener">Ask About Tax Watch Pro</a>
         </article>
 
         <article class="cx-explore-card featured">
           <div class="cx-pinnacle-badge">Pinnacle Level</div>
           <div class="cx-plan-kicker">Tax Adjustment Guidance</div>
-          <h3>Tax Action Plan</h3>
-          <div class="cx-plan-price">$19.99 monthly or $199 annually</div>
+          <h3>Pinnacle Tax Action Plan</h3>
+          <div class="cx-plan-price"><strong data-portal-monthly-price="$19.99" data-portal-annual-price="$199">$19.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
           <p><strong>Best for:</strong> Someone who wants to know what to change per paycheck, save each month, or pay quarterly.</p>
           <ul>
-            <li>Everything in Tax Watch</li>
+            <li>Everything in Tax Watch Pro</li>
             <li>Use actual weekly, biweekly, twice-monthly, monthly, or annual pay</li>
             <li>Track more than one job or income source</li>
             <li>Add gig and self-employment income</li>
@@ -3973,14 +4231,14 @@
             <li>Download a Tax Adjustment Plan</li>
             <li>Complete a year-end tax readiness check</li>
           </ul>
-          <button type="button" disabled>Tax Action Plan Enrollment Coming Next</button>
+          <a href="/contact?service=Pinnacle%20Tax%20Action%20Plan&amp;return=plans-pricing" target="_blank" rel="noopener">Ask About the Pinnacle Plan</a>
         </article>
       `;
 
       comparison.innerHTML = `
         <table aria-label="Tax membership comparison">
           <thead>
-            <tr><th>What you receive</th><th>Free Tax Snapshot</th><th>Tax Watch</th><th>Tax Action Plan</th></tr>
+            <tr><th>What you receive</th><th>Free Tax Estimator</th><th>Tax Watch Pro</th><th>Pinnacle Tax Action Plan</th></tr>
           </thead>
           <tbody>
             <tr><td>Federal and state estimate</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
@@ -4060,15 +4318,44 @@
 
       additionalGrid.innerHTML = professionalServices.length
         ? professionalServices.map((service) => `
-            <article class="cx-explore-card">
-              <div class="cx-plan-kicker">Professional Tax Service</div>
+            <article class="cx-professional-card">
+              <div class="cx-service-number">Professional Service</div>
               <h3>${escapeHtml(service.name)}</h3>
               <p>${escapeHtml(service.description)}</p>
               <ul>${service.benefits.map((benefit) => `<li>${escapeHtml(benefit)}</li>`).join("")}</ul>
-              <a href="${escapeHtml(service.href)}" target="_blank" rel="noopener">Learn More — Opens a New Page</a>
+              <a href="${escapeHtml(service.href)}" target="_blank" rel="noopener">Learn More and Request This Service</a>
             </article>
           `).join("")
         : '<div class="cx-empty-active">All currently available professional services are already connected to your profile.</div>';
+    }
+
+    function initializePortalBillingToggle() {
+      const buttons = Array.from(document.querySelectorAll("[data-portal-billing]"));
+      if (!buttons.length) return;
+
+      function setBilling(mode) {
+        buttons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.portalBilling === mode);
+        });
+
+        document.querySelectorAll("[data-portal-monthly-price]").forEach((price) => {
+          price.textContent = mode === "annual"
+            ? price.dataset.portalAnnualPrice
+            : price.dataset.portalMonthlyPrice;
+        });
+
+        document.querySelectorAll("[data-portal-monthly-copy]").forEach((copy) => {
+          copy.textContent = mode === "annual"
+            ? copy.dataset.portalAnnualCopy
+            : copy.dataset.portalMonthlyCopy;
+        });
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => setBilling(button.dataset.portalBilling));
+      });
+
+      setBilling("monthly");
     }
 
     function renderClientExperienceV2(portal = {}) {
@@ -4089,7 +4376,7 @@
       document.getElementById("dashboardDocumentAwaiting").textContent = awaiting;
       document.getElementById("currentAccessLevel").textContent =
         (portal.records || []).length || (portal.olderRecords || []).length
-          ? "Free Tax Snapshot"
+          ? "Free Tax Estimator"
           : "Secure Portal";
 
       setClientExperienceGroupVisibility(
@@ -4142,7 +4429,8 @@
       "document-history": "uploaded-documents",
       questions: "questions-comments",
       completed: "completed-services",
-      explore: "explore-services",
+      plans: "plans-pricing",
+      "professional-services": "professional-tax-services",
       account: "account-security"
     };
 
@@ -4775,6 +5063,7 @@
     );
 
     initializePortalNavigation();
+      initializePortalBillingToggle();
 
     loadPortal().catch((error) => {
       document.getElementById(

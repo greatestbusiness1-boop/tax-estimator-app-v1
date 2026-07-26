@@ -963,6 +963,75 @@
         display: none !important;
       }
     }
+
+
+    .year-round-upgrade {
+      border: 1px solid #c8d9e6;
+      background: linear-gradient(135deg, #f6fbff 0%, #fffaf0 100%);
+    }
+
+    .year-round-upgrade-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(290px, 0.8fr);
+      gap: 24px;
+      align-items: center;
+    }
+
+    .year-round-upgrade-kicker {
+      color: #9a6a0f;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .year-round-upgrade h2 {
+      margin: 0 0 10px;
+      color: #123a5b;
+      font-size: 28px;
+    }
+
+    .year-round-upgrade-copy {
+      color: #51687c;
+      font-size: 15px;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .year-round-upgrade-options {
+      display: grid;
+      gap: 11px;
+    }
+
+    .year-round-upgrade-link {
+      display: block;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #123a5b;
+      color: #fff;
+      font-weight: 850;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .year-round-upgrade-link.gold {
+      background: #b27b12;
+    }
+
+    .year-round-upgrade-note {
+      color: #66798b;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .year-round-upgrade-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1125,6 +1194,25 @@
           <div class="scope">
             The $29 review is not a filed return, full tax preparation, audit representation, or a guarantee of the final result.
           </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section class="panel section year-round-upgrade no-print" id="yearRoundUpgradePanel" hidden>
+      <div class="year-round-upgrade-grid">
+        <div>
+          <div class="year-round-upgrade-kicker">Want to Know What to Do Next?</div>
+          <h2 id="yearRoundUpgradeTitle">Keep your estimate working for you throughout the year.</h2>
+          <p class="year-round-upgrade-copy" id="yearRoundUpgradeCopy">
+            Tax Watch Pro tracks changes. The Pinnacle Tax Action Plan adds paycheck, monthly savings, and quarterly-payment guidance.
+          </p>
+        </div>
+        <div class="year-round-upgrade-options">
+          <a class="year-round-upgrade-link" href="/plans-pricing#tax-watch-pro">Track My Estimate with Tax Watch Pro</a>
+          <a class="year-round-upgrade-link gold" href="/plans-pricing#pinnacle-plan">Show Me the Pinnacle Tax Action Plan</a>
+          <div class="year-round-upgrade-note">All numbers remain estimates based on the information entered. Professional review is available separately.</div>
         </div>
       </div>
     </section>
@@ -1791,6 +1879,29 @@
             : combinedNet < 0
               ? "Estimated combined balance due"
               : "Estimated near break-even";
+
+
+        const yearRoundPanel = document.getElementById("yearRoundUpgradePanel");
+        const yearRoundTitle = document.getElementById("yearRoundUpgradeTitle");
+        const yearRoundCopy = document.getElementById("yearRoundUpgradeCopy");
+
+        yearRoundPanel.hidden = false;
+
+        if (combinedNet < 0) {
+          yearRoundTitle.textContent = "Your estimate shows that you may owe. See what you may be able to change now.";
+          yearRoundCopy.textContent =
+            `Your current estimate shows a possible balance due of ${absoluteMoney(combinedNet)}. ` +
+            "Tax Watch Pro can track changes during the year. The Pinnacle Tax Action Plan can estimate an adjustment per paycheck, a monthly amount to set aside, or possible quarterly payments.";
+        } else if (combinedNet > 0) {
+          yearRoundTitle.textContent = "Your estimate shows a possible refund. Decide whether you want the refund or more money during the year.";
+          yearRoundCopy.textContent =
+            `Your current estimate shows a possible refund of ${absoluteMoney(combinedNet)}. ` +
+            "Tax Watch Pro can track the refund projection. The Pinnacle Tax Action Plan can compare keeping the refund with possible paycheck-withholding adjustments.";
+        } else {
+          yearRoundTitle.textContent = "Your estimate is close to break-even. Keep it on track as life changes.";
+          yearRoundCopy.textContent =
+            "A new job, side gig, dependent, or withholding change can move the result. Tax Watch Pro tracks those changes, while the Pinnacle Tax Action Plan adds specific adjustment estimates.";
+        }
 
         const metrics =
           document.getElementById("snapshotGrid");

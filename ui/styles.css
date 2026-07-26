@@ -3245,3 +3245,726 @@ input.error-field {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Client Experience V2.2 public pricing and professional-service presentation */
+.header-contact-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.header-contact-link:hover,
+.header-contact-link:focus {
+  text-decoration: underline;
+}
+
+.home-pricing-section {
+  padding: 78px 24px;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(53, 133, 176, 0.14), transparent 34%),
+    linear-gradient(180deg, #f7fbff 0%, #eef5fb 100%);
+}
+
+.home-pricing-inner {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+}
+
+.home-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 34px;
+}
+
+.home-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 560px;
+  padding: 30px 28px;
+  border: 1px solid #ccd9e7;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(17, 45, 71, 0.09);
+  overflow: hidden;
+}
+
+.home-plan-card.free-plan {
+  border-top: 8px solid #4c94c5;
+}
+
+.home-plan-card.watch-plan {
+  border: 2px solid #d5a435;
+  border-top: 8px solid #d5a435;
+  background: linear-gradient(160deg, #fffdf6 0%, #ffffff 68%);
+  transform: translateY(-10px);
+}
+
+.home-plan-card.pinnacle-plan {
+  border-top: 8px solid #d6ab4b;
+  background: linear-gradient(155deg, #0d3153 0%, #163f64 100%);
+  color: #ffffff;
+}
+
+.home-plan-label {
+  color: #2a729c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+.pinnacle-plan .home-plan-label {
+  color: #f0cf83;
+}
+
+.home-plan-card h3 {
+  margin: 0 0 14px;
+  color: #123653;
+  font-family: "Playfair Display", serif;
+  font-size: 29px;
+  line-height: 1.15;
+}
+
+.pinnacle-plan h3 {
+  color: #ffffff;
+}
+
+.home-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.home-plan-price strong {
+  color: #0e5685;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.pinnacle-plan .home-plan-price strong {
+  color: #f1cf80;
+}
+
+.home-plan-price span {
+  color: #60748a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pinnacle-plan .home-plan-price span,
+.pinnacle-plan p,
+.pinnacle-plan li {
+  color: #dce9f5;
+}
+
+.home-plan-card p {
+  margin: 0 0 18px;
+  color: #53677a;
+  line-height: 1.65;
+}
+
+.home-plan-card ul {
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-plan-card li {
+  position: relative;
+  padding: 8px 0 8px 27px;
+  color: #334e65;
+  line-height: 1.45;
+  border-bottom: 1px solid rgba(139, 158, 177, 0.18);
+}
+
+.home-plan-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #1b8158;
+  font-weight: 900;
+}
+
+.pinnacle-plan li::before {
+  color: #f1cf80;
+}
+
+.home-plan-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 9px 16px;
+  border-radius: 0 20px 0 16px;
+  background: #d5a435;
+  color: #1d2c3d;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.home-plan-ribbon.pinnacle {
+  background: #f0cf83;
+}
+
+.home-plan-button {
+  margin-top: auto;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #123a5b;
+  color: #ffffff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 850;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.watch-plan .home-plan-button {
+  background: #b57f12;
+}
+
+.pinnacle-plan .home-plan-button {
+  background: #f0cf83;
+  color: #102e49;
+}
+
+.home-pricing-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.btn-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 1px solid #9fb8cc;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #164d72;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.public-dedicated-page {
+  display: none;
+  min-height: 70vh;
+  padding: 34px 22px 76px;
+  background: #f3f7fb;
+}
+
+html[data-public-page="plans"] .progress-nav,
+html[data-public-page="plans"] .main-content,
+html[data-public-page="professional-services"] .progress-nav,
+html[data-public-page="professional-services"] .main-content {
+  display: none !important;
+}
+
+html[data-public-page="plans"] .plans-dedicated-page,
+html[data-public-page="professional-services"] .professional-dedicated-page {
+  display: block;
+}
+
+.dedicated-page-shell {
+  width: min(1320px, 100%);
+  margin: 0 auto;
+}
+
+.dedicated-page-topline,
+.dedicated-page-bottom-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.dedicated-page-bottom-actions {
+  margin-top: 30px;
+  margin-bottom: 0;
+}
+
+.dedicated-return,
+.dedicated-portal,
+.dedicated-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid #b7c8d7;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #144d73;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.dedicated-portal {
+  background: #123a5b;
+  color: #ffffff;
+  border-color: #123a5b;
+}
+
+.dedicated-page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 28px;
+  align-items: center;
+  padding: 38px 40px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #0d3153 0%, #155a85 100%);
+  color: #ffffff;
+  box-shadow: 0 24px 60px rgba(12, 44, 72, 0.18);
+  margin-bottom: 28px;
+}
+
+.dedicated-page-hero h1 {
+  margin: 5px 0 12px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.06;
+}
+
+.dedicated-page-hero p {
+  margin: 0;
+  max-width: 820px;
+  color: #deebf6;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.dedicated-eyebrow {
+  color: #f0cf83;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.billing-switch {
+  justify-self: end;
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.billing-choice {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.billing-choice span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #e8cf95;
+}
+
+.billing-choice.active {
+  background: #ffffff;
+  color: #123a5b;
+}
+
+.billing-choice.active span {
+  color: #7d5b16;
+}
+
+.dedicated-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+
+.dedicated-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 720px;
+  padding: 30px;
+  border: 1px solid #ccd8e4;
+  border-radius: 26px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(20, 54, 82, 0.09);
+  overflow: hidden;
+}
+
+.dedicated-plan-card.free-plan {
+  border-top: 9px solid #438fbd;
+}
+
+.dedicated-plan-card.watch-plan {
+  border: 2px solid #d0a13a;
+  border-top: 9px solid #d0a13a;
+  background: linear-gradient(160deg, #fffdf7 0%, #ffffff 72%);
+  transform: translateY(-10px);
+}
+
+.dedicated-plan-card.pinnacle-plan {
+  border-top: 9px solid #e2bd68;
+  background: linear-gradient(155deg, #0b2d4d 0%, #174a72 100%);
+  color: #ffffff;
+}
+
+.dedicated-plan-label {
+  color: #2c7199;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-label {
+  color: #f0cf83;
+}
+
+.dedicated-plan-card h2 {
+  margin: 0 0 12px;
+  color: #123650;
+  font-family: "Playfair Display", serif;
+  font-size: 30px;
+  line-height: 1.16;
+}
+
+.dedicated-plan-card.pinnacle-plan h2 {
+  color: #ffffff;
+}
+
+.dedicated-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.dedicated-plan-price strong {
+  color: #0c5685;
+  font-size: 43px;
+  line-height: 1;
+}
+
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-price strong {
+  color: #f0cf83;
+}
+
+.dedicated-plan-price span {
+  color: #60748a;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-price span,
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-summary,
+.dedicated-plan-card.pinnacle-plan li {
+  color: #dce9f5;
+}
+
+.dedicated-plan-summary {
+  margin: 0 0 18px;
+  color: #566a7d;
+  line-height: 1.65;
+}
+
+.dedicated-plan-card ul {
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.dedicated-plan-card li {
+  position: relative;
+  padding: 8px 0 8px 27px;
+  border-bottom: 1px solid rgba(138, 157, 175, 0.2);
+  color: #334d64;
+  line-height: 1.45;
+}
+
+.dedicated-plan-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #177a53;
+  font-weight: 900;
+}
+
+.dedicated-plan-card.pinnacle-plan li::before {
+  color: #f0cf83;
+}
+
+.dedicated-plan-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px 17px;
+  border-radius: 0 22px 0 17px;
+  background: #d0a13a;
+  color: #1d2c3c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dedicated-plan-badge.pinnacle {
+  background: #f0cf83;
+}
+
+.dedicated-plan-cta {
+  margin-top: auto;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 51px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #123a5b;
+  color: #ffffff;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
+.dedicated-plan-card.watch-plan .dedicated-plan-cta {
+  background: #b67f10;
+}
+
+.dedicated-plan-card.pinnacle-plan .dedicated-plan-cta {
+  background: #f0cf83;
+  color: #102d47;
+}
+
+.plan-comparison-section {
+  margin-top: 32px;
+  padding: 30px;
+  border: 1px solid #d2dde8;
+  border-radius: 25px;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(19, 51, 78, 0.07);
+}
+
+.comparison-heading h2 {
+  margin: 5px 0 20px;
+  color: #123650;
+  font-family: "Playfair Display", serif;
+  font-size: 34px;
+}
+
+.public-plan-comparison {
+  overflow-x: auto;
+}
+
+.public-plan-comparison table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}
+
+.public-plan-comparison th,
+.public-plan-comparison td {
+  padding: 15px 16px;
+  border-bottom: 1px solid #e4eaf0;
+  text-align: center;
+}
+
+.public-plan-comparison th:first-child,
+.public-plan-comparison td:first-child {
+  text-align: left;
+  font-weight: 800;
+  color: #233f56;
+}
+
+.public-plan-comparison thead th {
+  background: #123a5b;
+  color: #ffffff;
+}
+
+.public-plan-comparison thead th:nth-child(3) {
+  background: #a9730c;
+}
+
+.public-plan-comparison thead th:nth-child(4) {
+  background: #0b2d4d;
+  color: #f0cf83;
+}
+
+.professional-hero-note {
+  padding: 22px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.professional-hero-note strong,
+.professional-hero-note span {
+  display: block;
+}
+
+.professional-hero-note strong {
+  margin-bottom: 7px;
+  font-size: 18px;
+}
+
+.professional-hero-note span {
+  color: #deebf6;
+  line-height: 1.6;
+}
+
+.professional-service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.professional-service-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 515px;
+  padding: 28px;
+  border: 1px solid #d1dce7;
+  border-radius: 23px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(18, 52, 80, 0.08);
+  overflow: hidden;
+}
+
+.professional-service-number {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  color: #d9e7f1;
+  font-family: "Playfair Display", serif;
+  font-size: 50px;
+  font-weight: 700;
+}
+
+.professional-service-card h2 {
+  position: relative;
+  margin: 0 0 12px;
+  max-width: 78%;
+  color: #123650;
+  font-family: "Playfair Display", serif;
+  font-size: 27px;
+  line-height: 1.18;
+}
+
+.professional-service-card p {
+  margin: 0 0 17px;
+  color: #566a7d;
+  line-height: 1.65;
+}
+
+.professional-service-card ul {
+  margin: 0 0 23px;
+  padding: 0;
+  list-style: none;
+}
+
+.professional-service-card li {
+  position: relative;
+  padding: 7px 0 7px 25px;
+  color: #344f65;
+  line-height: 1.45;
+}
+
+.professional-service-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #1b7c57;
+  font-weight: 900;
+}
+
+.professional-service-card a {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 49px;
+  padding: 12px 16px;
+  border-radius: 11px;
+  background: #123a5b;
+  color: #ffffff;
+  font-weight: 850;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (max-width: 1050px) {
+  .home-pricing-grid,
+  .dedicated-pricing-grid,
+  .professional-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-plan-card.watch-plan,
+  .dedicated-plan-card.watch-plan {
+    transform: none;
+  }
+
+  .dedicated-page-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-switch {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 680px) {
+  .home-pricing-section,
+  .public-dedicated-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .home-plan-card,
+  .dedicated-plan-card,
+  .professional-service-card,
+  .plan-comparison-section {
+    padding: 22px 18px;
+  }
+
+  .dedicated-page-hero {
+    padding: 28px 20px;
+  }
+
+  .billing-switch {
+    width: 100%;
+  }
+
+  .billing-choice {
+    flex: 1;
+  }
+}
