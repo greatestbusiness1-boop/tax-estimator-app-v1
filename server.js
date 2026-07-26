@@ -13646,6 +13646,122 @@ app.post(
 
 
 app.get(
+  "/client-portal/tax-watch/update-estimate",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session = req.clientPortalSession;
+    const accessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    const candidates = accessible
+      .map((entry) => ({
+        entry,
+        snapshot: getTaxWatchSnapshot(entry)
+      }))
+      .filter((item) => item.snapshot)
+      .sort(
+        (left, right) =>
+          Date.parse(right.snapshot.recordedAt || 0) -
+          Date.parse(left.snapshot.recordedAt || 0)
+      );
+
+    const latest = candidates[0] || null;
+
+    if (!latest) {
+      return res
+        .status(409)
+        .type("html")
+        .send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tax Watch Pro Update</title>
+  <style>
+    body{margin:0;background:#eef4f7;color:#17354e;font-family:Arial,sans-serif}
+    main{max-width:680px;margin:70px auto;padding:28px;background:#fff;border:1px solid #cbdce7;border-radius:18px;box-shadow:0 12px 35px rgba(20,50,75,.12)}
+    h1{margin-top:0;color:#0f2f59}p{font-size:17px;line-height:1.6}
+    a{display:inline-block;margin-top:12px;padding:13px 18px;border-radius:11px;background:#0f2f59;color:#fff;text-decoration:none;font-weight:800}
+  </style>
+</head>
+<body><main>
+  <h1>Your estimate update could not be prepared</h1>
+  <p>No saved Free Tax Estimator result is connected to this portal email yet.</p>
+  <a href="/client-portal#tax-watch">Return to Tax Watch Pro</a>
+</main></body></html>`);
+    }
+
+    const lead = latest.entry.lead || {};
+    const taxData =
+      lead.taxData &&
+      typeof lead.taxData === "object" &&
+      !Array.isArray(lead.taxData)
+        ? lead.taxData
+        : {};
+
+    const context = {
+      version: 1,
+      sourceLeadId: latest.snapshot.leadId,
+      clientName:
+        lead.contact?.name ||
+        getLeadNameValue(latest.entry.raw) ||
+        "Client",
+      email: session.email,
+      taxData,
+      startingSnapshot: latest.snapshot,
+      sourceLimit: 2,
+      createdAt: new Date().toISOString()
+    };
+
+    const contextLiteral = JSON.stringify(
+      JSON.stringify(context)
+    )
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026")
+      .replace(/\\u2028/g, "\\\\u2028")
+      .replace(/\\u2029/g, "\\\\u2029");
+
+    return res
+      .status(200)
+      .type("html")
+      .send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Preparing Tax Watch Pro Update</title>
+  <style>
+    body{margin:0;background:#eef4f7;color:#17354e;font-family:Arial,sans-serif}
+    main{max-width:680px;margin:70px auto;padding:28px;background:#fff;border:1px solid #cbdce7;border-radius:18px;box-shadow:0 12px 35px rgba(20,50,75,.12);text-align:center}
+    h1{margin-top:0;color:#0f2f59}p{font-size:17px;line-height:1.6}
+  </style>
+</head>
+<body><main>
+  <h1>Preparing Your Tax Watch Pro Update</h1>
+  <p>Your latest saved estimate is being loaded.</p>
+</main>
+<script>
+  try {
+    localStorage.setItem("tspTaxWatchUpdateContextV1", ${contextLiteral});
+    window.location.replace("/?taxWatchUpdate=1");
+  } catch (error) {
+    document.querySelector("main").innerHTML =
+      "<h1>Your update could not be opened</h1>" +
+      "<p>Your browser blocked the saved update context. Return to Tax Watch Pro and try again.</p>" +
+      "<p><a href='/client-portal#tax-watch'>Return to Tax Watch Pro</a></p>";
+  }
+</script>
+</body></html>`);
+  }
+);
+
+
+app.get(
   "/api/client-portal/tax-watch/update-context",
   requireClientPortalApiSession,
   async (req, res) => {

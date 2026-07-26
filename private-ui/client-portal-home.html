@@ -1754,7 +1754,7 @@
       width:100%;box-sizing:border-box;border:1px solid #a9c2d3;border-radius:12px;padding:13px 14px;font-size:16px;background:#fff;color:#17354e
     }
     .tax-watch-action-button{
-      border:0;border-radius:12px;padding:14px 20px;background:#0c6f5b;color:#fff;font-weight:900;font-size:15px;cursor:pointer
+      display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;border:0;border-radius:12px;padding:14px 20px;background:#0c6f5b;color:#fff;font-weight:900;font-size:15px;line-height:1.2;text-decoration:none;cursor:pointer
     }
     .tax-watch-action-button.secondary{background:#0f2f59}
     .tax-watch-action-button:disabled{opacity:.62;cursor:wait}
@@ -2230,7 +2230,7 @@
                 <p id="taxWatchNextAction">—</p>
               </div>
               <div class="tax-watch-actions">
-                <button class="tax-watch-action-button secondary" id="beginTaxWatchUpdateButton" type="button">Update My Tax Watch Estimate</button>
+                <a class="tax-watch-action-button secondary" id="beginTaxWatchUpdateButton" href="/client-portal/tax-watch/update-estimate">Update My Tax Watch Estimate</a>
                 <button class="portal-back-button" id="changeTaxWatchObjectiveButton" type="button">Change My Objective</button>
               </div>
             </div>
@@ -5488,7 +5488,6 @@
     );
 
 
-    document.getElementById("beginTaxWatchUpdateButton")?.addEventListener("click", beginTaxWatchEstimateUpdate);
     document.getElementById("taxWatchObjective")?.addEventListener("change", updateTaxWatchTargetVisibility);
     document.getElementById("startTaxWatchButton")?.addEventListener("click", saveTaxWatchProfile);
     document.getElementById("changeTaxWatchObjectiveButton")?.addEventListener("click", () => {
