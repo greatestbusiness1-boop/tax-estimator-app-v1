@@ -13665,6 +13665,363 @@ app.post(
 
 
 
+
+function taxWatchOrganizerEscapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function taxWatchOrganizerMoney(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  }).format(getTaxWatchNumber(value));
+}
+
+function taxWatchOrganizerLabel(value) {
+  return String(value || "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .trim();
+}
+
+function getTaxWatchOrganizerSources(snapshot = {}) {
+  const streams = Array.isArray(snapshot.selfEmploymentStreams)
+    ? snapshot.selfEmploymentStreams.slice(0, 2)
+    : [];
+
+  if (!streams.length) {
+    return [{
+      name: "Gig or Business Income",
+      income: getTaxWatchNumber(snapshot.selfEmploymentIncome),
+      mileage: 0,
+      expenses: [],
+      totalExpenses: getTaxWatchNumber(snapshot.businessExpenses)
+    }];
+  }
+
+  return streams.map((stream = {}, index) => {
+    const categoryObjects = [
+      stream.expenseCategories,
+      stream.categorizedExpenses,
+      stream.expensesByCategory,
+      stream.businessExpenseCategories
+    ].filter(
+      (value) =>
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+    );
+
+    const merged = Object.assign({}, ...categoryObjects);
+    const expenses = Object.entries(merged)
+      .map(([key, value]) => ({
+        label: taxWatchOrganizerLabel(key),
+        amount: getTaxWatchNumber(value)
+      }))
+      .filter((item) => item.amount > 0);
+
+    const directTotal = getTaxWatchNumber(
+      stream.totalExpenses ??
+      stream.businessExpenses ??
+      stream.expenses ??
+      stream.uncategorizedExpenses
+    );
+
+    const categorizedTotal = expenses.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
+
+    return {
+      name: String(
+        stream.sourceName ||
+        stream.businessName ||
+        stream.name ||
+        `Gig or Business Source ${index + 1}`
+      ),
+      income: getTaxWatchNumber(
+        stream.income ??
+        stream.incomeReceived ??
+        stream.selfEmploymentIncome ??
+        stream.grossIncome
+      ),
+      mileage: getTaxWatchNumber(
+        stream.mileage ??
+        stream.businessMileage
+      ),
+      expenses,
+      totalExpenses: Math.max(
+        directTotal,
+        categorizedTotal
+      )
+    };
+  });
+}
+
+function buildTaxWatchOrganizerHtml({
+  clientName = "Client",
+  email = "",
+  snapshot = {},
+  sent = false
+} = {}) {
+  const sources = getTaxWatchOrganizerSources(snapshot);
+  const income = sources.reduce(
+    (sum, source) => sum + getTaxWatchNumber(source.income),
+    0
+  ) || getTaxWatchNumber(snapshot.selfEmploymentIncome);
+  const expenses = sources.reduce(
+    (sum, source) => sum + getTaxWatchNumber(source.totalExpenses),
+    0
+  ) || getTaxWatchNumber(snapshot.businessExpenses);
+  const net = income - expenses;
+  const estimatedPayments =
+    getTaxWatchNumber(snapshot.estimatedTaxPayments);
+
+  const sourceCards = sources.map((source, index) => {
+    const rows = source.expenses.length
+      ? source.expenses.map((item) => `
+          <tr>
+            <td>${taxWatchOrganizerEscapeHtml(item.label)}</td>
+            <td>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(item.amount))}</td>
+          </tr>`).join("")
+      : `<tr><td colspan="2">No categorized expenses were entered for this source.</td></tr>`;
+
+    return `
+      <section class="source-card">
+        <div class="source-heading">
+          <div>
+            <span>Income source ${index + 1}</span>
+            <h2>${taxWatchOrganizerEscapeHtml(source.name)}</h2>
+          </div>
+          <strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(source.income))}</strong>
+        </div>
+        <div class="source-summary">
+          <div><span>Income entered</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(source.income))}</strong></div>
+          <div><span>Total expenses</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(source.totalExpenses))}</strong></div>
+          <div><span>Business mileage</span><strong>${Math.round(getTaxWatchNumber(source.mileage)).toLocaleString("en-US")} miles</strong></div>
+        </div>
+        <h3>Expense organizer</h3>
+        <table>
+          <thead><tr><th>Expense category</th><th>Amount entered</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>`;
+  }).join("");
+
+  const alerts = [];
+  if (income <= 0) alerts.push("No gig or business income was entered.");
+  if (expenses <= 0) alerts.push("No business expenses were entered.");
+  if (!sources.some((source) => source.mileage > 0)) {
+    alerts.push("No business mileage was entered. Review whether mileage records apply.");
+  }
+  if (estimatedPayments <= 0 && income > 0) {
+    alerts.push("No estimated tax payments were entered.");
+  }
+  alerts.push("Greatest Business Solution LLC must verify the tax treatment, documentation, and allowable amount of every expense.");
+
+  const sentBanner = sent
+    ? `<div class="success"><strong>Organizer sent.</strong> Greatest Business Solution LLC now has a professional-preparation request connected to this portal record.</div>`
+    : "";
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Business Income and Expense Organizer</title>
+  <style>
+    :root{--navy:#0f355d;--blue:#155b83;--gold:#c6922e;--ink:#17354e;--line:#cbdce7;--soft:#eef4f7;--green:#0c7b58}
+    *{box-sizing:border-box}body{margin:0;background:var(--soft);color:var(--ink);font-family:Arial,sans-serif}
+    .page{max-width:1080px;margin:28px auto;padding:0 18px 50px}.hero{background:linear-gradient(135deg,var(--navy),#177c7a);color:#fff;padding:30px;border-radius:22px}
+    .hero small{color:#ffd16b;font-weight:800;letter-spacing:.12em}.hero h1{font-size:38px;margin:8px 0}.hero p{font-size:17px;line-height:1.55;max-width:800px}
+    .client{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.client div,.summary div{background:#fff;color:var(--ink);padding:15px;border-radius:12px}
+    .client span,.summary span,.source-summary span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#5d7182;font-weight:800}
+    .client strong,.summary strong,.source-summary strong{display:block;font-size:20px;margin-top:5px}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.panel,.source-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 10px 30px rgba(20,50,75,.07)}
+    .source-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.source-heading span{color:var(--gold);font-weight:800;text-transform:uppercase;font-size:12px}.source-heading h2{margin:6px 0}.source-heading>strong{font-size:26px}
+    .source-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.source-summary div{background:#f5f9fb;padding:14px;border-radius:12px}
+    table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #dce7ed;text-align:left}th:last-child,td:last-child{text-align:right}
+    .notice{border-left:5px solid var(--gold);background:#fff7df}.success{background:#e8f7f1;border:1px solid #9fd7c3;color:#075b40;border-radius:14px;padding:16px;margin:18px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.actions a,.actions button{border:0;border-radius:11px;padding:13px 17px;font-weight:800;text-decoration:none;cursor:pointer}
+    .primary{background:var(--navy);color:#fff}.secondary{background:#fff;color:var(--navy);border:1px solid var(--navy)!important}.gold{background:var(--gold);color:#172f46}
+    ul{line-height:1.7}@media(max-width:760px){.client,.summary,.source-summary{grid-template-columns:1fr}.hero h1{font-size:29px}}
+    @media print{body{background:#fff}.actions{display:none}.page{margin:0;max-width:none}.panel,.source-card{box-shadow:none;break-inside:avoid}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <section class="hero">
+    <small>GREATEST BUSINESS SOLUTION LLC</small>
+    <h1>Business Income and Expense Organizer</h1>
+    <p>A plain-language summary of the business information entered through Tax Watch Pro. This is an organizer—not a completed Schedule C or tax return.</p>
+    <div class="client">
+      <div><span>Client</span><strong>${taxWatchOrganizerEscapeHtml(clientName)}</strong></div>
+      <div><span>Tax year</span><strong>${taxWatchOrganizerEscapeHtml(snapshot.taxYear || "Not recorded")}</strong></div>
+      <div><span>Portal email</span><strong style="font-size:16px">${taxWatchOrganizerEscapeHtml(email)}</strong></div>
+    </div>
+  </section>
+
+  ${sentBanner}
+
+  <section class="summary">
+    <div><span>Money earned</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(income))}</strong></div>
+    <div><span>Business expenses</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(expenses))}</strong></div>
+    <div><span>Money left after expenses</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(net))}</strong></div>
+    <div><span>Tax payments entered</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(estimatedPayments))}</strong></div>
+  </section>
+
+  ${sourceCards}
+
+  <section class="panel notice">
+    <h2>Items for Professional Review</h2>
+    <ul>${alerts.map((alert) => `<li>${taxWatchOrganizerEscapeHtml(alert)}</li>`).join("")}</ul>
+    <p><strong>Important:</strong> Greatest Business Solution LLC will determine the proper tax treatment, allowable amount, return placement, Schedule C preparation, and filing under a separate tax-preparation engagement.</p>
+  </section>
+
+  <section class="panel">
+    <h2>What happens next?</h2>
+    <p>You may print or save this organizer for your records. Sending it creates a professional-preparation request connected to your portal. It does not submit a tax return and does not replace the tax-preparation intake.</p>
+    <div class="actions">
+      <button class="primary" type="button" onclick="window.print()">Print / Save Organizer</button>
+      <form method="post" action="/client-portal/tax-watch/organizer/send" style="display:inline">
+        <button class="gold" type="submit">Send to Greatest Business Solution LLC</button>
+      </form>
+      <a class="secondary" href="/start-my-tax-return?return=tax-watch-pro">Continue to Start My Tax Return</a>
+      <a class="secondary" href="/client-portal/home#tax-watch">Return to Tax Watch Pro</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>`;
+}
+
+app.get(
+  "/client-portal/tax-watch/organizer",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session = req.clientPortalSession;
+    const accessible = await getClientPortalAccessibleLeads(
+      session.email
+    );
+
+    const candidates = accessible
+      .map((entry) => ({
+        entry,
+        snapshot: getTaxWatchSnapshot(entry)
+      }))
+      .filter((item) => item.snapshot)
+      .sort(
+        (left, right) =>
+          Date.parse(right.snapshot.recordedAt || 0) -
+          Date.parse(left.snapshot.recordedAt || 0)
+      );
+
+    const latest = candidates[0] || null;
+
+    if (!latest) {
+      return res.status(409).type("html").send(
+        "<h1>Organizer unavailable</h1><p>No saved Tax Watch estimate is connected to this portal.</p><p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>"
+      );
+    }
+
+    const lead = latest.entry.lead || {};
+    return res.status(200).type("html").send(
+      buildTaxWatchOrganizerHtml({
+        clientName:
+          lead.contact?.name ||
+          getLeadNameValue(latest.entry.raw) ||
+          "Client",
+        email: session.email,
+        snapshot: latest.snapshot,
+        sent: String(req.query?.sent || "") === "1"
+      })
+    );
+  }
+);
+
+app.post(
+  "/client-portal/tax-watch/organizer/send",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session = req.clientPortalSession;
+    const accessible = await getClientPortalAccessibleLeads(
+      session.email
+    );
+
+    const candidates = accessible
+      .map((entry) => ({
+        entry,
+        snapshot: getTaxWatchSnapshot(entry)
+      }))
+      .filter((item) => item.snapshot)
+      .sort(
+        (left, right) =>
+          Date.parse(right.snapshot.recordedAt || 0) -
+          Date.parse(left.snapshot.recordedAt || 0)
+      );
+
+    const latest = candidates[0] || null;
+
+    if (!latest?.snapshot?.leadId) {
+      return res.status(409).type("html").send(
+        "<h1>Organizer could not be sent</h1><p>No saved Tax Watch estimate is connected to this portal.</p><p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>"
+      );
+    }
+
+    const now = new Date().toISOString();
+    const sources = getTaxWatchOrganizerSources(latest.snapshot);
+    const organizer = {
+      version: 1,
+      status: "sent-for-professional-preparation",
+      sentAt: now,
+      taxYear: latest.snapshot.taxYear,
+      sourceLeadId: latest.snapshot.leadId,
+      sourceCount: sources.length,
+      totalIncome: getTaxWatchNumber(latest.snapshot.selfEmploymentIncome),
+      totalExpenses: getTaxWatchNumber(latest.snapshot.businessExpenses),
+      estimatedTaxPayments: getTaxWatchNumber(
+        latest.snapshot.estimatedTaxPayments
+      ),
+      sources
+    };
+
+    const result = await updateLeadAfterStripePayment(
+      latest.snapshot.leadId,
+      (record = {}) => ({
+        ...record,
+        taxWatchOrganizer: organizer,
+        latestClientAction:
+          "Business organizer sent for professional tax preparation",
+        latestClientActionAt: now,
+        updatedAt: now
+      })
+    );
+
+    if (!result.ok) {
+      return res.status(500).type("html").send(
+        "<h1>Organizer could not be sent</h1><p>Your organizer was not saved. Return to Tax Watch Pro and try again.</p><p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>"
+      );
+    }
+
+    return res.redirect(
+      303,
+      "/client-portal/tax-watch/organizer?sent=1"
+    );
+  }
+);
+
+
 app.get(
   "/client-portal/tax-watch/update-estimate",
   requireClientPortalApiSession,
