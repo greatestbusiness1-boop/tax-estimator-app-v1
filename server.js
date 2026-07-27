@@ -6625,7 +6625,7 @@ function buildClientPortalTaxWatchSummary(
   const trackerRecord =
     trackerEntry?.lead?.taxWatchMoneyTracker || {};
 
-  const trackerEntries = Array.isArray(
+  const rawTrackerEntries = Array.isArray(
     trackerRecord.entries
   )
     ? trackerRecord.entries
@@ -6638,13 +6638,34 @@ function buildClientPortalTaxWatchSummary(
           note: String(entry.note || ""),
           recordedAt: String(
             entry.recordedAt || ""
-          )
+          ),
+          estimatedTaxMoneyNeededAtEntry:
+            entry.estimatedTaxMoneyNeededAtEntry ===
+            undefined
+              ? null
+              : getTaxWatchNumber(
+                  entry.estimatedTaxMoneyNeededAtEntry
+                ),
+          savedBalanceAfterEntry:
+            entry.savedBalanceAfterEntry ===
+            undefined
+              ? null
+              : getTaxWatchNumber(
+                  entry.savedBalanceAfterEntry
+                ),
+          amountStillNeededAfterEntry:
+            entry.amountStillNeededAfterEntry ===
+            undefined
+              ? null
+              : getTaxWatchNumber(
+                  entry.amountStillNeededAfterEntry
+                )
         }))
         .filter((entry) => entry.amount > 0)
         .sort(
           (left, right) =>
-            Date.parse(right.recordedAt || 0) -
-            Date.parse(left.recordedAt || 0)
+            Date.parse(left.recordedAt || 0) -
+            Date.parse(right.recordedAt || 0)
         )
     : [];
 
@@ -6659,14 +6680,76 @@ function buildClientPortalTaxWatchSummary(
   const generalReserveBeforePayments = Math.round(netBusinessIncome * 0.25);
   const generalTaxReserve = Math.max(0, generalReserveBeforePayments - paymentsAlreadyMade);
   const estimatedAvailableToSpend = Math.max(0, netBusinessIncome - generalTaxReserve);
-  const reportedSaved = trackerEntries.reduce(
-    (sum, entry) => sum + entry.amount,
-    0
-  );
+
+  let calculatedSavedBalance = 0;
+  const trackerEntries = rawTrackerEntries
+    .map((entry) => {
+      calculatedSavedBalance =
+        Math.round(
+          (calculatedSavedBalance + entry.amount) * 100
+        ) / 100;
+
+      const hasEstimateSnapshot =
+        Number.isFinite(
+          entry.estimatedTaxMoneyNeededAtEntry
+        ) &&
+        entry.estimatedTaxMoneyNeededAtEntry >= 0;
+
+      const estimatedAtEntry =
+        hasEstimateSnapshot
+          ? entry.estimatedTaxMoneyNeededAtEntry
+          : generalTaxReserve;
+
+      const savedBalanceAfterEntry =
+        Number.isFinite(entry.savedBalanceAfterEntry) &&
+        entry.savedBalanceAfterEntry > 0
+          ? entry.savedBalanceAfterEntry
+          : calculatedSavedBalance;
+
+      const amountStillNeededAfterEntry =
+        Number.isFinite(
+          entry.amountStillNeededAfterEntry
+        ) &&
+        entry.amountStillNeededAfterEntry >= 0
+          ? entry.amountStillNeededAfterEntry
+          : Math.max(
+              0,
+              estimatedAtEntry -
+                savedBalanceAfterEntry
+            );
+
+      return {
+        id: entry.id,
+        amount: entry.amount,
+        note: entry.note,
+        recordedAt: entry.recordedAt,
+        estimatedTaxMoneyNeededAtEntry:
+          estimatedAtEntry,
+        savedBalanceAfterEntry,
+        amountStillNeededAfterEntry,
+        estimateSnapshotStored:
+          hasEstimateSnapshot
+      };
+    })
+    .sort(
+      (left, right) =>
+        Date.parse(right.recordedAt || 0) -
+        Date.parse(left.recordedAt || 0)
+    );
+
+  const reportedSaved =
+    Math.round(
+      rawTrackerEntries.reduce(
+        (sum, entry) => sum + entry.amount,
+        0
+      ) * 100
+    ) / 100;
+
   const stillNeeded = Math.max(
     0,
     generalTaxReserve - reportedSaved
   );
+
   const progressPercent =
     generalTaxReserve > 0
       ? Math.min(
@@ -6678,6 +6761,35 @@ function buildClientPortalTaxWatchSummary(
       : reportedSaved > 0
         ? 100
         : 0;
+
+  const trackerStatus =
+    reportedSaved <= 0
+      ? {
+          key: "none",
+          label: "No savings reported yet",
+          message:
+            "Add your first savings entry when you report setting money aside for taxes."
+        }
+      : stillNeeded <= 0
+        ? {
+            key: "reached",
+            label: "Target reached",
+            message:
+              "Your reported savings meet or exceed the current estimated tax money needed."
+          }
+        : progressPercent < 25
+          ? {
+              key: "behind",
+              label: "Behind target",
+              message:
+                "Your reported savings cover less than 25% of the current estimate. Keep building the balance."
+            }
+          : {
+              key: "progress",
+              label: "Making progress",
+              message:
+                "Your reported savings are building toward the current estimated tax money needed."
+            };
 
   return {
     available: Boolean(current),
@@ -6728,19 +6840,14 @@ function buildClientPortalTaxWatchSummary(
       moneyReportedSaved: reportedSaved,
       amountStillNeeded: stillNeeded,
       progressPercent,
-      statusLabel:
-        generalTaxReserve <= 0
-          ? "No tax savings target is currently estimated"
-          : stillNeeded <= 0
-            ? "Savings target met"
-            : reportedSaved > 0
-              ? "Savings started"
-              : "No savings reported yet",
+      statusKey: trackerStatus.key,
+      statusLabel: trackerStatus.label,
+      statusMessage: trackerStatus.message,
       latestEntryAt:
         trackerEntries[0]?.recordedAt || "",
-      entries: trackerEntries.slice(0, 24),
+      entries: trackerEntries,
       disclaimer:
-        "Savings entries are reported by the client and are not verified bank deposits."
+        "Savings entries are entered by the client and do not verify an actual bank deposit."
     },
     changes: getTaxWatchChangeDetails(previous, current),
     recommendedNextAction:
@@ -13892,14 +13999,48 @@ app.post(
     }
 
     const now = new Date().toISOString();
+    const roundedAmount =
+      Math.round(amount * 100) / 100;
+    const estimatedTaxMoneyNeededAtEntry =
+      Math.max(
+        0,
+        getTaxWatchNumber(
+          summary.moneyTracker
+            ?.estimatedTaxMoneyNeeded
+        )
+      );
+    const savedBalanceAfterEntry =
+      Math.round(
+        (
+          getTaxWatchNumber(
+            summary.moneyTracker
+              ?.moneyReportedSaved
+          ) +
+          roundedAmount
+        ) * 100
+      ) / 100;
+    const amountStillNeededAfterEntry =
+      Math.max(
+        0,
+        Math.round(
+          (
+            estimatedTaxMoneyNeededAtEntry -
+            savedBalanceAfterEntry
+          ) * 100
+        ) / 100
+      );
+
     const entry = {
       id: `TWS-${Date.now()}-${crypto
         .randomBytes(3)
         .toString("hex")
         .toUpperCase()}`,
-      amount: Math.round(amount * 100) / 100,
+      amount: roundedAmount,
       note,
-      recordedAt: now
+      recordedAt: now,
+      estimatedTaxMoneyNeededAtEntry,
+      savedBalanceAfterEntry,
+      amountStillNeededAfterEntry
     };
 
     const updateResult =
@@ -13923,12 +14064,12 @@ app.post(
             ...record,
             taxWatchMoneyTracker: {
               ...existing,
-              version: 1,
+              version: 2,
               updatedAt: now,
               entries: [
                 ...entries,
                 entry
-              ].slice(-120)
+              ]
             },
             latestClientAction:
               `Tax savings entry added: ${taxWatchOrganizerMoney(entry.amount)}`,
@@ -17995,9 +18136,8 @@ ${googleReviewUrl}
 
 Please share only what you are comfortable making public. For your privacy, do not include Social Security numbers, tax documents, bank information, refund amounts, tax balances, or other sensitive financial details.
 
-Thank you again for allowing me to assist you.
+Thank you again for allowing Greatest Business Solution LLC to assist you.
 
-Cedric Easley | Tax Specialist
 Greatest Business Solution LLC`
     });
 
