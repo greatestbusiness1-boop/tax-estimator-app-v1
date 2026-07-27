@@ -14076,9 +14076,18 @@ async function getLatestTaxWatchOrganizerContext(session) {
         Date.parse(left.snapshot.recordedAt || 0)
     );
 
+  const organizerEntry =
+    accessible.find(
+      (entry) =>
+        entry.lead?.taxWatchOrganizer &&
+        typeof entry.lead.taxWatchOrganizer === "object" &&
+        !Array.isArray(entry.lead.taxWatchOrganizer)
+    ) || null;
+
   return {
     accessible,
-    latest: candidates[0] || null
+    latest: candidates[0] || null,
+    organizerEntry
   };
 }
 
@@ -14111,7 +14120,7 @@ app.get(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const { latest } =
+    const { latest, organizerEntry } =
       await getLatestTaxWatchOrganizerContext(session);
 
     if (!latest) {
@@ -14121,25 +14130,35 @@ app.get(
     }
 
     const existing =
-      latest.entry.lead?.taxWatchOrganizer &&
-      typeof latest.entry.lead.taxWatchOrganizer === "object"
-        ? latest.entry.lead.taxWatchOrganizer
+      organizerEntry?.lead?.taxWatchOrganizer &&
+      typeof organizerEntry.lead.taxWatchOrganizer === "object"
+        ? organizerEntry.lead.taxWatchOrganizer
         : {};
 
     const organizer =
-      buildTaxWatchOrganizerRecord(
-        latest.snapshot,
-        existing
-      );
-
-    await updateLeadAfterStripePayment(
-      latest.snapshot.leadId,
-      (record = {}) => ({
-        ...record,
-        taxWatchOrganizer: organizer,
-        updatedAt: organizer.updatedAt
-      })
-    );
+      Object.keys(existing).length
+        ? buildTaxWatchOrganizerRecord(
+            latest.snapshot,
+            existing
+          )
+        : {
+            version: 2,
+            status: "ready",
+            createdAt: String(
+              latest.snapshot.recordedAt ||
+              new Date().toISOString()
+            ),
+            updatedAt: String(
+              latest.snapshot.recordedAt ||
+              new Date().toISOString()
+            ),
+            taxYear: latest.snapshot.taxYear,
+            sourceLeadId: latest.snapshot.leadId,
+            sourceCount:
+              getTaxWatchOrganizerSources(
+                latest.snapshot
+              ).length
+          };
 
     const lead = latest.entry.lead || {};
     return res.status(200).type("html").send(
@@ -14166,7 +14185,7 @@ app.post(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const { latest } =
+    const { latest, organizerEntry } =
       await getLatestTaxWatchOrganizerContext(session);
 
     if (!latest?.snapshot?.leadId) {
@@ -14177,9 +14196,9 @@ app.post(
 
     const now = new Date().toISOString();
     const existing =
-      latest.entry.lead?.taxWatchOrganizer &&
-      typeof latest.entry.lead.taxWatchOrganizer === "object"
-        ? latest.entry.lead.taxWatchOrganizer
+      organizerEntry?.lead?.taxWatchOrganizer &&
+      typeof organizerEntry.lead.taxWatchOrganizer === "object"
+        ? organizerEntry.lead.taxWatchOrganizer
         : {};
 
     const organizer = {
@@ -14261,7 +14280,7 @@ app.post(
     }
 
     const session = req.clientPortalSession;
-    const { latest } =
+    const { latest, organizerEntry } =
       await getLatestTaxWatchOrganizerContext(session);
 
     if (!latest?.snapshot?.leadId) {
@@ -14327,9 +14346,9 @@ app.post(
 
     const now = new Date().toISOString();
     const existing =
-      latest.entry.lead?.taxWatchOrganizer &&
-      typeof latest.entry.lead.taxWatchOrganizer === "object"
-        ? latest.entry.lead.taxWatchOrganizer
+      organizerEntry?.lead?.taxWatchOrganizer &&
+      typeof organizerEntry.lead.taxWatchOrganizer === "object"
+        ? organizerEntry.lead.taxWatchOrganizer
         : {};
 
     const organizer = {
