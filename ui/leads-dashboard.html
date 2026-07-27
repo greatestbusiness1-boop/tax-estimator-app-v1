@@ -3099,7 +3099,7 @@
         <input
           id="taxPrepSearchFilter"
           type="search"
-          placeholder="Name or email"
+          placeholder="Name, email, or reference"
           autocomplete="off"
         >
       </div>
@@ -3185,7 +3185,7 @@
         <input
           id="contactSearchFilter"
           type="search"
-          placeholder="Name, email, or phone"
+          placeholder="Name, email, phone, or reference"
           autocomplete="off"
         >
       </div>
@@ -3226,6 +3226,7 @@
           <option value="all">All lead types</option>
           <option value="written-review">Written Review</option>
           <option value="tax-preparation">Tax Preparation</option>
+          <option value="tax-watch-enrollment">Tax Watch Pro Enrollment</option>
           <option value="website-contact">Website Contact</option>
           <option value="transcript">Transcript</option>
           <option value="estimate">Free Estimate</option>
@@ -3245,7 +3246,7 @@
         <input
           id="allSearchFilter"
           type="search"
-          placeholder="Name or email"
+          placeholder="Name, email, or reference"
           autocomplete="off"
         >
       </div>
@@ -3286,6 +3287,7 @@
           <option value="all">All services</option>
           <option value="written-review">Written Review</option>
           <option value="tax-preparation">Tax Preparation</option>
+          <option value="tax-watch-enrollment">Tax Watch Pro Enrollment</option>
           <option value="website-contact">Website Contact</option>
           <option value="transcript">Transcript</option>
           <option value="other">Other</option>
@@ -3526,6 +3528,30 @@ function formatUSPhone(value){
   return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
 }
 
+function isTaxWatchEnrollmentLead(lead){
+  const service = String(
+    lead?.contactRequest?.service ||
+    lead?.Request?.service ||
+    ""
+  ).trim().toLowerCase();
+
+  const message = String(
+    lead?.contactRequest?.message ||
+    lead?.Request?.message ||
+    ""
+  ).toLowerCase();
+
+  return Boolean(
+    isWebsiteContactLead(lead) &&
+    service === "tax watch pro" &&
+    (
+      message.includes("enroll") ||
+      message.includes("monthly") ||
+      message.includes("annual")
+    )
+  );
+}
+
 function getAllLeadTypeKey(lead){
   const status = String(lead?.status || "").toLowerCase();
   const leadId = String(lead?.leadId || "").toLowerCase();
@@ -3570,6 +3596,10 @@ function getAllLeadTypeKey(lead){
     return "transcript";
   }
 
+  if(isTaxWatchEnrollmentLead(lead)){
+    return "tax-watch-enrollment";
+  }
+
   if(
     isWebsiteContactLead(lead) ||
     status.includes("contact request")
@@ -3593,6 +3623,7 @@ function getAllLeadTypeLabel(lead){
     "written-review": "Written Review",
     "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
+    "tax-watch-enrollment": "Tax Watch Pro Enrollment",
     "website-contact": "Website Contact",
     "transcript": "Transcript Help",
     "estimate": "Free Estimate",
@@ -3646,6 +3677,12 @@ function getAllLeadLatestAction(lead){
 
   if(lead?.Request?.officeWorkCompletedAt || lead?.completedAt){
     return "Office work completed";
+  }
+
+  if(isTaxWatchEnrollmentLead(lead)){
+    return getContactRepliedAt(lead)
+      ? "Tax Watch Pro enrollment request replied"
+      : "Tax Watch Pro enrollment request received";
   }
 
   if(getContactRepliedAt(lead)){
@@ -3704,11 +3741,17 @@ function matchesAllLeadFilters(lead){
 
   if(currentAllSearch){
     const haystack = [
+      lead?.leadId,
       lead?.contact?.name,
       lead?.contact?.email,
       lead?.contact?.phone,
       lead?.status,
-      getAllLeadTypeLabel(lead)
+      getAllLeadTypeLabel(lead),
+      lead?.contactRequest?.service,
+      lead?.contactRequest?.preferredContact,
+      lead?.contactRequest?.message,
+      lead?.Request?.service,
+      lead?.Request?.message
     ].join(" ").toLowerCase();
 
     if(!haystack.includes(currentAllSearch.toLowerCase())){
@@ -3859,6 +3902,10 @@ function getClosedServiceKey(lead){
     return "tax-preparation";
   }
 
+  if(isTaxWatchEnrollmentLead(lead)){
+    return "tax-watch-enrollment";
+  }
+
   if(
     isWebsiteContactLead(lead) ||
     status.includes("contact request")
@@ -3882,6 +3929,7 @@ function getClosedServiceLabel(lead){
     "written-review": "Written Review",
     "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
+    "tax-watch-enrollment": "Tax Watch Pro Enrollment",
     "website-contact": "Website Contact",
     "transcript": "Transcript",
     "other": "Other"
@@ -3916,10 +3964,16 @@ function matchesClosedFilters(lead){
 
   if(currentClosedSearch){
     const haystack = [
+      lead?.leadId,
       lead?.contact?.name,
       lead?.contact?.email,
+      lead?.contact?.phone,
       lead?.status,
-      getClosedServiceLabel(lead)
+      getClosedServiceLabel(lead),
+      lead?.contactRequest?.service,
+      lead?.contactRequest?.message,
+      lead?.Request?.service,
+      lead?.Request?.message
     ].join(" ").toLowerCase();
 
     if(!haystack.includes(currentClosedSearch.toLowerCase())){
@@ -4775,11 +4829,13 @@ function matchesContactAdvancedFilters(lead){
 
   if(currentContactSearch){
     const haystack = [
+      lead?.leadId,
       lead?.contact?.name,
       lead?.contact?.email,
       lead?.contact?.phone,
       getWebsiteContactService(lead),
       lead?.contactRequest?.preferredContact,
+      lead?.contactRequest?.message,
       lead?.status
     ].join(" ").toLowerCase();
 
@@ -6000,6 +6056,7 @@ function matchesTaxPrepAdvancedFilters(lead){
 
   if(currentTaxPrepSearch){
     const haystack = [
+      lead?.leadId,
       lead?.contact?.name,
       lead?.contact?.email,
       lead?.contact?.phone,
