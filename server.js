@@ -6556,6 +6556,22 @@ function buildClientPortalTaxWatchSummary(
 
   const profile =
     profileEntry?.lead?.taxWatchProfile || {};
+
+  const organizerEntry =
+    accessible.find(
+      (entry) =>
+        entry.lead?.taxWatchOrganizer &&
+        typeof entry.lead.taxWatchOrganizer === "object" &&
+        !Array.isArray(entry.lead.taxWatchOrganizer)
+    ) || null;
+
+  const organizerRecord =
+    organizerEntry?.lead?.taxWatchOrganizer || {};
+
+  const organizerStatus = String(
+    organizerRecord.status || ""
+  ).trim();
+
   const current = deduped[deduped.length - 1] || null;
   const previous = deduped[deduped.length - 2] || null;
   const baseline = profile.baselineSnapshot || deduped[0] || null;
@@ -6615,6 +6631,31 @@ function buildClientPortalTaxWatchSummary(
     changes: getTaxWatchChangeDetails(previous, current),
     recommendedNextAction:
       getTaxWatchRecommendedNextAction(profile, current),
+    organizer: {
+      exists: Boolean(organizerEntry),
+      status: organizerStatus || "not-created",
+      statusLabel:
+        organizerStatus === "sent-for-professional-preparation"
+          ? "Sent to Greatest Business Solution LLC"
+          : organizerStatus === "shared-with-tax-professional"
+            ? "Shared with My Tax Professional"
+            : organizerEntry
+              ? "Ready"
+              : "Not created",
+      createdAt: String(
+        organizerRecord.createdAt ||
+        organizerRecord.updatedAt ||
+        ""
+      ),
+      sentAt: String(organizerRecord.sentAt || ""),
+      sharedAt: String(organizerRecord.sharedAt || ""),
+      sharedWithName: String(
+        organizerRecord.sharedWithName || ""
+      ),
+      sharedWithEmail: String(
+        organizerRecord.sharedWithEmail || ""
+      )
+    },
     history: [...deduped].reverse().slice(0, 12)
   };
 }
@@ -13765,11 +13806,68 @@ function getTaxWatchOrganizerSources(snapshot = {}) {
   });
 }
 
+function buildTaxWatchOrganizerEmailHtml({
+  clientName = "Client",
+  snapshot = {},
+  sources = []
+} = {}) {
+  const income = sources.reduce(
+    (sum, source) => sum + getTaxWatchNumber(source.income),
+    0
+  ) || getTaxWatchNumber(snapshot.selfEmploymentIncome);
+
+  const expenses = sources.reduce(
+    (sum, source) => sum + getTaxWatchNumber(source.totalExpenses),
+    0
+  ) || getTaxWatchNumber(snapshot.businessExpenses);
+
+  const sourceSections = sources.map((source, index) => {
+    const expenseRows = source.expenses.length
+      ? source.expenses.map((item) => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #dbe5ec">${taxWatchOrganizerEscapeHtml(item.label)}</td>
+            <td style="padding:8px;border-bottom:1px solid #dbe5ec;text-align:right">${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(item.amount))}</td>
+          </tr>`).join("")
+      : `<tr><td colspan="2" style="padding:8px">No categorized expenses entered.</td></tr>`;
+
+    return `
+      <h3 style="color:#0f355d;margin:22px 0 8px">${taxWatchOrganizerEscapeHtml(source.name || `Income Source ${index + 1}`)}</h3>
+      <p><strong>Income entered:</strong> ${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(source.income))}<br>
+      <strong>Total expenses:</strong> ${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(source.totalExpenses))}<br>
+      <strong>Business mileage:</strong> ${Math.round(getTaxWatchNumber(source.mileage)).toLocaleString("en-US")} miles</p>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="padding:8px;text-align:left;border-bottom:2px solid #0f355d">Expense category</th><th style="padding:8px;text-align:right;border-bottom:2px solid #0f355d">Amount</th></tr></thead>
+        <tbody>${expenseRows}</tbody>
+      </table>`;
+  }).join("");
+
+  return `
+    <div style="font-family:Arial,sans-serif;color:#17354e;max-width:760px;margin:auto">
+      <div style="background:#0f355d;color:white;padding:24px;border-radius:14px">
+        <div style="color:#ffd16b;font-weight:700">GREATEST BUSINESS SOLUTION LLC</div>
+        <h1 style="margin:8px 0">Business Income and Expense Organizer</h1>
+        <p style="margin:0">Prepared from information entered by ${taxWatchOrganizerEscapeHtml(clientName)} through Tax Watch Pro.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0">
+        <div style="background:#eef4f7;padding:14px"><strong>Money earned</strong><br>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(income))}</div>
+        <div style="background:#eef4f7;padding:14px"><strong>Business expenses</strong><br>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(expenses))}</div>
+        <div style="background:#eef4f7;padding:14px"><strong>Money left after expenses</strong><br>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(income - expenses))}</div>
+      </div>
+      ${sourceSections}
+      <div style="margin-top:24px;padding:16px;background:#fff7df;border-left:5px solid #c6922e">
+        <strong>Important:</strong> This organizer summarizes information entered by the client. It is not a completed Schedule C, tax return, or determination that every listed expense is deductible. The receiving tax professional must verify the records and determine the proper tax treatment.
+      </div>
+    </div>`;
+}
+
 function buildTaxWatchOrganizerHtml({
   clientName = "Client",
   email = "",
   snapshot = {},
-  sent = false
+  organizer = {},
+  sent = false,
+  shared = false,
+  error = ""
 } = {}) {
   const sources = getTaxWatchOrganizerSources(snapshot);
   const income = sources.reduce(
@@ -13824,11 +13922,26 @@ function buildTaxWatchOrganizerHtml({
   if (estimatedPayments <= 0 && income > 0) {
     alerts.push("No estimated tax payments were entered.");
   }
-  alerts.push("Greatest Business Solution LLC must verify the tax treatment, documentation, and allowable amount of every expense.");
+  alerts.push("The tax professional preparing the return must verify the tax treatment, documentation, and allowable amount of every expense.");
 
   const sentBanner = sent
     ? `<div class="success"><strong>Organizer sent.</strong> Greatest Business Solution LLC now has a professional-preparation request connected to this portal record.</div>`
     : "";
+
+  const sharedBanner = shared
+    ? `<div class="success"><strong>Organizer shared.</strong> A copy was emailed to ${taxWatchOrganizerEscapeHtml(organizer.sharedWithName || organizer.sharedWithEmail || "your tax professional")}.</div>`
+    : "";
+
+  const errorBanner = error
+    ? `<div class="error"><strong>The organizer was not shared.</strong> ${taxWatchOrganizerEscapeHtml(error)}</div>`
+    : "";
+
+  const statusText =
+    organizer.status === "sent-for-professional-preparation"
+      ? "Sent to Greatest Business Solution LLC"
+      : organizer.status === "shared-with-tax-professional"
+        ? "Shared with My Tax Professional"
+        : "Ready";
 
   return `<!doctype html>
 <html lang="en">
@@ -13837,22 +13950,23 @@ function buildTaxWatchOrganizerHtml({
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Business Income and Expense Organizer</title>
   <style>
-    :root{--navy:#0f355d;--blue:#155b83;--gold:#c6922e;--ink:#17354e;--line:#cbdce7;--soft:#eef4f7;--green:#0c7b58}
+    :root{--navy:#0f355d;--blue:#155b83;--gold:#c6922e;--ink:#17354e;--line:#cbdce7;--soft:#eef4f7;--green:#0c7b58;--red:#8a1c1c}
     *{box-sizing:border-box}body{margin:0;background:var(--soft);color:var(--ink);font-family:Arial,sans-serif}
     .page{max-width:1080px;margin:28px auto;padding:0 18px 50px}.hero{background:linear-gradient(135deg,var(--navy),#177c7a);color:#fff;padding:30px;border-radius:22px}
     .hero small{color:#ffd16b;font-weight:800;letter-spacing:.12em}.hero h1{font-size:38px;margin:8px 0}.hero p{font-size:17px;line-height:1.55;max-width:800px}
-    .client{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.client div,.summary div{background:#fff;color:var(--ink);padding:15px;border-radius:12px}
+    .client{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.client div,.summary div{background:#fff;color:var(--ink);padding:15px;border-radius:12px}
     .client span,.summary span,.source-summary span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#5d7182;font-weight:800}
     .client strong,.summary strong,.source-summary strong{display:block;font-size:20px;margin-top:5px}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.panel,.source-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 10px 30px rgba(20,50,75,.07)}
     .source-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.source-heading span{color:var(--gold);font-weight:800;text-transform:uppercase;font-size:12px}.source-heading h2{margin:6px 0}.source-heading>strong{font-size:26px}
     .source-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.source-summary div{background:#f5f9fb;padding:14px;border-radius:12px}
     table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #dce7ed;text-align:left}th:last-child,td:last-child{text-align:right}
-    .notice{border-left:5px solid var(--gold);background:#fff7df}.success{background:#e8f7f1;border:1px solid #9fd7c3;color:#075b40;border-radius:14px;padding:16px;margin:18px 0}
+    .notice{border-left:5px solid var(--gold);background:#fff7df}.success{background:#e8f7f1;border:1px solid #9fd7c3;color:#075b40;border-radius:14px;padding:16px;margin:18px 0}.error{background:#fff0f0;border:1px solid #e0aaaa;color:var(--red);border-radius:14px;padding:16px;margin:18px 0}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.actions a,.actions button{border:0;border-radius:11px;padding:13px 17px;font-weight:800;text-decoration:none;cursor:pointer}
     .primary{background:var(--navy);color:#fff}.secondary{background:#fff;color:var(--navy);border:1px solid var(--navy)!important}.gold{background:var(--gold);color:#172f46}
-    ul{line-height:1.7}@media(max-width:760px){.client,.summary,.source-summary{grid-template-columns:1fr}.hero h1{font-size:29px}}
-    @media print{body{background:#fff}.actions{display:none}.page{margin:0;max-width:none}.panel,.source-card{box-shadow:none;break-inside:avoid}}
+    .share-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.share-grid label{font-weight:800}.share-grid input,.share-grid textarea{width:100%;padding:12px;border:1px solid #b8cbd7;border-radius:9px;margin-top:6px}.share-message{grid-column:1/-1}
+    ul{line-height:1.7}@media(max-width:760px){.client,.summary,.source-summary,.share-grid{grid-template-columns:1fr}.hero h1{font-size:29px}.share-message{grid-column:auto}}
+    @media print{body{background:#fff}.actions,.share-panel{display:none}.page{margin:0;max-width:none}.panel,.source-card{box-shadow:none;break-inside:avoid}}
   </style>
 </head>
 <body>
@@ -13864,11 +13978,14 @@ function buildTaxWatchOrganizerHtml({
     <div class="client">
       <div><span>Client</span><strong>${taxWatchOrganizerEscapeHtml(clientName)}</strong></div>
       <div><span>Tax year</span><strong>${taxWatchOrganizerEscapeHtml(snapshot.taxYear || "Not recorded")}</strong></div>
-      <div><span>Portal email</span><strong style="font-size:16px">${taxWatchOrganizerEscapeHtml(email)}</strong></div>
+      <div><span>Organizer status</span><strong>${taxWatchOrganizerEscapeHtml(statusText)}</strong></div>
+      <div><span>Portal email</span><strong style="font-size:15px">${taxWatchOrganizerEscapeHtml(email)}</strong></div>
     </div>
   </section>
 
   ${sentBanner}
+  ${sharedBanner}
+  ${errorBanner}
 
   <section class="summary">
     <div><span>Money earned</span><strong>${taxWatchOrganizerEscapeHtml(taxWatchOrganizerMoney(income))}</strong></div>
@@ -13882,12 +13999,12 @@ function buildTaxWatchOrganizerHtml({
   <section class="panel notice">
     <h2>Items for Professional Review</h2>
     <ul>${alerts.map((alert) => `<li>${taxWatchOrganizerEscapeHtml(alert)}</li>`).join("")}</ul>
-    <p><strong>Important:</strong> Greatest Business Solution LLC will determine the proper tax treatment, allowable amount, return placement, Schedule C preparation, and filing under a separate tax-preparation engagement.</p>
+    <p><strong>Important:</strong> This organizer belongs to the client. Greatest Business Solution LLC may prepare the return, or the client may provide this organizer to another qualified tax professional. The tax professional selected by the client must determine the proper tax treatment, allowable amount, return placement, Schedule C preparation, and filing.</p>
   </section>
 
   <section class="panel">
-    <h2>What happens next?</h2>
-    <p>You may print or save this organizer for your records. Sending it creates a professional-preparation request connected to your portal. It does not submit a tax return and does not replace the tax-preparation intake.</p>
+    <h2>Your Organizer Choices</h2>
+    <p>Keep a copy, send it to Greatest Business Solution LLC, or share it with the qualified tax professional of your choice.</p>
     <div class="actions">
       <button class="primary" type="button" onclick="window.print()">Print / Save Organizer</button>
       <form method="post" action="/client-portal/tax-watch/organizer/send" style="display:inline">
@@ -13897,9 +14014,75 @@ function buildTaxWatchOrganizerHtml({
       <a class="secondary" href="/client-portal/home#tax-watch">Return to Tax Watch Pro</a>
     </div>
   </section>
+
+  <section class="panel share-panel">
+    <h2>Share With My Tax Professional</h2>
+    <p>Enter the qualified tax professional you selected. The system will email a copy of this organizer and will not send Social Security numbers, bank information, tax documents, or portal passwords.</p>
+    <form method="post" action="/client-portal/tax-watch/organizer/share">
+      <div class="share-grid">
+        <label>Tax professional's name
+          <input name="professionalName" maxlength="120" required>
+        </label>
+        <label>Tax professional's email
+          <input name="professionalEmail" type="email" maxlength="200" required>
+        </label>
+        <label class="share-message">Optional message
+          <textarea name="message" rows="4" maxlength="800" placeholder="Example: Please use this organizer when preparing my return."></textarea>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit">Email Organizer to My Tax Professional</button>
+      </div>
+    </form>
+  </section>
 </main>
 </body>
 </html>`;
+}
+
+async function getLatestTaxWatchOrganizerContext(session) {
+  const accessible = await getClientPortalAccessibleLeads(
+    session.email
+  );
+
+  const candidates = accessible
+    .map((entry) => ({
+      entry,
+      snapshot: getTaxWatchSnapshot(entry)
+    }))
+    .filter((item) => item.snapshot)
+    .sort(
+      (left, right) =>
+        Date.parse(right.snapshot.recordedAt || 0) -
+        Date.parse(left.snapshot.recordedAt || 0)
+    );
+
+  return {
+    accessible,
+    latest: candidates[0] || null
+  };
+}
+
+function buildTaxWatchOrganizerRecord(snapshot = {}, existing = {}) {
+  const now = new Date().toISOString();
+  const sources = getTaxWatchOrganizerSources(snapshot);
+
+  return {
+    ...existing,
+    version: 2,
+    status: String(existing.status || "ready"),
+    createdAt: String(existing.createdAt || now),
+    updatedAt: now,
+    taxYear: snapshot.taxYear,
+    sourceLeadId: snapshot.leadId,
+    sourceCount: sources.length,
+    totalIncome: getTaxWatchNumber(snapshot.selfEmploymentIncome),
+    totalExpenses: getTaxWatchNumber(snapshot.businessExpenses),
+    estimatedTaxPayments: getTaxWatchNumber(
+      snapshot.estimatedTaxPayments
+    ),
+    sources
+  };
 }
 
 app.get(
@@ -13909,29 +14092,35 @@ app.get(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const accessible = await getClientPortalAccessibleLeads(
-      session.email
-    );
-
-    const candidates = accessible
-      .map((entry) => ({
-        entry,
-        snapshot: getTaxWatchSnapshot(entry)
-      }))
-      .filter((item) => item.snapshot)
-      .sort(
-        (left, right) =>
-          Date.parse(right.snapshot.recordedAt || 0) -
-          Date.parse(left.snapshot.recordedAt || 0)
-      );
-
-    const latest = candidates[0] || null;
+    const { latest } =
+      await getLatestTaxWatchOrganizerContext(session);
 
     if (!latest) {
       return res.status(409).type("html").send(
         "<h1>Organizer unavailable</h1><p>No saved Tax Watch estimate is connected to this portal.</p><p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>"
       );
     }
+
+    const existing =
+      latest.entry.lead?.taxWatchOrganizer &&
+      typeof latest.entry.lead.taxWatchOrganizer === "object"
+        ? latest.entry.lead.taxWatchOrganizer
+        : {};
+
+    const organizer =
+      buildTaxWatchOrganizerRecord(
+        latest.snapshot,
+        existing
+      );
+
+    await updateLeadAfterStripePayment(
+      latest.snapshot.leadId,
+      (record = {}) => ({
+        ...record,
+        taxWatchOrganizer: organizer,
+        updatedAt: organizer.updatedAt
+      })
+    );
 
     const lead = latest.entry.lead || {};
     return res.status(200).type("html").send(
@@ -13942,7 +14131,10 @@ app.get(
           "Client",
         email: session.email,
         snapshot: latest.snapshot,
-        sent: String(req.query?.sent || "") === "1"
+        organizer,
+        sent: String(req.query?.sent || "") === "1",
+        shared: String(req.query?.shared || "") === "1",
+        error: String(req.query?.error || "")
       })
     );
   }
@@ -13955,23 +14147,8 @@ app.post(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const accessible = await getClientPortalAccessibleLeads(
-      session.email
-    );
-
-    const candidates = accessible
-      .map((entry) => ({
-        entry,
-        snapshot: getTaxWatchSnapshot(entry)
-      }))
-      .filter((item) => item.snapshot)
-      .sort(
-        (left, right) =>
-          Date.parse(right.snapshot.recordedAt || 0) -
-          Date.parse(left.snapshot.recordedAt || 0)
-      );
-
-    const latest = candidates[0] || null;
+    const { latest } =
+      await getLatestTaxWatchOrganizerContext(session);
 
     if (!latest?.snapshot?.leadId) {
       return res.status(409).type("html").send(
@@ -13980,20 +14157,20 @@ app.post(
     }
 
     const now = new Date().toISOString();
-    const sources = getTaxWatchOrganizerSources(latest.snapshot);
+    const existing =
+      latest.entry.lead?.taxWatchOrganizer &&
+      typeof latest.entry.lead.taxWatchOrganizer === "object"
+        ? latest.entry.lead.taxWatchOrganizer
+        : {};
+
     const organizer = {
-      version: 1,
+      ...buildTaxWatchOrganizerRecord(
+        latest.snapshot,
+        existing
+      ),
       status: "sent-for-professional-preparation",
       sentAt: now,
-      taxYear: latest.snapshot.taxYear,
-      sourceLeadId: latest.snapshot.leadId,
-      sourceCount: sources.length,
-      totalIncome: getTaxWatchNumber(latest.snapshot.selfEmploymentIncome),
-      totalExpenses: getTaxWatchNumber(latest.snapshot.businessExpenses),
-      estimatedTaxPayments: getTaxWatchNumber(
-        latest.snapshot.estimatedTaxPayments
-      ),
-      sources
+      updatedAt: now
     };
 
     const result = await updateLeadAfterStripePayment(
@@ -14017,6 +14194,152 @@ app.post(
     return res.redirect(
       303,
       "/client-portal/tax-watch/organizer?sent=1"
+    );
+  }
+);
+
+app.post(
+  "/client-portal/tax-watch/organizer/share",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const professionalName = String(
+      req.body?.professionalName || ""
+    ).trim();
+
+    const professionalEmail = String(
+      req.body?.professionalEmail || ""
+    ).trim().toLowerCase();
+
+    const message = String(
+      req.body?.message || ""
+    ).trim().slice(0, 800);
+
+    if (
+      !professionalName ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        professionalEmail
+      )
+    ) {
+      return res.redirect(
+        303,
+        "/client-portal/tax-watch/organizer?error=" +
+        encodeURIComponent(
+          "Enter the tax professional's name and a valid email address."
+        )
+      );
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      return res.redirect(
+        303,
+        "/client-portal/tax-watch/organizer?error=" +
+        encodeURIComponent(
+          "Email delivery is not configured right now. Use Print / Save Organizer and share the saved copy directly."
+        )
+      );
+    }
+
+    const session = req.clientPortalSession;
+    const { latest } =
+      await getLatestTaxWatchOrganizerContext(session);
+
+    if (!latest?.snapshot?.leadId) {
+      return res.redirect(
+        303,
+        "/client-portal/tax-watch/organizer?error=" +
+        encodeURIComponent(
+          "No saved Tax Watch estimate is connected to this portal."
+        )
+      );
+    }
+
+    const clientName =
+      latest.entry.lead?.contact?.name ||
+      getLeadNameValue(latest.entry.raw) ||
+      "Client";
+
+    const sources =
+      getTaxWatchOrganizerSources(latest.snapshot);
+
+    const emailHtml =
+      buildTaxWatchOrganizerEmailHtml({
+        clientName,
+        snapshot: latest.snapshot,
+        sources
+      });
+
+    const optionalMessage = message
+      ? `<p><strong>Message from ${taxWatchOrganizerEscapeHtml(clientName)}:</strong><br>${taxWatchOrganizerEscapeHtml(message).replace(/\n/g, "<br>")}</p>`
+      : "";
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: professionalEmail,
+        replyTo: session.email,
+        subject:
+          `${clientName} shared a Business Income and Expense Organizer`,
+        text:
+          `${clientName} shared a Business Income and Expense Organizer with you.\n\n` +
+          (message ? `Message: ${message}\n\n` : "") +
+          "This organizer is not a completed Schedule C or tax return. The receiving tax professional must verify the records and determine the proper tax treatment.",
+        html:
+          `<p>Hello ${taxWatchOrganizerEscapeHtml(professionalName)},</p>` +
+          `<p>${taxWatchOrganizerEscapeHtml(clientName)} selected you to receive a copy of their Business Income and Expense Organizer.</p>` +
+          optionalMessage +
+          emailHtml
+      });
+    } catch (error) {
+      console.error(
+        "[tax-watch-organizer-share]",
+        error.message
+      );
+
+      return res.redirect(
+        303,
+        "/client-portal/tax-watch/organizer?error=" +
+        encodeURIComponent(
+          "The email could not be sent. Confirm the address or use Print / Save Organizer."
+        )
+      );
+    }
+
+    const now = new Date().toISOString();
+    const existing =
+      latest.entry.lead?.taxWatchOrganizer &&
+      typeof latest.entry.lead.taxWatchOrganizer === "object"
+        ? latest.entry.lead.taxWatchOrganizer
+        : {};
+
+    const organizer = {
+      ...buildTaxWatchOrganizerRecord(
+        latest.snapshot,
+        existing
+      ),
+      status: "shared-with-tax-professional",
+      sharedAt: now,
+      sharedWithName: professionalName,
+      sharedWithEmail: professionalEmail,
+      updatedAt: now
+    };
+
+    await updateLeadAfterStripePayment(
+      latest.snapshot.leadId,
+      (record = {}) => ({
+        ...record,
+        taxWatchOrganizer: organizer,
+        latestClientAction:
+          "Business organizer shared with client's tax professional",
+        latestClientActionAt: now,
+        updatedAt: now
+      })
+    );
+
+    return res.redirect(
+      303,
+      "/client-portal/tax-watch/organizer?shared=1"
     );
   }
 );

@@ -2267,9 +2267,13 @@
             <h3>Your Records Stay Organized. Professional Tax Preparation Stays Separate.</h3>
             <p>Tax Watch Pro helps organize income and expenses. Greatest Business Solution LLC determines the final tax treatment, prepares Schedule C and the complete return, and handles filing as a separate professional service.</p>
             <div class="tax-watch-actions">
-              <a class="tax-watch-action-button secondary" href="/client-portal/tax-watch/organizer">Create My Business Organizer</a>
+              <a class="tax-watch-action-button secondary" id="taxWatchOrganizerButton" href="/client-portal/tax-watch/organizer">Create My Business Organizer</a>
             </div>
-            <p class="tax-watch-credit-note"><strong>Annual membership benefit:</strong> Eligible annual Tax Watch Pro and Pinnacle members may receive a $20 credit toward professional tax preparation. The credit is noncash, nontransferable, and cannot be stacked.</p>
+            <div class="tax-watch-cash-note" id="taxWatchOrganizerStatus">
+              <strong>Organizer status:</strong> Not created
+            </div>
+            <p class="tax-watch-credit-note"><strong>Your choice:</strong> Use Greatest Business Solution LLC for professional tax preparation, or print, save, and share your organizer with the qualified tax professional of your choice.</p>
+            <p class="tax-watch-credit-note"><strong>Annual membership benefit:</strong> Eligible annual Tax Watch Pro and Pinnacle members may receive a $20 credit toward professional tax preparation by Greatest Business Solution LLC. The credit is noncash, nontransferable, and cannot be stacked.</p>
           </div>
 
           <div class="tax-watch-panel">
@@ -4675,6 +4679,34 @@
       document.getElementById("taxWatchBusinessExpenses").textContent = taxWatchMoney(cash.organizedExpenses || 0);
       document.getElementById("taxWatchGeneralReserve").textContent = taxWatchMoney(cash.generalTaxReserve || 0);
       document.getElementById("taxWatchAvailableToSpend").textContent = taxWatchMoney(cash.estimatedAvailableToSpend || 0);
+
+      const organizer = taxWatch.organizer || {};
+      const organizerButton = document.getElementById("taxWatchOrganizerButton");
+      const organizerStatus = document.getElementById("taxWatchOrganizerStatus");
+
+      if (organizerButton) {
+        organizerButton.textContent = organizer.exists
+          ? organizer.status === "sent-for-professional-preparation"
+            ? "Organizer Sent — Open My Business Organizer"
+            : organizer.status === "shared-with-tax-professional"
+              ? "Organizer Shared — Open My Business Organizer"
+              : "Open My Business Organizer"
+          : "Create My Business Organizer";
+      }
+
+      if (organizerStatus) {
+        const detail = organizer.statusLabel || "Not created";
+        const dateValue =
+          organizer.sentAt ||
+          organizer.sharedAt ||
+          organizer.createdAt ||
+          "";
+        organizerStatus.innerHTML =
+          `<strong>Organizer status:</strong> ${escapeHtml(detail)}` +
+          (dateValue
+            ? `<br><strong>Last activity:</strong> ${escapeHtml(formatDate(dateValue, true))}`
+            : "");
+      }
 
       const changeList = document.getElementById("taxWatchChangeList");
       changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])
