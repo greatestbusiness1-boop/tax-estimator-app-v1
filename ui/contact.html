@@ -67,6 +67,18 @@
       color: #0f2f59;
       border: 1px solid #0f2f59;
     }
+    .enrollment-summary {
+      display: none;
+      margin: 0 0 22px;
+      padding: 16px 18px;
+      border: 1px solid #b8cee0;
+      border-left: 5px solid #0f5f4a;
+      border-radius: 10px;
+      background: #eef8f4;
+      color: #173a32;
+    }
+    .enrollment-summary.show { display: block; }
+    .enrollment-summary strong { color: #0f2f59; }
     .notice {
       background: #fff8e8;
       border-left: 4px solid #c69a37;
@@ -105,8 +117,9 @@
 <body>
   <main class="page">
     <div class="brand">Greatest Business Solution LLC</div>
-    <h1>Contact Us</h1>
-    <p class="intro">Send a contact request without opening an outside email program. We will receive the request in the Tax Lead Center and by email.</p>
+    <h1 id="contactPageTitle">Contact Us</h1>
+    <p class="intro" id="contactPageIntro">Send a contact request without opening an outside email program. We will receive the request in the Tax Lead Center and by email.</p>
+    <div class="enrollment-summary" id="enrollmentSummary" role="status"></div>
 
 
     <form id="contactForm">
@@ -177,9 +190,41 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const serviceFromUrl = params.get("service");
+    const serviceFromUrl = String(params.get("service") || "").trim();
+    const planFromUrl = String(params.get("plan") || "").trim().toLowerCase();
     const returnFromUrl = params.get("return") || "";
     const returnLink = document.getElementById("returnServicePageLink");
+    const serviceSelect = document.getElementById("service");
+    const phoneInput = document.getElementById("phone");
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const messageInput = document.getElementById("message");
+    const submitButton = document.getElementById("submitButton");
+    const pageTitle = document.getElementById("contactPageTitle");
+    const pageIntro = document.getElementById("contactPageIntro");
+    const enrollmentSummary = document.getElementById("enrollmentSummary");
+
+    const taxWatchEnrollmentPlans = {
+      monthly: {
+        label: "Monthly",
+        price: "$11.99 per month"
+      },
+      annual: {
+        label: "Annual",
+        price: "$119 per year"
+      }
+    };
+
+    const selectedEnrollmentPlan = taxWatchEnrollmentPlans[planFromUrl] || null;
+    const normalizedServiceFromUrl = serviceFromUrl.toLowerCase();
+    const isTaxWatchEnrollment = Boolean(
+      selectedEnrollmentPlan &&
+      (
+        normalizedServiceFromUrl === "tax watch pro" ||
+        normalizedServiceFromUrl === "tax watch pro monthly membership" ||
+        normalizedServiceFromUrl === "tax watch pro annual membership"
+      )
+    );
 
     if (returnLink && returnFromUrl === "plans-pricing") {
       returnLink.href = "/plans-pricing";
@@ -187,9 +232,10 @@
     } else if (returnLink && returnFromUrl === "professional-tax-services") {
       returnLink.href = "/professional-tax-services";
       returnLink.textContent = "Return to Professional Tax Services";
+    } else if (returnLink && returnFromUrl === "client-portal") {
+      returnLink.href = "/client-portal/home#tax-watch";
+      returnLink.textContent = "Return to Tax Money Tracker";
     }
-    const serviceSelect = document.getElementById("service");
-    const phoneInput = document.getElementById("phone");
 
     function formatPhoneInput(value) {
       const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -209,9 +255,14 @@
       phoneInput.value = formatPhoneInput(phoneInput.value);
     });
 
-    if (serviceFromUrl) {
+    function selectRequestedService() {
+      if (!serviceFromUrl) return;
+
+      const requestedService = normalizedServiceFromUrl.startsWith("tax watch pro")
+        ? "Tax Watch Pro"
+        : serviceFromUrl;
       const matchingOption = Array.from(serviceSelect.options).find(
-        (option) => option.value.toLowerCase() === serviceFromUrl.toLowerCase()
+        (option) => option.value.toLowerCase() === requestedService.toLowerCase()
       );
 
       if (matchingOption) {
@@ -219,24 +270,71 @@
       }
     }
 
+    function applyEnrollmentDefaults() {
+      selectRequestedService();
+
+      if (!isTaxWatchEnrollment) return;
+
+      const planLabel = selectedEnrollmentPlan.label;
+      const planPrice = selectedEnrollmentPlan.price;
+      document.title = `Tax Watch Pro ${planLabel} Enrollment Request | Greatest Business Solution LLC`;
+      pageTitle.textContent = "Tax Watch Pro Enrollment Request";
+      pageIntro.textContent = "Send a secure enrollment request for the plan you selected. This form does not charge you or activate recurring billing.";
+      enrollmentSummary.className = "enrollment-summary show";
+      enrollmentSummary.innerHTML =
+        `<strong>Selected plan:</strong> Tax Watch Pro — ${planLabel} — ${planPrice}<br>` +
+        "<strong>No charge from this request.</strong> Greatest Business Solution LLC will provide the secure enrollment steps before any payment is authorized.";
+      messageInput.value =
+        `I would like to enroll in Tax Watch Pro — ${planLabel} — ${planPrice}. ` +
+        "I understand this enrollment request does not create a charge or activate recurring billing. " +
+        "Please send me the secure enrollment steps.";
+      submitButton.textContent = "Send Enrollment Request";
+    }
+
+    async function prefillPortalIdentity() {
+      if (returnFromUrl !== "client-portal") return;
+
+      try {
+        const response = await fetch("/api/client-portal/session", {
+          credentials: "same-origin",
+          cache: "no-store"
+        });
+        const result = await response.json().catch(() => ({}));
+        const portal = result.portal || {};
+
+        if (response.ok && result.ok) {
+          if (!nameInput.value.trim()) {
+            nameInput.value = String(portal.clientName || "").trim();
+          }
+          if (!emailInput.value.trim()) {
+            emailInput.value = String(portal.email || portal.username || "").trim();
+          }
+        }
+      } catch (error) {
+        // The form remains usable when a portal session cannot be read.
+      }
+    }
+
+    applyEnrollmentDefaults();
+    prefillPortalIdentity();
+
     document.getElementById("contactForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const submitButton = document.getElementById("submitButton");
       const formMessage = document.getElementById("formMessage");
 
       submitButton.disabled = true;
-      submitButton.textContent = "Sending...";
+      submitButton.textContent = isTaxWatchEnrollment ? "Sending Enrollment Request..." : "Sending...";
       formMessage.className = "message";
       formMessage.textContent = "";
 
       const payload = {
-        name: document.getElementById("name").value.trim(),
-        email: document.getElementById("email").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput.value.trim(),
         preferredContact: document.getElementById("preferredContact").value,
-        service: document.getElementById("service").value,
-        message: document.getElementById("message").value.trim()
+        service: serviceSelect.value,
+        message: messageInput.value.trim()
       };
 
       try {
@@ -259,18 +357,15 @@
 
         formMessage.className = "message success";
         formMessage.innerHTML =
-          "Your contact request was received. Reference: " +
+          (isTaxWatchEnrollment
+            ? "Your Tax Watch Pro enrollment request was received. Reference: "
+            : "Your contact request was received. Reference: ") +
           result.leadId +
           (window.serviceReturnActionHtml ? window.serviceReturnActionHtml() : "");
 
         event.target.reset();
-
-        if (serviceFromUrl) {
-          const matchingOption = Array.from(serviceSelect.options).find(
-            (option) => option.value.toLowerCase() === serviceFromUrl.toLowerCase()
-          );
-          if (matchingOption) serviceSelect.value = matchingOption.value;
-        }
+        applyEnrollmentDefaults();
+        await prefillPortalIdentity();
       } catch (error) {
         formMessage.className = "message error";
         formMessage.textContent =
@@ -279,7 +374,7 @@
             : "The request could not be sent. Please try again.";
       } finally {
         submitButton.disabled = false;
-        submitButton.textContent = "Send Contact Request";
+        submitButton.textContent = isTaxWatchEnrollment ? "Send Enrollment Request" : "Send Contact Request";
       }
     });
   </script>
@@ -300,6 +395,10 @@
     "portal-professional-services": {
       href: "/client-portal/home#professional-tax-services",
       label: "Return to Professional Tax Services"
+    },
+    "client-portal": {
+      href: "/client-portal/home#tax-watch",
+      label: "Return to Tax Money Tracker"
     }
   };
   const primary = destinations[source] || {
