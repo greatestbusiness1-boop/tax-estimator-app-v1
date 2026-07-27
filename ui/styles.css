@@ -5000,3 +5000,13 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
     flex-direction: column;
   }
 }
+
+
+/* Tax Watch Pro V2.8.0 categorized business organizer */
+.tax-watch-expense-details{margin-top:16px;border-top:1px solid #d8e3eb;padding-top:14px}
+.tax-watch-expense-details summary{cursor:pointer;font-weight:800;color:#173f67}
+.tax-watch-expense-guidance{margin:12px 0;color:#526779;line-height:1.55}
+.tax-watch-expense-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tax-watch-expense-field{margin:0}
+@media(max-width:900px){.tax-watch-expense-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.tax-watch-expense-grid{grid-template-columns:1fr}}

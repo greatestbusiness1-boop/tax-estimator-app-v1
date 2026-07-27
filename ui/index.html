@@ -996,17 +996,84 @@
                 <div class="field-row cols-2">
                   <div class="field-group">
                     <label class="field-label" for="selfEmploymentIncome">Income received</label>
-                    <div class="dollar-input">
-                      <input type="number" id="selfEmploymentIncome" placeholder="0" min="0" />
-                    </div>
+                    <div class="dollar-input"><input type="number" id="selfEmploymentIncome" placeholder="0" min="0" /></div>
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="businessExpenses">Business expenses</label>
-                    <div class="dollar-input">
-                      <input type="number" id="businessExpenses" placeholder="0" min="0" />
-                    </div>
+                    <label class="field-label" for="businessExpenses">Uncategorized expenses</label>
+                    <div class="dollar-input"><input type="number" id="businessExpenses" placeholder="0" min="0" /></div>
+                    <div class="field-hint">Use this only for an amount you have not placed into a category below.</div>
                   </div>
                 </div>
+                <details class="tax-watch-expense-details">
+                  <summary>Organize expenses by common business category</summary>
+                  <p class="tax-watch-expense-guidance">These categories organize your records. Greatest Business Solution LLC will determine the final tax treatment and return placement during professional tax preparation.</p>
+                  <div class="tax-watch-expense-grid">
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_advertising">Advertising</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_advertising" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_contractLabor">Contract labor</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_contractLabor" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_insurance">Business insurance</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_insurance" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_legalProfessional">Legal and professional fees</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_legalProfessional" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_officeExpense">Office expense</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_officeExpense" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_equipmentRent">Rent or lease — equipment</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_equipmentRent" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_repairs">Repairs and maintenance</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_repairs" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_supplies">Supplies</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_supplies" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_taxesLicenses">Taxes and licenses</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_taxesLicenses" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_travel">Business travel</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_travel" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_meals">Business meals</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_meals" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_utilities">Utilities</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_utilities" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_platformFees">Merchant and platform fees</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_platformFees" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_softwareSubscriptions">Software and subscriptions</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_softwareSubscriptions" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_phoneInternet">Business-use phone and internet</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_phoneInternet" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource1Expense_other">Other business expenses</label>
+                      <div class="dollar-input"><input type="number" id="businessSource1Expense_other" min="0" placeholder="0" /></div>
+                    </div>
+                  </div>
+                </details>
               </div>
 
               <div class="tax-watch-source-card">
@@ -1018,17 +1085,84 @@
                 <div class="field-row cols-2">
                   <div class="field-group">
                     <label class="field-label" for="businessSource2Income">Income received</label>
-                    <div class="dollar-input">
-                      <input type="number" id="businessSource2Income" placeholder="0" min="0" />
-                    </div>
+                    <div class="dollar-input"><input type="number" id="businessSource2Income" placeholder="0" min="0" /></div>
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="businessSource2Expenses">Business expenses</label>
-                    <div class="dollar-input">
-                      <input type="number" id="businessSource2Expenses" placeholder="0" min="0" />
-                    </div>
+                    <label class="field-label" for="businessSource2Expenses">Uncategorized expenses</label>
+                    <div class="dollar-input"><input type="number" id="businessSource2Expenses" placeholder="0" min="0" /></div>
+                    <div class="field-hint">Use this only for an amount you have not placed into a category below.</div>
                   </div>
                 </div>
+                <details class="tax-watch-expense-details">
+                  <summary>Organize expenses by common business category</summary>
+                  <p class="tax-watch-expense-guidance">These categories organize your records. Greatest Business Solution LLC will determine the final tax treatment and return placement during professional tax preparation.</p>
+                  <div class="tax-watch-expense-grid">
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_advertising">Advertising</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_advertising" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_contractLabor">Contract labor</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_contractLabor" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_insurance">Business insurance</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_insurance" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_legalProfessional">Legal and professional fees</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_legalProfessional" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_officeExpense">Office expense</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_officeExpense" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_equipmentRent">Rent or lease — equipment</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_equipmentRent" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_repairs">Repairs and maintenance</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_repairs" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_supplies">Supplies</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_supplies" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_taxesLicenses">Taxes and licenses</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_taxesLicenses" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_travel">Business travel</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_travel" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_meals">Business meals</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_meals" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_utilities">Utilities</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_utilities" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_platformFees">Merchant and platform fees</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_platformFees" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_softwareSubscriptions">Software and subscriptions</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_softwareSubscriptions" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_phoneInternet">Business-use phone and internet</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_phoneInternet" min="0" placeholder="0" /></div>
+                    </div>
+                    <div class="field-group tax-watch-expense-field">
+                      <label class="field-label" for="businessSource2Expense_other">Other business expenses</label>
+                      <div class="dollar-input"><input type="number" id="businessSource2Expense_other" min="0" placeholder="0" /></div>
+                    </div>
+                  </div>
+                </details>
               </div>
 
               <div class="field-row cols-2">

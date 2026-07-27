@@ -1117,20 +1117,43 @@ function readForm() {
     return Number.isNaN(n) ? 0 : Math.max(0, n);
   };
 
+  const taxWatchExpenseKeys = [
+    "advertising", "contractLabor", "insurance", "legalProfessional",
+    "officeExpense", "equipmentRent", "repairs", "supplies",
+    "taxesLicenses", "travel", "meals", "utilities", "platformFees",
+    "softwareSubscriptions", "phoneInternet", "other"
+  ];
+
+  const readExpenseCategories = (sourceNumber) => {
+    const categories = {};
+    taxWatchExpenseKeys.forEach((key) => {
+      categories[key] = numVal(`businessSource${sourceNumber}Expense_${key}`);
+    });
+    return categories;
+  };
+
+  const source1Categories = readExpenseCategories(1);
+  const source2Categories = readExpenseCategories(2);
+  const categoryTotal = (categories) => Object.values(categories).reduce((sum, value) => sum + Number(value || 0), 0);
+
   const selfEmploymentStreams = [
     {
       source:
         String(getVal("businessSource1Name") || "").trim() ||
         "Gig or business source 1",
       income: numVal("selfEmploymentIncome"),
-      expenses: numVal("businessExpenses")
+      uncategorizedExpenses: numVal("businessExpenses"),
+      expenseCategories: source1Categories,
+      expenses: numVal("businessExpenses") + categoryTotal(source1Categories)
     },
     {
       source:
         String(getVal("businessSource2Name") || "").trim() ||
         "Gig or business source 2",
       income: numVal("businessSource2Income"),
-      expenses: numVal("businessSource2Expenses")
+      uncategorizedExpenses: numVal("businessSource2Expenses"),
+      expenseCategories: source2Categories,
+      expenses: numVal("businessSource2Expenses") + categoryTotal(source2Categories)
     }
   ].filter(
     (stream) =>
@@ -2634,10 +2657,21 @@ function loadTaxWatchUpdateContext() {
 
   setEstimatorFieldValue("businessSource1Name", source1.source || "");
   setEstimatorFieldValue("selfEmploymentIncome", source1.income || 0);
-  setEstimatorFieldValue("businessExpenses", source1.expenses || 0);
+  setEstimatorFieldValue("businessExpenses", source1.uncategorizedExpenses ?? source1.expenses ?? 0);
   setEstimatorFieldValue("businessSource2Name", source2.source || "");
   setEstimatorFieldValue("businessSource2Income", source2.income || 0);
-  setEstimatorFieldValue("businessSource2Expenses", source2.expenses || 0);
+  setEstimatorFieldValue("businessSource2Expenses", source2.uncategorizedExpenses ?? source2.expenses ?? 0);
+
+  const expenseKeys = [
+    "advertising", "contractLabor", "insurance", "legalProfessional",
+    "officeExpense", "equipmentRent", "repairs", "supplies",
+    "taxesLicenses", "travel", "meals", "utilities", "platformFees",
+    "softwareSubscriptions", "phoneInternet", "other"
+  ];
+  expenseKeys.forEach((key) => {
+    setEstimatorFieldValue(`businessSource1Expense_${key}`, source1.expenseCategories?.[key] || 0);
+    setEstimatorFieldValue(`businessSource2Expense_${key}`, source2.expenseCategories?.[key] || 0);
+  });
 
   const banner = document.getElementById("taxWatchUpdateBanner");
   if (banner) banner.hidden = false;

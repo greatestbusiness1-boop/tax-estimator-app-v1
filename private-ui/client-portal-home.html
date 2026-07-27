@@ -1793,6 +1793,14 @@
       .tax-watch-hero h2{font-size:30px}
     }
 
+
+    /* Tax Watch Pro V2.8.0 business cash and protection panels */
+    .tax-watch-panel-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}
+    .tax-watch-panel-heading h3{margin:4px 0 0}
+    .tax-watch-plan-chip{display:inline-flex;padding:7px 11px;border-radius:999px;background:#e8f7ef;color:#13613a;font-weight:800;font-size:12px}
+    .tax-watch-cash-note,.tax-watch-credit-note{margin-top:16px;padding:14px 16px;border-radius:12px;background:#f5f8fb;border:1px solid #d8e3eb;line-height:1.55}
+    .tax-watch-protection-panel{border-left:5px solid #c3922f}
+    @media(max-width:700px){.tax-watch-panel-heading{display:block}.tax-watch-plan-chip{margin-top:10px}}
   </style>
 </head>
 <body>
@@ -2191,8 +2199,8 @@
                   <option value="avoid_owing">Avoid owing at tax time</option>
                   <option value="target_refund">Target a specific refund</option>
                   <option value="increase_take_home">Increase take-home pay</option>
-                  <option value="self_employment">Prepare for self-employment taxes</option>
-                  <option value="quarterly_payments">Save for quarterly payments</option>
+                  <option value="self_employment">Track self-employment income changes</option>
+                  <option value="quarterly_payments">Build a general tax reserve</option>
                 </select>
               </div>
               <div class="tax-watch-field" id="taxWatchTargetField" hidden>
@@ -2217,6 +2225,25 @@
             <div class="tax-watch-stat"><span>Saved updates</span><strong id="taxWatchUpdateCount">0</strong></div>
           </div>
 
+          <div class="tax-watch-panel tax-watch-cash-panel">
+            <div class="tax-watch-panel-heading">
+              <div>
+                <div class="eyebrow">Business Cash Snapshot</div>
+                <h3>What May Be Safe to Reserve and Spend</h3>
+              </div>
+              <span class="tax-watch-plan-chip">Included in Tax Watch Pro</span>
+            </div>
+            <div class="tax-watch-summary-grid">
+              <div class="tax-watch-stat"><span>Business income received</span><strong id="taxWatchBusinessIncome">$0</strong></div>
+              <div class="tax-watch-stat"><span>Organized business expenses</span><strong id="taxWatchBusinessExpenses">$0</strong></div>
+              <div class="tax-watch-stat"><span>General tax reserve</span><strong id="taxWatchGeneralReserve">$0</strong></div>
+              <div class="tax-watch-stat"><span>Estimated available to spend</span><strong id="taxWatchAvailableToSpend">$0</strong></div>
+            </div>
+            <div class="tax-watch-cash-note">
+              <strong>Planning estimate only.</strong> This general reserve does not calculate final self-employment tax, prepare Schedule C, or replace professional tax preparation by Greatest Business Solution LLC.
+            </div>
+          </div>
+
           <div class="tax-watch-columns">
             <div class="tax-watch-panel">
               <h3>What Changed and Why</h3>
@@ -2234,6 +2261,15 @@
                 <button class="portal-back-button" id="changeTaxWatchObjectiveButton" type="button">Change My Objective</button>
               </div>
             </div>
+          </div>
+
+          <div class="tax-watch-panel tax-watch-protection-panel">
+            <h3>Your Records Stay Organized. Professional Tax Preparation Stays Separate.</h3>
+            <p>Tax Watch Pro helps organize income and expenses. Greatest Business Solution LLC determines the final tax treatment, prepares Schedule C and the complete return, and handles filing as a separate professional service.</p>
+            <div class="tax-watch-actions">
+              <a class="tax-watch-action-button secondary" href="/start-my-tax-return?return=tax-watch-pro" target="_blank" rel="noopener">Send My Organizer for Professional Tax Preparation</a>
+            </div>
+            <p class="tax-watch-credit-note"><strong>Annual membership benefit:</strong> Eligible annual Tax Watch Pro and Pinnacle members may receive a $20 credit toward professional tax preparation. The credit is noncash, nontransferable, and cannot be stacked.</p>
           </div>
 
           <div class="tax-watch-panel">
@@ -4428,18 +4464,19 @@
         <article class="cx-explore-card featured">
           <div class="cx-plan-kicker">Year-Round Tracking</div>
           <h3>Tax Watch Pro</h3>
-          <div class="cx-plan-price"><strong data-portal-monthly-price="$8.99" data-portal-annual-price="$89">$8.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
+          <div class="cx-plan-price"><strong data-portal-monthly-price="$9.99" data-portal-annual-price="$99">$9.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
           <p><strong>Best for:</strong> Someone whose income, job, gig work, withholding, or family may change during the year.</p>
           <ul>
             <li>Everything in Free Tax Estimator</li>
-            <li>Update income and withholding throughout the year</li>
-            <li>Track a new job, side gig, or dependent</li>
+            <li>Track up to 2 jobs, gigs, or business income sources</li>
+            <li>Organize expenses by common business category</li>
+            <li>See income, expenses, net business income, and a general tax reserve</li>
+            <li>See an estimated amount that may be available to spend</li>
             <li>See what changed and why</li>
-            <li>View estimate-change history</li>
-            <li>Choose a tax goal, such as avoiding a tax bill</li>
-            <li>Quarterly reminders to review your numbers</li>
-            <li>Alerts when your estimate changes by a meaningful amount</li>
-            <li>One clear next step after each update</li>
+            <li>View estimate-change history and missing-record reminders</li>
+            <li>Professional handoff to Greatest Business Solution LLC</li>
+            <li>Eligible annual membership includes a $20 tax-preparation credit</li>
+            <li>Tax preparation and filing are separate professional services</li>
           </ul>
           ${taxWatchAction}
         </article>
@@ -4448,23 +4485,21 @@
           <div class="cx-pinnacle-badge">Pinnacle Level</div>
           <div class="cx-plan-kicker">Tax Adjustment Guidance</div>
           <h3>Pinnacle Tax Action Plan</h3>
-          <div class="cx-plan-price"><strong data-portal-monthly-price="$19.99" data-portal-annual-price="$199">$19.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
+          <div class="cx-plan-price"><strong data-portal-monthly-price="$24.99" data-portal-annual-price="$249">$24.99</strong> <span data-portal-monthly-copy="per month" data-portal-annual-copy="billed once per year">per month</span></div>
           <p><strong>Best for:</strong> Someone who wants to know what to change per paycheck, save each month, or pay quarterly.</p>
           <ul>
             <li>Everything in Tax Watch Pro</li>
-            <li>Use actual weekly, biweekly, twice-monthly, monthly, or annual pay</li>
-            <li>Track more than one job or income source</li>
-            <li>Add gig and self-employment income</li>
-            <li>Enter year-to-date pay and withholding</li>
-            <li>See expected annual income and withholding</li>
-            <li>Estimate an adjustment for each paycheck</li>
-            <li>Estimate how much to set aside each month</li>
-            <li>Estimate quarterly tax payments</li>
-            <li>Choose a refund or balance-due goal</li>
-            <li>Compare before-and-after choices</li>
-            <li>Run what-if examples for a new job, gig, or child</li>
-            <li>Download a Tax Adjustment Plan</li>
-            <li>Complete a year-end tax readiness check</li>
+            <li>Track up to 10 jobs, gigs, or business income sources</li>
+            <li>Separate estimated self-employment tax from income-tax exposure</li>
+            <li>Choose a weekly, monthly, or yearly tax-and-savings plan</li>
+            <li>See what to reserve, what may be safe to spend, and when to act</li>
+            <li>Estimate quarterly-payment or W-2 withholding adjustments</li>
+            <li>Review a preliminary QBI opportunity estimate</li>
+            <li>Compare SEP-IRA and Solo 401(k) planning scenarios</li>
+            <li>Compare before-and-after choices and what happens if nothing changes</li>
+            <li>Download a Pinnacle Tax Action Plan</li>
+            <li>Eligible annual membership includes a $20 tax-preparation credit</li>
+            <li>Tax preparation and filing remain separate professional services</li>
           </ul>
           <a href="/contact?service=Pinnacle%20Tax%20Action%20Plan&amp;return=plans-pricing" target="_blank" rel="noopener">Ask About the Pinnacle Plan</a>
         </article>
@@ -4479,15 +4514,14 @@
             <tr><td>Federal and state estimate</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
             <tr><td>Saved progress</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
             <tr><td>Year-round updates</td><td>Limited</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>What changed and why</td><td>Basic</td><td class="cx-plan-check">Detailed</td><td class="cx-plan-check">Detailed</td></tr>
-            <tr><td>Estimate-change history</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Tax goals and alerts</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Actual paycheck calculations</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Per-paycheck adjustment estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Monthly tax set-aside estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Quarterly payment estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>What-if examples</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
-            <tr><td>Downloadable action plan</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Income sources tracked</td><td>Basic estimate</td><td>Up to 2</td><td>Up to 10</td></tr>
+            <tr><td>Categorized business-expense organizer</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>General reserve and available-to-spend snapshot</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Self-employment tax estimate</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Weekly, monthly, and yearly tax-and-savings plan</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>QBI and retirement-planning scenarios</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
+            <tr><td>Professional tax preparation included</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td></tr>
+            <tr><td>Eligible annual-member preparation credit</td><td class="cx-plan-dash">—</td><td>$20</td><td>$20</td></tr>
           </tbody>
         </table>
       `;
@@ -4635,6 +4669,12 @@
       document.getElementById("taxWatchTaxYear").textContent = current.taxYear || "Not recorded";
       document.getElementById("taxWatchUpdateCount").textContent = Number((taxWatch.history || []).length);
       document.getElementById("taxWatchNextAction").textContent = taxWatch.recommendedNextAction || "Update your estimate after a meaningful change.";
+
+      const cash = taxWatch.businessCashSnapshot || {};
+      document.getElementById("taxWatchBusinessIncome").textContent = taxWatchMoney(cash.incomeReceived || 0);
+      document.getElementById("taxWatchBusinessExpenses").textContent = taxWatchMoney(cash.organizedExpenses || 0);
+      document.getElementById("taxWatchGeneralReserve").textContent = taxWatchMoney(cash.generalTaxReserve || 0);
+      document.getElementById("taxWatchAvailableToSpend").textContent = taxWatchMoney(cash.estimatedAvailableToSpend || 0);
 
       const changeList = document.getElementById("taxWatchChangeList");
       changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])

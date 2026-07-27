@@ -6337,6 +6337,9 @@ function getTaxWatchSnapshot(entry = {}) {
     businessExpenses: getTaxWatchNumber(
       taxData.businessExpenses
     ),
+    selfEmploymentStreams: Array.isArray(taxData.selfEmploymentStreams)
+      ? taxData.selfEmploymentStreams.slice(0, 2)
+      : [],
     federalWithheld: getTaxWatchNumber(
       taxData.federalWithheld ??
       federal.federalWithheld
@@ -6557,6 +6560,13 @@ function buildClientPortalTaxWatchSummary(
   const previous = deduped[deduped.length - 2] || null;
   const baseline = profile.baselineSnapshot || deduped[0] || null;
   const isActive = Boolean(profileEntry);
+  const businessIncome = getTaxWatchNumber(current?.selfEmploymentIncome);
+  const organizedExpenses = getTaxWatchNumber(current?.businessExpenses);
+  const netBusinessIncome = Math.max(0, businessIncome - organizedExpenses);
+  const paymentsAlreadyMade = getTaxWatchNumber(current?.estimatedTaxPayments);
+  const generalReserveBeforePayments = Math.round(netBusinessIncome * 0.25);
+  const generalTaxReserve = Math.max(0, generalReserveBeforePayments - paymentsAlreadyMade);
+  const estimatedAvailableToSpend = Math.max(0, netBusinessIncome - generalTaxReserve);
 
   return {
     available: Boolean(current),
@@ -6592,6 +6602,16 @@ function buildClientPortalTaxWatchSummary(
     currentResult: current
       ? getTaxWatchResultText(current)
       : "No saved estimate yet",
+    businessCashSnapshot: {
+      incomeReceived: businessIncome,
+      organizedExpenses,
+      netBusinessIncome,
+      generalTaxReserve,
+      estimatedAvailableToSpend,
+      reserveRate: 25,
+      estimatedPaymentsAlreadyMade: paymentsAlreadyMade,
+      disclaimer: "This is a general planning reserve, not a final self-employment tax calculation or tax return."
+    },
     changes: getTaxWatchChangeDetails(previous, current),
     recommendedNextAction:
       getTaxWatchRecommendedNextAction(profile, current),
