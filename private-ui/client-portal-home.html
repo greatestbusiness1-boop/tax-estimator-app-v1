@@ -1819,11 +1819,22 @@
     .tax-watch-tracker-message{display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-weight:700}
     .tax-watch-tracker-message.show{display:block}.tax-watch-tracker-message.success{background:#e8f7f1;color:#075b40}.tax-watch-tracker-message.error{background:#fff0f0;color:#8a1c1c}
     .tax-watch-tracker-disclaimer{margin-top:12px;padding:12px 14px;border-left:4px solid #c6922e;background:#fffaf0;color:#4f4636}
-    .tax-watch-history-heading{margin:22px 0 5px}
-    .tax-watch-history-intro{margin:0 0 12px;color:#53697a}
-    .tax-watch-savings-history{display:grid;gap:12px}
-    .tax-watch-savings-entry{border:1px solid #cbdce7;border-radius:14px;background:#fff;padding:16px}
-    .tax-watch-savings-entry-date{font-size:15px;color:#17354e;margin-bottom:12px}
+    .tax-watch-history-header{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:22px}
+    .tax-watch-history-heading{margin:0 0 5px}
+    .tax-watch-history-intro{margin:0;color:#53697a}
+    .tax-watch-history-toggle{margin:0;white-space:nowrap}
+    .tax-watch-savings-history{display:grid;gap:8px;margin-top:12px}
+    .tax-watch-savings-entry{border:1px solid #cbdce7;border-radius:12px;background:#fff;overflow:hidden}
+    .tax-watch-savings-entry[hidden]{display:none}
+    .tax-watch-savings-entry-summary{width:100%;display:grid;grid-template-columns:minmax(230px,1.45fr) minmax(125px,.7fr) minmax(175px,1fr) auto;gap:14px;align-items:center;padding:12px 14px;border:0;background:#fff;text-align:left;cursor:pointer;color:#17354e}
+    .tax-watch-savings-entry-summary:hover{background:#f7fbfd}
+    .tax-watch-savings-entry-summary:focus-visible{outline:3px solid rgba(12,123,88,.28);outline-offset:-3px}
+    .tax-watch-savings-entry-date{font-size:14px;font-weight:800;color:#17354e}
+    .tax-watch-savings-entry-amount span,.tax-watch-savings-entry-balance span{display:block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#63798a}
+    .tax-watch-savings-entry-amount strong,.tax-watch-savings-entry-balance strong{display:block;margin-top:2px;font-size:17px;color:#0f355d}
+    .tax-watch-savings-entry-action{font-weight:800;color:#0c6f59;white-space:nowrap}
+    .tax-watch-savings-entry-details{padding:2px 14px 14px;background:#fbfdfe;border-top:1px solid #e3ebf0}
+    .tax-watch-savings-entry-details[hidden]{display:none}
     .tax-watch-savings-entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
     .tax-watch-savings-entry-item{padding-top:9px;border-top:1px solid #e3ebf0}
     .tax-watch-savings-entry-item span{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#63798a}
@@ -1835,7 +1846,7 @@
     .tax-watch-document-card{background:#fff;border:1px solid #cbdce7;border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(20,50,75,.07)}
     .tax-watch-document-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
     @media(max-width:980px){.tax-watch-tracker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.tax-watch-tracker-grid,.tax-watch-savings-entry-grid{grid-template-columns:1fr}.tax-watch-savings-form{grid-template-columns:1fr}.tax-watch-savings-entry-note{grid-column:auto}}
+    @media(max-width:760px){.tax-watch-tracker-grid,.tax-watch-savings-entry-grid{grid-template-columns:1fr}.tax-watch-savings-form{grid-template-columns:1fr}.tax-watch-savings-entry-note{grid-column:auto}.tax-watch-history-header{display:block}.tax-watch-history-toggle{margin-top:10px}.tax-watch-savings-entry-summary{grid-template-columns:1fr 1fr}.tax-watch-savings-entry-date{grid-column:1/-1}.tax-watch-savings-entry-action{justify-self:start}}
 
   </style>
 </head>
@@ -2326,7 +2337,7 @@
             </p>
             <form class="tax-watch-savings-form" id="taxWatchSavingsForm">
               <label>Deposit amount reported
-                <input id="taxWatchSavingsAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Example: 100">
+                <input id="taxWatchSavingsAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Example: 100.00">
               </label>
               <label>Optional note
                 <input id="taxWatchSavingsNote" maxlength="200" placeholder="Example: Set aside money after this week's DoorDash payout">
@@ -2337,8 +2348,13 @@
             <div class="tax-watch-tracker-disclaimer" id="taxWatchSavingsDisclaimer">
               <strong>Important:</strong> Savings entries are entered by the client and do not verify an actual bank deposit.
             </div>
-            <h4 class="tax-watch-history-heading">Deposit History</h4>
-            <p class="tax-watch-history-intro">Your complete history appears below with the newest entry first.</p>
+            <div class="tax-watch-history-header">
+              <div>
+                <h4 class="tax-watch-history-heading">Deposit History</h4>
+                <p class="tax-watch-history-intro" id="taxWatchHistoryIntro">Newest entries appear first. Open an entry to see its full details.</p>
+              </div>
+              <button class="portal-back-button tax-watch-history-toggle" id="taxWatchHistoryToggle" type="button" hidden>Show All History</button>
+            </div>
             <div class="tax-watch-savings-history" id="taxWatchSavingsHistory">
               <div class="tax-watch-savings-empty">No savings entries yet.</div>
             </div>
@@ -4741,6 +4757,16 @@
       }).format(Number.isFinite(number) ? number : 0);
     }
 
+    function taxWatchTrackerMoney(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number.isFinite(number) ? number : 0);
+    }
+
     function taxWatchSavingsDate(value) {
       if (!value) return "Date and time not recorded";
 
@@ -4850,9 +4876,9 @@
         )
       );
 
-      if (trackerTarget) trackerTarget.textContent = taxWatchMoney(tracker.estimatedTaxMoneyNeeded || 0);
-      if (trackerSaved) trackerSaved.textContent = taxWatchMoney(tracker.moneyReportedSaved || 0);
-      if (trackerRemaining) trackerRemaining.textContent = taxWatchMoney(tracker.amountStillNeeded || 0);
+      if (trackerTarget) trackerTarget.textContent = taxWatchTrackerMoney(tracker.estimatedTaxMoneyNeeded || 0);
+      if (trackerSaved) trackerSaved.textContent = taxWatchTrackerMoney(tracker.moneyReportedSaved || 0);
+      if (trackerRemaining) trackerRemaining.textContent = taxWatchTrackerMoney(tracker.amountStillNeeded || 0);
       if (trackerProgress) trackerProgress.style.width = `${progressPercent}%`;
       if (trackerProgressTrack) trackerProgressTrack.setAttribute("aria-valuenow", String(progressPercent));
       if (trackerStatus) trackerStatus.textContent = tracker.statusLabel || "No savings reported yet";
@@ -4865,41 +4891,104 @@
         const entries = Array.isArray(tracker.entries)
           ? tracker.entries
           : [];
+        const visibleHistoryLimit = 3;
+        const historyToggle = document.getElementById("taxWatchHistoryToggle");
+        const historyIntro = document.getElementById("taxWatchHistoryIntro");
 
         trackerHistory.innerHTML = entries.length
-          ? entries.map((entry) => {
+          ? entries.map((entry, index) => {
               const estimateNote = entry.estimateSnapshotStored
                 ? ""
                 : `<span class="tax-watch-entry-fallback">Current estimate shown because this earlier entry did not store an estimate snapshot.</span>`;
+              const isExtraEntry = index >= visibleHistoryLimit;
 
-              return `<article class="tax-watch-savings-entry">
-                <div class="tax-watch-savings-entry-date"><strong>${escapeHtml(taxWatchSavingsDate(entry.recordedAt))}</strong></div>
-                <div class="tax-watch-savings-entry-grid">
-                  <div class="tax-watch-savings-entry-item">
-                    <span>Deposit reported</span>
-                    <strong>${escapeHtml(taxWatchMoney(entry.amount || 0))}</strong>
-                  </div>
-                  <div class="tax-watch-savings-entry-item">
+              return `<article class="tax-watch-savings-entry" data-tax-watch-history-entry${isExtraEntry ? " hidden" : ""}>
+                <button class="tax-watch-savings-entry-summary" type="button" aria-expanded="false">
+                  <span class="tax-watch-savings-entry-date">${escapeHtml(taxWatchSavingsDate(entry.recordedAt))}</span>
+                  <span class="tax-watch-savings-entry-amount">
+                    <span>Deposit</span>
+                    <strong>${escapeHtml(taxWatchTrackerMoney(entry.amount || 0))}</strong>
+                  </span>
+                  <span class="tax-watch-savings-entry-balance">
                     <span>Saved balance</span>
-                    <strong>${escapeHtml(taxWatchMoney(entry.savedBalanceAfterEntry || 0))}</strong>
-                  </div>
-                  <div class="tax-watch-savings-entry-item">
-                    <span>Estimated tax money needed</span>
-                    <strong>${escapeHtml(taxWatchMoney(entry.estimatedTaxMoneyNeededAtEntry || 0))}</strong>
-                    ${estimateNote}
-                  </div>
-                  <div class="tax-watch-savings-entry-item">
-                    <span>Amount still needed</span>
-                    <strong>${escapeHtml(taxWatchMoney(entry.amountStillNeededAfterEntry || 0))}</strong>
-                  </div>
-                  <div class="tax-watch-savings-entry-item tax-watch-savings-entry-note">
-                    <span>Note</span>
-                    <p>${escapeHtml(entry.note || "No note entered")}</p>
+                    <strong>${escapeHtml(taxWatchTrackerMoney(entry.savedBalanceAfterEntry || 0))}</strong>
+                  </span>
+                  <span class="tax-watch-savings-entry-action">View details</span>
+                </button>
+                <div class="tax-watch-savings-entry-details" hidden>
+                  <div class="tax-watch-savings-entry-grid">
+                    <div class="tax-watch-savings-entry-item">
+                      <span>Deposit reported</span>
+                      <strong>${escapeHtml(taxWatchTrackerMoney(entry.amount || 0))}</strong>
+                    </div>
+                    <div class="tax-watch-savings-entry-item">
+                      <span>Saved balance</span>
+                      <strong>${escapeHtml(taxWatchTrackerMoney(entry.savedBalanceAfterEntry || 0))}</strong>
+                    </div>
+                    <div class="tax-watch-savings-entry-item">
+                      <span>Estimated tax money needed</span>
+                      <strong>${escapeHtml(taxWatchTrackerMoney(entry.estimatedTaxMoneyNeededAtEntry || 0))}</strong>
+                      ${estimateNote}
+                    </div>
+                    <div class="tax-watch-savings-entry-item">
+                      <span>Amount still needed</span>
+                      <strong>${escapeHtml(taxWatchTrackerMoney(entry.amountStillNeededAfterEntry || 0))}</strong>
+                    </div>
+                    <div class="tax-watch-savings-entry-item tax-watch-savings-entry-note">
+                      <span>Note</span>
+                      <p>${escapeHtml(entry.note || "No note entered")}</p>
+                    </div>
                   </div>
                 </div>
               </article>`;
             }).join("")
           : `<div class="tax-watch-savings-empty">No savings entries yet.</div>`;
+
+        trackerHistory.querySelectorAll(".tax-watch-savings-entry-summary").forEach((summaryButton) => {
+          summaryButton.addEventListener("click", () => {
+            const details = summaryButton.nextElementSibling;
+            const action = summaryButton.querySelector(".tax-watch-savings-entry-action");
+            const isExpanded = summaryButton.getAttribute("aria-expanded") === "true";
+
+            summaryButton.setAttribute("aria-expanded", String(!isExpanded));
+            if (details) details.hidden = isExpanded;
+            if (action) action.textContent = isExpanded ? "View details" : "Hide details";
+          });
+        });
+
+        if (historyToggle) {
+          if (entries.length > visibleHistoryLimit) {
+            historyToggle.hidden = false;
+            historyToggle.setAttribute("aria-expanded", "false");
+            historyToggle.textContent = `Show All History (${entries.length})`;
+            historyToggle.onclick = () => {
+              const isShowingAll = historyToggle.getAttribute("aria-expanded") === "true";
+              trackerHistory.querySelectorAll("[data-tax-watch-history-entry]").forEach((historyEntry, index) => {
+                if (index >= visibleHistoryLimit) historyEntry.hidden = isShowingAll;
+              });
+              historyToggle.setAttribute("aria-expanded", String(!isShowingAll));
+              historyToggle.textContent = isShowingAll
+                ? `Show All History (${entries.length})`
+                : `Show Newest ${visibleHistoryLimit} Only`;
+              if (historyIntro) {
+                historyIntro.textContent = isShowingAll
+                  ? `Showing newest ${visibleHistoryLimit} of ${entries.length} entries. Open an entry to see details.`
+                  : `Showing all ${entries.length} entries. Open an entry to see details.`;
+              }
+            };
+          } else {
+            historyToggle.hidden = true;
+            historyToggle.onclick = null;
+          }
+        }
+
+        if (historyIntro) {
+          historyIntro.textContent = entries.length > visibleHistoryLimit
+            ? `Showing newest ${visibleHistoryLimit} of ${entries.length} entries. Open an entry to see details.`
+            : entries.length
+              ? `Showing all ${entries.length} ${entries.length === 1 ? "entry" : "entries"}. Open an entry to see details.`
+              : "Your complete deposit history will appear here.";
+        }
       }
 
       const documentStatus = document.getElementById("taxWatchDocumentStatus");
