@@ -2228,19 +2228,19 @@
           <div class="tax-watch-panel tax-watch-cash-panel">
             <div class="tax-watch-panel-heading">
               <div>
-                <div class="eyebrow">Business Cash Snapshot</div>
-                <h3>What May Be Safe to Reserve and Spend</h3>
+                <div class="eyebrow">Your Business Money</div>
+                <h3>What to Save and What You Can Spend</h3>
               </div>
               <span class="tax-watch-plan-chip">Included in Tax Watch Pro</span>
             </div>
             <div class="tax-watch-summary-grid">
-              <div class="tax-watch-stat"><span>Business income received</span><strong id="taxWatchBusinessIncome">$0</strong></div>
-              <div class="tax-watch-stat"><span>Organized business expenses</span><strong id="taxWatchBusinessExpenses">$0</strong></div>
-              <div class="tax-watch-stat"><span>General tax reserve</span><strong id="taxWatchGeneralReserve">$0</strong></div>
-              <div class="tax-watch-stat"><span>Estimated available to spend</span><strong id="taxWatchAvailableToSpend">$0</strong></div>
+              <div class="tax-watch-stat"><span>Money You Earned</span><strong id="taxWatchBusinessIncome">$0</strong></div>
+              <div class="tax-watch-stat"><span>Business Expenses</span><strong id="taxWatchBusinessExpenses">$0</strong></div>
+              <div class="tax-watch-stat"><span>Money to Set Aside for Taxes</span><strong id="taxWatchGeneralReserve">$0</strong></div>
+              <div class="tax-watch-stat"><span>Money You Can Spend</span><strong id="taxWatchAvailableToSpend">$0</strong></div>
             </div>
             <div class="tax-watch-cash-note">
-              <strong>Planning estimate only.</strong> This general reserve does not calculate final self-employment tax, prepare Schedule C, or replace professional tax preparation by Greatest Business Solution LLC.
+              <strong>Simple planning estimate.</strong> Based on the income and expenses you entered, this shows an estimated amount to set aside for taxes and an estimated amount you may have available to spend. It does not calculate final self-employment tax, prepare Schedule C, or replace professional tax preparation by Greatest Business Solution LLC.
             </div>
           </div>
 
@@ -4921,6 +4921,36 @@
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
       });
 
+      const activeServiceViews = new Set([
+        "active-services",
+        "tax-preparation",
+        "contractor-1099",
+        "tax-extension",
+        "transcript-help",
+        "tax-records",
+        "tax-watch"
+      ]);
+      const activeServicesToggle = document.querySelector(
+        '[data-submenu-toggle="activeServicesMenu"]'
+      );
+      if (activeServicesToggle) {
+        activeServicesToggle.classList.toggle(
+          "is-active",
+          activeServiceViews.has(requestedView)
+        );
+      }
+
+      const documentViews = new Set(["document-upload", "document-history"]);
+      const documentsToggle = document.querySelector(
+        '[data-submenu-toggle="documentsMenu"]'
+      );
+      if (documentsToggle) {
+        documentsToggle.classList.toggle(
+          "is-active",
+          documentViews.has(requestedView)
+        );
+      }
+
       configurePortalServiceView(requestedView);
       configureDocumentView(requestedView);
 
@@ -4999,11 +5029,17 @@
         const toggle = event.target.closest("[data-submenu-toggle]");
         if (toggle) {
           event.preventDefault();
-          const submenu = document.getElementById(toggle.dataset.submenuToggle);
+          const submenuId = toggle.dataset.submenuToggle;
+          const submenu = document.getElementById(submenuId);
           const shouldOpen = hoverCapable.matches
             ? true
             : !submenu?.classList.contains("is-open");
           cancelPortalSubmenuClose();
+
+          if (submenuId === "activeServicesMenu") {
+            openPortalView("active-services");
+          }
+
           setPortalSubmenu(toggle, shouldOpen);
           return;
         }

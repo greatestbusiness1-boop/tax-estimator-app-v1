@@ -2695,7 +2695,7 @@ function ensureTaxWatchReturnBanner() {
       <strong>Your Tax Watch Pro update was saved.</strong>
       <span>Return to the portal to compare this estimate with your starting estimate.</span>
     </div>
-    <a href="/client-portal#tax-watch">Return to Tax Watch Pro</a>
+    <a href="/client-portal/home#tax-watch">Return to Tax Watch Pro</a>
   `;
 
   results.prepend(banner);

@@ -13711,7 +13711,7 @@ app.get(
 <body><main>
   <h1>Your estimate update could not be prepared</h1>
   <p>No saved Free Tax Estimator result is connected to this portal email yet.</p>
-  <a href="/client-portal#tax-watch">Return to Tax Watch Pro</a>
+  <a href="/client-portal/home#tax-watch">Return to Tax Watch Pro</a>
 </main></body></html>`);
     }
 
@@ -13773,7 +13773,7 @@ app.get(
     document.querySelector("main").innerHTML =
       "<h1>Your update could not be opened</h1>" +
       "<p>Your browser blocked the saved update context. Return to Tax Watch Pro and try again.</p>" +
-      "<p><a href='/client-portal#tax-watch'>Return to Tax Watch Pro</a></p>";
+      "<p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>";
   }
 </script>
 </body></html>`);
