@@ -6380,7 +6380,7 @@ function getTaxWatchSnapshot(entry = {}) {
       taxData.businessExpenses
     ),
     selfEmploymentStreams: Array.isArray(taxData.selfEmploymentStreams)
-      ? taxData.selfEmploymentStreams.slice(0, 2)
+      ? taxData.selfEmploymentStreams.slice(0, 5)
       : [],
     federalWithheld: getTaxWatchNumber(
       taxData.federalWithheld ??
@@ -6513,6 +6513,59 @@ function getTaxWatchChangeDetails(previous, current) {
     : [
         "The information entered did not create a meaningful change from the previous saved estimate."
       ];
+}
+
+const TAX_WATCH_PREVIEW_DAYS = 14;
+const TAX_WATCH_PREVIEW_MILLISECONDS =
+  TAX_WATCH_PREVIEW_DAYS * 24 * 60 * 60 * 1000;
+
+function getTaxWatchPreviewWindow(profile = {}) {
+  const status = String(profile.status || "")
+    .trim()
+    .toLowerCase();
+
+  const startedAt = String(
+    profile.previewStartedAt ||
+    profile.activatedAt ||
+    ""
+  ).trim();
+
+  const startedAtMs = Date.parse(startedAt);
+  const explicitEndsAt = String(
+    profile.previewEndsAt ||
+    ""
+  ).trim();
+  const explicitEndsAtMs = Date.parse(explicitEndsAt);
+
+  const endsAtMs = Number.isFinite(explicitEndsAtMs)
+    ? explicitEndsAtMs
+    : Number.isFinite(startedAtMs)
+      ? startedAtMs + TAX_WATCH_PREVIEW_MILLISECONDS
+      : NaN;
+
+  const endsAt = Number.isFinite(endsAtMs)
+    ? new Date(endsAtMs).toISOString()
+    : "";
+
+  const isPreview = status === "preview";
+  const remainingMs =
+    isPreview && Number.isFinite(endsAtMs)
+      ? Math.max(0, endsAtMs - Date.now())
+      : 0;
+  const expired =
+    isPreview &&
+    Number.isFinite(endsAtMs) &&
+    remainingMs <= 0;
+
+  return {
+    durationDays: TAX_WATCH_PREVIEW_DAYS,
+    startedAt,
+    endsAt,
+    remainingMs,
+    expired,
+    canEdit: status === "active" || (isPreview && !expired),
+    noAutomaticCharge: true
+  };
 }
 
 function getTaxWatchRecommendedNextAction(profile = {}, current = null) {
@@ -6673,6 +6726,7 @@ function buildClientPortalTaxWatchSummary(
   const previous = deduped[deduped.length - 2] || null;
   const baseline = profile.baselineSnapshot || deduped[0] || null;
   const isActive = Boolean(profileEntry);
+  const previewWindow = getTaxWatchPreviewWindow(profile);
   const businessIncome = getTaxWatchNumber(current?.selfEmploymentIncome);
   const organizedExpenses = getTaxWatchNumber(current?.businessExpenses);
   const netBusinessIncome = Math.max(0, businessIncome - organizedExpenses);
@@ -6794,13 +6848,29 @@ function buildClientPortalTaxWatchSummary(
   return {
     available: Boolean(current),
     active: isActive,
+    canEdit: isActive ? previewWindow.canEdit : false,
     status: isActive
       ? String(profile.status || "preview")
       : "not-started",
     planName: "Tax Watch Pro",
+    serviceName: "Tax Money Tracker",
+    serviceSubtitle: "Year-Round Income, Expense, and Tax Tracking",
     accessLabel: isActive
-      ? "Preview access — no subscription charge"
+      ? previewWindow.expired
+        ? "Preview ended — no charge occurred"
+        : "Preview active — no charge during preview"
       : "Not started",
+    preview: isActive
+      ? previewWindow
+      : {
+          durationDays: TAX_WATCH_PREVIEW_DAYS,
+          startedAt: "",
+          endsAt: "",
+          remainingMs: 0,
+          expired: false,
+          canEdit: false,
+          noAutomaticCharge: true
+        },
     profileLeadId: String(
       profileEntry?.leadId ||
       accountLeadId ||
@@ -13847,6 +13917,14 @@ app.post(
       });
     }
 
+    if (currentSummary.active && !currentSummary.canEdit) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your Tax Watch Pro preview has ended. Choose a monthly or annual plan to resume Tax Money Tracker updates."
+      });
+    }
+
     const targetLeadId = String(
       currentSummary.profileLeadId ||
       session.payload.accountLeadId ||
@@ -13874,6 +13952,22 @@ app.post(
               ? record.taxWatchProfile
               : {};
 
+          const previewStartedAt = String(
+            existing.previewStartedAt ||
+            existing.activatedAt ||
+            now
+          );
+          const previewStartedAtMs = Date.parse(previewStartedAt);
+          const previewEndsAt = String(
+            existing.previewEndsAt ||
+            new Date(
+              (Number.isFinite(previewStartedAtMs)
+                ? previewStartedAtMs
+                : Date.now()) +
+              TAX_WATCH_PREVIEW_MILLISECONDS
+            ).toISOString()
+          );
+
           return {
             ...record,
             taxWatchProfile: {
@@ -13894,6 +13988,8 @@ app.post(
                 currentSummary.current,
               activatedAt:
                 existing.activatedAt || now,
+              previewStartedAt,
+              previewEndsAt,
               updatedAt: now
             },
             updatedAt: now
@@ -13980,6 +14076,14 @@ app.post(
         ok: false,
         error:
           "A saved Tax Watch estimate is required before adding tax savings."
+      });
+    }
+
+    if (summary.active && !summary.canEdit) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your Tax Watch Pro preview has ended. Choose a monthly or annual plan to add new savings entries."
       });
     }
 
@@ -14135,7 +14239,7 @@ function taxWatchOrganizerLabel(value) {
 
 function getTaxWatchOrganizerSources(snapshot = {}) {
   const streams = Array.isArray(snapshot.selfEmploymentStreams)
-    ? snapshot.selfEmploymentStreams.slice(0, 2)
+    ? snapshot.selfEmploymentStreams.slice(0, 5)
     : [];
 
   if (!streams.length) {
@@ -14869,6 +14973,37 @@ app.get(
         session.email
       );
 
+    const taxWatchAccess =
+      buildClientPortalTaxWatchSummary(
+        accessible,
+        session.payload.accountLeadId
+      );
+
+    if (taxWatchAccess.active && !taxWatchAccess.canEdit) {
+      return res
+        .status(403)
+        .type("html")
+        .send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tax Money Tracker Preview Ended</title>
+  <style>
+    body{margin:0;background:#eef4f7;color:#17354e;font-family:Arial,sans-serif}
+    main{max-width:680px;margin:70px auto;padding:28px;background:#fff;border:1px solid #cbdce7;border-radius:18px;box-shadow:0 12px 35px rgba(20,50,75,.12)}
+    h1{margin-top:0;color:#0f2f59}p{font-size:17px;line-height:1.6}
+    a{display:inline-block;margin:12px 8px 0 0;padding:13px 18px;border-radius:11px;background:#0f2f59;color:#fff;text-decoration:none;font-weight:800}
+  </style>
+</head>
+<body><main>
+  <h1>Your Tax Watch Pro preview has ended</h1>
+  <p>No automatic charge occurred. Your saved Tax Money Tracker records remain available.</p>
+  <a href="/plans-pricing#tax-watch-pro">Review Tax Watch Pro Plans</a>
+  <a href="/client-portal/home#tax-watch">Return to Tax Money Tracker</a>
+</main></body></html>`);
+    }
+
     const candidates = accessible
       .map((entry) => ({
         entry,
@@ -14925,7 +15060,7 @@ app.get(
       email: session.email,
       taxData,
       startingSnapshot: latest.snapshot,
-      sourceLimit: 2,
+      sourceLimit: 5,
       createdAt: new Date().toISOString()
     };
 
@@ -14985,6 +15120,20 @@ app.get(
         session.email
       );
 
+    const taxWatchAccess =
+      buildClientPortalTaxWatchSummary(
+        accessible,
+        session.payload.accountLeadId
+      );
+
+    if (taxWatchAccess.active && !taxWatchAccess.canEdit) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your Tax Watch Pro preview has ended. Choose a monthly or annual plan to resume Tax Money Tracker updates."
+      });
+    }
+
     const candidates = accessible
       .map((entry) => ({
         entry,
@@ -15027,7 +15176,7 @@ app.get(
         email: session.email,
         taxData,
         startingSnapshot: latest.snapshot,
-        sourceLimit: 2,
+        sourceLimit: 5,
         createdAt: new Date().toISOString()
       }
     });

@@ -1105,6 +1105,46 @@ function getEstimateCompleteness(input) {
 // TAX FORM - READ
 // =============================================================================
 
+const TAX_WATCH_PRO_SOURCE_LIMIT = 5;
+
+function ensureTaxWatchAdditionalSources() {
+  const container = document.getElementById("taxWatchAdditionalSources");
+  const template = document.querySelector('[data-tax-watch-source-number="2"]');
+
+  if (!container || !template || container.children.length > 0) {
+    return;
+  }
+
+  for (let sourceNumber = 3; sourceNumber <= TAX_WATCH_PRO_SOURCE_LIMIT; sourceNumber += 1) {
+    const card = template.cloneNode(true);
+    card.dataset.taxWatchSourceNumber = String(sourceNumber);
+
+    card.querySelectorAll("[id]").forEach((element) => {
+      element.id = element.id.replace(/businessSource2/g, `businessSource${sourceNumber}`);
+    });
+
+    card.querySelectorAll("label[for]").forEach((label) => {
+      label.htmlFor = label.htmlFor.replace(/businessSource2/g, `businessSource${sourceNumber}`);
+    });
+
+    card.querySelectorAll("input").forEach((input) => {
+      input.value = "";
+    });
+
+    const title = card.querySelector(".tax-watch-source-title");
+    if (title) {
+      title.innerHTML = `Gig or Business Source ${sourceNumber} <span>Optional</span>`;
+    }
+
+    const nameInput = card.querySelector(`#businessSource${sourceNumber}Name`);
+    if (nameInput) {
+      nameInput.placeholder = `Example: Income source ${sourceNumber}`;
+    }
+
+    container.appendChild(card);
+  }
+}
+
 function readForm() {
   const getVal = (id) => document.getElementById(id)?.value ?? "";
   const getRadio = (name) => {
@@ -1132,34 +1172,46 @@ function readForm() {
     return categories;
   };
 
-  const source1Categories = readExpenseCategories(1);
-  const source2Categories = readExpenseCategories(2);
-  const categoryTotal = (categories) => Object.values(categories).reduce((sum, value) => sum + Number(value || 0), 0);
+  const categoryTotal = (categories) =>
+    Object.values(categories).reduce(
+      (sum, value) => sum + Number(value || 0),
+      0
+    );
 
-  const selfEmploymentStreams = [
-    {
-      source:
-        String(getVal("businessSource1Name") || "").trim() ||
-        "Gig or business source 1",
-      income: numVal("selfEmploymentIncome"),
-      uncategorizedExpenses: numVal("businessExpenses"),
-      expenseCategories: source1Categories,
-      expenses: numVal("businessExpenses") + categoryTotal(source1Categories)
-    },
-    {
-      source:
-        String(getVal("businessSource2Name") || "").trim() ||
-        "Gig or business source 2",
-      income: numVal("businessSource2Income"),
-      uncategorizedExpenses: numVal("businessSource2Expenses"),
-      expenseCategories: source2Categories,
-      expenses: numVal("businessSource2Expenses") + categoryTotal(source2Categories)
+  const selfEmploymentStreams = Array.from(
+    { length: TAX_WATCH_PRO_SOURCE_LIMIT },
+    (_, index) => {
+      const sourceNumber = index + 1;
+      const categories = readExpenseCategories(sourceNumber);
+      const incomeField = sourceNumber === 1
+        ? "selfEmploymentIncome"
+        : `businessSource${sourceNumber}Income`;
+      const expenseField = sourceNumber === 1
+        ? "businessExpenses"
+        : `businessSource${sourceNumber}Expenses`;
+      const uncategorizedExpenses = numVal(expenseField);
+
+      return {
+        source:
+          String(
+            getVal(`businessSource${sourceNumber}Name`) ||
+            ""
+          ).trim() ||
+          `Gig or business source ${sourceNumber}`,
+        income: numVal(incomeField),
+        uncategorizedExpenses,
+        expenseCategories: categories,
+        expenses:
+          uncategorizedExpenses +
+          categoryTotal(categories)
+      };
     }
-  ].filter(
-    (stream) =>
+  ).filter(
+    (stream, index) =>
       stream.income > 0 ||
       stream.expenses > 0 ||
-      !/^Gig or business source [12]$/.test(stream.source)
+      stream.source !==
+        `Gig or business source ${index + 1}`
   );
 
   const totalSelfEmploymentIncome = selfEmploymentStreams.reduce(
@@ -1634,7 +1686,7 @@ async function submitLeadGateway(input, result) {
           ? {
               sourceLeadId: _taxWatchUpdateContext.sourceLeadId || "",
               sourceCount: Array.isArray(input?.selfEmploymentStreams)
-                ? Math.min(2, input.selfEmploymentStreams.length)
+                ? Math.min(TAX_WATCH_PRO_SOURCE_LIMIT, input.selfEmploymentStreams.length)
                 : 0,
               updateReason: "Tax Watch Pro estimate update"
             }
@@ -2629,7 +2681,7 @@ function loadTaxWatchUpdateContext() {
   _taxWatchUpdateContext = context;
   const taxData = context.taxData || {};
   const streams = Array.isArray(taxData.selfEmploymentStreams)
-    ? taxData.selfEmploymentStreams.slice(0, 2)
+    ? taxData.selfEmploymentStreams.slice(0, TAX_WATCH_PRO_SOURCE_LIMIT)
     : [];
 
   setEstimatorFieldValue("taxYear", taxData.taxYear);
@@ -2648,19 +2700,15 @@ function loadTaxWatchUpdateContext() {
   setEstimatorFieldValue("businessMileage", taxData.businessMileage);
   setEstimatorFieldValue("estimatedTaxPayments", taxData.estimatedTaxPayments);
 
-  const source1 = streams[0] || {
-    source: "",
-    income: taxData.selfEmploymentIncome || 0,
-    expenses: taxData.businessExpenses || 0
-  };
-  const source2 = streams[1] || {};
+  ensureTaxWatchAdditionalSources();
 
-  setEstimatorFieldValue("businessSource1Name", source1.source || "");
-  setEstimatorFieldValue("selfEmploymentIncome", source1.income || 0);
-  setEstimatorFieldValue("businessExpenses", source1.uncategorizedExpenses ?? source1.expenses ?? 0);
-  setEstimatorFieldValue("businessSource2Name", source2.source || "");
-  setEstimatorFieldValue("businessSource2Income", source2.income || 0);
-  setEstimatorFieldValue("businessSource2Expenses", source2.uncategorizedExpenses ?? source2.expenses ?? 0);
+  const sourceDefaults = {
+    source: "",
+    income: 0,
+    uncategorizedExpenses: 0,
+    expenses: 0,
+    expenseCategories: {}
+  };
 
   const expenseKeys = [
     "advertising", "contractLabor", "insurance", "legalProfessional",
@@ -2668,10 +2716,45 @@ function loadTaxWatchUpdateContext() {
     "taxesLicenses", "travel", "meals", "utilities", "platformFees",
     "softwareSubscriptions", "phoneInternet", "other"
   ];
-  expenseKeys.forEach((key) => {
-    setEstimatorFieldValue(`businessSource1Expense_${key}`, source1.expenseCategories?.[key] || 0);
-    setEstimatorFieldValue(`businessSource2Expense_${key}`, source2.expenseCategories?.[key] || 0);
-  });
+
+  for (let sourceNumber = 1; sourceNumber <= TAX_WATCH_PRO_SOURCE_LIMIT; sourceNumber += 1) {
+    const fallback = sourceNumber === 1
+      ? {
+          ...sourceDefaults,
+          income: taxData.selfEmploymentIncome || 0,
+          expenses: taxData.businessExpenses || 0
+        }
+      : sourceDefaults;
+    const source = streams[sourceNumber - 1] || fallback;
+    const incomeField = sourceNumber === 1
+      ? "selfEmploymentIncome"
+      : `businessSource${sourceNumber}Income`;
+    const expenseField = sourceNumber === 1
+      ? "businessExpenses"
+      : `businessSource${sourceNumber}Expenses`;
+
+    setEstimatorFieldValue(
+      `businessSource${sourceNumber}Name`,
+      source.source || ""
+    );
+    setEstimatorFieldValue(
+      incomeField,
+      source.income || 0
+    );
+    setEstimatorFieldValue(
+      expenseField,
+      source.uncategorizedExpenses ??
+        source.expenses ??
+        0
+    );
+
+    expenseKeys.forEach((key) => {
+      setEstimatorFieldValue(
+        `businessSource${sourceNumber}Expense_${key}`,
+        source.expenseCategories?.[key] || 0
+      );
+    });
+  }
 
   const banner = document.getElementById("taxWatchUpdateBanner");
   if (banner) banner.hidden = false;
