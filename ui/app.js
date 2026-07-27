@@ -1107,6 +1107,67 @@ function getEstimateCompleteness(input) {
 
 const TAX_WATCH_PRO_SOURCE_LIMIT = 5;
 
+function taxWatchAdditionalSourceHasData(sourceNumber) {
+  const disclosure = document.querySelector(
+    `[data-tax-watch-source-disclosure-number="${sourceNumber}"]`
+  );
+
+  if (!disclosure) return false;
+
+  const name = String(
+    document.getElementById(`businessSource${sourceNumber}Name`)?.value || ""
+  ).trim();
+
+  if (name) return true;
+
+  return Array.from(disclosure.querySelectorAll('input[type="number"]')).some(
+    (input) => Number(String(input.value || "").replace(/[$,\s]/g, "")) > 0
+  );
+}
+
+function refreshTaxWatchAdditionalSourceDisclosure(sourceNumber) {
+  const disclosure = document.querySelector(
+    `[data-tax-watch-source-disclosure-number="${sourceNumber}"]`
+  );
+
+  if (!disclosure) return;
+
+  const name = String(
+    document.getElementById(`businessSource${sourceNumber}Name`)?.value || ""
+  ).trim();
+  const title = disclosure.querySelector(".tax-watch-source-summary-title");
+  const action = disclosure.querySelector(".tax-watch-source-summary-action");
+  const hasData = taxWatchAdditionalSourceHasData(sourceNumber);
+
+  if (title) {
+    title.textContent = name
+      ? `Gig or Business Source ${sourceNumber}: ${name}`
+      : `Gig or Business Source ${sourceNumber}`;
+  }
+
+  if (action) {
+    action.textContent = disclosure.open
+      ? "Hide details"
+      : hasData
+        ? "View saved details"
+        : "Add source details";
+  }
+}
+
+function openPopulatedTaxWatchAdditionalSources() {
+  for (let sourceNumber = 3; sourceNumber <= TAX_WATCH_PRO_SOURCE_LIMIT; sourceNumber += 1) {
+    const disclosure = document.querySelector(
+      `[data-tax-watch-source-disclosure-number="${sourceNumber}"]`
+    );
+
+    if (disclosure && taxWatchAdditionalSourceHasData(sourceNumber)) {
+      disclosure.open = true;
+    }
+
+    refreshTaxWatchAdditionalSourceDisclosure(sourceNumber);
+  }
+}
+
 function ensureTaxWatchAdditionalSources() {
   const container = document.getElementById("taxWatchAdditionalSources");
   const template = document.querySelector('[data-tax-watch-source-number="2"]');
@@ -1141,7 +1202,36 @@ function ensureTaxWatchAdditionalSources() {
       nameInput.placeholder = `Example: Income source ${sourceNumber}`;
     }
 
-    container.appendChild(card);
+    const disclosure = document.createElement("details");
+    disclosure.className = "tax-watch-source-disclosure";
+    disclosure.dataset.taxWatchSourceDisclosureNumber = String(sourceNumber);
+
+    const summary = document.createElement("summary");
+    summary.innerHTML = `
+      <span class="tax-watch-source-summary-copy">
+        <strong class="tax-watch-source-summary-title">Gig or Business Source ${sourceNumber}</strong>
+        <span class="tax-watch-source-summary-help">Optional - open only when you need this income source</span>
+      </span>
+      <span class="tax-watch-source-summary-action">Add source details</span>
+    `;
+
+    disclosure.appendChild(summary);
+    disclosure.appendChild(card);
+    disclosure.addEventListener("toggle", () => {
+      refreshTaxWatchAdditionalSourceDisclosure(sourceNumber);
+    });
+
+    card.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", () => {
+        refreshTaxWatchAdditionalSourceDisclosure(sourceNumber);
+      });
+      input.addEventListener("change", () => {
+        refreshTaxWatchAdditionalSourceDisclosure(sourceNumber);
+      });
+    });
+
+    container.appendChild(disclosure);
+    refreshTaxWatchAdditionalSourceDisclosure(sourceNumber);
   }
 }
 
@@ -2755,6 +2845,8 @@ function loadTaxWatchUpdateContext() {
       );
     });
   }
+
+  openPopulatedTaxWatchAdditionalSources();
 
   const banner = document.getElementById("taxWatchUpdateBanner");
   if (banner) banner.hidden = false;

@@ -66,6 +66,97 @@
     color: #b8c8dc;
   }
 </style>
+
+
+<style id="tax-watch-additional-source-accordion">
+  #taxWatchAdditionalSources {
+    margin: 4px 0 16px;
+  }
+
+  .tax-watch-source-disclosure {
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 15px;
+    background: #f8fafc;
+  }
+
+  .tax-watch-source-disclosure > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    min-height: 58px;
+    padding: 13px 16px;
+    cursor: pointer;
+    list-style: none;
+    color: #0f2c56;
+  }
+
+  .tax-watch-source-disclosure > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tax-watch-source-disclosure > summary::marker {
+    content: "";
+  }
+
+  .tax-watch-source-summary-copy {
+    min-width: 0;
+  }
+
+  .tax-watch-source-summary-title {
+    display: block;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 950;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tax-watch-source-summary-help {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .tax-watch-source-summary-action {
+    color: #08785e;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tax-watch-source-disclosure[open] > summary {
+    border-bottom: 1px solid #d8e3eb;
+    background: #eef5fb;
+  }
+
+  .tax-watch-source-disclosure > .tax-watch-source-card {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  .tax-watch-source-disclosure > .tax-watch-source-card > .tax-watch-source-title {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .tax-watch-source-disclosure > summary {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .tax-watch-source-summary-action {
+      white-space: normal;
+    }
+  }
+</style>
+
 </head>
 
 <body>
