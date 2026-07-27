@@ -4408,6 +4408,16 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativeTaxWatchOrganizer = {
+      ...asPlainObject(
+        mapped.taxWatchOrganizer
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.taxWatchOrganizer
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -4431,6 +4441,12 @@ async function loadClientPortalLeadCandidates() {
             authoritativeTaxWatchProfile
           ).length
             ? authoritativeTaxWatchProfile
+            : null,
+        taxWatchOrganizer:
+          Object.keys(
+            authoritativeTaxWatchOrganizer
+          ).length
+            ? authoritativeTaxWatchOrganizer
             : null,
         status:
           existing.lead?.status ||
