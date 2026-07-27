@@ -6648,19 +6648,22 @@ function buildClientPortalTaxWatchSummary(
     recommendedNextAction:
       getTaxWatchRecommendedNextAction(profile, current),
     organizer: {
-      exists: Boolean(organizerEntry),
-      status: organizerStatus || "not-created",
+      exists: Boolean(organizerEntry || current),
+      status:
+        organizerStatus ||
+        (current ? "ready" : "not-created"),
       statusLabel:
         organizerStatus === "sent-for-professional-preparation"
           ? "Sent to Greatest Business Solution LLC"
           : organizerStatus === "shared-with-tax-professional"
             ? "Shared with My Tax Professional"
-            : organizerEntry
+            : current
               ? "Ready"
               : "Not created",
       createdAt: String(
         organizerRecord.createdAt ||
         organizerRecord.updatedAt ||
+        current?.recordedAt ||
         ""
       ),
       sentAt: String(organizerRecord.sentAt || ""),
