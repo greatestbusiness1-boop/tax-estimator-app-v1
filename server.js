@@ -1707,6 +1707,16 @@ function mapRowToLead(row) {
       row.taxWatchProfile ||
       row.tax_watch_profile ||
       null,
+    taxWatchOrganizer:
+      estimate.taxWatchOrganizer ||
+      row.taxWatchOrganizer ||
+      row.tax_watch_organizer ||
+      null,
+    taxWatchMoneyTracker:
+      estimate.taxWatchMoneyTracker ||
+      row.taxWatchMoneyTracker ||
+      row.tax_watch_money_tracker ||
+      null,
     clientPortal: sanitizeClientPortalRecord(
       estimate.clientPortal ||
       row.clientPortal ||
