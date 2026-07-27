@@ -4418,6 +4418,16 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativeTaxWatchMoneyTracker = {
+      ...asPlainObject(
+        mapped.taxWatchMoneyTracker
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.taxWatchMoneyTracker
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -4447,6 +4457,12 @@ async function loadClientPortalLeadCandidates() {
             authoritativeTaxWatchOrganizer
           ).length
             ? authoritativeTaxWatchOrganizer
+            : null,
+        taxWatchMoneyTracker:
+          Object.keys(
+            authoritativeTaxWatchMoneyTracker
+          ).length
+            ? authoritativeTaxWatchMoneyTracker
             : null,
         status:
           existing.lead?.status ||
@@ -6588,6 +6604,40 @@ function buildClientPortalTaxWatchSummary(
     organizerRecord.status || ""
   ).trim();
 
+  const trackerEntry =
+    accessible.find(
+      (entry) =>
+        entry.lead?.taxWatchMoneyTracker &&
+        typeof entry.lead.taxWatchMoneyTracker === "object" &&
+        !Array.isArray(entry.lead.taxWatchMoneyTracker)
+    ) || null;
+
+  const trackerRecord =
+    trackerEntry?.lead?.taxWatchMoneyTracker || {};
+
+  const trackerEntries = Array.isArray(
+    trackerRecord.entries
+  )
+    ? trackerRecord.entries
+        .map((entry = {}) => ({
+          id: String(entry.id || ""),
+          amount: Math.max(
+            0,
+            getTaxWatchNumber(entry.amount)
+          ),
+          note: String(entry.note || ""),
+          recordedAt: String(
+            entry.recordedAt || ""
+          )
+        }))
+        .filter((entry) => entry.amount > 0)
+        .sort(
+          (left, right) =>
+            Date.parse(right.recordedAt || 0) -
+            Date.parse(left.recordedAt || 0)
+        )
+    : [];
+
   const current = deduped[deduped.length - 1] || null;
   const previous = deduped[deduped.length - 2] || null;
   const baseline = profile.baselineSnapshot || deduped[0] || null;
@@ -6599,6 +6649,25 @@ function buildClientPortalTaxWatchSummary(
   const generalReserveBeforePayments = Math.round(netBusinessIncome * 0.25);
   const generalTaxReserve = Math.max(0, generalReserveBeforePayments - paymentsAlreadyMade);
   const estimatedAvailableToSpend = Math.max(0, netBusinessIncome - generalTaxReserve);
+  const reportedSaved = trackerEntries.reduce(
+    (sum, entry) => sum + entry.amount,
+    0
+  );
+  const stillNeeded = Math.max(
+    0,
+    generalTaxReserve - reportedSaved
+  );
+  const progressPercent =
+    generalTaxReserve > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (reportedSaved / generalTaxReserve) * 100
+          )
+        )
+      : reportedSaved > 0
+        ? 100
+        : 0;
 
   return {
     available: Boolean(current),
@@ -6644,6 +6713,25 @@ function buildClientPortalTaxWatchSummary(
       estimatedPaymentsAlreadyMade: paymentsAlreadyMade,
       disclaimer: "This is a general planning reserve, not a final self-employment tax calculation or tax return."
     },
+    moneyTracker: {
+      estimatedTaxMoneyNeeded: generalTaxReserve,
+      moneyReportedSaved: reportedSaved,
+      amountStillNeeded: stillNeeded,
+      progressPercent,
+      statusLabel:
+        generalTaxReserve <= 0
+          ? "No tax savings target is currently estimated"
+          : stillNeeded <= 0
+            ? "Savings target met"
+            : reportedSaved > 0
+              ? "Savings started"
+              : "No savings reported yet",
+      latestEntryAt:
+        trackerEntries[0]?.recordedAt || "",
+      entries: trackerEntries.slice(0, 24),
+      disclaimer:
+        "Savings entries are reported by the client and are not verified bank deposits."
+    },
     changes: getTaxWatchChangeDetails(previous, current),
     recommendedNextAction:
       getTaxWatchRecommendedNextAction(profile, current),
@@ -6656,7 +6744,9 @@ function buildClientPortalTaxWatchSummary(
         organizerStatus === "sent-for-professional-preparation"
           ? "Sent to Greatest Business Solution LLC"
           : organizerStatus === "shared-with-tax-professional"
-            ? "Shared with My Tax Professional"
+            ? organizerRecord.sharedWithName
+              ? `Shared with ${organizerRecord.sharedWithName}`
+              : "Shared with My Tax Professional"
             : current
               ? "Ready"
               : "Not created",
@@ -13725,6 +13815,147 @@ app.post(
 
 
 
+app.post(
+  "/api/client-portal/tax-watch/savings",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const amount = Math.max(
+      0,
+      getTaxWatchNumber(req.body?.amount)
+    );
+
+    const note = String(
+      req.body?.note || ""
+    ).trim().slice(0, 200);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the amount you reported moving into tax savings."
+      });
+    }
+
+    if (amount > 1000000) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The savings entry is larger than the supported limit."
+      });
+    }
+
+    const session = req.clientPortalSession;
+    const accessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    const summary =
+      buildClientPortalTaxWatchSummary(
+        accessible,
+        session.payload.accountLeadId
+      );
+
+    if (!summary.current) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "A saved Tax Watch estimate is required before adding tax savings."
+      });
+    }
+
+    const targetLeadId = String(
+      session.payload.accountLeadId ||
+      summary.profileLeadId ||
+      summary.current.leadId ||
+      ""
+    ).trim();
+
+    if (!targetLeadId) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Your portal savings record could not be selected."
+      });
+    }
+
+    const now = new Date().toISOString();
+    const entry = {
+      id: `TWS-${Date.now()}-${crypto
+        .randomBytes(3)
+        .toString("hex")
+        .toUpperCase()}`,
+      amount: Math.round(amount * 100) / 100,
+      note,
+      recordedAt: now
+    };
+
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        targetLeadId,
+        (record = {}) => {
+          const existing =
+            record.taxWatchMoneyTracker &&
+            typeof record.taxWatchMoneyTracker === "object" &&
+            !Array.isArray(record.taxWatchMoneyTracker)
+              ? record.taxWatchMoneyTracker
+              : {};
+
+          const entries = Array.isArray(
+            existing.entries
+          )
+            ? existing.entries
+            : [];
+
+          return {
+            ...record,
+            taxWatchMoneyTracker: {
+              ...existing,
+              version: 1,
+              updatedAt: now,
+              entries: [
+                ...entries,
+                entry
+              ].slice(-120)
+            },
+            latestClientAction:
+              `Tax savings entry added: ${taxWatchOrganizerMoney(entry.amount)}`,
+            latestClientActionAt: now,
+            updatedAt: now
+          };
+        }
+      );
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "The tax savings entry could not be saved."
+      });
+    }
+
+    const refreshedAccessible =
+      await getClientPortalAccessibleLeads(
+        session.email
+      );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your reported tax savings entry was added.",
+      taxWatch:
+        buildClientPortalTaxWatchSummary(
+          refreshedAccessible,
+          session.payload.accountLeadId
+        )
+    });
+  }
+);
+
+
 
 function taxWatchOrganizerEscapeHtml(value) {
   return String(value ?? "")
@@ -13801,6 +14032,7 @@ function getTaxWatchOrganizerSources(snapshot = {}) {
 
     return {
       name: String(
+        stream.source ||
         stream.sourceName ||
         stream.businessName ||
         stream.name ||
@@ -13879,6 +14111,21 @@ function buildTaxWatchOrganizerEmailHtml({
     </div>`;
 }
 
+function taxWatchOrganizerDateTime(value) {
+  const parsed = Date.parse(String(value || ""));
+  if (!Number.isFinite(parsed)) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Phoenix",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).format(new Date(parsed));
+}
+
 function buildTaxWatchOrganizerHtml({
   clientName = "Client",
   email = "",
@@ -13948,7 +14195,28 @@ function buildTaxWatchOrganizerHtml({
     : "";
 
   const sharedBanner = shared
-    ? `<div class="success"><strong>Organizer shared.</strong> A copy was emailed to ${taxWatchOrganizerEscapeHtml(organizer.sharedWithName || organizer.sharedWithEmail || "your tax professional")}.</div>`
+    ? `<div class="success">
+        <strong>Organizer shared with ${taxWatchOrganizerEscapeHtml(
+          organizer.sharedWithName ||
+          "your tax professional"
+        )}.</strong>
+        ${
+          organizer.sharedWithEmail
+            ? `<br>${taxWatchOrganizerEscapeHtml(
+                organizer.sharedWithEmail
+              )}`
+            : ""
+        }
+        ${
+          organizer.sharedAt
+            ? `<br>${taxWatchOrganizerEscapeHtml(
+                taxWatchOrganizerDateTime(
+                  organizer.sharedAt
+                )
+              )}`
+            : ""
+        }
+      </div>`
     : "";
 
   const errorBanner = error
@@ -14188,7 +14456,14 @@ app.post(
     const { latest, organizerEntry } =
       await getLatestTaxWatchOrganizerContext(session);
 
-    if (!latest?.snapshot?.leadId) {
+    const organizerRecordLeadId = String(
+      session.payload?.accountLeadId ||
+      session.accountLead?.leadId ||
+      latest?.snapshot?.leadId ||
+      ""
+    ).trim();
+
+    if (!latest?.snapshot?.leadId || !organizerRecordLeadId) {
       return res.status(409).type("html").send(
         "<h1>Organizer could not be sent</h1><p>No saved Tax Watch estimate is connected to this portal.</p><p><a href='/client-portal/home#tax-watch'>Return to Tax Watch Pro</a></p>"
       );
@@ -14201,6 +14476,12 @@ app.post(
         ? organizerEntry.lead.taxWatchOrganizer
         : {};
 
+    const priorActivity = Array.isArray(
+      existing.activity
+    )
+      ? existing.activity
+      : [];
+
     const organizer = {
       ...buildTaxWatchOrganizerRecord(
         latest.snapshot,
@@ -14208,11 +14489,20 @@ app.post(
       ),
       status: "sent-for-professional-preparation",
       sentAt: now,
-      updatedAt: now
+      updatedAt: now,
+      activity: [
+        ...priorActivity,
+        {
+          type: "sent-to-greatest-business-solution",
+          label:
+            "Sent to Greatest Business Solution LLC",
+          occurredAt: now
+        }
+      ].slice(-20)
     };
 
     const result = await updateLeadAfterStripePayment(
-      latest.snapshot.leadId,
+      organizerRecordLeadId,
       (record = {}) => ({
         ...record,
         taxWatchOrganizer: organizer,
@@ -14283,7 +14573,14 @@ app.post(
     const { latest, organizerEntry } =
       await getLatestTaxWatchOrganizerContext(session);
 
-    if (!latest?.snapshot?.leadId) {
+    const organizerRecordLeadId = String(
+      session.payload?.accountLeadId ||
+      session.accountLead?.leadId ||
+      latest?.snapshot?.leadId ||
+      ""
+    ).trim();
+
+    if (!latest?.snapshot?.leadId || !organizerRecordLeadId) {
       return res.redirect(
         303,
         "/client-portal/tax-watch/organizer?error=" +
@@ -14351,6 +14648,12 @@ app.post(
         ? organizerEntry.lead.taxWatchOrganizer
         : {};
 
+    const priorActivity = Array.isArray(
+      existing.activity
+    )
+      ? existing.activity
+      : [];
+
     const organizer = {
       ...buildTaxWatchOrganizerRecord(
         latest.snapshot,
@@ -14360,11 +14663,21 @@ app.post(
       sharedAt: now,
       sharedWithName: professionalName,
       sharedWithEmail: professionalEmail,
-      updatedAt: now
+      updatedAt: now,
+      activity: [
+        ...priorActivity,
+        {
+          type: "shared-with-tax-professional",
+          label: `Shared with ${professionalName}`,
+          professionalName,
+          professionalEmail,
+          occurredAt: now
+        }
+      ].slice(-20)
     };
 
-    await updateLeadAfterStripePayment(
-      latest.snapshot.leadId,
+    const saveResult = await updateLeadAfterStripePayment(
+      organizerRecordLeadId,
       (record = {}) => ({
         ...record,
         taxWatchOrganizer: organizer,
@@ -14374,6 +14687,16 @@ app.post(
         updatedAt: now
       })
     );
+
+    if (!saveResult.ok) {
+      return res.redirect(
+        303,
+        "/client-portal/tax-watch/organizer?error=" +
+        encodeURIComponent(
+          "The email was sent, but the organizer activity could not be saved. Please contact Greatest Business Solution LLC."
+        )
+      );
+    }
 
     return res.redirect(
       303,

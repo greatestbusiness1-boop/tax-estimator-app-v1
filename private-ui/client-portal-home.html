@@ -1801,6 +1801,25 @@
     .tax-watch-cash-note,.tax-watch-credit-note{margin-top:16px;padding:14px 16px;border-radius:12px;background:#f5f8fb;border:1px solid #d8e3eb;line-height:1.55}
     .tax-watch-protection-panel{border-left:5px solid #c3922f}
     @media(max-width:700px){.tax-watch-panel-heading{display:block}.tax-watch-plan-chip{margin-top:10px}}
+
+    .tax-watch-tracker-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+    .tax-watch-tracker-card{background:#f4f8fb;border:1px solid #cbdce7;border-radius:14px;padding:16px}
+    .tax-watch-tracker-card span{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5d7182}
+    .tax-watch-tracker-card strong{display:block;margin-top:7px;font-size:26px;color:#0f355d}
+    .tax-watch-progress{height:16px;background:#dce8ef;border-radius:999px;overflow:hidden;margin:12px 0 8px}
+    .tax-watch-progress>div{height:100%;width:0;background:linear-gradient(90deg,#c6922e,#0c7b58);transition:width .25s ease}
+    .tax-watch-savings-form{display:grid;grid-template-columns:180px 1fr auto;gap:12px;align-items:end;margin-top:16px}
+    .tax-watch-savings-form label{font-weight:800;color:#17354e}
+    .tax-watch-savings-form input{width:100%;margin-top:6px;padding:12px;border:1px solid #b8cbd7;border-radius:9px}
+    .tax-watch-tracker-message{display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-weight:700}
+    .tax-watch-tracker-message.show{display:block}.tax-watch-tracker-message.success{background:#e8f7f1;color:#075b40}.tax-watch-tracker-message.error{background:#fff0f0;color:#8a1c1c}
+    .tax-watch-savings-history{width:100%;border-collapse:collapse;margin-top:14px}
+    .tax-watch-savings-history th,.tax-watch-savings-history td{padding:11px;border-bottom:1px solid #dbe5ec;text-align:left}
+    .tax-watch-savings-history th:last-child,.tax-watch-savings-history td:last-child{text-align:right}
+    .tax-watch-document-card{background:#fff;border:1px solid #cbdce7;border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(20,50,75,.07)}
+    .tax-watch-document-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    @media(max-width:760px){.tax-watch-tracker-grid{grid-template-columns:1fr}.tax-watch-savings-form{grid-template-columns:1fr}}
+
   </style>
 </head>
 <body>
@@ -1841,6 +1860,7 @@
             <span>Documents</span><span aria-hidden="true">▾</span>
           </button>
           <div class="portal-submenu" id="documentsMenu">
+            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
             <button type="button" data-portal-open="document-upload">Upload Documents</button>
             <button type="button" data-portal-open="document-history">Uploaded Documents</button>
           </div>
@@ -2027,6 +2047,29 @@
 
         <div class="transcript-portal-list" id="transcriptPortalList">
           <div class="empty">Loading your IRS Transcript Help status...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section portal-view" id="taxWatchDocuments" data-portal-view="tax-watch-documents">
+      <div class="section-head">
+        <div>
+          <h2>Tax Watch Documents</h2>
+          <p>Your Tax Watch organizer is available here without searching through the service pages.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+      </div>
+      <div class="section-body">
+        <div class="tax-watch-document-card">
+          <div class="eyebrow">Business Income and Expense Organizer</div>
+          <h3>My Business Organizer</h3>
+          <p>A plain-language summary of the income, categorized expenses, mileage, and tax-payment information you entered.</p>
+          <p id="taxWatchDocumentStatus"><strong>Status:</strong> Not ready</p>
+          <p id="taxWatchDocumentUpdated"><strong>Last activity:</strong> Not recorded</p>
+          <div class="tax-watch-document-actions">
+            <a class="tax-watch-action-button" id="taxWatchDocumentOpen" href="/client-portal/tax-watch/organizer">Open My Business Organizer</a>
+            <button class="portal-back-button" type="button" data-portal-open="tax-watch">Return to Tax Watch Pro</button>
+          </div>
         </div>
       </div>
     </section>
@@ -2241,6 +2284,40 @@
             </div>
             <div class="tax-watch-cash-note">
               <strong>Simple planning estimate.</strong> Based on the income and expenses you entered, this shows an estimated amount to set aside for taxes and an estimated amount you may have available to spend. It does not calculate final self-employment tax, prepare Schedule C, or replace professional tax preparation by Greatest Business Solution LLC.
+            </div>
+          </div>
+
+          <div class="tax-watch-panel">
+            <div class="tax-watch-panel-heading">
+              <div>
+                <div class="eyebrow">Tax Money Tracker</div>
+                <h3>What You Need, What You Saved, and What Is Left</h3>
+              </div>
+              <span class="tax-watch-plan-chip">Included in Tax Watch Pro</span>
+            </div>
+            <p>Record money you moved into tax savings. This creates a dated accountability record but does not verify a bank deposit.</p>
+            <div class="tax-watch-tracker-grid">
+              <div class="tax-watch-tracker-card"><span>Estimated Tax Money Needed</span><strong id="taxWatchSavingsTarget">$0</strong></div>
+              <div class="tax-watch-tracker-card"><span>Money You Reported Saving</span><strong id="taxWatchSavingsReported">$0</strong></div>
+              <div class="tax-watch-tracker-card"><span>Amount You Still Need</span><strong id="taxWatchSavingsRemaining">$0</strong></div>
+            </div>
+            <div class="tax-watch-progress" aria-label="Tax savings progress"><div id="taxWatchSavingsProgress"></div></div>
+            <p><strong id="taxWatchSavingsStatus">No savings reported yet</strong> · <span id="taxWatchSavingsPercent">0%</span> of the current estimate covered</p>
+            <form class="tax-watch-savings-form" id="taxWatchSavingsForm">
+              <label>Deposit amount
+                <input id="taxWatchSavingsAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Example: 100">
+              </label>
+              <label>Optional note
+                <input id="taxWatchSavingsNote" maxlength="200" placeholder="Example: Moved money after this week's DoorDash payout">
+              </label>
+              <button class="tax-watch-action-button" id="taxWatchSavingsButton" type="submit">Add Savings Entry</button>
+            </form>
+            <div class="tax-watch-tracker-message" id="taxWatchSavingsMessage" role="status" aria-live="polite"></div>
+            <div style="overflow-x:auto">
+              <table class="tax-watch-savings-history">
+                <thead><tr><th>Date and time</th><th>Note</th><th>Deposit</th></tr></thead>
+                <tbody id="taxWatchSavingsHistory"><tr><td colspan="3">No savings entries yet.</td></tr></tbody>
+              </table>
             </div>
           </div>
 
@@ -4708,6 +4785,41 @@
             : "");
       }
 
+      const tracker = taxWatch.moneyTracker || {};
+      const trackerTarget = document.getElementById("taxWatchSavingsTarget");
+      const trackerSaved = document.getElementById("taxWatchSavingsReported");
+      const trackerRemaining = document.getElementById("taxWatchSavingsRemaining");
+      const trackerProgress = document.getElementById("taxWatchSavingsProgress");
+      const trackerStatus = document.getElementById("taxWatchSavingsStatus");
+      const trackerPercent = document.getElementById("taxWatchSavingsPercent");
+      const trackerHistory = document.getElementById("taxWatchSavingsHistory");
+
+      if (trackerTarget) trackerTarget.textContent = taxWatchMoney(tracker.estimatedTaxMoneyNeeded || 0);
+      if (trackerSaved) trackerSaved.textContent = taxWatchMoney(tracker.moneyReportedSaved || 0);
+      if (trackerRemaining) trackerRemaining.textContent = taxWatchMoney(tracker.amountStillNeeded || 0);
+      if (trackerProgress) trackerProgress.style.width = `${Math.max(0, Math.min(100, Number(tracker.progressPercent || 0)))}%`;
+      if (trackerStatus) trackerStatus.textContent = tracker.statusLabel || "No savings reported yet";
+      if (trackerPercent) trackerPercent.textContent = `${Number(tracker.progressPercent || 0)}%`;
+
+      if (trackerHistory) {
+        const entries = tracker.entries || [];
+        trackerHistory.innerHTML = entries.length
+          ? entries.map((entry) => `<tr>
+              <td><strong>${escapeHtml(formatDate(entry.recordedAt, true))}</strong></td>
+              <td>${escapeHtml(entry.note || "Savings entry")}</td>
+              <td><strong>${escapeHtml(taxWatchMoney(entry.amount || 0))}</strong></td>
+            </tr>`).join("")
+          : `<tr><td colspan="3">No savings entries yet.</td></tr>`;
+      }
+
+      const documentStatus = document.getElementById("taxWatchDocumentStatus");
+      const documentUpdated = document.getElementById("taxWatchDocumentUpdated");
+      const documentOpen = document.getElementById("taxWatchDocumentOpen");
+      if (documentStatus) documentStatus.innerHTML = `<strong>Status:</strong> ${escapeHtml(organizer.statusLabel || (organizer.exists ? "Ready" : "Not ready"))}`;
+      const organizerDate = organizer.sentAt || organizer.sharedAt || organizer.createdAt || "";
+      if (documentUpdated) documentUpdated.innerHTML = `<strong>Last activity:</strong> ${escapeHtml(organizerDate ? formatDate(organizerDate, true) : "Not recorded")}`;
+      if (documentOpen) documentOpen.textContent = organizer.exists ? "Open My Business Organizer" : "Create My Business Organizer";
+
       const changeList = document.getElementById("taxWatchChangeList");
       changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])
         .map((item) => `<li>${escapeHtml(item)}</li>`)
@@ -4733,6 +4845,44 @@
             </tr>`;
           }).join("")
         : `<tr><td colspan="5">No saved estimate history is available yet.</td></tr>`;
+    }
+
+    function showTaxWatchSavingsMessage(text, type = "") {
+      const message = document.getElementById("taxWatchSavingsMessage");
+      if (!message) return;
+      message.textContent = text;
+      message.className = `tax-watch-tracker-message show ${type}`.trim();
+    }
+
+    async function saveTaxWatchSavingsEntry(event) {
+      event.preventDefault();
+      const amountInput = document.getElementById("taxWatchSavingsAmount");
+      const noteInput = document.getElementById("taxWatchSavingsNote");
+      const button = document.getElementById("taxWatchSavingsButton");
+      const amount = Number(amountInput?.value || 0);
+      const note = String(noteInput?.value || "").trim();
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showTaxWatchSavingsMessage("Enter the amount you moved into tax savings.", "error");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Saving Entry...";
+
+      try {
+        const data = await postJson("/api/client-portal/tax-watch/savings", { amount, note });
+        showTaxWatchSavingsMessage(data.message || "Your savings entry was added.", "success");
+        amountInput.value = "";
+        noteInput.value = "";
+        await loadPortal();
+        openPortalView("tax-watch", { updateHash: true, scroll: false });
+      } catch (error) {
+        showTaxWatchSavingsMessage(error.message || "The savings entry could not be saved.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Add Savings Entry";
+      }
     }
 
     function updateTaxWatchTargetVisibility() {
@@ -4893,6 +5043,7 @@
       "tax-extension": "tax-extension",
       "transcript-help": "transcript-help",
       "tax-records": "tax-records",
+      "tax-watch-documents": "tax-watch-documents",
       "document-upload": "documents-upload",
       "document-history": "uploaded-documents",
       questions: "questions-comments",
@@ -4972,7 +5123,7 @@
         );
       }
 
-      const documentViews = new Set(["document-upload", "document-history"]);
+      const documentViews = new Set(["tax-watch-documents", "document-upload", "document-history"]);
       const documentsToggle = document.querySelector(
         '[data-submenu-toggle="documentsMenu"]'
       );
@@ -5649,6 +5800,13 @@
         button.textContent = "Send My Question";
       }
     });
+
+    document.getElementById(
+      "taxWatchSavingsForm"
+    ).addEventListener(
+      "submit",
+      saveTaxWatchSavingsEntry
+    );
 
     document.getElementById(
       "signOutButton"
