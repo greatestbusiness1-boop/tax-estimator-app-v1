@@ -858,6 +858,20 @@
       background:#fff;
       padding:22px;
     }
+    .billing-history-page .section-body{
+      padding:28px;
+    }
+    .billing-history-page .membership-billing-card{
+      grid-column:auto;
+      border:0;
+      border-radius:0;
+      background:transparent;
+      padding:0;
+    }
+    .billing-history-page .membership-billing-card > p{
+      max-width:980px;
+      font-size:14px;
+    }
     .membership-billing-card h3{
       margin:0;
       color:var(--navy);
@@ -1691,6 +1705,11 @@
       background:#edf6fb;
       color:#0b5685;
     }
+    .portal-top-navigation #accountSecurityMenu{
+      left:auto;
+      right:0;
+      min-width:275px;
+    }
     .portal-top-navigation .portal-active-nav{display:grid}
     .portal-top-navigation{isolation:isolate}
     .portal-top-navigation .portal-nav-group::after{
@@ -2052,7 +2071,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div class="brand-text">
         <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.6.0</span>
+        <span>Client Experience V2 — Portal 2.6.1</span>
       </div>
     </div>
     <div class="top-actions">
@@ -2090,11 +2109,20 @@
           </div>
         </div>
 
-        <button class="portal-nav-item" type="button" data-portal-open="questions">Questions &amp; Comments</button>
         <button class="portal-nav-item" type="button" data-portal-open="completed">Completed Services</button>
         <button class="portal-nav-item" type="button" data-portal-open="plans">Plans &amp; Pricing</button>
         <button class="portal-nav-item" type="button" data-portal-open="professional-services">Professional Tax Services</button>
-        <button class="portal-nav-item" type="button" data-portal-open="account">Account &amp; Security</button>
+
+        <div class="portal-nav-group">
+          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="accountSecurityMenu" aria-expanded="false">
+            <span>Account &amp; Security</span><span aria-hidden="true">▾</span>
+          </button>
+          <div class="portal-submenu" id="accountSecurityMenu">
+            <button type="button" data-portal-open="account">Profile &amp; Portal Access</button>
+            <button type="button" data-portal-open="billing-history">Billing &amp; Payment History</button>
+            <button type="button" data-portal-open="questions">Questions &amp; Comments</button>
+          </div>
+        </div>
       </nav>
     </aside>
 
@@ -2693,8 +2721,8 @@
     <section class="section portal-view" id="accountSecurity" data-portal-view="account">
       <div class="section-head">
         <div>
-          <h2>Account &amp; Security</h2>
-          <p>Manage your username, password, and secure access on this page.</p>
+          <h2>Profile &amp; Portal Access</h2>
+          <p>Review your portal username, password settings, and secure access information.</p>
         </div>
         <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
@@ -2749,10 +2777,22 @@
             <a class="button secondary" href="/client-portal?activate=1">Forgot Password / Reset Access</a>
           </div>
         </form>
+      </div>
+    </section>
 
+    <section class="section portal-view billing-history-page" id="billingPaymentHistory" data-portal-view="billing-history">
+      <div class="section-head">
+        <div>
+          <h2>Billing &amp; Payment History</h2>
+          <p>See what you paid each year without contacting the office. Payment records stay connected to this portal account.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+      </div>
+
+      <div class="section-body">
         <div class="membership-billing-card" id="membershipBillingCard">
           <h3>Billing &amp; Payment History</h3>
-          <p>See what you paid, when you paid it, the period covered, and the saved Stripe receipt or invoice. For security, only the card brand and last four digits are shown.</p>
+          <p>Review current membership billing and every recorded payment by year. Open a payment to see the exact date and time, service period, payment method, and available Stripe receipt or invoice. For security, only the card brand and last four digits are shown.</p>
 
           <div class="membership-billing-summary">
             <div>
@@ -6140,6 +6180,7 @@
       "document-upload": "documents-upload",
       "document-history": "uploaded-documents",
       questions: "questions-comments",
+      "billing-history": "billing-payment-history",
       completed: "completed-services",
       plans: "plans-pricing",
       "professional-services": "professional-tax-services",
@@ -6224,6 +6265,21 @@
         documentsToggle.classList.toggle(
           "is-active",
           documentViews.has(requestedView)
+        );
+      }
+
+      const accountSecurityViews = new Set([
+        "account",
+        "billing-history",
+        "questions"
+      ]);
+      const accountSecurityToggle = document.querySelector(
+        '[data-submenu-toggle="accountSecurityMenu"]'
+      );
+      if (accountSecurityToggle) {
+        accountSecurityToggle.classList.toggle(
+          "is-active",
+          accountSecurityViews.has(requestedView)
         );
       }
 
@@ -6314,6 +6370,10 @@
 
           if (submenuId === "activeServicesMenu") {
             openPortalView("active-services");
+          }
+
+          if (submenuId === "accountSecurityMenu") {
+            openPortalView("account");
           }
 
           setPortalSubmenu(toggle, shouldOpen);
