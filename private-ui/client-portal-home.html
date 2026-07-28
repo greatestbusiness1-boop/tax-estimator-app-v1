@@ -1862,12 +1862,20 @@
     .tax-watch-preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
     .tax-watch-preview-actions a{display:inline-flex;align-items:center;justify-content:center;padding:11px 15px;border-radius:10px;background:#0f355d;color:#fff;text-decoration:none;font-weight:800}
     .tax-watch-preview-actions a.secondary{background:#fff;color:#0f355d;border:1px solid #a9c1d2}
+    .tax-watch-preview-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 18px;border:2px solid #0f355d;border-radius:11px;background:#0f355d;color:#fff;box-shadow:0 7px 16px rgba(15,53,93,.22);font:inherit;font-weight:900;cursor:pointer;opacity:1;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+    .tax-watch-preview-actions button::after{content:'\2192';margin-left:9px;font-size:18px;line-height:1}
+    .tax-watch-preview-actions button.secondary{background:#f2ca67;border-color:#b47d10;color:#102f52;box-shadow:0 7px 16px rgba(180,125,16,.2)}
+    .tax-watch-preview-actions button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 20px rgba(15,53,93,.28)}
+    .tax-watch-preview-actions button.secondary:hover:not(:disabled){background:#f6d57f;border-color:#9c6908;box-shadow:0 10px 20px rgba(180,125,16,.27)}
+    .tax-watch-preview-actions button:focus-visible{outline:4px solid rgba(39,113,158,.28);outline-offset:3px}
+    .tax-watch-preview-actions button:disabled{background:#e6eaee;border-color:#c6cdd4;color:#7b8792;box-shadow:none;cursor:not-allowed;opacity:1;transform:none}
+    .tax-watch-preview-actions button:disabled::after{content:'';margin-left:0}
     .cx-service-preview{margin-top:12px;padding:12px 14px;border-radius:12px;background:#edf7f3;border-left:4px solid #0d7c5f}
     .cx-service-preview strong,.cx-service-preview span{display:block}
     .cx-service-preview strong{color:#0f355d;margin-bottom:3px}
     .cx-service-preview span{color:#466277;font-size:13px}
     .tax-watch-readonly-notice{margin:0 0 16px;padding:14px 16px;border-radius:12px;background:#fff1f1;border-left:4px solid #9b1c1c;color:#6f1d1d;font-weight:800}
-    @media(max-width:760px){.tax-watch-preview-top{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-preview-actions a{width:100%}}
+    @media(max-width:760px){.tax-watch-preview-top{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}}
   </style>
 </head>
 <body>
@@ -2321,8 +2329,8 @@
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
             <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
             <div class="tax-watch-preview-actions" id="taxWatchMembershipCheckoutActions">
-              <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Select Monthly — $11.99</button>
-              <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Select Annual — $119</button>
+              <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
+              <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
             </div>
             <div class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"></div>
           </div>
@@ -4620,8 +4628,8 @@
       const taxWatchCheckoutActions = activeMembership
         ? ""
         : `<div class="tax-watch-preview-actions">
-            <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Choose Monthly — $11.99</button>
-            <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Choose Annual — $119</button>
+            <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
+            <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
           </div>`;
 
       membershipGrid.innerHTML = `
