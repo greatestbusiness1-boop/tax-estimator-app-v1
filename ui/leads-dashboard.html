@@ -2859,6 +2859,37 @@
     <button class="sidebar-btn" data-view="written" data-title="Written Review Requests">Written Review Requests</button>
 
     <div class="sidebar-divider"></div>
+    <div class="sidebar-group">Year-Round Memberships</div>
+    <button
+      id="taxWatchEnrollmentsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="taxwatchenrollments"
+      data-title="Tax Watch Pro Enrollments"
+      type="button"
+    >
+      <span>Tax Watch Pro Enrollments</span>
+      <span
+        id="taxWatchEnrollmentsSidebarCount"
+        class="transcript-sidebar-count is-zero"
+        aria-label="0 Tax Watch Pro enrollment records"
+      >0</span>
+    </button>
+    <button
+      id="pinnacleEnrollmentsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="pinnacleenrollments"
+      data-title="Pinnacle Tax Action Plan Enrollments"
+      type="button"
+    >
+      <span>Pinnacle Tax Action Plan Enrollments</span>
+      <span
+        id="pinnacleEnrollmentsSidebarCount"
+        class="transcript-sidebar-count is-zero"
+        aria-label="0 Pinnacle Tax Action Plan enrollment records"
+      >0</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
     <div class="sidebar-group">Tax Preparation Work Center</div>
     <button
       id="taxPrepRequestsSidebarButton"
@@ -3227,6 +3258,7 @@
           <option value="written-review">Written Review</option>
           <option value="tax-preparation">Tax Preparation</option>
           <option value="tax-watch-enrollment">Tax Watch Pro Enrollment</option>
+          <option value="pinnacle-enrollment">Pinnacle Tax Action Plan Enrollment</option>
           <option value="website-contact">Website Contact</option>
           <option value="transcript">Transcript</option>
           <option value="estimate">Free Estimate</option>
@@ -3288,6 +3320,7 @@
           <option value="written-review">Written Review</option>
           <option value="tax-preparation">Tax Preparation</option>
           <option value="tax-watch-enrollment">Tax Watch Pro Enrollment</option>
+          <option value="pinnacle-enrollment">Pinnacle Tax Action Plan Enrollment</option>
           <option value="website-contact">Website Contact</option>
           <option value="transcript">Transcript</option>
           <option value="other">Other</option>
@@ -3528,28 +3561,260 @@ function formatUSPhone(value){
   return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
 }
 
-function isTaxWatchEnrollmentLead(lead){
-  const service = String(
-    lead?.contactRequest?.service ||
-    lead?.Request?.service ||
-    ""
-  ).trim().toLowerCase();
+function getMembershipEnrollmentText(lead){
+  const request =
+    lead?.contactRequest ||
+    lead?.Request ||
+    {};
 
-  const message = String(
-    lead?.contactRequest?.message ||
-    lead?.Request?.message ||
-    ""
-  ).toLowerCase();
+  return {
+    service: String(request.service || "").trim(),
+    message: String(request.message || "").trim()
+  };
+}
+
+function isTaxWatchEnrollmentLead(lead){
+  const enrollment = getMembershipEnrollmentText(lead);
+  const service = enrollment.service.toLowerCase();
+  const message = enrollment.message.toLowerCase();
 
   return Boolean(
     isWebsiteContactLead(lead) &&
-    service === "tax watch pro" &&
+    (
+      service === "tax watch pro" ||
+      message.includes("tax watch pro")
+    ) &&
     (
       message.includes("enroll") ||
       message.includes("monthly") ||
       message.includes("annual")
     )
   );
+}
+
+function isPinnacleEnrollmentLead(lead){
+  const enrollment = getMembershipEnrollmentText(lead);
+  const service = enrollment.service.toLowerCase();
+  const message = enrollment.message.toLowerCase();
+
+  return Boolean(
+    isWebsiteContactLead(lead) &&
+    (
+      service === "pinnacle tax action plan" ||
+      service === "pinnacle" ||
+      message.includes("pinnacle tax action plan")
+    ) &&
+    (
+      message.includes("enroll") ||
+      message.includes("monthly") ||
+      message.includes("annual")
+    )
+  );
+}
+
+function isMembershipEnrollmentLead(lead){
+  return (
+    isTaxWatchEnrollmentLead(lead) ||
+    isPinnacleEnrollmentLead(lead)
+  );
+}
+
+function getMembershipPlanLabel(lead){
+  return isPinnacleEnrollmentLead(lead)
+    ? "Pinnacle Tax Action Plan"
+    : "Tax Watch Pro";
+}
+
+function getMembershipBillingChoice(lead){
+  const message =
+    getMembershipEnrollmentText(lead)
+      .message
+      .toLowerCase();
+
+  if(message.includes("annual")){
+    return "Annual";
+  }
+
+  if(message.includes("monthly")){
+    return "Monthly";
+  }
+
+  return "Not selected";
+}
+
+function formatMembershipPriceAmount(value){
+  const amount = Number(
+    String(value || "")
+      .replace(/[$,]/g, "")
+      .trim()
+  );
+
+  if(!Number.isFinite(amount)){
+    return "";
+  }
+
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits:
+      Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function getMembershipSelectedPrice(lead){
+  const message =
+    getMembershipEnrollmentText(lead).message;
+  const billing = getMembershipBillingChoice(lead);
+  const priceMatch =
+    message.match(/\$\s*([\d,]+(?:\.\d{1,2})?)/);
+
+  let price = priceMatch
+    ? formatMembershipPriceAmount(priceMatch[1])
+    : "";
+
+  if(!price){
+    if(isPinnacleEnrollmentLead(lead)){
+      price =
+        billing === "Annual"
+          ? "$349"
+          : billing === "Monthly"
+            ? "$34.99"
+            : "";
+    }else{
+      price =
+        billing === "Annual"
+          ? "$119"
+          : billing === "Monthly"
+            ? "$11.99"
+            : "";
+    }
+  }
+
+  if(!price){
+    return "Not selected";
+  }
+
+  if(billing === "Annual"){
+    return `${price} per year`;
+  }
+
+  if(billing === "Monthly"){
+    return `${price} per month`;
+  }
+
+  return price;
+}
+
+function getMembershipEnrollmentStatus(lead){
+  const status =
+    String(lead?.status || "").toLowerCase();
+
+  if(status.includes("active membership")){
+    return "Active Membership";
+  }
+
+  if(status.includes("payment pending")){
+    return "Payment Pending";
+  }
+
+  if(
+    status.includes("steps sent") ||
+    status.includes("enrollment sent") ||
+    status.includes("replied") ||
+    Boolean(getContactRepliedAt(lead))
+  ){
+    return "Enrollment Steps Sent";
+  }
+
+  if(status.includes("expired")){
+    return "Expired";
+  }
+
+  if(
+    status.includes("cancelled") ||
+    status.includes("canceled")
+  ){
+    return "Cancelled";
+  }
+
+  if(
+    status.includes("closed") ||
+    status.includes("completed")
+  ){
+    return "Closed";
+  }
+
+  return "Enrollment Requested";
+}
+
+function getMembershipLatestAction(lead){
+  const enrollmentStatus =
+    getMembershipEnrollmentStatus(lead);
+
+  const actions = {
+    "Active Membership": "Membership activated",
+    "Payment Pending": "Waiting for membership payment",
+    "Enrollment Steps Sent": "Secure enrollment steps sent",
+    "Expired": "Membership expired",
+    "Cancelled": "Membership cancelled",
+    "Closed": "Enrollment record closed",
+    "Enrollment Requested": "Enrollment request received"
+  };
+
+  return (
+    actions[enrollmentStatus] ||
+    "Enrollment request received"
+  );
+}
+
+function updateMembershipEnrollmentCounts(){
+  const memberships = [
+    {
+      buttonId: "taxWatchEnrollmentsSidebarButton",
+      badgeId: "taxWatchEnrollmentsSidebarCount",
+      label: "Tax Watch Pro",
+      count: (allLeads || [])
+        .filter(isTaxWatchEnrollmentLead)
+        .length
+    },
+    {
+      buttonId: "pinnacleEnrollmentsSidebarButton",
+      badgeId: "pinnacleEnrollmentsSidebarCount",
+      label: "Pinnacle Tax Action Plan",
+      count: (allLeads || [])
+        .filter(isPinnacleEnrollmentLead)
+        .length
+    }
+  ];
+
+  memberships.forEach((membership) => {
+    const button =
+      document.getElementById(membership.buttonId);
+    const badge =
+      document.getElementById(membership.badgeId);
+
+    if(badge){
+      badge.textContent = String(membership.count);
+      badge.classList.toggle(
+        "is-zero",
+        membership.count === 0
+      );
+      badge.setAttribute(
+        "aria-label",
+        `${membership.count} ${membership.label} enrollment ${
+          membership.count === 1 ? "record" : "records"
+        }`
+      );
+    }
+
+    if(button){
+      button.title =
+        `${membership.count} ${membership.label} enrollment ${
+          membership.count === 1 ? "record" : "records"
+        }`;
+    }
+  });
 }
 
 function getAllLeadTypeKey(lead){
@@ -3600,6 +3865,10 @@ function getAllLeadTypeKey(lead){
     return "tax-watch-enrollment";
   }
 
+  if(isPinnacleEnrollmentLead(lead)){
+    return "pinnacle-enrollment";
+  }
+
   if(
     isWebsiteContactLead(lead) ||
     status.includes("contact request")
@@ -3624,6 +3893,7 @@ function getAllLeadTypeLabel(lead){
     "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
     "tax-watch-enrollment": "Tax Watch Pro Enrollment",
+    "pinnacle-enrollment": "Pinnacle Tax Action Plan Enrollment",
     "website-contact": "Website Contact",
     "transcript": "Transcript Help",
     "estimate": "Free Estimate",
@@ -3679,10 +3949,8 @@ function getAllLeadLatestAction(lead){
     return "Office work completed";
   }
 
-  if(isTaxWatchEnrollmentLead(lead)){
-    return getContactRepliedAt(lead)
-      ? "Tax Watch Pro enrollment request replied"
-      : "Tax Watch Pro enrollment request received";
+  if(isMembershipEnrollmentLead(lead)){
+    return getMembershipLatestAction(lead);
   }
 
   if(getContactRepliedAt(lead)){
@@ -3906,6 +4174,10 @@ function getClosedServiceKey(lead){
     return "tax-watch-enrollment";
   }
 
+  if(isPinnacleEnrollmentLead(lead)){
+    return "pinnacle-enrollment";
+  }
+
   if(
     isWebsiteContactLead(lead) ||
     status.includes("contact request")
@@ -3930,6 +4202,7 @@ function getClosedServiceLabel(lead){
     "contractor-1099": "Contractor Forms 1099",
     "tax-preparation": "Tax Preparation",
     "tax-watch-enrollment": "Tax Watch Pro Enrollment",
+    "pinnacle-enrollment": "Pinnacle Tax Action Plan Enrollment",
     "website-contact": "Website Contact",
     "transcript": "Transcript",
     "other": "Other"
@@ -4851,7 +5124,11 @@ function populateContactAdvancedFilters(){
   const yearSelect = document.getElementById("contactYearFilter");
   const serviceSelect = document.getElementById("contactServiceFilter");
   const statusSelect = document.getElementById("contactStatusFilter");
-  const contactLeads = allLeads.filter(isWebsiteContactLead);
+  const contactLeads = allLeads.filter(
+    lead =>
+      isWebsiteContactLead(lead) &&
+      !isMembershipEnrollmentLead(lead)
+  );
 
   if(yearSelect){
     const years = new Set();
@@ -6201,9 +6478,33 @@ function updateTaxPrepAdvancedSummary(count){
 }
 
 function getVisibleLeads(){
+  if(currentView==="taxwatchenrollments"){
+    return allLeads
+      .filter(isTaxWatchEnrollmentLead)
+      .sort(
+        (a,b) =>
+          new Date(getLeadEnteredAt(b) || 0) -
+          new Date(getLeadEnteredAt(a) || 0)
+      );
+  }
+
+  if(currentView==="pinnacleenrollments"){
+    return allLeads
+      .filter(isPinnacleEnrollmentLead)
+      .sort(
+        (a,b) =>
+          new Date(getLeadEnteredAt(b) || 0) -
+          new Date(getLeadEnteredAt(a) || 0)
+      );
+  }
+
   if(currentView==="websitecontact"){
     return allLeads
-      .filter(isWebsiteContactLead)
+      .filter(
+        lead =>
+          isWebsiteContactLead(lead) &&
+          !isMembershipEnrollmentLead(lead)
+      )
       .filter(matchesContactFilter)
       .filter(matchesContactAdvancedFilters)
       .sort((a,b) => new Date(getLeadEnteredAt(b) || 0) - new Date(getLeadEnteredAt(a) || 0));
@@ -8995,12 +9296,26 @@ function renderLeads(){
   updateTranscriptSidebarCount();
   updateTaxPrepRequestCounts();
   updateContractor1099Counts();
+  updateMembershipEnrollmentCounts();
 
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
   const count=document.getElementById("leadCount");
+  const membershipView =
+    currentView === "taxwatchenrollments" ||
+    currentView === "pinnacleenrollments";
 
-  count.innerText = visible.length + (visible.length === 1 ? " lead" : " leads");
+  count.innerText =
+    visible.length +
+    (
+      membershipView
+        ? visible.length === 1
+          ? " enrollment"
+          : " enrollments"
+        : visible.length === 1
+          ? " lead"
+          : " leads"
+    );
 
   if(currentView === "all"){
     updateAllSummary(visible.length);
@@ -9375,6 +9690,99 @@ function renderLeads(){
       </div>`;
 
     window.visibleWrittenReviewLeads = visible;
+    return;
+  }
+
+  if(
+    currentView === "taxwatchenrollments" ||
+    currentView === "pinnacleenrollments"
+  ){
+    const planLabel =
+      currentView === "pinnacleenrollments"
+        ? "Pinnacle Tax Action Plan"
+        : "Tax Watch Pro";
+
+    if(!visible.length){
+      list.innerHTML = `
+        <div class="office-empty">
+          No ${planLabel} enrollment records are available.
+        </div>`;
+      window.visibleMembershipEnrollmentLeads = [];
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="taxprep-table-wrap">
+        <table class="taxprep-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Plan / Billing</th>
+              <th>Selected Price</th>
+              <th>Enrollment Status</th>
+              <th>Request Date / Time</th>
+              <th>Client Reference</th>
+              <th>Latest Action</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map((lead, index) => {
+              const clientName =
+                lead?.contact?.name ||
+                "No Name";
+              const clientEmail =
+                lead?.contact?.email ||
+                "No email";
+              const billing =
+                getMembershipBillingChoice(lead);
+              const selectedPrice =
+                getMembershipSelectedPrice(lead);
+              const enrollmentStatus =
+                getMembershipEnrollmentStatus(lead);
+              const requestedAt =
+                formatLeadDate(getLeadEnteredAt(lead));
+              const reference =
+                String(lead?.leadId || "Not provided");
+              const latestAction =
+                getMembershipLatestAction(lead);
+
+              return `
+                <tr>
+                  <td>
+                    <strong>${escapeOfficeHtml(clientName)}</strong><br>
+                    ${escapeOfficeHtml(clientEmail)}
+                  </td>
+                  <td>
+                    <strong>${escapeOfficeHtml(getMembershipPlanLabel(lead))}</strong><br>
+                    ${escapeOfficeHtml(billing)}
+                  </td>
+                  <td>${escapeOfficeHtml(selectedPrice)}</td>
+                  <td>
+                    <span class="status-pill">
+                      ${escapeOfficeHtml(enrollmentStatus)}
+                    </span>
+                  </td>
+                  <td>${escapeOfficeHtml(requestedAt || "Date unavailable")}</td>
+                  <td>
+                    <strong>${escapeOfficeHtml(reference)}</strong>
+                  </td>
+                  <td>${escapeOfficeHtml(latestAction)}</td>
+                  <td>
+                    <button
+                      class="closed-open-btn"
+                      onclick="openMembershipEnrollment(${index})"
+                    >
+                      Open
+                    </button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    window.visibleMembershipEnrollmentLeads = visible;
     return;
   }
 
@@ -15329,6 +15737,15 @@ function openClosedLead(index){
   if(lead) openPanel(lead);
 }
 
+function openMembershipEnrollment(index){
+  const lead =
+    (window.visibleMembershipEnrollmentLeads || [])[index];
+
+  if(lead){
+    openPanel(lead);
+  }
+}
+
 async function loadLeads(){
   try{
     const res=await fetch("/api/leads?includeLocal=1");
@@ -15379,6 +15796,8 @@ document.addEventListener("DOMContentLoaded", () => {
         extensions: "Extension Requests",
         extensionscompleted: "Completed & Closed Extensions",
         taxprepcompleted: "Completed Tax Returns",
+        taxwatchenrollments: "Tax Watch Pro Enrollments",
+        pinnacleenrollments: "Pinnacle Tax Action Plan Enrollments",
         websitecontact: "Website Contact Requests",
         calendar: "Scheduled Consultations",
         calendarclosed: "Closed Calendar",
