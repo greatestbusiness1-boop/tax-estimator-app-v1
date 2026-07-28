@@ -2319,11 +2319,12 @@
               <div class="tax-watch-preview-countdown" id="taxWatchPreviewCountdown" data-tax-watch-preview-countdown>Calculating...</div>
             </div>
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
-            <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option when you are ready. Your selection opens the enrollment request, and your saved records remain connected to your portal.</p>
-            <div class="tax-watch-preview-actions">
-              <a href="/contact?service=Tax%20Watch%20Pro&amp;plan=monthly&amp;return=client-portal" target="_blank" rel="noopener">Select Monthly — $11.99</a>
-              <a class="secondary" href="/contact?service=Tax%20Watch%20Pro&amp;plan=annual&amp;return=client-portal" target="_blank" rel="noopener">Select Annual — $119</a>
+            <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
+            <div class="tax-watch-preview-actions" id="taxWatchMembershipCheckoutActions">
+              <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Select Monthly — $11.99</button>
+              <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Select Annual — $119</button>
             </div>
+            <div class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"></div>
           </div>
           <div class="tax-watch-readonly-notice" id="taxWatchPreviewExpiredNotice" hidden>Your preview has ended. No charge occurred. Your saved records remain available, but new updates and savings entries are paused until you choose a plan.</div>
           <div class="tax-watch-summary-grid">
@@ -2599,6 +2600,8 @@
     let currentDocumentCenter = null;
     let pendingTranscriptUploadLeadId = "";
     let taxWatchPreviewTimer = null;
+    let currentMembershipCheckout = {};
+    let membershipCheckoutConfirming = false;
 
     function formatFileSize(
       bytes
@@ -4609,9 +4612,17 @@
       const comparison = document.getElementById("membershipComparison");
       const additionalGrid = document.getElementById("additionalServiceGrid");
       const taxWatch = portal.taxWatch || {};
+      const membership = taxWatch.membership || {};
+      const activeMembership = membership.enrollmentStatus === "Active Membership" && membership.paymentStatus === "Paid / Confirmed";
       const taxWatchAction = taxWatch.active
         ? `<button type="button" data-portal-open="tax-watch">Open Tax Money Tracker</button>`
         : `<button type="button" data-portal-open="tax-watch">Start Tax Money Tracker Preview</button>`;
+      const taxWatchCheckoutActions = activeMembership
+        ? ""
+        : `<div class="tax-watch-preview-actions">
+            <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Choose Monthly — $11.99</button>
+            <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Choose Annual — $119</button>
+          </div>`;
 
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
@@ -4650,6 +4661,7 @@
             <li>Tax preparation and filing are separate professional services</li>
           </ul>
           ${taxWatchAction}
+          ${taxWatchCheckoutActions}
         </article>
 
         <article class="cx-explore-card featured">
@@ -4673,9 +4685,11 @@
             <li>Tax preparation and filing remain separate professional services</li>
           </ul>
           <p><strong>Designed for freelancers and self-employed individuals.</strong> Larger businesses with complex entities, payroll, inventory, or full bookkeeping needs may require separate professional services.</p>
-          <a href="/contact?service=Pinnacle%20Tax%20Action%20Plan&amp;return=plans-pricing" target="_blank" rel="noopener">Ask About the Pinnacle Plan</a>
+          <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Pinnacle Checkout Opens When Plan Is Ready</button>
         </article>
       `;
+
+      configureMembershipCheckoutButtons();
 
       comparison.innerHTML = `
         <table aria-label="Tax membership comparison">
@@ -4889,11 +4903,76 @@
         taxWatchPreviewTimer = null;
       }
 
+      const membership = taxWatch.membership || {};
+      const enrollmentStatus = String(membership.enrollmentStatus || "");
+      const paymentStatus = String(membership.paymentStatus || "");
+      const membershipActive =
+        enrollmentStatus === "Active Membership" &&
+        paymentStatus === "Paid / Confirmed";
+      const membershipPastDue = enrollmentStatus === "Past Due";
+      const membershipEnded = ["Cancelled", "Expired"].includes(enrollmentStatus);
       const isPreview = String(taxWatch.status || "").toLowerCase() === "preview";
+      const actions = document.getElementById("taxWatchMembershipCheckoutActions");
+
+      currentMembershipCheckout = taxWatch.checkout || {};
+
+      if (membershipActive) {
+        if (card) card.hidden = false;
+        if (countdown) {
+          countdown.removeAttribute("data-preview-ends-at");
+          countdown.textContent = "Membership Active";
+          countdown.classList.remove("expired");
+        }
+        if (heading) heading.textContent = `${membership.planName || "Tax Watch Pro"} membership is active`;
+        if (dates) {
+          dates.textContent =
+            `${membership.billingLabel || "Membership"} plan` +
+            (membership.membershipStartedAt
+              ? ` started ${formatDate(membership.membershipStartedAt)}.`
+              : ".") +
+            (membership.nextRenewalAt
+              ? ` Next renewal: ${formatDate(membership.nextRenewalAt)}.`
+              : "");
+        }
+        if (progressTrack) progressTrack.hidden = true;
+        if (note) note.innerHTML = "<strong>Payment confirmed.</strong> Your year-round tracking access is active. Tax preparation and filing remain separate professional services.";
+        if (actions) actions.hidden = true;
+        if (expiredNotice) expiredNotice.hidden = true;
+        if (badgeStatus) badgeStatus.textContent = "Membership Active";
+        if (badgeText) badgeText.textContent = `${membership.planName || "Tax Watch Pro"} — ${membership.billingLabel || "Paid plan"}`;
+        return;
+      }
+
+      if (membershipPastDue || membershipEnded) {
+        if (card) card.hidden = false;
+        if (countdown) {
+          countdown.removeAttribute("data-preview-ends-at");
+          countdown.textContent = membershipPastDue ? "Payment Needs Attention" : enrollmentStatus;
+          countdown.classList.add("expired");
+        }
+        if (heading) heading.textContent = membershipPastDue
+          ? "Your membership payment needs attention"
+          : `Your membership is ${enrollmentStatus.toLowerCase()}`;
+        if (dates) dates.textContent = membership.latestAction || "Contact Greatest Business Solution LLC for help with membership access.";
+        if (progressTrack) progressTrack.hidden = true;
+        if (note) note.innerHTML = membershipPastDue
+          ? "<strong>Payment was not confirmed.</strong> New Tax Money Tracker updates may be paused until the Stripe subscription is current."
+          : "<strong>Your saved records remain connected.</strong> Choose a plan again when you are ready to resume year-round tracking.";
+        if (actions) actions.hidden = false;
+        if (expiredNotice) expiredNotice.hidden = true;
+        if (badgeStatus) badgeStatus.textContent = enrollmentStatus;
+        if (badgeText) badgeText.textContent = paymentStatus || "Payment not active";
+        configureMembershipCheckoutButtons();
+        return;
+      }
+
       if (card) card.hidden = !isPreview;
       if (expiredNotice) expiredNotice.hidden = !Boolean(preview.expired);
+      if (progressTrack) progressTrack.hidden = false;
+      if (actions) actions.hidden = false;
 
       if (!isPreview || !preview.endsAt) {
+        configureMembershipCheckoutButtons();
         return;
       }
 
@@ -4926,15 +5005,133 @@
       if (note) {
         note.innerHTML = preview.expired
           ? "<strong>No automatic charge occurred.</strong> Your saved records remain available. Choose a monthly or annual plan to resume new updates and savings entries."
-          : "<strong>No automatic charge.</strong> Select a monthly or annual option when you are ready. Your selection opens the enrollment request, and your saved records remain connected to your portal.";
+          : "<strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.";
       }
       if (badgeStatus) badgeStatus.textContent = preview.expired ? "Preview Ended" : "14-Day Preview Active";
       if (badgeText) badgeText.textContent = preview.expired
         ? "No charge occurred. Your records remain saved."
         : "No automatic charge. Choose a plan only when you are ready.";
 
+      configureMembershipCheckoutButtons();
       updateTaxWatchPreviewCountdowns();
       taxWatchPreviewTimer = window.setInterval(updateTaxWatchPreviewCountdowns, 1000);
+    }
+
+    function showMembershipCheckoutMessage(text, type = "") {
+      const message = document.getElementById("membershipCheckoutMessage");
+      if (!message) return;
+      message.textContent = text || "";
+      message.className = `tax-watch-message ${text ? "show" : ""} ${type}`.trim();
+    }
+
+    function configureMembershipCheckoutButtons() {
+      document.querySelectorAll("[data-membership-checkout-plan]").forEach((button) => {
+        const planKey = button.dataset.membershipCheckoutPlan || "tax-watch-pro";
+        const isPinnacle = planKey === "pinnacle";
+        const available = isPinnacle
+          ? currentMembershipCheckout.pinnacleAvailable === true
+          : currentMembershipCheckout.taxWatchAvailable === true;
+
+        button.disabled = !available;
+        button.setAttribute("aria-disabled", String(!available));
+        if (!available) {
+          button.title = isPinnacle
+            ? "Pinnacle checkout opens after the complete Pinnacle tools are ready."
+            : currentMembershipCheckout.stripeMode === "live"
+              ? "LOCAL testing is blocked with a live Stripe key."
+              : "Secure Stripe checkout is not enabled in this environment yet.";
+        } else {
+          button.removeAttribute("title");
+        }
+      });
+    }
+
+    async function startMembershipCheckout(button) {
+      const planKey = button.dataset.membershipCheckoutPlan || "tax-watch-pro";
+      const billingFrequency = button.dataset.membershipCheckoutBilling || "monthly";
+      const originalText = button.textContent;
+
+      if (button.disabled) {
+        showMembershipCheckoutMessage(button.title || "Secure checkout is not available yet.", "bad");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Opening secure Stripe checkout...";
+      showMembershipCheckoutMessage("Creating your secure Stripe subscription checkout. No charge occurs until you review and complete Stripe Checkout.");
+
+      try {
+        const response = await fetch("/api/client-portal/membership-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ planKey, billingFrequency })
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok || !data.checkoutUrl) {
+          throw new Error(data.error || "Secure Stripe checkout could not be opened.");
+        }
+
+        window.location.href = data.checkoutUrl;
+      } catch (error) {
+        showMembershipCheckoutMessage(error.message || "Secure Stripe checkout could not be opened. No charge was made.", "bad");
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+
+    async function confirmMembershipCheckoutFromUrl() {
+      if (membershipCheckoutConfirming) return false;
+
+      const url = new URL(window.location.href);
+      const result = url.searchParams.get("membershipCheckout");
+      const sessionId = url.searchParams.get("session_id") || "";
+
+      if (result === "cancelled") {
+        showMembershipCheckoutMessage("Stripe Checkout was cancelled. No charge was made. Your saved records remain connected.");
+        url.searchParams.delete("membershipCheckout");
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+        return false;
+      }
+
+      if (result !== "success" || !sessionId) {
+        return false;
+      }
+
+      membershipCheckoutConfirming = true;
+      showMembershipCheckoutMessage("Stripe Checkout returned successfully. Confirming your membership payment...", "good");
+
+      try {
+        const response = await fetch("/api/client-portal/membership-checkout-confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ sessionId })
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Your Stripe payment could not be confirmed yet.");
+        }
+
+        showMembershipCheckoutMessage(
+          data.paymentStatus === "paid"
+            ? "Payment confirmed. Your membership is active."
+            : "Stripe Checkout is complete. Payment confirmation is still processing.",
+          "good"
+        );
+      } catch (error) {
+        showMembershipCheckoutMessage(error.message || "The office can verify the Stripe payment if confirmation is delayed.", "bad");
+      } finally {
+        url.searchParams.delete("membershipCheckout");
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+        membershipCheckoutConfirming = false;
+      }
+
+      return true;
     }
 
     function renderTaxWatchPro(taxWatch = {}) {
@@ -6104,6 +6301,13 @@
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
+    document.addEventListener("click", (event) => {
+      const checkoutButton = event.target.closest("[data-membership-checkout-plan]");
+      if (!checkoutButton) return;
+      event.preventDefault();
+      startMembershipCheckout(checkoutButton);
+    });
+
     document.getElementById("portalQuestionForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
@@ -6181,12 +6385,19 @@
     initializePortalNavigation();
       initializePortalBillingToggle();
 
-    loadPortal().catch((error) => {
-      document.getElementById(
-        "records"
-      ).innerHTML =
-        `<div class="empty">${escapeHtml(error.message)}</div>`;
-    });
+    loadPortal()
+      .then(async () => {
+        const confirmed = await confirmMembershipCheckoutFromUrl();
+        if (confirmed) {
+          await loadPortal();
+        }
+      })
+      .catch((error) => {
+        document.getElementById(
+          "records"
+        ).innerHTML =
+          `<div class="empty">${escapeHtml(error.message)}</div>`;
+      });
   </script>
 </body>
 </html>

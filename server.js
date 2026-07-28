@@ -42,7 +42,25 @@ const PDFDocument = require("pdfkit");
 const { estimate } = require("./taxEstimator");
 
 require("dotenv").config();
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
+const STRIPE_SECRET_KEY = String(
+  process.env.STRIPE_SECRET_KEY || ""
+).trim();
+const stripe = require("stripe")(
+  STRIPE_SECRET_KEY
+);
+const STRIPE_KEY_MODE = STRIPE_SECRET_KEY.startsWith("sk_test_")
+  ? "test"
+  : STRIPE_SECRET_KEY.startsWith("sk_live_")
+    ? "live"
+    : "unavailable";
+const TAX_WATCH_STRIPE_CHECKOUT_ENABLED =
+  String(process.env.TAX_WATCH_STRIPE_CHECKOUT_ENABLED || "")
+    .trim()
+    .toLowerCase() === "true";
+const PINNACLE_STRIPE_CHECKOUT_ENABLED =
+  String(process.env.PINNACLE_STRIPE_CHECKOUT_ENABLED || "")
+    .trim()
+    .toLowerCase() === "true";
 const { createClient } = require("@supabase/supabase-js");
 
 const SUPABASE_URL = String(
@@ -3858,6 +3876,27 @@ Greatest Business Solution LLC`
         }
       }
 
+      if (service === "year_round_membership") {
+        const result =
+          await processMembershipCheckoutSession(
+            session,
+            event.id,
+            stripeUnixToIso(event.created)
+          );
+
+        if (!result.ok) {
+          console.error(
+            "[stripe webhook] Membership Checkout Session could not be synchronized:",
+            result.error || result
+          );
+        } else if (!result.ignored) {
+          console.log(
+            "[stripe webhook] Membership Checkout Session synchronized:",
+            leadId
+          );
+        }
+      }
+
       if (service === "written_review" && session.payment_status === "paid") {
         const result = await applyWrittenReviewPaidUpdate(leadId, {
           sessionId: session.id,
@@ -3897,6 +3936,46 @@ Greatest Business Solution LLC`
             );
           }
         }
+      }
+    }
+
+    if (
+      event.type === "invoice.paid" ||
+      event.type === "invoice.payment_failed"
+    ) {
+      const result = await processMembershipInvoice(
+        event.data.object || {},
+        event.id,
+        event.type,
+        stripeUnixToIso(event.created)
+      );
+
+      if (!result.ok) {
+        console.error(
+          "[stripe webhook] Membership invoice could not be synchronized:",
+          result.error || result
+        );
+      }
+    }
+
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      const result =
+        await processMembershipSubscription(
+          event.data.object || {},
+          event.id,
+          event.type,
+          stripeUnixToIso(event.created)
+        );
+
+      if (!result.ok) {
+        console.error(
+          "[stripe webhook] Membership subscription could not be synchronized:",
+          result.error || result
+        );
       }
     }
 
@@ -6802,6 +6881,18 @@ function buildClientPortalTaxWatchSummary(
   const baseline = profile.baselineSnapshot || deduped[0] || null;
   const isActive = Boolean(profileEntry);
   const previewWindow = getTaxWatchPreviewWindow(profile);
+  const membership = getClientPortalMembershipSummary(
+    accessible
+  );
+  const membershipIsActive =
+    membership.enrollmentStatus === "Active Membership" &&
+    membership.paymentStatus === "Paid / Confirmed";
+  const membershipNeedsPayment = [
+    "Past Due",
+    "Payment Pending",
+    "Enrollment Steps Sent",
+    "Enrollment Requested"
+  ].includes(membership.enrollmentStatus);
   const businessIncome = getTaxWatchNumber(current?.selfEmploymentIncome);
   const organizedExpenses = getTaxWatchNumber(current?.businessExpenses);
   const netBusinessIncome = Math.max(0, businessIncome - organizedExpenses);
@@ -6922,19 +7013,38 @@ function buildClientPortalTaxWatchSummary(
 
   return {
     available: Boolean(current),
-    active: isActive,
-    canEdit: isActive ? previewWindow.canEdit : false,
-    status: isActive
-      ? String(profile.status || "preview")
-      : "not-started",
-    planName: "Tax Watch Pro",
+    active: isActive || membershipIsActive,
+    canEdit: membershipIsActive
+      ? true
+      : isActive
+        ? previewWindow.canEdit
+        : false,
+    status: membershipIsActive
+      ? "active-membership"
+      : membership.enrollmentStatus === "Past Due"
+        ? "past-due"
+        : membership.enrollmentStatus === "Cancelled"
+          ? "cancelled"
+          : membership.enrollmentStatus === "Expired"
+            ? "expired"
+            : isActive
+              ? String(profile.status || "preview")
+              : "not-started",
+    planName:
+      membership.planName || "Tax Watch Pro",
     serviceName: "Tax Money Tracker",
     serviceSubtitle: "Year-Round Income, Expense, and Tax Tracking",
-    accessLabel: isActive
-      ? previewWindow.expired
-        ? "Preview ended — no charge occurred"
-        : "Preview active — no charge during preview"
-      : "Not started",
+    accessLabel: membershipIsActive
+      ? `${membership.planName} membership active`
+      : membershipNeedsPayment
+        ? `${membership.enrollmentStatus} — payment not confirmed`
+        : isActive
+          ? previewWindow.expired
+            ? "Preview ended — no charge occurred"
+            : "Preview active — no charge during preview"
+          : "Not started",
+    membership,
+    checkout: getMembershipCheckoutAvailability(),
     preview: isActive
       ? previewWindow
       : {
@@ -18544,7 +18654,7 @@ function buildMembershipEnrollmentBase(record = {}) {
   }
 
   return {
-    version: 1,
+    version: Math.max(2, Number(current.version || 1)),
     planKey: String(current.planKey || plan.planKey),
     planName: String(current.planName || plan.planName),
     billingFrequency: String(
@@ -18586,6 +18696,61 @@ function buildMembershipEnrollmentBase(record = {}) {
     expiredAt: String(current.expiredAt || ""),
     closedAt: String(current.closedAt || ""),
     endedAt: String(current.endedAt || ""),
+    stripeCheckoutSessionId: String(
+      current.stripeCheckoutSessionId || ""
+    ),
+    stripeCustomerId: String(
+      current.stripeCustomerId || ""
+    ),
+    stripeSubscriptionId: String(
+      current.stripeSubscriptionId || ""
+    ),
+    stripeLatestInvoiceId: String(
+      current.stripeLatestInvoiceId || ""
+    ),
+    stripeLatestEventId: String(
+      current.stripeLatestEventId || ""
+    ),
+    stripeSubscriptionStatus: String(
+      current.stripeSubscriptionStatus || ""
+    ),
+    stripeCurrentPeriodEnd: String(
+      current.stripeCurrentPeriodEnd || ""
+    ),
+    checkoutCreatedAt: String(
+      current.checkoutCreatedAt || ""
+    ),
+    checkoutEnvironment: String(
+      current.checkoutEnvironment || ""
+    ),
+    paymentSource: String(
+      current.paymentSource || ""
+    ),
+    lastPaymentAt: String(
+      current.lastPaymentAt || ""
+    ),
+    lastPaymentAmountCents: Math.max(
+      0,
+      Number(current.lastPaymentAmountCents || 0)
+    ),
+    lastPaymentAmountDisplay: String(
+      current.lastPaymentAmountDisplay || ""
+    ),
+    renewalCount: Math.max(
+      0,
+      Number.parseInt(current.renewalCount, 10) || 0
+    ),
+    cancelAtPeriodEnd:
+      current.cancelAtPeriodEnd === true,
+    cancelAt: String(current.cancelAt || ""),
+    processedStripeEventIds: Array.isArray(
+      current.processedStripeEventIds
+    )
+      ? current.processedStripeEventIds
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+          .slice(-99)
+      : [],
     latestAction: String(
       current.latestAction || "Enrollment request received"
     ),
@@ -18725,6 +18890,1069 @@ function applyMembershipAction(record = {}, action, now) {
   return next;
 }
 
+function normalizeMembershipPlanKey(value) {
+  const clean = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  return clean === "pinnacle" ||
+    clean === "pinnacle-tax-action-plan"
+    ? "pinnacle"
+    : "tax-watch-pro";
+}
+
+function normalizeMembershipBillingFrequency(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase() === "annual"
+    ? "annual"
+    : "monthly";
+}
+
+function getMembershipCheckoutPlanConfig(
+  planKey,
+  billingFrequency
+) {
+  const normalizedPlan =
+    normalizeMembershipPlanKey(planKey);
+  const normalizedBilling =
+    normalizeMembershipBillingFrequency(
+      billingFrequency
+    );
+  const pinnacle = normalizedPlan === "pinnacle";
+  const annual = normalizedBilling === "annual";
+
+  return {
+    planKey: normalizedPlan,
+    planName: pinnacle
+      ? "Pinnacle Tax Action Plan"
+      : "Tax Watch Pro",
+    billingFrequency: normalizedBilling,
+    billingLabel: annual ? "Annual" : "Monthly",
+    interval: annual ? "year" : "month",
+    selectedPriceCents: pinnacle
+      ? annual
+        ? 34900
+        : 3499
+      : annual
+        ? 11900
+        : 1199,
+    selectedPriceDisplay: pinnacle
+      ? annual
+        ? "$349 per year"
+        : "$34.99 per month"
+      : annual
+        ? "$119 per year"
+        : "$11.99 per month",
+    productDescription: pinnacle
+      ? "Year-round tax tracking plus advanced planning scenarios. Tax preparation and filing are separate professional services."
+      : "Year-round income, expense, tax-reserve, and savings-accountability tracking. Tax preparation and filing are separate professional services."
+  };
+}
+
+function getMembershipCheckoutAvailability() {
+  const localTestAvailable =
+    !CLIENT_PORTAL_PRODUCTION_HOST &&
+    STRIPE_KEY_MODE === "test";
+
+  return {
+    stripeConfigured:
+      STRIPE_KEY_MODE !== "unavailable",
+    stripeMode: STRIPE_KEY_MODE,
+    taxWatchAvailable:
+      localTestAvailable ||
+      (
+        CLIENT_PORTAL_PRODUCTION_HOST &&
+        STRIPE_KEY_MODE === "live" &&
+        TAX_WATCH_STRIPE_CHECKOUT_ENABLED
+      ),
+    pinnacleAvailable:
+      localTestAvailable &&
+      PINNACLE_STRIPE_CHECKOUT_ENABLED ||
+      (
+        CLIENT_PORTAL_PRODUCTION_HOST &&
+        STRIPE_KEY_MODE === "live" &&
+        PINNACLE_STRIPE_CHECKOUT_ENABLED
+      ),
+    pinnacleReady:
+      PINNACLE_STRIPE_CHECKOUT_ENABLED,
+    noAutomaticCharge:
+      true
+  };
+}
+
+function isMembershipEnrollmentRecord(record = {}) {
+  const request = getMembershipRequestRecord(record);
+  const text = `${request.service || ""} ${request.message || ""}`
+    .toLowerCase();
+
+  return text.includes("tax watch pro") ||
+    text.includes("pinnacle tax action plan") ||
+    Boolean(request.membershipEnrollment);
+}
+
+function getMembershipRecordSortTime(record = {}) {
+  const enrollment =
+    buildMembershipEnrollmentBase(record);
+  const parsed = Date.parse(
+    enrollment.statusUpdatedAt ||
+    enrollment.requestedAt ||
+    getMembershipRequestTime(record) ||
+    0
+  );
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getClientPortalMembershipSummary(
+  accessible = []
+) {
+  const membershipEntries = accessible
+    .filter((entry) =>
+      isMembershipEnrollmentRecord(
+        entry?.lead || entry?.raw || {}
+      )
+    )
+    .sort(
+      (left, right) =>
+        getMembershipRecordSortTime(
+          right?.lead || right?.raw || {}
+        ) -
+        getMembershipRecordSortTime(
+          left?.lead || left?.raw || {}
+        )
+    );
+
+  const preferred =
+    membershipEntries.find((entry) => {
+      const enrollment =
+        buildMembershipEnrollmentBase(
+          entry?.lead || entry?.raw || {}
+        );
+
+      return enrollment.enrollmentStatus ===
+        "Active Membership";
+    }) || membershipEntries[0] || null;
+
+  if (!preferred) {
+    return {
+      exists: false,
+      leadId: "",
+      planKey: "",
+      planName: "",
+      billingFrequency: "",
+      billingLabel: "",
+      selectedPriceDisplay: "",
+      enrollmentStatus: "",
+      paymentStatus: "",
+      requestedAt: "",
+      paymentConfirmedAt: "",
+      membershipStartedAt: "",
+      nextRenewalAt: "",
+      statusUpdatedAt: "",
+      latestAction: ""
+    };
+  }
+
+  const enrollment =
+    buildMembershipEnrollmentBase(
+      preferred.lead || preferred.raw || {}
+    );
+
+  return {
+    exists: true,
+    leadId: String(preferred.leadId || ""),
+    planKey: enrollment.planKey,
+    planName: enrollment.planName,
+    billingFrequency:
+      enrollment.billingFrequency,
+    billingLabel: enrollment.billingLabel,
+    selectedPriceDisplay:
+      enrollment.selectedPriceDisplay,
+    enrollmentStatus:
+      enrollment.enrollmentStatus,
+    paymentStatus: enrollment.paymentStatus,
+    requestedAt: enrollment.requestedAt,
+    paymentConfirmedAt:
+      enrollment.paymentConfirmedAt,
+    membershipStartedAt:
+      enrollment.membershipStartedAt,
+    nextRenewalAt: enrollment.nextRenewalAt,
+    statusUpdatedAt:
+      enrollment.statusUpdatedAt,
+    latestAction: enrollment.latestAction,
+    cancelAtPeriodEnd:
+      enrollment.cancelAtPeriodEnd,
+    cancelAt: enrollment.cancelAt
+  };
+}
+
+function getStripeObjectId(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return String(value.id || "").trim();
+}
+
+function stripeUnixToIso(value) {
+  const seconds = Number(value || 0);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "";
+  }
+
+  return new Date(seconds * 1000).toISOString();
+}
+
+function getStripeSubscriptionPeriodEnd(subscription = {}) {
+  const direct = Number(
+    subscription.current_period_end || 0
+  );
+  const itemEnd = Number(
+    subscription.items?.data?.[0]
+      ?.current_period_end || 0
+  );
+
+  return stripeUnixToIso(direct || itemEnd);
+}
+
+function getStripeSubscriptionStart(subscription = {}) {
+  return stripeUnixToIso(
+    subscription.start_date ||
+    subscription.billing_cycle_anchor ||
+    subscription.created ||
+    0
+  );
+}
+
+function getStripeInvoiceSubscriptionId(invoice = {}) {
+  return getStripeObjectId(
+    invoice.subscription ||
+    invoice.parent?.subscription_details
+      ?.subscription ||
+    invoice.lines?.data?.[0]?.parent
+      ?.subscription_item_details?.subscription
+  );
+}
+
+function getMembershipCheckoutBaseUrl(req) {
+  const host = String(
+    req.get("host") || ""
+  ).trim().toLowerCase();
+  const forwardedProtocol = String(
+    req.headers["x-forwarded-proto"] || ""
+  ).split(",")[0].trim();
+  const protocol = forwardedProtocol ||
+    (req.secure ? "https" : "http");
+  const allowedRequestHost =
+    host === "localhost:3000" ||
+    host.startsWith("127.0.0.1:") ||
+    host === "taxestimatereview.com" ||
+    host === "www.taxestimatereview.com" ||
+    host.endsWith(".onrender.com");
+
+  if (host && allowedRequestHost) {
+    return `${protocol}://${host}`;
+  }
+
+  return String(APP_BASE_URL || "")
+    .replace(/\/+$/, "");
+}
+
+function membershipHistoryEntryMatches(
+  entry = {},
+  status,
+  paymentStatus,
+  action
+) {
+  return String(entry.status || "") === status &&
+    String(entry.paymentStatus || "") ===
+      paymentStatus &&
+    String(entry.action || "") === action;
+}
+
+async function findMembershipEnrollmentLead(
+  email,
+  planKey
+) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPlan =
+    normalizeMembershipPlanKey(planKey);
+  const candidates =
+    await loadClientPortalLeadCandidates();
+
+  return candidates
+    .filter((entry) => {
+      if (
+        getLeadEmailValue(entry.raw) !==
+        normalizedEmail
+      ) {
+        return false;
+      }
+
+      if (
+        !isMembershipEnrollmentRecord(
+          entry.lead || entry.raw || {}
+        )
+      ) {
+        return false;
+      }
+
+      return buildMembershipEnrollmentBase(
+        entry.lead || entry.raw || {}
+      ).planKey === normalizedPlan;
+    })
+    .sort(
+      (left, right) =>
+        getMembershipRecordSortTime(
+          right.lead || right.raw || {}
+        ) -
+        getMembershipRecordSortTime(
+          left.lead || left.raw || {}
+        )
+    )[0] || null;
+}
+
+async function ensureMembershipEnrollmentLead(
+  session,
+  config
+) {
+  const existing =
+    await findMembershipEnrollmentLead(
+      session.email,
+      config.planKey
+    );
+
+  if (existing) {
+    return existing;
+  }
+
+  const submittedAt = new Date().toISOString();
+  const leadId =
+    "CONTACT-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 7)
+      .toUpperCase();
+  const name = String(
+    getLeadNameValue(
+      session.accountLead?.raw || {}
+    ) || "Client"
+  ).trim();
+  const phone = String(
+    session.accountLead?.lead?.contact?.phone ||
+    session.accountLead?.raw?.phone ||
+    "Not provided"
+  ).trim();
+  const message =
+    `I selected ${config.planName} — ` +
+    `${config.billingLabel} — ` +
+    `${config.selectedPriceDisplay}. ` +
+    "I understand that recurring billing begins only after I complete secure Stripe Checkout.";
+  const enrollment = {
+    version: 2,
+    planKey: config.planKey,
+    planName: config.planName,
+    billingFrequency:
+      config.billingFrequency,
+    billingLabel: config.billingLabel,
+    selectedPriceCents:
+      config.selectedPriceCents,
+    selectedPriceDisplay:
+      config.selectedPriceDisplay,
+    enrollmentStatus:
+      "Enrollment Requested",
+    paymentStatus: "Not Paid",
+    requestedAt: submittedAt,
+    latestAction:
+      "Secure subscription checkout selected",
+    statusUpdatedAt: submittedAt,
+    processedStripeEventIds: [],
+    statusHistory: [
+      {
+        status: "Enrollment Requested",
+        paymentStatus: "Not Paid",
+        action:
+          "Secure subscription checkout selected",
+        at: submittedAt
+      }
+    ]
+  };
+  const lead = {
+    leadId,
+    timestamp: submittedAt,
+    priority: "medium",
+    status:
+      "Membership - Enrollment Requested",
+    notes:
+      `${config.planName} ${config.billingLabel} secure checkout selected.`,
+    contact: {
+      name,
+      email: session.email,
+      phone: phone || "Not provided"
+    },
+    taxData: {},
+    estimateSummary: {},
+    contactRequest: {
+      service: config.planName,
+      preferredContact: "Email",
+      message,
+      submittedAt,
+      membershipEnrollment: enrollment
+    },
+    Request: {
+      type: "Membership Enrollment",
+      service: config.planName,
+      preferredContact: "Email",
+      message
+    }
+  };
+
+  const saved = await appendLead(lead);
+  recentLeads.set(saved.leadId, saved);
+
+  return {
+    leadId,
+    raw: saved,
+    lead: saved,
+    source: "created"
+  };
+}
+
+function getMembershipStripeStateFromSubscription(
+  subscription = {}
+) {
+  const status = String(
+    subscription.status || ""
+  ).toLowerCase();
+
+  if (status === "active" || status === "trialing") {
+    return {
+      enrollmentStatus: "Active Membership",
+      paymentStatus: "Paid / Confirmed",
+      latestAction:
+        subscription.cancel_at_period_end
+          ? "Membership active; cancellation scheduled at period end"
+          : "Stripe confirmed active membership"
+    };
+  }
+
+  if (
+    status === "past_due" ||
+    status === "unpaid" ||
+    status === "paused"
+  ) {
+    return {
+      enrollmentStatus: "Past Due",
+      paymentStatus: "Past Due",
+      latestAction:
+        "Stripe reported that membership payment needs attention"
+    };
+  }
+
+  if (status === "canceled") {
+    return {
+      enrollmentStatus: "Cancelled",
+      paymentStatus: "Cancelled",
+      latestAction:
+        "Stripe reported that the membership ended"
+    };
+  }
+
+  if (status === "incomplete_expired") {
+    return {
+      enrollmentStatus: "Expired",
+      paymentStatus: "Expired",
+      latestAction:
+        "Stripe checkout expired before payment was completed"
+    };
+  }
+
+  return {
+    enrollmentStatus: "Payment Pending",
+    paymentStatus: "Pending",
+    latestAction:
+      "Stripe is waiting for membership payment to complete"
+  };
+}
+
+async function applyMembershipStripeUpdate(
+  leadId,
+  details = {}
+) {
+  const now = String(
+    details.occurredAt ||
+    new Date().toISOString()
+  );
+  const eventId = String(
+    details.eventId || ""
+  ).trim();
+
+  return updateLeadAfterStripePayment(
+    leadId,
+    (record = {}) => {
+      const request =
+        getMembershipRequestRecord(record);
+      const current =
+        buildMembershipEnrollmentBase(record);
+      const processed = new Set(
+        current.processedStripeEventIds || []
+      );
+
+      if (eventId && processed.has(eventId)) {
+        return record;
+      }
+
+      const config =
+        getMembershipCheckoutPlanConfig(
+          details.planKey || current.planKey,
+          details.billingFrequency ||
+            current.billingFrequency
+        );
+      const next = {
+        ...current,
+        version: 2,
+        planKey: config.planKey,
+        planName: config.planName,
+        billingFrequency:
+          config.billingFrequency,
+        billingLabel: config.billingLabel,
+        selectedPriceCents:
+          config.selectedPriceCents,
+        selectedPriceDisplay:
+          config.selectedPriceDisplay,
+        enrollmentStatus: String(
+          details.enrollmentStatus ||
+          current.enrollmentStatus
+        ),
+        paymentStatus: String(
+          details.paymentStatus ||
+          current.paymentStatus
+        ),
+        latestAction: String(
+          details.latestAction ||
+          current.latestAction
+        ),
+        statusUpdatedAt: now,
+        stripeCheckoutSessionId: String(
+          details.checkoutSessionId ||
+          current.stripeCheckoutSessionId ||
+          ""
+        ),
+        stripeCustomerId: String(
+          details.customerId ||
+          current.stripeCustomerId ||
+          ""
+        ),
+        stripeSubscriptionId: String(
+          details.subscriptionId ||
+          current.stripeSubscriptionId ||
+          ""
+        ),
+        stripeLatestInvoiceId: String(
+          details.invoiceId ||
+          current.stripeLatestInvoiceId ||
+          ""
+        ),
+        stripeLatestEventId:
+          eventId || current.stripeLatestEventId,
+        stripeSubscriptionStatus: String(
+          details.subscriptionStatus ||
+          current.stripeSubscriptionStatus ||
+          ""
+        ),
+        stripeCurrentPeriodEnd: String(
+          details.currentPeriodEnd ||
+          current.stripeCurrentPeriodEnd ||
+          ""
+        ),
+        checkoutEnvironment: String(
+          details.checkoutEnvironment ||
+          current.checkoutEnvironment ||
+          STRIPE_KEY_MODE
+        ),
+        paymentSource: String(
+          details.paymentSource ||
+          current.paymentSource ||
+          "Stripe Subscription"
+        ),
+        cancelAtPeriodEnd:
+          details.cancelAtPeriodEnd === true,
+        cancelAt: String(
+          details.cancelAt ||
+          current.cancelAt ||
+          ""
+        )
+      };
+
+      if (details.checkoutCreatedAt) {
+        next.checkoutCreatedAt =
+          details.checkoutCreatedAt;
+      }
+
+      if (details.paymentConfirmedAt) {
+        next.paymentConfirmedAt =
+          details.paymentConfirmedAt;
+        next.lastPaymentAt =
+          details.paymentConfirmedAt;
+      }
+
+      if (details.membershipStartedAt) {
+        next.membershipStartedAt =
+          current.membershipStartedAt ||
+          details.membershipStartedAt;
+      }
+
+      if (details.nextRenewalAt !== undefined) {
+        next.nextRenewalAt =
+          String(details.nextRenewalAt || "");
+      }
+
+      if (details.amountPaidCents !== undefined) {
+        const amount = Math.max(
+          0,
+          Number(details.amountPaidCents || 0)
+        );
+        next.lastPaymentAmountCents = amount;
+        next.lastPaymentAmountDisplay =
+          new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD"
+          }).format(amount / 100);
+      }
+
+      if (
+        next.enrollmentStatus ===
+        "Active Membership"
+      ) {
+        next.paymentConfirmedAt =
+          next.paymentConfirmedAt || now;
+        next.lastPaymentAt =
+          next.lastPaymentAt || now;
+        next.membershipStartedAt =
+          next.membershipStartedAt || now;
+        next.nextRenewalAt =
+          next.nextRenewalAt ||
+          getMembershipRenewalDate(
+            next.membershipStartedAt,
+            next.billingFrequency
+          );
+        next.pastDueAt = "";
+        next.cancelledAt = "";
+        next.expiredAt = "";
+        next.endedAt = "";
+      }
+
+      if (
+        next.enrollmentStatus === "Past Due"
+      ) {
+        next.pastDueAt = now;
+      }
+
+      if (
+        next.enrollmentStatus === "Cancelled"
+      ) {
+        next.cancelledAt = now;
+        next.endedAt = now;
+        next.nextRenewalAt = "";
+      }
+
+      if (
+        next.enrollmentStatus === "Expired"
+      ) {
+        next.expiredAt = now;
+        next.endedAt = now;
+        next.nextRenewalAt = "";
+      }
+
+      if (
+        details.isRenewal === true &&
+        next.enrollmentStatus ===
+          "Active Membership"
+      ) {
+        next.renewalCount =
+          Math.max(0, current.renewalCount) + 1;
+      }
+
+      if (eventId) {
+        processed.add(eventId);
+      }
+      next.processedStripeEventIds =
+        Array.from(processed).slice(-100);
+
+      const lastHistory =
+        current.statusHistory?.[
+          current.statusHistory.length - 1
+        ] || {};
+      const shouldAddHistory =
+        details.forceHistory === true ||
+        !membershipHistoryEntryMatches(
+          lastHistory,
+          next.enrollmentStatus,
+          next.paymentStatus,
+          next.latestAction
+        );
+
+      next.statusHistory = shouldAddHistory
+        ? [
+            ...(current.statusHistory || []),
+            {
+              status: next.enrollmentStatus,
+              paymentStatus:
+                next.paymentStatus,
+              action: next.latestAction,
+              at: now,
+              source:
+                details.paymentSource ||
+                "Stripe Subscription"
+            }
+          ].slice(-50)
+        : current.statusHistory;
+
+      const message =
+        `I selected ${config.planName} — ` +
+        `${config.billingLabel} — ` +
+        `${config.selectedPriceDisplay}. ` +
+        "Recurring billing is managed through secure Stripe Checkout.";
+
+      return {
+        ...record,
+        status:
+          `Membership - ${next.enrollmentStatus}`,
+        notes:
+          `${config.planName} ${config.billingLabel}: ${next.latestAction}.`,
+        contactRequest: {
+          ...request,
+          service: config.planName,
+          message,
+          membershipEnrollment: next
+        },
+        Request: {
+          ...(record.Request || {}),
+          type: "Membership Enrollment",
+          service: config.planName,
+          message
+        },
+        updatedAt: now
+      };
+    }
+  );
+}
+
+async function retrieveStripeSubscription(value) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+
+  try {
+    return await stripe.subscriptions.retrieve(
+      String(value)
+    );
+  } catch (error) {
+    console.error(
+      "[membership stripe] Subscription lookup failed:",
+      error.message || error
+    );
+    return null;
+  }
+}
+
+async function processMembershipCheckoutSession(
+  session = {},
+  eventId = "",
+  occurredAt = ""
+) {
+  const metadata = session.metadata || {};
+  if (
+    String(metadata.service || "") !==
+      "year_round_membership"
+  ) {
+    return { ok: true, ignored: true };
+  }
+
+  const leadId = String(
+    metadata.leadId ||
+    session.client_reference_id ||
+    ""
+  ).trim();
+
+  if (!leadId) {
+    return {
+      ok: false,
+      error:
+        "Membership Checkout Session is missing its client reference."
+    };
+  }
+
+  const subscription =
+    await retrieveStripeSubscription(
+      session.subscription
+    );
+  const stripeState = subscription
+    ? getMembershipStripeStateFromSubscription(
+        subscription
+      )
+    : session.payment_status === "paid"
+      ? {
+          enrollmentStatus:
+            "Active Membership",
+          paymentStatus:
+            "Paid / Confirmed",
+          latestAction:
+            "Stripe confirmed initial membership payment"
+        }
+      : {
+          enrollmentStatus:
+            "Payment Pending",
+          paymentStatus: "Pending",
+          latestAction:
+            "Stripe Checkout completed and payment confirmation is pending"
+        };
+  const paid = session.payment_status === "paid";
+  const startedAt = subscription
+    ? getStripeSubscriptionStart(subscription)
+    : occurredAt || new Date().toISOString();
+  const nextRenewalAt = subscription
+    ? getStripeSubscriptionPeriodEnd(subscription)
+    : "";
+
+  return applyMembershipStripeUpdate(
+    leadId,
+    {
+      eventId,
+      occurredAt,
+      planKey: metadata.planKey,
+      billingFrequency:
+        metadata.billingFrequency,
+      enrollmentStatus:
+        stripeState.enrollmentStatus,
+      paymentStatus:
+        stripeState.paymentStatus,
+      latestAction:
+        stripeState.latestAction,
+      checkoutSessionId: session.id,
+      customerId:
+        getStripeObjectId(session.customer),
+      subscriptionId:
+        getStripeObjectId(
+          session.subscription
+        ),
+      subscriptionStatus:
+        String(subscription?.status || ""),
+      currentPeriodEnd: nextRenewalAt,
+      paymentConfirmedAt:
+        paid
+          ? occurredAt ||
+            new Date().toISOString()
+          : "",
+      membershipStartedAt:
+        paid ? startedAt : "",
+      nextRenewalAt:
+        paid ? nextRenewalAt : undefined,
+      amountPaidCents:
+        Number(session.amount_total || 0),
+      checkoutEnvironment:
+        session.livemode ? "live" : "test",
+      paymentSource:
+        "Stripe Subscription Checkout",
+      cancelAtPeriodEnd:
+        subscription?.cancel_at_period_end === true,
+      cancelAt:
+        stripeUnixToIso(
+          subscription?.cancel_at || 0
+        )
+    }
+  );
+}
+
+async function processMembershipInvoice(
+  invoice = {},
+  eventId = "",
+  eventType = "",
+  occurredAt = ""
+) {
+  const subscriptionId =
+    getStripeInvoiceSubscriptionId(invoice);
+  const subscription =
+    await retrieveStripeSubscription(
+      subscriptionId
+    );
+  const metadata = subscription?.metadata || {};
+  const leadId = String(
+    metadata.leadId || ""
+  ).trim();
+
+  if (
+    !leadId ||
+    String(metadata.service || "") !==
+      "year_round_membership"
+  ) {
+    return { ok: true, ignored: true };
+  }
+
+  const paid =
+    eventType === "invoice.paid" ||
+    invoice.paid === true ||
+    invoice.status === "paid";
+  const nextRenewalAt =
+    getStripeSubscriptionPeriodEnd(
+      subscription || {}
+    );
+  const state = paid
+    ? {
+        enrollmentStatus:
+          "Active Membership",
+        paymentStatus:
+          "Paid / Confirmed",
+        latestAction:
+          invoice.billing_reason ===
+            "subscription_cycle"
+            ? "Stripe confirmed membership renewal payment"
+            : "Stripe confirmed membership payment"
+      }
+    : {
+        enrollmentStatus: "Past Due",
+        paymentStatus: "Past Due",
+        latestAction:
+          "Stripe reported that membership payment failed"
+      };
+
+  return applyMembershipStripeUpdate(
+    leadId,
+    {
+      eventId,
+      occurredAt,
+      planKey: metadata.planKey,
+      billingFrequency:
+        metadata.billingFrequency,
+      enrollmentStatus:
+        state.enrollmentStatus,
+      paymentStatus: state.paymentStatus,
+      latestAction: state.latestAction,
+      customerId:
+        getStripeObjectId(invoice.customer),
+      subscriptionId,
+      invoiceId: invoice.id,
+      subscriptionStatus:
+        String(subscription?.status || ""),
+      currentPeriodEnd: nextRenewalAt,
+      paymentConfirmedAt:
+        paid
+          ? occurredAt ||
+            new Date().toISOString()
+          : "",
+      membershipStartedAt:
+        paid
+          ? getStripeSubscriptionStart(
+              subscription || {}
+            )
+          : "",
+      nextRenewalAt:
+        paid ? nextRenewalAt : undefined,
+      amountPaidCents:
+        Number(invoice.amount_paid || 0),
+      checkoutEnvironment:
+        invoice.livemode ? "live" : "test",
+      paymentSource: "Stripe Subscription",
+      isRenewal:
+        paid &&
+        invoice.billing_reason ===
+          "subscription_cycle",
+      forceHistory: paid &&
+        invoice.billing_reason ===
+          "subscription_cycle",
+      cancelAtPeriodEnd:
+        subscription?.cancel_at_period_end === true,
+      cancelAt:
+        stripeUnixToIso(
+          subscription?.cancel_at || 0
+        )
+    }
+  );
+}
+
+async function processMembershipSubscription(
+  subscription = {},
+  eventId = "",
+  eventType = "",
+  occurredAt = ""
+) {
+  const metadata = subscription.metadata || {};
+  const leadId = String(
+    metadata.leadId || ""
+  ).trim();
+
+  if (
+    !leadId ||
+    String(metadata.service || "") !==
+      "year_round_membership"
+  ) {
+    return { ok: true, ignored: true };
+  }
+
+  const state =
+    eventType === "customer.subscription.deleted"
+      ? {
+          enrollmentStatus: "Cancelled",
+          paymentStatus: "Cancelled",
+          latestAction:
+            "Stripe confirmed that the membership ended"
+        }
+      : getMembershipStripeStateFromSubscription(
+          subscription
+        );
+
+  return applyMembershipStripeUpdate(
+    leadId,
+    {
+      eventId,
+      occurredAt,
+      planKey: metadata.planKey,
+      billingFrequency:
+        metadata.billingFrequency,
+      enrollmentStatus:
+        state.enrollmentStatus,
+      paymentStatus: state.paymentStatus,
+      latestAction: state.latestAction,
+      customerId:
+        getStripeObjectId(
+          subscription.customer
+        ),
+      subscriptionId: subscription.id,
+      subscriptionStatus:
+        String(subscription.status || ""),
+      currentPeriodEnd:
+        getStripeSubscriptionPeriodEnd(
+          subscription
+        ),
+      membershipStartedAt:
+        getStripeSubscriptionStart(
+          subscription
+        ),
+      nextRenewalAt:
+        state.enrollmentStatus ===
+          "Active Membership"
+          ? getStripeSubscriptionPeriodEnd(
+              subscription
+            )
+          : state.enrollmentStatus ===
+              "Cancelled"
+            ? ""
+            : undefined,
+      checkoutEnvironment:
+        subscription.livemode
+          ? "live"
+          : "test",
+      paymentSource: "Stripe Subscription",
+      cancelAtPeriodEnd:
+        subscription.cancel_at_period_end === true,
+      cancelAt:
+        stripeUnixToIso(
+          subscription.cancel_at || 0
+        )
+    }
+  );
+}
+
 app.post(
   "/api/leads/:leadId/membership-action",
   async (req, res) => {
@@ -18800,6 +20028,300 @@ app.post(
       membershipEnrollment:
         result.lead?.contactRequest?.membershipEnrollment || null
     });
+  }
+);
+
+app.post(
+  "/api/client-portal/membership-checkout",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    try {
+      if (!STRIPE_SECRET_KEY) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "Secure Stripe membership checkout is not configured yet."
+        });
+      }
+
+      const planKey =
+        normalizeMembershipPlanKey(
+          req.body?.planKey
+        );
+      const billingFrequency =
+        normalizeMembershipBillingFrequency(
+          req.body?.billingFrequency
+        );
+      const config =
+        getMembershipCheckoutPlanConfig(
+          planKey,
+          billingFrequency
+        );
+      const availability =
+        getMembershipCheckoutAvailability();
+
+      if (
+        config.planKey === "pinnacle" &&
+        !availability.pinnacleAvailable
+      ) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "Pinnacle secure checkout will open after the complete Pinnacle planning tools are ready. No payment was created."
+        });
+      }
+
+      if (
+        config.planKey === "tax-watch-pro" &&
+        !availability.taxWatchAvailable
+      ) {
+        const localLiveKeyBlocked =
+          !CLIENT_PORTAL_PRODUCTION_HOST &&
+          STRIPE_KEY_MODE === "live";
+
+        return res.status(409).json({
+          ok: false,
+          error: localLiveKeyBlocked
+            ? "LOCAL membership testing is blocked because the configured Stripe key is live. Use a Stripe test key locally. Do not send the key to Greatest Business Solution LLC or ChatGPT."
+            : "Secure Tax Watch Pro checkout is not enabled for this environment yet. No payment was created."
+        });
+      }
+
+      const portalSession =
+        req.clientPortalSession;
+      const enrollmentEntry =
+        await ensureMembershipEnrollmentLead(
+          portalSession,
+          config
+        );
+      const leadId = String(
+        enrollmentEntry.leadId || ""
+      ).trim();
+      const baseUrl =
+        getMembershipCheckoutBaseUrl(req);
+      const metadata = {
+        service: "year_round_membership",
+        leadId,
+        planKey: config.planKey,
+        planName: config.planName,
+        billingFrequency:
+          config.billingFrequency,
+        selectedPriceCents: String(
+          config.selectedPriceCents
+        ),
+        portalEmail: portalSession.email
+      };
+      const session =
+        await stripe.checkout.sessions.create({
+          mode: "subscription",
+          customer_email:
+            portalSession.email,
+          client_reference_id: leadId,
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                unit_amount:
+                  config.selectedPriceCents,
+                recurring: {
+                  interval: config.interval
+                },
+                product_data: {
+                  name: config.planName,
+                  description:
+                    config.productDescription
+                }
+              },
+              quantity: 1
+            }
+          ],
+          metadata,
+          subscription_data: {
+            metadata
+          },
+          success_url:
+            `${baseUrl}/client-portal/home` +
+            "?membershipCheckout=success" +
+            "&session_id={CHECKOUT_SESSION_ID}" +
+            "#tax-watch",
+          cancel_url:
+            `${baseUrl}/client-portal/home` +
+            "?membershipCheckout=cancelled" +
+            "#tax-watch"
+        });
+      const now = new Date().toISOString();
+      const saveResult =
+        await applyMembershipStripeUpdate(
+          leadId,
+          {
+            eventId:
+              `checkout-created:${session.id}`,
+            occurredAt: now,
+            planKey: config.planKey,
+            billingFrequency:
+              config.billingFrequency,
+            enrollmentStatus:
+              "Payment Pending",
+            paymentStatus: "Pending",
+            latestAction:
+              "Secure Stripe subscription checkout created",
+            checkoutSessionId: session.id,
+            checkoutCreatedAt: now,
+            checkoutEnvironment:
+              session.livemode
+                ? "live"
+                : "test",
+            paymentSource:
+              "Stripe Subscription Checkout"
+          }
+        );
+
+      if (!saveResult.ok) {
+        console.error(
+          "[membership checkout] Checkout created but enrollment record could not be updated:",
+          leadId,
+          saveResult.error || saveResult
+        );
+      }
+
+      return res.status(201).json({
+        ok: true,
+        leadId,
+        planName: config.planName,
+        billingLabel: config.billingLabel,
+        selectedPriceDisplay:
+          config.selectedPriceDisplay,
+        checkoutEnvironment:
+          session.livemode ? "live" : "test",
+        checkoutUrl: session.url
+      });
+    } catch (error) {
+      console.error(
+        "[membership checkout] Creation failed:",
+        error.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Secure Stripe membership checkout could not be created. No charge was made."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/client-portal/membership-checkout-confirm",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    try {
+      if (!STRIPE_SECRET_KEY) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "Stripe payment confirmation is not configured."
+        });
+      }
+
+      const sessionId = String(
+        req.body?.sessionId || ""
+      ).trim();
+
+      if (!sessionId.startsWith("cs_")) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            "The Stripe Checkout Session reference is not valid."
+        });
+      }
+
+      const checkoutSession =
+        await stripe.checkout.sessions.retrieve(
+          sessionId,
+          {
+            expand: ["subscription"]
+          }
+        );
+      const metadata =
+        checkoutSession.metadata || {};
+      const portalEmail = normalizeEmail(
+        metadata.portalEmail ||
+        checkoutSession.customer_details?.email ||
+        checkoutSession.customer_email ||
+        ""
+      );
+
+      if (
+        String(metadata.service || "") !==
+          "year_round_membership" ||
+        portalEmail !==
+          req.clientPortalSession.email
+      ) {
+        return res.status(403).json({
+          ok: false,
+          error:
+            "This Stripe membership payment is not connected to your portal account."
+        });
+      }
+
+      const leadId = String(
+        metadata.leadId ||
+        checkoutSession.client_reference_id ||
+        ""
+      ).trim();
+      const accessible =
+        await clientPortalSessionCanAccessLead(
+          req.clientPortalSession,
+          leadId
+        );
+
+      if (!accessible) {
+        return res.status(403).json({
+          ok: false,
+          error:
+            "This membership record is not connected to your portal account."
+        });
+      }
+
+      const result =
+        await processMembershipCheckoutSession(
+          checkoutSession,
+          `checkout-confirm:${sessionId}`,
+          new Date().toISOString()
+        );
+
+      if (!result.ok) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            result.error ||
+            "Stripe confirmed the checkout, but the membership record could not be updated."
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        paymentStatus:
+          checkoutSession.payment_status,
+        membership:
+          getClientPortalMembershipSummary(
+            await getClientPortalAccessibleLeads(
+              req.clientPortalSession.email
+            )
+          )
+      });
+    } catch (error) {
+      console.error(
+        "[membership checkout] Confirmation failed:",
+        error.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Stripe payment confirmation could not be completed. The office can verify the payment from Stripe."
+      });
+    }
   }
 );
 
