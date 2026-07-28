@@ -18736,6 +18736,75 @@ function buildMembershipEnrollmentBase(record = {}) {
     lastPaymentAmountDisplay: String(
       current.lastPaymentAmountDisplay || ""
     ),
+    paymentMethodBrand: String(
+      current.paymentMethodBrand || ""
+    ),
+    paymentMethodLast4: String(
+      current.paymentMethodLast4 || ""
+    ),
+    billingHistorySyncedAt: String(
+      current.billingHistorySyncedAt || ""
+    ),
+    paymentHistory: Array.isArray(
+      current.paymentHistory
+    )
+      ? current.paymentHistory
+          .filter(
+            (entry) =>
+              entry &&
+              typeof entry === "object" &&
+              !Array.isArray(entry) &&
+              (entry.id || entry.paidAt)
+          )
+          .map((entry) => ({
+            id: String(entry.id || ""),
+            invoiceId: String(entry.invoiceId || ""),
+            paymentIntentId: String(entry.paymentIntentId || ""),
+            chargeId: String(entry.chargeId || ""),
+            status: String(entry.status || ""),
+            amountPaidCents: Math.max(
+              0,
+              Number(entry.amountPaidCents || 0)
+            ),
+            currency: String(entry.currency || "usd"),
+            paidAt: String(entry.paidAt || ""),
+            planName: String(
+              entry.planName || current.planName || plan.planName
+            ),
+            billingLabel: String(
+              entry.billingLabel ||
+              current.billingLabel ||
+              plan.billingLabel
+            ),
+            servicePeriodStart: String(
+              entry.servicePeriodStart || ""
+            ),
+            servicePeriodEnd: String(
+              entry.servicePeriodEnd || ""
+            ),
+            cardBrand: String(entry.cardBrand || ""),
+            cardLast4: String(entry.cardLast4 || ""),
+            receiptUrl: String(entry.receiptUrl || ""),
+            hostedInvoiceUrl: String(
+              entry.hostedInvoiceUrl || ""
+            ),
+            invoicePdfUrl: String(
+              entry.invoicePdfUrl || ""
+            ),
+            billingReason: String(
+              entry.billingReason || ""
+            ),
+            environment: String(
+              entry.environment || ""
+            )
+          }))
+          .sort(
+            (left, right) =>
+              Date.parse(right.paidAt || 0) -
+              Date.parse(left.paidAt || 0)
+          )
+          .slice(0, 240)
+      : [],
     renewalCount: Math.max(
       0,
       Number.parseInt(current.renewalCount, 10) || 0
@@ -19050,7 +19119,12 @@ function getClientPortalMembershipSummary(
       membershipStartedAt: "",
       nextRenewalAt: "",
       statusUpdatedAt: "",
-      latestAction: ""
+      latestAction: "",
+      paymentMethodBrand: "",
+      paymentMethodLast4: "",
+      paymentHistory: [],
+      paidThisYearCents: 0,
+      paidThisYearDisplay: "$0.00"
     };
   }
 
@@ -19081,6 +19155,57 @@ function getClientPortalMembershipSummary(
     statusUpdatedAt:
       enrollment.statusUpdatedAt,
     latestAction: enrollment.latestAction,
+    paymentMethodBrand:
+      enrollment.paymentMethodBrand,
+    paymentMethodLast4:
+      enrollment.paymentMethodLast4,
+    paymentHistory:
+      enrollment.paymentHistory,
+    paidThisYearCents:
+      enrollment.paymentHistory
+        .filter((entry) => {
+          const paidAt = new Date(entry.paidAt || "");
+          return (
+            entry.status === "Paid" &&
+            Number.isFinite(paidAt.getTime()) &&
+            paidAt.getFullYear() ===
+              new Date().getFullYear()
+          );
+        })
+        .reduce(
+          (total, entry) =>
+            total +
+            Math.max(
+              0,
+              Number(entry.amountPaidCents || 0)
+            ),
+          0
+        ),
+    paidThisYearDisplay:
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD"
+      }).format(
+        enrollment.paymentHistory
+          .filter((entry) => {
+            const paidAt = new Date(entry.paidAt || "");
+            return (
+              entry.status === "Paid" &&
+              Number.isFinite(paidAt.getTime()) &&
+              paidAt.getFullYear() ===
+                new Date().getFullYear()
+            );
+          })
+          .reduce(
+            (total, entry) =>
+              total +
+              Math.max(
+                0,
+                Number(entry.amountPaidCents || 0)
+              ),
+            0
+          ) / 100
+      ),
     cancelAtPeriodEnd:
       enrollment.cancelAtPeriodEnd,
     cancelAt: enrollment.cancelAt
@@ -19131,6 +19256,480 @@ function getStripeInvoiceSubscriptionId(invoice = {}) {
     invoice.lines?.data?.[0]?.parent
       ?.subscription_item_details?.subscription
   );
+}
+
+
+function getStripeInvoicePaymentIntentId(invoice = {}) {
+  return getStripeObjectId(
+    invoice.payment_intent ||
+    invoice.payments?.data?.[0]?.payment?.payment_intent ||
+    invoice.payments?.data?.[0]?.payment_intent
+  );
+}
+
+async function retrieveStripePaymentIntent(value) {
+  const id = getStripeObjectId(value);
+  if (!id) return null;
+
+  try {
+    return await stripe.paymentIntents.retrieve(
+      id,
+      {
+        expand: [
+          "payment_method",
+          "latest_charge"
+        ]
+      }
+    );
+  } catch (error) {
+    console.error(
+      "[membership stripe] Payment Intent lookup failed:",
+      error.message || error
+    );
+    return null;
+  }
+}
+
+async function retrieveStripeCharge(value) {
+  const id = getStripeObjectId(value);
+  if (!id) return null;
+
+  try {
+    return await stripe.charges.retrieve(id);
+  } catch (error) {
+    console.error(
+      "[membership stripe] Charge lookup failed:",
+      error.message || error
+    );
+    return null;
+  }
+}
+
+function getMembershipPaymentMethodDetails(
+  charge = {},
+  paymentIntent = {},
+  subscription = {}
+) {
+  const chargeCard =
+    charge.payment_method_details?.card || {};
+  const intentMethod =
+    paymentIntent.payment_method &&
+    typeof paymentIntent.payment_method === "object"
+      ? paymentIntent.payment_method
+      : {};
+  const intentCard = intentMethod.card || {};
+  const subscriptionMethod =
+    subscription.default_payment_method &&
+    typeof subscription.default_payment_method === "object"
+      ? subscription.default_payment_method
+      : {};
+  const subscriptionCard =
+    subscriptionMethod.card || {};
+
+  const brand = String(
+    chargeCard.brand ||
+    intentCard.brand ||
+    subscriptionCard.brand ||
+    ""
+  ).trim();
+
+  const last4 = String(
+    chargeCard.last4 ||
+    intentCard.last4 ||
+    subscriptionCard.last4 ||
+    ""
+  ).trim();
+
+  return {
+    brand,
+    last4
+  };
+}
+
+function normalizeMembershipPaymentRecord(
+  record = {},
+  fallback = {}
+) {
+  const paidAt = String(
+    record.paidAt ||
+    fallback.paidAt ||
+    new Date().toISOString()
+  );
+  const invoiceId = String(
+    record.invoiceId ||
+    fallback.invoiceId ||
+    ""
+  );
+  const paymentIntentId = String(
+    record.paymentIntentId ||
+    fallback.paymentIntentId ||
+    ""
+  );
+  const chargeId = String(
+    record.chargeId ||
+    fallback.chargeId ||
+    ""
+  );
+
+  return {
+    id: String(
+      record.id ||
+      invoiceId ||
+      paymentIntentId ||
+      chargeId ||
+      `membership-payment-${Date.parse(paidAt) || Date.now()}`
+    ),
+    invoiceId,
+    paymentIntentId,
+    chargeId,
+    status: String(
+      record.status ||
+      fallback.status ||
+      "Paid"
+    ),
+    amountPaidCents: Math.max(
+      0,
+      Number(
+        record.amountPaidCents ??
+        fallback.amountPaidCents ??
+        0
+      )
+    ),
+    currency: String(
+      record.currency ||
+      fallback.currency ||
+      "usd"
+    ).toLowerCase(),
+    paidAt,
+    planName: String(
+      record.planName ||
+      fallback.planName ||
+      "Tax Watch Pro"
+    ),
+    billingLabel: String(
+      record.billingLabel ||
+      fallback.billingLabel ||
+      "Monthly"
+    ),
+    servicePeriodStart: String(
+      record.servicePeriodStart ||
+      fallback.servicePeriodStart ||
+      ""
+    ),
+    servicePeriodEnd: String(
+      record.servicePeriodEnd ||
+      fallback.servicePeriodEnd ||
+      ""
+    ),
+    cardBrand: String(
+      record.cardBrand ||
+      fallback.cardBrand ||
+      ""
+    ),
+    cardLast4: String(
+      record.cardLast4 ||
+      fallback.cardLast4 ||
+      ""
+    ),
+    receiptUrl: String(
+      record.receiptUrl ||
+      fallback.receiptUrl ||
+      ""
+    ),
+    hostedInvoiceUrl: String(
+      record.hostedInvoiceUrl ||
+      fallback.hostedInvoiceUrl ||
+      ""
+    ),
+    invoicePdfUrl: String(
+      record.invoicePdfUrl ||
+      fallback.invoicePdfUrl ||
+      ""
+    ),
+    billingReason: String(
+      record.billingReason ||
+      fallback.billingReason ||
+      ""
+    ),
+    environment: String(
+      record.environment ||
+      fallback.environment ||
+      ""
+    )
+  };
+}
+
+async function buildMembershipPaymentRecordFromInvoice(
+  invoice = {},
+  subscription = {},
+  config = {},
+  occurredAt = ""
+) {
+  const paymentIntent =
+    await retrieveStripePaymentIntent(
+      getStripeInvoicePaymentIntentId(invoice)
+    );
+  const charge =
+    await retrieveStripeCharge(
+      invoice.charge ||
+      paymentIntent?.latest_charge
+    );
+  const method =
+    getMembershipPaymentMethodDetails(
+      charge || {},
+      paymentIntent || {},
+      subscription || {}
+    );
+  const paidAt =
+    stripeUnixToIso(
+      invoice.status_transitions?.paid_at ||
+      charge?.created ||
+      paymentIntent?.created ||
+      invoice.created ||
+      0
+    ) ||
+    occurredAt ||
+    new Date().toISOString();
+
+  return normalizeMembershipPaymentRecord(
+    {
+      id:
+        invoice.id ||
+        paymentIntent?.id ||
+        charge?.id ||
+        "",
+      invoiceId: invoice.id || "",
+      paymentIntentId:
+        paymentIntent?.id ||
+        getStripeInvoicePaymentIntentId(invoice),
+      chargeId:
+        charge?.id ||
+        getStripeObjectId(invoice.charge),
+      status:
+        invoice.paid === true ||
+        invoice.status === "paid"
+          ? "Paid"
+          : invoice.status === "open"
+            ? "Pending"
+            : invoice.status === "void"
+              ? "Void"
+              : invoice.status === "uncollectible"
+                ? "Failed"
+                : String(invoice.status || "Pending"),
+      amountPaidCents:
+        Number(invoice.amount_paid || 0),
+      currency: invoice.currency || "usd",
+      paidAt,
+      planName:
+        config.planName ||
+        subscription.metadata?.planName ||
+        "Tax Watch Pro",
+      billingLabel:
+        config.billingLabel ||
+        (subscription.metadata?.billingFrequency === "annual"
+          ? "Annual"
+          : "Monthly"),
+      servicePeriodStart:
+        stripeUnixToIso(
+          invoice.period_start ||
+          invoice.lines?.data?.[0]?.period?.start ||
+          0
+        ),
+      servicePeriodEnd:
+        stripeUnixToIso(
+          invoice.period_end ||
+          invoice.lines?.data?.[0]?.period?.end ||
+          0
+        ),
+      cardBrand: method.brand,
+      cardLast4: method.last4,
+      receiptUrl: charge?.receipt_url || "",
+      hostedInvoiceUrl:
+        invoice.hosted_invoice_url || "",
+      invoicePdfUrl: invoice.invoice_pdf || "",
+      billingReason: invoice.billing_reason || "",
+      environment:
+        invoice.livemode === true
+          ? "live"
+          : "test"
+    }
+  );
+}
+
+function mergeMembershipPaymentHistory(
+  currentHistory = [],
+  incomingHistory = []
+) {
+  const byId = new Map();
+
+  [
+    ...(Array.isArray(currentHistory)
+      ? currentHistory
+      : []),
+    ...(Array.isArray(incomingHistory)
+      ? incomingHistory
+      : [])
+  ].forEach((entry) => {
+    const normalized =
+      normalizeMembershipPaymentRecord(entry);
+    const key = String(
+      normalized.id ||
+      normalized.invoiceId ||
+      normalized.paymentIntentId ||
+      normalized.chargeId ||
+      normalized.paidAt
+    );
+
+    if (!key) return;
+
+    byId.set(
+      key,
+      {
+        ...(byId.get(key) || {}),
+        ...normalized
+      }
+    );
+  });
+
+  return Array.from(byId.values())
+    .sort(
+      (left, right) =>
+        Date.parse(right.paidAt || 0) -
+        Date.parse(left.paidAt || 0)
+    )
+    .slice(0, 240);
+}
+
+async function synchronizeMembershipBillingHistory(
+  leadId,
+  force = false
+) {
+  const candidate =
+    await findClientPortalLeadById(leadId);
+
+  if (!candidate) {
+    return {
+      ok: false,
+      error: "Membership lead was not found."
+    };
+  }
+
+  const current =
+    buildMembershipEnrollmentBase(
+      candidate.lead || candidate.raw || {}
+    );
+  const lastSync = Date.parse(
+    current.billingHistorySyncedAt || 0
+  );
+
+  if (
+    !force &&
+    Number.isFinite(lastSync) &&
+    Date.now() - lastSync < 5 * 60 * 1000
+  ) {
+    return {
+      ok: true,
+      skipped: true,
+      membership: current
+    };
+  }
+
+  if (!current.stripeSubscriptionId) {
+    return {
+      ok: true,
+      skipped: true,
+      membership: current
+    };
+  }
+
+  const subscription =
+    await stripe.subscriptions.retrieve(
+      current.stripeSubscriptionId,
+      {
+        expand: [
+          "default_payment_method"
+        ]
+      }
+    );
+  const invoiceList =
+    await stripe.invoices.list({
+      subscription:
+        current.stripeSubscriptionId,
+      limit: 100
+    });
+  const config =
+    getMembershipCheckoutPlanConfig(
+      current.planKey,
+      current.billingFrequency
+    );
+  const paymentHistory = [];
+
+  for (const invoice of invoiceList.data || []) {
+    paymentHistory.push(
+      await buildMembershipPaymentRecordFromInvoice(
+        invoice,
+        subscription,
+        config,
+        ""
+      )
+    );
+  }
+
+  const now = new Date().toISOString();
+  const mergedHistory =
+    mergeMembershipPaymentHistory(
+      current.paymentHistory,
+      paymentHistory
+    );
+  const latestPaid =
+    mergedHistory.find(
+      (entry) => entry.status === "Paid"
+    ) || mergedHistory[0] || null;
+  const updateResult =
+    await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => {
+        const request =
+          getMembershipRequestRecord(record);
+        const enrollment =
+          buildMembershipEnrollmentBase(record);
+        const next = {
+          ...enrollment,
+          version: 3,
+          billingHistorySyncedAt: now,
+          paymentHistory: mergedHistory,
+          paymentMethodBrand:
+            latestPaid?.cardBrand ||
+            enrollment.paymentMethodBrand ||
+            "",
+          paymentMethodLast4:
+            latestPaid?.cardLast4 ||
+            enrollment.paymentMethodLast4 ||
+            ""
+        };
+
+        return {
+          ...record,
+          contactRequest: {
+            ...request,
+            membershipEnrollment: next
+          },
+          updatedAt: now
+        };
+      }
+    );
+
+  if (!updateResult.ok) {
+    return updateResult;
+  }
+
+  return {
+    ok: true,
+    membership:
+      buildMembershipEnrollmentBase(
+        updateResult.lead || {}
+      )
+  };
 }
 
 function getMembershipCheckoutBaseUrl(req) {
@@ -19521,6 +20120,36 @@ async function applyMembershipStripeUpdate(
           }).format(amount / 100);
       }
 
+      if (details.paymentRecord) {
+        const paymentRecord =
+          normalizeMembershipPaymentRecord(
+            details.paymentRecord,
+            {
+              planName: config.planName,
+              billingLabel:
+                config.billingLabel,
+              environment:
+                details.checkoutEnvironment ||
+                current.checkoutEnvironment ||
+                STRIPE_KEY_MODE
+            }
+          );
+        next.paymentHistory =
+          mergeMembershipPaymentHistory(
+            current.paymentHistory,
+            [paymentRecord]
+          );
+        next.paymentMethodBrand =
+          paymentRecord.cardBrand ||
+          current.paymentMethodBrand ||
+          "";
+        next.paymentMethodLast4 =
+          paymentRecord.cardLast4 ||
+          current.paymentMethodLast4 ||
+          "";
+        next.billingHistorySyncedAt = now;
+      }
+
       if (
         next.enrollmentStatus ===
         "Active Membership"
@@ -19714,6 +20343,40 @@ async function processMembershipCheckoutSession(
   const nextRenewalAt = subscription
     ? getStripeSubscriptionPeriodEnd(subscription)
     : "";
+  let paymentRecord = null;
+
+  if (paid && subscription) {
+    const latestInvoiceId =
+      getStripeObjectId(
+        subscription.latest_invoice
+      );
+
+    if (latestInvoiceId) {
+      try {
+        const latestInvoice =
+          await stripe.invoices.retrieve(
+            latestInvoiceId
+          );
+        const config =
+          getMembershipCheckoutPlanConfig(
+            metadata.planKey,
+            metadata.billingFrequency
+          );
+        paymentRecord =
+          await buildMembershipPaymentRecordFromInvoice(
+            latestInvoice,
+            subscription,
+            config,
+            occurredAt
+          );
+      } catch (error) {
+        console.error(
+          "[membership stripe] Initial invoice detail lookup failed:",
+          error.message || error
+        );
+      }
+    }
+  }
 
   return applyMembershipStripeUpdate(
     leadId,
@@ -19754,6 +20417,9 @@ async function processMembershipCheckoutSession(
         session.livemode ? "live" : "test",
       paymentSource:
         "Stripe Subscription Checkout",
+      paymentRecord,
+      invoiceId:
+        paymentRecord?.invoiceId || "",
       cancelAtPeriodEnd:
         subscription?.cancel_at_period_end === true,
       cancelAt:
@@ -19796,6 +20462,18 @@ async function processMembershipInvoice(
   const nextRenewalAt =
     getStripeSubscriptionPeriodEnd(
       subscription || {}
+    );
+  const config =
+    getMembershipCheckoutPlanConfig(
+      metadata.planKey,
+      metadata.billingFrequency
+    );
+  const paymentRecord =
+    await buildMembershipPaymentRecordFromInvoice(
+      invoice,
+      subscription || {},
+      config,
+      occurredAt
     );
   const state = paid
     ? {
@@ -19853,6 +20531,7 @@ async function processMembershipInvoice(
       checkoutEnvironment:
         invoice.livemode ? "live" : "test",
       paymentSource: "Stripe Subscription",
+      paymentRecord,
       isRenewal:
         paid &&
         invoice.billing_reason ===
@@ -19952,6 +20631,73 @@ async function processMembershipSubscription(
     }
   );
 }
+
+
+app.post(
+  "/api/client-portal/membership-billing-history/sync",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    try {
+      const accessible =
+        await getClientPortalAccessibleLeads(
+          req.clientPortalSession.email
+        );
+      const summary =
+        getClientPortalMembershipSummary(
+          accessible
+        );
+
+      if (!summary.exists || !summary.leadId) {
+        return res.status(200).json({
+          ok: true,
+          membership: summary
+        });
+      }
+
+      const synchronized =
+        await synchronizeMembershipBillingHistory(
+          summary.leadId,
+          req.body?.force === true
+        );
+
+      if (!synchronized.ok) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            synchronized.error ||
+            "Billing history could not be synchronized."
+        });
+      }
+
+      const refreshed =
+        await getClientPortalAccessibleLeads(
+          req.clientPortalSession.email
+        );
+
+      return res.status(200).json({
+        ok: true,
+        membership:
+          getClientPortalMembershipSummary(
+            refreshed
+          )
+      });
+    } catch (error) {
+      console.error(
+        "[membership billing history] Sync failed:",
+        error.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Billing history could not be synchronized with Stripe."
+      });
+    }
+  }
+);
+
 
 app.post(
   "/api/leads/:leadId/membership-action",

@@ -573,6 +573,88 @@
       border-bottom: 0;
     }
 
+    .membership-payment-history {
+      margin-top: 16px;
+      border-top: 1px solid #d8caa5;
+      padding-top: 12px;
+    }
+
+    .membership-payment-year {
+      margin-top: 9px;
+      border: 1px solid #d8caa5;
+      background: #ffffff;
+    }
+
+    .membership-payment-year > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px;
+      color: #0f2f59;
+      background: #f5f1e6;
+      font-weight: 900;
+    }
+
+    .membership-payment-year > summary::-webkit-details-marker,
+    .membership-payment-entry > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .membership-payment-entry {
+      border-top: 1px solid #e8e1cf;
+      padding: 10px 11px;
+    }
+
+    .membership-payment-entry > summary {
+      cursor: pointer;
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1.35fr .65fr .75fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .membership-payment-entry span {
+      display: block;
+      color: #667085;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .membership-payment-entry strong {
+      display: block;
+      margin-top: 4px;
+      color: #0f2f59;
+      overflow-wrap: anywhere;
+    }
+
+    .membership-payment-entry-details {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8fafc;
+      line-height: 1.45;
+    }
+
+    .membership-payment-entry-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 9px;
+    }
+
+    .membership-payment-entry-links a {
+      display: inline-block;
+      background: #0f2f59;
+      color: #ffffff;
+      padding: 7px 10px;
+      text-decoration: none;
+      font-weight: 850;
+    }
+
     .client-portal-crm-card {
       margin-top: 18px;
       border: 2px solid #9bb4ca;
@@ -654,6 +736,10 @@
       .client-portal-status-grid,
       .membership-lifecycle-summary {
         grid-template-columns: 1fr;
+      }
+
+      .membership-payment-entry > summary {
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -8439,6 +8525,144 @@ function getMembershipStatusHistory(lead){
   }];
 }
 
+
+function membershipOfficeMoney(cents){
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(
+    Math.max(0, Number(cents || 0)) / 100
+  );
+}
+
+function membershipOfficePaymentMethod(
+  brand,
+  last4
+){
+  const cleanBrand = String(brand || "").trim();
+  const cleanLast4 = String(last4 || "").trim();
+  const label = cleanBrand
+    ? cleanBrand.charAt(0).toUpperCase() +
+      cleanBrand.slice(1)
+    : "Card";
+
+  return cleanLast4
+    ? `${label} ending in ${cleanLast4}`
+    : "Not recorded";
+}
+
+function getMembershipPaymentHistoryHtml(lead){
+  const record = getMembershipLifecycleRecord(lead);
+  const history = Array.isArray(record.paymentHistory)
+    ? record.paymentHistory
+    : [];
+
+  if(!history.length){
+    return `
+      <div class="membership-payment-history">
+        <strong>Billing &amp; Payment History</strong>
+        <div class="membership-lifecycle-history-entry">
+          No membership payment history has been recorded yet.
+        </div>
+      </div>
+    `;
+  }
+
+  const years = new Map();
+
+  history.forEach((entry) => {
+    const date = new Date(entry.paidAt || "");
+    const year = Number.isFinite(date.getTime())
+      ? String(date.getFullYear())
+      : "Date not recorded";
+
+    if(!years.has(year)){
+      years.set(year, []);
+    }
+
+    years.get(year).push(entry);
+  });
+
+  return `
+    <div class="membership-payment-history">
+      <strong>Billing &amp; Payment History</strong>
+      ${Array.from(years.entries())
+        .sort((a,b) => Number(b[0]) - Number(a[0]))
+        .map(([year, entries], yearIndex) => {
+          const total = entries
+            .filter(entry => entry.status === "Paid")
+            .reduce(
+              (sum, entry) =>
+                sum +
+                Math.max(
+                  0,
+                  Number(entry.amountPaidCents || 0)
+                ),
+              0
+            );
+
+          return `
+            <details class="membership-payment-year" ${yearIndex === 0 ? "open" : ""}>
+              <summary>
+                <span>${escapeOfficeHtml(year)} Payments</span>
+                <span>Total Paid: ${escapeOfficeHtml(membershipOfficeMoney(total))}</span>
+              </summary>
+              ${entries.map((entry) => {
+                const coverageStart = entry.servicePeriodStart
+                  ? formatMembershipLifecycleDate(entry.servicePeriodStart)
+                  : "Not recorded";
+                const coverageEnd = entry.servicePeriodEnd
+                  ? formatMembershipLifecycleDate(entry.servicePeriodEnd)
+                  : "Not recorded";
+                const links = [
+                  entry.receiptUrl
+                    ? `<a href="${escapeOfficeHtml(entry.receiptUrl)}" target="_blank" rel="noopener">Receipt</a>`
+                    : "",
+                  entry.hostedInvoiceUrl
+                    ? `<a href="${escapeOfficeHtml(entry.hostedInvoiceUrl)}" target="_blank" rel="noopener">Invoice</a>`
+                    : "",
+                  entry.invoicePdfUrl
+                    ? `<a href="${escapeOfficeHtml(entry.invoicePdfUrl)}" target="_blank" rel="noopener">Invoice PDF</a>`
+                    : ""
+                ].filter(Boolean).join("");
+
+                return `
+                  <details class="membership-payment-entry">
+                    <summary>
+                      <div>
+                        <span>Payment Date</span>
+                        <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(entry.paidAt))}</strong>
+                      </div>
+                      <div>
+                        <span>Amount</span>
+                        <strong>${escapeOfficeHtml(membershipOfficeMoney(entry.amountPaidCents))}</strong>
+                      </div>
+                      <div>
+                        <span>Status</span>
+                        <strong>${escapeOfficeHtml(entry.status || "Not recorded")}</strong>
+                      </div>
+                      <strong>View details</strong>
+                    </summary>
+                    <div class="membership-payment-entry-details">
+                      <strong>${escapeOfficeHtml(entry.planName || getMembershipPlanLabel(lead))} — ${escapeOfficeHtml(entry.billingLabel || getMembershipBillingChoice(lead))}</strong><br>
+                      Service period: ${escapeOfficeHtml(coverageStart)} to ${escapeOfficeHtml(coverageEnd)}<br>
+                      Payment method: ${escapeOfficeHtml(membershipOfficePaymentMethod(entry.cardBrand, entry.cardLast4))}
+                      ${links ? `<div class="membership-payment-entry-links">${links}</div>` : ""}
+                    </div>
+                  </details>
+                `;
+              }).join("")}
+            </details>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+
 function getMembershipLifecycleHtml(lead){
   const record = getMembershipLifecycleRecord(lead);
   const portal = lead?.portalAccount || {};
@@ -8467,6 +8691,44 @@ function getMembershipLifecycleHtml(lead){
         <div class="membership-lifecycle-item">
           <span>Selected Price</span>
           <strong>${escapeOfficeHtml(getMembershipSelectedPrice(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Paid This Year</span>
+          <strong>${escapeOfficeHtml(
+            membershipOfficeMoney(
+              (Array.isArray(record.paymentHistory)
+                ? record.paymentHistory
+                : []
+              )
+                .filter((entry) => {
+                  const date = new Date(entry.paidAt || "");
+                  return (
+                    entry.status === "Paid" &&
+                    Number.isFinite(date.getTime()) &&
+                    date.getFullYear() ===
+                      new Date().getFullYear()
+                  );
+                })
+                .reduce(
+                  (sum, entry) =>
+                    sum +
+                    Math.max(
+                      0,
+                      Number(entry.amountPaidCents || 0)
+                    ),
+                  0
+                )
+            )
+          )}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Payment Method</span>
+          <strong>${escapeOfficeHtml(
+            membershipOfficePaymentMethod(
+              record.paymentMethodBrand,
+              record.paymentMethodLast4
+            )
+          )}</strong>
         </div>
         <div class="membership-lifecycle-item">
           <span>Enrollment Status</span>
@@ -8515,6 +8777,8 @@ function getMembershipLifecycleHtml(lead){
         <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'expire')">Mark Expired</button>
         <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'close')">Close Enrollment</button>
       </div>
+
+      ${getMembershipPaymentHistoryHtml(lead)}
 
       <div class="membership-lifecycle-history">
         <strong>Status History</strong>
