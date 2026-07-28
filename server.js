@@ -4550,6 +4550,81 @@ async function findActiveClientPortalAccountByEmail(email) {
   );
 }
 
+function buildClientPortalAccountSummary(account = {}) {
+  if (!account || typeof account !== "object") {
+    return null;
+  }
+
+  const status = String(account.status || "").trim();
+  const email = normalizeEmail(account.email || "");
+  const sourceLeadId = String(account.leadId || "").trim();
+
+  if (status !== "active" || !email || !sourceLeadId) {
+    return null;
+  }
+
+  return {
+    status: "active",
+    email,
+    sourceLeadId,
+    activatedAt: String(account.activatedAt || ""),
+    lastLoginAt: String(account.lastLoginAt || ""),
+    lastActivityAt: String(account.lastActivityAt || "")
+  };
+}
+
+async function hydrateLeadsWithPortalAccountSummaries(leads = []) {
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const emails = Array.from(
+    new Set(
+      safeLeads
+        .map((lead) => getLeadEmailValue(lead))
+        .filter(Boolean)
+    )
+  );
+
+  if (!emails.length || !clientPortalStore.isAvailable()) {
+    return safeLeads;
+  }
+
+  const accountsByEmail = new Map();
+
+  await Promise.all(
+    emails.map(async (email) => {
+      try {
+        const account =
+          await findActiveClientPortalAccountByEmail(email);
+        const summary =
+          buildClientPortalAccountSummary(account);
+
+        if (summary) {
+          accountsByEmail.set(email, summary);
+        }
+      } catch (error) {
+        console.warn(
+          "[api/leads] Portal account lookup unavailable:",
+          email,
+          error?.message || error
+        );
+      }
+    })
+  );
+
+  return safeLeads.map((lead) => {
+    const email = getLeadEmailValue(lead);
+    const portalAccount = accountsByEmail.get(email);
+
+    if (!portalAccount) {
+      return lead;
+    }
+
+    return {
+      ...lead,
+      portalAccount
+    };
+  });
+}
+
 async function getClientPortalAccessibleLeads(email) {
   const normalized = normalizeEmail(email);
   const candidates =
@@ -18367,6 +18442,367 @@ Greatest Business Solution LLC`
   }
 });
 
+function getMembershipRequestRecord(record = {}) {
+  const request =
+    record.contactRequest &&
+    typeof record.contactRequest === "object" &&
+    !Array.isArray(record.contactRequest)
+      ? record.contactRequest
+      : {};
+
+  const fallback =
+    record.Request &&
+    typeof record.Request === "object" &&
+    !Array.isArray(record.Request)
+      ? record.Request
+      : {};
+
+  return {
+    ...fallback,
+    ...request
+  };
+}
+
+function getMembershipPlanDetails(record = {}) {
+  const request = getMembershipRequestRecord(record);
+  const service = String(request.service || "").trim();
+  const message = String(request.message || "").trim();
+  const combined = `${service} ${message}`.toLowerCase();
+  const pinnacle = combined.includes("pinnacle tax action plan");
+  const annual = combined.includes("annual");
+  const monthly = combined.includes("monthly");
+
+  return {
+    planKey: pinnacle ? "pinnacle" : "tax-watch-pro",
+    planName: pinnacle
+      ? "Pinnacle Tax Action Plan"
+      : "Tax Watch Pro",
+    billingFrequency: annual
+      ? "annual"
+      : monthly
+        ? "monthly"
+        : "not-selected",
+    billingLabel: annual
+      ? "Annual"
+      : monthly
+        ? "Monthly"
+        : "Not selected",
+    selectedPriceCents: pinnacle
+      ? annual
+        ? 34900
+        : 3499
+      : annual
+        ? 11900
+        : 1199,
+    selectedPriceDisplay: pinnacle
+      ? annual
+        ? "$349 per year"
+        : "$34.99 per month"
+      : annual
+        ? "$119 per year"
+        : "$11.99 per month"
+  };
+}
+
+function getMembershipRequestTime(record = {}) {
+  return String(
+    record.timestamp ||
+    record.createdAt ||
+    record.created_at ||
+    record.updatedAt ||
+    ""
+  ).trim();
+}
+
+function buildMembershipEnrollmentBase(record = {}) {
+  const request = getMembershipRequestRecord(record);
+  const current =
+    request.membershipEnrollment &&
+    typeof request.membershipEnrollment === "object" &&
+    !Array.isArray(request.membershipEnrollment)
+      ? request.membershipEnrollment
+      : {};
+  const plan = getMembershipPlanDetails(record);
+  const requestedAt = String(
+    current.requestedAt ||
+    getMembershipRequestTime(record) ||
+    new Date().toISOString()
+  );
+  const history = Array.isArray(current.statusHistory)
+    ? current.statusHistory
+        .filter((entry) => entry && (entry.status || entry.at))
+        .slice(-49)
+    : [];
+
+  if (!history.length) {
+    history.push({
+      status: "Enrollment Requested",
+      paymentStatus: "Not Paid",
+      action: "Enrollment request received",
+      at: requestedAt
+    });
+  }
+
+  return {
+    version: 1,
+    planKey: String(current.planKey || plan.planKey),
+    planName: String(current.planName || plan.planName),
+    billingFrequency: String(
+      current.billingFrequency || plan.billingFrequency
+    ),
+    billingLabel: String(
+      current.billingLabel || plan.billingLabel
+    ),
+    selectedPriceCents: Number(
+      current.selectedPriceCents || plan.selectedPriceCents
+    ),
+    selectedPriceDisplay: String(
+      current.selectedPriceDisplay || plan.selectedPriceDisplay
+    ),
+    enrollmentStatus: String(
+      current.enrollmentStatus || "Enrollment Requested"
+    ),
+    paymentStatus: String(
+      current.paymentStatus || "Not Paid"
+    ),
+    requestedAt,
+    enrollmentStepsSentAt: String(
+      current.enrollmentStepsSentAt || ""
+    ),
+    paymentPendingAt: String(
+      current.paymentPendingAt || ""
+    ),
+    paymentConfirmedAt: String(
+      current.paymentConfirmedAt || ""
+    ),
+    membershipStartedAt: String(
+      current.membershipStartedAt || ""
+    ),
+    nextRenewalAt: String(
+      current.nextRenewalAt || ""
+    ),
+    pastDueAt: String(current.pastDueAt || ""),
+    cancelledAt: String(current.cancelledAt || ""),
+    expiredAt: String(current.expiredAt || ""),
+    closedAt: String(current.closedAt || ""),
+    endedAt: String(current.endedAt || ""),
+    latestAction: String(
+      current.latestAction || "Enrollment request received"
+    ),
+    statusUpdatedAt: String(
+      current.statusUpdatedAt || requestedAt
+    ),
+    statusHistory: history
+  };
+}
+
+function getMembershipRenewalDate(startIso, billingFrequency) {
+  const date = new Date(startIso);
+
+  if (!Number.isFinite(date.getTime())) {
+    return "";
+  }
+
+  if (billingFrequency === "annual") {
+    date.setUTCFullYear(date.getUTCFullYear() + 1);
+  } else {
+    date.setUTCMonth(date.getUTCMonth() + 1);
+  }
+
+  return date.toISOString();
+}
+
+function applyMembershipAction(record = {}, action, now) {
+  const current = buildMembershipEnrollmentBase(record);
+  const next = { ...current };
+  const actionMap = {
+    "reset-requested": {
+      enrollmentStatus: "Enrollment Requested",
+      paymentStatus: "Not Paid",
+      latestAction: "Enrollment request received"
+    },
+    "steps-sent": {
+      enrollmentStatus: "Enrollment Steps Sent",
+      paymentStatus: "Not Paid",
+      latestAction: "Secure enrollment steps sent"
+    },
+    "payment-pending": {
+      enrollmentStatus: "Payment Pending",
+      paymentStatus: "Pending",
+      latestAction: "Waiting for membership payment"
+    },
+    activate: {
+      enrollmentStatus: "Active Membership",
+      paymentStatus: "Paid / Confirmed",
+      latestAction: "Membership activated"
+    },
+    "past-due": {
+      enrollmentStatus: "Past Due",
+      paymentStatus: "Past Due",
+      latestAction: "Membership payment is past due"
+    },
+    cancel: {
+      enrollmentStatus: "Cancelled",
+      paymentStatus: "Cancelled",
+      latestAction: "Membership cancelled"
+    },
+    expire: {
+      enrollmentStatus: "Expired",
+      paymentStatus: "Expired",
+      latestAction: "Membership expired"
+    },
+    close: {
+      enrollmentStatus: "Closed",
+      paymentStatus: "Closed",
+      latestAction: "Enrollment record closed"
+    }
+  };
+  const update = actionMap[action];
+
+  if (!update) {
+    return null;
+  }
+
+  Object.assign(next, update, {
+    statusUpdatedAt: now
+  });
+
+  if (action === "steps-sent") {
+    next.enrollmentStepsSentAt = now;
+  }
+
+  if (action === "payment-pending") {
+    next.paymentPendingAt = now;
+  }
+
+  if (action === "activate") {
+    next.paymentConfirmedAt = now;
+    next.membershipStartedAt =
+      next.membershipStartedAt || now;
+    next.nextRenewalAt = getMembershipRenewalDate(
+      next.membershipStartedAt,
+      next.billingFrequency
+    );
+    next.endedAt = "";
+    next.cancelledAt = "";
+    next.expiredAt = "";
+    next.closedAt = "";
+    next.pastDueAt = "";
+  }
+
+  if (action === "past-due") {
+    next.pastDueAt = now;
+  }
+
+  if (action === "cancel") {
+    next.cancelledAt = now;
+    next.endedAt = now;
+    next.nextRenewalAt = "";
+  }
+
+  if (action === "expire") {
+    next.expiredAt = now;
+    next.endedAt = now;
+    next.nextRenewalAt = "";
+  }
+
+  if (action === "close") {
+    next.closedAt = now;
+  }
+
+  next.statusHistory = [
+    ...(Array.isArray(current.statusHistory)
+      ? current.statusHistory
+      : []),
+    {
+      status: next.enrollmentStatus,
+      paymentStatus: next.paymentStatus,
+      action: next.latestAction,
+      at: now
+    }
+  ].slice(-50);
+
+  return next;
+}
+
+app.post(
+  "/api/leads/:leadId/membership-action",
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+    const action = String(req.body?.action || "").trim();
+    const allowedActions = new Set([
+      "reset-requested",
+      "steps-sent",
+      "payment-pending",
+      "activate",
+      "past-due",
+      "cancel",
+      "expire",
+      "close"
+    ]);
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Client reference is required."
+      });
+    }
+
+    if (!allowedActions.has(action)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid membership action."
+      });
+    }
+
+    const now = new Date().toISOString();
+
+    const result = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => {
+        const request = getMembershipRequestRecord(record);
+        const nextEnrollment = applyMembershipAction(
+          record,
+          action,
+          now
+        );
+
+        if (!nextEnrollment) {
+          return record;
+        }
+
+        return {
+          ...record,
+          status: `Membership - ${nextEnrollment.enrollmentStatus}`,
+          contactRequest: {
+            ...request,
+            membershipEnrollment: nextEnrollment
+          },
+          updatedAt: now
+        };
+      }
+    );
+
+    if (!result.ok) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          result.error ||
+          "The membership record could not be updated."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      action,
+      updatedAt: now,
+      lead: result.lead,
+      membershipEnrollment:
+        result.lead?.contactRequest?.membershipEnrollment || null
+    });
+  }
+);
+
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
   const {
@@ -19149,9 +19585,13 @@ app.get("/api/leads", async (req, res) => {
       .filter((lead) => !isNewsletterOnlyLead(lead));
 
     if (!includeLocal) {
-      const leads =
+      const leadsWithDocuments =
         await hydrateLeadsWithSecureDocumentSummaries(
           supabaseLeads
+        );
+      const leads =
+        await hydrateLeadsWithPortalAccountSummaries(
+          leadsWithDocuments
         );
 
       return res.status(200).json({
@@ -19262,9 +19702,13 @@ app.get("/api/leads", async (req, res) => {
       }
     });
 
-    const leads =
+    const leadsWithDocuments =
       await hydrateLeadsWithSecureDocumentSummaries(
         Array.from(mergedById.values())
+      );
+    const leads =
+      await hydrateLeadsWithPortalAccountSummaries(
+        leadsWithDocuments
       );
 
     return res.status(200).json({
@@ -19276,11 +19720,15 @@ app.get("/api/leads", async (req, res) => {
   } catch (err) {
     console.error("Supabase load leads failed. Loading local instead:", err.message || err);
 
-    const leads =
+    const leadsWithDocuments =
       await hydrateLeadsWithSecureDocumentSummaries(
         readLeads().filter(
           (lead) => !isNewsletterOnlyLead(mapRowToLead(lead))
         )
+      );
+    const leads =
+      await hydrateLeadsWithPortalAccountSummaries(
+        leadsWithDocuments
       );
 
     return res.status(200).json({

@@ -490,6 +490,89 @@
     }
 
 
+    .membership-lifecycle-card {
+      margin-top: 18px;
+      border: 2px solid #9bb4ca;
+      border-left: 7px solid #b78c49;
+      background: #fffdf7;
+      padding: 18px;
+    }
+
+    .membership-lifecycle-card h3 {
+      margin: 0 0 8px;
+      color: #0f2f59;
+      font-size: 20px;
+    }
+
+    .membership-lifecycle-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .membership-lifecycle-item {
+      min-width: 0;
+      border: 1px solid #d8caa5;
+      background: #ffffff;
+      padding: 11px;
+    }
+
+    .membership-lifecycle-item span {
+      display: block;
+      color: #667085;
+      font-size: 10px;
+      line-height: 1.25;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .membership-lifecycle-item strong {
+      display: block;
+      margin-top: 5px;
+      color: #0f2f59;
+      overflow-wrap: anywhere;
+    }
+
+    .membership-lifecycle-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .membership-lifecycle-actions button {
+      border: 1px solid #0f2f59;
+      background: #0f2f59;
+      color: #ffffff;
+      padding: 9px 11px;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .membership-lifecycle-actions button.secondary {
+      background: #ffffff;
+      color: #0f2f59;
+    }
+
+    .membership-lifecycle-history {
+      margin-top: 14px;
+      border-top: 1px solid #d8caa5;
+      padding-top: 10px;
+    }
+
+    .membership-lifecycle-history-entry {
+      border-bottom: 1px solid #e8e1cf;
+      padding: 8px 0;
+      line-height: 1.4;
+    }
+
+    .membership-lifecycle-history-entry:last-child {
+      border-bottom: 0;
+    }
+
     .client-portal-crm-card {
       margin-top: 18px;
       border: 2px solid #9bb4ca;
@@ -568,7 +651,8 @@
     }
 
     @media (max-width: 760px) {
-      .client-portal-status-grid {
+      .client-portal-status-grid,
+      .membership-lifecycle-summary {
         grid-template-columns: 1fr;
       }
     }
@@ -3573,6 +3657,23 @@ function getMembershipEnrollmentText(lead){
   };
 }
 
+function getMembershipLifecycleRecord(lead){
+  const request =
+    lead?.contactRequest ||
+    lead?.Request ||
+    {};
+  const enrollment =
+    request?.membershipEnrollment;
+
+  return (
+    enrollment &&
+    typeof enrollment === "object" &&
+    !Array.isArray(enrollment)
+      ? enrollment
+      : {}
+  );
+}
+
 function isTaxWatchEnrollmentLead(lead){
   const enrollment = getMembershipEnrollmentText(lead);
   const service = enrollment.service.toLowerCase();
@@ -3620,12 +3721,32 @@ function isMembershipEnrollmentLead(lead){
 }
 
 function getMembershipPlanLabel(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.planName){
+    return String(record.planName);
+  }
+
   return isPinnacleEnrollmentLead(lead)
     ? "Pinnacle Tax Action Plan"
     : "Tax Watch Pro";
 }
 
 function getMembershipBillingChoice(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.billingLabel){
+    return String(record.billingLabel);
+  }
+
+  if(record.billingFrequency === "annual"){
+    return "Annual";
+  }
+
+  if(record.billingFrequency === "monthly"){
+    return "Monthly";
+  }
+
   const message =
     getMembershipEnrollmentText(lead)
       .message
@@ -3663,6 +3784,12 @@ function formatMembershipPriceAmount(value){
 }
 
 function getMembershipSelectedPrice(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.selectedPriceDisplay){
+    return String(record.selectedPriceDisplay);
+  }
+
   const message =
     getMembershipEnrollmentText(lead).message;
   const billing = getMembershipBillingChoice(lead);
@@ -3707,11 +3834,21 @@ function getMembershipSelectedPrice(lead){
 }
 
 function getMembershipEnrollmentStatus(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.enrollmentStatus){
+    return String(record.enrollmentStatus);
+  }
+
   const status =
     String(lead?.status || "").toLowerCase();
 
   if(status.includes("active membership")){
     return "Active Membership";
+  }
+
+  if(status.includes("past due")){
+    return "Past Due";
   }
 
   if(status.includes("payment pending")){
@@ -3748,7 +3885,33 @@ function getMembershipEnrollmentStatus(lead){
   return "Enrollment Requested";
 }
 
+function getMembershipPaymentStatus(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.paymentStatus){
+    return String(record.paymentStatus);
+  }
+
+  const status = getMembershipEnrollmentStatus(lead);
+  const map = {
+    "Active Membership": "Paid / Confirmed",
+    "Payment Pending": "Pending",
+    "Past Due": "Past Due",
+    "Cancelled": "Cancelled",
+    "Expired": "Expired",
+    "Closed": "Closed"
+  };
+
+  return map[status] || "Not Paid";
+}
+
 function getMembershipLatestAction(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(record.latestAction){
+    return String(record.latestAction);
+  }
+
   const enrollmentStatus =
     getMembershipEnrollmentStatus(lead);
 
@@ -3756,6 +3919,7 @@ function getMembershipLatestAction(lead){
     "Active Membership": "Membership activated",
     "Payment Pending": "Waiting for membership payment",
     "Enrollment Steps Sent": "Secure enrollment steps sent",
+    "Past Due": "Membership payment is past due",
     "Expired": "Membership expired",
     "Cancelled": "Membership cancelled",
     "Closed": "Enrollment record closed",
@@ -8251,10 +8415,139 @@ function getTaxPlannerCrmHtml(lead){
 }
 
 
+function formatMembershipLifecycleDate(value){
+  return value
+    ? formatLeadDate(value)
+    : "Not recorded";
+}
+
+function getMembershipStatusHistory(lead){
+  const record = getMembershipLifecycleRecord(lead);
+
+  if(
+    Array.isArray(record.statusHistory) &&
+    record.statusHistory.length
+  ){
+    return record.statusHistory;
+  }
+
+  return [{
+    status: "Enrollment Requested",
+    paymentStatus: "Not Paid",
+    action: "Enrollment request received",
+    at: getLeadEnteredAt(lead)
+  }];
+}
+
+function getMembershipLifecycleHtml(lead){
+  const record = getMembershipLifecycleRecord(lead);
+  const portal = lead?.portalAccount || {};
+  const portalActive = portal.status === "active";
+  const history = getMembershipStatusHistory(lead)
+    .slice()
+    .reverse()
+    .slice(0, 8);
+
+  return `
+    <div class="membership-lifecycle-card">
+      <h3>Membership Enrollment &amp; Payment</h3>
+      <div>
+        Enrollment and payment are separate from portal sign-in. A client is an active member only after payment is confirmed and the membership is activated.
+      </div>
+
+      <div class="membership-lifecycle-summary">
+        <div class="membership-lifecycle-item">
+          <span>Plan</span>
+          <strong>${escapeOfficeHtml(getMembershipPlanLabel(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Billing</span>
+          <strong>${escapeOfficeHtml(getMembershipBillingChoice(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Selected Price</span>
+          <strong>${escapeOfficeHtml(getMembershipSelectedPrice(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Enrollment Status</span>
+          <strong>${escapeOfficeHtml(getMembershipEnrollmentStatus(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Payment Status</span>
+          <strong>${escapeOfficeHtml(getMembershipPaymentStatus(lead))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Request Received</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.requestedAt || getLeadEnteredAt(lead)))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Payment Confirmed</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.paymentConfirmedAt))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Membership Started</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.membershipStartedAt))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Next Renewal</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.nextRenewalAt))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Portal Access</span>
+          <strong>${portalActive ? "Active" : "Not active"}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Portal Account Reference</span>
+          <strong>${escapeOfficeHtml(portal.sourceLeadId || "Not connected")}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Last Sign In</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(portal.lastLoginAt))}</strong>
+        </div>
+      </div>
+
+      <div class="membership-lifecycle-actions">
+        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'steps-sent')">Mark Enrollment Steps Sent</button>
+        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'payment-pending')">Mark Payment Pending</button>
+        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'activate')">Activate Membership</button>
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'past-due')">Mark Past Due</button>
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'cancel')">Cancel Membership</button>
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'expire')">Mark Expired</button>
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'close')">Close Enrollment</button>
+      </div>
+
+      <div class="membership-lifecycle-history">
+        <strong>Status History</strong>
+        ${history.map((entry) => `
+          <div class="membership-lifecycle-history-entry">
+            <strong>${escapeOfficeHtml(entry.status || "Status updated")}</strong>
+            ${entry.paymentStatus ? ` - ${escapeOfficeHtml(entry.paymentStatus)}` : ""}<br>
+            ${escapeOfficeHtml(entry.action || "Membership status updated")}<br>
+            ${escapeOfficeHtml(formatMembershipLifecycleDate(entry.at))}
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function getClientPortalCrmHtml(lead){
-  const portal = lead?.clientPortal || {};
-  const documents = portal.documentCenter || {};
+  const recordPortal = lead?.clientPortal || {};
+  const portalAccount = lead?.portalAccount || {};
+  const portal = portalAccount.status === "active"
+    ? {
+        ...recordPortal,
+        ...portalAccount,
+        documentCenter: recordPortal.documentCenter || {}
+      }
+    : recordPortal;
+  const documents = recordPortal.documentCenter || {};
   const leadId = String(lead?.leadId || "").trim();
+  const portalLeadId = String(
+    portalAccount.sourceLeadId ||
+    portal.sourceLeadId ||
+    leadId
+  ).trim();
   const leadEmail = String(
     lead?.contact?.email ||
     lead?.email ||
@@ -8265,7 +8558,7 @@ function getClientPortalCrmHtml(lead){
   const active = status === "active";
   const activationParams = new URLSearchParams({
     activate: "1",
-    leadId,
+    leadId: active ? portalLeadId : leadId,
     email: leadEmail
   });
   const activationUrl = `/client-portal?${activationParams.toString()}`;
@@ -8315,8 +8608,12 @@ function getClientPortalCrmHtml(lead){
           <strong>${escapeOfficeHtml(statusLabel)}</strong>
         </div>
         <div class="client-portal-status-item">
-          <span>Client Reference</span>
+          <span>Request Reference</span>
           <strong>${escapeOfficeHtml(leadId || "Not available")}</strong>
+        </div>
+        <div class="client-portal-status-item">
+          <span>Portal Account Reference</span>
+          <strong>${escapeOfficeHtml(portalLeadId || "Not available")}</strong>
         </div>
         <div class="client-portal-status-item">
           <span>Secure Documents</span>
@@ -8367,7 +8664,7 @@ function getClientPortalCrmHtml(lead){
       <div class="client-portal-actions">
         <a href="/office-document-review" target="_blank" rel="noopener">Open Secure Office Document Review</a>
         ${leadId ? `<button class="secondary" type="button" data-client-reference="${escapeOfficeHtml(leadId)}" onclick="copyClientReference(this.dataset.clientReference, this)">Copy Client Reference</button>` : ""}
-        ${leadId ? `<a class="secondary" href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
+        ${!active && leadId ? `<a class="secondary" href="${activationUrl}" target="_blank" rel="noopener">Open Client Activation Page</a>` : ""}
         <a class="secondary" href="${signInUrl}" target="_blank" rel="noopener">Open Portal Sign In</a>
       </div>
     </div>
@@ -8425,13 +8722,21 @@ function appendTaxPlannerCrmToDetail(lead){
 
   detailContent
     .querySelectorAll(
-      ".tax-planner-crm-card, .client-portal-crm-card"
+      ".tax-planner-crm-card, .membership-lifecycle-card, .client-portal-crm-card"
     )
     .forEach((card) => card.remove());
 
+  const membershipHtml = isMembershipEnrollmentLead(lead)
+    ? getMembershipLifecycleHtml(lead)
+    : "";
+  const plannerHtml = isMembershipEnrollmentLead(lead)
+    ? ""
+    : getTaxPlannerCrmHtml(lead);
+
   detailContent.insertAdjacentHTML(
     "beforeend",
-    getTaxPlannerCrmHtml(lead) +
+    membershipHtml +
+    plannerHtml +
     getClientPortalCrmHtml(lead)
   );
 }
@@ -8484,7 +8789,10 @@ function openPanel(lead){
 
   document.getElementById("dpName").innerText = name;
   document.getElementById("dpEmail").innerText = email;
-  document.getElementById("dpStatus").innerText = "Status: " + (lead.status||"New");
+  document.getElementById("dpStatus").innerText =
+    isMembershipEnrollmentLead(lead)
+      ? "Membership Status: " + getMembershipEnrollmentStatus(lead)
+      : "Status: " + (lead.status||"New");
 
   if(isCalendarLead(lead)){
     const appointment = lead.calendarAppointment || {};
@@ -8516,7 +8824,10 @@ function openPanel(lead){
     return;
   }
 
-  document.getElementById("dpTaxYear").innerText = "Tax Year: " + (lead.taxData?.taxYear || "");
+  document.getElementById("dpTaxYear").innerText =
+    isMembershipEnrollmentLead(lead)
+      ? `${getMembershipBillingChoice(lead)} - ${getMembershipSelectedPrice(lead)}`
+      : "Tax Year: " + (lead.taxData?.taxYear || "");
   const intake = lead.taxPreparationIntake || null;
   const contactRequest = lead.contactRequest || null;
 
@@ -9720,6 +10031,7 @@ function renderLeads(){
               <th>Plan / Billing</th>
               <th>Selected Price</th>
               <th>Enrollment Status</th>
+              <th>Payment Status</th>
               <th>Request Date / Time</th>
               <th>Client Reference</th>
               <th>Latest Action</th>
@@ -9740,6 +10052,8 @@ function renderLeads(){
                 getMembershipSelectedPrice(lead);
               const enrollmentStatus =
                 getMembershipEnrollmentStatus(lead);
+              const paymentStatus =
+                getMembershipPaymentStatus(lead);
               const requestedAt =
                 formatLeadDate(getLeadEnteredAt(lead));
               const reference =
@@ -9763,6 +10077,7 @@ function renderLeads(){
                       ${escapeOfficeHtml(enrollmentStatus)}
                     </span>
                   </td>
+                  <td>${escapeOfficeHtml(paymentStatus)}</td>
                   <td>${escapeOfficeHtml(requestedAt || "Date unavailable")}</td>
                   <td>
                     <strong>${escapeOfficeHtml(reference)}</strong>
@@ -15737,6 +16052,66 @@ function openClosedLead(index){
   if(lead) openPanel(lead);
 }
 
+async function updateMembershipLifecycle(leadId, action){
+  const cleanLeadId = String(leadId || "").trim();
+  const labels = {
+    "steps-sent": "mark the enrollment steps as sent",
+    "payment-pending": "mark payment as pending",
+    activate: "confirm payment and activate this membership",
+    "past-due": "mark this membership as past due",
+    cancel: "cancel this membership",
+    expire: "mark this membership as expired",
+    close: "close this enrollment record"
+  };
+
+  if(!cleanLeadId || !labels[action]){
+    return;
+  }
+
+  if(
+    !window.confirm(
+      `Confirm that you want to ${labels[action]}?`
+    )
+  ){
+    return;
+  }
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(cleanLeadId)}/membership-action`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action })
+      }
+    );
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(
+        result.error ||
+        "The membership status could not be updated."
+      );
+    }
+
+    await loadLeads();
+    const updatedLead = (allLeads || []).find(
+      (lead) => String(lead?.leadId || "") === cleanLeadId
+    );
+
+    if(updatedLead){
+      openPanel(updatedLead);
+    }
+  }catch(error){
+    window.alert(
+      error?.message ||
+      "The membership status could not be updated."
+    );
+  }
+}
+
 function openMembershipEnrollment(index){
   const lead =
     (window.visibleMembershipEnrollmentLeads || [])[index];
@@ -15759,6 +16134,7 @@ async function loadLeads(){
     updateExtensionRequestCounts();
     updateContractor1099Counts();
     renderLeads();
+    return allLeads;
 
   }catch(e){
     console.log(e);
