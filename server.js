@@ -18756,48 +18756,17 @@ function buildMembershipEnrollmentBase(record = {}) {
               !Array.isArray(entry) &&
               (entry.id || entry.paidAt)
           )
-          .map((entry) => ({
-            id: String(entry.id || ""),
-            invoiceId: String(entry.invoiceId || ""),
-            paymentIntentId: String(entry.paymentIntentId || ""),
-            chargeId: String(entry.chargeId || ""),
-            status: String(entry.status || ""),
-            amountPaidCents: Math.max(
-              0,
-              Number(entry.amountPaidCents || 0)
-            ),
-            currency: String(entry.currency || "usd"),
-            paidAt: String(entry.paidAt || ""),
-            planName: String(
-              entry.planName || current.planName || plan.planName
-            ),
-            billingLabel: String(
-              entry.billingLabel ||
-              current.billingLabel ||
-              plan.billingLabel
-            ),
-            servicePeriodStart: String(
-              entry.servicePeriodStart || ""
-            ),
-            servicePeriodEnd: String(
-              entry.servicePeriodEnd || ""
-            ),
-            cardBrand: String(entry.cardBrand || ""),
-            cardLast4: String(entry.cardLast4 || ""),
-            receiptUrl: String(entry.receiptUrl || ""),
-            hostedInvoiceUrl: String(
-              entry.hostedInvoiceUrl || ""
-            ),
-            invoicePdfUrl: String(
-              entry.invoicePdfUrl || ""
-            ),
-            billingReason: String(
-              entry.billingReason || ""
-            ),
-            environment: String(
-              entry.environment || ""
+          .map((entry) =>
+            normalizeMembershipPaymentRecord(
+              entry,
+              {
+                planName:
+                  current.planName || plan.planName,
+                billingLabel:
+                  current.billingLabel || plan.billingLabel
+              }
             )
-          }))
+          )
           .sort(
             (left, right) =>
               Date.parse(right.paidAt || 0) -
@@ -19346,6 +19315,54 @@ function getMembershipPaymentMethodDetails(
   };
 }
 
+function getMembershipPaymentPeriodEnd(
+  startValue,
+  billingLabel
+) {
+  const start = new Date(startValue || "");
+
+  if (Number.isNaN(start.getTime())) {
+    return "";
+  }
+
+  const end = new Date(start.getTime());
+
+  if (String(billingLabel || "").toLowerCase() === "annual") {
+    end.setUTCFullYear(end.getUTCFullYear() + 1);
+  } else {
+    end.setUTCMonth(end.getUTCMonth() + 1);
+  }
+
+  return end.toISOString();
+}
+
+function normalizeMembershipServicePeriod(
+  startValue,
+  endValue,
+  billingLabel,
+  paidAt
+) {
+  const cleanStart = String(startValue || paidAt || "");
+  const cleanEnd = String(endValue || "");
+  const startTime = Date.parse(cleanStart);
+  const endTime = Date.parse(cleanEnd);
+
+  if (!Number.isFinite(startTime)) {
+    return { start: "", end: "" };
+  }
+
+  return {
+    start: new Date(startTime).toISOString(),
+    end:
+      Number.isFinite(endTime) && endTime > startTime
+        ? new Date(endTime).toISOString()
+        : getMembershipPaymentPeriodEnd(
+            new Date(startTime).toISOString(),
+            billingLabel
+          )
+  };
+}
+
 function normalizeMembershipPaymentRecord(
   record = {},
   fallback = {}
@@ -19370,6 +19387,22 @@ function normalizeMembershipPaymentRecord(
     fallback.chargeId ||
     ""
   );
+  const billingLabel = String(
+    record.billingLabel ||
+    fallback.billingLabel ||
+    "Monthly"
+  );
+  const servicePeriod =
+    normalizeMembershipServicePeriod(
+      record.servicePeriodStart ||
+        fallback.servicePeriodStart ||
+        paidAt,
+      record.servicePeriodEnd ||
+        fallback.servicePeriodEnd ||
+        "",
+      billingLabel,
+      paidAt
+    );
 
   return {
     id: String(
@@ -19406,21 +19439,9 @@ function normalizeMembershipPaymentRecord(
       fallback.planName ||
       "Tax Watch Pro"
     ),
-    billingLabel: String(
-      record.billingLabel ||
-      fallback.billingLabel ||
-      "Monthly"
-    ),
-    servicePeriodStart: String(
-      record.servicePeriodStart ||
-      fallback.servicePeriodStart ||
-      ""
-    ),
-    servicePeriodEnd: String(
-      record.servicePeriodEnd ||
-      fallback.servicePeriodEnd ||
-      ""
-    ),
+    billingLabel,
+    servicePeriodStart: servicePeriod.start,
+    servicePeriodEnd: servicePeriod.end,
     cardBrand: String(
       record.cardBrand ||
       fallback.cardBrand ||
@@ -19531,14 +19552,16 @@ async function buildMembershipPaymentRecordFromInvoice(
           : "Monthly"),
       servicePeriodStart:
         stripeUnixToIso(
-          invoice.period_start ||
           invoice.lines?.data?.[0]?.period?.start ||
+          invoice.period_start ||
+          subscription.current_period_start ||
           0
         ),
       servicePeriodEnd:
         stripeUnixToIso(
-          invoice.period_end ||
           invoice.lines?.data?.[0]?.period?.end ||
+          invoice.period_end ||
+          subscription.current_period_end ||
           0
         ),
       cardBrand: method.brand,

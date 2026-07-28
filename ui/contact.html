@@ -192,6 +192,7 @@
     const params = new URLSearchParams(window.location.search);
     const serviceFromUrl = String(params.get("service") || "").trim();
     const planFromUrl = String(params.get("plan") || "").trim().toLowerCase();
+    const fitCallFromUrl = String(params.get("fitCall") || "").trim().toLowerCase();
     const returnFromUrl = params.get("return") || "";
     const returnLink = document.getElementById("returnServicePageLink");
     const serviceSelect = document.getElementById("service");
@@ -225,6 +226,8 @@
         normalizedServiceFromUrl === "tax watch pro annual membership"
       )
     );
+    const isExpenseCategoryFitCall =
+      fitCallFromUrl === "expense-category";
 
     if (returnLink && returnFromUrl === "plans-pricing") {
       returnLink.href = "/plans-pricing";
@@ -235,6 +238,9 @@
     } else if (returnLink && returnFromUrl === "client-portal") {
       returnLink.href = "/client-portal/home#tax-watch";
       returnLink.textContent = "Return to Tax Money Tracker";
+    } else if (returnLink && returnFromUrl === "free-estimator") {
+      returnLink.href = "/";
+      returnLink.textContent = "Return to Free Tax Estimator";
     }
 
     function formatPhoneInput(value) {
@@ -260,7 +266,9 @@
 
       const requestedService = normalizedServiceFromUrl.startsWith("tax watch pro")
         ? "Tax Watch Pro"
-        : serviceFromUrl;
+        : isExpenseCategoryFitCall
+          ? "Tax Preparation"
+          : serviceFromUrl;
       const matchingOption = Array.from(serviceSelect.options).find(
         (option) => option.value.toLowerCase() === requestedService.toLowerCase()
       );
@@ -272,6 +280,19 @@
 
     function applyEnrollmentDefaults() {
       selectRequestedService();
+
+      if (isExpenseCategoryFitCall) {
+        document.title = "15-Minute Fit Call Request | Greatest Business Solution LLC";
+        pageTitle.textContent = "Request a 15-Minute Fit Call";
+        pageIntro.textContent = "Tell us where you need help organizing a business expense. This request does not determine final tax treatment and does not obligate you to purchase tax preparation.";
+        enrollmentSummary.className = "enrollment-summary show";
+        enrollmentSummary.innerHTML =
+          "<strong>Expense-category help:</strong> Use this request when you are unsure where an expense belongs or whether your situation needs more detail. Final tax treatment and return placement are determined during professional tax preparation.";
+        messageInput.value =
+          "I need help deciding where a business expense belongs or whether my situation needs more detail. Please contact me about a 15-Minute Fit Call. I understand final tax treatment and return placement are determined during professional tax preparation.";
+        submitButton.textContent = "Send Fit Call Request";
+        return;
+      }
 
       if (!isTaxWatchEnrollment) return;
 
@@ -324,7 +345,11 @@
       const formMessage = document.getElementById("formMessage");
 
       submitButton.disabled = true;
-      submitButton.textContent = isTaxWatchEnrollment ? "Sending Enrollment Request..." : "Sending...";
+      submitButton.textContent = isTaxWatchEnrollment
+        ? "Sending Enrollment Request..."
+        : isExpenseCategoryFitCall
+          ? "Sending Fit Call Request..."
+          : "Sending...";
       formMessage.className = "message";
       formMessage.textContent = "";
 
@@ -359,7 +384,9 @@
         formMessage.innerHTML =
           (isTaxWatchEnrollment
             ? "Your Tax Watch Pro enrollment request was received. Reference: "
-            : "Your contact request was received. Reference: ") +
+            : isExpenseCategoryFitCall
+              ? "Your 15-Minute Fit Call request was received. Reference: "
+              : "Your contact request was received. Reference: ") +
           result.leadId +
           (window.serviceReturnActionHtml ? window.serviceReturnActionHtml() : "");
 
@@ -374,7 +401,11 @@
             : "The request could not be sent. Please try again.";
       } finally {
         submitButton.disabled = false;
-        submitButton.textContent = isTaxWatchEnrollment ? "Send Enrollment Request" : "Send Contact Request";
+        submitButton.textContent = isTaxWatchEnrollment
+          ? "Send Enrollment Request"
+          : isExpenseCategoryFitCall
+            ? "Send Fit Call Request"
+            : "Send Contact Request";
       }
     });
   </script>

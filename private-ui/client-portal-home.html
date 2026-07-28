@@ -851,6 +851,17 @@
       line-height:1.55;
       font-size:13px
     }
+    .cx-membership-credit-policy{
+      margin:16px 0 0;
+      padding:14px 16px;
+      border:1px solid #dbc88e;
+      border-left:4px solid #c69a37;
+      border-radius:10px;
+      background:#fffaf0;
+      color:#334b5f;
+      line-height:1.55;
+    }
+    .cx-membership-credit-policy strong{color:#123a5b}
     .membership-billing-card{
       grid-column:1 / -1;
       border:1px solid var(--line);
@@ -934,6 +945,13 @@
     }
     .membership-payment-year > summary::-webkit-details-marker{
       display:none;
+    }
+    .membership-payment-year-action{
+      color:#0b6b52;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-left:auto;
     }
     .membership-payment-list{
       padding:0 14px 14px;
@@ -2653,7 +2671,7 @@
               <strong>Organizer status:</strong> Not created
             </div>
             <p class="tax-watch-credit-note"><strong>Your choice:</strong> Use Greatest Business Solution LLC for professional tax preparation, or print, save, and share your organizer with the qualified tax professional of your choice.</p>
-            <p class="tax-watch-credit-note"><strong>Annual membership benefit:</strong> Eligible annual Tax Watch Pro and Pinnacle members may receive a $20 credit toward professional tax preparation by Greatest Business Solution LLC. The credit is noncash, nontransferable, and cannot be stacked.</p>
+            <p class="tax-watch-credit-note"><strong>$20 tax-preparation credit eligibility:</strong> Annual members and monthly members with at least 90 consecutive paid days may receive one credit per tax year when Greatest Business Solution LLC prepares the return. The membership must be active and current when the return is accepted. The credit is noncash, nontransferable, nonstackable, and cannot exceed the preparation fee.</p>
           </div>
 
           <div class="tax-watch-panel">
@@ -2791,7 +2809,6 @@
 
       <div class="section-body">
         <div class="membership-billing-card" id="membershipBillingCard">
-          <h3>Billing &amp; Payment History</h3>
           <p>Review current membership billing and every recorded payment by year. Open a payment to see the exact date and time, service period, payment method, and available Stripe receipt or invoice. For security, only the card brand and last four digits are shown.</p>
 
           <div class="membership-billing-summary">
@@ -4894,6 +4911,8 @@
             <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
           </div>`;
 
+      document.getElementById("membershipCreditPolicy")?.remove();
+
       membershipGrid.innerHTML = `
         <article class="cx-explore-card">
           <div class="cx-plan-kicker">Free Starting Point</div>
@@ -4902,6 +4921,7 @@
           <p><strong>Best for:</strong> Someone who wants to know whether a refund or tax bill may be coming.</p>
           <ul>
             <li>Current federal and state estimate</li>
+            <li>Estimate up to 2 jobs, gigs, or business income sources</li>
             <li>Refund or balance-due direction</li>
             <li>Plain-language explanation of the main reasons</li>
             <li>Saved progress in your secure portal</li>
@@ -4927,7 +4947,7 @@
             <li>See what changed and why</li>
             <li>View estimate-change history and missing-record reminders</li>
             <li>Professional handoff to Greatest Business Solution LLC</li>
-            <li>Eligible memberships may receive a $20 annual tax-preparation credit when Greatest Business Solution LLC prepares the return</li>
+            <li>Annual members and monthly members with at least 90 consecutive paid days may receive one $20 tax-preparation credit per tax year when Greatest Business Solution LLC prepares the return</li>
             <li>Tax preparation and filing are separate professional services</li>
           </ul>
           ${taxWatchAction}
@@ -4951,7 +4971,7 @@
             <li>Compare SEP-IRA and Solo 401(k) planning scenarios</li>
             <li>Compare before-and-after choices and what happens if nothing changes</li>
             <li>Download a Pinnacle Tax Action Plan</li>
-            <li>Eligible memberships may receive a $20 annual tax-preparation credit when Greatest Business Solution LLC prepares the return</li>
+            <li>Annual members and monthly members with at least 90 consecutive paid days may receive one $20 tax-preparation credit per tax year when Greatest Business Solution LLC prepares the return</li>
             <li>Tax preparation and filing remain separate professional services</li>
           </ul>
           <p><strong>Designed for freelancers and self-employed individuals.</strong> Larger businesses with complex entities, payroll, inventory, or full bookkeeping needs may require separate professional services.</p>
@@ -4978,10 +4998,17 @@
             <tr><td>Weekly, monthly, and yearly tax-and-savings plan</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
             <tr><td>QBI and retirement-planning scenarios</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-check">Yes</td></tr>
             <tr><td>Professional tax preparation included</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td><td class="cx-plan-dash">—</td></tr>
-            <tr><td>Eligible annual tax-preparation credit</td><td class="cx-plan-dash">—</td><td>Up to $20</td><td>Up to $20</td></tr>
+            <tr><td>Tax-preparation credit after eligibility period</td><td class="cx-plan-dash">—</td><td>Up to $20</td><td>Up to $20</td></tr>
           </tbody>
         </table>
       `;
+
+      comparison.insertAdjacentHTML(
+        "afterend",
+        `<div class="cx-membership-credit-policy" id="membershipCreditPolicy">
+          <strong>$20 tax-preparation credit eligibility:</strong> Annual members and monthly members with at least 90 consecutive paid days may receive one credit per tax year when Greatest Business Solution LLC prepares the return. The membership must be active and current when the return is accepted for preparation. The credit is noncash, nontransferable, nonstackable, and cannot exceed the tax-preparation fee.
+        </div>`
+      );
 
       const professionalServices = [
         {
@@ -5842,14 +5869,12 @@
     ) {
       const start = entry.servicePeriodStart
         ? formatDate(
-            entry.servicePeriodStart,
-            true
+            entry.servicePeriodStart
           )
         : "Not recorded";
       const end = entry.servicePeriodEnd
         ? formatDate(
-            entry.servicePeriodEnd,
-            true
+            entry.servicePeriodEnd
           )
         : "Not recorded";
 
@@ -6020,10 +6045,11 @@
               );
 
             return `
-              <details class="membership-payment-year" ${yearIndex === 0 ? "open" : ""}>
+              <details class="membership-payment-year">
                 <summary>
                   <span>${escapeHtml(year)} Payments</span>
                   <span>Total Paid: ${escapeHtml(membershipPaymentAmount(total))}</span>
+                  <span class="membership-payment-year-action">Open year</span>
                 </summary>
                 <div class="membership-payment-list">
                   ${entries.map((entry) => {
@@ -6058,7 +6084,7 @@
                             <span>Plan</span>
                             <strong>${escapeHtml(entry.billingLabel || membership.billingLabel || "Membership")}</strong>
                           </div>
-                          <strong>View details</strong>
+                          <strong class="membership-payment-entry-action">View details</strong>
                         </summary>
                         <div class="membership-payment-details">
                           <div>
@@ -6085,6 +6111,28 @@
             `;
           })
           .join("");
+
+      historyRoot
+        .querySelectorAll(".membership-payment-year")
+        .forEach((yearDetails) => {
+          const action = yearDetails.querySelector(".membership-payment-year-action");
+          const updateYearAction = () => {
+            if (action) action.textContent = yearDetails.open ? "Hide year" : "Open year";
+          };
+          yearDetails.addEventListener("toggle", updateYearAction);
+          updateYearAction();
+        });
+
+      historyRoot
+        .querySelectorAll(".membership-payment-entry")
+        .forEach((paymentDetails) => {
+          const action = paymentDetails.querySelector(".membership-payment-entry-action");
+          const updatePaymentAction = () => {
+            if (action) action.textContent = paymentDetails.open ? "Hide details" : "View details";
+          };
+          paymentDetails.addEventListener("toggle", updatePaymentAction);
+          updatePaymentAction();
+        });
     }
 
 
