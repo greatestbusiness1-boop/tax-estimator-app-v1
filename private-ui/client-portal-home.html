@@ -1860,6 +1860,7 @@
     .tax-watch-preview-progress>div{height:100%;width:0;background:linear-gradient(90deg,#d29a22,#13805f);transition:width .4s ease}
     .tax-watch-preview-note{margin:0;color:#25455d;line-height:1.55}
     .tax-watch-preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .tax-watch-preview-actions[hidden]{display:none!important}
     .tax-watch-preview-actions a{display:inline-flex;align-items:center;justify-content:center;padding:11px 15px;border-radius:10px;background:#0f355d;color:#fff;text-decoration:none;font-weight:800}
     .tax-watch-preview-actions a.secondary{background:#fff;color:#0f355d;border:1px solid #a9c1d2}
     .tax-watch-preview-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 18px;border:2px solid #0f355d;border-radius:11px;background:#0f355d;color:#fff;box-shadow:0 7px 16px rgba(15,53,93,.22);font:inherit;font-weight:900;cursor:pointer;opacity:1;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
@@ -2320,7 +2321,7 @@
           <div class="tax-watch-preview-card" id="taxWatchPreviewCard" hidden>
             <div class="tax-watch-preview-top">
               <div>
-                <div class="eyebrow">Tax Watch Pro Preview</div>
+                <div class="eyebrow" id="taxWatchMembershipCardEyebrow">Tax Watch Pro Preview</div>
                 <h3 id="taxWatchPreviewHeading">Your preview is active</h3>
                 <p id="taxWatchPreviewDates">Loading your preview dates...</p>
               </div>
@@ -4905,6 +4906,7 @@
       const expiredNotice = document.getElementById("taxWatchPreviewExpiredNotice");
       const badgeStatus = document.getElementById("taxWatchPreviewBadgeStatus");
       const badgeText = document.getElementById("taxWatchPreviewBadgeText");
+      const eyebrow = document.getElementById("taxWatchMembershipCardEyebrow");
 
       if (taxWatchPreviewTimer) {
         window.clearInterval(taxWatchPreviewTimer);
@@ -4926,6 +4928,7 @@
 
       if (membershipActive) {
         if (card) card.hidden = false;
+        if (eyebrow) eyebrow.textContent = "Tax Watch Pro Membership";
         if (countdown) {
           countdown.removeAttribute("data-preview-ends-at");
           countdown.textContent = "Membership Active";
@@ -4935,6 +4938,9 @@
         if (dates) {
           dates.textContent =
             `${membership.billingLabel || "Membership"} plan` +
+            (membership.selectedPriceDisplay
+              ? ` — ${membership.selectedPriceDisplay}`
+              : "") +
             (membership.membershipStartedAt
               ? ` started ${formatDate(membership.membershipStartedAt)}.`
               : ".") +
@@ -4944,7 +4950,10 @@
         }
         if (progressTrack) progressTrack.hidden = true;
         if (note) note.innerHTML = "<strong>Payment confirmed.</strong> Your year-round tracking access is active. Tax preparation and filing remain separate professional services.";
-        if (actions) actions.hidden = true;
+        if (actions) {
+          actions.hidden = true;
+          actions.style.display = "none";
+        }
         if (expiredNotice) expiredNotice.hidden = true;
         if (badgeStatus) badgeStatus.textContent = "Membership Active";
         if (badgeText) badgeText.textContent = `${membership.planName || "Tax Watch Pro"} — ${membership.billingLabel || "Paid plan"}`;
@@ -4953,6 +4962,7 @@
 
       if (membershipPastDue || membershipEnded) {
         if (card) card.hidden = false;
+        if (eyebrow) eyebrow.textContent = "Tax Watch Pro Membership";
         if (countdown) {
           countdown.removeAttribute("data-preview-ends-at");
           countdown.textContent = membershipPastDue ? "Payment Needs Attention" : enrollmentStatus;
@@ -4966,7 +4976,10 @@
         if (note) note.innerHTML = membershipPastDue
           ? "<strong>Payment was not confirmed.</strong> New Tax Money Tracker updates may be paused until the Stripe subscription is current."
           : "<strong>Your saved records remain connected.</strong> Choose a plan again when you are ready to resume year-round tracking.";
-        if (actions) actions.hidden = false;
+        if (actions) {
+          actions.hidden = false;
+          actions.style.removeProperty("display");
+        }
         if (expiredNotice) expiredNotice.hidden = true;
         if (badgeStatus) badgeStatus.textContent = enrollmentStatus;
         if (badgeText) badgeText.textContent = paymentStatus || "Payment not active";
@@ -4975,9 +4988,13 @@
       }
 
       if (card) card.hidden = !isPreview;
+      if (eyebrow) eyebrow.textContent = "Tax Watch Pro Preview";
       if (expiredNotice) expiredNotice.hidden = !Boolean(preview.expired);
       if (progressTrack) progressTrack.hidden = false;
-      if (actions) actions.hidden = false;
+      if (actions) {
+        actions.hidden = false;
+        actions.style.removeProperty("display");
+      }
 
       if (!isPreview || !preview.endsAt) {
         configureMembershipCheckoutButtons();

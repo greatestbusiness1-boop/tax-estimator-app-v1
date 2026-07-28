@@ -20089,6 +20089,26 @@ app.post(
 
       const portalSession =
         req.clientPortalSession;
+      const existingMembership =
+        getClientPortalMembershipSummary(
+          await getClientPortalAccessibleLeads(
+            portalSession.email
+          )
+        );
+      const activeMembershipExists =
+        existingMembership.enrollmentStatus ===
+          "Active Membership" &&
+        existingMembership.paymentStatus ===
+          "Paid / Confirmed";
+
+      if (activeMembershipExists) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "Your Tax Watch Pro membership is already active. No second Stripe subscription was created."
+        });
+      }
+
       const enrollmentEntry =
         await ensureMembershipEnrollmentLead(
           portalSession,
