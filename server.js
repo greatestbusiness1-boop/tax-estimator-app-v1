@@ -87,6 +87,22 @@ const LEADS_FILE = path.join(__dirname, "leads.json");
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
 const recentLeads = new Map();
 
+const FREE_ESTIMATE_LIMIT = 3;
+const FREE_ESTIMATE_WINDOW_DAYS = 30;
+const FREE_ESTIMATE_WINDOW_MILLISECONDS =
+  FREE_ESTIMATE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+const FREE_ESTIMATE_TEST_EMAILS = new Set(
+  [
+    "greatestbusiness1+1099test@gmail.com",
+    ...String(process.env.FREE_ESTIMATE_TEST_EMAILS || "")
+      .split(",")
+  ]
+    .map((value) =>
+      String(value || "").trim().toLowerCase()
+    )
+    .filter(Boolean)
+);
+
 // =============================================================================
 // SECURE CLIENT PORTAL FOUNDATION
 // Client sessions use an HttpOnly, signed cookie. Passwords and activation
@@ -854,7 +870,9 @@ async function appendLead(lead) {
       contractor1099Work: lead.contractor1099Work || null,
       extensionRequest: lead.extensionRequest || null,
       contactRequest: lead.contactRequest || null,
-      calendarAppointment: lead.calendarAppointment || null
+      calendarAppointment: lead.calendarAppointment || null,
+      submissionType: lead.submissionType || null,
+      freeEstimateUsage: lead.freeEstimateUsage || null
     },
     taxYear: lead.taxData?.taxYear || null,
     filingYear: lead.taxData?.filingYear || null
@@ -1640,6 +1658,21 @@ function mapRowToLead(row) {
     },
     taxData: estimate.taxData || row.taxData || row.tax_data || null,
     estimateSummary: estimate.estimateSummary || row.estimateSummary || row.estimate_summary || {},
+    submissionType:
+      estimate.submissionType ||
+      row.submissionType ||
+      row.submission_type ||
+      null,
+    freeEstimateUsage:
+      estimate.freeEstimateUsage ||
+      row.freeEstimateUsage ||
+      row.free_estimate_usage ||
+      null,
+    taxWatchUpdate:
+      estimate.taxWatchUpdate ||
+      row.taxWatchUpdate ||
+      row.tax_watch_update ||
+      null,
     taxPreparationIntake:
       estimate.taxPreparationIntake ||
       row.taxPreparationIntake ||
@@ -4712,6 +4745,324 @@ async function getClientPortalAccessibleLeads(email) {
   return candidates.filter(
     (entry) =>
       getLeadEmailValue(entry.raw) === normalized
+  );
+}
+
+function getFreeEstimateRecord(entry = {}) {
+  return entry.lead || entry.raw || entry || {};
+}
+
+function getFreeEstimateRecordTimestamp(entry = {}) {
+  const record = getFreeEstimateRecord(entry);
+  const usage =
+    record.freeEstimateUsage &&
+    typeof record.freeEstimateUsage === "object" &&
+    !Array.isArray(record.freeEstimateUsage)
+      ? record.freeEstimateUsage
+      : {};
+
+  return String(
+    usage.completedAt ||
+    record.timestamp ||
+    record.createdAt ||
+    entry.raw?.created_at ||
+    ""
+  ).trim();
+}
+
+function getFreeEstimateRecordLeadId(entry = {}) {
+  const record = getFreeEstimateRecord(entry);
+
+  return String(
+    entry.leadId ||
+    record.leadId ||
+    record.leadid ||
+    record.lead_id ||
+    ""
+  ).trim();
+}
+
+function isCompletedFreeEstimateRecord(entry = {}) {
+  const record = getFreeEstimateRecord(entry);
+  const submissionType = String(
+    record.submissionType ||
+    record.freeEstimateUsage?.submissionType ||
+    ""
+  ).trim().toLowerCase();
+
+  if (
+    submissionType &&
+    submissionType !== "free-estimate"
+  ) {
+    return false;
+  }
+
+  if (
+    record.taxWatchUpdate &&
+    typeof record.taxWatchUpdate === "object" &&
+    !Array.isArray(record.taxWatchUpdate)
+  ) {
+    return false;
+  }
+
+  const taxData = record.taxData;
+  const estimateSummary = record.estimateSummary;
+
+  if (
+    !taxData ||
+    typeof taxData !== "object" ||
+    Array.isArray(taxData) ||
+    !estimateSummary ||
+    typeof estimateSummary !== "object" ||
+    Array.isArray(estimateSummary)
+  ) {
+    return false;
+  }
+
+  if (submissionType === "free-estimate") {
+    return true;
+  }
+
+  const status = String(record.status || "").toLowerCase();
+  const notes = String(record.notes || "").toLowerCase();
+
+  if (
+    status.includes("follow-up") ||
+    notes.includes("fit call") ||
+    notes.includes("tax preparation")
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function getFreeEstimatePreviewProfile(accessible = []) {
+  const profileEntry = accessible.find((entry) => {
+    const profile = getFreeEstimateRecord(entry).taxWatchProfile;
+    return (
+      profile &&
+      typeof profile === "object" &&
+      !Array.isArray(profile) &&
+      String(profile.status || "")
+        .trim()
+        .toLowerCase()
+        .match(/preview|active/)
+    );
+  });
+
+  return profileEntry
+    ? getFreeEstimateRecord(profileEntry).taxWatchProfile
+    : null;
+}
+
+async function getFreeEstimateUsage(email) {
+  const normalizedEmail = normalizeEmail(email);
+  const now = Date.now();
+  const windowStartedAtMs =
+    now - FREE_ESTIMATE_WINDOW_MILLISECONDS;
+  const accessible = normalizedEmail
+    ? await getClientPortalAccessibleLeads(
+        normalizedEmail
+      )
+    : [];
+  const completed = accessible
+    .filter(isCompletedFreeEstimateRecord)
+    .map((entry) => ({
+      entry,
+      leadId: getFreeEstimateRecordLeadId(entry),
+      timestamp: getFreeEstimateRecordTimestamp(entry),
+      timestampMs: Date.parse(
+        getFreeEstimateRecordTimestamp(entry)
+      )
+    }))
+    .filter(
+      (item) =>
+        Number.isFinite(item.timestampMs) &&
+        item.timestampMs >= windowStartedAtMs &&
+        item.timestampMs <= now + 60 * 1000
+    )
+    .sort(
+      (left, right) =>
+        right.timestampMs - left.timestampMs
+    );
+  const membership =
+    getClientPortalMembershipSummary(accessible);
+  const activeMembership =
+    membership.enrollmentStatus ===
+      "Active Membership" &&
+    membership.paymentStatus ===
+      "Paid / Confirmed";
+  const previewProfile =
+    getFreeEstimatePreviewProfile(accessible);
+  const previewWindow = previewProfile
+    ? getTaxWatchPreviewWindow(previewProfile)
+    : null;
+  const activePreview = Boolean(
+    previewProfile &&
+    previewWindow?.canEdit &&
+    !previewWindow?.expired
+  );
+  const testAccount =
+    FREE_ESTIMATE_TEST_EMAILS.has(normalizedEmail);
+  const exemptionReason = testAccount
+    ? "office-test-account"
+    : activeMembership
+      ? "active-membership"
+      : activePreview
+        ? "active-preview"
+        : "";
+  const used = completed.length;
+  const remaining = Math.max(
+    0,
+    FREE_ESTIMATE_LIMIT - used
+  );
+  const oldestCounted = completed.length
+    ? completed[completed.length - 1]
+    : null;
+  const nextAvailableAt =
+    used >= FREE_ESTIMATE_LIMIT && oldestCounted
+      ? new Date(
+          oldestCounted.timestampMs +
+          FREE_ESTIMATE_WINDOW_MILLISECONDS
+        ).toISOString()
+      : "";
+
+  return {
+    limit: FREE_ESTIMATE_LIMIT,
+    windowDays: FREE_ESTIMATE_WINDOW_DAYS,
+    used,
+    remaining,
+    capReached:
+      !exemptionReason &&
+      used >= FREE_ESTIMATE_LIMIT,
+    exempt: Boolean(exemptionReason),
+    exemptionReason,
+    nextAvailableAt,
+    latestSavedLeadId:
+      completed[0]?.leadId || "",
+    windowStartedAt:
+      new Date(windowStartedAtMs).toISOString()
+  };
+}
+
+async function recordFreeEstimateCapReached(
+  email,
+  usage = {}
+) {
+  const leadId = String(
+    usage.latestSavedLeadId || ""
+  ).trim();
+
+  if (!leadId) {
+    return { ok: false, error: "No saved estimate was available for cap analytics." };
+  }
+
+  const now = new Date().toISOString();
+
+  return updateLeadAfterStripePayment(
+    leadId,
+    (record = {}) => {
+      const existing =
+        record.freeEstimateUsage &&
+        typeof record.freeEstimateUsage === "object" &&
+        !Array.isArray(record.freeEstimateUsage)
+          ? record.freeEstimateUsage
+          : {};
+
+      return {
+        ...record,
+        freeEstimateUsage: {
+          ...existing,
+          version: 1,
+          normalizedEmail: normalizeEmail(email),
+          limit: FREE_ESTIMATE_LIMIT,
+          windowDays: FREE_ESTIMATE_WINDOW_DAYS,
+          capReachedAt:
+            existing.capReachedAt || now,
+          lastCapReachedAt: now,
+          capReachedCount:
+            Math.max(
+              0,
+              Number(existing.capReachedCount || 0)
+            ) + 1,
+          countAtCap: Math.max(
+            FREE_ESTIMATE_LIMIT,
+            Number(usage.used || 0)
+          )
+        },
+        updatedAt: now
+      };
+    }
+  );
+}
+
+async function recordFreeEstimatePreviewConversion(
+  email,
+  previewStartedAt
+) {
+  const normalizedEmail = normalizeEmail(email);
+  const accessible =
+    await getClientPortalAccessibleLeads(
+      normalizedEmail
+    );
+  const cappedEstimate = accessible
+    .filter(isCompletedFreeEstimateRecord)
+    .map((entry) => ({
+      entry,
+      record: getFreeEstimateRecord(entry),
+      leadId: getFreeEstimateRecordLeadId(entry),
+      timestampMs: Date.parse(
+        getFreeEstimateRecordTimestamp(entry)
+      )
+    }))
+    .filter((item) => {
+      const analytics = item.record.freeEstimateUsage;
+      return (
+        item.leadId &&
+        Number.isFinite(item.timestampMs) &&
+        analytics &&
+        typeof analytics === "object" &&
+        !Array.isArray(analytics) &&
+        analytics.capReachedAt
+      );
+    })
+    .sort(
+      (left, right) =>
+        right.timestampMs - left.timestampMs
+    )[0];
+
+  if (!cappedEstimate) {
+    return { ok: true, skipped: true };
+  }
+
+  const now = String(
+    previewStartedAt || new Date().toISOString()
+  );
+
+  return updateLeadAfterStripePayment(
+    cappedEstimate.leadId,
+    (record = {}) => {
+      const existing =
+        record.freeEstimateUsage &&
+        typeof record.freeEstimateUsage === "object" &&
+        !Array.isArray(record.freeEstimateUsage)
+          ? record.freeEstimateUsage
+          : {};
+
+      if (existing.previewStartedAfterCapAt) {
+        return record;
+      }
+
+      return {
+        ...record,
+        freeEstimateUsage: {
+          ...existing,
+          previewStartedAfterCapAt: now
+        },
+        updatedAt: now
+      };
+    }
   );
 }
 
@@ -9545,7 +9896,8 @@ app.post("/api/lead", async (req, res) => {
     estimateSummary,
     status,
     notes,
-    taxWatchUpdate
+    taxWatchUpdate,
+    submissionType
   } = req.body || {};
 
   const errors = [];
@@ -9562,6 +9914,70 @@ app.post("/api/lead", async (req, res) => {
 
   if (errors.length > 0) {
     return res.status(400).json({ ok: false, errors });
+  }
+
+  const normalizedSubmissionType = String(
+    submissionType || ""
+  ).trim().toLowerCase();
+  const isTaxWatchUpdate = Boolean(
+    taxWatchUpdate &&
+    typeof taxWatchUpdate === "object" &&
+    !Array.isArray(taxWatchUpdate)
+  );
+  const isFreeEstimateSubmission =
+    normalizedSubmissionType === "free-estimate" ||
+    (
+      !normalizedSubmissionType &&
+      !isTaxWatchUpdate &&
+      taxData &&
+      typeof taxData === "object" &&
+      !Array.isArray(taxData) &&
+      estimateSummary &&
+      typeof estimateSummary === "object" &&
+      !Array.isArray(estimateSummary) &&
+      !String(status || "").trim() &&
+      !String(notes || "").trim()
+    );
+  let freeEstimateUsageBefore = null;
+
+  if (isFreeEstimateSubmission) {
+    try {
+      freeEstimateUsageBefore =
+        await getFreeEstimateUsage(email);
+    } catch (error) {
+      console.error(
+        "[/api/lead] Free-estimate usage check failed:",
+        error?.message || error
+      );
+
+      return res.status(503).json({
+        ok: false,
+        errors: [
+          "The free-estimate usage check is temporarily unavailable. Please try again."
+        ]
+      });
+    }
+
+    if (freeEstimateUsageBefore.capReached) {
+      recordFreeEstimateCapReached(
+        email,
+        freeEstimateUsageBefore
+      ).catch((error) => {
+        console.warn(
+          "[free estimate usage] Cap analytics could not be recorded:",
+          error?.message || error
+        );
+      });
+
+      return res.status(429).json({
+        ok: false,
+        code: "FREE_ESTIMATE_LIMIT_REACHED",
+        errors: [
+          "You have used your 3 free estimates during the current rolling 30-day period."
+        ],
+        freeEstimateUsage: freeEstimateUsageBefore
+      });
+    }
   }
 
   const leadId =
@@ -9582,6 +9998,19 @@ app.post("/api/lead", async (req, res) => {
     },
     taxData: taxData || null,
     estimateSummary: estimateSummary || {},
+    submissionType: isFreeEstimateSubmission
+      ? "free-estimate"
+      : normalizedSubmissionType || null,
+    freeEstimateUsage: isFreeEstimateSubmission
+      ? {
+          version: 1,
+          submissionType: "free-estimate",
+          completedAt: new Date().toISOString(),
+          normalizedEmail: normalizeEmail(email),
+          limit: FREE_ESTIMATE_LIMIT,
+          windowDays: FREE_ESTIMATE_WINDOW_DAYS
+        }
+      : null,
     taxWatchUpdate:
       taxWatchUpdate &&
       typeof taxWatchUpdate === "object" &&
@@ -9590,7 +10019,7 @@ app.post("/api/lead", async (req, res) => {
             sourceLeadId: String(taxWatchUpdate.sourceLeadId || "").trim(),
             sourceCount: Math.max(
               0,
-              Math.min(2, Number(taxWatchUpdate.sourceCount || 0))
+              Math.min(5, Number(taxWatchUpdate.sourceCount || 0))
             ),
             updateReason: String(
               taxWatchUpdate.updateReason || "Tax Watch Pro estimate update"
@@ -9642,6 +10071,39 @@ app.post("/api/lead", async (req, res) => {
   }
 
   console.log("Lead saved successfully:", savedLead.leadId);
+
+  let freeEstimateUsage = null;
+
+  if (isFreeEstimateSubmission) {
+    try {
+      freeEstimateUsage =
+        await getFreeEstimateUsage(email);
+    } catch (error) {
+      console.warn(
+        "[free estimate usage] Post-save usage refresh failed:",
+        error?.message || error
+      );
+
+      const used = Math.min(
+        FREE_ESTIMATE_LIMIT,
+        Math.max(
+          0,
+          Number(freeEstimateUsageBefore?.used || 0) + 1
+        )
+      );
+
+      freeEstimateUsage = {
+        ...(freeEstimateUsageBefore || {}),
+        used,
+        remaining: Math.max(
+          0,
+          FREE_ESTIMATE_LIMIT - used
+        ),
+        capReached: false,
+        latestSavedLeadId: savedLead.leadId
+      };
+    }
+  }
 
   let emailSent = false;
   let emailError = "";
@@ -9773,6 +10235,7 @@ Greatest Business Solution LLC`,
     leadId: savedLead.leadId,
     emailSent,
     emailError: emailSent ? null : emailError,
+    freeEstimateUsage,
     message: emailSent
       ? "Your free estimate was saved and emailed as a PDF."
       : "Your estimate was saved, but the email could not be delivered."
@@ -14188,6 +14651,18 @@ app.post(
         error:
           updateResult.error ||
           "Tax Watch Pro could not be saved."
+      });
+    }
+
+    if (!currentSummary.active) {
+      recordFreeEstimatePreviewConversion(
+        session.email,
+        now
+      ).catch((error) => {
+        console.warn(
+          "[free estimate usage] Preview conversion analytics could not be recorded:",
+          error?.message || error
+        );
       });
     }
 

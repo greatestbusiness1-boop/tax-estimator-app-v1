@@ -5025,3 +5025,124 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
 .tax-watch-expense-field{margin:0}
 @media(max-width:900px){.tax-watch-expense-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.tax-watch-expense-grid{grid-template-columns:1fr}}
+
+
+/* V3.2.8 - rolling free-estimate usage guidance */
+.free-estimate-usage-notice {
+  margin: 0 0 18px;
+  padding: 15px 18px;
+  border: 1px solid #b8d4e8;
+  border-left: 5px solid #176a96;
+  border-radius: 12px;
+  background: #eef7fc;
+  color: #18354d;
+  display: grid;
+  gap: 5px;
+  line-height: 1.5;
+}
+
+.free-estimate-usage-notice strong {
+  color: #0f3b61;
+  font-size: 16px;
+}
+
+.free-estimate-usage-notice span {
+  color: #294b63;
+  font-weight: 600;
+}
+
+.free-estimate-usage-notice.limit-used {
+  border-color: #e2c47e;
+  border-left-color: #c58a0a;
+  background: #fff8e8;
+}
+
+.free-estimate-usage-notice a {
+  width: fit-content;
+  margin-top: 5px;
+  color: #0f3b61;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.free-estimate-limit-kicker {
+  color: #9a6200;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.free-estimate-limit-title {
+  margin: 8px 0 12px;
+  color: #0f2c56;
+  font-size: 27px;
+  line-height: 1.2;
+}
+
+.free-estimate-limit-copy {
+  margin: 0 0 15px;
+  color: #334155;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.free-estimate-limit-date,
+.free-estimate-limit-preview {
+  margin-top: 12px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.free-estimate-limit-date {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.free-estimate-limit-preview {
+  border-left: 4px solid #c58a0a;
+  background: #fff8e8;
+  color: #493813;
+}
+
+.free-estimate-limit-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.free-estimate-limit-primary,
+.free-estimate-limit-secondary {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+}
+
+.free-estimate-limit-primary {
+  border: 2px solid #0f2c56;
+  background: #0f2c56;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.free-estimate-limit-secondary {
+  border: 2px solid #0f2c56;
+  background: #ffffff;
+  color: #0f2c56;
+  text-decoration: none;
+}
+
+.free-estimate-limit-primary:hover,
+.free-estimate-limit-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 44, 86, 0.16);
+}

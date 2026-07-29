@@ -147,6 +147,9 @@ function restoreEstimatorReturnContext() {
   _leadGatewayUnlocked = true;
 
   renderResults(_lastEstimate, _lastTaxInput);
+  renderFreeEstimateUsageNotice(
+    _leadGatewayContact?.freeEstimateUsage || null
+  );
   goToScreen("results");
 
   window.setTimeout(() => {
@@ -1754,6 +1757,128 @@ function buildSavedEstimateSummary(result, input) {
   };
 }
 
+function formatFreeEstimateLimitDate(value) {
+  const parsed = new Date(value || "");
+  if (!Number.isFinite(parsed.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(parsed);
+}
+
+function renderFreeEstimateLimitReached(usage = {}) {
+  const overlay = document.getElementById("leadGatewayOverlay");
+  const card = overlay?.firstElementChild;
+  if (!card) return;
+
+  const nextAvailable = formatFreeEstimateLimitDate(
+    usage.nextAvailableAt
+  );
+  const latestLeadId = String(
+    usage.latestSavedLeadId || ""
+  ).trim();
+  const latestLink = latestLeadId
+    ? `/estimate/${encodeURIComponent(latestLeadId)}`
+    : "";
+
+  card.innerHTML = `
+    <div class="free-estimate-limit-kicker">Free Estimate Limit Reached</div>
+    <h2 class="free-estimate-limit-title">
+      You have used your 3 free estimates during the current 30-day period.
+    </h2>
+    <p class="free-estimate-limit-copy">
+      Your saved results remain available. If your numbers keep changing,
+      Tax Money Tracker can update your estimate throughout the year,
+      explain what changed and why, and track the money you reported saving.
+    </p>
+    ${nextAvailable ? `
+      <div class="free-estimate-limit-date">
+        Your next free estimate becomes available after
+        <strong>${escHtml(nextAvailable)}</strong>.
+      </div>
+    ` : ""}
+    <div class="free-estimate-limit-preview">
+      <strong>14-day Tax Watch Pro preview.</strong>
+      No automatic charge. Choose a plan only when you are ready.
+    </div>
+    <div class="free-estimate-limit-actions">
+      <a class="free-estimate-limit-primary" href="/client-portal">
+        Open Secure Client Portal
+      </a>
+      ${latestLink ? `
+        <a class="free-estimate-limit-secondary" href="${escHtml(latestLink)}" target="_blank" rel="noopener noreferrer">
+          Open My Latest Saved Estimate
+        </a>
+      ` : ""}
+      <button type="button" class="free-estimate-limit-secondary" id="closeFreeEstimateLimit">
+        Return to My Entries
+      </button>
+    </div>
+  `;
+
+  document.getElementById("closeFreeEstimateLimit")
+    ?.addEventListener("click", () => overlay.remove());
+}
+
+function renderFreeEstimateUsageNotice(usage = {}) {
+  const existing = document.getElementById(
+    "freeEstimateUsageNotice"
+  );
+
+  if (existing) existing.remove();
+
+  if (
+    !usage ||
+    usage.exempt ||
+    !Number.isFinite(Number(usage.limit)) ||
+    !Number.isFinite(Number(usage.remaining))
+  ) {
+    return;
+  }
+
+  const limit = Math.max(1, Number(usage.limit));
+  const remaining = Math.max(
+    0,
+    Number(usage.remaining)
+  );
+  const used = Math.max(0, Number(usage.used || 0));
+  const results = document.getElementById("screen-results");
+  const disclaimer = results?.querySelector(".disclaimer-banner");
+
+  if (!results || !disclaimer) return;
+
+  const notice = document.createElement("div");
+  notice.id = "freeEstimateUsageNotice";
+  notice.className =
+    "free-estimate-usage-notice" +
+    (remaining === 0 ? " limit-used" : "");
+
+  notice.innerHTML = remaining > 0
+    ? `
+      <strong>${remaining} of ${limit} free estimates remaining</strong>
+      <span>
+        Completed estimates are counted by email during a rolling 30-day period.
+        Opening, printing, or refreshing a saved estimate does not use another estimate.
+      </span>
+    `
+    : `
+      <strong>This was free estimate ${used} of ${limit} for the current 30-day period.</strong>
+      <span>
+        Your saved results remain available. Use Tax Money Tracker for ongoing changes,
+        estimate comparisons, and year-round savings accountability.
+      </span>
+      <a href="/client-portal">Explore the 14-day preview — no automatic charge</a>
+    `;
+
+  disclaimer.insertAdjacentElement("afterend", notice);
+}
+
 async function submitLeadGateway(input, result) {
   const fullName = (document.getElementById("gatewayFullName")?.value || "").trim();
   const email = (document.getElementById("gatewayEmail")?.value || "").trim();
@@ -1798,6 +1923,9 @@ async function submitLeadGateway(input, result) {
           : "low",
         taxData: input || null,
         estimateSummary: estimateSummary || null,
+        submissionType: _taxWatchUpdateContext
+          ? "tax-watch-update"
+          : "free-estimate",
         taxWatchUpdate: _taxWatchUpdateContext
           ? {
               sourceLeadId: _taxWatchUpdateContext.sourceLeadId || "",
@@ -1818,6 +1946,13 @@ async function submitLeadGateway(input, result) {
     }
 
     if (!response.ok || !data.ok) {
+      if (data.code === "FREE_ESTIMATE_LIMIT_REACHED") {
+        renderFreeEstimateLimitReached(
+          data.freeEstimateUsage || {}
+        );
+        return;
+      }
+
       const serverErrors = Array.isArray(data.errors) && data.errors.length > 0
         ? data.errors
         : ["Could not unlock your estimate. Please try again."];
@@ -1829,6 +1964,7 @@ async function submitLeadGateway(input, result) {
       fullName,
       email,
       leadId: data.leadId || null,
+      freeEstimateUsage: data.freeEstimateUsage || null,
     };
 
     const overlay = document.getElementById("leadGatewayOverlay");
@@ -1840,6 +1976,9 @@ async function submitLeadGateway(input, result) {
     if (leadNameInput) leadNameInput.value = fullName;
     if (leadEmailInput) leadEmailInput.value = email;
     renderResults(result, input);
+    renderFreeEstimateUsageNotice(
+      data.freeEstimateUsage || null
+    );
     goToScreen("results");
 
     if (_taxWatchUpdateContext) {
@@ -1946,6 +2085,7 @@ async function handleLeadSubmit(event) {
           : "low",
         status: "Follow-up Needed",
         notes: followUpNote,
+        submissionType: "tax-preparation-fit-call",
         taxData: _lastTaxInput || null,
         estimateSummary: estimateSummary || null,
       }),
