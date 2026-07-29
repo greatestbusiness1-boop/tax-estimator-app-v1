@@ -2097,20 +2097,27 @@
     .preview-pill-button:hover{background:#edbd5e}
     .preview-pill-button:focus-visible{outline:3px solid rgba(255,255,255,.55);outline-offset:2px}
 
-    .dashboard-preview-countdown{margin-top:14px;padding:16px 18px;border:1px solid #d8c89e;border-radius:15px;background:#fffdf8;box-shadow:0 7px 18px rgba(16,43,70,.06);display:grid;grid-template-columns:auto minmax(180px,1fr) auto auto;gap:18px;align-items:center}
+    .dashboard-preview-countdown{margin-top:14px;padding:16px 18px;border:1px solid #d8c89e;border-radius:15px;background:#fffdf8;box-shadow:0 7px 18px rgba(16,43,70,.06);display:grid;grid-template-columns:auto minmax(180px,1fr) minmax(390px,auto) auto;gap:18px;align-items:center}
     .dashboard-preview-ring{position:relative;width:70px;height:70px;flex:0 0 70px}
     .dashboard-preview-ring .preview-ring-track{stroke:#eee6d3;stroke-width:6}
     .dashboard-preview-ring .preview-ring-fill{stroke-width:6}
     .dashboard-preview-days{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0f2a47;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
     .dashboard-preview-copy strong{display:block;color:#102b46;font-size:18px}
     .dashboard-preview-copy span{display:block;margin-top:4px;color:#5a6b7a;font-size:13px;font-weight:700}
+    .dashboard-preview-checkout{display:flex;flex-direction:column;gap:7px;min-width:0}
+    .dashboard-preview-checkout-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .dashboard-preview-checkout-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border:2px solid #0f355d;border-radius:9px;background:#0f355d;color:#fff;box-shadow:0 5px 12px rgba(15,53,93,.2);font:inherit;font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+    .dashboard-preview-checkout-actions button::after{content:'\2192';margin-left:7px;font-size:15px;line-height:1}
+    .dashboard-preview-checkout-actions button.secondary{background:#f2ca67;border-color:#b47d10;color:#102f52;box-shadow:0 5px 12px rgba(180,125,16,.18)}
+    .dashboard-preview-checkout-actions button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 16px rgba(15,53,93,.26)}
+    .dashboard-preview-checkout-actions button.secondary:hover:not(:disabled){background:#f6d57f;box-shadow:0 8px 16px rgba(180,125,16,.25)}
+    .dashboard-preview-checkout-actions button:focus-visible{outline:4px solid rgba(39,113,158,.28);outline-offset:3px}
+    .dashboard-preview-checkout-actions button:disabled{background:#e6eaee;border-color:#c6cdd4;color:#7b8792;box-shadow:none;cursor:not-allowed;transform:none}
+    .dashboard-preview-checkout-actions button:disabled::after{content:'';margin-left:0}
     .dashboard-preview-clock{display:flex;align-items:center;gap:5px}
     .dashboard-preview-clock .preview-clock-box{width:42px;padding:7px 0;border-radius:6px;background:#0a1d33;color:#f8f4ea;text-align:center;font-size:14px;font-weight:900;font-variant-numeric:tabular-nums}
     .dashboard-preview-clock .preview-clock-separator{color:#9b8d69;font-weight:900}
-    .dashboard-preview-actions{text-align:center}
-    .dashboard-preview-actions button{border:0;border-radius:9px;background:#102b46;color:#fff;padding:10px 14px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
-    .dashboard-preview-actions button:hover{background:#194d77}
-    .dashboard-preview-note{display:block;margin-top:7px;color:#6f7881;font-size:10.5px;font-weight:700}
+    .dashboard-preview-note{display:block;color:#6f7881;font-size:10.5px;font-weight:700}
     .dashboard-preview-countdown.preview-ending{border-color:#d9a441;background:#fff9eb}
     .dashboard-preview-countdown.preview-ended{border-color:#d9634a;background:#fff4f1}
     .tax-watch-inline-preview-card{width:236px;flex:0 0 236px;padding:16px 16px 14px;border:1px solid #e6ddc8;border-radius:14px;background:#fff;box-shadow:0 8px 22px rgba(15,42,71,.08);font-family:Arial,Helvetica,sans-serif}
@@ -2134,10 +2141,15 @@
     .tax-watch-inline-preview-card.preview-ending{border-color:#d9a441;background:#fff9eb}
     .tax-watch-inline-preview-card.preview-ended{border-color:#d9634a;background:#fff4f1}
 
+    @media(max-width:1180px){
+      .dashboard-preview-countdown{grid-template-columns:auto minmax(180px,1fr) auto}
+      .dashboard-preview-checkout{grid-column:1/-1;align-items:center}
+      .dashboard-preview-checkout-actions{justify-content:center}
+      .dashboard-preview-note{text-align:center}
+    }
     @media(max-width:980px){
       .preview-topbar-pill{order:2;max-width:100%}
       .dashboard-preview-countdown{grid-template-columns:auto 1fr auto}
-      .dashboard-preview-actions{grid-column:1/-1}
     }
     @media(max-width:760px){
       .tax-watch-preview-top{display:block}.tax-watch-preview-copy{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-inline-preview-card{width:100%;margin-top:14px}.tax-watch-preview-actions{margin-top:16px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}
@@ -2146,7 +2158,9 @@
       .dashboard-preview-countdown{grid-template-columns:1fr;text-align:center}
       .dashboard-preview-ring{margin:0 auto}
       .dashboard-preview-clock{justify-content:center}
-      .dashboard-preview-actions{grid-column:auto}
+      .dashboard-preview-checkout{grid-column:auto;width:100%}
+      .dashboard-preview-checkout-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
+      .dashboard-preview-checkout-actions button{width:100%}
     }
   </style>
 </head>
@@ -2281,16 +2295,19 @@
           <strong id="taxWatchDashboardPreviewHeading">Tax Watch Pro preview running</strong>
           <span id="taxWatchDashboardPreviewStatus">Plenty of time left</span>
         </div>
+        <div class="dashboard-preview-checkout">
+          <div class="dashboard-preview-checkout-actions" aria-label="Choose Tax Watch Pro billing">
+            <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
+            <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
+          </div>
+          <span class="dashboard-preview-note" id="taxWatchDashboardPreviewNote"><strong>No automatic charge.</strong> Choose a plan only when you are ready.</span>
+        </div>
         <div class="dashboard-preview-clock" aria-label="Preview time remaining">
           <span class="preview-clock-box" id="taxWatchDashboardPreviewHours">00</span>
           <span class="preview-clock-separator">:</span>
           <span class="preview-clock-box" id="taxWatchDashboardPreviewMinutes">00</span>
           <span class="preview-clock-separator">:</span>
           <span class="preview-clock-box" id="taxWatchDashboardPreviewSeconds">00</span>
-        </div>
-        <div class="dashboard-preview-actions">
-          <button type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
-          <span class="dashboard-preview-note" id="taxWatchDashboardPreviewNote">No card is charged automatically</span>
         </div>
       </div>
       <div class="cx-dashboard-membership" id="dashboardMembershipSummary" hidden>
@@ -5380,7 +5397,7 @@
             : "Plenty of time left";
       if (dashboardNote) dashboardNote.textContent = expired
         ? "Preview ended — no payment was taken"
-        : "No card is charged automatically";
+        : "No automatic charge. Choose a plan only when you are ready.";
       if (dashboardCard) {
         dashboardCard.classList.toggle("preview-ending", !expired && days <= 4);
         dashboardCard.classList.toggle("preview-ended", expired);
