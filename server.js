@@ -5169,6 +5169,767 @@ async function recordFreeEstimatePreviewConversion(
   );
 }
 
+
+function getTaxWatchPreviewReminderThresholdByKey(key) {
+  return TAX_WATCH_PREVIEW_REMINDER_THRESHOLDS.find(
+    (item) => item.key === key
+  ) || null;
+}
+
+function taxWatchPreviewEmailRetryIsDue(
+  lastAttemptAt,
+  nowMs
+) {
+  const parsed = Date.parse(
+    String(lastAttemptAt || "")
+  );
+
+  return (
+    !Number.isFinite(parsed) ||
+    nowMs - parsed >=
+      TAX_WATCH_PREVIEW_EMAIL_RETRY_MILLISECONDS
+  );
+}
+
+function getTaxWatchPreviewEmailCopy(
+  stageKey,
+  previewWindow = {},
+  clientName = "Client"
+) {
+  const portalUrl =
+    `${String(APP_BASE_URL || "").replace(/\/$/, "")}` +
+    "/client-portal/home#tax-watch";
+  const plansUrl =
+    `${String(APP_BASE_URL || "").replace(/\/$/, "")}` +
+    "/client-portal/home#tax-watch";
+  const endsAtText = previewWindow.endsAt
+    ? new Date(previewWindow.endsAt).toLocaleString(
+        "en-US",
+        {
+          dateStyle: "long",
+          timeStyle: "short"
+        }
+      )
+    : "the scheduled preview end time";
+  const safeName = String(clientName || "Client").trim() || "Client";
+
+  const common = {
+    portalUrl,
+    plansUrl,
+    clientName: safeName,
+    endsAtText
+  };
+
+  if (stageKey === "seven-day") {
+    return {
+      ...common,
+      subject: "7 Days Left in Your Tax Watch Pro Preview",
+      headline: "You are halfway through your Tax Watch Pro preview.",
+      message:
+        `Your preview is scheduled to end ${endsAtText}. ` +
+        "Keep testing Tax Money Tracker with your real income, expense, withholding, and savings changes. No automatic charge will occur."
+    };
+  }
+
+  if (stageKey === "three-day") {
+    return {
+      ...common,
+      subject: "3 Days Left in Your Tax Watch Pro Preview",
+      headline: "Your Tax Watch Pro preview is ending soon.",
+      message:
+        `Your preview is scheduled to end ${endsAtText}. ` +
+        "Your records remain saved. Choose Monthly or Annual only if you want to continue adding new updates after the preview ends. No automatic charge will occur."
+    };
+  }
+
+  if (stageKey === "one-day") {
+    return {
+      ...common,
+      subject: "Your Tax Watch Pro Preview Ends Within 24 Hours",
+      headline: "Your Tax Watch Pro preview ends within 24 hours.",
+      message:
+        `Your preview is scheduled to end ${endsAtText}. ` +
+        "No payment will be taken automatically. Your saved records will remain available if you do not choose a plan."
+    };
+  }
+
+  return {
+    ...common,
+    subject: "Your Tax Watch Pro Preview Has Ended",
+    headline: "Your Tax Watch Pro preview has ended.",
+    message:
+      "No payment was taken. Your saved estimates, organized expenses, savings entries, and notes remain connected to your secure portal. Choose a plan only when you are ready to resume new Tax Money Tracker updates."
+  };
+}
+
+async function sendTaxWatchPreviewLifecycleEmail({
+  record = {},
+  stageKey,
+  previewWindow = {}
+}) {
+  const to = normalizeEmail(
+    getLeadEmailValue(record)
+  );
+  const clientName =
+    getLeadNameValue(record) || "Client";
+
+  if (!to) {
+    return {
+      ok: false,
+      skipped: true,
+      error: "No client email was available."
+    };
+  }
+
+  if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+    return {
+      ok: false,
+      skipped: true,
+      error:
+        "Portal email delivery is not configured on this server."
+    };
+  }
+
+  const copy = getTaxWatchPreviewEmailCopy(
+    stageKey,
+    previewWindow,
+    clientName
+  );
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to,
+      subject: copy.subject,
+      text:
+        `Hello ${copy.clientName},\n\n` +
+        `${copy.headline}\n\n` +
+        `${copy.message}\n\n` +
+        `Open your secure portal: ${copy.portalUrl}\n\n` +
+        "Greatest Business Solution LLC",
+      html:
+        `<p>Hello ${taxWatchOrganizerEscapeHtml(copy.clientName)},</p>` +
+        `<h2>${taxWatchOrganizerEscapeHtml(copy.headline)}</h2>` +
+        `<p>${taxWatchOrganizerEscapeHtml(copy.message)}</p>` +
+        `<p><a href="${taxWatchOrganizerEscapeHtml(copy.portalUrl)}" style="display:inline-block;padding:12px 18px;background:#123a63;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Open Tax Money Tracker</a></p>` +
+        "<p><strong>No automatic charge.</strong> Choose a plan only when you are ready.</p>" +
+        "<p>Greatest Business Solution LLC</p>"
+    });
+
+    return { ok: true, to };
+  } catch (error) {
+    return {
+      ok: false,
+      skipped: false,
+      error:
+        error?.message ||
+        "The preview reminder email could not be sent."
+    };
+  }
+}
+
+async function updateTaxWatchPreviewProfile(
+  leadId,
+  applyProfileUpdate
+) {
+  return updateLeadAfterStripePayment(
+    leadId,
+    (record = {}) => {
+      const existing =
+        record.taxWatchProfile &&
+        typeof record.taxWatchProfile === "object" &&
+        !Array.isArray(record.taxWatchProfile)
+          ? record.taxWatchProfile
+          : {};
+      const nextProfile = applyProfileUpdate(
+        existing,
+        record
+      );
+
+      if (!nextProfile) {
+        return record;
+      }
+
+      const now = new Date().toISOString();
+
+      return {
+        ...record,
+        taxWatchProfile: nextProfile,
+        updatedAt: now
+      };
+    }
+  );
+}
+
+async function reconcileTaxWatchPreviewLifecycleEntry(
+  entry = {},
+  options = {}
+) {
+  const leadId = String(entry.leadId || "").trim();
+  const record = entry.lead || entry.raw || {};
+  const profile =
+    record.taxWatchProfile &&
+    typeof record.taxWatchProfile === "object" &&
+    !Array.isArray(record.taxWatchProfile)
+      ? record.taxWatchProfile
+      : null;
+
+  if (!leadId || !profile) {
+    return { changed: false, skipped: true };
+  }
+
+  const status = String(profile.status || "")
+    .trim()
+    .toLowerCase();
+
+  if (!status.startsWith("preview")) {
+    return { changed: false, skipped: true };
+  }
+
+  if (taxWatchPreviewLifecycleLeadLocks.has(leadId)) {
+    return { changed: false, skipped: true, locked: true };
+  }
+
+  taxWatchPreviewLifecycleLeadLocks.add(leadId);
+
+  try {
+    const nowMs = Number.isFinite(options.nowMs)
+      ? options.nowMs
+      : Date.now();
+    const now = new Date(nowMs).toISOString();
+    const previewWindow = getTaxWatchPreviewWindow(
+      profile,
+      nowMs
+    );
+    let lifecycle = getTaxWatchPreviewLifecycle(profile);
+    let changed = false;
+
+    if (!lifecycle.statusHistory.length) {
+      const initialHistoryUpdate =
+        await updateTaxWatchPreviewProfile(
+          leadId,
+          (currentProfile = {}) => {
+            const currentLifecycle =
+              getTaxWatchPreviewLifecycle(
+                currentProfile
+              );
+
+            if (currentLifecycle.statusHistory.length) {
+              return currentProfile;
+            }
+
+            const startedAt =
+              previewWindow.startedAt || now;
+
+            return {
+              ...currentProfile,
+              version: Math.max(
+                2,
+                Number(currentProfile.version || 1)
+              ),
+              previewLifecycle: {
+                ...currentLifecycle,
+                version: 1,
+                lastCheckedAt: now,
+                statusHistory:
+                  appendTaxWatchPreviewStatusHistory(
+                    currentLifecycle,
+                    {
+                      status: "Preview Active",
+                      action:
+                        "The one-time 14-day Tax Watch Pro preview started; no automatic charge",
+                      at: startedAt,
+                      source: "Preview Lifecycle"
+                    }
+                  )
+              },
+              updatedAt: now
+            };
+          }
+        );
+
+      changed = changed || initialHistoryUpdate.ok;
+      if (initialHistoryUpdate.ok) {
+        lifecycle = getTaxWatchPreviewLifecycle(
+          initialHistoryUpdate.lead?.taxWatchProfile ||
+          profile
+        );
+      }
+    }
+
+    if (!previewWindow.endsAt) {
+      return { changed: false, skipped: true };
+    }
+
+    const presentation =
+      getTaxWatchPreviewReminderPresentation(
+        previewWindow.remainingMs,
+        previewWindow.expired
+      );
+
+    if (previewWindow.expired) {
+      if (
+        !lifecycle.expiredAt ||
+        status !== "preview-expired"
+      ) {
+        const updateResult =
+          await updateTaxWatchPreviewProfile(
+            leadId,
+            (currentProfile = {}) => {
+              const currentLifecycle =
+                getTaxWatchPreviewLifecycle(
+                  currentProfile
+                );
+              const expiredAt =
+                currentLifecycle.expiredAt ||
+                previewWindow.endsAt ||
+                now;
+
+              return {
+                ...currentProfile,
+                version: Math.max(
+                  2,
+                  Number(currentProfile.version || 1)
+                ),
+                status: "preview-expired",
+                previewLifecycle: {
+                  ...currentLifecycle,
+                  version: 1,
+                  expiredAt,
+                  lastCheckedAt: now,
+                  statusHistory:
+                    appendTaxWatchPreviewStatusHistory(
+                      currentLifecycle,
+                      {
+                        status: "Preview Expired",
+                        action:
+                          "The 14-day Tax Watch Pro preview ended; no payment was taken",
+                        at: expiredAt,
+                        source:
+                          options.source ||
+                          "Preview Lifecycle"
+                      }
+                    )
+                },
+                updatedAt: now
+              };
+            }
+          );
+
+        changed = changed || updateResult.ok;
+        if (updateResult.ok) {
+          lifecycle = getTaxWatchPreviewLifecycle(
+            updateResult.lead?.taxWatchProfile ||
+            profile
+          );
+        }
+      }
+
+      const expirationRetryDue =
+        !lifecycle.expirationEmailSentAt &&
+        taxWatchPreviewEmailRetryIsDue(
+          lifecycle.expirationEmailLastAttemptAt,
+          nowMs
+        );
+
+      if (
+        options.sendEmail !== false &&
+        expirationRetryDue
+      ) {
+        const emailResult =
+          await sendTaxWatchPreviewLifecycleEmail({
+            record,
+            stageKey: "expired",
+            previewWindow
+          });
+
+        const emailUpdate =
+          await updateTaxWatchPreviewProfile(
+            leadId,
+            (currentProfile = {}) => {
+              const currentLifecycle =
+                getTaxWatchPreviewLifecycle(
+                  currentProfile
+                );
+
+              return {
+                ...currentProfile,
+                status: "preview-expired",
+                previewLifecycle: {
+                  ...currentLifecycle,
+                  expirationEmailLastAttemptAt: now,
+                  expirationEmailSentAt:
+                    emailResult.ok
+                      ? now
+                      : currentLifecycle.expirationEmailSentAt,
+                  expirationEmailError:
+                    emailResult.ok
+                      ? ""
+                      : String(emailResult.error || ""),
+                  lastCheckedAt: now
+                },
+                updatedAt: now
+              };
+            }
+          );
+
+        changed = changed || emailUpdate.ok;
+      }
+
+      return {
+        changed,
+        expired: true,
+        presentation
+      };
+    }
+
+    const presentationStage =
+      getTaxWatchPreviewReminderThresholdByKey(
+        presentation.key
+      );
+    const dueStage =
+      presentationStage &&
+      !lifecycle[
+        presentationStage.triggeredField
+      ]
+        ? presentationStage
+        : null;
+
+    if (dueStage) {
+      const triggerUpdate =
+        await updateTaxWatchPreviewProfile(
+          leadId,
+          (currentProfile = {}) => {
+            const currentLifecycle =
+              getTaxWatchPreviewLifecycle(
+                currentProfile
+              );
+
+            if (
+              currentLifecycle[
+                dueStage.triggeredField
+              ]
+            ) {
+              return currentProfile;
+            }
+
+            return {
+              ...currentProfile,
+              version: Math.max(
+                2,
+                Number(currentProfile.version || 1)
+              ),
+              previewLifecycle: {
+                ...currentLifecycle,
+                [dueStage.triggeredField]: now,
+                lastCheckedAt: now,
+                statusHistory:
+                  appendTaxWatchPreviewStatusHistory(
+                    currentLifecycle,
+                    {
+                      status: dueStage.status,
+                      action: dueStage.action,
+                      at: now,
+                      source:
+                        options.source ||
+                        "Preview Lifecycle"
+                    }
+                  )
+              },
+              updatedAt: now
+            };
+          }
+        );
+
+      changed = changed || triggerUpdate.ok;
+      if (triggerUpdate.ok) {
+        lifecycle = getTaxWatchPreviewLifecycle(
+          triggerUpdate.lead?.taxWatchProfile ||
+          profile
+        );
+      }
+    }
+
+    const activeStage =
+      getTaxWatchPreviewReminderThresholdByKey(
+        presentation.key
+      );
+
+    if (
+      activeStage &&
+      options.sendEmail !== false &&
+      !lifecycle[activeStage.emailSentField] &&
+      taxWatchPreviewEmailRetryIsDue(
+        lifecycle[activeStage.emailAttemptField],
+        nowMs
+      )
+    ) {
+      const emailResult =
+        await sendTaxWatchPreviewLifecycleEmail({
+          record,
+          stageKey: activeStage.key,
+          previewWindow
+        });
+
+      const emailUpdate =
+        await updateTaxWatchPreviewProfile(
+          leadId,
+          (currentProfile = {}) => {
+            const currentLifecycle =
+              getTaxWatchPreviewLifecycle(
+                currentProfile
+              );
+
+            return {
+              ...currentProfile,
+              previewLifecycle: {
+                ...currentLifecycle,
+                [activeStage.emailAttemptField]: now,
+                [activeStage.emailSentField]:
+                  emailResult.ok
+                    ? now
+                    : currentLifecycle[
+                        activeStage.emailSentField
+                      ],
+                [activeStage.emailErrorField]:
+                  emailResult.ok
+                    ? ""
+                    : String(emailResult.error || ""),
+                lastCheckedAt: now
+              },
+              updatedAt: now
+            };
+          }
+        );
+
+      changed = changed || emailUpdate.ok;
+    }
+
+    return {
+      changed,
+      expired: false,
+      reminderStage: presentation.key,
+      presentation
+    };
+  } finally {
+    taxWatchPreviewLifecycleLeadLocks.delete(leadId);
+  }
+}
+
+async function reconcileTaxWatchPreviewLifecycleForAccessible(
+  accessible = [],
+  options = {}
+) {
+  const membership =
+    getClientPortalMembershipSummary(accessible);
+  const membershipActive =
+    membership.enrollmentStatus ===
+      "Active Membership" &&
+    membership.paymentStatus ===
+      "Paid / Confirmed";
+
+  if (membershipActive) {
+    return { changed: false, membershipActive: true };
+  }
+
+  let changed = false;
+
+  for (const entry of accessible) {
+    const profile = entry?.lead?.taxWatchProfile;
+    const status = String(profile?.status || "")
+      .trim()
+      .toLowerCase();
+
+    if (!status.startsWith("preview")) {
+      continue;
+    }
+
+    const result =
+      await reconcileTaxWatchPreviewLifecycleEntry(
+        entry,
+        options
+      );
+    changed = changed || result.changed === true;
+  }
+
+  return { changed, membershipActive: false };
+}
+
+async function reconcileTaxWatchPreviewLifecycleForEmail(
+  email,
+  options = {}
+) {
+  let accessible =
+    await getClientPortalAccessibleLeads(email);
+  const result =
+    await reconcileTaxWatchPreviewLifecycleForAccessible(
+      accessible,
+      options
+    );
+
+  if (result.changed) {
+    accessible =
+      await getClientPortalAccessibleLeads(email);
+  }
+
+  return {
+    ...result,
+    accessible
+  };
+}
+
+async function runTaxWatchPreviewLifecycleSweep() {
+  if (taxWatchPreviewSweepInFlight) {
+    return { ok: true, skipped: true };
+  }
+
+  taxWatchPreviewSweepInFlight = true;
+
+  try {
+    const candidates =
+      await loadClientPortalLeadCandidates();
+    const grouped = new Map();
+
+    candidates.forEach((entry) => {
+      const email = normalizeEmail(
+        getLeadEmailValue(
+          entry.lead || entry.raw || {}
+        )
+      );
+
+      if (!email) return;
+      if (!grouped.has(email)) {
+        grouped.set(email, []);
+      }
+      grouped.get(email).push(entry);
+    });
+
+    let changedGroups = 0;
+
+    for (const accessible of grouped.values()) {
+      const hasPreview = accessible.some((entry) =>
+        String(
+          entry?.lead?.taxWatchProfile?.status ||
+          ""
+        )
+          .trim()
+          .toLowerCase()
+          .startsWith("preview")
+      );
+
+      if (!hasPreview) continue;
+
+      const result =
+        await reconcileTaxWatchPreviewLifecycleForAccessible(
+          accessible,
+          {
+            sendEmail: true,
+            source: "Hourly Preview Sweep"
+          }
+        );
+
+      if (result.changed) {
+        changedGroups++;
+      }
+    }
+
+    return {
+      ok: true,
+      groupsChecked: grouped.size,
+      changedGroups
+    };
+  } catch (error) {
+    console.error(
+      "[tax-watch-preview-lifecycle] Sweep failed:",
+      error?.message || error
+    );
+
+    return {
+      ok: false,
+      error:
+        error?.message ||
+        "Tax Watch preview lifecycle sweep failed."
+    };
+  } finally {
+    taxWatchPreviewSweepInFlight = false;
+  }
+}
+
+async function markTaxWatchProfilesMembershipActive(
+  email,
+  details = {}
+) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return { ok: false, skipped: true };
+  }
+
+  const accessible =
+    await getClientPortalAccessibleLeads(
+      normalizedEmail
+    );
+  const now = String(
+    details.activatedAt ||
+    new Date().toISOString()
+  );
+  let changed = false;
+
+  for (const entry of accessible) {
+    const profile = entry?.lead?.taxWatchProfile;
+    const status = String(profile?.status || "")
+      .trim()
+      .toLowerCase();
+
+    if (!profile || !status.startsWith("preview")) {
+      continue;
+    }
+
+    const result =
+      await updateTaxWatchPreviewProfile(
+        entry.leadId,
+        (currentProfile = {}) => {
+          const lifecycle =
+            getTaxWatchPreviewLifecycle(
+              currentProfile
+            );
+
+          return {
+            ...currentProfile,
+            version: Math.max(
+              2,
+              Number(currentProfile.version || 1)
+            ),
+            status: "active-membership",
+            membershipActivatedAt: now,
+            previewLifecycle: {
+              ...lifecycle,
+              membershipActivatedAt: now,
+              lastCheckedAt: now,
+              statusHistory:
+                appendTaxWatchPreviewStatusHistory(
+                  lifecycle,
+                  {
+                    status: "Active Membership",
+                    action:
+                      "Stripe payment was confirmed and the Tax Watch Pro membership became active",
+                    at: now,
+                    source:
+                      details.source ||
+                      "Stripe Subscription"
+                  }
+                )
+            },
+            updatedAt: now
+          };
+        }
+      );
+
+    changed = changed || result.ok;
+  }
+
+  return { ok: true, changed };
+}
+
 function getClientPortalServiceLabel(lead = {}) {
   if (lead.contractor1099Request) {
     return "Contractor Forms 1099";
@@ -7126,8 +7887,205 @@ function getTaxWatchChangeDetails(previous, current) {
 const TAX_WATCH_PREVIEW_DAYS = 14;
 const TAX_WATCH_PREVIEW_MILLISECONDS =
   TAX_WATCH_PREVIEW_DAYS * 24 * 60 * 60 * 1000;
+const TAX_WATCH_PREVIEW_REMINDER_THRESHOLDS = Object.freeze([
+  {
+    key: "seven-day",
+    days: 7,
+    triggeredField: "reminder7TriggeredAt",
+    emailSentField: "reminder7EmailSentAt",
+    emailAttemptField: "reminder7EmailLastAttemptAt",
+    emailErrorField: "reminder7EmailError",
+    status: "7-Day Preview Reminder",
+    action: "Seven-day Tax Watch Pro preview reminder became due"
+  },
+  {
+    key: "three-day",
+    days: 3,
+    triggeredField: "reminder3TriggeredAt",
+    emailSentField: "reminder3EmailSentAt",
+    emailAttemptField: "reminder3EmailLastAttemptAt",
+    emailErrorField: "reminder3EmailError",
+    status: "3-Day Preview Reminder",
+    action: "Three-day Tax Watch Pro preview reminder became due"
+  },
+  {
+    key: "one-day",
+    days: 1,
+    triggeredField: "reminder1TriggeredAt",
+    emailSentField: "reminder1EmailSentAt",
+    emailAttemptField: "reminder1EmailLastAttemptAt",
+    emailErrorField: "reminder1EmailError",
+    status: "1-Day Preview Reminder",
+    action: "One-day Tax Watch Pro preview reminder became due"
+  }
+]);
+const TAX_WATCH_PREVIEW_EMAIL_RETRY_MILLISECONDS =
+  6 * 60 * 60 * 1000;
+const TAX_WATCH_PREVIEW_SWEEP_INTERVAL_MILLISECONDS =
+  60 * 60 * 1000;
+const taxWatchPreviewLifecycleLeadLocks = new Set();
+let taxWatchPreviewSweepInFlight = false;
 
-function getTaxWatchPreviewWindow(profile = {}) {
+function getTaxWatchPreviewLifecycle(profile = {}) {
+  const current =
+    profile.previewLifecycle &&
+    typeof profile.previewLifecycle === "object" &&
+    !Array.isArray(profile.previewLifecycle)
+      ? profile.previewLifecycle
+      : {};
+
+  return {
+    version: Math.max(1, Number(current.version || 1)),
+    reminder7TriggeredAt: String(
+      current.reminder7TriggeredAt || ""
+    ),
+    reminder7EmailSentAt: String(
+      current.reminder7EmailSentAt || ""
+    ),
+    reminder7EmailLastAttemptAt: String(
+      current.reminder7EmailLastAttemptAt || ""
+    ),
+    reminder7EmailError: String(
+      current.reminder7EmailError || ""
+    ),
+    reminder3TriggeredAt: String(
+      current.reminder3TriggeredAt || ""
+    ),
+    reminder3EmailSentAt: String(
+      current.reminder3EmailSentAt || ""
+    ),
+    reminder3EmailLastAttemptAt: String(
+      current.reminder3EmailLastAttemptAt || ""
+    ),
+    reminder3EmailError: String(
+      current.reminder3EmailError || ""
+    ),
+    reminder1TriggeredAt: String(
+      current.reminder1TriggeredAt || ""
+    ),
+    reminder1EmailSentAt: String(
+      current.reminder1EmailSentAt || ""
+    ),
+    reminder1EmailLastAttemptAt: String(
+      current.reminder1EmailLastAttemptAt || ""
+    ),
+    reminder1EmailError: String(
+      current.reminder1EmailError || ""
+    ),
+    expiredAt: String(current.expiredAt || ""),
+    expirationEmailSentAt: String(
+      current.expirationEmailSentAt || ""
+    ),
+    expirationEmailLastAttemptAt: String(
+      current.expirationEmailLastAttemptAt || ""
+    ),
+    expirationEmailError: String(
+      current.expirationEmailError || ""
+    ),
+    membershipActivatedAt: String(
+      current.membershipActivatedAt || ""
+    ),
+    lastCheckedAt: String(current.lastCheckedAt || ""),
+    statusHistory: Array.isArray(current.statusHistory)
+      ? current.statusHistory
+          .filter(
+            (entry) =>
+              entry &&
+              typeof entry === "object" &&
+              !Array.isArray(entry) &&
+              (entry.status || entry.at)
+          )
+          .slice(-49)
+      : []
+  };
+}
+
+function appendTaxWatchPreviewStatusHistory(
+  lifecycle = {},
+  entry = {}
+) {
+  const history = Array.isArray(lifecycle.statusHistory)
+    ? lifecycle.statusHistory
+    : [];
+  const last = history[history.length - 1] || {};
+  const status = String(entry.status || "");
+  const action = String(entry.action || "");
+
+  if (
+    String(last.status || "") === status &&
+    String(last.action || "") === action
+  ) {
+    return history.slice(-50);
+  }
+
+  return [
+    ...history,
+    {
+      status,
+      action,
+      at: String(entry.at || new Date().toISOString()),
+      source: String(entry.source || "Tax Watch Pro Preview")
+    }
+  ].slice(-50);
+}
+
+function getTaxWatchPreviewReminderPresentation(
+  remainingMs,
+  expired
+) {
+  if (expired || remainingMs <= 0) {
+    return {
+      key: "expired",
+      label: "Preview Expired",
+      title: "Your 14-day preview has ended",
+      message:
+        "No payment was taken. Your saved estimates, expense records, savings entries, and notes remain available. Choose a plan only when you are ready to resume new updates."
+    };
+  }
+
+  if (remainingMs <= 24 * 60 * 60 * 1000) {
+    return {
+      key: "one-day",
+      label: "1 Day Remaining",
+      title: "Your preview ends within 24 hours",
+      message:
+        "No automatic charge will occur. Choose Monthly or Annual only if you want Tax Money Tracker updates to continue after the preview ends."
+    };
+  }
+
+  if (remainingMs <= 3 * 24 * 60 * 60 * 1000) {
+    return {
+      key: "three-day",
+      label: "3 Days Remaining",
+      title: "Your preview is ending soon",
+      message:
+        "Your records are saved. No automatic charge will occur. Choose a plan only if you want to keep adding estimate updates and savings entries."
+    };
+  }
+
+  if (remainingMs <= 7 * 24 * 60 * 60 * 1000) {
+    return {
+      key: "seven-day",
+      label: "7 Days Remaining",
+      title: "You are halfway through your preview",
+      message:
+        "Keep testing Tax Money Tracker with your real year-round changes. Your records stay saved, and no automatic charge will occur."
+    };
+  }
+
+  return {
+    key: "active",
+    label: "Preview Active",
+    title: "Your Tax Watch Pro preview is active",
+    message:
+      "Use the preview to track meaningful changes. No automatic charge will occur."
+  };
+}
+
+function getTaxWatchPreviewWindow(
+  profile = {},
+  nowMs = Date.now()
+) {
   const status = String(profile.status || "")
     .trim()
     .toLowerCase();
@@ -7155,23 +8113,54 @@ function getTaxWatchPreviewWindow(profile = {}) {
     ? new Date(endsAtMs).toISOString()
     : "";
 
-  const isPreview = status === "preview";
+  const isPreview =
+    status === "preview" ||
+    status === "preview-expired";
   const remainingMs =
     isPreview && Number.isFinite(endsAtMs)
-      ? Math.max(0, endsAtMs - Date.now())
+      ? Math.max(0, endsAtMs - nowMs)
       : 0;
   const expired =
     isPreview &&
     Number.isFinite(endsAtMs) &&
     remainingMs <= 0;
+  const daysRemaining = remainingMs > 0
+    ? Math.ceil(
+        remainingMs /
+        (24 * 60 * 60 * 1000)
+      )
+    : 0;
+  const lifecycle = getTaxWatchPreviewLifecycle(profile);
+  const reminder =
+    getTaxWatchPreviewReminderPresentation(
+      remainingMs,
+      expired
+    );
 
   return {
     durationDays: TAX_WATCH_PREVIEW_DAYS,
     startedAt,
     endsAt,
     remainingMs,
+    daysRemaining,
     expired,
-    canEdit: status === "active" || (isPreview && !expired),
+    statusLabel: expired
+      ? "Preview Expired"
+      : isPreview
+        ? "Preview Active"
+        : status === "active" ||
+            status === "active-membership"
+          ? "Active Membership"
+          : "Not Started",
+    reminderStage: reminder.key,
+    reminderLabel: reminder.label,
+    reminderTitle: reminder.title,
+    reminderMessage: reminder.message,
+    lifecycle,
+    canEdit:
+      status === "active" ||
+      status === "active-membership" ||
+      (isPreview && !expired),
     noAutomaticCharge: true
   };
 }
@@ -14484,10 +15473,15 @@ app.get(
   requireClientPortalApiSession,
   async (req, res) => {
     const session = req.clientPortalSession;
-    const accessible =
-      await getClientPortalAccessibleLeads(
-        session.email
+    const lifecycleResult =
+      await reconcileTaxWatchPreviewLifecycleForEmail(
+        session.email,
+        {
+          sendEmail: true,
+          source: "Client Portal Session"
+        }
       );
+    const accessible = lifecycleResult.accessible;
 
     const records = accessible
       .map(buildClientPortalLeadSummary)
@@ -14757,11 +15751,34 @@ app.post(
             ).toISOString()
           );
 
+          const existingLifecycle =
+            getTaxWatchPreviewLifecycle(existing);
+          const firstPreviewActivation =
+            !existing.previewStartedAt;
+          const previewLifecycle = {
+            ...existingLifecycle,
+            version: 1,
+            lastCheckedAt: now,
+            statusHistory:
+              firstPreviewActivation
+                ? appendTaxWatchPreviewStatusHistory(
+                    existingLifecycle,
+                    {
+                      status: "Preview Active",
+                      action:
+                        "The one-time 14-day Tax Watch Pro preview started; no automatic charge",
+                      at: now,
+                      source: "Client Portal"
+                    }
+                  )
+                : existingLifecycle.statusHistory
+          };
+
           return {
             ...record,
             taxWatchProfile: {
               ...existing,
-              version: 1,
+              version: 2,
               planName: "Tax Watch Pro",
               status: "preview",
               objective,
@@ -14779,6 +15796,7 @@ app.post(
                 existing.activatedAt || now,
               previewStartedAt,
               previewEndsAt,
+              previewLifecycle,
               updatedAt: now
             },
             updatedAt: now
@@ -20626,7 +21644,7 @@ async function applyMembershipStripeUpdate(
     details.eventId || ""
   ).trim();
 
-  return updateLeadAfterStripePayment(
+  const updateResult = await updateLeadAfterStripePayment(
     leadId,
     (record = {}) => {
       const request =
@@ -20905,6 +21923,40 @@ async function applyMembershipStripeUpdate(
       };
     }
   );
+
+  if (
+    updateResult.ok &&
+    String(details.enrollmentStatus || "") ===
+      "Active Membership"
+  ) {
+    const membershipEmail = normalizeEmail(
+      getLeadEmailValue(updateResult.lead || {})
+    );
+
+    if (membershipEmail) {
+      try {
+        await markTaxWatchProfilesMembershipActive(
+          membershipEmail,
+          {
+            activatedAt:
+              details.membershipStartedAt ||
+              details.paymentConfirmedAt ||
+              now,
+            source:
+              details.paymentSource ||
+              "Stripe Subscription"
+          }
+        );
+      } catch (error) {
+        console.warn(
+          "[membership stripe] Preview profile activation sync failed:",
+          error?.message || error
+        );
+      }
+    }
+  }
+
+  return updateResult;
 }
 
 async function retrieveStripeSubscription(value) {
@@ -24777,6 +25829,20 @@ app.get("/api/debug/supabase-leads", async (req, res) => {
 });
 
 app.listen(PORT, () => {
+  const startupPreviewSweep = setTimeout(() => {
+    void runTaxWatchPreviewLifecycleSweep();
+  }, 15000);
+  if (typeof startupPreviewSweep.unref === "function") {
+    startupPreviewSweep.unref();
+  }
+
+  const previewSweepTimer = setInterval(() => {
+    void runTaxWatchPreviewLifecycleSweep();
+  }, TAX_WATCH_PREVIEW_SWEEP_INTERVAL_MILLISECONDS);
+  if (typeof previewSweepTimer.unref === "function") {
+    previewSweepTimer.unref();
+  }
+
   console.log("=".repeat(54));
   console.log("  Greatest Business Solution LLC");
   console.log("  Tax Estimator + Lead Capture Server");

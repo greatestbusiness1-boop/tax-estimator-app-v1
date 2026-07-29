@@ -2081,6 +2081,11 @@
     .cx-service-preview strong{color:#0f355d;margin-bottom:3px}
     .cx-service-preview span{color:#466277;font-size:13px}
     .tax-watch-readonly-notice{margin:0 0 16px;padding:14px 16px;border-radius:12px;background:#fff1f1;border-left:4px solid #9b1c1c;color:#6f1d1d;font-weight:800}
+    .tax-watch-preview-lifecycle-notice{margin:0 0 16px;padding:14px 16px;border:1px solid #bdd7e7;border-left:5px solid #2f9e8f;border-radius:12px;background:#eff8f7;color:#17354e;line-height:1.5}
+    .tax-watch-preview-lifecycle-notice strong,.tax-watch-preview-lifecycle-notice span{display:block}
+    .tax-watch-preview-lifecycle-notice strong{margin-bottom:3px;color:#0f3159;font-size:16px}
+    .tax-watch-preview-lifecycle-notice.seven-day{border-color:#d7c58d;border-left-color:#d9a441;background:#fff9e9}
+    .tax-watch-preview-lifecycle-notice.three-day,.tax-watch-preview-lifecycle-notice.one-day{border-color:#e3b49f;border-left-color:#d9634a;background:#fff4ef}
 
     /* Compact preview countdowns — V3.3.0 */
     .preview-topbar-pill{display:inline-flex;align-items:center;gap:10px;max-width:520px;padding:7px 12px 7px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:#0a1d33;box-shadow:0 4px 14px rgba(0,0,0,.2);font-family:Arial,Helvetica,sans-serif}
@@ -2719,6 +2724,10 @@
               </div>
             </div>
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
+          </div>
+          <div class="tax-watch-preview-lifecycle-notice" id="taxWatchPreviewLifecycleNotice" hidden>
+            <strong id="taxWatchPreviewLifecycleTitle">Preview reminder</strong>
+            <span id="taxWatchPreviewLifecycleMessage"></span>
           </div>
           <div class="tax-watch-readonly-notice" id="taxWatchPreviewExpiredNotice" hidden>Your preview has ended. No charge occurred. Your saved records remain available, but new updates and savings entries are paused until you choose a plan.</div>
           <div class="tax-watch-summary-grid">
@@ -5471,6 +5480,9 @@
       const progressTrack = document.getElementById("taxWatchPreviewProgressTrack");
       const note = document.getElementById("taxWatchPreviewNote");
       const expiredNotice = document.getElementById("taxWatchPreviewExpiredNotice");
+      const lifecycleNotice = document.getElementById("taxWatchPreviewLifecycleNotice");
+      const lifecycleTitle = document.getElementById("taxWatchPreviewLifecycleTitle");
+      const lifecycleMessage = document.getElementById("taxWatchPreviewLifecycleMessage");
       const badgeStatus = document.getElementById("taxWatchPreviewBadgeStatus");
       const badgeText = document.getElementById("taxWatchPreviewBadgeText");
       const eyebrow = document.getElementById("taxWatchMembershipCardEyebrow");
@@ -5488,7 +5500,9 @@
         paymentStatus === "Paid / Confirmed";
       const membershipPastDue = enrollmentStatus === "Past Due";
       const membershipEnded = ["Cancelled", "Expired"].includes(enrollmentStatus);
-      const isPreview = String(taxWatch.status || "").toLowerCase() === "preview";
+      const isPreview = String(taxWatch.status || "")
+        .toLowerCase()
+        .startsWith("preview");
       const actions = document.getElementById("taxWatchMembershipCheckoutActions");
 
       currentMembershipCheckout = taxWatch.checkout || {};
@@ -5523,6 +5537,7 @@
           actions.style.display = "none";
         }
         if (expiredNotice) expiredNotice.hidden = true;
+        if (lifecycleNotice) lifecycleNotice.hidden = true;
         if (badgeStatus) badgeStatus.textContent = "Membership Active";
         if (badgeText) badgeText.textContent = `${membership.planName || "Tax Watch Pro"} — ${membership.billingLabel || "Paid plan"}`;
         return;
@@ -5550,6 +5565,7 @@
           actions.style.removeProperty("display");
         }
         if (expiredNotice) expiredNotice.hidden = true;
+        if (lifecycleNotice) lifecycleNotice.hidden = true;
         if (badgeStatus) badgeStatus.textContent = enrollmentStatus;
         if (badgeText) badgeText.textContent = paymentStatus || "Payment not active";
         configureMembershipCheckoutButtons();
@@ -5559,7 +5575,31 @@
       setCompactPreviewState(preview, Boolean(isPreview && preview.endsAt));
       if (card) card.hidden = !isPreview;
       if (eyebrow) eyebrow.textContent = "Tax Watch Pro Preview";
-      if (expiredNotice) expiredNotice.hidden = !Boolean(preview.expired);
+      if (expiredNotice) {
+        expiredNotice.hidden = !Boolean(preview.expired);
+        if (preview.expired && preview.reminderMessage) {
+          expiredNotice.textContent = preview.reminderMessage;
+        }
+      }
+
+      const reminderStage = String(preview.reminderStage || "");
+      const showLifecycleReminder = [
+        "seven-day",
+        "three-day",
+        "one-day"
+      ].includes(reminderStage) && !preview.expired;
+
+      if (lifecycleNotice) {
+        lifecycleNotice.hidden = !showLifecycleReminder;
+        lifecycleNotice.className = `tax-watch-preview-lifecycle-notice ${showLifecycleReminder ? reminderStage : ""}`.trim();
+      }
+      if (lifecycleTitle) {
+        lifecycleTitle.textContent = preview.reminderTitle || "Preview reminder";
+      }
+      if (lifecycleMessage) {
+        lifecycleMessage.textContent = preview.reminderMessage || "";
+      }
+
       if (progressTrack) progressTrack.hidden = false;
       if (actions) {
         actions.hidden = false;

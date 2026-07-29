@@ -504,6 +504,62 @@
       font-size: 20px;
     }
 
+    .tax-watch-preview-lifecycle-card {
+      margin-top: 18px;
+      border: 2px solid #9bb4ca;
+      border-left: 7px solid #2f9e8f;
+      background: #f8fcfb;
+      padding: 18px;
+    }
+
+    .tax-watch-preview-lifecycle-card.expired {
+      border-left-color: #d9634a;
+      background: #fff8f5;
+    }
+
+    .tax-watch-preview-lifecycle-card.converted {
+      border-left-color: #176344;
+      background: #f3fbf7;
+    }
+
+    .tax-watch-preview-lifecycle-card h3 {
+      margin: 0 0 8px;
+      color: #0f2f59;
+      font-size: 20px;
+    }
+
+    .tax-watch-preview-reminder-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tax-watch-preview-reminder-grid > div {
+      border: 1px solid #c9d9e4;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .tax-watch-preview-reminder-grid span,
+    .tax-watch-preview-reminder-grid strong {
+      display: block;
+    }
+
+    .tax-watch-preview-reminder-grid span {
+      color: #667085;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .tax-watch-preview-reminder-grid strong {
+      margin-top: 4px;
+      color: #0f2f59;
+      overflow-wrap: anywhere;
+    }
+
     .membership-lifecycle-summary {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8507,6 +8563,165 @@ function formatMembershipLifecycleDate(value){
     : "Not recorded";
 }
 
+function getTaxWatchPreviewProfileRecord(lead){
+  const profile = lead?.taxWatchProfile;
+
+  return (
+    profile &&
+    typeof profile === "object" &&
+    !Array.isArray(profile)
+      ? profile
+      : {}
+  );
+}
+
+function hasTaxWatchPreviewProfile(lead){
+  const profile = getTaxWatchPreviewProfileRecord(lead);
+  const status = String(profile.status || "")
+    .trim()
+    .toLowerCase();
+
+  return Boolean(
+    profile.previewStartedAt ||
+    profile.previewEndsAt ||
+    status.startsWith("preview") ||
+    status === "active-membership"
+  );
+}
+
+function getTaxWatchPreviewOfficeState(lead){
+  const profile = getTaxWatchPreviewProfileRecord(lead);
+  const status = String(profile.status || "")
+    .trim()
+    .toLowerCase();
+  const endMs = Date.parse(profile.previewEndsAt || "");
+  const remainingMs = Number.isFinite(endMs)
+    ? Math.max(0, endMs - Date.now())
+    : 0;
+  const expired =
+    status === "preview-expired" ||
+    (
+      status.startsWith("preview") &&
+      Number.isFinite(endMs) &&
+      remainingMs <= 0
+    );
+  const converted = status === "active-membership";
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  return {
+    profile,
+    status: converted
+      ? "Active Membership"
+      : expired
+        ? "Preview Expired"
+        : "Preview Active",
+    className: converted
+      ? "converted"
+      : expired
+        ? "expired"
+        : "active",
+    timeRemaining: converted
+      ? "Converted to paid membership"
+      : expired
+        ? "0 days — preview ended"
+        : `${days}d ${hours}h ${minutes}m`,
+    noAutomaticCharge: true
+  };
+}
+
+function getTaxWatchPreviewLifecycleHtml(lead){
+  const state = getTaxWatchPreviewOfficeState(lead);
+  const profile = state.profile;
+  const lifecycle =
+    profile.previewLifecycle &&
+    typeof profile.previewLifecycle === "object" &&
+    !Array.isArray(profile.previewLifecycle)
+      ? profile.previewLifecycle
+      : {};
+  const history = Array.isArray(lifecycle.statusHistory)
+    ? lifecycle.statusHistory
+        .slice()
+        .reverse()
+        .slice(0, 10)
+    : [];
+  const reminderLabel = (triggeredAt, emailSentAt) => {
+    if(emailSentAt){
+      return `Email sent ${formatMembershipLifecycleDate(emailSentAt)}`;
+    }
+    if(triggeredAt){
+      return `In-app reminder recorded ${formatMembershipLifecycleDate(triggeredAt)}`;
+    }
+    return "Not due yet";
+  };
+
+  return `
+    <div class="tax-watch-preview-lifecycle-card ${escapeOfficeHtml(state.className)}">
+      <h3>Tax Watch Pro Preview Lifecycle</h3>
+      <div>
+        The preview never converts to a paid plan automatically. Saved estimates, expenses, savings entries, and notes remain connected after expiration.
+      </div>
+
+      <div class="membership-lifecycle-summary">
+        <div class="membership-lifecycle-item">
+          <span>Access Status</span>
+          <strong>${escapeOfficeHtml(state.status)}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Preview Started</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(profile.previewStartedAt || profile.activatedAt))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Preview Ends</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(profile.previewEndsAt))}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Time Remaining</span>
+          <strong>${escapeOfficeHtml(state.timeRemaining)}</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Automatic Charge</span>
+          <strong>No</strong>
+        </div>
+        <div class="membership-lifecycle-item">
+          <span>Membership Activated</span>
+          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(profile.membershipActivatedAt || lifecycle.membershipActivatedAt))}</strong>
+        </div>
+      </div>
+
+      <div class="tax-watch-preview-reminder-grid">
+        <div>
+          <span>7-Day Reminder</span>
+          <strong>${escapeOfficeHtml(reminderLabel(lifecycle.reminder7TriggeredAt, lifecycle.reminder7EmailSentAt))}</strong>
+        </div>
+        <div>
+          <span>3-Day Reminder</span>
+          <strong>${escapeOfficeHtml(reminderLabel(lifecycle.reminder3TriggeredAt, lifecycle.reminder3EmailSentAt))}</strong>
+        </div>
+        <div>
+          <span>1-Day Reminder</span>
+          <strong>${escapeOfficeHtml(reminderLabel(lifecycle.reminder1TriggeredAt, lifecycle.reminder1EmailSentAt))}</strong>
+        </div>
+      </div>
+
+      <div class="membership-lifecycle-history">
+        <strong>Status History</strong>
+        ${history.length
+          ? history.map((entry) => `
+              <div class="membership-lifecycle-history-entry">
+                <strong>${escapeOfficeHtml(entry.status || "Preview Activity")}</strong><br>
+                ${escapeOfficeHtml(entry.action || "Preview status updated")}<br>
+                ${escapeOfficeHtml(formatMembershipLifecycleDate(entry.at))}
+              </div>
+            `).join("")
+          : `<div class="membership-lifecycle-history-entry">Preview lifecycle history will appear here as reminders and status changes occur.</div>`}
+      </div>
+    </div>
+  `;
+}
+
 function getMembershipStatusHistory(lead){
   const record = getMembershipLifecycleRecord(lead);
 
@@ -8986,13 +9201,18 @@ function appendTaxPlannerCrmToDetail(lead){
 
   detailContent
     .querySelectorAll(
-      ".tax-planner-crm-card, .membership-lifecycle-card, .client-portal-crm-card"
+      ".tax-planner-crm-card, .membership-lifecycle-card, .tax-watch-preview-lifecycle-card, .client-portal-crm-card"
     )
     .forEach((card) => card.remove());
 
   const membershipHtml = isMembershipEnrollmentLead(lead)
     ? getMembershipLifecycleHtml(lead)
     : "";
+  const previewLifecycleHtml =
+    !isMembershipEnrollmentLead(lead) &&
+    hasTaxWatchPreviewProfile(lead)
+      ? getTaxWatchPreviewLifecycleHtml(lead)
+      : "";
   const plannerHtml = isMembershipEnrollmentLead(lead)
     ? ""
     : getTaxPlannerCrmHtml(lead);
@@ -9000,6 +9220,7 @@ function appendTaxPlannerCrmToDetail(lead){
   detailContent.insertAdjacentHTML(
     "beforeend",
     membershipHtml +
+    previewLifecycleHtml +
     plannerHtml +
     getClientPortalCrmHtml(lead)
   );
