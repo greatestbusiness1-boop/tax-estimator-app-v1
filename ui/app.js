@@ -1013,6 +1013,26 @@ function setWorkingChildPanelVisible(visible) {
   }
 }
 
+function updateWorkingChildCheckerVisibility() {
+  const checker = document.getElementById("workingChildChecker");
+  const dependentsInput = document.getElementById("numberOfDependents");
+  if (!checker || !dependentsInput) return;
+
+  const dependentCount = Math.max(0, parseInt(dependentsInput.value, 10) || 0);
+  const shouldShow = dependentCount > 0;
+  checker.hidden = !shouldShow;
+
+  if (!shouldShow) {
+    const noRadio = document.querySelector('input[name="hasWorkingChildIncome"][value="no"]');
+    if (noRadio) noRadio.checked = true;
+    setWorkingChildPanelVisible(false);
+    return;
+  }
+
+  const yesRadio = document.querySelector('input[name="hasWorkingChildIncome"][value="yes"]');
+  setWorkingChildPanelVisible(Boolean(yesRadio?.checked));
+}
+
 function initWorkingChildChecker() {
   document.querySelectorAll('input[name="hasWorkingChildIncome"]').forEach((radio) => {
     radio.addEventListener("change", () => {
@@ -1020,9 +1040,14 @@ function initWorkingChildChecker() {
     });
   });
 
+  const dependentsInput = document.getElementById("numberOfDependents");
+  dependentsInput?.addEventListener("input", updateWorkingChildCheckerVisibility);
+  dependentsInput?.addEventListener("change", updateWorkingChildCheckerVisibility);
+
   document.getElementById("addWorkingChildBtn")?.addEventListener("click", addWorkingChildCard);
   document.getElementById("taxYear")?.addEventListener("change", refreshWorkingChildInlineResults);
   document.getElementById("age")?.addEventListener("input", refreshWorkingChildInlineResults);
+  updateWorkingChildCheckerVisibility();
 }
 
 function renderWorkingChildResults(input) {
@@ -1429,6 +1454,7 @@ function clearForm() {
   if (workingChildList) workingChildList.innerHTML = "";
   _workingChildCounter = 0;
   setWorkingChildPanelVisible(false);
+  updateWorkingChildCheckerVisibility();
   clearErrors();
 }
 
