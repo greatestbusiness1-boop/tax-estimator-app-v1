@@ -967,8 +967,9 @@ button { font-family: var(--font-sans); }
 
 .field-hint {
   font-size: 11px;
-  color: var(--text-light);
-  line-height: 1.4;
+  color: var(--text-muted);
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 /* Inputs */
@@ -5008,21 +5009,18 @@ html[data-public-page="professional-services"] .professional-dedicated-page {
 .tax-watch-expense-guidance{margin:14px 0 18px;padding:14px 16px;border:1px solid #e0c675;border-left:5px solid #c68a00;border-radius:10px;background:#fff8e6;color:#263f54;line-height:1.55;box-shadow:0 3px 10px rgba(18,58,91,.06)}
 .tax-watch-expense-guidance strong{display:block;margin-bottom:4px;color:#7a4c00;font-size:14px}
 .tax-watch-expense-guidance span{display:block;font-size:14px}
-.tax-watch-expense-help{margin:18px auto 4px;padding:15px 18px;border:1px solid #bfd3e2;border-left:4px solid #1d6a8a;border-radius:12px;background:#f4f9fc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;line-height:1.45}
-.tax-watch-expense-help strong{display:block;color:#123a5b;margin-bottom:4px;font-size:15px}
-.tax-watch-expense-help span{display:block;max-width:720px;color:#526779;font-size:13px}
-.tax-watch-expense-help a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 17px;border:2px solid #123a5b;border-radius:999px;background:#123a5b;color:#fff;text-decoration:none;font-size:13px;font-weight:900;box-shadow:0 4px 10px rgba(18,58,91,.18)}
-.tax-watch-expense-help a:hover,.tax-watch-expense-help a:focus{background:#0a2c4a;border-color:#0a2c4a;color:#fff;transform:translateY(-1px)}
-.tax-watch-expense-help a:focus-visible{outline:3px solid rgba(29,106,138,.3);outline-offset:3px}
-.tax-watch-final-category-reminder{margin:0 0 14px;padding:13px 15px;border-left:4px solid #c69a37;background:#fff8e8;color:#334b5f;line-height:1.5;text-align:center}
-.tax-watch-final-category-reminder strong{color:#123a5b}
-.tax-watch-final-category-reminder a{display:inline-flex;align-items:center;justify-content:center;margin:9px auto 0;padding:8px 14px;border:1px solid #123a5b;border-radius:999px;background:#fff;color:#123a5b;text-decoration:none;font-size:13px;font-weight:900}
-.tax-watch-final-category-reminder a:hover,.tax-watch-final-category-reminder a:focus{background:#123a5b;color:#fff}
+.tax-watch-tax-help-callout{margin:0 0 16px;padding:17px 20px;border:1px solid #e0c675;border-left:5px solid #c68a00;border-radius:12px;background:#fff8e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;line-height:1.5;box-shadow:0 3px 10px rgba(18,58,91,.06)}
+.tax-watch-tax-help-callout strong{display:block;color:#123a5b;margin-bottom:5px;font-size:15px}
+.tax-watch-tax-help-callout span{display:block;max-width:760px;color:#334b5f;font-size:13px;font-weight:600}
+.tax-watch-tax-help-callout a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 18px;border:2px solid #123a5b;border-radius:999px;background:#123a5b;color:#fff;text-decoration:none;font-size:13px;font-weight:900;box-shadow:0 4px 10px rgba(18,58,91,.18)}
+.tax-watch-tax-help-callout a:hover,.tax-watch-tax-help-callout a:focus{background:#0a2c4a;border-color:#0a2c4a;color:#fff;transform:translateY(-1px)}
+.tax-watch-tax-help-callout a:focus-visible{outline:3px solid rgba(198,138,0,.28);outline-offset:3px}
+.tax-watch-tax-help-callout small{display:block;color:#526779;font-size:11px;font-weight:600}
 .tax-credit-policy{margin:18px 0;padding:14px 16px;border:1px solid #dbc88e;border-left:4px solid #c69a37;border-radius:10px;background:#fffaf0;color:#334b5f;line-height:1.55}
 .tax-credit-policy strong{color:#123a5b}
 .home-credit-policy{margin-top:18px}
 .trust-estimate-note{max-width:980px;margin:12px auto 0;padding:0 16px;text-align:center;color:rgba(255,255,255,.72);font-size:12px;line-height:1.45}
-@media(max-width:720px){.tax-watch-expense-help{padding:14px 12px}.tax-watch-expense-help a,.tax-watch-final-category-reminder a{width:100%}}
+@media(max-width:720px){.tax-watch-tax-help-callout{padding:15px 13px}.tax-watch-tax-help-callout a{width:100%}}
 .tax-watch-expense-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .tax-watch-expense-field{margin:0}
 @media(max-width:900px){.tax-watch-expense-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
