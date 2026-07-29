@@ -88,14 +88,25 @@ const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.o
 const recentLeads = new Map();
 
 const FREE_ESTIMATE_LIMIT = 3;
-const FREE_ESTIMATE_WINDOW_DAYS = 30;
-const FREE_ESTIMATE_WINDOW_MILLISECONDS =
-  FREE_ESTIMATE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+const FREE_ESTIMATE_LIMIT_SCOPE = "tax-year";
 const FREE_ESTIMATE_TEST_EMAILS = new Set(
   [
     "greatestbusiness1+1099test@gmail.com",
     ...String(process.env.FREE_ESTIMATE_TEST_EMAILS || "")
       .split(",")
+  ]
+    .map((value) =>
+      String(value || "").trim().toLowerCase()
+    )
+    .filter(Boolean)
+);
+const FREE_ESTIMATE_LIMIT_TEST_EMAILS = new Set(
+  [
+    "greatestbusiness1+freelimit@gmail.com",
+    ...String(
+      process.env.FREE_ESTIMATE_LIMIT_TEST_EMAILS ||
+      ""
+    ).split(",")
   ]
     .map((value) =>
       String(value || "").trim().toLowerCase()
@@ -4040,6 +4051,42 @@ function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeFreeEstimateIdentityEmail(value) {
+  const normalized = normalizeEmail(value);
+  const atIndex = normalized.lastIndexOf("@");
+
+  if (atIndex <= 0) {
+    return normalized;
+  }
+
+  let localPart = normalized.slice(0, atIndex);
+  let domain = normalized.slice(atIndex + 1);
+
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    localPart = localPart.split("+", 1)[0].replace(/\./g, "");
+    domain = "gmail.com";
+  }
+
+  return localPart && domain
+    ? `${localPart}@${domain}`
+    : normalized;
+}
+
+function getFreeEstimateIdentityKey(value) {
+  const rawEmail = normalizeEmail(value);
+
+  return FREE_ESTIMATE_LIMIT_TEST_EMAILS.has(rawEmail)
+    ? rawEmail
+    : normalizeFreeEstimateIdentityEmail(rawEmail);
+}
+
+function normalizeFreeEstimateTaxYear(value) {
+  const taxYear = String(value || "").trim();
+  return /^\d{4}$/.test(taxYear)
+    ? taxYear
+    : "";
+}
+
 
 function getClientPortalRecord(record = {}) {
   const estimate = record?.estimate || {};
@@ -4748,6 +4795,20 @@ async function getClientPortalAccessibleLeads(email) {
   );
 }
 
+async function getFreeEstimateIdentityAccessibleLeads(email) {
+  const identityEmail =
+    getFreeEstimateIdentityKey(email);
+  const candidates =
+    await loadClientPortalLeadCandidates();
+
+  return candidates.filter(
+    (entry) =>
+      getFreeEstimateIdentityKey(
+        getLeadEmailValue(entry.raw)
+      ) === identityEmail
+  );
+}
+
 function getFreeEstimateRecord(entry = {}) {
   return entry.lead || entry.raw || entry || {};
 }
@@ -4780,6 +4841,36 @@ function getFreeEstimateRecordLeadId(entry = {}) {
     record.lead_id ||
     ""
   ).trim();
+}
+
+function getFreeEstimateRecordTaxYear(entry = {}) {
+  const record = getFreeEstimateRecord(entry);
+  const usage =
+    record.freeEstimateUsage &&
+    typeof record.freeEstimateUsage === "object" &&
+    !Array.isArray(record.freeEstimateUsage)
+      ? record.freeEstimateUsage
+      : {};
+  const taxData =
+    record.taxData &&
+    typeof record.taxData === "object" &&
+    !Array.isArray(record.taxData)
+      ? record.taxData
+      : {};
+  const estimateSummary =
+    record.estimateSummary &&
+    typeof record.estimateSummary === "object" &&
+    !Array.isArray(record.estimateSummary)
+      ? record.estimateSummary
+      : {};
+
+  return normalizeFreeEstimateTaxYear(
+    usage.taxYear ||
+    taxData.taxYear ||
+    estimateSummary.taxYear ||
+    estimateSummary.meta?.taxYear ||
+    ""
+  );
 }
 
 function isCompletedFreeEstimateRecord(entry = {}) {
@@ -4856,32 +4947,43 @@ function getFreeEstimatePreviewProfile(accessible = []) {
     : null;
 }
 
-async function getFreeEstimateUsage(email) {
-  const normalizedEmail = normalizeEmail(email);
-  const now = Date.now();
-  const windowStartedAtMs =
-    now - FREE_ESTIMATE_WINDOW_MILLISECONDS;
-  const accessible = normalizedEmail
-    ? await getClientPortalAccessibleLeads(
-        normalizedEmail
+async function getFreeEstimateUsage(email, taxYear) {
+  const rawEmail = normalizeEmail(email);
+  const identityEmail =
+    getFreeEstimateIdentityKey(email);
+  const selectedTaxYear =
+    normalizeFreeEstimateTaxYear(taxYear);
+  const accessible = identityEmail
+    ? await getFreeEstimateIdentityAccessibleLeads(
+        identityEmail
       )
     : [];
   const completed = accessible
     .filter(isCompletedFreeEstimateRecord)
-    .map((entry) => ({
-      entry,
-      leadId: getFreeEstimateRecordLeadId(entry),
-      timestamp: getFreeEstimateRecordTimestamp(entry),
-      timestampMs: Date.parse(
-        getFreeEstimateRecordTimestamp(entry)
-      )
-    }))
     .filter(
-      (item) =>
-        Number.isFinite(item.timestampMs) &&
-        item.timestampMs >= windowStartedAtMs &&
-        item.timestampMs <= now + 60 * 1000
+      (entry) =>
+        !selectedTaxYear ||
+        getFreeEstimateRecordTaxYear(entry) ===
+          selectedTaxYear
     )
+    .map((entry) => {
+      const timestamp =
+        getFreeEstimateRecordTimestamp(entry);
+      const parsedTimestamp = Date.parse(timestamp);
+
+      return {
+        entry,
+        leadId:
+          getFreeEstimateRecordLeadId(entry),
+        taxYear:
+          getFreeEstimateRecordTaxYear(entry),
+        timestamp,
+        timestampMs:
+          Number.isFinite(parsedTimestamp)
+            ? parsedTimestamp
+            : 0
+      };
+    })
     .sort(
       (left, right) =>
         right.timestampMs - left.timestampMs
@@ -4904,7 +5006,7 @@ async function getFreeEstimateUsage(email) {
     !previewWindow?.expired
   );
   const testAccount =
-    FREE_ESTIMATE_TEST_EMAILS.has(normalizedEmail);
+    FREE_ESTIMATE_TEST_EMAILS.has(rawEmail);
   const exemptionReason = testAccount
     ? "office-test-account"
     : activeMembership
@@ -4917,20 +5019,11 @@ async function getFreeEstimateUsage(email) {
     0,
     FREE_ESTIMATE_LIMIT - used
   );
-  const oldestCounted = completed.length
-    ? completed[completed.length - 1]
-    : null;
-  const nextAvailableAt =
-    used >= FREE_ESTIMATE_LIMIT && oldestCounted
-      ? new Date(
-          oldestCounted.timestampMs +
-          FREE_ESTIMATE_WINDOW_MILLISECONDS
-        ).toISOString()
-      : "";
 
   return {
     limit: FREE_ESTIMATE_LIMIT,
-    windowDays: FREE_ESTIMATE_WINDOW_DAYS,
+    limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
+    taxYear: selectedTaxYear,
     used,
     remaining,
     capReached:
@@ -4938,11 +5031,11 @@ async function getFreeEstimateUsage(email) {
       used >= FREE_ESTIMATE_LIMIT,
     exempt: Boolean(exemptionReason),
     exemptionReason,
-    nextAvailableAt,
     latestSavedLeadId:
       completed[0]?.leadId || "",
-    windowStartedAt:
-      new Date(windowStartedAtMs).toISOString()
+    identityEmail,
+    profileType: "lightweight-free-estimate",
+    portalCreatedAutomatically: false
   };
 }
 
@@ -4974,10 +5067,19 @@ async function recordFreeEstimateCapReached(
         ...record,
         freeEstimateUsage: {
           ...existing,
-          version: 1,
+          version: 2,
           normalizedEmail: normalizeEmail(email),
+          identityEmail:
+            getFreeEstimateIdentityKey(email),
+          taxYear:
+            normalizeFreeEstimateTaxYear(
+              usage.taxYear ||
+              getFreeEstimateRecordTaxYear({
+                lead: record
+              })
+            ),
           limit: FREE_ESTIMATE_LIMIT,
-          windowDays: FREE_ESTIMATE_WINDOW_DAYS,
+          limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
           capReachedAt:
             existing.capReachedAt || now,
           lastCapReachedAt: now,
@@ -5001,10 +5103,11 @@ async function recordFreeEstimatePreviewConversion(
   email,
   previewStartedAt
 ) {
-  const normalizedEmail = normalizeEmail(email);
+  const identityEmail =
+    getFreeEstimateIdentityKey(email);
   const accessible =
-    await getClientPortalAccessibleLeads(
-      normalizedEmail
+    await getFreeEstimateIdentityAccessibleLeads(
+      identityEmail
     );
   const cappedEstimate = accessible
     .filter(isCompletedFreeEstimateRecord)
@@ -9938,12 +10041,36 @@ app.post("/api/lead", async (req, res) => {
       !String(status || "").trim() &&
       !String(notes || "").trim()
     );
+  const freeEstimateTaxYear =
+    isFreeEstimateSubmission
+      ? normalizeFreeEstimateTaxYear(
+          taxData?.taxYear ||
+          estimateSummary?.taxYear ||
+          estimateSummary?.meta?.taxYear ||
+          ""
+        )
+      : "";
   let freeEstimateUsageBefore = null;
+
+  if (
+    isFreeEstimateSubmission &&
+    !freeEstimateTaxYear
+  ) {
+    return res.status(400).json({
+      ok: false,
+      errors: [
+        "Select a valid tax year before saving the free estimate."
+      ]
+    });
+  }
 
   if (isFreeEstimateSubmission) {
     try {
       freeEstimateUsageBefore =
-        await getFreeEstimateUsage(email);
+        await getFreeEstimateUsage(
+          email,
+          freeEstimateTaxYear
+        );
     } catch (error) {
       console.error(
         "[/api/lead] Free-estimate usage check failed:",
@@ -9973,7 +10100,7 @@ app.post("/api/lead", async (req, res) => {
         ok: false,
         code: "FREE_ESTIMATE_LIMIT_REACHED",
         errors: [
-          "You have used your 3 free estimates during the current rolling 30-day period."
+          `You have completed your 3 free estimates for tax year ${freeEstimateTaxYear}.`
         ],
         freeEstimateUsage: freeEstimateUsageBefore
       });
@@ -10003,12 +10130,17 @@ app.post("/api/lead", async (req, res) => {
       : normalizedSubmissionType || null,
     freeEstimateUsage: isFreeEstimateSubmission
       ? {
-          version: 1,
+          version: 2,
           submissionType: "free-estimate",
           completedAt: new Date().toISOString(),
           normalizedEmail: normalizeEmail(email),
+          identityEmail:
+            getFreeEstimateIdentityKey(email),
+          taxYear: freeEstimateTaxYear,
           limit: FREE_ESTIMATE_LIMIT,
-          windowDays: FREE_ESTIMATE_WINDOW_DAYS
+          limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
+          profileType: "lightweight-free-estimate",
+          portalCreatedAutomatically: false
         }
       : null,
     taxWatchUpdate:
@@ -10077,7 +10209,10 @@ app.post("/api/lead", async (req, res) => {
   if (isFreeEstimateSubmission) {
     try {
       freeEstimateUsage =
-        await getFreeEstimateUsage(email);
+        await getFreeEstimateUsage(
+          email,
+          freeEstimateTaxYear
+        );
     } catch (error) {
       console.warn(
         "[free estimate usage] Post-save usage refresh failed:",
@@ -10100,7 +10235,13 @@ app.post("/api/lead", async (req, res) => {
           FREE_ESTIMATE_LIMIT - used
         ),
         capReached: false,
-        latestSavedLeadId: savedLead.leadId
+        latestSavedLeadId: savedLead.leadId,
+        taxYear: freeEstimateTaxYear,
+        limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
+        identityEmail:
+          getFreeEstimateIdentityKey(email),
+        profileType: "lightweight-free-estimate",
+        portalCreatedAutomatically: false
       };
     }
   }

@@ -1757,59 +1757,69 @@ function buildSavedEstimateSummary(result, input) {
   };
 }
 
-function formatFreeEstimateLimitDate(value) {
-  const parsed = new Date(value || "");
-  if (!Number.isFinite(parsed.getTime())) {
-    return "";
+function buildClaimSavedEstimateUrl(
+  leadId,
+  email
+) {
+  const reference = String(leadId || "").trim();
+  const accountEmail = String(email || "").trim();
+
+  if (!reference || !accountEmail) {
+    return "/client-portal";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(parsed);
+  return (
+    "/client-portal?activate=1&leadId=" +
+    encodeURIComponent(reference) +
+    "&email=" +
+    encodeURIComponent(accountEmail)
+  );
 }
 
-function renderFreeEstimateLimitReached(usage = {}) {
+function renderFreeEstimateLimitReached(
+  usage = {},
+  context = {}
+) {
   const overlay = document.getElementById("leadGatewayOverlay");
   const card = overlay?.firstElementChild;
   if (!card) return;
 
-  const nextAvailable = formatFreeEstimateLimitDate(
-    usage.nextAvailableAt
-  );
+  const taxYear = String(
+    usage.taxYear ||
+    context.taxYear ||
+    ""
+  ).trim();
   const latestLeadId = String(
     usage.latestSavedLeadId || ""
+  ).trim();
+  const email = String(
+    context.email || ""
   ).trim();
   const latestLink = latestLeadId
     ? `/estimate/${encodeURIComponent(latestLeadId)}`
     : "";
+  const claimUrl = buildClaimSavedEstimateUrl(
+    latestLeadId,
+    email
+  );
 
   card.innerHTML = `
     <div class="free-estimate-limit-kicker">Free Estimate Limit Reached</div>
     <h2 class="free-estimate-limit-title">
-      You have used your 3 free estimates during the current 30-day period.
+      You have completed your 3 free estimates${taxYear ? ` for tax year ${escHtml(taxYear)}` : ""}.
     </h2>
     <p class="free-estimate-limit-copy">
-      Your saved results remain available. If your numbers keep changing,
-      Tax Money Tracker can update your estimate throughout the year,
-      explain what changed and why, and track the money you reported saving.
+      Your saved results remain available. To continue updating income,
+      withholding, dependents, or business activity throughout the year,
+      claim your saved estimate and start your one-time Tax Watch Pro preview.
     </p>
-    ${nextAvailable ? `
-      <div class="free-estimate-limit-date">
-        Your next free estimate becomes available after
-        <strong>${escHtml(nextAvailable)}</strong>.
-      </div>
-    ` : ""}
     <div class="free-estimate-limit-preview">
-      <strong>14-day Tax Watch Pro preview.</strong>
+      <strong>One-time 14-day Tax Watch Pro preview.</strong>
       No automatic charge. Choose a plan only when you are ready.
     </div>
     <div class="free-estimate-limit-actions">
-      <a class="free-estimate-limit-primary" href="/client-portal">
-        Open Secure Client Portal
+      <a class="free-estimate-limit-primary" href="${escHtml(claimUrl)}">
+        Claim My Saved Estimate
       </a>
       ${latestLink ? `
         <a class="free-estimate-limit-secondary" href="${escHtml(latestLink)}" target="_blank" rel="noopener noreferrer">
@@ -1817,9 +1827,17 @@ function renderFreeEstimateLimitReached(usage = {}) {
         </a>
       ` : ""}
       <button type="button" class="free-estimate-limit-secondary" id="closeFreeEstimateLimit">
-        Return to My Entries
+        Return to My Estimate Entries
       </button>
+      <a class="free-estimate-limit-secondary" href="/">
+        Exit to Home Page
+      </a>
     </div>
+    <p class="free-estimate-limit-footnote">
+      A full secure portal account is created only after you request the
+      six-digit code and choose a password. Completing a free estimate
+      alone does not create a password-protected portal.
+    </p>
   `;
 
   document.getElementById("closeFreeEstimateLimit")
@@ -1848,6 +1866,11 @@ function renderFreeEstimateUsageNotice(usage = {}) {
     Number(usage.remaining)
   );
   const used = Math.max(0, Number(usage.used || 0));
+  const taxYear = String(
+    usage.taxYear ||
+    _lastTaxInput?.taxYear ||
+    ""
+  ).trim();
   const results = document.getElementById("screen-results");
   const disclaimer = results?.querySelector(".disclaimer-banner");
 
@@ -1861,19 +1884,22 @@ function renderFreeEstimateUsageNotice(usage = {}) {
 
   notice.innerHTML = remaining > 0
     ? `
-      <strong>${remaining} of ${limit} free estimates remaining</strong>
+      <strong>${remaining} of ${limit} free estimates remaining${taxYear ? ` for tax year ${escHtml(taxYear)}` : ""}</strong>
       <span>
-        Completed estimates are counted by email during a rolling 30-day period.
-        Opening, printing, or refreshing a saved estimate does not use another estimate.
+        Only successfully completed estimates count. Opening, printing,
+        or refreshing a saved estimate does not use another estimate.
       </span>
     `
     : `
-      <strong>This was free estimate ${used} of ${limit} for the current 30-day period.</strong>
+      <strong>This was free estimate ${used} of ${limit}${taxYear ? ` for tax year ${escHtml(taxYear)}` : ""}.</strong>
       <span>
         Your saved results remain available. Use Tax Money Tracker for ongoing changes,
         estimate comparisons, and year-round savings accountability.
       </span>
-      <a href="/client-portal">Explore the 14-day preview — no automatic charge</a>
+      <a href="${escHtml(buildClaimSavedEstimateUrl(
+        _leadGatewayContact?.leadId,
+        _leadGatewayContact?.email
+      ))}">Claim My Saved Estimate — one-time 14-day preview, no automatic charge</a>
     `;
 
   disclaimer.insertAdjacentElement("afterend", notice);
@@ -1948,7 +1974,11 @@ async function submitLeadGateway(input, result) {
     if (!response.ok || !data.ok) {
       if (data.code === "FREE_ESTIMATE_LIMIT_REACHED") {
         renderFreeEstimateLimitReached(
-          data.freeEstimateUsage || {}
+          data.freeEstimateUsage || {},
+          {
+            email,
+            taxYear: input?.taxYear || ""
+          }
         );
         return;
       }
