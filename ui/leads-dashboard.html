@@ -3090,10 +3090,10 @@
       id="taxWatchEnrollmentsSidebarButton"
       class="sidebar-btn transcript-sidebar-link"
       data-view="taxwatchenrollments"
-      data-title="Tax Watch Pro Enrollments"
+      data-title="Tax Watch Pro Preview &amp; Enrollments"
       type="button"
     >
-      <span>Tax Watch Pro Enrollments</span>
+      <span>Tax Watch Pro Preview &amp; Enrollments</span>
       <span
         id="taxWatchEnrollmentsSidebarCount"
         class="transcript-sidebar-count is-zero"
@@ -3835,6 +3835,41 @@ function isTaxWatchEnrollmentLead(lead){
   );
 }
 
+function isTaxWatchPreviewWorklistLead(lead){
+  const profile =
+    lead?.taxWatchProfile &&
+    typeof lead.taxWatchProfile === "object" &&
+    !Array.isArray(lead.taxWatchProfile)
+      ? lead.taxWatchProfile
+      : {};
+  const status = String(profile.status || "")
+    .trim()
+    .toLowerCase();
+
+  return status.startsWith("preview");
+}
+
+function isTaxWatchPreviewOrEnrollmentLead(lead){
+  return (
+    isTaxWatchEnrollmentLead(lead) ||
+    isTaxWatchPreviewWorklistLead(lead)
+  );
+}
+
+function getTaxWatchWorklistActivityAt(lead){
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    const profile = getTaxWatchPreviewProfileRecord(lead);
+
+    return (
+      profile.previewStartedAt ||
+      profile.activatedAt ||
+      getLeadEnteredAt(lead)
+    );
+  }
+
+  return getLeadEnteredAt(lead);
+}
+
 function isPinnacleEnrollmentLead(lead){
   const enrollment = getMembershipEnrollmentText(lead);
   const service = enrollment.service.toLowerCase();
@@ -3876,6 +3911,10 @@ function getMembershipPlanLabel(lead){
 
 function getMembershipBillingChoice(lead){
   const record = getMembershipLifecycleRecord(lead);
+
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    return "Not selected";
+  }
 
   if(record.billingLabel){
     return String(record.billingLabel);
@@ -3928,6 +3967,10 @@ function formatMembershipPriceAmount(value){
 function getMembershipSelectedPrice(lead){
   const record = getMembershipLifecycleRecord(lead);
 
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    return "Not selected";
+  }
+
   if(record.selectedPriceDisplay){
     return String(record.selectedPriceDisplay);
   }
@@ -3977,6 +4020,10 @@ function getMembershipSelectedPrice(lead){
 
 function getMembershipEnrollmentStatus(lead){
   const record = getMembershipLifecycleRecord(lead);
+
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    return getTaxWatchPreviewOfficeState(lead).status;
+  }
 
   if(record.enrollmentStatus){
     return String(record.enrollmentStatus);
@@ -4030,6 +4077,10 @@ function getMembershipEnrollmentStatus(lead){
 function getMembershipPaymentStatus(lead){
   const record = getMembershipLifecycleRecord(lead);
 
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    return "No payment / No automatic charge";
+  }
+
   if(record.paymentStatus){
     return String(record.paymentStatus);
   }
@@ -4049,6 +4100,28 @@ function getMembershipPaymentStatus(lead){
 
 function getMembershipLatestAction(lead){
   const record = getMembershipLifecycleRecord(lead);
+
+  if(isTaxWatchPreviewWorklistLead(lead)){
+    const profile = getTaxWatchPreviewProfileRecord(lead);
+    const lifecycle =
+      profile.previewLifecycle &&
+      typeof profile.previewLifecycle === "object" &&
+      !Array.isArray(profile.previewLifecycle)
+        ? profile.previewLifecycle
+        : {};
+    const history = Array.isArray(lifecycle.statusHistory)
+      ? lifecycle.statusHistory
+      : [];
+    const latest = history[history.length - 1];
+
+    if(latest?.action){
+      return String(latest.action);
+    }
+
+    return getTaxWatchPreviewOfficeState(lead).status === "Preview Expired"
+      ? "Preview ended — no payment was taken"
+      : "One-time Tax Watch Pro preview started";
+  }
 
   if(record.latestAction){
     return String(record.latestAction);
@@ -4080,14 +4153,16 @@ function updateMembershipEnrollmentCounts(){
       buttonId: "taxWatchEnrollmentsSidebarButton",
       badgeId: "taxWatchEnrollmentsSidebarCount",
       label: "Tax Watch Pro",
+      recordLabel: "preview or enrollment",
       count: (allLeads || [])
-        .filter(isTaxWatchEnrollmentLead)
+        .filter(isTaxWatchPreviewOrEnrollmentLead)
         .length
     },
     {
       buttonId: "pinnacleEnrollmentsSidebarButton",
       badgeId: "pinnacleEnrollmentsSidebarCount",
       label: "Pinnacle Tax Action Plan",
+      recordLabel: "enrollment",
       count: (allLeads || [])
         .filter(isPinnacleEnrollmentLead)
         .length
@@ -4108,7 +4183,7 @@ function updateMembershipEnrollmentCounts(){
       );
       badge.setAttribute(
         "aria-label",
-        `${membership.count} ${membership.label} enrollment ${
+        `${membership.count} ${membership.label} ${membership.recordLabel} ${
           membership.count === 1 ? "record" : "records"
         }`
       );
@@ -4116,7 +4191,7 @@ function updateMembershipEnrollmentCounts(){
 
     if(button){
       button.title =
-        `${membership.count} ${membership.label} enrollment ${
+        `${membership.count} ${membership.label} ${membership.recordLabel} ${
           membership.count === 1 ? "record" : "records"
         }`;
     }
@@ -6786,11 +6861,11 @@ function updateTaxPrepAdvancedSummary(count){
 function getVisibleLeads(){
   if(currentView==="taxwatchenrollments"){
     return allLeads
-      .filter(isTaxWatchEnrollmentLead)
+      .filter(isTaxWatchPreviewOrEnrollmentLead)
       .sort(
         (a,b) =>
-          new Date(getLeadEnteredAt(b) || 0) -
-          new Date(getLeadEnteredAt(a) || 0)
+          new Date(getTaxWatchWorklistActivityAt(b) || 0) -
+          new Date(getTaxWatchWorklistActivityAt(a) || 0)
       );
   }
 
@@ -10106,8 +10181,8 @@ function renderLeads(){
     (
       membershipView
         ? visible.length === 1
-          ? " enrollment"
-          : " enrollments"
+          ? " record"
+          : " records"
         : visible.length === 1
           ? " lead"
           : " leads"
@@ -10501,7 +10576,7 @@ function renderLeads(){
     if(!visible.length){
       list.innerHTML = `
         <div class="office-empty">
-          No ${planLabel} enrollment records are available.
+          No ${planLabel} preview or enrollment records are available.
         </div>`;
       window.visibleMembershipEnrollmentLeads = [];
       return;
@@ -10517,7 +10592,7 @@ function renderLeads(){
               <th>Selected Price</th>
               <th>Enrollment Status</th>
               <th>Payment Status</th>
-              <th>Request Date / Time</th>
+              <th>Preview / Request Date</th>
               <th>Client Reference</th>
               <th>Latest Action</th>
               <th>Action</th>
@@ -10540,7 +10615,11 @@ function renderLeads(){
               const paymentStatus =
                 getMembershipPaymentStatus(lead);
               const requestedAt =
-                formatLeadDate(getLeadEnteredAt(lead));
+                formatLeadDate(
+                  currentView === "taxwatchenrollments"
+                    ? getTaxWatchWorklistActivityAt(lead)
+                    : getLeadEnteredAt(lead)
+                );
               const reference =
                 String(lead?.leadId || "Not provided");
               const latestAction =
@@ -16657,7 +16736,7 @@ document.addEventListener("DOMContentLoaded", () => {
         extensions: "Extension Requests",
         extensionscompleted: "Completed & Closed Extensions",
         taxprepcompleted: "Completed Tax Returns",
-        taxwatchenrollments: "Tax Watch Pro Enrollments",
+        taxwatchenrollments: "Tax Watch Pro Preview & Enrollments",
         pinnacleenrollments: "Pinnacle Tax Action Plan Enrollments",
         websitecontact: "Website Contact Requests",
         calendar: "Scheduled Consultations",
