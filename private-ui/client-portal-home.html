@@ -2112,6 +2112,26 @@
     .dashboard-preview-note{display:block;margin-top:7px;color:#6f7881;font-size:10.5px;font-weight:700}
     .dashboard-preview-countdown.preview-ending{border-color:#d9a441;background:#fff9eb}
     .dashboard-preview-countdown.preview-ended{border-color:#d9634a;background:#fff4f1}
+    .tax-watch-inline-preview-card{width:236px;flex:0 0 236px;padding:16px 16px 14px;border:1px solid #e6ddc8;border-radius:14px;background:#fff;box-shadow:0 8px 22px rgba(15,42,71,.08);font-family:Arial,Helvetica,sans-serif}
+    .tax-watch-inline-preview-card[hidden]{display:none!important}
+    .tax-watch-inline-preview-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .tax-watch-inline-preview-ring{position:relative;width:52px;height:52px;flex:0 0 52px}
+    .tax-watch-inline-preview-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+    .tax-watch-inline-preview-ring .preview-ring-track{stroke:#eee6d3;stroke-width:6}
+    .tax-watch-inline-preview-ring .preview-ring-fill{stroke-width:6}
+    .tax-watch-inline-preview-days{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0f2a47;font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+    .tax-watch-inline-preview-copy{min-width:0}
+    .tax-watch-inline-preview-copy strong{display:block;color:#0f2a47;font-size:13px;line-height:1.3}
+    .tax-watch-inline-preview-copy span{display:block;margin-top:2px;color:#5a6b7a;font-size:11px;font-weight:700}
+    .tax-watch-inline-preview-clock{display:flex;justify-content:center;align-items:center;gap:5px;margin-bottom:12px}
+    .tax-watch-inline-preview-clock-box{width:36px;padding:5px 0;border-radius:5px;background:#0a1d33;color:#f8f4ea;text-align:center;font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
+    .tax-watch-inline-preview-clock-separator{color:#c9bfa4;font-size:12px;font-weight:900}
+    .tax-watch-inline-preview-button{display:block;width:100%;border:0;border-radius:8px;background:#0f2a47;color:#fff;padding:9px;font:inherit;font-size:12.5px;font-weight:900;cursor:pointer}
+    .tax-watch-inline-preview-button:hover{background:#194d77}
+    .tax-watch-inline-preview-button:focus-visible{outline:3px solid rgba(15,42,71,.25);outline-offset:2px}
+    .tax-watch-inline-preview-note{display:block;margin-top:8px;color:#82919e;text-align:center;font-size:10px;font-weight:700}
+    .tax-watch-inline-preview-card.preview-ending{border-color:#d9a441;background:#fff9eb}
+    .tax-watch-inline-preview-card.preview-ended{border-color:#d9634a;background:#fff4f1}
 
     @media(max-width:980px){
       .preview-topbar-pill{order:2;max-width:100%}
@@ -2119,7 +2139,7 @@
       .dashboard-preview-actions{grid-column:1/-1}
     }
     @media(max-width:760px){
-      .tax-watch-preview-top{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}
+      .tax-watch-preview-top{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-inline-preview-card{width:100%;margin-top:14px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}
       .preview-topbar-pill{width:100%;justify-content:center;border-radius:14px}
       .preview-pill-copy{flex:1}
       .dashboard-preview-countdown{grid-template-columns:1fr;text-align:center}
@@ -2644,7 +2664,30 @@
                 <h3 id="taxWatchPreviewHeading">Your preview is active</h3>
                 <p id="taxWatchPreviewDates">Loading your preview dates...</p>
               </div>
-              <div class="tax-watch-preview-countdown" id="taxWatchPreviewCountdown" data-tax-watch-preview-countdown>Calculating...</div>
+              <div class="tax-watch-inline-preview-card" id="taxWatchInlinePreviewCard" data-preview-compact hidden>
+                <div class="tax-watch-inline-preview-top">
+                  <div class="tax-watch-inline-preview-ring" aria-hidden="true">
+                    <svg viewBox="0 0 52 52">
+                      <circle class="preview-ring-track" cx="26" cy="26" r="22"></circle>
+                      <circle class="preview-ring-fill" id="taxWatchInlinePreviewRing" cx="26" cy="26" r="22" stroke-dasharray="138.230" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <span class="tax-watch-inline-preview-days" id="taxWatchInlinePreviewDays">14</span>
+                  </div>
+                  <div class="tax-watch-inline-preview-copy">
+                    <strong id="taxWatchInlinePreviewHeading">Preview running</strong>
+                    <span id="taxWatchInlinePreviewStatus">Plenty of time left</span>
+                  </div>
+                </div>
+                <div class="tax-watch-inline-preview-clock" aria-label="Preview time remaining">
+                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewHours">00</span>
+                  <span class="tax-watch-inline-preview-clock-separator">:</span>
+                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewMinutes">00</span>
+                  <span class="tax-watch-inline-preview-clock-separator">:</span>
+                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewSeconds">00</span>
+                </div>
+                <button class="tax-watch-inline-preview-button" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
+                <span class="tax-watch-inline-preview-note" id="taxWatchInlinePreviewNote">No card is ever charged automatically</span>
+              </div>
             </div>
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
             <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
@@ -5256,7 +5299,8 @@
     function setCompactPreviewState(preview = {}, visible = false) {
       const pill = document.getElementById("taxWatchPreviewTopbarPill");
       const dashboardCard = document.getElementById("taxWatchDashboardPreviewCountdown");
-      [pill, dashboardCard].forEach((element) => {
+      const inlineCard = document.getElementById("taxWatchInlinePreviewCard");
+      [pill, dashboardCard, inlineCard].forEach((element) => {
         if (!element) return;
         element.hidden = !visible;
         if (visible) {
@@ -5272,9 +5316,10 @@
     function updateCompactPreviewCountdowns(now = Date.now()) {
       const pill = document.getElementById("taxWatchPreviewTopbarPill");
       const dashboardCard = document.getElementById("taxWatchDashboardPreviewCountdown");
-      if ((!pill || pill.hidden) && (!dashboardCard || dashboardCard.hidden)) return;
+      const inlineCard = document.getElementById("taxWatchInlinePreviewCard");
+      if ((!pill || pill.hidden) && (!dashboardCard || dashboardCard.hidden) && (!inlineCard || inlineCard.hidden)) return;
 
-      const source = pill && !pill.hidden ? pill : dashboardCard;
+      const source = pill && !pill.hidden ? pill : dashboardCard && !dashboardCard.hidden ? dashboardCard : inlineCard;
       const startMs = Date.parse(source?.dataset.previewStartsAt || "");
       const endMs = Date.parse(source?.dataset.previewEndsAt || "");
       if (!Number.isFinite(endMs)) return;
@@ -5338,6 +5383,38 @@
       if (dashboardCard) {
         dashboardCard.classList.toggle("preview-ending", !expired && days <= 4);
         dashboardCard.classList.toggle("preview-ended", expired);
+      }
+
+      const inlineRing = document.getElementById("taxWatchInlinePreviewRing");
+      const inlineDays = document.getElementById("taxWatchInlinePreviewDays");
+      const inlineHeading = document.getElementById("taxWatchInlinePreviewHeading");
+      const inlineStatus = document.getElementById("taxWatchInlinePreviewStatus");
+      const inlineNote = document.getElementById("taxWatchInlinePreviewNote");
+      const inlineHours = document.getElementById("taxWatchInlinePreviewHours");
+      const inlineMinutes = document.getElementById("taxWatchInlinePreviewMinutes");
+      const inlineSeconds = document.getElementById("taxWatchInlinePreviewSeconds");
+      if (inlineRing) {
+        inlineRing.style.stroke = color;
+        inlineRing.style.strokeDashoffset = String(138.230 * (1 - fraction));
+      }
+      if (inlineDays) inlineDays.textContent = expired ? "0" : String(days);
+      if (inlineHours) inlineHours.textContent = pad(hours);
+      if (inlineMinutes) inlineMinutes.textContent = pad(minutes);
+      if (inlineSeconds) inlineSeconds.textContent = pad(seconds);
+      if (inlineHeading) inlineHeading.textContent = expired ? "Preview ended" : "Preview running";
+      if (inlineStatus) inlineStatus.textContent = expired
+        ? "Saved records remain available"
+        : days <= 1
+          ? "Ending soon"
+          : days <= 4
+            ? "Getting close"
+            : "Plenty of time left";
+      if (inlineNote) inlineNote.textContent = expired
+        ? "No payment was taken"
+        : "No card is ever charged automatically";
+      if (inlineCard) {
+        inlineCard.classList.toggle("preview-ending", !expired && days <= 4);
+        inlineCard.classList.toggle("preview-ended", expired);
       }
     }
 
