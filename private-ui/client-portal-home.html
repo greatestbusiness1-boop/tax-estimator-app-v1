@@ -2055,15 +2055,16 @@
 
     /* Tax Money Tracker preview countdown — V3.1.0 */
     .tax-watch-preview-card{margin:0 0 18px;padding:20px;border:1px solid #bfd4e3;border-radius:18px;background:linear-gradient(135deg,#eef7fb,#fff8e8);box-shadow:0 10px 24px rgba(20,50,75,.07)}
-    .tax-watch-preview-top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+    .tax-watch-preview-top{display:flex;align-items:stretch;justify-content:space-between;gap:22px}
+    .tax-watch-preview-copy{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start}
     .tax-watch-preview-top h3{margin:4px 0 5px;color:#0f3159;font-size:22px}
-    .tax-watch-preview-top p{margin:0;color:#526779}
+    .tax-watch-preview-top p{color:#526779}
     .tax-watch-preview-countdown{min-width:270px;padding:14px 16px;border-radius:14px;background:#10375e;color:#fff;text-align:center;font-weight:900;font-size:22px;letter-spacing:.01em}
     .tax-watch-preview-countdown.expired{background:#7f1d1d}
-    .tax-watch-preview-progress{height:13px;margin:16px 0 10px;border-radius:999px;background:#dbe7ee;overflow:hidden;border:1px solid #c7d8e2}
+    .tax-watch-preview-progress{height:13px;margin:14px 0 0;border-radius:999px;background:#dbe7ee;overflow:hidden;border:1px solid #c7d8e2}
     .tax-watch-preview-progress>div{height:100%;width:0;background:linear-gradient(90deg,#d29a22,#13805f);transition:width .4s ease}
-    .tax-watch-preview-note{margin:0;color:#25455d;line-height:1.55}
-    .tax-watch-preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .tax-watch-preview-note{margin:11px 0 0;color:#25455d;line-height:1.55}
+    .tax-watch-preview-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
     .tax-watch-preview-actions[hidden]{display:none!important}
     .tax-watch-preview-actions a{display:inline-flex;align-items:center;justify-content:center;padding:11px 15px;border-radius:10px;background:#0f355d;color:#fff;text-decoration:none;font-weight:800}
     .tax-watch-preview-actions a.secondary{background:#fff;color:#0f355d;border:1px solid #a9c1d2}
@@ -2139,7 +2140,7 @@
       .dashboard-preview-actions{grid-column:1/-1}
     }
     @media(max-width:760px){
-      .tax-watch-preview-top{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-inline-preview-card{width:100%;margin-top:14px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}
+      .tax-watch-preview-top{display:block}.tax-watch-preview-copy{display:block}.tax-watch-preview-countdown{min-width:0;margin-top:14px;font-size:18px}.tax-watch-inline-preview-card{width:100%;margin-top:14px}.tax-watch-preview-actions{margin-top:16px}.tax-watch-preview-actions a,.tax-watch-preview-actions button{width:100%}
       .preview-topbar-pill{width:100%;justify-content:center;border-radius:14px}
       .preview-pill-copy{flex:1}
       .dashboard-preview-countdown{grid-template-columns:1fr;text-align:center}
@@ -2659,10 +2660,16 @@
         <div id="taxWatchDashboard" hidden>
           <div class="tax-watch-preview-card" id="taxWatchPreviewCard" hidden>
             <div class="tax-watch-preview-top">
-              <div>
+              <div class="tax-watch-preview-copy">
                 <div class="eyebrow" id="taxWatchMembershipCardEyebrow">Tax Watch Pro Preview</div>
                 <h3 id="taxWatchPreviewHeading">Your preview is active</h3>
                 <p id="taxWatchPreviewDates">Loading your preview dates...</p>
+                <div class="tax-watch-preview-actions" id="taxWatchMembershipCheckoutActions">
+                  <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
+                  <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
+                </div>
+                <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
+                <div class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"></div>
               </div>
               <div class="tax-watch-inline-preview-card" id="taxWatchInlinePreviewCard" data-preview-compact hidden>
                 <div class="tax-watch-inline-preview-top">
@@ -2690,12 +2697,6 @@
               </div>
             </div>
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
-            <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
-            <div class="tax-watch-preview-actions" id="taxWatchMembershipCheckoutActions">
-              <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
-              <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
-            </div>
-            <div class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"></div>
           </div>
           <div class="tax-watch-readonly-notice" id="taxWatchPreviewExpiredNotice" hidden>Your preview has ended. No charge occurred. Your saved records remain available, but new updates and savings entries are paused until you choose a plan.</div>
           <div class="tax-watch-summary-grid">
