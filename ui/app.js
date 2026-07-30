@@ -273,7 +273,10 @@ function refreshFreeEstimateEditBanner() {
   if (name) name.textContent = identity.fullName;
   if (email) email.textContent = identity.email;
   if (reference) {
-    reference.textContent = identity.sourceLeadId || "Saved estimate";
+    reference.textContent =
+      identity.estimateFamilyId ||
+      identity.sourceLeadId ||
+      "Saved estimate";
   }
 }
 
@@ -3319,6 +3322,11 @@ function renderClientEstimateSummaryLink() {
   const leadId = _leadGatewayContact?.leadId;
   if (!leadId) return;
 
+  const clientReference = String(
+    _leadGatewayContact?.estimateFamilyId ||
+    leadId
+  ).trim();
+
   const summaryUrl =
     `${window.location.origin}/estimate/${encodeURIComponent(leadId)}`;
 
@@ -3340,7 +3348,7 @@ function renderClientEstimateSummaryLink() {
         working-child guidance, and the items that could change the estimate.
       </div>
       <div class="detailed-summary-ready-reference">
-        Reference ID: ${escHtml(leadId)}
+        Reference ID: ${escHtml(clientReference)}
       </div>
     </div>
 
