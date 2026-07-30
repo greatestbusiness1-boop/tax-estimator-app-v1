@@ -226,6 +226,44 @@
   }
 </style>
 
+
+<style id="v3-3-13-header-visibility-fix">
+  .site-header .header-contact {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 12px;
+    border: 1px solid rgba(255,255,255,.32);
+    border-radius: 10px;
+    background: rgba(255,255,255,.12);
+  }
+
+  .site-header .header-contact-label {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+  }
+
+  .site-header .header-contact-link {
+    color: #7ff3d2 !important;
+    font-weight: 900 !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .site-header .header-contact-link:hover,
+  .site-header .header-contact-link:focus {
+    color: #ffffff !important;
+  }
+
+  @media (max-width: 760px) {
+    .site-header .header-contact {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -380,8 +418,8 @@
       </div>
 
       <div class="membership-availability-note">
-        <strong>Free Tax Estimator is available now, and Tax Watch Pro preview access is available through the Secure Client Portal.</strong>
-        Pinnacle Tax Action Plan remains a planned membership. No preview automatically starts a paid subscription or charges a payment method.
+        <strong>Tax Watch Pro and Pinnacle Tax Action Plan are both Secure Client Portal services.</strong>
+        Tax Watch Pro preview access is available now. Pinnacle Tax Action Plan remains planned and will also be accessed through the Secure Client Portal when released. Viewing plans or starting a preview does not automatically begin a paid subscription or charge a payment method.
       </div>
 
       <div class="tax-credit-policy">
@@ -1557,7 +1595,7 @@
           </div>
 
           <div class="personalized-upgrade-note">
-            Tax Watch Pro preview access is available through the Secure Client Portal. Pinnacle Tax Action Plan remains a planned membership. Exploring a plan does not start a subscription or charge you.
+            Tax Watch Pro and Pinnacle Tax Action Plan are both accessed through the Secure Client Portal. Tax Watch Pro preview access is available now; Pinnacle remains planned and will appear in the portal when released. Exploring or comparing a plan does not start a subscription or charge you.
             <a href="/plans-pricing" data-estimator-return-link="true">Compare all plans and benefits</a>
           </div>
         </section>

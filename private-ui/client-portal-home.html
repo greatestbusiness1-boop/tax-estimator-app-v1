@@ -2179,6 +2179,63 @@
       .dashboard-preview-checkout-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
       .dashboard-preview-checkout-actions button{width:100%}
     }
+  
+    /* V3.3.13 portal brightness and membership-access wording */
+    body{
+      background:#f7fafc;
+    }
+    .topbar{
+      background:#f8fbff;
+      color:#102b46;
+      border-bottom:1px solid #cbdbe7;
+      box-shadow:0 5px 18px rgba(16,43,70,.10);
+    }
+    .brand-text strong{color:#102b46}
+    .brand-text span{color:#587087}
+    .top-link,
+    .signout{
+      border-color:#8ba9bf;
+      background:#ffffff;
+      color:#123a5b;
+    }
+    .top-link:hover,
+    .top-link:focus,
+    .signout:hover,
+    .signout:focus{
+      background:#eaf4fa;
+      color:#0b4d75;
+    }
+    .portal-top-navigation{
+      background:#edf6fb;
+      border-bottom:1px solid #c7dce9;
+    }
+    .portal-top-navigation .portal-sidebar-head span,
+    .portal-top-navigation .portal-sidebar-head strong{
+      color:#123a5b;
+    }
+    .portal-top-navigation .portal-nav>.portal-nav-item,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item{
+      color:#123a5b;
+      border:1px solid transparent;
+    }
+    .portal-top-navigation .portal-nav>.portal-nav-item:hover,
+    .portal-top-navigation .portal-nav>.portal-nav-item:focus,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item:hover,
+    .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item:focus{
+      background:#ffffff;
+      color:#0b5685;
+      border-color:#b9d1e0;
+    }
+    .portal-top-navigation .portal-nav-item.is-active{
+      background:#ffffff!important;
+      color:#0b4d75!important;
+      border-color:#9fc0d5;
+      box-shadow:0 3px 10px rgba(16,43,70,.08);
+    }
+    .portal-layout>.wrap{
+      background:#f7fafc;
+    }
+
   </style>
 </head>
 <body>
@@ -2866,7 +2923,7 @@
         <div>
           <div class="eyebrow">Plans &amp; Pricing</div>
           <h2>Start Free. Add More Guidance When You Need It.</h2>
-          <p>Compare the Free Tax Estimator, Tax Watch Pro, and the Pinnacle Tax Action Plan. Nothing is added to your account until you choose it.</p>
+          <p>Tax Watch Pro and Pinnacle Tax Action Plan are both Secure Client Portal services. Tax Watch Pro is available for preview now; Pinnacle remains planned and will open here when released. Nothing is added to your account and no payment is created until you deliberately choose an available paid plan.</p>
         </div>
         <div class="cx-billing-toggle" aria-label="Choose monthly or annual pricing">
           <button class="active" type="button" data-portal-billing="monthly">Monthly</button>
