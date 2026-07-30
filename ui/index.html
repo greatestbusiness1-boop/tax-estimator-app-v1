@@ -68,6 +68,75 @@
 </style>
 
 
+<style id="free-estimate-edit-flow-styles">
+  .free-estimate-edit-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    max-width: 1180px;
+    margin: 18px auto 0;
+    padding: 16px 18px;
+    border: 2px solid #2563eb;
+    border-radius: 16px;
+    background: #eff6ff;
+    color: #0f2c56;
+    box-shadow: 0 8px 22px rgba(15, 44, 86, 0.08);
+  }
+
+  .free-estimate-edit-banner[hidden] {
+    display: none !important;
+  }
+
+  .free-estimate-edit-banner strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 950;
+  }
+
+  .free-estimate-edit-details,
+  .free-estimate-edit-note {
+    margin-top: 4px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .free-estimate-edit-details span {
+    font-weight: 900;
+  }
+
+  .free-estimate-edit-exit {
+    border: 2px solid #0f2c56;
+    border-radius: 11px;
+    background: #ffffff;
+    color: #0f2c56;
+    cursor: pointer;
+    padding: 10px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .free-estimate-edit-exit:hover,
+  .free-estimate-edit-exit:focus-visible {
+    background: #0f2c56;
+    color: #ffffff;
+  }
+
+  @media (max-width: 760px) {
+    .free-estimate-edit-banner {
+      grid-template-columns: 1fr;
+    }
+
+    .free-estimate-edit-exit {
+      width: 100%;
+    }
+  }
+</style>
+
 <style id="tax-watch-additional-source-accordion">
   #taxWatchAdditionalSources {
     margin: 4px 0 16px;
@@ -800,6 +869,20 @@
           <span>Your latest saved estimate is loaded below. Change only what is new, then calculate and save the updated result.</span>
         </div>
         <a href="/client-portal/home#tax-watch">Return to Tax Watch Pro</a>
+      </div>
+      <div id="freeEstimateEditBanner" class="free-estimate-edit-banner" hidden>
+        <div>
+          <strong>Editing saved estimate for <b id="freeEstimateEditName"></b></strong>
+          <div class="free-estimate-edit-details">
+            <span id="freeEstimateEditEmail"></span> &bull; Reference: <span id="freeEstimateEditReference"></span>
+          </div>
+          <div class="free-estimate-edit-note">
+            Your identity stays attached automatically. Another free-estimate use is counted only after you complete a recalculation.
+          </div>
+        </div>
+        <button type="button" class="free-estimate-edit-exit" onclick="cancelEstimateEdit()">
+          Exit Without Recalculating
+        </button>
       </div>
       <div class="form-wrap">
 
@@ -1663,7 +1746,7 @@
         <!-- Action bar -->
         <div class="action-bar">
           <div class="action-bar-left">
-            <button class="btn-action" onclick="goToScreen('form')">&#x270F; Edit My Answers</button>
+            <button class="btn-action" onclick="beginEstimateEdit()">&#x270F; Edit My Answers</button>
             <button class="btn-action" onclick="goToScreen('welcome')">&#x21A9; Start Over</button>
             <a class="btn-action" href="/">Exit to Home Page</a>
           </div>

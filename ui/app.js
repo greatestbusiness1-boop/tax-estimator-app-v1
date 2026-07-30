@@ -8,6 +8,7 @@ let _lastTaxInput = null;
 let _lastEstimate = null;
 let _leadGatewayUnlocked = false;
 let _leadGatewayContact = null;
+let _freeEstimateEditContext = null;
 let _workingChildCounter = 0;
 let _taxWatchUpdateContext = null;
 
@@ -212,6 +213,125 @@ function updateProgress(activeId) {
 function scrollToLead() {
   const el = document.getElementById("leadSection");
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function getActiveFreeEstimateEditIdentity() {
+  if (
+    !_freeEstimateEditContext ||
+    !_leadGatewayContact ||
+    !String(_freeEstimateEditContext.fullName || "").trim() ||
+    !String(_freeEstimateEditContext.email || "").trim()
+  ) {
+    return null;
+  }
+
+  return {
+    fullName: String(_freeEstimateEditContext.fullName || "").trim(),
+    email: String(_freeEstimateEditContext.email || "").trim(),
+    sourceLeadId: String(_freeEstimateEditContext.sourceLeadId || "").trim(),
+    estimateFamilyId: String(
+      _freeEstimateEditContext.estimateFamilyId ||
+      _freeEstimateEditContext.sourceLeadId ||
+      ""
+    ).trim(),
+    taxYear: String(
+      _freeEstimateEditContext.taxYear ||
+      _lastTaxInput?.taxYear ||
+      ""
+    ).trim()
+  };
+}
+
+function refreshFreeEstimateEditBanner() {
+  const banner = document.getElementById("freeEstimateEditBanner");
+  if (!banner) return;
+
+  const identity = getActiveFreeEstimateEditIdentity();
+  banner.hidden = !identity;
+
+  const taxYearField = document.getElementById("taxYear");
+  if (taxYearField) {
+    taxYearField.disabled = Boolean(identity);
+  }
+
+  const calculateButton = document.getElementById("calculateBtn");
+  if (calculateButton) {
+    calculateButton.dataset.editMode = identity ? "true" : "false";
+    if (!calculateButton.disabled) {
+      calculateButton.innerHTML = identity
+        ? "Calculate Updated Estimate"
+        : "Calculate My Estimate";
+    }
+  }
+
+  if (!identity) return;
+
+  const name = document.getElementById("freeEstimateEditName");
+  const email = document.getElementById("freeEstimateEditEmail");
+  const reference = document.getElementById("freeEstimateEditReference");
+
+  if (name) name.textContent = identity.fullName;
+  if (email) email.textContent = identity.email;
+  if (reference) {
+    reference.textContent = identity.sourceLeadId || "Saved estimate";
+  }
+}
+
+function beginEstimateEdit() {
+  const fullName = String(_leadGatewayContact?.fullName || "").trim();
+  const email = String(_leadGatewayContact?.email || "").trim();
+  const sourceLeadId = String(_leadGatewayContact?.leadId || "").trim();
+
+  if (
+    !_lastTaxInput ||
+    !_lastEstimate ||
+    !fullName ||
+    !email ||
+    !sourceLeadId
+  ) {
+    goToScreen("form");
+    return;
+  }
+
+  restoreEstimatorFormFromTaxData(_lastTaxInput);
+
+  _freeEstimateEditContext = {
+    fullName,
+    email,
+    sourceLeadId,
+    estimateFamilyId: String(
+      _leadGatewayContact?.estimateFamilyId ||
+      sourceLeadId
+    ).trim(),
+    taxYear: String(_lastTaxInput.taxYear || "").trim(),
+    startedAt: new Date().toISOString()
+  };
+
+  refreshFreeEstimateEditBanner();
+  goToScreen("form");
+}
+
+function cancelEstimateEdit() {
+  if (!_freeEstimateEditContext) {
+    goToScreen("results");
+    return;
+  }
+
+  if (_lastTaxInput) {
+    restoreEstimatorFormFromTaxData(_lastTaxInput);
+  }
+
+  _freeEstimateEditContext = null;
+  refreshFreeEstimateEditBanner();
+
+  if (_lastTaxInput && _lastEstimate) {
+    renderResults(_lastEstimate, _lastTaxInput);
+    renderFreeEstimateUsageNotice(
+      _leadGatewayContact?.freeEstimateUsage || null
+    );
+  }
+
+  goToScreen("results");
 }
 
 const PAID_REVIEW_URL = "https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00";
@@ -1475,7 +1595,9 @@ function setCalculateLoading(isLoading) {
     btn.style.opacity = "0.72";
   } else {
     btn.disabled = false;
-    btn.innerHTML = btn.dataset.orig || "Calculate My Estimate";
+    btn.innerHTML = btn.dataset.editMode === "true"
+      ? "Calculate Updated Estimate"
+      : "Calculate My Estimate";
     btn.style.opacity = "";
   }
 }
@@ -1534,11 +1656,24 @@ async function handleCalculate() {
       return;
     }
 
+    const editIdentity = getActiveFreeEstimateEditIdentity();
+
+    if (editIdentity && !_taxWatchUpdateContext) {
+      await submitLeadGateway(
+        input,
+        data.result,
+        editIdentity
+      );
+      return;
+    }
+
     _lastTaxInput = input;
     _lastEstimate = data.result;
 
     _leadGatewayUnlocked = false;
     _leadGatewayContact = null;
+    _freeEstimateEditContext = null;
+    refreshFreeEstimateEditBanner();
     showLeadGateway(input, data.result);
   } catch (err) {
     console.error("[handleCalculate]", err);
@@ -1905,11 +2040,20 @@ function renderFreeEstimateUsageNotice(usage = {}) {
   disclaimer.insertAdjacentElement("afterend", notice);
 }
 
-async function submitLeadGateway(input, result) {
-  const fullName = (document.getElementById("gatewayFullName")?.value || "").trim();
-  const email = (document.getElementById("gatewayEmail")?.value || "").trim();
+async function submitLeadGateway(input, result, existingIdentity = null) {
+  const identity = existingIdentity && typeof existingIdentity === "object"
+    ? existingIdentity
+    : null;
+  const fullName = identity
+    ? String(identity.fullName || "").trim()
+    : (document.getElementById("gatewayFullName")?.value || "").trim();
+  const email = identity
+    ? String(identity.email || "").trim()
+    : (document.getElementById("gatewayEmail")?.value || "").trim();
   const errorBox = document.getElementById("leadGatewayErrors");
-  const btn = document.getElementById("gatewayUnlockBtn");
+  const btn = identity
+    ? null
+    : document.getElementById("gatewayUnlockBtn");
 
   const errors = [];
 
@@ -1961,6 +2105,17 @@ async function submitLeadGateway(input, result) {
               updateReason: "Tax Watch Pro estimate update"
             }
           : null,
+        freeEstimateRevision: identity?.sourceLeadId
+          ? {
+              sourceLeadId: identity.sourceLeadId,
+              estimateFamilyId:
+                identity.estimateFamilyId ||
+                identity.sourceLeadId,
+              editStartedAt:
+                _freeEstimateEditContext?.startedAt ||
+                new Date().toISOString()
+            }
+          : null,
       }),
     });
 
@@ -1973,6 +2128,10 @@ async function submitLeadGateway(input, result) {
 
     if (!response.ok || !data.ok) {
       if (data.code === "FREE_ESTIMATE_LIMIT_REACHED") {
+        if (!document.getElementById("leadGatewayOverlay")) {
+          showLeadGateway(input, result);
+        }
+
         renderFreeEstimateLimitReached(
           data.freeEstimateUsage || {},
           {
@@ -1980,7 +2139,7 @@ async function submitLeadGateway(input, result) {
             taxYear: input?.taxYear || ""
           }
         );
-        return;
+        return false;
       }
 
       const serverErrors = Array.isArray(data.errors) && data.errors.length > 0
@@ -1989,13 +2148,22 @@ async function submitLeadGateway(input, result) {
       throw new Error(serverErrors.join(" "));
     }
 
+    _lastTaxInput = input;
+    _lastEstimate = result;
     _leadGatewayUnlocked = true;
     _leadGatewayContact = {
       fullName,
       email,
       leadId: data.leadId || null,
+      estimateFamilyId:
+        data.estimateFamilyId ||
+        identity?.estimateFamilyId ||
+        data.leadId ||
+        null,
       freeEstimateUsage: data.freeEstimateUsage || null,
     };
+    _freeEstimateEditContext = null;
+    refreshFreeEstimateEditBanner();
 
     const overlay = document.getElementById("leadGatewayOverlay");
     if (overlay) overlay.remove();
@@ -2015,9 +2183,15 @@ async function submitLeadGateway(input, result) {
       localStorage.removeItem(TAX_WATCH_UPDATE_CONTEXT_KEY);
       ensureTaxWatchReturnBanner();
     }
+
+    return true;
   } catch (err) {
-    if (errorBox) {
-      errorBox.textContent = err.message || "Could not unlock your estimate. Please try again.";
+    const message = err.message || "Could not unlock your estimate. Please try again.";
+
+    if (identity) {
+      showErrors([message]);
+    } else if (errorBox) {
+      errorBox.textContent = message;
       errorBox.style.display = "block";
     }
 
@@ -2026,6 +2200,8 @@ async function submitLeadGateway(input, result) {
       btn.textContent = "View My Full Estimate";
       btn.style.opacity = "";
     }
+
+    return false;
   }
 }
 
@@ -2941,6 +3117,165 @@ function setEstimatorRadioValue(name, value) {
     radio.checked = true;
     radio.dispatchEvent(new Event("change", { bubbles: true }));
   }
+}
+
+function restoreEstimatorFormFromTaxData(taxData = {}) {
+  if (!taxData || typeof taxData !== "object") return;
+
+  setEstimatorFieldValue("taxYear", taxData.taxYear);
+  setEstimatorFieldValue("filingStatus", taxData.filingStatus);
+  setEstimatorFieldValue("age", taxData.age);
+  setEstimatorRadioValue(
+    "isFullTimeStudent",
+    Boolean(taxData.isFullTimeStudent)
+  );
+  setEstimatorRadioValue(
+    "canBeClaimedAsDependent",
+    Boolean(taxData.canBeClaimedAsDependent)
+  );
+  setEstimatorFieldValue("stateCode", taxData.stateCode);
+  setEstimatorFieldValue(
+    "numberOfDependents",
+    taxData.numberOfDependents
+  );
+  setEstimatorFieldValue("w2Income", taxData.w2Income);
+  setEstimatorFieldValue("otherIncome", taxData.otherIncome);
+  setEstimatorFieldValue("scholarships", taxData.scholarships);
+  setEstimatorFieldValue(
+    "educationExpenses",
+    taxData.educationExpenses
+  );
+  setEstimatorFieldValue(
+    "federalWithheld",
+    taxData.federalWithheld
+  );
+  setEstimatorFieldValue(
+    "stateWithheld",
+    taxData.stateWithheld
+  );
+  setEstimatorFieldValue(
+    "businessMileage",
+    taxData.businessMileage
+  );
+  setEstimatorFieldValue(
+    "estimatedTaxPayments",
+    taxData.estimatedTaxPayments
+  );
+
+  const children = Array.isArray(taxData.workingChildren)
+    ? taxData.workingChildren
+    : [];
+  const hasWorkingChildren = Boolean(
+    taxData.hasWorkingChildIncome &&
+    children.length > 0
+  );
+
+  setEstimatorRadioValue(
+    "hasWorkingChildIncome",
+    hasWorkingChildren
+  );
+
+  const workingChildList =
+    document.getElementById("workingChildList");
+  if (workingChildList) {
+    workingChildList.innerHTML = "";
+  }
+  _workingChildCounter = 0;
+  setWorkingChildPanelVisible(hasWorkingChildren);
+
+  if (hasWorkingChildren) {
+    children.forEach((child, index) => {
+      if (index > 0) addWorkingChildCard();
+      const card = document.querySelectorAll(
+        ".working-child-card"
+      )[index];
+      if (!card) return;
+
+      const values = {
+        ".wc-name": child.name,
+        ".wc-relationship": child.relationship,
+        ".wc-age": child.age,
+        ".wc-student": child.student,
+        ".wc-disabled": child.disabled,
+        ".wc-residency": child.residency,
+        ".wc-wages": child.wages,
+        ".wc-gig-income": child.gigIncome,
+        ".wc-unearned-income": child.unearnedIncome,
+        ".wc-federal-withheld": child.federalWithheld,
+        ".wc-state-withheld": child.stateWithheld,
+        ".wc-support": child.support,
+        ".wc-citizenship": child.citizenship,
+        ".wc-joint-return": child.jointReturn,
+        ".wc-other-claim": child.otherClaim
+      };
+
+      Object.entries(values).forEach(
+        ([selector, value]) => {
+          const field = card.querySelector(selector);
+          if (field) {
+            field.value = value === undefined || value === null
+              ? ""
+              : String(value);
+          }
+        }
+      );
+    });
+  }
+
+  updateWorkingChildCheckerVisibility();
+  refreshWorkingChildInlineResults();
+
+  const streams = Array.isArray(
+    taxData.selfEmploymentStreams
+  )
+    ? taxData.selfEmploymentStreams
+    : [];
+  const expenseKeys = [
+    "advertising", "contractLabor", "insurance",
+    "legalProfessional", "officeExpense",
+    "equipmentRent", "repairs", "supplies",
+    "taxesLicenses", "travel", "meals",
+    "utilities", "platformFees",
+    "softwareSubscriptions", "phoneInternet",
+    "other"
+  ];
+
+  for (
+    let sourceNumber = 1;
+    sourceNumber <= TAX_WATCH_PRO_SOURCE_LIMIT;
+    sourceNumber += 1
+  ) {
+    const source = streams[sourceNumber - 1] || {};
+    const incomeField = sourceNumber === 1
+      ? "selfEmploymentIncome"
+      : `businessSource${sourceNumber}Income`;
+    const expenseField = sourceNumber === 1
+      ? "businessExpenses"
+      : `businessSource${sourceNumber}Expenses`;
+
+    setEstimatorFieldValue(
+      `businessSource${sourceNumber}Name`,
+      source.source || ""
+    );
+    setEstimatorFieldValue(
+      incomeField,
+      source.income || 0
+    );
+    setEstimatorFieldValue(
+      expenseField,
+      source.uncategorizedExpenses ?? 0
+    );
+
+    expenseKeys.forEach((key) => {
+      setEstimatorFieldValue(
+        `businessSource${sourceNumber}Expense_${key}`,
+        source.expenseCategories?.[key] || 0
+      );
+    });
+  }
+
+  openPopulatedTaxWatchAdditionalSources();
+  clearErrors();
 }
 
 function loadTaxWatchUpdateContext() {

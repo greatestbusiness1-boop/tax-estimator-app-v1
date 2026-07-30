@@ -4809,6 +4809,68 @@ async function getFreeEstimateIdentityAccessibleLeads(email) {
   );
 }
 
+function normalizeFreeEstimateClientName(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function getFreeEstimateIdentityNameGuard(
+  accessible = [],
+  submittedName = ""
+) {
+  const submittedNameKey =
+    normalizeFreeEstimateClientName(submittedName);
+  const namedRecords = accessible
+    .map((entry) => {
+      const record = getFreeEstimateRecord(entry);
+      const name = getLeadNameValue(record);
+      const nameKey =
+        normalizeFreeEstimateClientName(name);
+      const timestampMs = Date.parse(
+        getFreeEstimateRecordTimestamp(entry)
+      );
+
+      return {
+        name,
+        nameKey,
+        timestampMs: Number.isFinite(timestampMs)
+          ? timestampMs
+          : 0
+      };
+    })
+    .filter((item) =>
+      item.nameKey &&
+      item.nameKey !== "client"
+    )
+    .sort((left, right) =>
+      right.timestampMs - left.timestampMs
+    );
+
+  if (
+    !submittedNameKey ||
+    namedRecords.length === 0 ||
+    namedRecords.some((item) =>
+      item.nameKey === submittedNameKey
+    )
+  ) {
+    return {
+      ok: true,
+      establishedName:
+        namedRecords[0]?.name || ""
+    };
+  }
+
+  return {
+    ok: false,
+    establishedName:
+      namedRecords[0]?.name || "Existing client"
+  };
+}
+
 function getFreeEstimateRecord(entry = {}) {
   return entry.lead || entry.raw || entry || {};
 }
@@ -10989,7 +11051,8 @@ app.post("/api/lead", async (req, res) => {
     status,
     notes,
     taxWatchUpdate,
-    submissionType
+    submissionType,
+    freeEstimateRevision
   } = req.body || {};
 
   const errors = [];
@@ -11040,6 +11103,8 @@ app.post("/api/lead", async (req, res) => {
         )
       : "";
   let freeEstimateUsageBefore = null;
+  let freeEstimateAccessible = [];
+  let freeEstimateRevisionSource = null;
 
   if (
     isFreeEstimateSubmission &&
@@ -11055,6 +11120,58 @@ app.post("/api/lead", async (req, res) => {
 
   if (isFreeEstimateSubmission) {
     try {
+      freeEstimateAccessible =
+        await getFreeEstimateIdentityAccessibleLeads(
+          email
+        );
+
+      const identityGuard =
+        getFreeEstimateIdentityNameGuard(
+          freeEstimateAccessible,
+          name
+        );
+
+      if (!identityGuard.ok) {
+        return res.status(409).json({
+          ok: false,
+          code: "FREE_ESTIMATE_IDENTITY_MISMATCH",
+          errors: [
+            `This email is already connected to ${identityGuard.establishedName}. Use the original client name, sign in to the existing portal, or use a different email address.`
+          ]
+        });
+      }
+
+      const requestedRevisionSourceId = String(
+        freeEstimateRevision?.sourceLeadId ||
+        ""
+      ).trim();
+
+      if (requestedRevisionSourceId) {
+        const sourceEntry = freeEstimateAccessible.find(
+          (entry) =>
+            getFreeEstimateRecordLeadId(entry) ===
+              requestedRevisionSourceId
+        );
+
+        if (
+          !sourceEntry ||
+          !isCompletedFreeEstimateRecord(sourceEntry) ||
+          getFreeEstimateRecordTaxYear(sourceEntry) !==
+            freeEstimateTaxYear
+        ) {
+          return res.status(409).json({
+            ok: false,
+            code: "FREE_ESTIMATE_REVISION_SOURCE_MISMATCH",
+            errors: [
+              "The saved estimate being edited could not be verified for this client and tax year. Reopen the latest saved estimate or contact Greatest Business Solution LLC."
+            ]
+          });
+        }
+
+        freeEstimateRevisionSource =
+          getFreeEstimateRecord(sourceEntry);
+      }
+
       freeEstimateUsageBefore =
         await getFreeEstimateUsage(
           email,
@@ -11129,9 +11246,49 @@ app.post("/api/lead", async (req, res) => {
           limit: FREE_ESTIMATE_LIMIT,
           limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
           profileType: "lightweight-free-estimate",
-          portalCreatedAutomatically: false
+          portalCreatedAutomatically: false,
+          revisedFromLeadId:
+            freeEstimateRevisionSource
+              ? getLeadIdValue(
+                  freeEstimateRevisionSource
+                )
+              : ""
         }
       : null,
+    freeEstimateRevision:
+      isFreeEstimateSubmission &&
+      freeEstimateRevisionSource
+        ? {
+            sourceLeadId: getLeadIdValue(
+              freeEstimateRevisionSource
+            ),
+            estimateFamilyId: String(
+              freeEstimateRevisionSource
+                ?.freeEstimateRevision
+                ?.estimateFamilyId ||
+              freeEstimateRevision
+                ?.estimateFamilyId ||
+              getLeadIdValue(
+                freeEstimateRevisionSource
+              )
+            ).trim(),
+            revisionNumber: Math.max(
+              2,
+              Number(
+                freeEstimateRevisionSource
+                  ?.freeEstimateRevision
+                  ?.revisionNumber ||
+                1
+              ) + 1
+            ),
+            editStartedAt: String(
+              freeEstimateRevision
+                ?.editStartedAt ||
+              ""
+            ).trim() || null,
+            recalculatedAt: new Date().toISOString()
+          }
+        : null,
     taxWatchUpdate:
       taxWatchUpdate &&
       typeof taxWatchUpdate === "object" &&
@@ -11363,6 +11520,12 @@ Greatest Business Solution LLC`,
   return res.status(201).json({
     ok: true,
     leadId: savedLead.leadId,
+    estimateFamilyId: String(
+      savedLead.freeEstimateRevision
+        ?.estimateFamilyId ||
+      savedLead.leadId ||
+      ""
+    ).trim(),
     emailSent,
     emailError: emailSent ? null : emailError,
     freeEstimateUsage,
