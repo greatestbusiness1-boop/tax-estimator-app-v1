@@ -1632,6 +1632,52 @@
       font-weight:850;
       cursor:pointer;
     }
+
+    .pinnacle-inline-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .pinnacle-inline-actions button,.pinnacle-business-actions button{
+      min-height:44px;padding:10px 16px;border:1px solid #0b5d8d;border-radius:10px;
+      background:#0b5d8d;color:#fff;font-weight:850;cursor:pointer
+    }
+    .pinnacle-business-actions button.secondary{background:#fff;color:#0b5685;border-color:#b9ccdc}
+    .pinnacle-business-page .section-body{padding:26px}
+    .pinnacle-business-intro{
+      display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start;
+      padding:22px;border:1px solid #c8dbe9;border-radius:18px;background:#f4f9fc;margin-bottom:20px
+    }
+    .pinnacle-business-intro h3{margin:0 0 8px;color:#0a3154;font-size:22px}
+    .pinnacle-business-intro p{margin:0;color:#526b80;line-height:1.6}
+    .pinnacle-business-summary{border:1px solid #c5d8e7;border-radius:14px;background:#fff;padding:16px}
+    .pinnacle-business-summary span{display:block;color:#64798b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .pinnacle-business-summary strong{display:block;margin-top:6px;color:#075d8c;font-size:18px}
+    .pinnacle-business-progress{height:8px;margin-top:12px;border-radius:999px;background:#dfeaf2;overflow:hidden}
+    .pinnacle-business-progress i{display:block;width:0;height:100%;background:#0b5d8d;transition:width .2s ease}
+    .pinnacle-form-card{border:1px solid #cbdce8;border-radius:18px;background:#fff;padding:22px;margin-top:18px}
+    .pinnacle-form-card h3{margin:0 0 6px;color:#0a3154}.pinnacle-form-card>p{margin:0 0 18px;color:#5c7183}
+    .pinnacle-structure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .pinnacle-structure-option{
+      position:relative;display:block;min-height:165px;padding:17px;border:1px solid #cadbe8;
+      border-radius:16px;background:#fff;cursor:pointer;transition:.15s
+    }
+    .pinnacle-structure-option:hover{border-color:#7da9c6;box-shadow:0 10px 24px rgba(15,59,91,.09);transform:translateY(-1px)}
+    .pinnacle-structure-option.is-selected{border:2px solid #0b5d8d;background:#f1f8fc}
+    .pinnacle-structure-option input{position:absolute;top:16px;right:16px;width:18px;height:18px;accent-color:#0b5d8d}
+    .pinnacle-structure-option strong{display:block;max-width:85%;margin-bottom:9px;color:#092f50;font-size:16px;line-height:1.3}
+    .pinnacle-structure-option small{display:block;color:#536d82;font-size:13px;line-height:1.48}
+    .pinnacle-business-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+    .pinnacle-business-field{display:flex;flex-direction:column;gap:7px}.pinnacle-business-field.wide{grid-column:span 2}.pinnacle-business-field.full{grid-column:1/-1}
+    .pinnacle-business-field label{color:#183e5c;font-size:13px;font-weight:800}
+    .pinnacle-business-field input,.pinnacle-business-field select,.pinnacle-business-field textarea{
+      width:100%;min-height:44px;padding:10px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit
+    }
+    .pinnacle-business-field textarea{min-height:90px;resize:vertical}
+    .pinnacle-conditional{display:none}.pinnacle-conditional.is-visible{display:flex}
+    .pinnacle-business-help{color:#687e90;font-size:12px;line-height:1.45}
+    .pinnacle-business-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
+    .pinnacle-save-status{min-height:20px;color:#12673a;font-size:13px;font-weight:800}
+    .pinnacle-safety-note{margin-top:18px;padding:14px 16px;border-left:4px solid #b47a00;background:#fff7df;color:#6c4b05;line-height:1.55}
+    @media(max-width:1080px){.pinnacle-structure-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pinnacle-business-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:720px){.pinnacle-business-intro,.pinnacle-structure-grid,.pinnacle-business-form-grid{grid-template-columns:1fr}.pinnacle-business-field.wide{grid-column:auto}.pinnacle-business-page .section-body{padding:16px}}
+
     .portal-nav-pinnacle{
       background:linear-gradient(135deg,#102b46,#155d8a);
       color:#fff;
@@ -1823,11 +1869,12 @@
     .portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item{
       width:auto;
       min-height:48px;
-      padding:10px 12px;
+      padding:10px 8px;
       color:#eef7ff;
       white-space:nowrap;
       border-radius:10px;
       justify-content:center!important;
+      font-size:12.5px;
     }
     .portal-top-navigation .portal-nav>.portal-nav-item:hover,
     .portal-top-navigation .portal-nav>.portal-nav-item:focus,
@@ -3026,6 +3073,9 @@
             <div class="cx-pinnacle-badge">Pinnacle Tax Action Plan</div>
             <h3>Turn your tax information into a clear year-round action plan.</h3>
             <p>Track business activity, compare possible tax outcomes, and follow practical steps designed to help you prepare for refunds, balances due, paycheck withholding, estimated taxes, and savings goals.</p>
+            <div class="pinnacle-inline-actions">
+              <button type="button" data-portal-open="pinnacle-business-profile">Start My Business Profile</button>
+            </div>
           </div>
           <div class="pinnacle-access-card">
             <span>Current Access</span>
@@ -3086,6 +3136,74 @@
         <div class="pinnacle-disclaimer">
           <strong>Planning estimate notice:</strong> Pinnacle provides planning estimates based on the information entered. Actual tax results may change when income, expenses, deductions, credits, tax law, or filing information changes.
         </div>
+      </div>
+    </section>
+
+
+    <section class="section portal-view pinnacle-business-page" id="pinnacleBusinessProfile" data-portal-view="pinnacle-business-profile">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Pinnacle Setup · Step 1</div>
+          <h2>Tell Us About Your Business</h2>
+          <p>Select the option that best matches how this business is currently organized and taxed.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
+      </div>
+      <div class="section-body">
+        <div class="pinnacle-business-intro">
+          <div>
+            <h3>Business Structure &amp; Profile</h3>
+            <p>Your answers will help Pinnacle organize income, expenses, mileage, reminders, and future tax-planning recommendations for the correct business.</p>
+          </div>
+          <div class="pinnacle-business-summary">
+            <span>Setup Progress</span><strong id="pinnacleBusinessProgressText">0% Complete</strong>
+            <div class="pinnacle-business-progress"><i id="pinnacleBusinessProgressBar"></i></div>
+          </div>
+        </div>
+
+        <div class="pinnacle-form-card">
+          <h3>Choose the Current Business Structure</h3>
+          <p>Having an EIN does not automatically make a sole proprietor an LLC or corporation.</p>
+          <div class="pinnacle-structure-grid" id="pinnacleStructureGrid">
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="sole-no-ein"><strong>Sole Proprietor — No EIN</strong><small>I operate an unincorporated business using my Social Security number rather than a separate EIN.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="sole-ein"><strong>Sole Proprietor — Has EIN</strong><small>I operate an unincorporated business and have an Employer Identification Number.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="single-llc"><strong>Single-Member LLC</strong><small>My business is registered as an LLC with one owner and has not elected another tax classification, or I am not sure.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="multi-llc"><strong>Multi-Member LLC</strong><small>My LLC has two or more owners and is generally taxed as a partnership unless another election was made.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="llc-scorp"><strong>LLC Taxed as an S Corporation</strong><small>My business is legally an LLC and an S corporation tax election was made.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="llc-ccorp"><strong>LLC Taxed as a C Corporation</strong><small>My business is legally an LLC and a C corporation tax election was made.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="scorp"><strong>S Corporation</strong><small>My corporation has elected S corporation tax treatment and generally passes tax items to its shareholders.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="ccorp"><strong>C Corporation</strong><small>My corporation is a separate taxpaying entity that normally files its own corporate return.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="partnership"><strong>Partnership</strong><small>I operate a business with one or more additional owners, or the business files a partnership return.</small></label>
+            <label class="pinnacle-structure-option"><input type="radio" name="pinnacleBusinessStructure" value="not-sure"><strong>Not Sure — Help Me Identify It</strong><small>I am not certain how the business is legally organized or taxed and need guidance about which documents to check.</small></label>
+          </div>
+        </div>
+
+        <form class="pinnacle-form-card" id="pinnacleBusinessProfileForm" novalidate>
+          <h3>Business Details</h3><p>Enter what you know now. Optional items may be completed later.</p>
+          <div class="pinnacle-business-form-grid">
+            <div class="pinnacle-business-field wide"><label for="pinnacleBusinessLegalName">Legal business name</label><input id="pinnacleBusinessLegalName" name="legalName" autocomplete="organization" placeholder="Example: Greatest Business Solution LLC"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessPublicName">Business name used publicly</label><input id="pinnacleBusinessPublicName" name="publicName" placeholder="Leave blank if the same"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessOwner">Owned by</label><select id="pinnacleBusinessOwner" name="owner"><option value="">Select owner</option><option value="taxpayer">Taxpayer</option><option value="spouse">Spouse</option><option value="joint">Taxpayer and spouse</option><option value="other">Other ownership arrangement</option></select></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessActivity">Primary business activity</label><input id="pinnacleBusinessActivity" name="activity" placeholder="Example: Tax preparation"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessStartDate">Business start date</label><input id="pinnacleBusinessStartDate" name="startDate" type="date"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessState">State organized or registered</label><input id="pinnacleBusinessState" name="state" placeholder="Example: Arizona"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessEinStatus">EIN status</label><select id="pinnacleBusinessEinStatus" name="einStatus"><option value="">Select status</option><option value="none">No EIN</option><option value="has">Has EIN</option><option value="applied">Applied / waiting</option><option value="unknown">Not sure</option></select></div>
+            <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessEinField"><label for="pinnacleBusinessEinLast4">EIN — last four digits only</label><input id="pinnacleBusinessEinLast4" name="einLast4" inputmode="numeric" maxlength="4" placeholder="1234"><div class="pinnacle-business-help">Full secure EIN collection will be added separately.</div></div>
+            <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessOwnerCountField"><label for="pinnacleBusinessOwnerCount">Number of owners</label><input id="pinnacleBusinessOwnerCount" name="ownerCount" type="number" min="2" max="100" placeholder="2"></div>
+            <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessOwnershipField"><label for="pinnacleBusinessOwnershipPercent">Your ownership percentage</label><input id="pinnacleBusinessOwnershipPercent" name="ownershipPercent" type="number" min="0" max="100" step="0.01" placeholder="100"></div>
+            <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessElectionField"><label for="pinnacleBusinessElectionStatus">Corporate tax election status</label><select id="pinnacleBusinessElectionStatus" name="electionStatus"><option value="">Select status</option><option value="confirmed">Election confirmed</option><option value="pending">Election pending</option><option value="unsure">Not sure</option></select></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessPayroll">Does this business run payroll?</label><select id="pinnacleBusinessPayroll" name="payroll"><option value="">Select answer</option><option value="yes">Yes</option><option value="no">No</option><option value="planning">Planning to start</option><option value="unknown">Not sure</option></select></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessWorkers">Does the business pay workers?</label><select id="pinnacleBusinessWorkers" name="workers"><option value="">Select answer</option><option value="none">No workers</option><option value="employees">Employees</option><option value="contractors">Independent contractors</option><option value="both">Employees and contractors</option><option value="unknown">Not sure</option></select></div>
+            <div class="pinnacle-business-field full"><label for="pinnacleBusinessNotes">Business notes</label><textarea id="pinnacleBusinessNotes" name="notes" placeholder="Add anything Pinnacle should remember about this business."></textarea></div>
+          </div>
+          <div class="pinnacle-business-actions">
+            <button type="submit">Save Business Profile</button>
+            <button class="secondary" type="button" id="pinnacleBusinessClear">Clear This Draft</button>
+            <button class="secondary" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
+            <span class="pinnacle-save-status" id="pinnacleBusinessSaveStatus" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+        <div class="pinnacle-safety-note"><strong>Business-structure notice:</strong> Pinnacle uses this information to organize planning questions. It does not create an entity, make a tax election, or provide a final legal determination.</div>
       </div>
     </section>
 
@@ -6790,6 +6908,7 @@
       "active-services": "active-services",
       "tax-watch": "tax-watch",
       pinnacle: "pinnacle",
+      "pinnacle-business-profile": "pinnacle-business-profile",
       "tax-preparation": "tax-preparation",
       "contractor-1099": "contractor-1099",
       "tax-extension": "tax-extension",
@@ -6844,6 +6963,53 @@
       title.textContent = view === "document-upload" ? "Upload My Documents" : "My Uploaded Documents";
     }
 
+
+    const PINNACLE_BUSINESS_DRAFT_KEY = "pinnacleBusinessProfileDraft.v1";
+    function getPinnacleBusinessStructure(){
+      return document.querySelector('input[name="pinnacleBusinessStructure"]:checked')?.value || "";
+    }
+    function collectPinnacleBusinessDraft(){
+      const form=document.getElementById("pinnacleBusinessProfileForm");
+      return {structure:getPinnacleBusinessStructure(),fields:form?Object.fromEntries(new FormData(form).entries()):{},savedAt:new Date().toISOString()};
+    }
+    function updatePinnacleBusinessProgress(){
+      const d=collectPinnacleBusinessDraft();
+      const values=[d.structure,d.fields.legalName,d.fields.owner,d.fields.activity,d.fields.einStatus];
+      const pct=Math.round(values.filter(v=>String(v||"").trim()).length/values.length*100);
+      const text=document.getElementById("pinnacleBusinessProgressText"),bar=document.getElementById("pinnacleBusinessProgressBar");
+      if(text)text.textContent=`${pct}% Complete`;if(bar)bar.style.width=`${pct}%`;
+    }
+    function updatePinnacleBusinessFields(){
+      const structure=getPinnacleBusinessStructure(),ein=document.getElementById("pinnacleBusinessEinStatus")?.value||"";
+      const owners=new Set(["multi-llc","partnership","scorp","ccorp","llc-scorp","llc-ccorp"]);
+      const elections=new Set(["llc-scorp","llc-ccorp","scorp"]);
+      document.querySelectorAll(".pinnacle-structure-option").forEach(c=>c.classList.toggle("is-selected",Boolean(c.querySelector("input")?.checked)));
+      document.getElementById("pinnacleBusinessEinField")?.classList.toggle("is-visible",ein==="has");
+      document.getElementById("pinnacleBusinessOwnerCountField")?.classList.toggle("is-visible",owners.has(structure));
+      document.getElementById("pinnacleBusinessOwnershipField")?.classList.toggle("is-visible",owners.has(structure));
+      document.getElementById("pinnacleBusinessElectionField")?.classList.toggle("is-visible",elections.has(structure));
+      updatePinnacleBusinessProgress();
+    }
+    function restorePinnacleBusinessDraft(){
+      let d=null;try{d=JSON.parse(localStorage.getItem(PINNACLE_BUSINESS_DRAFT_KEY)||"null")}catch(e){}
+      if(d?.structure){const r=document.querySelector(`input[name="pinnacleBusinessStructure"][value="${CSS.escape(d.structure)}"]`);if(r)r.checked=true}
+      const f=document.getElementById("pinnacleBusinessProfileForm");
+      if(f&&d?.fields)Object.entries(d.fields).forEach(([n,v])=>{const x=f.elements.namedItem(n);if(x&&"value"in x)x.value=v||""});
+      updatePinnacleBusinessFields();
+      if(d?.savedAt){const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Saved business profile restored."}
+    }
+    function savePinnacleBusinessDraft(e){
+      e.preventDefault();const d=collectPinnacleBusinessDraft(),s=document.getElementById("pinnacleBusinessSaveStatus");
+      if(!d.structure){if(s)s.textContent="Select the current business structure before saving.";return}
+      if(!String(d.fields.legalName||"").trim()){if(s)s.textContent="Enter the legal business name before saving.";document.getElementById("pinnacleBusinessLegalName")?.focus();return}
+      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));if(s)s.textContent="Business profile saved on this device.";updatePinnacleBusinessProgress();
+    }
+    function clearPinnacleBusinessDraft(){
+      localStorage.removeItem(PINNACLE_BUSINESS_DRAFT_KEY);document.getElementById("pinnacleBusinessProfileForm")?.reset();
+      document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.checked=false);
+      const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Draft cleared.";updatePinnacleBusinessFields();
+    }
+
     function openPortalView(view, options = {}) {
       const { updateHash = true, scroll = true } = options;
       const requestedView = portalViewHashes[view] ? view : "dashboard";
@@ -6853,7 +7019,15 @@
         element.classList.toggle("is-active", views.includes(requestedView));
       });
 
-      document.querySelectorAll("[data-portal-open]").forEach((button) => {
+  
+    document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.addEventListener("change",updatePinnacleBusinessFields));
+    document.getElementById("pinnacleBusinessEinStatus")?.addEventListener("change",updatePinnacleBusinessFields);
+    document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("input",updatePinnacleBusinessProgress);
+    document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("submit",savePinnacleBusinessDraft);
+    document.getElementById("pinnacleBusinessClear")?.addEventListener("click",clearPinnacleBusinessDraft);
+    restorePinnacleBusinessDraft();
+
+    document.querySelectorAll("[data-portal-open]").forEach((button) => {
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
       });
 
