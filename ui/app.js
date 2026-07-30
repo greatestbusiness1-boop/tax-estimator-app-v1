@@ -329,9 +329,13 @@ function cancelEstimateEdit() {
     renderFreeEstimateUsageNotice(
       _leadGatewayContact?.freeEstimateUsage || null
     );
+    goToScreen("results");
+    return;
   }
 
-  goToScreen("results");
+  _leadGatewayUnlocked = false;
+  _leadGatewayContact = null;
+  goToScreen("welcome");
 }
 
 const PAID_REVIEW_URL = "https://buy.stripe.com/eVq4gz9vf0nmgAJ7MN1ZS00";
@@ -1685,6 +1689,497 @@ async function handleCalculate() {
   }
 }
 
+
+// =============================================================================
+// SECURE SAVED-ESTIMATE RETURN
+// =============================================================================
+
+function showSavedEstimateReturn() {
+  document
+    .getElementById("savedEstimateReturnOverlay")
+    ?.remove();
+
+  const gatewayEmail =
+    document.getElementById("gatewayEmail")
+      ?.value || "";
+
+  const overlay =
+    document.createElement("div");
+
+  overlay.id =
+    "savedEstimateReturnOverlay";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:10050;
+    background:rgba(15, 23, 42, 0.82);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      width:100%;
+      max-width:540px;
+      background:#ffffff;
+      border-radius:22px;
+      padding:28px;
+      box-shadow:0 30px 80px rgba(0,0,0,0.38);
+      border:3px solid #0f2c56;
+    ">
+      <div style="
+        font-size:14px;
+        font-weight:900;
+        color:#2563eb;
+        text-transform:uppercase;
+        letter-spacing:1px;
+        margin-bottom:10px;
+      ">
+        Returning Client
+      </div>
+
+      <h2 style="
+        margin:0 0 12px;
+        color:#0f2c56;
+        font-size:29px;
+        line-height:1.15;
+      ">
+        Return to a Saved Estimate
+      </h2>
+
+      <p style="
+        margin:0 0 18px;
+        color:#334155;
+        font-size:16px;
+        line-height:1.6;
+      ">
+        Enter the email address used for the saved estimate. We will send a six-digit code so you can reopen the latest saved entries without typing your name again.
+      </p>
+
+      <div
+        id="savedEstimateReturnStatus"
+        style="
+          display:none;
+          padding:12px;
+          border-radius:12px;
+          margin-bottom:14px;
+          font-weight:800;
+          line-height:1.45;
+        "
+      ></div>
+
+      <div style="display:grid;gap:12px;">
+        <div>
+          <label style="
+            display:block;
+            font-weight:800;
+            color:#0f172a;
+            margin-bottom:6px;
+          ">
+            Email Address
+          </label>
+          <input
+            id="savedEstimateReturnEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="you@email.com"
+            value="${escHtml(gatewayEmail)}"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              padding:14px;
+              border-radius:12px;
+              border:1px solid #cbd5e1;
+              font-size:16px;
+            "
+          />
+        </div>
+
+        <button
+          type="button"
+          id="savedEstimateRequestCodeBtn"
+          style="
+            width:100%;
+            background:#0f2c56;
+            color:#fff;
+            border:none;
+            border-radius:14px;
+            padding:15px;
+            font-size:17px;
+            font-weight:900;
+            cursor:pointer;
+          "
+        >
+          Send My Return Code
+        </button>
+
+        <div
+          id="savedEstimateCodePanel"
+          style="display:none;gap:12px;"
+        >
+          <div>
+            <label style="
+              display:block;
+              font-weight:800;
+              color:#0f172a;
+              margin-bottom:6px;
+            ">
+              Six-Digit Return Code
+            </label>
+            <input
+              id="savedEstimateReturnCode"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="000000"
+              style="
+                width:100%;
+                box-sizing:border-box;
+                padding:14px;
+                border-radius:12px;
+                border:1px solid #cbd5e1;
+                font-size:20px;
+                letter-spacing:5px;
+                text-align:center;
+                font-weight:900;
+              "
+            />
+          </div>
+
+          <button
+            type="button"
+            id="savedEstimateVerifyCodeBtn"
+            style="
+              width:100%;
+              background:#15803d;
+              color:#fff;
+              border:none;
+              border-radius:14px;
+              padding:15px;
+              font-size:17px;
+              font-weight:900;
+              cursor:pointer;
+            "
+          >
+            Reopen My Saved Entries
+          </button>
+        </div>
+
+        <button
+          type="button"
+          id="savedEstimateReturnCloseBtn"
+          style="
+            width:100%;
+            background:#ffffff;
+            color:#334155;
+            border:1px solid #cbd5e1;
+            border-radius:14px;
+            padding:13px;
+            font-size:15px;
+            font-weight:800;
+            cursor:pointer;
+          "
+        >
+          Cancel
+        </button>
+
+        <div style="
+          font-size:13px;
+          color:#64748b;
+          line-height:1.5;
+          text-align:center;
+        ">
+          Opening saved entries does not use another free estimate. A new use is counted only after an updated estimate is recalculated and completed.
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const emailInput =
+    document.getElementById(
+      "savedEstimateReturnEmail"
+    );
+
+  const codeInput =
+    document.getElementById(
+      "savedEstimateReturnCode"
+    );
+
+  const requestBtn =
+    document.getElementById(
+      "savedEstimateRequestCodeBtn"
+    );
+
+  const verifyBtn =
+    document.getElementById(
+      "savedEstimateVerifyCodeBtn"
+    );
+
+  const codePanel =
+    document.getElementById(
+      "savedEstimateCodePanel"
+    );
+
+  const status =
+    document.getElementById(
+      "savedEstimateReturnStatus"
+    );
+
+  function showStatus(message, isError = false) {
+    if (!status) return;
+
+    status.textContent = message;
+    status.style.display = "block";
+    status.style.background =
+      isError ? "#fee2e2" : "#dcfce7";
+    status.style.border =
+      isError
+        ? "1px solid #ef4444"
+        : "1px solid #22c55e";
+    status.style.color =
+      isError ? "#991b1b" : "#166534";
+  }
+
+  requestBtn?.addEventListener(
+    "click",
+    async () => {
+      const email =
+        String(emailInput?.value || "")
+          .trim();
+
+      if (
+        !email ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ) {
+        showStatus(
+          "Enter the email address used for the saved estimate.",
+          true
+        );
+        return;
+      }
+
+      requestBtn.disabled = true;
+      requestBtn.textContent =
+        "Sending Code...";
+      requestBtn.style.opacity = "0.72";
+
+      try {
+        const response = await fetch(
+          "/api/free-estimate-return/request",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              email
+            })
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.error ||
+            "The return code could not be sent."
+          );
+        }
+
+        showStatus(
+          data.message ||
+          "Check your email for the six-digit return code."
+        );
+
+        if (codePanel) {
+          codePanel.style.display = "grid";
+        }
+
+        codeInput?.focus();
+      } catch (error) {
+        showStatus(
+          error.message ||
+          "The return code could not be sent.",
+          true
+        );
+      } finally {
+        requestBtn.disabled = false;
+        requestBtn.textContent =
+          "Send My Return Code";
+        requestBtn.style.opacity = "";
+      }
+    }
+  );
+
+  verifyBtn?.addEventListener(
+    "click",
+    async () => {
+      const email =
+        String(emailInput?.value || "")
+          .trim();
+
+      const code =
+        String(codeInput?.value || "")
+          .replace(/\D/g, "")
+          .slice(0, 6);
+
+      if (code.length !== 6) {
+        showStatus(
+          "Enter the complete six-digit return code.",
+          true
+        );
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent =
+        "Reopening Saved Entries...";
+      verifyBtn.style.opacity = "0.72";
+
+      try {
+        const response = await fetch(
+          "/api/free-estimate-return/verify",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              email,
+              code
+            })
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.error ||
+            "The saved estimate could not be reopened."
+          );
+        }
+
+        const saved =
+          data.savedEstimate || {};
+
+        if (
+          !saved.taxData ||
+          !saved.fullName ||
+          !saved.email ||
+          !saved.leadId
+        ) {
+          throw new Error(
+            "The saved estimate entries are incomplete."
+          );
+        }
+
+        _lastTaxInput =
+          saved.taxData;
+        _lastEstimate = null;
+        _leadGatewayUnlocked = true;
+        _leadGatewayContact = {
+          fullName:
+            String(saved.fullName).trim(),
+          email:
+            String(saved.email).trim(),
+          leadId:
+            String(saved.leadId).trim(),
+          estimateFamilyId:
+            String(
+              saved.estimateFamilyId ||
+              saved.leadId
+            ).trim(),
+          freeEstimateUsage:
+            saved.freeEstimateUsage || null
+        };
+
+        _freeEstimateEditContext = {
+          fullName:
+            _leadGatewayContact.fullName,
+          email:
+            _leadGatewayContact.email,
+          sourceLeadId:
+            _leadGatewayContact.leadId,
+          estimateFamilyId:
+            _leadGatewayContact.estimateFamilyId,
+          taxYear:
+            String(
+              saved.taxYear ||
+              saved.taxData.taxYear ||
+              ""
+            ).trim(),
+          startedAt:
+            new Date().toISOString()
+        };
+
+        restoreEstimatorFormFromTaxData(
+          saved.taxData
+        );
+
+        refreshFreeEstimateEditBanner();
+
+        document
+          .getElementById(
+            "leadGatewayOverlay"
+          )
+          ?.remove();
+
+        overlay.remove();
+
+        goToScreen("form");
+
+        window.scrollTo({
+          top: 0,
+          behavior: "auto"
+        });
+      } catch (error) {
+        showStatus(
+          error.message ||
+          "The saved estimate could not be reopened.",
+          true
+        );
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent =
+          "Reopen My Saved Entries";
+        verifyBtn.style.opacity = "";
+      }
+    }
+  );
+
+  codeInput?.addEventListener(
+    "input",
+    () => {
+      codeInput.value =
+        codeInput.value
+          .replace(/\D/g, "")
+          .slice(0, 6);
+    }
+  );
+
+  document
+    .getElementById(
+      "savedEstimateReturnCloseBtn"
+    )
+    ?.addEventListener(
+      "click",
+      () => overlay.remove()
+    );
+
+  emailInput?.focus();
+}
+
 // =============================================================================
 // LEAD GATEWAY - CAPTURE NAME + EMAIL BEFORE SHOWING RESULTS
 // =============================================================================
@@ -1723,11 +2218,11 @@ function showLeadGateway(input, result) {
       </div>
 
       <h2 style="margin:0 0 12px;color:#0f2c56;font-size:30px;line-height:1.15;">
-        Unlock Your Full Tax Estimate
+        Save and View This Estimate
       </h2>
 
       <p style="margin:0 0 18px;color:#334155;font-size:16px;line-height:1.6;">
-        Enter your full name and email to view your full tax estimate and personalized tax insights.
+        Enter the full name and email for this estimate. Returning clients must use the same name spelling, or reopen the saved estimate with an emailed return code.
       </p>
 
       <div id="leadGatewayErrors" style="display:none;background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:12px;border-radius:12px;margin-bottom:14px;font-weight:700;"></div>
@@ -1772,8 +2267,26 @@ function showLeadGateway(input, result) {
           View My Full Estimate
         </button>
 
+        <button
+          type="button"
+          id="gatewayReturnSavedBtn"
+          style="
+            width:100%;
+            background:#ffffff;
+            color:#0f2c56;
+            border:2px solid #0f2c56;
+            border-radius:14px;
+            padding:13px;
+            font-size:15px;
+            font-weight:900;
+            cursor:pointer;
+          "
+        >
+          Return to a Saved Estimate
+        </button>
+
         <div style="font-size:13px;color:#64748b;line-height:1.5;text-align:center;">
-          We ask for this so your estimate can be saved and you can return to it later.
+          This screen saves a new completed estimate. Opening an earlier saved estimate uses a secure six-digit email code and does not count as another estimate.
         </div>
       </div>
     </div>
@@ -1795,6 +2308,13 @@ function showLeadGateway(input, result) {
   if (btn) {
     btn.addEventListener("click", () => submitLeadGateway(input, result));
   }
+
+  document
+    .getElementById("gatewayReturnSavedBtn")
+    ?.addEventListener(
+      "click",
+      showSavedEstimateReturn
+    );
 }
 
 
@@ -2074,7 +2594,7 @@ async function submitLeadGateway(input, result, existingIdentity = null) {
 
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Unlocking Estimate...";
+    btn.textContent = "Saving Estimate...";
     btn.style.opacity = "0.75";
   }
 

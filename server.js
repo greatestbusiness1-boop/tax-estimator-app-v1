@@ -152,6 +152,9 @@ const clientPortalSecurity = createClientPortalSecurity({
 
 const clientPortalAttemptBuckets = new Map();
 
+const FREE_ESTIMATE_RETURN_CODE_MINUTES = 15;
+const freeEstimateReturnCodeRecords = new Map();
+
 const CLIENT_PORTAL_SERVICE_ROLE_KEY = String(
   process.env.SUPABASE_SECRET_KEY ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -11000,6 +11003,399 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// =============================================================================
+// SECURE FREE-ESTIMATE RETURN
+// A returning client verifies control of the saved email address with a
+// short-lived six-digit code. No password or portal account is required.
+// Opening the saved entries does not count as another completed estimate.
+// =============================================================================
+
+function getLatestCompletedFreeEstimateEntry(accessible = []) {
+  return accessible
+    .filter(isCompletedFreeEstimateRecord)
+    .map((entry) => {
+      const timestamp = getFreeEstimateRecordTimestamp(entry);
+      const timestampMs = Date.parse(timestamp);
+
+      return {
+        entry,
+        timestampMs: Number.isFinite(timestampMs)
+          ? timestampMs
+          : 0
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.timestampMs - left.timestampMs
+    )[0]?.entry || null;
+}
+
+function getFreeEstimateFamilyId(record = {}) {
+  return String(
+    record?.freeEstimateRevision?.estimateFamilyId ||
+    record?.freeEstimateRevision?.sourceLeadId ||
+    getLeadIdValue(record) ||
+    ""
+  ).trim();
+}
+
+function pruneExpiredFreeEstimateReturnCodes() {
+  const now = Date.now();
+
+  for (const [key, record] of freeEstimateReturnCodeRecords.entries()) {
+    if (
+      !record ||
+      Date.parse(String(record.expiresAt || "")) <= now
+    ) {
+      freeEstimateReturnCodeRecords.delete(key);
+    }
+  }
+}
+
+app.post(
+  "/api/free-estimate-return/request",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+    pruneExpiredFreeEstimateReturnCodes();
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    if (
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the email address used for the saved estimate."
+      });
+    }
+
+    const identityEmail =
+      getFreeEstimateIdentityKey(email);
+
+    const rateKey =
+      clientPortalRateLimitKey(
+        req,
+        "free-estimate-return-request",
+        identityEmail
+      );
+
+    const rate =
+      consumeClientPortalAttempt(
+        rateKey,
+        {
+          limit: 5,
+          windowMs: 15 * 60 * 1000
+        }
+      );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many code requests. Please wait 15 minutes and try again."
+      });
+    }
+
+    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Saved-estimate email verification is temporarily unavailable. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const accessible =
+      await getFreeEstimateIdentityAccessibleLeads(
+        identityEmail
+      );
+
+    const latestEntry =
+      getLatestCompletedFreeEstimateEntry(
+        accessible
+      );
+
+    const genericMessage =
+      "If a saved estimate matches that email address, a six-digit return code will be sent. The code expires in 15 minutes.";
+
+    if (!latestEntry) {
+      return res.status(200).json({
+        ok: true,
+        message: genericMessage
+      });
+    }
+
+    const record =
+      getFreeEstimateRecord(latestEntry);
+
+    const leadId =
+      getFreeEstimateRecordLeadId(latestEntry);
+
+    const savedEmail =
+      getLeadEmailValue(record);
+
+    if (!leadId || !savedEmail) {
+      return res.status(200).json({
+        ok: true,
+        message: genericMessage
+      });
+    }
+
+    const code =
+      clientPortalSecurity.generateActivationCode();
+
+    const codeRecord =
+      clientPortalSecurity.hashActivationCode(code);
+
+    const expiresAt =
+      new Date(
+        Date.now() +
+        (
+          FREE_ESTIMATE_RETURN_CODE_MINUTES *
+          60 *
+          1000
+        )
+      ).toISOString();
+
+    freeEstimateReturnCodeRecords.set(
+      identityEmail,
+      {
+        hash: codeRecord.hash,
+        salt: codeRecord.salt,
+        expiresAt,
+        attempts: 0,
+        leadId,
+        requestedAt:
+          new Date().toISOString()
+      }
+    );
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: savedEmail,
+        subject:
+          "Your Saved Tax Estimate Return Code",
+        text:
+`Hello ${getLeadNameValue(record)},
+
+Your six-digit code to reopen your saved tax estimate is:
+
+${code}
+
+This code expires in ${FREE_ESTIMATE_RETURN_CODE_MINUTES} minutes.
+
+Return to the Free Tax Estimator and enter this code. Opening your saved entries does not count as another completed estimate. A new use is counted only after you recalculate and successfully complete an updated estimate.
+
+For your protection, do not email this code, passwords, Social Security numbers, or tax documents.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+    } catch (error) {
+      freeEstimateReturnCodeRecords.delete(
+        identityEmail
+      );
+
+      console.error(
+        "[free estimate return] Code email failed:",
+        error?.message || error
+      );
+
+      return res.status(503).json({
+        ok: false,
+        error:
+          "The return code could not be emailed. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    clearClientPortalAttempts(rateKey);
+
+    return res.status(200).json({
+      ok: true,
+      message: genericMessage
+    });
+  }
+);
+
+app.post(
+  "/api/free-estimate-return/verify",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+    pruneExpiredFreeEstimateReturnCodes();
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const code = String(
+      req.body?.code || ""
+    )
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    if (
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email) ||
+      code.length !== 6
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the email address and complete six-digit code."
+      });
+    }
+
+    const identityEmail =
+      getFreeEstimateIdentityKey(email);
+
+    const rateKey =
+      clientPortalRateLimitKey(
+        req,
+        "free-estimate-return-verify",
+        identityEmail
+      );
+
+    const rate =
+      consumeClientPortalAttempt(
+        rateKey,
+        {
+          limit: 7,
+          windowMs: 15 * 60 * 1000
+        }
+      );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many code attempts. Request a new code after 15 minutes."
+      });
+    }
+
+    const codeRecord =
+      freeEstimateReturnCodeRecords.get(
+        identityEmail
+      );
+
+    const codeMatches = Boolean(
+      codeRecord &&
+      Date.parse(
+        String(codeRecord.expiresAt || "")
+      ) > Date.now() &&
+      Number(codeRecord.attempts || 0) < 7 &&
+      clientPortalSecurity
+        .verifyActivationCode(
+          code,
+          codeRecord
+        )
+    );
+
+    if (!codeMatches) {
+      if (codeRecord) {
+        freeEstimateReturnCodeRecords.set(
+          identityEmail,
+          {
+            ...codeRecord,
+            attempts:
+              Number(codeRecord.attempts || 0) + 1
+          }
+        );
+      }
+
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The return code is invalid or expired. Request a new code and try again."
+      });
+    }
+
+    const candidate =
+      await findClientPortalLeadById(
+        codeRecord.leadId
+      );
+
+    const record =
+      candidate
+        ? getFreeEstimateRecord(candidate)
+        : null;
+
+    const detailsMatch = Boolean(
+      candidate &&
+      record &&
+      isCompletedFreeEstimateRecord(candidate) &&
+      getFreeEstimateIdentityKey(
+        getLeadEmailValue(record)
+      ) === identityEmail
+    );
+
+    if (!detailsMatch) {
+      freeEstimateReturnCodeRecords.delete(
+        identityEmail
+      );
+
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The saved estimate could not be reopened. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const taxData =
+      record.taxData &&
+      typeof record.taxData === "object" &&
+      !Array.isArray(record.taxData)
+        ? record.taxData
+        : null;
+
+    if (!taxData) {
+      freeEstimateReturnCodeRecords.delete(
+        identityEmail
+      );
+
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The saved estimate entries are unavailable. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const usage =
+      await getFreeEstimateUsage(
+        getLeadEmailValue(record),
+        getFreeEstimateRecordTaxYear(candidate)
+      );
+
+    freeEstimateReturnCodeRecords.delete(
+      identityEmail
+    );
+
+    clearClientPortalAttempts(rateKey);
+
+    return res.status(200).json({
+      ok: true,
+      savedEstimate: {
+        fullName:
+          getLeadNameValue(record),
+        email:
+          getLeadEmailValue(record),
+        leadId:
+          getFreeEstimateRecordLeadId(candidate),
+        estimateFamilyId:
+          getFreeEstimateFamilyId(record),
+        taxYear:
+          getFreeEstimateRecordTaxYear(candidate),
+        taxData,
+        freeEstimateUsage: usage
+      }
+    });
+  }
+);
+
 // =============================================================================
 // POST /api/estimate
 // =============================================================================
@@ -11136,7 +11532,7 @@ app.post("/api/lead", async (req, res) => {
           ok: false,
           code: "FREE_ESTIMATE_IDENTITY_MISMATCH",
           errors: [
-            `This email is already connected to ${identityGuard.establishedName}. Use the original client name, sign in to the existing portal, or use a different email address.`
+            "This email is connected to a saved estimate under a different name. Check the spelling, or choose Return to a Saved Estimate and verify the email address."
           ]
         });
       }
