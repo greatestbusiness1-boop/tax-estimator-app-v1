@@ -246,6 +246,22 @@
     const activationEmail = params.get("email") || "";
     const isTaxPreparationEntry =
       params.get("taxPrep") === "1";
+    const isEstimateActivation =
+      params.get("estimate") === "1";
+
+    if (isEstimateActivation) {
+      document.querySelector(".card-head h2").textContent =
+        "Activate your Secure Client Portal";
+
+      document.getElementById("portalIntroText").textContent =
+        "Your completed tax estimate is ready to connect. Your email address and permanent estimate reference are already filled in. Request the six-digit code below, then create your password.";
+
+      showMessage(
+        document.getElementById("activationMessage"),
+        "Your estimate information is filled in automatically. Request your security code, then create your password. Portal activation does not start a paid subscription or charge you.",
+        "good"
+      );
+    }
 
     if (isTaxPreparationEntry) {
       document.querySelector(".card-head h2").textContent =
@@ -282,6 +298,16 @@
 
     if (params.get("activate") === "1") {
       setMode("activate");
+    }
+
+    if (isEstimateActivation && leadId && activationEmail) {
+      const emailField = document.getElementById("activationEmail");
+      const referenceField = document.getElementById("activationLeadId");
+
+      emailField.readOnly = true;
+      referenceField.readOnly = true;
+      emailField.setAttribute("aria-readonly", "true");
+      referenceField.setAttribute("aria-readonly", "true");
     }
 
     if (params.get("reason") === "session") {

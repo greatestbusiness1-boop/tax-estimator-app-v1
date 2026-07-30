@@ -11864,7 +11864,18 @@ app.post("/api/lead", async (req, res) => {
     }
 
     const estimateDisplay = buildEstimateDisplay(savedLead.estimateSummary || {});
+    const stableEstimateReference = String(
+      savedLead.freeEstimateRevision?.estimateFamilyId ||
+      savedLead.freeEstimateRevision?.sourceLeadId ||
+      savedLead.leadId ||
+      ""
+    ).trim();
     const summaryUrl = `${baseUrl}/estimate/${encodeURIComponent(savedLead.leadId)}`;
+    const portalActivationUrl =
+      `${baseUrl}/client-portal?activate=1&estimate=1&leadId=` +
+      encodeURIComponent(stableEstimateReference) +
+      "&email=" +
+      encodeURIComponent(savedLead.contact.email);
     const pdfBuffer = await buildFreeEstimatePdfBuffer(savedLead);
 
     const safeClientName =
@@ -11892,8 +11903,13 @@ Estimate summary:
 You may reopen your online estimate here:
 ${summaryUrl}
 
-Reference number:
-${savedLead.leadId}
+Permanent estimate reference:
+${stableEstimateReference}
+
+Activate your Secure Client Portal:
+${portalActivationUrl}
+
+The activation page fills in your email address and permanent estimate reference automatically. Request the six-digit code, then create your password. Activating the portal does not start a paid subscription or charge a payment method.
 
 This is an estimate based on the information entered. It is not a filed tax return or a guarantee of your final tax result.
 

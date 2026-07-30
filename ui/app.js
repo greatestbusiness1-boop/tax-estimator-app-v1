@@ -2427,7 +2427,7 @@ function buildClaimSavedEstimateUrl(
   }
 
   return (
-    "/client-portal?activate=1&leadId=" +
+    "/client-portal?activate=1&estimate=1&leadId=" +
     encodeURIComponent(reference) +
     "&email=" +
     encodeURIComponent(accountEmail)
@@ -2540,7 +2540,17 @@ function renderFreeEstimateUsageNotice(usage = {}) {
     "free-estimate-usage-notice" +
     (remaining === 0 ? " limit-used" : "");
 
-  notice.innerHTML = remaining > 0
+  const stableReference = String(
+    _leadGatewayContact?.estimateFamilyId ||
+    _leadGatewayContact?.leadId ||
+    ""
+  ).trim();
+  const activationUrl = buildClaimSavedEstimateUrl(
+    stableReference,
+    _leadGatewayContact?.email
+  );
+
+  const usageSummary = remaining > 0
     ? `
       <strong>${remaining} of ${limit} free estimates remaining${taxYear ? ` for tax year ${escHtml(taxYear)}` : ""}</strong>
       <span>
@@ -2551,14 +2561,48 @@ function renderFreeEstimateUsageNotice(usage = {}) {
     : `
       <strong>This was free estimate ${used} of ${limit}${taxYear ? ` for tax year ${escHtml(taxYear)}` : ""}.</strong>
       <span>
-        Your saved results remain available. Use Tax Money Tracker for ongoing changes,
+        Your saved results remain available. Use Tax Watch Pro for ongoing changes,
         estimate comparisons, and year-round savings accountability.
       </span>
-      <a href="${escHtml(buildClaimSavedEstimateUrl(
-        _leadGatewayContact?.leadId,
-        _leadGatewayContact?.email
-      ))}">Claim My Saved Estimate — one-time 14-day preview, no automatic charge</a>
     `;
+
+  notice.innerHTML = `
+    ${usageSummary}
+    <div style="
+      margin-top:16px;
+      padding:18px;
+      border:2px solid #0f5f57;
+      border-radius:14px;
+      background:#ecfdf5;
+      color:#0f2f59;
+    ">
+      <strong style="display:block;font-size:18px;margin-bottom:7px;">
+        Keep Your Estimate in Your Secure Client Portal
+      </strong>
+      <span style="display:block;line-height:1.55;margin-bottom:13px;">
+        Your email address and permanent estimate reference will be filled in automatically.
+        You will only need the six-digit code sent to your email and a password you create.
+      </span>
+      <a
+        href="${escHtml(activationUrl)}"
+        style="
+          display:inline-block;
+          padding:13px 18px;
+          border-radius:10px;
+          background:#0f5f57;
+          color:#ffffff;
+          font-weight:900;
+          text-decoration:none;
+        "
+      >
+        Activate My Secure Client Portal
+      </a>
+      <small style="display:block;margin-top:10px;line-height:1.45;color:#475569;">
+        Activating your portal saves access to this estimate. It does not start a paid
+        subscription or charge a payment method.
+      </small>
+    </div>
+  `;
 
   disclaimer.insertAdjacentElement("afterend", notice);
 }
