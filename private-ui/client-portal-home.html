@@ -1632,6 +1632,147 @@
       font-weight:850;
       cursor:pointer;
     }
+    .portal-nav-pinnacle{
+      background:linear-gradient(135deg,#102b46,#155d8a);
+      color:#fff;
+      border-color:#102b46;
+    }
+    .portal-nav-pinnacle:hover,
+    .portal-nav-pinnacle.is-active{
+      background:linear-gradient(135deg,#0b2238,#0f4f77);
+      color:#fff;
+    }
+    .pinnacle-dashboard-card{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:18px;
+      align-items:center;
+      margin-top:18px;
+      border:1px solid #c7d8e5;
+      border-radius:17px;
+      background:linear-gradient(135deg,#f8fbfd 0%,#edf5fa 100%);
+      padding:20px 22px;
+    }
+    .pinnacle-dashboard-card h3{margin:5px 0 7px;color:#102b46;font-size:20px}
+    .pinnacle-dashboard-card p{margin:0;color:#536679;line-height:1.55}
+    .pinnacle-dashboard-card .cx-status-pill{
+      display:inline-flex;
+      width:max-content;
+      margin-bottom:3px;
+      background:#e4edf4;
+      color:#244f72;
+    }
+    .pinnacle-dashboard-card button{
+      min-height:44px;
+      border:0;
+      border-radius:11px;
+      background:#155d8a;
+      color:#fff;
+      padding:10px 17px;
+      font:inherit;
+      font-weight:900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .pinnacle-overview-page .section-body{padding:26px}
+    .pinnacle-hero-card{
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(280px,.75fr);
+      gap:22px;
+      align-items:stretch;
+      border:1px solid #c9d8e5;
+      border-radius:20px;
+      background:linear-gradient(135deg,#f7fbfe 0%,#edf5fa 100%);
+      padding:26px;
+      margin-bottom:22px;
+    }
+    .pinnacle-hero-copy h3{margin:8px 0 10px;font-size:26px;color:#102b46}
+    .pinnacle-hero-copy p{margin:0;color:#4f6275;line-height:1.65}
+    .pinnacle-access-card{
+      border:1px solid #b8cddd;
+      border-radius:16px;
+      background:#fff;
+      padding:20px;
+      box-shadow:0 8px 24px rgba(16,43,70,.08);
+    }
+    .pinnacle-access-card span{display:block;color:#627386;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}
+    .pinnacle-access-card strong{display:block;margin:6px 0 10px;font-size:21px;color:#155d8a}
+    .pinnacle-access-card p{margin:0;color:#526578;line-height:1.55}
+    .pinnacle-feature-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+      margin-bottom:22px;
+    }
+    .pinnacle-feature-card{
+      border:1px solid #d8e3ec;
+      border-radius:17px;
+      background:#fff;
+      padding:21px;
+    }
+    .pinnacle-feature-card h3{margin:0 0 11px;color:#173a59;font-size:18px}
+    .pinnacle-feature-card ul{margin:0;padding-left:19px;color:#536579;line-height:1.55}
+    .pinnacle-feature-card li{margin-bottom:7px}
+    .pinnacle-pricing-card{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:18px;
+      border:1px solid #b9cad9;
+      border-radius:18px;
+      background:#fff;
+      padding:22px;
+    }
+    .pinnacle-price-option{
+      position:relative;
+      border:1px solid #d7e2eb;
+      border-radius:15px;
+      padding:20px;
+      background:#f9fbfd;
+    }
+    .pinnacle-price-option.best{border:2px solid #155d8a;background:#f3f9fc}
+    .pinnacle-best-badge{
+      display:inline-flex;
+      border-radius:999px;
+      padding:5px 9px;
+      background:#102b46;
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      margin-bottom:9px;
+    }
+    .pinnacle-price-option h3{margin:0 0 5px;color:#173a59}
+    .pinnacle-price{font-size:28px;font-weight:950;color:#102b46;margin:8px 0}
+    .pinnacle-price small{font-size:13px;color:#637487;font-weight:750}
+    .pinnacle-price-option p{color:#56697c;line-height:1.5}
+    .pinnacle-price-option button{
+      width:100%;
+      min-height:44px;
+      border:0;
+      border-radius:11px;
+      background:#dce5ec;
+      color:#667786;
+      font:inherit;
+      font-weight:850;
+      cursor:not-allowed;
+    }
+    .pinnacle-disclaimer{
+      margin-top:18px;
+      border-left:4px solid #155d8a;
+      background:#f4f8fb;
+      padding:14px 16px;
+      color:#526578;
+      line-height:1.55;
+      border-radius:0 10px 10px 0;
+    }
+    @media(max-width:900px){
+      .pinnacle-dashboard-card,
+      .pinnacle-hero-card,
+      .pinnacle-pricing-card{grid-template-columns:1fr}
+      .pinnacle-feature-grid{grid-template-columns:1fr}
+      .pinnacle-dashboard-card button{width:100%}
+    }
     @media(max-width:1080px){
       .portal-nav{display:block}
       .portal-nav-label,.portal-nav .nav-divider{display:none}
@@ -2217,6 +2358,7 @@
       </div>
       <nav class="portal-nav" id="portalNavigation">
         <button class="portal-nav-item" type="button" data-portal-open="dashboard">Dashboard</button>
+        <button class="portal-nav-item portal-nav-pinnacle" type="button" data-portal-open="pinnacle">Pinnacle Tax Action Plan</button>
 
         <div class="portal-nav-group">
           <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="false">
@@ -2299,6 +2441,14 @@
           <span>Current Access</span>
           <strong id="currentAccessLevel">Secure Portal</strong>
         </div>
+      </div>
+      <div class="pinnacle-dashboard-card">
+        <div>
+          <span class="cx-status-pill">Coming Soon</span>
+          <h3>Pinnacle Tax Action Plan</h3>
+          <p>Explore the advanced year-round workspace for unlimited income sources, mileage, expenses, receipts, tax scenarios, reminders, and personalized action steps.</p>
+        </div>
+        <button type="button" data-portal-open="pinnacle">Explore Pinnacle</button>
       </div>
       <div class="dashboard-preview-countdown" id="taxWatchDashboardPreviewCountdown" data-preview-compact hidden>
         <div class="dashboard-preview-status">
@@ -2857,6 +3007,84 @@
             <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
             <button class="portal-primary-link" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section portal-view pinnacle-overview-page" id="pinnacleTaxActionPlan" data-portal-view="pinnacle">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Pinnacle Level</div>
+          <h2>Pinnacle Tax Action Plan</h2>
+          <p>Your advanced year-round tax planning and small-business tracking workspace.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+      </div>
+      <div class="section-body">
+        <div class="pinnacle-hero-card">
+          <div class="pinnacle-hero-copy">
+            <div class="cx-pinnacle-badge">Pinnacle Tax Action Plan</div>
+            <h3>Turn your tax information into a clear year-round action plan.</h3>
+            <p>Track business activity, compare possible tax outcomes, and follow practical steps designed to help you prepare for refunds, balances due, paycheck withholding, estimated taxes, and savings goals.</p>
+          </div>
+          <div class="pinnacle-access-card">
+            <span>Current Access</span>
+            <strong>Coming Soon</strong>
+            <p>Pinnacle is being prepared for your Secure Client Portal. Viewing this page does not activate a paid membership or charge a payment method.</p>
+          </div>
+        </div>
+
+        <div class="pinnacle-feature-grid">
+          <article class="pinnacle-feature-card">
+            <h3>Plan Your Tax Outcome</h3>
+            <ul>
+              <li>Avoid owing at tax time</li>
+              <li>Target a specific refund</li>
+              <li>Reduce an expected balance</li>
+              <li>Improve paycheck withholding</li>
+              <li>Build an estimated-tax payment plan</li>
+            </ul>
+          </article>
+          <article class="pinnacle-feature-card">
+            <h3>Track Your Business</h3>
+            <ul>
+              <li>Unlimited businesses and income sources</li>
+              <li>Mileage Tracker with trip reports</li>
+              <li>Expense Tracker with category totals</li>
+              <li>Receipt uploads from your phone</li>
+              <li>Business income and deduction summaries</li>
+            </ul>
+          </article>
+          <article class="pinnacle-feature-card">
+            <h3>Follow Your Action Plan</h3>
+            <ul>
+              <li>Personalized recommendations</li>
+              <li>Scenario comparisons</li>
+              <li>Tax deadlines and reminders</li>
+              <li>Required-document tracking</li>
+              <li>Completed-action history</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="pinnacle-pricing-card">
+          <article class="pinnacle-price-option">
+            <h3>Monthly Membership</h3>
+            <div class="pinnacle-price">$34.99 <small>per month</small></div>
+            <p>Monthly access after successful checkout. The membership will renew monthly until canceled.</p>
+            <button type="button" disabled aria-disabled="true">Monthly Enrollment Coming Soon</button>
+          </article>
+          <article class="pinnacle-price-option best">
+            <div class="pinnacle-best-badge">Best Value · Save 17%</div>
+            <h3>Annual Membership</h3>
+            <div class="pinnacle-price">$349 <small>billed once per year</small></div>
+            <p>Receive 12 months of access and save $70.88 compared with twelve monthly payments.</p>
+            <button type="button" disabled aria-disabled="true">Annual Enrollment Coming Soon</button>
+          </article>
+        </div>
+
+        <div class="pinnacle-disclaimer">
+          <strong>Planning estimate notice:</strong> Pinnacle provides planning estimates based on the information entered. Actual tax results may change when income, expenses, deductions, credits, tax law, or filing information changes.
         </div>
       </div>
     </section>
@@ -6561,6 +6789,7 @@
       dashboard: "dashboard",
       "active-services": "active-services",
       "tax-watch": "tax-watch",
+      pinnacle: "pinnacle",
       "tax-preparation": "tax-preparation",
       "contractor-1099": "contractor-1099",
       "tax-extension": "tax-extension",
