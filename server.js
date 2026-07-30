@@ -11035,9 +11035,51 @@ function getFreeEstimateFamilyId(record = {}) {
   return String(
     record?.freeEstimateRevision?.estimateFamilyId ||
     record?.freeEstimateRevision?.sourceLeadId ||
+    record?.freeEstimateUsage?.revisedFromLeadId ||
     getLeadIdValue(record) ||
     ""
   ).trim();
+}
+
+function resolveFreeEstimateFamilyId(candidate, accessible = []) {
+  const entriesByLeadId = new Map();
+
+  for (const entry of Array.isArray(accessible) ? accessible : []) {
+    const entryLeadId = getFreeEstimateRecordLeadId(entry);
+    if (entryLeadId) entriesByLeadId.set(entryLeadId, entry);
+  }
+
+  let currentEntry = candidate || null;
+  let currentLeadId = getFreeEstimateRecordLeadId(currentEntry);
+  let rootLeadId = currentLeadId;
+  const visited = new Set();
+
+  while (currentEntry && currentLeadId && !visited.has(currentLeadId)) {
+    visited.add(currentLeadId);
+    rootLeadId = currentLeadId;
+
+    const currentRecord = getFreeEstimateRecord(currentEntry);
+    const parentLeadId = String(
+      currentRecord?.freeEstimateUsage?.revisedFromLeadId ||
+      currentRecord?.freeEstimateRevision?.sourceLeadId ||
+      ""
+    ).trim();
+
+    if (!parentLeadId || parentLeadId === currentLeadId) break;
+
+    const parentEntry = entriesByLeadId.get(parentLeadId);
+    if (!parentEntry) {
+      rootLeadId = parentLeadId;
+      break;
+    }
+
+    currentEntry = parentEntry;
+    currentLeadId = parentLeadId;
+  }
+
+  return String(rootLeadId || getFreeEstimateFamilyId(
+    getFreeEstimateRecord(candidate) || {}
+  ) || "").trim();
 }
 
 function pruneExpiredFreeEstimateReturnCodes() {
@@ -11370,6 +11412,17 @@ app.post(
         getFreeEstimateRecordTaxYear(candidate)
       );
 
+    const accessible =
+      await getFreeEstimateIdentityAccessibleLeads(
+        identityEmail
+      );
+
+    const stableEstimateFamilyId =
+      resolveFreeEstimateFamilyId(
+        candidate,
+        accessible
+      );
+
     freeEstimateReturnCodeRecords.delete(
       identityEmail
     );
@@ -11386,6 +11439,7 @@ app.post(
         leadId:
           getFreeEstimateRecordLeadId(candidate),
         estimateFamilyId:
+          stableEstimateFamilyId ||
           getFreeEstimateFamilyId(record),
         taxYear:
           getFreeEstimateRecordTaxYear(candidate),
@@ -11501,6 +11555,7 @@ app.post("/api/lead", async (req, res) => {
   let freeEstimateUsageBefore = null;
   let freeEstimateAccessible = [];
   let freeEstimateRevisionSource = null;
+  let stableFreeEstimateFamilyId = "";
 
   if (
     isFreeEstimateSubmission &&
@@ -11566,6 +11621,11 @@ app.post("/api/lead", async (req, res) => {
 
         freeEstimateRevisionSource =
           getFreeEstimateRecord(sourceEntry);
+        stableFreeEstimateFamilyId =
+          resolveFreeEstimateFamilyId(
+            sourceEntry,
+            freeEstimateAccessible
+          );
       }
 
       freeEstimateUsageBefore =
@@ -11659,6 +11719,7 @@ app.post("/api/lead", async (req, res) => {
               freeEstimateRevisionSource
             ),
             estimateFamilyId: String(
+              stableFreeEstimateFamilyId ||
               freeEstimateRevisionSource
                 ?.freeEstimateRevision
                 ?.estimateFamilyId ||
