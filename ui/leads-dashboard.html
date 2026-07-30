@@ -4147,16 +4147,97 @@ function getMembershipLatestAction(lead){
   );
 }
 
+function getTaxWatchWorklistIdentityKey(lead){
+  const email = String(
+    lead?.contact?.email ||
+    lead?.email ||
+    lead?.calendarAppointment?.inviteeEmail ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if(email){
+    return `email:${email}`;
+  }
+
+  const portal = lead?.portalAccount || {};
+  const portalReference = String(
+    portal.sourceLeadId ||
+    lead?.clientPortal?.sourceLeadId ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if(portalReference){
+    return `portal:${portalReference}`;
+  }
+
+  return `lead:${String(lead?.leadId || "")
+    .trim()
+    .toLowerCase()}`;
+}
+
+function getTaxWatchCurrentWorklistRecords(leads){
+  const currentByIdentity = new Map();
+
+  (Array.isArray(leads) ? leads : [])
+    .filter(isTaxWatchPreviewOrEnrollmentLead)
+    .forEach((lead) => {
+      const identityKey = getTaxWatchWorklistIdentityKey(lead);
+      const existing = currentByIdentity.get(identityKey);
+
+      if(!existing){
+        currentByIdentity.set(identityKey, lead);
+        return;
+      }
+
+      const candidateIsEnrollment = isTaxWatchEnrollmentLead(lead);
+      const existingIsEnrollment = isTaxWatchEnrollmentLead(existing);
+
+      if(candidateIsEnrollment !== existingIsEnrollment){
+        if(candidateIsEnrollment){
+          currentByIdentity.set(identityKey, lead);
+        }
+        return;
+      }
+
+      const candidateTime = Date.parse(
+        getTaxWatchWorklistActivityAt(lead) || ""
+      );
+      const existingTime = Date.parse(
+        getTaxWatchWorklistActivityAt(existing) || ""
+      );
+
+      const candidateMs = Number.isFinite(candidateTime)
+        ? candidateTime
+        : 0;
+      const existingMs = Number.isFinite(existingTime)
+        ? existingTime
+        : 0;
+
+      if(candidateMs >= existingMs){
+        currentByIdentity.set(identityKey, lead);
+      }
+    });
+
+  return Array.from(currentByIdentity.values())
+    .sort(
+      (a,b) =>
+        new Date(getTaxWatchWorklistActivityAt(b) || 0) -
+        new Date(getTaxWatchWorklistActivityAt(a) || 0)
+    );
+}
+
 function updateMembershipEnrollmentCounts(){
   const memberships = [
     {
       buttonId: "taxWatchEnrollmentsSidebarButton",
       badgeId: "taxWatchEnrollmentsSidebarCount",
       label: "Tax Watch Pro",
-      recordLabel: "preview or enrollment",
-      count: (allLeads || [])
-        .filter(isTaxWatchPreviewOrEnrollmentLead)
-        .length
+      recordLabel: "current preview or enrollment",
+      count: getTaxWatchCurrentWorklistRecords(allLeads).length
     },
     {
       buttonId: "pinnacleEnrollmentsSidebarButton",
@@ -6860,13 +6941,7 @@ function updateTaxPrepAdvancedSummary(count){
 
 function getVisibleLeads(){
   if(currentView==="taxwatchenrollments"){
-    return allLeads
-      .filter(isTaxWatchPreviewOrEnrollmentLead)
-      .sort(
-        (a,b) =>
-          new Date(getTaxWatchWorklistActivityAt(b) || 0) -
-          new Date(getTaxWatchWorklistActivityAt(a) || 0)
-      );
+    return getTaxWatchCurrentWorklistRecords(allLeads);
   }
 
   if(currentView==="pinnacleenrollments"){
