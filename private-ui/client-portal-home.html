@@ -2085,7 +2085,16 @@
     .tax-watch-preview-lifecycle-notice strong,.tax-watch-preview-lifecycle-notice span{display:block}
     .tax-watch-preview-lifecycle-notice strong{margin-bottom:3px;color:#0f3159;font-size:16px}
     .tax-watch-preview-lifecycle-notice.seven-day{border-color:#d7c58d;border-left-color:#d9a441;background:#fff9e9}
-    .tax-watch-preview-lifecycle-notice.three-day,.tax-watch-preview-lifecycle-notice.one-day{border-color:#e3b49f;border-left-color:#d9634a;background:#fff4ef}
+    .tax-watch-preview-lifecycle-notice.three-day{border-color:#e3b49f;border-left-color:#d9634a;background:#fff4ef}
+    @keyframes taxWatchFinalDayPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(217,99,74,.08),0 7px 18px rgba(122,45,30,.08)}
+      50%{box-shadow:0 0 0 6px rgba(217,99,74,.15),0 11px 26px rgba(122,45,30,.16)}
+    }
+    .tax-watch-preview-lifecycle-notice.one-day{position:relative;border:2px solid #d9634a;border-left-width:7px;background:linear-gradient(135deg,#fff0eb,#fff8f4);animation:taxWatchFinalDayPulse 1.8s ease-in-out infinite}
+    .tax-watch-preview-lifecycle-notice.one-day::before{content:'FINAL 24 HOURS';display:inline-block;margin:0 0 7px;padding:4px 9px;border-radius:999px;background:#d9634a;color:#fff;font-size:11px;font-weight:900;letter-spacing:.08em}
+    .tax-watch-preview-lifecycle-notice.one-day strong{color:#8f2d1e;font-size:18px}
+    .preview-topbar-pill.preview-final-day,.dashboard-preview-countdown.preview-final-day,.tax-watch-inline-preview-card.preview-final-day{border-color:#d9634a}
+    @media(prefers-reduced-motion:reduce){.tax-watch-preview-lifecycle-notice.one-day{animation:none}}
 
     /* Compact preview countdowns — V3.3.0 */
     .preview-topbar-pill{display:inline-flex;align-items:center;gap:10px;max-width:520px;padding:7px 12px 7px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:#0a1d33;box-shadow:0 4px 14px rgba(0,0,0,.2);font-family:Arial,Helvetica,sans-serif}
@@ -2725,7 +2734,7 @@
             </div>
             <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
           </div>
-          <div class="tax-watch-preview-lifecycle-notice" id="taxWatchPreviewLifecycleNotice" hidden>
+          <div class="tax-watch-preview-lifecycle-notice" id="taxWatchPreviewLifecycleNotice" role="status" aria-live="polite" aria-atomic="true" hidden>
             <strong id="taxWatchPreviewLifecycleTitle">Preview reminder</strong>
             <span id="taxWatchPreviewLifecycleMessage"></span>
           </div>
@@ -5367,6 +5376,7 @@
       const color = compactPreviewColor(days, remainingMs);
       const pad = (value) => String(value).padStart(2, "0");
       const expired = remainingMs <= 0;
+      const lessThanOneDay = !expired && remainingMs < 86400000;
 
       const pillRing = document.getElementById("taxWatchPreviewPillRing");
       if (pillRing) {
@@ -5382,11 +5392,18 @@
       const pillDays = document.getElementById("taxWatchPreviewPillDays");
       const pillHeading = document.getElementById("taxWatchPreviewPillHeading");
       const pillSub = document.getElementById("taxWatchPreviewPillSub");
-      if (pillDays) pillDays.textContent = expired ? "0" : String(days);
-      if (pillHeading) pillHeading.textContent = expired ? "Preview ended" : "Preview active";
+      if (pillDays) pillDays.textContent = expired ? "0" : lessThanOneDay ? "<1" : String(days);
+      if (pillHeading) pillHeading.textContent = expired
+        ? "Preview ended"
+        : lessThanOneDay
+          ? "Preview ending"
+          : "Preview active";
       if (pillSub) pillSub.textContent = expired
         ? "No payment was taken"
-        : `${days} ${days === 1 ? "day" : "days"} left · no charge`;
+        : lessThanOneDay
+          ? "Less than 1 day left · no charge"
+          : `${days} ${days === 1 ? "day" : "days"} left · no charge`;
+      if (pill) pill.classList.toggle("preview-final-day", lessThanOneDay);
 
       const dashboardDays = document.getElementById("taxWatchDashboardPreviewDays");
       const dashboardHeading = document.getElementById("taxWatchDashboardPreviewHeading");
@@ -5395,7 +5412,7 @@
       const hoursBox = document.getElementById("taxWatchDashboardPreviewHours");
       const minutesBox = document.getElementById("taxWatchDashboardPreviewMinutes");
       const secondsBox = document.getElementById("taxWatchDashboardPreviewSeconds");
-      if (dashboardDays) dashboardDays.textContent = expired ? "0" : String(days);
+      if (dashboardDays) dashboardDays.textContent = expired ? "0" : lessThanOneDay ? "<1" : String(days);
       if (hoursBox) hoursBox.textContent = pad(hours);
       if (minutesBox) minutesBox.textContent = pad(minutes);
       if (secondsBox) secondsBox.textContent = pad(seconds);
@@ -5404,8 +5421,8 @@
         : "Tax Watch Pro preview running";
       if (dashboardStatus) dashboardStatus.textContent = expired
         ? "Your saved records remain available"
-        : days <= 1
-          ? "Ending soon"
+        : lessThanOneDay
+          ? "Ending within 24 hours"
           : days <= 4
             ? "Getting close"
             : "Plenty of time left";
@@ -5414,6 +5431,7 @@
         : "No automatic charge. Choose a plan only when you are ready.";
       if (dashboardCard) {
         dashboardCard.classList.toggle("preview-ending", !expired && days <= 4);
+        dashboardCard.classList.toggle("preview-final-day", lessThanOneDay);
         dashboardCard.classList.toggle("preview-ended", expired);
       }
 
@@ -5429,15 +5447,15 @@
         inlineRing.style.stroke = color;
         inlineRing.style.strokeDashoffset = String(138.230 * (1 - fraction));
       }
-      if (inlineDays) inlineDays.textContent = expired ? "0" : String(days);
+      if (inlineDays) inlineDays.textContent = expired ? "0" : lessThanOneDay ? "<1" : String(days);
       if (inlineHours) inlineHours.textContent = pad(hours);
       if (inlineMinutes) inlineMinutes.textContent = pad(minutes);
       if (inlineSeconds) inlineSeconds.textContent = pad(seconds);
       if (inlineHeading) inlineHeading.textContent = expired ? "Preview ended" : "Preview running";
       if (inlineStatus) inlineStatus.textContent = expired
         ? "Saved records remain available"
-        : days <= 1
-          ? "Ending soon"
+        : lessThanOneDay
+          ? "Ending within 24 hours"
           : days <= 4
             ? "Getting close"
             : "Plenty of time left";
@@ -5446,6 +5464,7 @@
         : "No card is ever charged automatically";
       if (inlineCard) {
         inlineCard.classList.toggle("preview-ending", !expired && days <= 4);
+        inlineCard.classList.toggle("preview-final-day", lessThanOneDay);
         inlineCard.classList.toggle("preview-ended", expired);
       }
     }
