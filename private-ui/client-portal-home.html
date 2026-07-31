@@ -2147,10 +2147,11 @@
       width:min(1540px,calc(100% - 24px));
       margin:16px auto 48px;
     }
+    .portal-layout{overflow:visible!important}
     .portal-top-navigation{
-      position:sticky;
-      top:var(--portal-sticky-offset,0px);
-      z-index:90;
+      position:sticky!important;
+      top:0!important;
+      z-index:1200;
       display:flex;
       align-items:stretch;
       width:100%;
@@ -7880,21 +7881,8 @@
       if(existingIndex>=0)items[existingIndex]=item;else items.unshift(item);
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
-    document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
-    document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
-    renderPinnacleFinancialSnapshot();
-    document.getElementById("pinnacleAddTrip")?.addEventListener("click",()=>openPinnacleMileageModal());
-    document.getElementById("pinnacleMileageClose")?.addEventListener("click",closePinnacleMileageModal);
-    document.getElementById("pinnacleMileageCancel")?.addEventListener("click",closePinnacleMileageModal);
-    document.getElementById("pinnacleMileageForm")?.addEventListener("submit",submitPinnacleTrip);
-    document.getElementById("pinnacleTripList")?.addEventListener("click",handlePinnacleTripClick);
-    document.getElementById("pinnacleMileageSearch")?.addEventListener("input",renderPinnacleMileage);
-    document.getElementById("pinnacleMileageSourceFilter")?.addEventListener("change",renderPinnacleMileage);
-    document.getElementById("pinnacleMileageMonth")?.addEventListener("change",renderPinnacleMileage);
-    document.getElementById("pinnacleMileageYear")?.addEventListener("change",renderPinnacleMileage);
-    document.getElementById("pinnacleMileageExport")?.addEventListener("click",exportPinnacleMileageCsv);
-    renderPinnacleMileage();
       renderPinnacleFinancialSnapshot();
+      renderPinnacleMileage();
       if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}
       closePinnacleIncomeModal();
       showPinnacleIncomePageStatus(
@@ -8131,6 +8119,64 @@
       const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));const a=document.createElement("a");a.href=url;a.download="Pinnacle-Mileage-Report.csv";a.click();URL.revokeObjectURL(url);
     }
 
+    let pinnacleFeaturesInitialized=false;
+    function initializePinnacleFeatures(){
+      if(pinnacleFeaturesInitialized)return;
+      pinnacleFeaturesInitialized=true;
+
+      document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach((radio)=>{
+        radio.addEventListener("change",updatePinnacleBusinessFields);
+      });
+      document.getElementById("pinnacleBusinessEinStatus")?.addEventListener("change",updatePinnacleBusinessFields);
+      document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("input",updatePinnacleBusinessProgress);
+      document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("submit",savePinnacleBusinessDraft);
+      document.getElementById("pinnacleBusinessClear")?.addEventListener("click",clearPinnacleBusinessDraft);
+
+      document.getElementById("pinnacleAddIncomeSource")?.addEventListener("click",()=>openPinnacleIncomeModal());
+      document.getElementById("pinnacleIncomeClose")?.addEventListener("click",closePinnacleIncomeModal);
+      document.getElementById("pinnacleIncomeCancel")?.addEventListener("click",closePinnacleIncomeModal);
+      document.getElementById("pinnacleIncomeForm")?.addEventListener("submit",submitPinnacleIncomeSource);
+      document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses").forEach((field)=>{
+        field.addEventListener("input",()=>{
+          const cleaned=sanitizePinnacleCurrencyInput(field.value);
+          if(field.value!==cleaned)field.value=cleaned;
+        });
+        field.addEventListener("blur",()=>{
+          field.value=normalizePinnacleCurrencyValue(field.value)||"";
+        });
+      });
+      document.getElementById("pinnacleIncomeSearch")?.addEventListener("input",renderPinnacleIncomeSources);
+      document.getElementById("pinnacleIncomeFilterMonth")?.addEventListener("change",renderPinnacleIncomeSources);
+      document.getElementById("pinnacleIncomeFilterYear")?.addEventListener("change",renderPinnacleIncomeSources);
+      document.getElementById("pinnacleIncomeSourceList")?.addEventListener("click",handlePinnacleIncomeListClick);
+      document.getElementById("pinnacleIncomeModal")?.addEventListener("click",(event)=>{
+        if(event.target===event.currentTarget)closePinnacleIncomeModal();
+      });
+
+      document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
+      document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
+
+      document.getElementById("pinnacleAddTrip")?.addEventListener("click",()=>openPinnacleMileageModal());
+      document.getElementById("pinnacleMileageClose")?.addEventListener("click",closePinnacleMileageModal);
+      document.getElementById("pinnacleMileageCancel")?.addEventListener("click",closePinnacleMileageModal);
+      document.getElementById("pinnacleMileageForm")?.addEventListener("submit",submitPinnacleTrip);
+      document.getElementById("pinnacleTripList")?.addEventListener("click",handlePinnacleTripClick);
+      document.getElementById("pinnacleMileageSearch")?.addEventListener("input",renderPinnacleMileage);
+      document.getElementById("pinnacleMileageSourceFilter")?.addEventListener("change",renderPinnacleMileage);
+      document.getElementById("pinnacleMileageMonth")?.addEventListener("change",renderPinnacleMileage);
+      document.getElementById("pinnacleMileageYear")?.addEventListener("change",renderPinnacleMileage);
+      document.getElementById("pinnacleMileageExport")?.addEventListener("click",exportPinnacleMileageCsv);
+      document.getElementById("pinnacleMileageModal")?.addEventListener("click",(event)=>{
+        if(event.target===event.currentTarget)closePinnacleMileageModal();
+      });
+
+      restorePinnacleBusinessDraft();
+      updatePinnacleBusinessProfileAccess();
+      renderPinnacleIncomeSources();
+      renderPinnacleFinancialSnapshot();
+      renderPinnacleMileage();
+    }
+
     function openPortalView(view, options = {}) {
       const { updateHash = true, scroll = true } = options;
       const requestedView = portalViewHashes[view] ? view : "dashboard";
@@ -8141,37 +8187,6 @@
       });
 
   
-    document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.addEventListener("change",updatePinnacleBusinessFields));
-    document.getElementById("pinnacleBusinessEinStatus")?.addEventListener("change",updatePinnacleBusinessFields);
-    document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("input",updatePinnacleBusinessProgress);
-    document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("submit",savePinnacleBusinessDraft);
-    document.getElementById("pinnacleBusinessClear")?.addEventListener("click",clearPinnacleBusinessDraft);
-    restorePinnacleBusinessDraft();
-    updatePinnacleBusinessProfileAccess();
-
-
-    document.getElementById("pinnacleAddIncomeSource")?.addEventListener("click",()=>openPinnacleIncomeModal());
-    document.getElementById("pinnacleIncomeClose")?.addEventListener("click",closePinnacleIncomeModal);
-    document.getElementById("pinnacleIncomeCancel")?.addEventListener("click",closePinnacleIncomeModal);
-    document.getElementById("pinnacleIncomeForm")?.addEventListener("submit",submitPinnacleIncomeSource);
-    document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses").forEach((field)=>{
-      field.addEventListener("input",()=>{
-        const cleaned=sanitizePinnacleCurrencyInput(field.value);
-        if(field.value!==cleaned)field.value=cleaned;
-      });
-      field.addEventListener("blur",()=>{
-        field.value=normalizePinnacleCurrencyValue(field.value) || "";
-      });
-    });
-    document.getElementById("pinnacleIncomeSearch")?.addEventListener("input",renderPinnacleIncomeSources);
-    document.getElementById("pinnacleIncomeFilterMonth")?.addEventListener("change",renderPinnacleIncomeSources);
-    document.getElementById("pinnacleIncomeFilterYear")?.addEventListener("change",renderPinnacleIncomeSources);
-    document.getElementById("pinnacleIncomeSourceList")?.addEventListener("click",handlePinnacleIncomeListClick);
-    document.getElementById("pinnacleIncomeModal")?.addEventListener("click",(event)=>{
-      if(event.target===event.currentTarget)closePinnacleIncomeModal();
-    });
-    renderPinnacleIncomeSources();
-
     document.querySelectorAll("[data-portal-open]").forEach((button) => {
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
       });
@@ -8272,14 +8287,9 @@
       const navigation = document.querySelector(".portal-top-navigation");
       if (!navigation) return;
 
-      const offset =
-        window.innerWidth > 1280 && topbar
-          ? Math.ceil(topbar.getBoundingClientRect().height)
-          : 0;
-
       document.documentElement.style.setProperty(
         "--portal-sticky-offset",
-        `${offset}px`
+        "0px"
       );
     }
 
@@ -8352,6 +8362,7 @@
         if (event.key === "Escape") closePortalSubmenus();
       });
 
+      initializePinnacleFeatures();
       syncPortalNavigationOffset();
       window.addEventListener("resize", syncPortalNavigationOffset);
 
