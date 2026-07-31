@@ -1665,16 +1665,12 @@
     .pinnacle-income-stat span{display:block;color:#63798a;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-income-stat strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
     .pinnacle-income-page-status{
-      position:fixed;right:24px;top:92px;z-index:3600;
-      max-width:min(420px,calc(100vw - 32px));
-      padding:12px 16px;border:1px solid #b9d8c4;border-radius:12px;
-      background:#eef9f1;color:#12673a;font-size:13px;font-weight:850;
-      box-shadow:0 14px 34px rgba(13,67,40,.18);
-      opacity:0;transform:translateY(-10px);pointer-events:none;
+      display:none;margin:0 0 16px;padding:13px 16px;
+      border:1px solid #9fc9ad;border-left:5px solid #168447;border-radius:10px;
+      background:#edf9f1;color:#0d6635;font-size:14px;font-weight:900;
+      box-shadow:0 8px 20px rgba(15,92,48,.10);
+      opacity:0;transform:translateY(-8px);
       transition:opacity .18s ease,transform .18s ease
-    }
-    .pinnacle-income-page-status.is-visible{
-      opacity:1;transform:translateY(0)
     }
     .pinnacle-income-filter-bar{
       display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.7fr));gap:12px;
@@ -3431,6 +3427,8 @@
           <strong>Business financial rollup:</strong> Each income source will ultimately combine year-to-date gross income, tracked expenses, mileage deductions, tax savings deposits, and estimated-tax payments. Pinnacle will use those records to calculate net business income and a Safe to Spend amount without requiring duplicate manual totals.
         </div>
 
+        <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="assertive"></div>
+
         <div class="pinnacle-income-summary">
           <div class="pinnacle-income-stat"><span>Income Sources</span><strong id="pinnacleIncomeSourceCount">0</strong></div>
           <div class="pinnacle-income-stat"><span>Year-to-Date Income</span><strong id="pinnacleIncomeYtdTotal">$0</strong></div>
@@ -3445,8 +3443,6 @@
           </div>
           <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
         </div>
-
-        <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="polite"></div>
 
         <div class="pinnacle-income-filter-bar">
           <div class="pinnacle-income-filter-field">
@@ -7417,19 +7413,30 @@
       localStorage.setItem(PINNACLE_INCOME_SOURCES_KEY,JSON.stringify(items));
     }
     let pinnacleIncomePageStatusTimer=null;
-    function showPinnacleIncomePageStatus(message,duration=3200){
+    function showPinnacleIncomePageStatus(message,duration=4200){
       const status=document.getElementById("pinnacleIncomePageStatus");
       if(!status)return;
-      status.textContent=message||"";
-      status.classList.toggle("is-visible",Boolean(message));
+
       if(pinnacleIncomePageStatusTimer){
         window.clearTimeout(pinnacleIncomePageStatusTimer);
         pinnacleIncomePageStatusTimer=null;
       }
+
+      status.textContent=message||"";
+      status.style.display=message?"block":"none";
+      status.style.opacity=message?"1":"0";
+      status.style.transform=message?"translateY(0)":"translateY(-8px)";
+
+      if(message){
+        status.scrollIntoView({behavior:"smooth",block:"nearest"});
+      }
+
       if(message&&duration>0){
         pinnacleIncomePageStatusTimer=window.setTimeout(()=>{
           status.textContent="";
-          status.classList.remove("is-visible");
+          status.style.opacity="0";
+          status.style.transform="translateY(-8px)";
+          window.setTimeout(()=>{status.style.display="none"},220);
           pinnacleIncomePageStatusTimer=null;
         },duration);
       }
@@ -7597,11 +7604,16 @@
     function submitPinnacleIncomeSource(event){
       event.preventDefault();
       const form=event.currentTarget;
+      const saveButton=form.querySelector('button[type="submit"]');
+      if(saveButton){
+        saveButton.disabled=true;
+        saveButton.textContent="Saving...";
+      }
       formatPinnacleCurrencyInputsInScope(form);
       const data=Object.fromEntries(new FormData(form).entries());
       data.type=normalizePinnacleIncomeType(data.type);
-      if(!String(data.name||"").trim()){showPinnacleIncomeStatus("Enter the income source name.",4500);return}
-      if(!String(data.type||"").trim()){showPinnacleIncomeStatus("Select the income type.",4500);return}
+      if(!String(data.name||"").trim()){showPinnacleIncomeStatus("Enter the income source name.",4500);if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}return}
+      if(!String(data.type||"").trim()){showPinnacleIncomeStatus("Select the income type.",4500);if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}return}
 
       const items=loadPinnacleIncomeSources();
       const existingIndex=items.findIndex(x=>x.id===data.id);
@@ -7613,12 +7625,13 @@
       if(existingIndex>=0)items[existingIndex]=item;else items.unshift(item);
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
+      if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}
       closePinnacleIncomeModal();
       showPinnacleIncomePageStatus(
         existingIndex>=0
-          ? `Income source update saved: ${item.name}.`
-          : `Income source saved: ${item.name}.`,
-        4200
+          ? `Saved successfully — ${item.name} was updated.`
+          : `Saved successfully — ${item.name} was added.`,
+        5200
       );
     }
     function handlePinnacleIncomeListClick(event){
