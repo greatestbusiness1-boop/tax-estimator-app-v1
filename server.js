@@ -4799,10 +4799,19 @@ async function getClientPortalAccessibleLeads(email) {
   const candidates =
     await loadClientPortalLeadCandidates();
 
-  return candidates.filter(
-    (entry) =>
-      getLeadEmailValue(entry.raw) === normalized
-  );
+  return candidates.filter((entry) => {
+    const mergedEmail = getLeadEmailValue(
+      entry.lead || {}
+    );
+    const rawEmail = getLeadEmailValue(
+      entry.raw || {}
+    );
+
+    return (
+      mergedEmail === normalized ||
+      rawEmail === normalized
+    );
+  });
 }
 
 async function getFreeEstimateIdentityAccessibleLeads(email) {
@@ -4811,12 +4820,21 @@ async function getFreeEstimateIdentityAccessibleLeads(email) {
   const candidates =
     await loadClientPortalLeadCandidates();
 
-  return candidates.filter(
-    (entry) =>
+  return candidates.filter((entry) => {
+    const mergedIdentity =
       getFreeEstimateIdentityKey(
-        getLeadEmailValue(entry.raw)
-      ) === identityEmail
-  );
+        getLeadEmailValue(entry.lead || {})
+      );
+    const rawIdentity =
+      getFreeEstimateIdentityKey(
+        getLeadEmailValue(entry.raw || {})
+      );
+
+    return (
+      mergedIdentity === identityEmail ||
+      rawIdentity === identityEmail
+    );
+  });
 }
 
 function normalizeFreeEstimateClientName(value) {
