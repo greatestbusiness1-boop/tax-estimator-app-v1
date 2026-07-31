@@ -3559,7 +3559,7 @@
           </article>
         </div>
         <details class="pinnacle-more-features">
-          <summary>Plus <span data-pinnacle-additional-count>0</span> additional Pinnacle features</summary>
+          <summary>Plus <span>18</span> additional Pinnacle features</summary>
           <ul id="pinnacleAdditionalFeatureList">
             <li>Year-to-date gross business income totals</li>
             <li>Tracked business-expense totals</li>
@@ -6259,8 +6259,27 @@
             <li>Tax preparation and filing remain separate professional services</li>
           </ul>
           <details class="pinnacle-more-features">
-            <summary>Plus <span data-pinnacle-additional-count>0</span> additional Pinnacle features</summary>
-            <ul data-pinnacle-additional-feature-copy></ul>
+            <summary>Plus <span>18</span> additional Pinnacle features</summary>
+            <ul>
+              <li>Year-to-date gross business income totals</li>
+              <li>Tracked business-expense totals</li>
+              <li>Date-sensitive mileage deduction calculations</li>
+              <li>Net business income rollup</li>
+              <li>Recommended tax-savings reserve</li>
+              <li>Deposited tax-savings tracking</li>
+              <li>Estimated-tax payment tracking</li>
+              <li>Month and tax-year financial filters</li>
+              <li>Income-source detail rows and update history</li>
+              <li>Separated start and end trip addresses</li>
+              <li>Business, personal, commuting, and unclassified mileage totals</li>
+              <li>Compact daily odometer history with expandable details</li>
+              <li>Mileage CSV download</li>
+              <li>Expense categories and receipt organization</li>
+              <li>Quarterly-payment and W-2 withholding guidance</li>
+              <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
+              <li>Before-and-after scenario comparisons</li>
+              <li>Downloadable Pinnacle Tax Action Plan</li>
+            </ul>
           </details>
           <p><strong>Designed for freelancers and self-employed individuals.</strong> Larger businesses with complex entities, payroll, inventory, or full bookkeeping needs may require separate professional services.</p>
           <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Pinnacle Checkout Opens When Plan Is Ready</button>
@@ -7741,18 +7760,6 @@
     }
 
 
-    function syncPinnacleAdditionalFeatureCount(){
-      const source=document.getElementById("pinnacleAdditionalFeatureList");
-      if(!source)return;
-      const features=[...source.querySelectorAll(":scope > li")].map(item=>item.textContent.trim()).filter(Boolean);
-      document.querySelectorAll("[data-pinnacle-additional-count]").forEach(node=>{
-        node.textContent=String(features.length);
-      });
-      document.querySelectorAll("[data-pinnacle-additional-feature-copy]").forEach(list=>{
-        list.innerHTML=features.map(feature=>`<li>${escapeHtml(feature)}</li>`).join("");
-      });
-    }
-
     const PINNACLE_PREVIEW_KEY="pinnaclePreview.v1";
     let pinnaclePreviewTimer=null;
 
@@ -8659,17 +8666,21 @@
         if(event.target===event.currentTarget)closePinnacleMileageModal();
       });
 
-      configurePinnacleBillingSwitch();
-      syncPinnacleAdditionalFeatureCount();
-      renderPinnaclePreview();
-      configureMembershipCheckoutButtons();
-      restorePinnacleBusinessDraft();
-      updatePinnacleBusinessProfileAccess();
-      renderPinnacleIncomeSources();
-      renderPinnacleFinancialSnapshot();
-      renderPinnacleVehicles();
-      renderPinnacleMileage();
-      renderPinnacleDailyMileage();
+      const pinnacleStartupSteps=[
+        configurePinnacleBillingSwitch,
+        renderPinnaclePreview,
+        configureMembershipCheckoutButtons,
+        restorePinnacleBusinessDraft,
+        updatePinnacleBusinessProfileAccess,
+        renderPinnacleIncomeSources,
+        renderPinnacleFinancialSnapshot,
+        renderPinnacleVehicles,
+        renderPinnacleMileage,
+        renderPinnacleDailyMileage
+      ];
+      pinnacleStartupSteps.forEach((step)=>{
+        try{step()}catch(error){console.error("Pinnacle startup step failed:",step.name,error)}
+      });
     }
 
     function openPortalView(view, options = {}) {
