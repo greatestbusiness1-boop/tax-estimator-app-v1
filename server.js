@@ -23653,7 +23653,8 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     extensionRequest,
     calendarAppointment,
     completedAt,
-    closedAt
+    closedAt,
+    contactEmail
   } = req.body || {};
   const cleanId = String(leadId || "").trim();
 
@@ -23702,6 +23703,33 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
     if (typeof closedAt === "string" && closedAt.trim()) {
       updatedEstimate.closedAt = closedAt.trim();
+    }
+
+    if (typeof contactEmail === "string") {
+      const cleanEmail = contactEmail
+        .trim()
+        .toLowerCase();
+
+      if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          cleanEmail
+        )
+      ) {
+        const invalidEmailError =
+          new Error("Enter a valid email address.");
+        invalidEmailError.code =
+          "INVALID_LEAD_EMAIL";
+        throw invalidEmailError;
+      }
+
+      updatedEstimate.contact = {
+        ...(updatedEstimate.contact || {}),
+        email: cleanEmail
+      };
+
+      updatedEstimate.email = cleanEmail;
+      updatedEstimate.emailUpdatedAt =
+        new Date().toISOString();
     }
 
     const incomingTranscriptRequest =
@@ -23923,6 +23951,16 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     } catch (supabaseErr) {
       if (
         supabaseErr?.code ===
+        "INVALID_LEAD_EMAIL"
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: supabaseErr.message
+        });
+      }
+
+      if (
+        supabaseErr?.code ===
         "CONTRACTOR_1099_COMPLETION_BLOCKED"
       ) {
         return res.status(409).json({
@@ -23970,6 +24008,31 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof closedAt === "string" && closedAt.trim()) {
         localLead.closedAt = closedAt.trim();
+      }
+
+      if (typeof contactEmail === "string") {
+        const cleanEmail = contactEmail
+          .trim()
+          .toLowerCase();
+
+        if (
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            cleanEmail
+          )
+        ) {
+          return res.status(400).json({
+            ok: false,
+            error: "Enter a valid email address."
+          });
+        }
+
+        localLead.contact = {
+          ...(localLead.contact || {}),
+          email: cleanEmail
+        };
+        localLead.email = cleanEmail;
+        localLead.emailUpdatedAt =
+          new Date().toISOString();
       }
 
       if (
@@ -24700,9 +24763,14 @@ app.post("/api/-help", (req, res) => {
   }
 });
 
-app.delete("/api/leads/:leadId", (req, res) => {
+app.delete("/api/leads/:leadId", async (req, res) => {
   try {
-    const leadId = String(req.params.leadId || "").trim();
+    const leadId = String(
+      req.params.leadId || ""
+    ).trim();
+    const reason = String(
+      req.body?.reason || ""
+    ).trim();
 
     if (!leadId) {
       return res.status(400).json({
@@ -24711,27 +24779,215 @@ app.delete("/api/leads/:leadId", (req, res) => {
       });
     }
 
-    const leads = readLeads();
-    const originalCount = leads.length;
+    if (reason !== "error-test-lead") {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Permanent deletion requires the error/test-lead reason."
+      });
+    }
 
-    const updatedLeads = leads.filter((lead) => String(lead.leadId) !== leadId);
+    const possibleIdsFor = (record = {}) => {
+      const estimate =
+        record.estimate &&
+        typeof record.estimate === "object"
+          ? record.estimate
+          : {};
 
-    if (updatedLeads.length === originalCount) {
+      return [
+        record.leadId,
+        record.leadid,
+        record.lead_id,
+        record.id,
+        estimate.leadId,
+        estimate.leadid,
+        estimate.lead_id,
+        estimate.id
+      ]
+        .map((value) =>
+          String(value || "").trim()
+        )
+        .filter(Boolean);
+    };
+
+    let matchedLead = null;
+    let matchedSupabaseRow = null;
+
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", {
+          ascending: false
+        });
+
+      if (error) {
+        console.error(
+          "[DELETE /api/leads] Supabase lookup error:",
+          error.message || error
+        );
+      } else if (Array.isArray(data)) {
+        matchedSupabaseRow =
+          data.find((row) =>
+            possibleIdsFor(row).includes(leadId)
+          ) || null;
+
+        if (matchedSupabaseRow) {
+          matchedLead =
+            mapRowToLead(matchedSupabaseRow);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[DELETE /api/leads] Supabase lookup failed:",
+        error.message || error
+      );
+    }
+
+    const localLeads = readLeads();
+    const localLead =
+      localLeads.find((lead) =>
+        possibleIdsFor(lead).includes(leadId)
+      ) || null;
+
+    matchedLead = matchedLead || localLead;
+
+    if (!matchedLead) {
       return res.status(404).json({
         ok: false,
         error: "Lead was not found."
       });
     }
 
-    writeLeads(updatedLeads);
+    const recordText = JSON.stringify(
+      matchedLead
+    ).toLowerCase();
 
-    return res.json({
+    const paidOrFinancial = Boolean(
+      matchedLead.stripePaymentIntentId ||
+      matchedLead.stripeCheckoutSessionId ||
+      matchedLead.stripeSubscriptionId ||
+      Number(
+        matchedLead.amountPaid ||
+        matchedLead.paymentAmount ||
+        matchedLead.paidAmount ||
+        0
+      ) > 0 ||
+      /paid\s*\/\s*confirmed|"paymentstatus":"paid"|"paymentstatus":"succeeded"/
+        .test(recordText)
+    );
+
+    const completed = Boolean(
+      matchedLead.completedAt ||
+      matchedLead.deliveredAt ||
+      matchedLead.returnFiledAt ||
+      /"status":"completed"|"status":"delivered"|"status":"filed"/
+        .test(recordText)
+    );
+
+    const hasDocuments = Boolean(
+      (Array.isArray(matchedLead.documents) &&
+        matchedLead.documents.length) ||
+      (Array.isArray(matchedLead.uploads) &&
+        matchedLead.uploads.length) ||
+      (Array.isArray(
+        matchedLead.clientDocuments
+      ) &&
+        matchedLead.clientDocuments.length)
+    );
+
+    if (
+      paidOrFinancial ||
+      completed ||
+      hasDocuments
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "This record cannot be permanently deleted because it contains a payment, completed work, or stored documents. Close or void it instead."
+      });
+    }
+
+    if (matchedSupabaseRow) {
+      let deleteQuery = supabase
+        .from("leads")
+        .delete();
+
+      if (matchedSupabaseRow.leadId) {
+        deleteQuery = deleteQuery.eq(
+          "leadId",
+          matchedSupabaseRow.leadId
+        );
+      } else if (matchedSupabaseRow.leadid) {
+        deleteQuery = deleteQuery.eq(
+          "leadid",
+          matchedSupabaseRow.leadid
+        );
+      } else if (matchedSupabaseRow.lead_id) {
+        deleteQuery = deleteQuery.eq(
+          "lead_id",
+          matchedSupabaseRow.lead_id
+        );
+      } else if (matchedSupabaseRow.id) {
+        deleteQuery = deleteQuery.eq(
+          "id",
+          matchedSupabaseRow.id
+        );
+      } else {
+        return res.status(500).json({
+          ok: false,
+          error:
+            "The database record has no usable deletion key."
+        });
+      }
+
+      const { error: deleteError } =
+        await deleteQuery;
+
+      if (deleteError) {
+        console.error(
+          "[DELETE /api/leads] Supabase delete error:",
+          deleteError.message || deleteError
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "The lead could not be removed from the database."
+        });
+      }
+    }
+
+    const updatedLeads =
+      localLeads.filter(
+        (lead) =>
+          !possibleIdsFor(lead).includes(leadId)
+      );
+
+    if (
+      updatedLeads.length !==
+      localLeads.length
+    ) {
+      writeLeads(updatedLeads);
+    }
+
+    recentLeads.delete(leadId);
+
+    return res.status(200).json({
       ok: true,
       removed: true,
-      leadId
+      leadId,
+      removedFromSupabase:
+        Boolean(matchedSupabaseRow),
+      removedFromLocal:
+        updatedLeads.length !==
+        localLeads.length
     });
   } catch (err) {
-    console.error("[leads] Delete error:", err);
+    console.error(
+      "[leads] Delete error:",
+      err
+    );
 
     return res.status(500).json({
       ok: false,

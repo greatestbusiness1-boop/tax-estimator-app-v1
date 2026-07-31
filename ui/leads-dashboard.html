@@ -3600,6 +3600,68 @@
   <div id="dpRefund"></div>
   <div id="dpEntered"></div>
   <div id="dpClosed"></div>
+
+  <div
+    id="dpAdminActions"
+    style="
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid #dbe4f0;
+      display:none;
+    "
+  >
+    <div style="font-weight:900;color:#0f2f55;margin-bottom:8px;">
+      Office Record Controls
+    </div>
+
+    <button
+      type="button"
+      id="editLeadEmailButton"
+      onclick="editActiveLeadEmail()"
+      style="
+        width:100%;
+        border:1px solid #0f2f55;
+        background:#ffffff;
+        color:#0f2f55;
+        border-radius:8px;
+        padding:10px 12px;
+        font-weight:850;
+        cursor:pointer;
+        margin-bottom:8px;
+      "
+    >
+      Edit Email Address
+    </button>
+
+    <button
+      type="button"
+      id="deleteErrorLeadButton"
+      onclick="deleteActiveErrorLead()"
+      style="
+        width:100%;
+        border:1px solid #b91c1c;
+        background:#fff5f5;
+        color:#991b1b;
+        border-radius:8px;
+        padding:10px 12px;
+        font-weight:850;
+        cursor:pointer;
+      "
+    >
+      Delete Error / Test Lead
+    </button>
+
+    <div
+      style="
+        margin-top:8px;
+        color:#64748b;
+        font-size:12px;
+        line-height:1.45;
+      "
+    >
+      Permanent deletion is blocked for paid, completed, or document-bearing records.
+    </div>
+  </div>
 </div>
 
 
@@ -9377,6 +9439,16 @@ function appendTaxPlannerCrmToDetail(lead){
 }
 
 function openPanel(lead){
+  window.activeOfficeLead = lead || null;
+
+  const adminActions =
+    document.getElementById("dpAdminActions");
+  if(adminActions){
+    adminActions.style.display = lead?.leadId
+      ? "block"
+      : "none";
+  }
+
   if(isContractor1099Lead(lead)){
     if(isCompletedContractor1099(lead)){
       currentView = "contractor1099completed";
@@ -16915,6 +16987,218 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
+function getActiveOfficeLead(){
+  return window.activeOfficeLead || null;
+}
+
+function isValidOfficeEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    String(value || "").trim()
+  );
+}
+
+async function editActiveLeadEmail(){
+  const lead = getActiveOfficeLead();
+
+  if(!lead?.leadId){
+    window.alert("Open a lead before editing its email address.");
+    return;
+  }
+
+  const currentEmail = String(
+    lead.contact?.email || ""
+  ).trim();
+
+  const entered = window.prompt(
+    "Enter the corrected email address for this lead:",
+    currentEmail
+  );
+
+  if(entered === null){
+    return;
+  }
+
+  const correctedEmail = String(entered || "")
+    .trim()
+    .toLowerCase();
+
+  if(!isValidOfficeEmail(correctedEmail)){
+    window.alert("Enter a valid email address.");
+    return;
+  }
+
+  if(
+    currentEmail &&
+    correctedEmail === currentEmail.toLowerCase()
+  ){
+    window.alert("That is already the saved email address.");
+    return;
+  }
+
+  const confirmation = window.confirm(
+    "Update this lead from:\n\n" +
+    (currentEmail || "No email saved") +
+    "\n\nto:\n\n" +
+    correctedEmail +
+    "\n\nThe permanent client reference number will not change."
+  );
+
+  if(!confirmation){
+    return;
+  }
+
+  const button =
+    document.getElementById("editLeadEmailButton");
+  const originalText = button?.textContent || "";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Saving Email...";
+  }
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(lead.leadId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contactEmail: correctedEmail
+        })
+      }
+    );
+
+    const data = await response.json()
+      .catch(() => ({}));
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error ||
+        "The email address could not be updated."
+      );
+    }
+
+    lead.contact = {
+      ...(lead.contact || {}),
+      email: correctedEmail
+    };
+
+    document.getElementById("dpEmail").innerText =
+      correctedEmail;
+
+    await loadLeads();
+
+    window.alert(
+      "Email address updated. The permanent client reference number was preserved."
+    );
+  }catch(error){
+    window.alert(
+      error?.message ||
+      "The email address could not be updated."
+    );
+  }finally{
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+async function deleteActiveErrorLead(){
+  const lead = getActiveOfficeLead();
+
+  if(!lead?.leadId){
+    window.alert("Open a lead before deleting it.");
+    return;
+  }
+
+  const clientName = String(
+    lead.contact?.name || "This lead"
+  ).trim();
+  const clientEmail = String(
+    lead.contact?.email || "No email"
+  ).trim();
+
+  const typed = window.prompt(
+    "Permanent deletion removes this error/test lead from the Tax Lead Center and lead database.\n\n" +
+    clientName + "\n" +
+    clientEmail + "\n" +
+    lead.leadId +
+    "\n\nType DELETE TEST LEAD to continue:"
+  );
+
+  if(typed !== "DELETE TEST LEAD"){
+    if(typed !== null){
+      window.alert(
+        "Deletion cancelled. The confirmation words did not match."
+      );
+    }
+    return;
+  }
+
+  const finalConfirmation = window.confirm(
+    "Permanently delete this error/test lead?\n\n" +
+    "This cannot be undone."
+  );
+
+  if(!finalConfirmation){
+    return;
+  }
+
+  const button =
+    document.getElementById("deleteErrorLeadButton");
+  const originalText = button?.textContent || "";
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "Deleting...";
+  }
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(lead.leadId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          reason: "error-test-lead"
+        })
+      }
+    );
+
+    const data = await response.json()
+      .catch(() => ({}));
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error ||
+        "The lead could not be deleted."
+      );
+    }
+
+    clearDetailPanel();
+    await loadLeads();
+
+    window.alert(
+      "The error/test lead was permanently deleted."
+    );
+  }catch(error){
+    window.alert(
+      error?.message ||
+      "The lead could not be deleted."
+    );
+  }finally{
+    if(button){
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
 function clearDetailPanel(){
   const panel = document.getElementById("detailPanel");
   if(panel){
@@ -16923,6 +17207,13 @@ function clearDetailPanel(){
 
   window.activeTaxPreparationLead = null;
   window.activeExtensionLead = null;
+  window.activeOfficeLead = null;
+
+  const adminActions =
+    document.getElementById("dpAdminActions");
+  if(adminActions){
+    adminActions.style.display = "none";
+  }
 
   const fields = [
     "dpName",
