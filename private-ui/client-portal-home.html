@@ -1655,6 +1655,68 @@
     }
     .pinnacle-profile-card-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
     .pinnacle-profile-card-actions .secondary{background:#fff;color:#0b5685;border-color:#b9ccdc}
+    .pinnacle-financial-page .section-body{padding:26px}
+    .pinnacle-financial-control-bar{
+      display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+      margin-bottom:18px;padding:18px 20px;border:1px solid #c6dae8;border-radius:16px;background:#f6fafc
+    }
+    .pinnacle-financial-control-group{display:flex;gap:12px;flex-wrap:wrap}
+    .pinnacle-financial-control-field{display:flex;flex-direction:column;gap:7px;min-width:170px}
+    .pinnacle-financial-control-field label{font-size:12px;font-weight:850;color:#173e5c}
+    .pinnacle-financial-control-field select{
+      min-height:42px;padding:9px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit
+    }
+    .pinnacle-financial-grid{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px
+    }
+    .pinnacle-financial-card{
+      border:1px solid #c3d8e6;border-radius:16px;background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%);
+      padding:17px;box-shadow:0 5px 15px rgba(16,56,84,.05)
+    }
+    .pinnacle-financial-card span{
+      display:block;color:#687d8e;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase
+    }
+    .pinnacle-financial-card strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
+    .pinnacle-financial-card small{display:block;margin-top:7px;color:#5b7183;line-height:1.45}
+    .pinnacle-financial-card.emphasis{
+      border:2px solid #0b5d8d;background:linear-gradient(180deg,#eef8fd 0%,#dceef8 100%)
+    }
+    .pinnacle-financial-card.gold{
+      border:2px solid #c89b35;background:linear-gradient(180deg,#fffaf0 0%,#f9efd8 100%)
+    }
+    .pinnacle-financial-source-list{display:grid;gap:12px}
+    .pinnacle-financial-source{
+      border:1px solid #c7dae7;border-radius:16px;background:#fff;overflow:hidden
+    }
+    .pinnacle-financial-source-head{
+      display:flex;justify-content:space-between;gap:14px;align-items:center;
+      padding:15px 18px;background:linear-gradient(90deg,#f6fafc 0%,#eaf4fa 100%);
+      border-bottom:1px solid #d8e5ee
+    }
+    .pinnacle-financial-source-head h4{margin:0;color:#082f50;font-size:17px}
+    .pinnacle-financial-source-head p{margin:5px 0 0;color:#607789;font-size:13px}
+    .pinnacle-financial-source-body{
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;padding:15px 18px
+    }
+    .pinnacle-financial-metric span{
+      display:block;color:#718596;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase
+    }
+    .pinnacle-financial-metric strong{display:block;margin-top:5px;color:#173e5c;font-size:15px}
+    .pinnacle-financial-note{
+      margin-top:18px;padding:15px 17px;border-left:5px solid #0b5d8d;border-radius:10px;
+      background:#f0f7fb;color:#35576e;line-height:1.55
+    }
+    .pinnacle-financial-empty{
+      padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083
+    }
+    @media(max-width:1100px){
+      .pinnacle-financial-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pinnacle-financial-source-body{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    @media(max-width:720px){
+      .pinnacle-financial-page .section-body{padding:16px}
+      .pinnacle-financial-grid,.pinnacle-financial-source-body{grid-template-columns:1fr}
+    }
     .pinnacle-income-page .section-body{padding:26px}
     .pinnacle-income-summary{
       display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px
@@ -1696,6 +1758,7 @@
       min-height:42px;padding:9px 14px;border:1px solid #0b5d8d;border-radius:9px;
       background:#0b5d8d;color:#fff;font-weight:800;cursor:pointer
     }
+    .pinnacle-income-toolbar button.secondary{background:#fff;color:#0b5685;border-color:#b9ccdc}
     .pinnacle-income-actions button.secondary,.pinnacle-source-row button.secondary{
       background:#fff;color:#0b5685;border-color:#b9ccdc
     }
@@ -2601,6 +2664,7 @@
             <button type="button" data-portal-open="pinnacle">Pinnacle Overview</button>
             <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
             <button type="button" data-portal-open="pinnacle-income-sources">Jobs, Gigs &amp; Business Income</button>
+            <button type="button" data-portal-open="pinnacle-financial-snapshot">Business Financial Snapshot</button>
           </div>
         </div>
 
@@ -3445,6 +3509,7 @@
           </div>
           <div class="pinnacle-income-toolbar-actions">
             <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="assertive"></div>
+            <button type="button" class="secondary" data-portal-open="pinnacle-financial-snapshot">View Financial Snapshot</button>
             <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
           </div>
         </div>
@@ -3550,6 +3615,61 @@
         </form>
       </div>
     </div>
+
+
+    <section class="section portal-view pinnacle-financial-page" id="pinnacleFinancialSnapshot" data-portal-view="pinnacle-financial-snapshot">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Pinnacle Planning</div>
+          <h2>Business Financial Snapshot</h2>
+          <p>Review business income, deductions, tax reserves, and the amount that may be available after planned tax obligations.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="pinnacle-income-sources">Return to Income Sources</button>
+      </div>
+      <div class="section-body">
+        <div class="pinnacle-financial-control-bar">
+          <div class="pinnacle-financial-control-group">
+            <div class="pinnacle-financial-control-field">
+              <label for="pinnacleFinancialMonth">Month</label>
+              <select id="pinnacleFinancialMonth">
+                <option value="">All months</option>
+                <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+              </select>
+            </div>
+            <div class="pinnacle-financial-control-field">
+              <label for="pinnacleFinancialYear">Tax year</label>
+              <select id="pinnacleFinancialYear">
+                <option value="">All years</option>
+                <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+                <option value="2029">2029</option><option value="2030">2030</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pinnacle-financial-grid">
+          <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong><small>Total from the income sources shown.</small></div>
+          <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong><small>Temporary total from income-source entries until the Expense Tracker is connected.</small></div>
+          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><small>This will update automatically after the Mileage Tracker is installed.</small></div>
+          <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong><small>Gross income minus tracked expenses and mileage deduction.</small></div>
+          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong><small>This activates after the tax-reserve setup and projection logic are approved.</small></div>
+          <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><small>Will connect to the Tax Savings history.</small></div>
+          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong><small>Will connect to recorded federal and state payments.</small></div>
+          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">Pending</strong><small>Will activate after cash available, tax reserve, savings, and payment records are connected.</small></div>
+        </div>
+
+        <div class="pinnacle-financial-source-list" id="pinnacleFinancialSourceList">
+          <div class="pinnacle-financial-empty">Add at least one income source to create the Business Financial Snapshot.</div>
+        </div>
+
+        <div class="pinnacle-financial-note">
+          <strong>How the final Safe to Spend calculation will work:</strong> Pinnacle will combine cash available, gross business income, tracked expenses, mileage deductions, recommended tax reserves, savings deposits, and estimated-tax payments. Safe to Spend will not be activated until those connected records are available, so the client is not shown an unreliable number.
+        </div>
+      </div>
+    </section>
 
     <section class="section portal-view cx-offer-page" id="plansPricing" data-portal-view="plans">
       <div class="cx-page-hero cx-plans-hero">
@@ -7254,6 +7374,7 @@
       pinnacle: "pinnacle",
       "pinnacle-business-profile": "pinnacle-business-profile",
       "pinnacle-income-sources": "pinnacle-income-sources",
+      "pinnacle-financial-snapshot": "pinnacle-financial-snapshot",
       "tax-preparation": "tax-preparation",
       "contractor-1099": "contractor-1099",
       "tax-extension": "tax-extension",
@@ -7631,6 +7752,10 @@
       if(existingIndex>=0)items[existingIndex]=item;else items.unshift(item);
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
+    document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
+    document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
+    renderPinnacleFinancialSnapshot();
+      renderPinnacleFinancialSnapshot();
       if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}
       closePinnacleIncomeModal();
       showPinnacleIncomePageStatus(
@@ -7664,14 +7789,80 @@
         const item=items.find(x=>x.id===duplicate.dataset.incomeDuplicate);
         if(item){
           const copy={...item,id:`INC-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,name:`${item.name} Copy`,updatedAt:new Date().toISOString()};
-          items.unshift(copy);savePinnacleIncomeSources(items);renderPinnacleIncomeSources();
+          items.unshift(copy);savePinnacleIncomeSources(items);renderPinnacleIncomeSources();renderPinnacleFinancialSnapshot();
         }
       }
       if(remove){
         const id=remove.dataset.incomeDelete;
         const next=items.filter(x=>x.id!==id);
-        savePinnacleIncomeSources(next);renderPinnacleIncomeSources();
+        savePinnacleIncomeSources(next);renderPinnacleIncomeSources();renderPinnacleFinancialSnapshot();
       }
+    }
+
+
+    function getPinnacleFinancialFilters(){
+      return {
+        month:String(document.getElementById("pinnacleFinancialMonth")?.value||""),
+        year:String(document.getElementById("pinnacleFinancialYear")?.value||"")
+      };
+    }
+    function renderPinnacleFinancialSnapshot(){
+      const allItems=loadPinnacleIncomeSources();
+      const filters=getPinnacleFinancialFilters();
+      const items=allItems.filter((item)=>{
+        const parts=getPinnacleIncomeEntryDateParts(item);
+        const monthMatch=!filters.month||parts.month===filters.month;
+        const yearMatch=!filters.year||parts.year===filters.year;
+        return monthMatch&&yearMatch;
+      });
+
+      const gross=items.reduce((sum,item)=>sum+Number(item.ytd||0),0);
+      const expenses=items.reduce((sum,item)=>sum+Number(item.expenses||0),0);
+      const mileage=0;
+      const net=Math.max(gross-expenses-mileage,0);
+
+      const setMoney=(id,value)=>{
+        const node=document.getElementById(id);
+        if(node)node.textContent=pinnacleMoney(value);
+      };
+      setMoney("pinnacleFinancialGross",gross);
+      setMoney("pinnacleFinancialExpenses",expenses);
+      setMoney("pinnacleFinancialMileage",mileage);
+      setMoney("pinnacleFinancialNet",net);
+      setMoney("pinnacleFinancialDeposited",0);
+      setMoney("pinnacleFinancialPayments",0);
+
+      const list=document.getElementById("pinnacleFinancialSourceList");
+      if(!list)return;
+      if(!items.length){
+        list.innerHTML='<div class="pinnacle-financial-empty">No income sources match the current month and tax-year filter.</div>';
+        return;
+      }
+
+      list.innerHTML=items.map((item)=>{
+        const sourceGross=Number(item.ytd||0);
+        const sourceExpenses=Number(item.expenses||0);
+        const sourceMileage=0;
+        const sourceNet=Math.max(sourceGross-sourceExpenses-sourceMileage,0);
+        return `
+          <article class="pinnacle-financial-source">
+            <div class="pinnacle-financial-source-head">
+              <div>
+                <h4>${escapeHtml(item.name||"Income Source")}</h4>
+                <p>${escapeHtml(item.type||"Other Income")} · ${item.entryDate?new Date(item.entryDate+"T00:00:00").toLocaleDateString():"Date not entered"}</p>
+              </div>
+              <span class="pinnacle-income-badge">Active</span>
+            </div>
+            <div class="pinnacle-financial-source-body">
+              <div class="pinnacle-financial-metric"><span>Gross Income</span><strong>${pinnacleMoney(sourceGross)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(sourceExpenses)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(sourceMileage)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(sourceNet)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
+              <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
+            </div>
+          </article>`;
+      }).join("");
     }
 
     function openPortalView(view, options = {}) {
