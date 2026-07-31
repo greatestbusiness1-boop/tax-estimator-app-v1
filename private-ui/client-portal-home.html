@@ -1664,6 +1664,16 @@
     }
     .pinnacle-income-stat span{display:block;color:#63798a;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-income-stat strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
+    .pinnacle-income-filter-bar{
+      display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.7fr));gap:12px;
+      margin:0 0 18px;padding:16px 18px;border:1px solid #c7dae7;border-radius:16px;background:#fbfdfe
+    }
+    .pinnacle-income-filter-field{display:flex;flex-direction:column;gap:7px}
+    .pinnacle-income-filter-field label{color:#183e5c;font-size:12px;font-weight:800}
+    .pinnacle-income-filter-field input,
+    .pinnacle-income-filter-field select{
+      width:100%;min-height:42px;padding:9px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit
+    }
     .pinnacle-income-toolbar{
       display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
       margin-bottom:18px;padding:18px 20px;border:1px solid #c7dae7;border-radius:16px;background:#f5f9fc
@@ -1681,12 +1691,17 @@
     .pinnacle-income-empty{
       padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083
     }
-    .pinnacle-currency-wrap{position:relative}
-    .pinnacle-currency-wrap::before{
-      content:"$";position:absolute;left:12px;top:50%;transform:translateY(-50%);
-      color:#4f6b80;font-weight:800;pointer-events:none
+    .pinnacle-currency-wrap{
+      display:flex;align-items:center;min-height:44px;border:1px solid #b9ccda;border-radius:10px;
+      background:#fff;overflow:hidden
     }
-    .pinnacle-currency-wrap input{padding-left:27px}
+    .pinnacle-currency-symbol{
+      flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:34px;height:42px;
+      color:#4f6b80;font-weight:900;background:#f6fafc;border-right:1px solid #d7e4ee
+    }
+    .pinnacle-currency-wrap input{
+      border:0!important;box-shadow:none!important;min-height:42px;padding:10px 11px!important
+    }
     .pinnacle-income-source-card.is-collapsed .pinnacle-income-source-body,
     .pinnacle-income-source-card.is-collapsed .pinnacle-source-secondary-actions{display:none}
     .pinnacle-income-source-head{cursor:pointer}
@@ -1724,7 +1739,7 @@
       background:#0b5d8d;color:#fff;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em
     }
     .pinnacle-income-source-body{
-      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:15px 18px
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;padding:15px 18px
     }
     .pinnacle-income-metric span{display:block;color:#718596;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
     .pinnacle-income-metric strong{display:block;margin-top:5px;color:#173e5c;font-size:15px}
@@ -3415,6 +3430,31 @@
           <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
         </div>
 
+        <div class="pinnacle-income-filter-bar">
+          <div class="pinnacle-income-filter-field">
+            <label for="pinnacleIncomeSearch">Search income source</label>
+            <input id="pinnacleIncomeSearch" placeholder="Search by source name">
+          </div>
+          <div class="pinnacle-income-filter-field">
+            <label for="pinnacleIncomeFilterMonth">Month</label>
+            <select id="pinnacleIncomeFilterMonth">
+              <option value="">All months</option>
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="pinnacle-income-filter-field">
+            <label for="pinnacleIncomeFilterYear">Tax year</label>
+            <select id="pinnacleIncomeFilterYear">
+              <option value="">All years</option>
+              <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+              <option value="2027">2027</option><option value="2028">2028</option>
+            </select>
+          </div>
+        </div>
+
         <div class="pinnacle-income-list" id="pinnacleIncomeSourceList">
           <div class="pinnacle-income-empty">No income sources have been added yet.</div>
         </div>
@@ -3454,24 +3494,28 @@
               <select id="pinnacleIncomeFrequency" name="frequency"><option value="">Select frequency</option><option>Weekly</option><option>Biweekly</option><option>Semimonthly</option><option>Monthly</option><option>Quarterly</option><option>Irregular</option><option>One-time</option></select>
             </div>
             <div class="pinnacle-income-field">
+              <label for="pinnacleIncomeEntryDate">Income entry / update date</label>
+              <input id="pinnacleIncomeEntryDate" name="entryDate" type="date">
+            </div>
+            <div class="pinnacle-income-field">
               <label for="pinnacleIncomeYtd">Year-to-date gross income</label>
-              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeYtd" name="ytd" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeYtd" name="ytd" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeExpected">Expected full-year income</label>
-              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeExpected" name="expected" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeExpected" name="expected" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeFederalWithholding">Federal withholding</label>
-              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeFederalWithholding" name="federalWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeFederalWithholding" name="federalWithholding" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeStateWithholding">State withholding</label>
-              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeStateWithholding" name="stateWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeStateWithholding" name="stateWithholding" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeExpenses">Business expenses entered so far</label>
-              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeExpenses" name="expenses" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeExpenses" name="expenses" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field full">
               <label for="pinnacleIncomeNotes">Notes</label>
@@ -7355,6 +7399,23 @@
       localStorage.setItem(PINNACLE_INCOME_SOURCES_KEY,JSON.stringify(items));
     }
     function showPinnacleIncomeStatus(message,duration=3000){
+    function sanitizePinnacleCurrencyInput(value){
+      return String(value||"").replace(/[^0-9.\-]/g,"");
+    }
+    function normalizePinnacleCurrencyValue(value){
+      const cleaned=sanitizePinnacleCurrencyInput(value);
+      const numeric=Number(cleaned||0);
+      if(!cleaned || Number.isNaN(numeric)) return "";
+      return numeric.toFixed(2);
+    }
+    function formatPinnacleCurrencyInputsInScope(scope){
+      const fields=(scope||document).querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses");
+      fields.forEach((field)=>{
+        const normalized=normalizePinnacleCurrencyValue(field.value);
+        if(normalized) field.value=normalized;
+      });
+    }
+
       const status=document.getElementById("pinnacleIncomeSaveStatus");
       if(!status)return;
       status.textContent=message||"";
@@ -7372,23 +7433,44 @@
       localStorage.setItem(PINNACLE_INCOME_COLLAPSE_KEY,JSON.stringify(state||{}));
     }
 
+    function getPinnacleIncomeFilters(){
+      return {
+        search:String(document.getElementById("pinnacleIncomeSearch")?.value||"").trim().toLowerCase(),
+        month:String(document.getElementById("pinnacleIncomeFilterMonth")?.value||"").trim(),
+        year:String(document.getElementById("pinnacleIncomeFilterYear")?.value||"").trim()
+      };
+    }
+    function getPinnacleIncomeEntryDateParts(entryDate){
+      if(!entryDate)return {year:"",month:""};
+      const parts=String(entryDate).split("-");
+      return {year:parts[0]||"",month:String(Number(parts[1]||""))};
+    }
     function renderPinnacleIncomeSources(){
       const items=loadPinnacleIncomeSources();
       const list=document.getElementById("pinnacleIncomeSourceList");
       if(!list)return;
 
-      document.getElementById("pinnacleIncomeSourceCount").textContent=String(items.length);
-      document.getElementById("pinnacleIncomeYtdTotal").textContent=pinnacleMoney(items.reduce((s,x)=>s+Number(x.ytd||0),0));
-      document.getElementById("pinnacleIncomeAnnualTotal").textContent=pinnacleMoney(items.reduce((s,x)=>s+Number(x.expected||0),0));
-      document.getElementById("pinnacleIncomeWithholdingTotal").textContent=pinnacleMoney(items.reduce((s,x)=>s+Number(x.federalWithholding||0),0));
+      const filters=getPinnacleIncomeFilters();
+      const filtered=items.filter((item)=>{
+        const nameMatch=!filters.search || String(item.name||"").toLowerCase().includes(filters.search);
+        const dateParts=getPinnacleIncomeEntryDateParts(item.entryDate);
+        const monthMatch=!filters.month || dateParts.month===filters.month;
+        const yearMatch=!filters.year || dateParts.year===filters.year;
+        return nameMatch && monthMatch && yearMatch;
+      });
 
-      if(!items.length){
-        list.innerHTML='<div class="pinnacle-income-empty">No income sources have been added yet.</div>';
+      document.getElementById("pinnacleIncomeSourceCount").textContent=String(filtered.length);
+      document.getElementById("pinnacleIncomeYtdTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.ytd||0),0));
+      document.getElementById("pinnacleIncomeAnnualTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.expected||0),0));
+      document.getElementById("pinnacleIncomeWithholdingTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.federalWithholding||0),0));
+
+      if(!filtered.length){
+        list.innerHTML='<div class="pinnacle-income-empty">No income sources match the current month, year, or search filter.</div>';
         return;
       }
 
       const collapsed=loadPinnacleIncomeCollapseState();
-      list.innerHTML=items.map(item=>{
+      list.innerHTML=filtered.map(item=>{
         const isCollapsed=collapsed[item.id]!==false;
         return `
         <article class="pinnacle-income-source-card ${isCollapsed?"is-collapsed":""}" data-income-card="${escapeHtml(item.id)}">
@@ -7408,6 +7490,7 @@
             <div class="pinnacle-income-metric"><span>State Withholding</span><strong>${pinnacleMoney(item.stateWithholding)}</strong></div>
             <div class="pinnacle-income-metric"><span>Expenses Entered</span><strong>${pinnacleMoney(item.expenses)}</strong></div>
             <div class="pinnacle-income-metric"><span>Income Frequency</span><strong>${escapeHtml(item.frequency||"Not selected")}</strong></div>
+            <div class="pinnacle-income-metric"><span>Entry Date</span><strong>${item.entryDate?new Date(item.entryDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
             <div class="pinnacle-income-metric"><span>Last Updated</span><strong>${item.updatedAt?new Date(item.updatedAt).toLocaleDateString():"Not available"}</strong></div>
           </div>
           <div class="pinnacle-source-row pinnacle-source-secondary-actions">
@@ -7429,6 +7512,11 @@
           const field=form.elements.namedItem(name);
           if(field&&"value" in field)field.value=value??"";
         });
+      }else{
+        const dateField=document.getElementById("pinnacleIncomeEntryDate");
+        if(dateField && !dateField.value){
+          dateField.value=new Date().toISOString().slice(0,10);
+        }
       }
       if(modal)modal.hidden=false;
       document.getElementById("pinnacleIncomeName")?.focus();
@@ -7441,6 +7529,7 @@
     function submitPinnacleIncomeSource(event){
       event.preventDefault();
       const form=event.currentTarget;
+      formatPinnacleCurrencyInputsInScope(form);
       const data=Object.fromEntries(new FormData(form).entries());
       if(!String(data.name||"").trim()){showPinnacleIncomeStatus("Enter the income source name.",4500);return}
       if(!String(data.type||"").trim()){showPinnacleIncomeStatus("Select the income type.",4500);return}
@@ -7514,6 +7603,12 @@
     document.getElementById("pinnacleIncomeClose")?.addEventListener("click",closePinnacleIncomeModal);
     document.getElementById("pinnacleIncomeCancel")?.addEventListener("click",closePinnacleIncomeModal);
     document.getElementById("pinnacleIncomeForm")?.addEventListener("submit",submitPinnacleIncomeSource);
+    document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses").forEach((field)=>{
+      field.addEventListener("blur",()=>{ field.value=normalizePinnacleCurrencyValue(field.value) || ""; });
+    });
+    document.getElementById("pinnacleIncomeSearch")?.addEventListener("input",renderPinnacleIncomeSources);
+    document.getElementById("pinnacleIncomeFilterMonth")?.addEventListener("change",renderPinnacleIncomeSources);
+    document.getElementById("pinnacleIncomeFilterYear")?.addEventListener("change",renderPinnacleIncomeSources);
     document.getElementById("pinnacleIncomeSourceList")?.addEventListener("click",handlePinnacleIncomeListClick);
     document.getElementById("pinnacleIncomeModal")?.addEventListener("click",(event)=>{
       if(event.target===event.currentTarget)closePinnacleIncomeModal();
