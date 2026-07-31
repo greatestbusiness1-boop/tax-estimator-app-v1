@@ -1633,6 +1633,26 @@
       cursor:pointer;
     }
 
+    .pinnacle-profile-access-card{
+      display:flex;align-items:center;justify-content:space-between;gap:20px;
+      margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
+      background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%);
+      box-shadow:0 6px 18px rgba(14,55,84,.06)
+    }
+    .pinnacle-profile-access-card span{
+      display:block;margin-bottom:5px;color:#6a7f90;font-size:11px;font-weight:900;
+      letter-spacing:.08em
+    }
+    .pinnacle-profile-access-card strong{display:block;color:#0a3154;font-size:18px}
+    .pinnacle-profile-access-card p{margin:6px 0 0;color:#526b80;line-height:1.5}
+    .pinnacle-profile-access-card button{
+      flex:0 0 auto;min-height:44px;padding:10px 16px;border:1px solid #0b5d8d;
+      border-radius:10px;background:#0b5d8d;color:#fff;font-weight:850;cursor:pointer
+    }
+    @media(max-width:760px){
+      .pinnacle-profile-access-card{align-items:stretch;flex-direction:column}
+      .pinnacle-profile-access-card button{width:100%}
+    }
     .pinnacle-inline-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
     .pinnacle-inline-actions button,.pinnacle-business-actions button{
       min-height:44px;padding:10px 16px;border:1px solid #0b5d8d;border-radius:10px;
@@ -3101,7 +3121,7 @@
             <h3>Turn your tax information into a clear year-round action plan.</h3>
             <p>Track business activity, compare possible tax outcomes, and follow practical steps designed to help you prepare for refunds, balances due, paycheck withholding, estimated taxes, and savings goals.</p>
             <div class="pinnacle-inline-actions">
-              <button type="button" data-portal-open="pinnacle-business-profile">Start My Business Profile</button>
+              <button type="button" data-portal-open="pinnacle-business-profile" id="pinnacleBusinessProfileOpenButton">Open / Edit My Business Profile</button>
             </div>
           </div>
           <div class="pinnacle-access-card">
@@ -3109,6 +3129,15 @@
             <strong>Coming Soon</strong>
             <p>Pinnacle is being prepared for your Secure Client Portal. Viewing this page does not activate a paid membership or charge a payment method.</p>
           </div>
+        </div>
+
+        <div class="pinnacle-profile-access-card">
+          <div>
+            <span>BUSINESS PROFILE</span>
+            <strong id="pinnacleBusinessProfileStatusTitle">Not Started</strong>
+            <p id="pinnacleBusinessProfileStatusText">Add your business structure and details so Pinnacle can organize income, expenses, mileage, and planning recommendations correctly.</p>
+          </div>
+          <button type="button" data-portal-open="pinnacle-business-profile" id="pinnacleBusinessProfileStatusButton">Open / Edit Business Profile</button>
         </div>
 
         <div class="pinnacle-feature-grid">
@@ -7017,24 +7046,52 @@
       document.getElementById("pinnacleBusinessElectionField")?.classList.toggle("is-visible",elections.has(structure));
       updatePinnacleBusinessProgress();
     }
+    function updatePinnacleBusinessProfileAccess(){
+      let draft=null;
+      try{
+        draft=JSON.parse(localStorage.getItem(PINNACLE_BUSINESS_DRAFT_KEY)||"null");
+      }catch(error){
+        draft=null;
+      }
+
+      const title=document.getElementById("pinnacleBusinessProfileStatusTitle");
+      const text=document.getElementById("pinnacleBusinessProfileStatusText");
+      const mainButton=document.getElementById("pinnacleBusinessProfileOpenButton");
+      const statusButton=document.getElementById("pinnacleBusinessProfileStatusButton");
+
+      const legalName=String(draft?.fields?.legalName||"").trim();
+      if(draft?.structure && legalName){
+        if(title)title.textContent=legalName;
+        if(text)text.textContent="Your saved business profile is available. Open it anytime to review or edit the business structure and details.";
+        if(mainButton)mainButton.textContent="Open / Edit My Business Profile";
+        if(statusButton)statusButton.textContent="Edit Business Profile";
+      }else{
+        if(title)title.textContent="Not Started";
+        if(text)text.textContent="Add your business structure and details so Pinnacle can organize income, expenses, mileage, and planning recommendations correctly.";
+        if(mainButton)mainButton.textContent="Start My Business Profile";
+        if(statusButton)statusButton.textContent="Start Business Profile";
+      }
+    }
+
     function restorePinnacleBusinessDraft(){
       let d=null;try{d=JSON.parse(localStorage.getItem(PINNACLE_BUSINESS_DRAFT_KEY)||"null")}catch(e){}
       if(d?.structure){const r=document.querySelector(`input[name="pinnacleBusinessStructure"][value="${CSS.escape(d.structure)}"]`);if(r)r.checked=true}
       const f=document.getElementById("pinnacleBusinessProfileForm");
       if(f&&d?.fields)Object.entries(d.fields).forEach(([n,v])=>{const x=f.elements.namedItem(n);if(x&&"value"in x)x.value=v||""});
       updatePinnacleBusinessFields();
+      updatePinnacleBusinessProfileAccess();
       if(d?.savedAt){const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Saved business profile restored."}
     }
     function savePinnacleBusinessDraft(e){
       e.preventDefault();const d=collectPinnacleBusinessDraft(),s=document.getElementById("pinnacleBusinessSaveStatus");
       if(!d.structure){if(s)s.textContent="Select the current business structure before saving.";return}
       if(!String(d.fields.legalName||"").trim()){if(s)s.textContent="Enter the legal business name before saving.";document.getElementById("pinnacleBusinessLegalName")?.focus();return}
-      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));if(s)s.textContent="Business profile saved on this device.";updatePinnacleBusinessProgress();
+      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));if(s)s.textContent="Business profile saved on this device.";updatePinnacleBusinessProgress();updatePinnacleBusinessProfileAccess();
     }
     function clearPinnacleBusinessDraft(){
       localStorage.removeItem(PINNACLE_BUSINESS_DRAFT_KEY);document.getElementById("pinnacleBusinessProfileForm")?.reset();
       document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.checked=false);
-      const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Draft cleared.";updatePinnacleBusinessFields();
+      const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Draft cleared.";updatePinnacleBusinessFields();updatePinnacleBusinessProfileAccess();
     }
 
     function openPortalView(view, options = {}) {
@@ -7053,6 +7110,7 @@
     document.getElementById("pinnacleBusinessProfileForm")?.addEventListener("submit",savePinnacleBusinessDraft);
     document.getElementById("pinnacleBusinessClear")?.addEventListener("click",clearPinnacleBusinessDraft);
     restorePinnacleBusinessDraft();
+    updatePinnacleBusinessProfileAccess();
 
     document.querySelectorAll("[data-portal-open]").forEach((button) => {
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
