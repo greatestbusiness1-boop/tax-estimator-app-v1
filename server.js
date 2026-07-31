@@ -6398,7 +6398,7 @@ function buildClientPortalTranscriptRequestSummary(
 
 const TAX_PREPARATION_SERVICE_LABELS = Object.freeze({
   individual_federal_state:
-    "Individual tax return â€” W-2 and/or 1099 income",
+    "Individual tax return — W-2 and/or 1099 income",
   prior_year_return:
     "Prior-year or multiple-year return",
   multiple_states:
@@ -8552,11 +8552,11 @@ function buildClientPortalTaxWatchSummary(
     accessLabel: membershipIsActive
       ? `${membership.planName} membership active`
       : membershipNeedsPayment
-        ? `${membership.enrollmentStatus} â€” payment not confirmed`
+        ? `${membership.enrollmentStatus} — payment not confirmed`
         : isActive
           ? previewWindow.expired
-            ? "Preview ended â€” no charge occurred"
-            : "Preview active â€” no charge during preview"
+            ? "Preview ended — no charge occurred"
+            : "Preview active — no charge during preview"
           : "Not started",
     membership,
     checkout: getMembershipCheckoutAvailability(),
@@ -9278,7 +9278,7 @@ Category:
 ${document.categoryLabel}
 
 Status:
-Received â€” Awaiting Office Review
+Received — Awaiting Office Review
 
 You can view your upload history in the Secure Document Center:
 ${portalUrl}
@@ -12531,7 +12531,7 @@ Educational content and paid service offers will remain clearly separated.`
     await transporter.sendMail({
       from: EMAIL_USER,
       to: email,
-      subject: "Youâ€™re on the Tax Updates That Matter List",
+      subject: "You’re on the Tax Updates That Matter List",
       text:
 `Thank you for joining Tax Updates That Matter from Greatest Business Solution LLC.
 
@@ -12540,7 +12540,7 @@ You will receive one useful email per month with:
 - Important upcoming deadlines
 - One common tax myth explained
 - One quick action you can take
-- A clearly labeled service offer only when it connects to that monthâ€™s topic
+- A clearly labeled service offer only when it connects to that month’s topic
 
 Changing dates and dollar amounts will be checked against current official sources before each edition.
 
@@ -16323,6 +16323,10 @@ app.post(
       getTaxWatchNumber(req.body?.targetAmount)
     );
 
+    const explicitSourceLeadId = String(
+      req.body?.sourceLeadId || ""
+    ).trim();
+
     const session = req.clientPortalSession;
     let accessible =
       await getClientPortalAccessibleLeads(
@@ -16339,81 +16343,38 @@ app.post(
       const accountLeadId = String(
         session.payload.accountLeadId || ""
       ).trim();
+      const requestedLeadId =
+        explicitSourceLeadId || accountLeadId;
 
-      if (accountLeadId) {
+      if (requestedLeadId) {
         const allCandidates =
           await loadClientPortalLeadCandidates();
 
-        const candidateIdsFor = (entry = {}) => {
-          const lead = entry.lead || {};
-          const raw = entry.raw || {};
-          const values = [
-            entry.leadId,
-            getLeadIdValue(lead),
-            getLeadIdValue(raw),
-            lead.clientPortal?.sourceLeadId,
-            raw.clientPortal?.sourceLeadId,
-            lead.portalAccount?.sourceLeadId,
-            raw.portalAccount?.sourceLeadId
-          ];
-
-          return values
-            .map((value) =>
-              String(value || "").trim()
-            )
-            .filter(Boolean);
-        };
-
-        const accountEntry =
-          allCandidates.find((entry) =>
-            candidateIdsFor(entry).includes(
-              accountLeadId
-            )
-          ) || null;
-
-        const linkedReferenceIds = new Set([
-          accountLeadId,
-          ...(accountEntry
-            ? candidateIdsFor(accountEntry)
-            : [])
-        ]);
-
         const completedEstimateEntry =
           allCandidates.find((entry) => {
-            const snapshot =
-              getTaxWatchSnapshot(entry);
+            const candidateLeadId = String(
+              entry.leadId ||
+              getLeadIdValue(entry.lead || {}) ||
+              getLeadIdValue(entry.raw || {}) ||
+              ""
+            ).trim();
 
-            if (!snapshot) return false;
-
-            return candidateIdsFor(entry)
-              .some((candidateId) =>
-                linkedReferenceIds.has(candidateId)
-              );
+            return (
+              candidateLeadId === requestedLeadId &&
+              Boolean(getTaxWatchSnapshot(entry))
+            );
           }) || null;
 
         if (completedEstimateEntry) {
-          const completedLeadId = String(
-            completedEstimateEntry.leadId ||
-            getLeadIdValue(
-              completedEstimateEntry.lead || {}
-            ) ||
-            accountLeadId
-          ).trim();
-
           accessible = [
-            ...accessible.filter(
-              (entry) =>
-                String(
-                  entry.leadId || ""
-                ).trim() !== completedLeadId
-            ),
+            ...accessible,
             completedEstimateEntry
           ];
 
           currentSummary =
             buildClientPortalTaxWatchSummary(
               accessible,
-              completedLeadId
+              requestedLeadId
             );
         }
       }
@@ -17062,7 +17023,7 @@ function buildTaxWatchOrganizerHtml({
   <section class="hero">
     <small>GREATEST BUSINESS SOLUTION LLC</small>
     <h1>Business Income and Expense Organizer</h1>
-    <p>A plain-language summary of the business information entered through Tax Watch Pro. This is an organizerâ€”not a completed Schedule C or tax return.</p>
+    <p>A plain-language summary of the business information entered through Tax Watch Pro. This is an organizer—not a completed Schedule C or tax return.</p>
     <div class="client">
       <div><span>Client</span><strong>${taxWatchOrganizerEscapeHtml(clientName)}</strong></div>
       <div><span>Tax year</span><strong>${taxWatchOrganizerEscapeHtml(snapshot.taxYear || "Not recorded")}</strong></div>
@@ -18019,7 +17980,7 @@ app.post(
             upload.category ===
               "identity-verification"
               ? "Use the Upload Identity Verification Document button on the IRS Transcript Help request."
-              : "Use the Upload Signed Form 8821 â€” Backup button on the IRS Transcript Help request."
+              : "Use the Upload Signed Form 8821 — Backup button on the IRS Transcript Help request."
         });
       }
     }
@@ -19170,7 +19131,7 @@ app.post(
       return res.status(201).json({
         ok: true,
         message:
-          "SECURE TRANSCRIPT DELIVERED â€” CLIENT PORTAL AND TRANSCRIPT CHECKLIST UPDATED.",
+          "SECURE TRANSCRIPT DELIVERED — CLIENT PORTAL AND TRANSCRIPT CHECKLIST UPDATED.",
         document:
           officeDocumentRecord(
             saveResult.record
@@ -22303,8 +22264,8 @@ async function ensureMembershipEnrollmentLead(
     "Not provided"
   ).trim();
   const message =
-    `I selected ${config.planName} â€” ` +
-    `${config.billingLabel} â€” ` +
+    `I selected ${config.planName} — ` +
+    `${config.billingLabel} — ` +
     `${config.selectedPriceDisplay}. ` +
     "I understand that recurring billing begins only after I complete secure Stripe Checkout.";
   const enrollment = {
@@ -22698,8 +22659,8 @@ async function applyMembershipStripeUpdate(
         : current.statusHistory;
 
       const message =
-        `I selected ${config.planName} â€” ` +
-        `${config.billingLabel} â€” ` +
+        `I selected ${config.planName} — ` +
+        `${config.billingLabel} — ` +
         `${config.selectedPriceDisplay}. ` +
         "Recurring billing is managed through secure Stripe Checkout.";
 
@@ -25145,7 +25106,7 @@ function getExtensionClosureEmailOutcome(request = {}) {
     String(request.workStatus || "").trim();
 
   if (
-    /closed\s*(?:â€”|-)\s*not eligible/i.test(
+    /closed\s*(?:—|-)\s*not eligible/i.test(
       workStatus
     )
   ) {
@@ -25291,7 +25252,7 @@ app.post("/api/extension-closure-email", async (req, res) => {
         ok: false,
         emailSent: false,
         error:
-          "The client closure email can be sent only after the extension is Completed or Closed â€” Not Eligible."
+          "The client closure email can be sent only after the extension is Completed or Closed — Not Eligible."
       });
     }
 
@@ -26054,7 +26015,7 @@ app.post("/api/create-tax-preparation-checkout", async (req, res) => {
             currency: "usd",
             product_data: {
               name:
-                "Tax Preparation â€” " +
+                "Tax Preparation — " +
                 (paymentPurpose || "Payment"),
               description:
                 "Professional Tax Preparation service payment for tax year " +
@@ -26384,7 +26345,7 @@ app.post("/api/create-contractor-1099-checkout", async (req, res) => {
               currency: "usd",
               product_data: {
                 name:
-                  "Contractor Forms 1099 â€” " +
+                  "Contractor Forms 1099 — " +
                   paymentPurpose,
                 description:
                   "Professional preparation and filing service for reporting year " +

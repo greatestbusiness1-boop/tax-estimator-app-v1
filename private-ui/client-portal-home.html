@@ -9067,7 +9067,8 @@
               credentials: "same-origin",
               body: JSON.stringify({
                 objective:"track_changes",
-                targetAmount:0
+                targetAmount:0,
+                sourceLeadId: String(intent.leadId || "").trim()
               })
             }
           );
