@@ -4127,14 +4127,21 @@ function getLeadIdValue(record = {}) {
 
 function getLeadEmailValue(record = {}) {
   const estimate = record?.estimate || {};
-  const contact =
-    estimate.contact ||
-    record.contact ||
-    {};
+  const directContact =
+    record.contact &&
+    typeof record.contact === "object"
+      ? record.contact
+      : {};
+  const estimateContact =
+    estimate.contact &&
+    typeof estimate.contact === "object"
+      ? estimate.contact
+      : {};
 
   return normalizeEmail(
-    contact.email ||
+    directContact.email ||
     record.email ||
+    estimateContact.email ||
     ""
   );
 }
@@ -23727,6 +23734,21 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         email: cleanEmail
       };
 
+      if (
+        updatedEstimate.estimate &&
+        typeof updatedEstimate.estimate === "object" &&
+        !Array.isArray(updatedEstimate.estimate)
+      ) {
+        updatedEstimate.estimate = {
+          ...updatedEstimate.estimate,
+          contact: {
+            ...(updatedEstimate.estimate.contact || {}),
+            email: cleanEmail
+          },
+          email: cleanEmail
+        };
+      }
+
       updatedEstimate.email = cleanEmail;
       updatedEstimate.emailUpdatedAt =
         new Date().toISOString();
@@ -24030,6 +24052,22 @@ app.patch("/api/leads/:leadId", async (req, res) => {
           ...(localLead.contact || {}),
           email: cleanEmail
         };
+
+        if (
+          localLead.estimate &&
+          typeof localLead.estimate === "object" &&
+          !Array.isArray(localLead.estimate)
+        ) {
+          localLead.estimate = {
+            ...localLead.estimate,
+            contact: {
+              ...(localLead.estimate.contact || {}),
+              email: cleanEmail
+            },
+            email: cleanEmail
+          };
+        }
+
         localLead.email = cleanEmail;
         localLead.emailUpdatedAt =
           new Date().toISOString();
