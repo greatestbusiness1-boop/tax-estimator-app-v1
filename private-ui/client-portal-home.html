@@ -7442,7 +7442,6 @@
       }
     }
 
-    function showPinnacleIncomeStatus(message,duration=3000){
     function sanitizePinnacleCurrencyInput(value){
       return String(value||"").replace(/[^0-9.\-]/g,"");
     }
@@ -7456,15 +7455,20 @@
       const fields=(scope||document).querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses");
       fields.forEach((field)=>{
         const normalized=normalizePinnacleCurrencyValue(field.value);
-        if(normalized) field.value=normalized;
+        field.value=normalized || "";
       });
     }
-
+    function showPinnacleIncomeStatus(message,duration=3000){
       const status=document.getElementById("pinnacleIncomeSaveStatus");
       if(!status)return;
       status.textContent=message||"";
       if(pinnacleIncomeStatusTimer)window.clearTimeout(pinnacleIncomeStatusTimer);
-      if(message) pinnacleIncomeStatusTimer=window.setTimeout(()=>{status.textContent="";pinnacleIncomeStatusTimer=null},duration);
+      if(message){
+        pinnacleIncomeStatusTimer=window.setTimeout(()=>{
+          status.textContent="";
+          pinnacleIncomeStatusTimer=null;
+        },duration);
+      }
     }
     const PINNACLE_INCOME_COLLAPSE_KEY="pinnacleIncomeCollapsed.v1";
     function loadPinnacleIncomeCollapseState(){
@@ -7587,6 +7591,7 @@
             ? new Date().toISOString().slice(0,10)
             : fallbackDate.toISOString().slice(0,10);
         }
+        formatPinnacleCurrencyInputsInScope(form);
       }else{
         const dateField=document.getElementById("pinnacleIncomeEntryDate");
         if(dateField && !dateField.value){
@@ -7692,7 +7697,13 @@
     document.getElementById("pinnacleIncomeCancel")?.addEventListener("click",closePinnacleIncomeModal);
     document.getElementById("pinnacleIncomeForm")?.addEventListener("submit",submitPinnacleIncomeSource);
     document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses").forEach((field)=>{
-      field.addEventListener("blur",()=>{ field.value=normalizePinnacleCurrencyValue(field.value) || ""; });
+      field.addEventListener("input",()=>{
+        const cleaned=sanitizePinnacleCurrencyInput(field.value);
+        if(field.value!==cleaned)field.value=cleaned;
+      });
+      field.addEventListener("blur",()=>{
+        field.value=normalizePinnacleCurrencyValue(field.value) || "";
+      });
     });
     document.getElementById("pinnacleIncomeSearch")?.addEventListener("input",renderPinnacleIncomeSources);
     document.getElementById("pinnacleIncomeFilterMonth")?.addEventListener("change",renderPinnacleIncomeSources);
