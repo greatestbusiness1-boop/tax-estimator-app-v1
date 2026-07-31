@@ -316,7 +316,11 @@ function beginEstimateEdit() {
 
 function cancelEstimateEdit() {
   if (!_freeEstimateEditContext) {
-    goToScreen("results");
+    if (_lastEstimate) {
+      goToScreen("results");
+    } else {
+      goToScreen("welcome");
+    }
     return;
   }
 
@@ -324,15 +328,71 @@ function cancelEstimateEdit() {
     restoreEstimatorFormFromTaxData(_lastTaxInput);
   }
 
+  const verifiedSavedIdentity = {
+    fullName: String(
+      _freeEstimateEditContext.fullName ||
+      _leadGatewayContact?.fullName ||
+      ""
+    ).trim(),
+    email: String(
+      _freeEstimateEditContext.email ||
+      _leadGatewayContact?.email ||
+      ""
+    ).trim(),
+    leadId: String(
+      _freeEstimateEditContext.sourceLeadId ||
+      _leadGatewayContact?.leadId ||
+      ""
+    ).trim(),
+    estimateFamilyId: String(
+      _freeEstimateEditContext.estimateFamilyId ||
+      _leadGatewayContact?.estimateFamilyId ||
+      _freeEstimateEditContext.sourceLeadId ||
+      _leadGatewayContact?.leadId ||
+      ""
+    ).trim(),
+    freeEstimateUsage:
+      _leadGatewayContact?.freeEstimateUsage || null
+  };
+
   _freeEstimateEditContext = null;
   refreshFreeEstimateEditBanner();
 
   if (_lastTaxInput && _lastEstimate) {
     renderResults(_lastEstimate, _lastTaxInput);
     renderFreeEstimateUsageNotice(
-      _leadGatewayContact?.freeEstimateUsage || null
+      verifiedSavedIdentity.freeEstimateUsage
     );
     goToScreen("results");
+    return;
+  }
+
+  const identityIsComplete = Boolean(
+    verifiedSavedIdentity.fullName &&
+    verifiedSavedIdentity.email &&
+    verifiedSavedIdentity.leadId
+  );
+
+  if (identityIsComplete) {
+    _leadGatewayUnlocked = true;
+    _leadGatewayContact = verifiedSavedIdentity;
+    goToScreen("welcome");
+
+    window.setTimeout(() => {
+      const plans =
+        document.querySelector(".home-pricing-grid") ||
+        document.querySelector(
+          "[data-estimator-membership-plan]"
+        );
+
+      if (plans) {
+        plans.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    }, 60);
+
     return;
   }
 
