@@ -2218,6 +2218,15 @@
       color:#0b4d75!important;
       box-shadow:none;
     }
+    .portal-top-navigation .portal-nav:has(>.portal-nav-group>.portal-nav-item:hover)
+      >.portal-nav-group>.portal-nav-item.is-active:not(:hover),
+    .portal-top-navigation .portal-nav:has(>.portal-nav-item:hover)
+      >.portal-nav-group>.portal-nav-item.is-active,
+    .portal-top-navigation .portal-nav:has(>.portal-nav-group>.portal-nav-item:hover)
+      >.portal-nav-item.is-active{
+      background:transparent!important;
+      color:#eef7ff!important;
+    }
     .portal-top-navigation .portal-nav-group{position:relative;display:flex}
     .portal-top-navigation .portal-submenu{
       position:absolute;
