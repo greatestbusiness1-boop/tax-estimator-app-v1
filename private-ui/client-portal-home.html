@@ -2452,7 +2452,15 @@
       </div>
       <nav class="portal-nav" id="portalNavigation">
         <button class="portal-nav-item" type="button" data-portal-open="dashboard">Dashboard</button>
-        <button class="portal-nav-item portal-nav-pinnacle" type="button" data-portal-open="pinnacle">Pinnacle Tax Action Plan</button>
+        <div class="portal-nav-group portal-nav-pinnacle-group">
+          <button class="portal-nav-item portal-nav-toggle portal-nav-pinnacle" type="button" data-submenu-toggle="pinnacleMenu" aria-expanded="false">
+            <span>Pinnacle Tax Action Plan</span><span aria-hidden="true">▾</span>
+          </button>
+          <div class="portal-submenu" id="pinnacleMenu">
+            <button type="button" data-portal-open="pinnacle">Pinnacle Overview</button>
+            <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
+          </div>
+        </div>
 
         <div class="portal-nav-group">
           <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="false">
@@ -7073,6 +7081,24 @@
       }
     }
 
+    let pinnacleBusinessStatusTimer=null;
+    function showPinnacleBusinessStatus(message, options={}){
+      const status=document.getElementById("pinnacleBusinessSaveStatus");
+      if(!status)return;
+      const duration=Number(options.duration||3500);
+      status.textContent=message||"";
+      if(pinnacleBusinessStatusTimer){
+        window.clearTimeout(pinnacleBusinessStatusTimer);
+        pinnacleBusinessStatusTimer=null;
+      }
+      if(message&&duration>0){
+        pinnacleBusinessStatusTimer=window.setTimeout(()=>{
+          status.textContent="";
+          pinnacleBusinessStatusTimer=null;
+        },duration);
+      }
+    }
+
     function restorePinnacleBusinessDraft(){
       let d=null;try{d=JSON.parse(localStorage.getItem(PINNACLE_BUSINESS_DRAFT_KEY)||"null")}catch(e){}
       if(d?.structure){const r=document.querySelector(`input[name="pinnacleBusinessStructure"][value="${CSS.escape(d.structure)}"]`);if(r)r.checked=true}
@@ -7080,18 +7106,18 @@
       if(f&&d?.fields)Object.entries(d.fields).forEach(([n,v])=>{const x=f.elements.namedItem(n);if(x&&"value"in x)x.value=v||""});
       updatePinnacleBusinessFields();
       updatePinnacleBusinessProfileAccess();
-      if(d?.savedAt){const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Saved business profile restored."}
+      if(d?.savedAt)showPinnacleBusinessStatus("Saved business profile restored.",{duration:2600})
     }
     function savePinnacleBusinessDraft(e){
-      e.preventDefault();const d=collectPinnacleBusinessDraft(),s=document.getElementById("pinnacleBusinessSaveStatus");
-      if(!d.structure){if(s)s.textContent="Select the current business structure before saving.";return}
-      if(!String(d.fields.legalName||"").trim()){if(s)s.textContent="Enter the legal business name before saving.";document.getElementById("pinnacleBusinessLegalName")?.focus();return}
-      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));if(s)s.textContent="Business profile saved on this device.";updatePinnacleBusinessProgress();updatePinnacleBusinessProfileAccess();
+      e.preventDefault();const d=collectPinnacleBusinessDraft();
+      if(!d.structure){showPinnacleBusinessStatus("Select the current business structure before saving.",{duration:5000});return}
+      if(!String(d.fields.legalName||"").trim()){showPinnacleBusinessStatus("Enter the legal business name before saving.",{duration:5000});document.getElementById("pinnacleBusinessLegalName")?.focus();return}
+      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));showPinnacleBusinessStatus("Business profile has been saved.",{duration:3200});updatePinnacleBusinessProgress();updatePinnacleBusinessProfileAccess();
     }
     function clearPinnacleBusinessDraft(){
       localStorage.removeItem(PINNACLE_BUSINESS_DRAFT_KEY);document.getElementById("pinnacleBusinessProfileForm")?.reset();
       document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.checked=false);
-      const s=document.getElementById("pinnacleBusinessSaveStatus");if(s)s.textContent="Draft cleared.";updatePinnacleBusinessFields();updatePinnacleBusinessProfileAccess();
+      showPinnacleBusinessStatus("Draft cleared.",{duration:2600});updatePinnacleBusinessFields();updatePinnacleBusinessProfileAccess();
     }
 
     function openPortalView(view, options = {}) {
