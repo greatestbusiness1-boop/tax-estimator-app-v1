@@ -1665,12 +1665,16 @@
     .pinnacle-income-stat span{display:block;color:#63798a;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-income-stat strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
     .pinnacle-income-page-status{
-      min-height:0;margin:0 0 14px;padding:0;border-radius:10px;
-      color:#12673a;font-size:13px;font-weight:850;
-      transition:opacity .2s ease
+      position:fixed;right:24px;top:92px;z-index:3600;
+      max-width:min(420px,calc(100vw - 32px));
+      padding:12px 16px;border:1px solid #b9d8c4;border-radius:12px;
+      background:#eef9f1;color:#12673a;font-size:13px;font-weight:850;
+      box-shadow:0 14px 34px rgba(13,67,40,.18);
+      opacity:0;transform:translateY(-10px);pointer-events:none;
+      transition:opacity .18s ease,transform .18s ease
     }
     .pinnacle-income-page-status.is-visible{
-      min-height:42px;padding:11px 14px;border:1px solid #b9d8c4;background:#eef9f1
+      opacity:1;transform:translateY(0)
     }
     .pinnacle-income-filter-bar{
       display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.7fr));gap:12px;
@@ -3423,6 +3427,10 @@
         <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
       </div>
       <div class="section-body">
+        <div class="pinnacle-safety-note" style="margin:0 0 18px">
+          <strong>Business financial rollup:</strong> Each income source will ultimately combine year-to-date gross income, tracked expenses, mileage deductions, tax savings deposits, and estimated-tax payments. Pinnacle will use those records to calculate net business income and a Safe to Spend amount without requiring duplicate manual totals.
+        </div>
+
         <div class="pinnacle-income-summary">
           <div class="pinnacle-income-stat"><span>Income Sources</span><strong id="pinnacleIncomeSourceCount">0</strong></div>
           <div class="pinnacle-income-stat"><span>Year-to-Date Income</span><strong id="pinnacleIncomeYtdTotal">$0</strong></div>
@@ -7540,6 +7548,18 @@
         </article>`;
       }).join("");
     }
+    function normalizePinnacleIncomeType(value){
+      const type=String(value||"").trim();
+      const legacyMap={
+        "Independent Contractor":"1099-NEC Independent Contractor",
+        "1099 NEC":"1099-NEC Independent Contractor",
+        "1099-NEC":"1099-NEC Independent Contractor",
+        "Gig Platform":"App-Based Gig Work (Uber, Lyft, DoorDash, etc.)",
+        "Gig Work":"App-Based Gig Work (Uber, Lyft, DoorDash, etc.)"
+      };
+      return legacyMap[type]||type;
+    }
+
     function openPinnacleIncomeModal(item=null){
       const modal=document.getElementById("pinnacleIncomeModal");
       const form=document.getElementById("pinnacleIncomeForm");
@@ -7549,7 +7569,9 @@
       if(item&&form){
         Object.entries(item).forEach(([name,value])=>{
           const field=form.elements.namedItem(name);
-          if(field&&"value" in field)field.value=value??"";
+          if(field&&"value" in field){
+            field.value=name==="type"?normalizePinnacleIncomeType(value):(value??"");
+          }
         });
         const dateField=document.getElementById("pinnacleIncomeEntryDate");
         if(dateField && !dateField.value){
@@ -7577,6 +7599,7 @@
       const form=event.currentTarget;
       formatPinnacleCurrencyInputsInScope(form);
       const data=Object.fromEntries(new FormData(form).entries());
+      data.type=normalizePinnacleIncomeType(data.type);
       if(!String(data.name||"").trim()){showPinnacleIncomeStatus("Enter the income source name.",4500);return}
       if(!String(data.type||"").trim()){showPinnacleIncomeStatus("Select the income type.",4500);return}
 
@@ -7591,7 +7614,12 @@
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
       closePinnacleIncomeModal();
-      showPinnacleIncomePageStatus(existingIndex>=0?"Income source update has been saved.":"Income source has been saved.");
+      showPinnacleIncomePageStatus(
+        existingIndex>=0
+          ? `Income source update saved: ${item.name}.`
+          : `Income source saved: ${item.name}.`,
+        4200
+      );
     }
     function handlePinnacleIncomeListClick(event){
       const toggle=event.target.closest("[data-income-toggle]");
