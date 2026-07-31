@@ -63,6 +63,38 @@
       .estimator-pinnacle-features ul{grid-template-columns:1fr!important}
     }
 
+  
+    .dedicated-membership-actions{display:grid;gap:9px;margin-top:14px}
+    .dedicated-membership-actions button{
+      min-height:48px;border:1px solid #0d5b87;border-radius:11px;
+      background:#126b9c;color:#fff;font-weight:900;cursor:pointer;padding:10px 14px
+    }
+    .dedicated-membership-actions button.annual{
+      background:#e2ad35;border-color:#bd8510;color:#102f52
+    }
+    .pinnacle-additional-feature-callout{
+      margin:14px 0;padding:12px 14px;border-radius:11px;background:#0f355d;color:#fff
+    }
+    .pinnacle-additional-feature-callout strong{display:block;font-size:16px}
+    .pinnacle-additional-feature-callout span{display:block;margin-top:5px;font-size:12px;line-height:1.4}
+    .landing-pinnacle-additional-features{
+      margin-top:22px;border:1px solid #2f78a7;border-radius:14px;background:#123f63;color:#fff;overflow:hidden
+    }
+    .landing-pinnacle-additional-features summary{
+      cursor:pointer;padding:15px 18px;background:#0f355d;color:#fff;font-weight:900
+    }
+    .landing-pinnacle-additional-features ul{
+      margin:0!important;padding:18px 32px 20px 46px!important;display:grid!important;
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px 32px!important
+    }
+    .landing-pinnacle-additional-features li{margin:0!important;color:#fff;line-height:1.35}
+    @media(max-width:980px){
+      .landing-pinnacle-additional-features ul{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    }
+    @media(max-width:680px){
+      .landing-pinnacle-additional-features ul{grid-template-columns:1fr!important}
+    }
+
   </style>
 
 <style id="footer-color-fix">
@@ -423,13 +455,17 @@
             <li>Business Income and Expense Organizer for professional handoff</li>
             <li>Annual members and monthly members with at least 90 consecutive paid days may receive one $20 tax-preparation credit per tax year when Greatest Business Solution LLC prepares the return</li>
           </ul>
-          <a class="dedicated-plan-cta" href="/client-portal">Open the Secure Client Portal</a>
-          <div class="dedicated-plan-footnote">14-day preview. No automatic charge. Choose a plan only when you are ready.</div>
+          <div class="dedicated-membership-actions">
+            <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="preview">Start 14-Day Preview</button>
+            <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $11.99</button>
+            <button type="button" class="annual" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $119</button>
+          </div>
+          <div class="dedicated-plan-footnote">No automatic charge for the preview. Secure Client Portal access is created or connected before continuing.</div>
         </article>
 
         <article class="dedicated-plan-card pinnacle-plan" id="pinnacle-plan">
           <div class="dedicated-plan-badge pinnacle">Pinnacle Level</div>
-          <div class="dedicated-plan-status planned">Planned Membership</div>
+          <div class="dedicated-plan-status available">Preview Available</div>
           <div class="dedicated-plan-label">Know What to Adjust</div>
           <h2>Pinnacle Tax Action Plan</h2>
           <div class="dedicated-plan-price">
@@ -450,15 +486,47 @@
             <li>Before-and-after and what-if comparisons</li>
             <li>Downloadable Pinnacle Tax Action Plan</li>
           </ul>
+          <div class="pinnacle-additional-feature-callout">
+            <strong>Plus 18 additional Pinnacle features</strong>
+            <span>Business, financial, vehicle, mileage, withholding, savings, and scenario-planning tools.</span>
+          </div>
           <p class="dedicated-plan-summary"><strong>Designed for freelancers and self-employed individuals.</strong> Complex entities, payroll, inventory, and full bookkeeping may require separate professional services.</p>
-          <a class="dedicated-plan-cta" href="/contact?service=Pinnacle%20Tax%20Action%20Plan&amp;return=plans-pricing">Join the Pinnacle Interest List</a>
-          <div class="dedicated-plan-footnote">No subscription is charged today.</div>
+          <div class="dedicated-membership-actions">
+            <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="preview">Start 14-Day Preview</button>
+            <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $34.99</button>
+            <button type="button" class="annual" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $349</button>
+          </div>
+          <div class="dedicated-plan-footnote">No automatic charge for the preview. Secure Client Portal access is created or connected before continuing.</div>
         </article>
       </div>
 
+      <details class="landing-pinnacle-additional-features">
+        <summary>Plus 18 additional Pinnacle features</summary>
+        <ul>
+          <li>Year-to-date gross business income totals</li>
+          <li>Tracked business-expense totals</li>
+          <li>Date-sensitive mileage deduction calculations</li>
+          <li>Net business income rollup</li>
+          <li>Recommended tax-savings reserve</li>
+          <li>Deposited tax-savings tracking</li>
+          <li>Estimated-tax payment tracking</li>
+          <li>Month and tax-year financial filters</li>
+          <li>Income-source detail rows and update history</li>
+          <li>Separated start and end trip addresses</li>
+          <li>Business, personal, commuting, and unclassified mileage totals</li>
+          <li>Compact daily odometer history with expandable details</li>
+          <li>Mileage CSV download</li>
+          <li>Expense categories and receipt organization</li>
+          <li>Quarterly-payment and W-2 withholding guidance</li>
+          <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
+          <li>Before-and-after scenario comparisons</li>
+          <li>Downloadable Pinnacle Tax Action Plan</li>
+        </ul>
+      </details>
+
       <div class="membership-availability-note">
         <strong>Tax Watch Pro and Pinnacle Tax Action Plan are both Secure Client Portal services.</strong>
-        Tax Watch Pro preview access is available now. Pinnacle Tax Action Plan remains planned and will also be accessed through the Secure Client Portal when released. Viewing plans or starting a preview does not automatically begin a paid subscription or charge a payment method.
+        Start a 14-day preview or purchase Monthly or Annual directly from this page. The system creates or connects Secure Client Portal access before the selected preview or secure checkout continues.
       </div>
 
       <div class="tax-credit-policy">
