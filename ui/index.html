@@ -2335,11 +2335,24 @@
         var planKey = String(button.getAttribute("data-estimator-membership-plan") || "").trim();
         var action = String(button.getAttribute("data-estimator-membership-action") || "").trim();
         var billingFrequency = String(button.getAttribute("data-estimator-membership-billing") || "monthly").trim();
+        var context = typeof window.getFreeEstimateMembershipContext === "function"
+          ? window.getFreeEstimateMembershipContext()
+          : { ready: false };
 
         if (!planKey || !action) return;
 
+        if (!context.ready) {
+          alert("Complete and submit your Free Tax Estimate first. Your full name, email address, and permanent client reference will then carry into Secure Client Portal setup.");
+          var estimatorStart = document.getElementById("screen-form") || document.querySelector("[data-screen='form']");
+          if (estimatorStart) estimatorStart.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+
         localStorage.setItem(intentKey, JSON.stringify({
-          version: 1,
+          version: 2,
+          fullName: context.fullName,
+          email: context.email,
+          leadId: context.leadId,
           planKey: planKey,
           action: action,
           billingFrequency: billingFrequency,
@@ -2347,7 +2360,10 @@
           createdAt: new Date().toISOString()
         }));
 
-        window.location.href = "/client-portal?activate=1&membershipIntent=1";
+        window.location.href =
+          "/client-portal?activate=1&estimate=1&membershipIntent=1" +
+          "&leadId=" + encodeURIComponent(context.leadId) +
+          "&email=" + encodeURIComponent(context.email);
       }
 
       document.querySelectorAll("[data-estimator-membership-plan]").forEach(function (button) {

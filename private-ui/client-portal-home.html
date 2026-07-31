@@ -9008,19 +9008,17 @@
       const taxWatchGroup = document.getElementById("taxWatchNavigationGroup");
       const pinnacleGroup = document.getElementById("pinnacleNavigationGroup");
       const membership = portal.taxWatch?.membership || {};
+      const programAccess = membership.programAccess || {};
       const taxWatch = portal.taxWatch || {};
-      const pinnacleState = getPinnaclePreviewState();
 
       const taxWatchAccess = Boolean(
+        programAccess["tax-watch-pro"]?.hasAccess ||
         taxWatch.active ||
         taxWatch.status === "preview" ||
-        taxWatch.status === "active-preview" ||
-        membership.planKey === "tax-watch-pro"
+        taxWatch.status === "active-preview"
       );
       const pinnacleAccess = Boolean(
-        membership.planKey === "pinnacle" ||
-        pinnacleState.status === "preview" ||
-        pinnacleState.status === "active"
+        programAccess.pinnacle?.hasAccess
       );
 
       if (taxWatchGroup) taxWatchGroup.hidden = !taxWatchAccess;
@@ -9038,30 +9036,75 @@
       }
 
       if (intent.action === "preview") {
-        if (intent.planKey === "tax-watch-pro") {
-          const response = await fetch("/api/client-portal/tax-watch", {
+        const previewResponse = await fetch(
+          "/api/client-portal/membership-preview",
+          {
             method: "POST",
             headers: {"Content-Type":"application/json"},
             credentials: "same-origin",
-            body: JSON.stringify({objective:"track_changes", targetAmount:0})
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || !data.ok) throw new Error(data.error || "Tax Watch Pro preview could not be started.");
-          localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
-          window.location.hash = "#tax-watch";
-          window.location.reload();
-          return true;
+            body: JSON.stringify({
+              planKey: intent.planKey
+            })
+          }
+        );
+        const previewData =
+          await previewResponse.json()
+            .catch(() => ({}));
+
+        if (!previewResponse.ok || !previewData.ok) {
+          throw new Error(
+            previewData.error ||
+            "The selected 14-day preview could not be started."
+          );
         }
 
-        const now = new Date();
-        localStorage.setItem(PINNACLE_PREVIEW_KEY, JSON.stringify({
-          startedAt: now.toISOString(),
-          endsAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "preview"
-        }));
-        localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
-        updateProgramNavigationAccess(portal);
-        openPortalView("pinnacle");
+        if (intent.planKey === "tax-watch-pro") {
+          const trackerResponse = await fetch(
+            "/api/client-portal/tax-watch",
+            {
+              method: "POST",
+              headers: {"Content-Type":"application/json"},
+              credentials: "same-origin",
+              body: JSON.stringify({
+                objective:"track_changes",
+                targetAmount:0
+              })
+            }
+          );
+          const trackerData =
+            await trackerResponse.json()
+              .catch(() => ({}));
+
+          if (!trackerResponse.ok || !trackerData.ok) {
+            throw new Error(
+              trackerData.error ||
+              "Tax Watch Pro could not be prepared."
+            );
+          }
+        }
+
+        if (intent.planKey === "pinnacle") {
+          localStorage.setItem(
+            PINNACLE_PREVIEW_KEY,
+            JSON.stringify({
+              startedAt:
+                previewData.previewStartedAt,
+              endsAt:
+                previewData.previewEndsAt,
+              status:"preview"
+            })
+          );
+        }
+
+        localStorage.removeItem(
+          ESTIMATE_MEMBERSHIP_INTENT_KEY
+        );
+
+        window.location.hash =
+          intent.planKey === "pinnacle"
+            ? "#pinnacle"
+            : "#tax-watch";
+        window.location.reload();
         return true;
       }
 

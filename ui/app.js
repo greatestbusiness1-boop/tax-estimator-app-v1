@@ -2415,6 +2415,30 @@ function buildSavedEstimateSummary(result, input) {
   };
 }
 
+function getFreeEstimateMembershipContext() {
+  const fullName = String(
+    _leadGatewayContact?.fullName || ""
+  ).trim();
+  const email = String(
+    _leadGatewayContact?.email || ""
+  ).trim();
+  const leadId = String(
+    _leadGatewayContact?.estimateFamilyId ||
+    _leadGatewayContact?.leadId ||
+    ""
+  ).trim();
+
+  return {
+    fullName,
+    email,
+    leadId,
+    ready: Boolean(fullName && email && leadId)
+  };
+}
+
+window.getFreeEstimateMembershipContext =
+  getFreeEstimateMembershipContext;
+
 function buildClaimSavedEstimateUrl(
   leadId,
   email

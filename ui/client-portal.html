@@ -109,6 +109,16 @@
     const signInPanel = document.getElementById("signInPanel");
     const activatePanel = document.getElementById("activatePanel");
     const params = new URLSearchParams(window.location.search);
+    const membershipIntentRequested =
+      params.get("membershipIntent") === "1";
+
+    function membershipRedirect(defaultRedirect) {
+      if (!membershipIntentRequested) {
+        return defaultRedirect || "/client-portal/home";
+      }
+
+      return "/client-portal/home?membershipIntent=1";
+    }
 
     function setMode(mode) {
       const activate = mode === "activate";
@@ -155,7 +165,7 @@
           password: document.getElementById("signInPassword").value
         });
         showMessage(message, data.message || "Signed in securely.", "good");
-        window.location.assign(data.redirect || "/client-portal/home");
+        window.location.assign(membershipRedirect(data.redirect));
       } catch (error) {
         showMessage(message, error.message, "bad");
       } finally {
@@ -233,7 +243,7 @@
           password
         });
         showMessage(message, data.message || "Your portal is active.", "good");
-        window.location.assign(data.redirect || "/client-portal/home");
+        window.location.assign(membershipRedirect(data.redirect));
       } catch (error) {
         showMessage(message, error.message, "bad");
       } finally {
@@ -251,10 +261,14 @@
 
     if (isEstimateActivation) {
       document.querySelector(".card-head h2").textContent =
-        "Activate your Secure Client Portal";
+        membershipIntentRequested
+          ? "Connect your estimate and start your selected program"
+          : "Activate your Secure Client Portal";
 
       document.getElementById("portalIntroText").textContent =
-        "Your completed tax estimate is ready to connect. Your email address and permanent estimate reference are already filled in. Request the six-digit code below, then create your password.";
+        membershipIntentRequested
+          ? "Your completed estimate, email address, permanent client reference, and selected program are ready to connect. Request the six-digit code, create your password, and the selected preview or checkout will continue automatically."
+          : "Your completed tax estimate is ready to connect. Your email address and permanent estimate reference are already filled in. Request the six-digit code below, then create your password.";
 
       showMessage(
         document.getElementById("activationMessage"),

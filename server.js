@@ -21062,6 +21062,12 @@ function buildMembershipEnrollmentBase(record = {}) {
     latestAction: String(
       current.latestAction || "Enrollment request received"
     ),
+    previewStartedAt: String(
+      current.previewStartedAt || ""
+    ),
+    previewEndsAt: String(
+      current.previewEndsAt || ""
+    ),
     statusUpdatedAt: String(
       current.statusUpdatedAt || requestedAt
     ),
@@ -21331,6 +21337,73 @@ function getClientPortalMembershipSummary(
         )
     );
 
+  const programAccess = membershipEntries.reduce(
+    (result, entry) => {
+      const enrollment =
+        buildMembershipEnrollmentBase(
+          entry?.lead || entry?.raw || {}
+        );
+      const planKey = String(
+        enrollment.planKey || ""
+      );
+      const previewEnd = Date.parse(
+        enrollment.previewEndsAt || ""
+      );
+      const previewActive =
+        enrollment.enrollmentStatus ===
+          "Active Preview" &&
+        Number.isFinite(previewEnd) &&
+        previewEnd > Date.now();
+      const paidActive =
+        enrollment.enrollmentStatus ===
+          "Active Membership" &&
+        enrollment.paymentStatus ===
+          "Paid / Confirmed";
+
+      if (
+        planKey === "tax-watch-pro" ||
+        planKey === "pinnacle"
+      ) {
+        result[planKey] = {
+          previewActive,
+          paidActive,
+          hasAccess:
+            previewActive || paidActive,
+          previewStartedAt:
+            enrollment.previewStartedAt,
+          previewEndsAt:
+            enrollment.previewEndsAt,
+          enrollmentStatus:
+            enrollment.enrollmentStatus,
+          paymentStatus:
+            enrollment.paymentStatus
+        };
+      }
+
+      return result;
+    },
+    {
+      "tax-watch-pro": {
+        previewActive: false,
+        paidActive: false,
+        hasAccess: false,
+        previewStartedAt: "",
+        previewEndsAt: "",
+        enrollmentStatus: "",
+        paymentStatus: ""
+      },
+      pinnacle: {
+        previewActive: false,
+        paidActive: false,
+        hasAccess: false,
+        previewStartedAt: "",
+        previewEndsAt: "",
+        enrollmentStatus: "",
+        paymentStatus: ""
+      }
+    }
+  );
+
   const preferred =
     membershipEntries.find((entry) => {
       const enrollment =
@@ -21363,7 +21436,8 @@ function getClientPortalMembershipSummary(
       paymentMethodLast4: "",
       paymentHistory: [],
       paidThisYearCents: 0,
-      paidThisYearDisplay: "$0.00"
+      paidThisYearDisplay: "$0.00",
+      programAccess
     };
   }
 
@@ -21447,7 +21521,8 @@ function getClientPortalMembershipSummary(
       ),
     cancelAtPeriodEnd:
       enrollment.cancelAtPeriodEnd,
-    cancelAt: enrollment.cancelAt
+    cancelAt: enrollment.cancelAt,
+    programAccess
   };
 }
 
@@ -23101,6 +23176,152 @@ app.post(
       membershipEnrollment:
         result.lead?.contactRequest?.membershipEnrollment || null
     });
+  }
+);
+
+app.post(
+  "/api/client-portal/membership-preview",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    try {
+      const planKey =
+        normalizeMembershipPlanKey(
+          req.body?.planKey
+        );
+      const config =
+        getMembershipCheckoutPlanConfig(
+          planKey,
+          "monthly"
+        );
+      const portalSession =
+        req.clientPortalSession;
+      const enrollmentEntry =
+        await ensureMembershipEnrollmentLead(
+          portalSession,
+          config
+        );
+      const leadId = String(
+        enrollmentEntry.leadId || ""
+      ).trim();
+      const now = new Date();
+      const startedAt = now.toISOString();
+      const endsAt = new Date(
+        now.getTime() +
+        14 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const updateResult =
+        await updateLeadAfterStripePayment(
+          leadId,
+          (record = {}) => {
+            const request =
+              getMembershipRequestRecord(record);
+            const current =
+              buildMembershipEnrollmentBase(record);
+            const alreadyActive =
+              current.enrollmentStatus ===
+                "Active Membership" &&
+              current.paymentStatus ===
+                "Paid / Confirmed";
+
+            if (alreadyActive) {
+              return record;
+            }
+
+            const next = {
+              ...current,
+              version: Math.max(
+                3,
+                Number(current.version || 1)
+              ),
+              planKey: config.planKey,
+              planName: config.planName,
+              enrollmentStatus:
+                "Active Preview",
+              paymentStatus: "No Charge",
+              previewStartedAt:
+                current.previewStartedAt ||
+                startedAt,
+              previewEndsAt:
+                Date.parse(
+                  current.previewEndsAt || ""
+                ) > Date.now()
+                  ? current.previewEndsAt
+                  : endsAt,
+              latestAction:
+                "14-day preview activated",
+              statusUpdatedAt: startedAt,
+              statusHistory: [
+                ...(Array.isArray(
+                  current.statusHistory
+                )
+                  ? current.statusHistory
+                  : []),
+                {
+                  status: "Active Preview",
+                  paymentStatus: "No Charge",
+                  action:
+                    "14-day preview activated",
+                  at: startedAt
+                }
+              ].slice(-50)
+            };
+
+            return {
+              ...record,
+              status:
+                "Membership - Active Preview",
+              notes:
+                `${config.planName} 14-day preview activated.`,
+              contactRequest: {
+                ...request,
+                membershipEnrollment: next
+              },
+              updatedAt: startedAt
+            };
+          }
+        );
+
+      if (!updateResult.ok) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            "The selected preview could not be saved to your secure portal."
+        });
+      }
+
+      const membership =
+        buildMembershipEnrollmentBase(
+          updateResult.lead || {}
+        );
+
+      return res.status(200).json({
+        ok: true,
+        planKey: config.planKey,
+        planName: config.planName,
+        previewStartedAt:
+          membership.previewStartedAt,
+        previewEndsAt:
+          membership.previewEndsAt,
+        membership:
+          getClientPortalMembershipSummary(
+            await getClientPortalAccessibleLeads(
+              portalSession.email
+            )
+          )
+      });
+    } catch (error) {
+      console.error(
+        "[membership preview] Activation failed:",
+        error.message || error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "The 14-day preview could not be activated."
+      });
+    }
   }
 );
 
