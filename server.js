@@ -16352,17 +16352,35 @@ app.post(
 
         const completedEstimateEntry =
           allCandidates.find((entry) => {
-            const candidateLeadId = String(
-              entry.leadId ||
-              getLeadIdValue(entry.lead || {}) ||
-              getLeadIdValue(entry.raw || {}) ||
-              ""
-            ).trim();
+            const lead = entry.lead || {};
+          const raw = entry.raw || {};
+          const rawEstimate =
+            raw.estimate &&
+            typeof raw.estimate === "object" &&
+            !Array.isArray(raw.estimate)
+              ? raw.estimate
+              : {};
 
-            return (
-              candidateLeadId === requestedLeadId &&
-              Boolean(getTaxWatchSnapshot(entry))
-            );
+          const candidateIds = [
+            entry.leadId,
+            getLeadIdValue(lead),
+            getLeadIdValue(raw),
+            lead.clientPortal?.sourceLeadId,
+            lead.portalAccount?.sourceLeadId,
+            raw.clientPortal?.sourceLeadId,
+            raw.portalAccount?.sourceLeadId,
+            rawEstimate.clientPortal?.sourceLeadId,
+            rawEstimate.portalAccount?.sourceLeadId
+          ]
+            .map((value) =>
+              String(value || "").trim()
+            )
+            .filter(Boolean);
+
+          return (
+            candidateIds.includes(requestedLeadId) &&
+            Boolean(getTaxWatchSnapshot(entry))
+          );
           }) || null;
 
         if (completedEstimateEntry) {
