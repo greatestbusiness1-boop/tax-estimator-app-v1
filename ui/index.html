@@ -35,7 +35,35 @@
   .footer-link:focus {
     text-decoration: underline;
   }
-</style>
+
+    .estimator-membership-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
+    .estimator-membership-actions button{
+      min-height:44px;border:1px solid #0f5f8e;border-radius:10px;background:#126b9c;
+      color:#fff;font-weight:900;cursor:pointer;padding:10px 14px
+    }
+    .estimator-membership-actions button.annual{
+      background:#e2ad35;border-color:#bd8510;color:#102f52
+    }
+    .estimator-membership-note{margin-top:10px;font-size:12px;line-height:1.45;color:#54697a}
+    .estimator-pinnacle-features{
+      margin-top:12px;border:1px solid #2f78a7;border-radius:12px;background:#123f63;color:#fff;overflow:hidden
+    }
+    .estimator-pinnacle-features summary{
+      cursor:pointer;padding:12px 14px;background:#0f355d;color:#fff;font-weight:900
+    }
+    .estimator-pinnacle-features ul{
+      margin:0!important;padding:14px 24px 16px 38px!important;display:grid!important;
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px 24px!important
+    }
+    .estimator-pinnacle-features li{margin:0!important;color:#fff;line-height:1.35}
+    @media(max-width:980px){
+      .estimator-pinnacle-features ul{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    }
+    @media(max-width:680px){
+      .estimator-pinnacle-features ul{grid-template-columns:1fr!important}
+    }
+
+  </style>
 
 <style id="footer-color-fix">
   .site-footer {
@@ -1563,7 +1591,7 @@
 
           <div class="personalized-upgrade-grid">
             <article class="personalized-upgrade-card tax-watch-upgrade-card">
-              <div class="personalized-upgrade-card-label">Track the Changes</div>
+              <div class="personalized-upgrade-card-label">14-Day Preview Available</div>
               <h4>Tax Watch Pro</h4>
               <p id="taxWatchUpgradeReason">
                 Keep your estimate updated when your income, withholding, job, business, or family changes.
@@ -1578,35 +1606,58 @@
                 <li>Track your estimate throughout the year</li>
                 <li>Get reminders when your information needs an update</li>
               </ul>
-              <a class="personalized-upgrade-button tax-watch-button" href="/plans-pricing#tax-watch-pro" data-estimator-return-link="true">
-                Explore Tax Watch Pro
-              </a>
+              <div class="estimator-membership-actions">
+                <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="preview">Start 14-Day Preview</button>
+                <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $11.99</button>
+                <button type="button" class="annual" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $119</button>
+              </div>
+              <div class="estimator-membership-note">No automatic charge for the preview. Secure Client Portal access is created or connected before preview or checkout continues.</div>
             </article>
 
             <article class="personalized-upgrade-card pinnacle-upgrade-card">
-              <div class="personalized-upgrade-card-label">Build an Action Plan</div>
+              <div class="personalized-upgrade-card-label">14-Day Preview Available</div>
               <h4>Pinnacle Tax Action Plan</h4>
               <p id="pinnacleUpgradeReason">
                 See what you may need to adjust per paycheck, save each month, or prepare to pay quarterly.
               </p>
               <div class="personalized-upgrade-value-line pinnacle-value-line">
                 <strong>Everything in Tax Watch Pro</strong>
-                <span>plus 16 additional action-planning tools</span>
+                <span>plus 18 additional Pinnacle features</span>
               </div>
-              <p class="personalized-upgrade-example-label">A few examples:</p>
-              <ul>
-                <li>Compare paycheck and savings options</li>
-                <li>Plan for multiple jobs or gig income</li>
-                <li>Choose a refund or balance-due goal</li>
-              </ul>
-              <a class="personalized-upgrade-button pinnacle-button" href="/plans-pricing#pinnacle-plan" data-estimator-return-link="true">
-                Explore the Pinnacle Plan
-              </a>
+              <details class="estimator-pinnacle-features">
+                <summary>Plus 18 additional Pinnacle features</summary>
+                <ul>
+                  <li>Year-to-date gross business income totals</li>
+                  <li>Tracked business-expense totals</li>
+                  <li>Date-sensitive mileage deduction calculations</li>
+                  <li>Net business income rollup</li>
+                  <li>Recommended tax-savings reserve</li>
+                  <li>Deposited tax-savings tracking</li>
+                  <li>Estimated-tax payment tracking</li>
+                  <li>Month and tax-year financial filters</li>
+                  <li>Income-source detail rows and update history</li>
+                  <li>Separated start and end trip addresses</li>
+                  <li>Business, personal, commuting, and unclassified mileage totals</li>
+                  <li>Compact daily odometer history with expandable details</li>
+                  <li>Mileage CSV download</li>
+                  <li>Expense categories and receipt organization</li>
+                  <li>Quarterly-payment and W-2 withholding guidance</li>
+                  <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
+                  <li>Before-and-after scenario comparisons</li>
+                  <li>Downloadable Pinnacle Tax Action Plan</li>
+                </ul>
+              </details>
+              <div class="estimator-membership-actions">
+                <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="preview">Start 14-Day Preview</button>
+                <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $34.99</button>
+                <button type="button" class="annual" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $349</button>
+              </div>
+              <div class="estimator-membership-note">No automatic charge for the preview. Secure Client Portal access is created or connected before preview or checkout continues.</div>
             </article>
           </div>
 
           <div class="personalized-upgrade-note">
-            Tax Watch Pro and Pinnacle Tax Action Plan are both accessed through the Secure Client Portal. Tax Watch Pro preview access is available now; Pinnacle remains planned and will appear in the portal when released. Exploring or comparing a plan does not start a subscription or charge you.
+            Choose the program that fits what you need. You may start a 14-day preview or purchase Monthly or Annual directly from this estimate page. The system will create or connect your Secure Client Portal before continuing.
             <a href="/plans-pricing" data-estimator-return-link="true">Compare all plans and benefits</a>
           </div>
         </section>
@@ -2131,6 +2182,38 @@
       });
 
       setBilling("monthly");
+    })();
+  </script>
+
+  
+  <script>
+    (function () {
+      var intentKey = "taxEstimatorMembershipIntent.v1";
+
+      function beginMembershipAction(button) {
+        var planKey = String(button.getAttribute("data-estimator-membership-plan") || "").trim();
+        var action = String(button.getAttribute("data-estimator-membership-action") || "").trim();
+        var billingFrequency = String(button.getAttribute("data-estimator-membership-billing") || "monthly").trim();
+
+        if (!planKey || !action) return;
+
+        localStorage.setItem(intentKey, JSON.stringify({
+          version: 1,
+          planKey: planKey,
+          action: action,
+          billingFrequency: billingFrequency,
+          sourcePage: window.location.pathname || "/",
+          createdAt: new Date().toISOString()
+        }));
+
+        window.location.href = "/client-portal?activate=1&membershipIntent=1";
+      }
+
+      document.querySelectorAll("[data-estimator-membership-plan]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          beginMembershipAction(button);
+        });
+      });
     })();
   </script>
 

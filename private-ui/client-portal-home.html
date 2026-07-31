@@ -9032,7 +9032,8 @@
       if (!intent) return false;
 
       const portalEmail = String(portal.email || portal.username || "").trim().toLowerCase();
-      if (portalEmail && String(intent.email || "").trim().toLowerCase() !== portalEmail) {
+      const intentEmail = String(intent.email || "").trim().toLowerCase();
+      if (portalEmail && intentEmail && intentEmail !== portalEmail) {
         return false;
       }
 
