@@ -2783,7 +2783,16 @@
       .dashboard-preview-checkout-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
       .dashboard-preview-checkout-actions button{width:100%}
     }
-</style>
+
+    .portal-nav-item.is-active,
+    .portal-nav-toggle.is-active,
+    .portal-submenu button.is-active{
+      background:#1f6694 !important;
+      color:#fff !important;
+      border-color:#3e86b4 !important;
+    }
+
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -2821,7 +2830,18 @@
       </div>
       <nav class="portal-nav" id="portalNavigation">
         <button class="portal-nav-item" type="button" data-portal-open="dashboard">Dashboard</button>
-        <div class="portal-nav-group portal-nav-pinnacle-group">
+        <div class="portal-nav-group portal-nav-tax-watch-group" id="taxWatchNavigationGroup" hidden>
+          <button class="portal-nav-item portal-nav-toggle portal-nav-tax-watch" type="button" data-submenu-toggle="taxWatchMenu" aria-expanded="false">
+            <span>Tax Watch Pro</span><span aria-hidden="true">▾</span>
+          </button>
+          <div class="portal-submenu" id="taxWatchMenu">
+            <button type="button" data-portal-open="tax-watch">Tax Watch Pro Overview &amp; Tracker</button>
+            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
+            <button type="button" data-portal-open="billing-history">Membership Billing History</button>
+          </div>
+        </div>
+
+        <div class="portal-nav-group portal-nav-pinnacle-group" id="pinnacleNavigationGroup" hidden>
           <button class="portal-nav-item portal-nav-toggle portal-nav-pinnacle" type="button" data-submenu-toggle="pinnacleMenu" aria-expanded="false">
             <span>Pinnacle Tax Action Plan</span><span aria-hidden="true">▾</span>
           </button>
@@ -8732,6 +8752,22 @@
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
       });
 
+      const plansButton = document.querySelector('[data-portal-open="plans"].portal-nav-item');
+      if (plansButton) plansButton.classList.toggle("is-active", requestedView === "plans");
+
+      const pinnacleToggle = document.querySelector('[data-submenu-toggle="pinnacleMenu"]');
+      if (pinnacleToggle) {
+        pinnacleToggle.classList.toggle("is-active", requestedView.startsWith("pinnacle"));
+      }
+
+      const taxWatchToggle = document.querySelector('[data-submenu-toggle="taxWatchMenu"]');
+      if (taxWatchToggle) {
+        taxWatchToggle.classList.toggle(
+          "is-active",
+          ["tax-watch","tax-watch-documents"].includes(requestedView)
+        );
+      }
+
       const activeServiceViews = new Set([
         "active-services",
         "tax-preparation",
@@ -8921,6 +8957,107 @@
       message.className = `portal-question-message show ${type}`.trim();
     }
 
+
+    const ESTIMATE_MEMBERSHIP_INTENT_KEY = "taxEstimatorMembershipIntent.v1";
+
+    function getPendingEstimateMembershipIntent() {
+      try {
+        const intent = JSON.parse(localStorage.getItem(ESTIMATE_MEMBERSHIP_INTENT_KEY) || "null");
+        if (!intent || !intent.planKey || !intent.action) return null;
+        const created = Date.parse(intent.createdAt || "");
+        if (Number.isFinite(created) && Date.now() - created > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
+          return null;
+        }
+        return intent;
+      } catch {
+        localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
+        return null;
+      }
+    }
+
+    function updateProgramNavigationAccess(portal = {}) {
+      const taxWatchGroup = document.getElementById("taxWatchNavigationGroup");
+      const pinnacleGroup = document.getElementById("pinnacleNavigationGroup");
+      const membership = portal.taxWatch?.membership || {};
+      const taxWatch = portal.taxWatch || {};
+      const pinnacleState = getPinnaclePreviewState();
+
+      const taxWatchAccess = Boolean(
+        taxWatch.active ||
+        taxWatch.status === "preview" ||
+        taxWatch.status === "active-preview" ||
+        membership.planKey === "tax-watch-pro"
+      );
+      const pinnacleAccess = Boolean(
+        membership.planKey === "pinnacle" ||
+        pinnacleState.status === "preview" ||
+        pinnacleState.status === "active"
+      );
+
+      if (taxWatchGroup) taxWatchGroup.hidden = !taxWatchAccess;
+      if (pinnacleGroup) pinnacleGroup.hidden = !pinnacleAccess;
+    }
+
+    async function processPendingEstimateMembershipIntent(portal = {}) {
+      const intent = getPendingEstimateMembershipIntent();
+      if (!intent) return false;
+
+      const portalEmail = String(portal.email || portal.username || "").trim().toLowerCase();
+      if (portalEmail && String(intent.email || "").trim().toLowerCase() !== portalEmail) {
+        return false;
+      }
+
+      if (intent.action === "preview") {
+        if (intent.planKey === "tax-watch-pro") {
+          const response = await fetch("/api/client-portal/tax-watch", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            credentials: "same-origin",
+            body: JSON.stringify({objective:"track_changes", targetAmount:0})
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.ok) throw new Error(data.error || "Tax Watch Pro preview could not be started.");
+          localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
+          window.location.hash = "#tax-watch";
+          window.location.reload();
+          return true;
+        }
+
+        const now = new Date();
+        localStorage.setItem(PINNACLE_PREVIEW_KEY, JSON.stringify({
+          startedAt: now.toISOString(),
+          endsAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          status: "preview"
+        }));
+        localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
+        updateProgramNavigationAccess(portal);
+        openPortalView("pinnacle");
+        return true;
+      }
+
+      if (intent.action === "purchase") {
+        const response = await fetch("/api/client-portal/membership-checkout", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          credentials: "same-origin",
+          body: JSON.stringify({
+            planKey: intent.planKey,
+            billingFrequency: intent.billingFrequency || "monthly"
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok || !data.checkoutUrl) {
+          throw new Error(data.error || "Secure membership checkout could not be opened.");
+        }
+        localStorage.removeItem(ESTIMATE_MEMBERSHIP_INTENT_KEY);
+        window.location.href = data.checkoutUrl;
+        return true;
+      }
+
+      return false;
+    }
+
     async function loadPortal() {
       const response = await fetch(
         "/api/client-portal/session",
@@ -9066,6 +9203,15 @@
       );
 
       renderClientExperienceV2(portal);
+      updateProgramNavigationAccess(portal);
+
+      try {
+        const handledMembershipIntent = await processPendingEstimateMembershipIntent(portal);
+        if (handledMembershipIntent) return;
+      } catch (error) {
+        console.error("Estimate membership intent failed:", error);
+        alert(error.message || "The selected membership action could not be completed.");
+      }
 
       const olderButton =
         document.getElementById(
