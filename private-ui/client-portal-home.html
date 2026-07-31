@@ -1633,6 +1633,16 @@
       cursor:pointer;
     }
 
+    .pinnacle-uniform-enrollment-hero{margin-bottom:18px}
+    .pinnacle-uniform-enrollment-hero h3{margin:8px 0 8px;font-size:28px}
+    .pinnacle-uniform-enrollment-hero .pinnacle-inline-actions{margin-top:14px}
+    .pinnacle-uniform-access-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+    .pinnacle-uniform-access-line strong{color:#ffd36a}
+    .pinnacle-uniform-access-line span{color:#fff}
+    .pinnacle-more-features{margin-top:14px;border:1px solid #d8b45b;border-radius:12px;background:#fffaf0;overflow:hidden}
+    .pinnacle-more-features summary{cursor:pointer;padding:13px 15px;font-weight:900;color:#123a5b}
+    .pinnacle-more-features ul{margin:0;padding:0 22px 16px 38px}
+    .pinnacle-more-features li{margin:7px 0}
     .pinnacle-profile-access-card{
       display:flex;align-items:center;justify-content:space-between;gap:20px;
       margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
@@ -3450,19 +3460,22 @@
         <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
       <div class="section-body">
-        <div class="pinnacle-hero-card">
-          <div class="pinnacle-hero-copy">
+        <div class="cx-page-hero cx-plans-hero pinnacle-uniform-enrollment-hero">
+          <div>
             <div class="cx-pinnacle-badge">Pinnacle Tax Action Plan</div>
             <h3>Turn your tax information into a clear year-round action plan.</h3>
             <p>Track business activity, compare possible tax outcomes, and follow practical steps designed to help you prepare for refunds, balances due, paycheck withholding, estimated taxes, and savings goals.</p>
             <div class="pinnacle-inline-actions">
               <button type="button" data-portal-open="pinnacle-business-profile" id="pinnacleBusinessProfileOpenButton">Open / Edit My Business Profile</button>
             </div>
+            <div class="pinnacle-uniform-access-line">
+              <strong id="pinnacleAccessStatus">14-Day Preview</strong>
+              <span id="pinnacleAccessText">No automatic charge. Choose a monthly or annual plan only when you are ready.</span>
+            </div>
           </div>
-          <div class="pinnacle-access-card">
-            <span>Current Access</span>
-            <strong id="pinnacleAccessStatus">14-Day Preview</strong>
-            <p id="pinnacleAccessText">No automatic charge. Choose a monthly or annual plan only when you are ready.</p>
+          <div class="cx-billing-toggle" id="pinnacleBillingToggle" aria-label="Choose Pinnacle monthly or annual pricing">
+            <button class="active" type="button" data-pinnacle-billing-choice="monthly">Monthly</button>
+            <button type="button" data-pinnacle-billing-choice="annual">Annual <span>Save about 17%</span></button>
           </div>
         </div>
 
@@ -3483,10 +3496,6 @@
           </div>
 
           <div class="dashboard-preview-checkout">
-            <div class="cx-billing-toggle" id="pinnacleBillingToggle" aria-label="Choose Pinnacle monthly or annual pricing">
-              <button class="active" type="button" data-pinnacle-billing-choice="monthly">Monthly</button>
-              <button type="button" data-pinnacle-billing-choice="annual">Annual <span>Save about 17%</span></button>
-            </div>
             <div class="dashboard-preview-checkout-actions" id="pinnacleMembershipCheckoutActions" aria-label="Choose Pinnacle billing">
               <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Open Monthly Checkout — $34.99</button>
               <button class="secondary" type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="annual" hidden>Open Annual Checkout — $349</button>
@@ -3532,10 +3541,10 @@
             <h3>Track Your Business</h3>
             <ul>
               <li>Unlimited businesses and income sources</li>
-              <li>Mileage Tracker with trip reports</li>
-              <li>Expense Tracker with category totals</li>
-              <li>Receipt uploads from your phone</li>
-              <li>Business income and deduction summaries</li>
+              <li>Business profiles with structure and ownership details</li>
+              <li>Financial Snapshot with Safe to Spend planning</li>
+              <li>Vehicle Profiles with a primary active vehicle</li>
+              <li>Mileage Tracker with individual trips and daily odometer logs</li>
             </ul>
           </article>
           <article class="pinnacle-feature-card">
@@ -3549,6 +3558,29 @@
             </ul>
           </article>
         </div>
+        <details class="pinnacle-more-features">
+          <summary>Plus <span data-pinnacle-additional-count>0</span> additional Pinnacle features</summary>
+          <ul id="pinnacleAdditionalFeatureList">
+            <li>Year-to-date gross business income totals</li>
+            <li>Tracked business-expense totals</li>
+            <li>Date-sensitive mileage deduction calculations</li>
+            <li>Net business income rollup</li>
+            <li>Recommended tax-savings reserve</li>
+            <li>Deposited tax-savings tracking</li>
+            <li>Estimated-tax payment tracking</li>
+            <li>Month and tax-year financial filters</li>
+            <li>Income-source detail rows and update history</li>
+            <li>Separated start and end trip addresses</li>
+            <li>Business, personal, commuting, and unclassified mileage totals</li>
+            <li>Compact daily odometer history with expandable details</li>
+            <li>Mileage CSV download</li>
+            <li>Expense categories and receipt organization</li>
+            <li>Quarterly-payment and W-2 withholding guidance</li>
+            <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
+            <li>Before-and-after scenario comparisons</li>
+            <li>Downloadable Pinnacle Tax Action Plan</li>
+          </ul>
+        </details>
 
         <div class="pinnacle-disclaimer">
           <strong>Planning estimate notice:</strong> Pinnacle provides planning estimates based on the information entered. Actual tax results may change when income, expenses, deductions, credits, tax law, or filing information changes.
@@ -6226,6 +6258,10 @@
             <li>Annual members and monthly members with at least 90 consecutive paid days may receive one $20 tax-preparation credit per tax year when Greatest Business Solution LLC prepares the return</li>
             <li>Tax preparation and filing remain separate professional services</li>
           </ul>
+          <details class="pinnacle-more-features">
+            <summary>Plus <span data-pinnacle-additional-count>0</span> additional Pinnacle features</summary>
+            <ul data-pinnacle-additional-feature-copy></ul>
+          </details>
           <p><strong>Designed for freelancers and self-employed individuals.</strong> Larger businesses with complex entities, payroll, inventory, or full bookkeeping needs may require separate professional services.</p>
           <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Pinnacle Checkout Opens When Plan Is Ready</button>
         </article>
@@ -7705,6 +7741,18 @@
     }
 
 
+    function syncPinnacleAdditionalFeatureCount(){
+      const source=document.getElementById("pinnacleAdditionalFeatureList");
+      if(!source)return;
+      const features=[...source.querySelectorAll(":scope > li")].map(item=>item.textContent.trim()).filter(Boolean);
+      document.querySelectorAll("[data-pinnacle-additional-count]").forEach(node=>{
+        node.textContent=String(features.length);
+      });
+      document.querySelectorAll("[data-pinnacle-additional-feature-copy]").forEach(list=>{
+        list.innerHTML=features.map(feature=>`<li>${escapeHtml(feature)}</li>`).join("");
+      });
+    }
+
     const PINNACLE_PREVIEW_KEY="pinnaclePreview.v1";
     let pinnaclePreviewTimer=null;
 
@@ -8612,6 +8660,7 @@
       });
 
       configurePinnacleBillingSwitch();
+      syncPinnacleAdditionalFeatureCount();
       renderPinnaclePreview();
       configureMembershipCheckoutButtons();
       restorePinnacleBusinessDraft();
