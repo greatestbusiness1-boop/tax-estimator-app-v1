@@ -1664,6 +1664,14 @@
     }
     .pinnacle-income-stat span{display:block;color:#63798a;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-income-stat strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
+    .pinnacle-income-page-status{
+      min-height:0;margin:0 0 14px;padding:0;border-radius:10px;
+      color:#12673a;font-size:13px;font-weight:850;
+      transition:opacity .2s ease
+    }
+    .pinnacle-income-page-status.is-visible{
+      min-height:42px;padding:11px 14px;border:1px solid #b9d8c4;background:#eef9f1
+    }
     .pinnacle-income-filter-bar{
       display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.7fr));gap:12px;
       margin:0 0 18px;padding:16px 18px;border:1px solid #c7dae7;border-radius:16px;background:#fbfdfe
@@ -3430,6 +3438,8 @@
           <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
         </div>
 
+        <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="polite"></div>
+
         <div class="pinnacle-income-filter-bar">
           <div class="pinnacle-income-filter-field">
             <label for="pinnacleIncomeSearch">Search income source</label>
@@ -3449,8 +3459,8 @@
             <label for="pinnacleIncomeFilterYear">Tax year</label>
             <select id="pinnacleIncomeFilterYear">
               <option value="">All years</option>
-              <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
-              <option value="2027">2027</option><option value="2028">2028</option>
+              <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+              <option value="2029">2029</option><option value="2030">2030</option>
             </select>
           </div>
         </div>
@@ -7398,6 +7408,25 @@
     function savePinnacleIncomeSources(items){
       localStorage.setItem(PINNACLE_INCOME_SOURCES_KEY,JSON.stringify(items));
     }
+    let pinnacleIncomePageStatusTimer=null;
+    function showPinnacleIncomePageStatus(message,duration=3200){
+      const status=document.getElementById("pinnacleIncomePageStatus");
+      if(!status)return;
+      status.textContent=message||"";
+      status.classList.toggle("is-visible",Boolean(message));
+      if(pinnacleIncomePageStatusTimer){
+        window.clearTimeout(pinnacleIncomePageStatusTimer);
+        pinnacleIncomePageStatusTimer=null;
+      }
+      if(message&&duration>0){
+        pinnacleIncomePageStatusTimer=window.setTimeout(()=>{
+          status.textContent="";
+          status.classList.remove("is-visible");
+          pinnacleIncomePageStatusTimer=null;
+        },duration);
+      }
+    }
+
     function showPinnacleIncomeStatus(message,duration=3000){
     function sanitizePinnacleCurrencyInput(value){
       return String(value||"").replace(/[^0-9.\-]/g,"");
@@ -7440,10 +7469,20 @@
         year:String(document.getElementById("pinnacleIncomeFilterYear")?.value||"").trim()
       };
     }
-    function getPinnacleIncomeEntryDateParts(entryDate){
-      if(!entryDate)return {year:"",month:""};
-      const parts=String(entryDate).split("-");
-      return {year:parts[0]||"",month:String(Number(parts[1]||""))};
+    function getPinnacleIncomeEntryDateParts(item){
+      const directDate=String(item?.entryDate||"").trim();
+      if(directDate){
+        const parts=directDate.split("-");
+        return {year:parts[0]||"",month:String(Number(parts[1]||""))};
+      }
+      const updated=String(item?.updatedAt||"").trim();
+      if(updated){
+        const date=new Date(updated);
+        if(!Number.isNaN(date.getTime())){
+          return {year:String(date.getFullYear()),month:String(date.getMonth()+1)};
+        }
+      }
+      return {year:"",month:""};
     }
     function renderPinnacleIncomeSources(){
       const items=loadPinnacleIncomeSources();
@@ -7453,7 +7492,7 @@
       const filters=getPinnacleIncomeFilters();
       const filtered=items.filter((item)=>{
         const nameMatch=!filters.search || String(item.name||"").toLowerCase().includes(filters.search);
-        const dateParts=getPinnacleIncomeEntryDateParts(item.entryDate);
+        const dateParts=getPinnacleIncomeEntryDateParts(item);
         const monthMatch=!filters.month || dateParts.month===filters.month;
         const yearMatch=!filters.year || dateParts.year===filters.year;
         return nameMatch && monthMatch && yearMatch;
@@ -7512,6 +7551,13 @@
           const field=form.elements.namedItem(name);
           if(field&&"value" in field)field.value=value??"";
         });
+        const dateField=document.getElementById("pinnacleIncomeEntryDate");
+        if(dateField && !dateField.value){
+          const fallbackDate=item.updatedAt?new Date(item.updatedAt):new Date();
+          dateField.value=Number.isNaN(fallbackDate.getTime())
+            ? new Date().toISOString().slice(0,10)
+            : fallbackDate.toISOString().slice(0,10);
+        }
       }else{
         const dateField=document.getElementById("pinnacleIncomeEntryDate");
         if(dateField && !dateField.value){
@@ -7545,6 +7591,7 @@
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
       closePinnacleIncomeModal();
+      showPinnacleIncomePageStatus(existingIndex>=0?"Income source update has been saved.":"Income source has been saved.");
     }
     function handlePinnacleIncomeListClick(event){
       const toggle=event.target.closest("[data-income-toggle]");
