@@ -4799,19 +4799,10 @@ async function getClientPortalAccessibleLeads(email) {
   const candidates =
     await loadClientPortalLeadCandidates();
 
-  return candidates.filter((entry) => {
-    const mergedEmail = getLeadEmailValue(
-      entry.lead || {}
-    );
-    const rawEmail = getLeadEmailValue(
-      entry.raw || {}
-    );
-
-    return (
-      mergedEmail === normalized ||
-      rawEmail === normalized
-    );
-  });
+  return candidates.filter(
+    (entry) =>
+      getLeadEmailValue(entry.raw) === normalized
+  );
 }
 
 async function getFreeEstimateIdentityAccessibleLeads(email) {
@@ -4820,21 +4811,12 @@ async function getFreeEstimateIdentityAccessibleLeads(email) {
   const candidates =
     await loadClientPortalLeadCandidates();
 
-  return candidates.filter((entry) => {
-    const mergedIdentity =
+  return candidates.filter(
+    (entry) =>
       getFreeEstimateIdentityKey(
-        getLeadEmailValue(entry.lead || {})
-      );
-    const rawIdentity =
-      getFreeEstimateIdentityKey(
-        getLeadEmailValue(entry.raw || {})
-      );
-
-    return (
-      mergedIdentity === identityEmail ||
-      rawIdentity === identityEmail
-    );
-  });
+        getLeadEmailValue(entry.raw)
+      ) === identityEmail
+  );
 }
 
 function normalizeFreeEstimateClientName(value) {
@@ -16342,22 +16324,71 @@ app.post(
     );
 
     const session = req.clientPortalSession;
-    const accessible =
+    let accessible =
       await getClientPortalAccessibleLeads(
         session.email
       );
 
-    const currentSummary =
+    let currentSummary =
       buildClientPortalTaxWatchSummary(
         accessible,
         session.payload.accountLeadId
       );
 
     if (!currentSummary.current) {
+      const accountLeadId = String(
+        session.payload.accountLeadId || ""
+      ).trim();
+
+      if (accountLeadId) {
+        const allCandidates =
+          await loadClientPortalLeadCandidates();
+
+        const accountEntry =
+          allCandidates.find((entry) => {
+            const candidateIds = [
+              entry.leadId,
+              getLeadIdValue(entry.lead || {}),
+              getLeadIdValue(entry.raw || {})
+            ]
+              .map((value) =>
+                String(value || "").trim()
+              )
+              .filter(Boolean);
+
+            return candidateIds.includes(
+              accountLeadId
+            );
+          }) || null;
+
+        if (
+          accountEntry &&
+          getTaxWatchSnapshot(accountEntry)
+        ) {
+          accessible = [
+            ...accessible.filter(
+              (entry) =>
+                String(
+                  entry.leadId || ""
+                ).trim() !== accountLeadId
+            ),
+            accountEntry
+          ];
+
+          currentSummary =
+            buildClientPortalTaxWatchSummary(
+              accessible,
+              accountLeadId
+            );
+        }
+      }
+    }
+
+    if (!currentSummary.current) {
       return res.status(409).json({
         ok: false,
         error:
-          "Complete the Free Tax Estimator with this portal email before starting Tax Watch Pro."
+          "The completed estimate linked to this permanent client reference could not be loaded for Tax Watch Pro."
       });
     }
 
