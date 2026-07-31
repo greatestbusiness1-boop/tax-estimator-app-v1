@@ -8134,7 +8134,8 @@
     function loadPinnacleVehicles(){try{const x=JSON.parse(localStorage.getItem(PINNACLE_VEHICLE_KEY)||"[]");return Array.isArray(x)?x:[]}catch(error){return []}}
     function savePinnacleVehicles(items){localStorage.setItem(PINNACLE_VEHICLE_KEY,JSON.stringify(items))}
     function formatPinnacleMileageNumber(value,decimals=1){
-      const number=Number(value||0);
+      const parsed=Number(String(value??"0").replace(/,/g,""));
+      const number=Number.isFinite(parsed)?parsed:0;
       return number.toLocaleString("en-US",{
         minimumFractionDigits:decimals,
         maximumFractionDigits:decimals
@@ -8174,7 +8175,7 @@
       if(!items.length){list.innerHTML='<div class="pinnacle-trip-empty">No vehicle profile has been added yet.</div>';refreshPinnacleVehicleOptions();return}
       list.innerHTML=items.map(v=>`<article class="pinnacle-vehicle-row">
         <div><h4>${escapeHtml(getPinnacleVehicleLabel(v))}</h4><p>${v.status==="retired"?"Retired vehicle":"Active vehicle"}</p></div>
-        <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${Number(v.beginningOdometer||0).toFixed(1)}</strong></div>
+        <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${formatPinnacleMileageNumber(v.beginningOdometer)}</strong></div>
         <div class="pinnacle-daily-metric"><span>Placed in Service</span><strong>${v.serviceDate?new Date(v.serviceDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
         <div><span class="pinnacle-vehicle-badge">${v.primary==="yes"?"Primary":"Secondary"}</span></div>
         <div class="pinnacle-vehicle-actions"><button type="button" data-vehicle-edit="${escapeHtml(v.id)}">Edit</button><button type="button" class="secondary" data-vehicle-primary="${escapeHtml(v.id)}">Make Primary</button></div>
@@ -8186,6 +8187,8 @@
       document.getElementById("pinnacleVehicleId").value=item?.id||"";
       document.getElementById("pinnacleVehicleDialogTitle").textContent=item?"Edit Vehicle":"Add Vehicle";
       if(item&&form)Object.entries(item).forEach(([name,value])=>{const field=form.elements.namedItem(name);if(field&&"value" in field)field.value=value??""});
+      const odometerField=document.getElementById("pinnacleVehicleBeginningOdometer");
+      if(odometerField)odometerField.value=normalizePinnacleOdometerValue(odometerField.value);
       document.getElementById("pinnacleVehicleModal").hidden=false;
     }
     function closePinnacleVehicleModal(){document.getElementById("pinnacleVehicleModal").hidden=true}
