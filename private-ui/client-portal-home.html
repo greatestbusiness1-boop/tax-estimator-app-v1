@@ -1633,6 +1633,54 @@
       cursor:pointer;
     }
 
+    .pinnacle-preview-card{
+      margin:0 0 18px;padding:20px;border:1px solid #bfd4e3;border-radius:18px;
+      background:linear-gradient(135deg,#eef7fb,#fff8e8);box-shadow:0 10px 24px rgba(20,50,75,.07)
+    }
+    .pinnacle-preview-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:start}
+    .pinnacle-preview-copy h3{margin:4px 0 5px;color:#0f3159;font-size:22px}
+    .pinnacle-preview-copy p{margin:0;color:#526779;line-height:1.55}
+    .pinnacle-preview-controls{min-width:340px;display:grid;gap:12px;justify-items:end}
+    .pinnacle-billing-switch{
+      display:inline-grid;grid-template-columns:1fr 1fr;padding:4px;border:1px solid #a9c1d2;
+      border-radius:12px;background:#fff
+    }
+    .pinnacle-billing-switch button{
+      min-height:38px;padding:8px 14px;border:0;border-radius:8px;background:transparent;
+      color:#164667;font-weight:850;cursor:pointer
+    }
+    .pinnacle-billing-switch button.active{background:#0f355d;color:#fff}
+    .pinnacle-preview-checkout{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+    .pinnacle-preview-checkout button{
+      min-height:44px;padding:10px 15px;border:1px solid #0f355d;border-radius:10px;
+      background:#0f355d;color:#fff;font-weight:850;cursor:pointer
+    }
+    .pinnacle-preview-checkout button.secondary{background:#fff;color:#0f355d}
+    .pinnacle-preview-note{font-size:12px;color:#36566d;text-align:right}
+    .pinnacle-preview-timer{
+      margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:14px 16px;border-radius:14px;background:#10375e;color:#fff
+    }
+    .pinnacle-preview-timer-copy strong{display:block;font-size:17px}
+    .pinnacle-preview-timer-copy span{display:block;margin-top:4px;color:#dbeaf3;font-size:12px}
+    .pinnacle-preview-clock{display:flex;align-items:center;gap:5px}
+    .pinnacle-preview-clock-box{
+      min-width:42px;padding:8px 7px;border-radius:8px;background:rgba(255,255,255,.14);
+      text-align:center;font-size:18px;font-weight:900
+    }
+    .pinnacle-preview-progress{height:11px;margin-top:12px;border-radius:999px;background:#dbe7ee;overflow:hidden;border:1px solid #c7d8e2}
+    .pinnacle-preview-progress>div{height:100%;width:0;background:linear-gradient(90deg,#d29a22,#13805f);transition:width .4s ease}
+    .pinnacle-preview-card.activated .pinnacle-preview-checkout,
+    .pinnacle-preview-card.activated .pinnacle-billing-switch,
+    .pinnacle-preview-card.activated .pinnacle-preview-note{display:none}
+    @media(max-width:850px){
+      .pinnacle-preview-top{grid-template-columns:1fr}
+      .pinnacle-preview-controls{min-width:0;justify-items:start}
+      .pinnacle-preview-checkout{justify-content:flex-start}
+      .pinnacle-preview-note{text-align:left}
+      .pinnacle-preview-timer{align-items:flex-start;flex-direction:column}
+    }
+
     .pinnacle-profile-access-card{
       display:flex;align-items:center;justify-content:space-between;gap:20px;
       margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
@@ -3461,9 +3509,46 @@
           </div>
           <div class="pinnacle-access-card">
             <span>Current Access</span>
-            <strong>Coming Soon</strong>
-            <p>Pinnacle is being prepared for your Secure Client Portal. Viewing this page does not activate a paid membership or charge a payment method.</p>
+            <strong id="pinnacleAccessStatus">14-Day Preview</strong>
+            <p id="pinnacleAccessText">No automatic charge. Choose a monthly or annual plan only when you are ready.</p>
           </div>
+        </div>
+
+        <div class="pinnacle-preview-card" id="pinnaclePreviewCard">
+          <div class="pinnacle-preview-top">
+            <div class="pinnacle-preview-copy">
+              <div class="eyebrow" id="pinnaclePreviewEyebrow">Pinnacle 14-Day Preview</div>
+              <h3 id="pinnaclePreviewHeading">Your Pinnacle preview is active</h3>
+              <p id="pinnaclePreviewDates">Loading your preview dates...</p>
+            </div>
+            <div class="pinnacle-preview-controls">
+              <div class="pinnacle-billing-switch" aria-label="Choose Pinnacle billing frequency">
+                <button type="button" class="active" data-pinnacle-billing-choice="monthly">Monthly</button>
+                <button type="button" data-pinnacle-billing-choice="annual">Annual</button>
+              </div>
+              <div class="pinnacle-preview-checkout" id="pinnacleMembershipCheckoutActions">
+                <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Open Monthly Checkout — $34.99</button>
+                <button type="button" class="secondary" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="annual" hidden>Open Annual Checkout — $349</button>
+              </div>
+              <span class="pinnacle-preview-note" id="pinnaclePreviewNote"><strong>No automatic charge.</strong> Stripe checkout opens only after you select a plan.</span>
+            </div>
+          </div>
+          <div class="pinnacle-preview-timer">
+            <div class="pinnacle-preview-timer-copy">
+              <strong id="pinnaclePreviewTimerHeading">Preview running</strong>
+              <span id="pinnaclePreviewTimerStatus">14 days remaining</span>
+            </div>
+            <div class="pinnacle-preview-clock" aria-label="Pinnacle preview time remaining">
+              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewDays">14d</span>
+              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewHours">00</span>
+              <span>:</span>
+              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewMinutes">00</span>
+              <span>:</span>
+              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewSeconds">00</span>
+            </div>
+          </div>
+          <div class="pinnacle-preview-progress" role="progressbar" aria-label="Pinnacle preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pinnaclePreviewProgressTrack"><div id="pinnaclePreviewProgress"></div></div>
+          <div class="tax-watch-message" id="pinnacleCheckoutMessage" role="status" aria-live="polite"></div>
         </div>
 
         <div class="pinnacle-profile-access-card">
@@ -3508,22 +3593,6 @@
               <li>Required-document tracking</li>
               <li>Completed-action history</li>
             </ul>
-          </article>
-        </div>
-
-        <div class="pinnacle-pricing-card">
-          <article class="pinnacle-price-option">
-            <h3>Monthly Membership</h3>
-            <div class="pinnacle-price">$34.99 <small>per month</small></div>
-            <p>Monthly access after successful checkout. The membership will renew monthly until canceled.</p>
-            <button type="button" disabled aria-disabled="true">Monthly Enrollment Coming Soon</button>
-          </article>
-          <article class="pinnacle-price-option best">
-            <div class="pinnacle-best-badge">Best Value · Save 17%</div>
-            <h3>Annual Membership</h3>
-            <div class="pinnacle-price">$349 <small>billed once per year</small></div>
-            <p>Receive 12 months of access and save $70.88 compared with twelve monthly payments.</p>
-            <button type="button" disabled aria-disabled="true">Annual Enrollment Coming Soon</button>
           </article>
         </div>
 
@@ -7682,6 +7751,87 @@
     }
 
 
+    const PINNACLE_PREVIEW_KEY="pinnaclePreview.v1";
+    let pinnaclePreviewTimer=null;
+
+    function getPinnaclePreviewState(){
+      let state=null;
+      try{state=JSON.parse(localStorage.getItem(PINNACLE_PREVIEW_KEY)||"null")}catch(error){state=null}
+      if(!state?.startedAt){
+        const startedAt=new Date();
+        const endsAt=new Date(startedAt.getTime()+14*24*60*60*1000);
+        state={startedAt:startedAt.toISOString(),endsAt:endsAt.toISOString(),status:"preview"};
+        localStorage.setItem(PINNACLE_PREVIEW_KEY,JSON.stringify(state));
+      }
+      return state;
+    }
+    function formatPinnaclePreviewDate(value){
+      const date=new Date(value);
+      return Number.isFinite(date.getTime())
+        ?date.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})
+        :"Not available";
+    }
+    function renderPinnaclePreview(){
+      const state=getPinnaclePreviewState();
+      const card=document.getElementById("pinnaclePreviewCard");
+      if(!card)return;
+
+      const now=Date.now();
+      const endsAt=Date.parse(state.endsAt||"");
+      const startedAt=Date.parse(state.startedAt||"");
+      const activeMembership=state.status==="active";
+      const totalMs=14*24*60*60*1000;
+      const remainingMs=activeMembership?0:Math.max(0,(Number.isFinite(endsAt)?endsAt:now)-now);
+      const usedPct=activeMembership?100:Math.min(100,Math.max(0,((now-startedAt)/totalMs)*100));
+
+      const days=Math.floor(remainingMs/86400000);
+      const hours=Math.floor((remainingMs%86400000)/3600000);
+      const minutes=Math.floor((remainingMs%3600000)/60000);
+      const seconds=Math.floor((remainingMs%60000)/1000);
+
+      document.getElementById("pinnaclePreviewDates").textContent=activeMembership
+        ?"Your Pinnacle membership is active."
+        :`Preview started ${formatPinnaclePreviewDate(state.startedAt)} · ends ${formatPinnaclePreviewDate(state.endsAt)}`;
+      document.getElementById("pinnaclePreviewDays").textContent=`${days}d`;
+      document.getElementById("pinnaclePreviewHours").textContent=String(hours).padStart(2,"0");
+      document.getElementById("pinnaclePreviewMinutes").textContent=String(minutes).padStart(2,"0");
+      document.getElementById("pinnaclePreviewSeconds").textContent=String(seconds).padStart(2,"0");
+      document.getElementById("pinnaclePreviewProgress").style.width=`${usedPct}%`;
+      document.getElementById("pinnaclePreviewProgressTrack").setAttribute("aria-valuenow",String(Math.round(usedPct)));
+
+      const expired=!activeMembership&&remainingMs<=0;
+      document.getElementById("pinnaclePreviewHeading").textContent=activeMembership
+        ?"Your Pinnacle membership is active"
+        :expired?"Your Pinnacle preview has ended":"Your Pinnacle preview is active";
+      document.getElementById("pinnaclePreviewTimerHeading").textContent=activeMembership
+        ?"Membership active":expired?"Preview ended":"Preview running";
+      document.getElementById("pinnaclePreviewTimerStatus").textContent=activeMembership
+        ?"Checkout controls are hidden after activation."
+        :expired?"No charge occurred. Choose a plan to continue.":`${days} day${days===1?"":"s"} remaining`;
+      document.getElementById("pinnacleAccessStatus").textContent=activeMembership
+        ?"Active Membership":expired?"Preview Ended":"14-Day Preview";
+      document.getElementById("pinnacleAccessText").textContent=activeMembership
+        ?"Pinnacle membership access is active."
+        :"No automatic charge. Choose a monthly or annual plan only when you are ready.";
+
+      card.classList.toggle("activated",activeMembership);
+      document.getElementById("pinnacleMembershipCheckoutActions").hidden=activeMembership;
+
+      if(pinnaclePreviewTimer)window.clearInterval(pinnaclePreviewTimer);
+      if(!activeMembership)pinnaclePreviewTimer=window.setInterval(renderPinnaclePreview,1000);
+    }
+    function configurePinnacleBillingSwitch(){
+      document.querySelectorAll("[data-pinnacle-billing-choice]").forEach(button=>{
+        button.addEventListener("click",()=>{
+          const billing=button.dataset.pinnacleBillingChoice;
+          document.querySelectorAll("[data-pinnacle-billing-choice]").forEach(item=>item.classList.toggle("active",item===button));
+          document.querySelectorAll('#pinnacleMembershipCheckoutActions [data-membership-checkout-billing]').forEach(checkout=>{
+            checkout.hidden=checkout.dataset.membershipCheckoutBilling!==billing;
+          });
+        });
+      });
+    }
+
     const PINNACLE_BUSINESS_DRAFT_KEY = "pinnacleBusinessProfileDraft.v1";
     function getPinnacleBusinessStructure(){
       return document.querySelector('input[name="pinnacleBusinessStructure"]:checked')?.value || "";
@@ -8498,6 +8648,9 @@
         if(event.target===event.currentTarget)closePinnacleMileageModal();
       });
 
+      configurePinnacleBillingSwitch();
+      renderPinnaclePreview();
+      configureMembershipCheckoutButtons();
       restorePinnacleBusinessDraft();
       updatePinnacleBusinessProfileAccess();
       renderPinnacleIncomeSources();
