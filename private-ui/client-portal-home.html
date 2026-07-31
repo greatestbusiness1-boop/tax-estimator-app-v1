@@ -1681,6 +1681,34 @@
     .pinnacle-income-empty{
       padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083
     }
+    .pinnacle-currency-wrap{position:relative}
+    .pinnacle-currency-wrap::before{
+      content:"$";position:absolute;left:12px;top:50%;transform:translateY(-50%);
+      color:#4f6b80;font-weight:800;pointer-events:none
+    }
+    .pinnacle-currency-wrap input{padding-left:27px}
+    .pinnacle-income-source-card.is-collapsed .pinnacle-income-source-body,
+    .pinnacle-income-source-card.is-collapsed .pinnacle-source-secondary-actions{display:none}
+    .pinnacle-income-source-head{cursor:pointer}
+    .pinnacle-income-source-summary{
+      display:grid;grid-template-columns:minmax(180px,1.4fr) repeat(2,minmax(120px,.7fr)) auto;
+      gap:14px;align-items:center;width:100%
+    }
+    .pinnacle-income-source-primary h4{margin:0;color:#082f50;font-size:17px}
+    .pinnacle-income-source-primary p{margin:5px 0 0;color:#607789;font-size:13px}
+    .pinnacle-income-source-compact-metric span{
+      display:block;color:#718596;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em
+    }
+    .pinnacle-income-source-compact-metric strong{
+      display:block;margin-top:4px;color:#173e5c;font-size:15px
+    }
+    .pinnacle-income-expand{
+      min-width:88px!important;background:#fff!important;color:#0b5685!important;border-color:#b9ccdc!important
+    }
+    @media(max-width:820px){
+      .pinnacle-income-source-summary{grid-template-columns:1fr 1fr}
+      .pinnacle-income-source-primary{grid-column:1/-1}
+    }
     .pinnacle-income-source-card{
       border:1px solid #c8dbe8;border-radius:16px;background:#fff;overflow:hidden;
       box-shadow:0 5px 16px rgba(17,57,84,.05)
@@ -3382,7 +3410,7 @@
         <div class="pinnacle-income-toolbar">
           <div>
             <h3>Your Income Sources</h3>
-            <p>Use separate entries for each job, gig platform, business, retirement source, or other income stream.</p>
+            <p>Use one source for each job, business, or income stream. Weekly pay and individual paychecks will be recorded as updates under that source instead of creating dozens of separate source cards.</p>
           </div>
           <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
         </div>
@@ -3410,9 +3438,9 @@
               <label for="pinnacleIncomeType">Income type</label>
               <select id="pinnacleIncomeType" name="type" required>
                 <option value="">Select type</option>
-                <option>W-2 Job</option><option>Spouse W-2 Job</option><option>Independent Contractor</option>
+                <option>W-2 Job</option><option>Spouse W-2 Job</option><option>1099-NEC Independent Contractor</option>
                 <option>Sole Proprietorship</option><option>Single-Member LLC</option><option>S Corporation</option>
-                <option>Partnership</option><option>Gig Platform</option><option>Rental Income</option>
+                <option>Partnership</option><option>App-Based Gig Work (Uber, Lyft, DoorDash, etc.)</option><option>Rental Income</option>
                 <option>Retirement Income</option><option>Social Security</option><option>Interest or Dividends</option>
                 <option>Other Income</option>
               </select>
@@ -3427,29 +3455,30 @@
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeYtd">Year-to-date gross income</label>
-              <input id="pinnacleIncomeYtd" name="ytd" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeYtd" name="ytd" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeExpected">Expected full-year income</label>
-              <input id="pinnacleIncomeExpected" name="expected" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeExpected" name="expected" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeFederalWithholding">Federal withholding</label>
-              <input id="pinnacleIncomeFederalWithholding" name="federalWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeFederalWithholding" name="federalWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeStateWithholding">State withholding</label>
-              <input id="pinnacleIncomeStateWithholding" name="stateWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeStateWithholding" name="stateWithholding" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
               <label for="pinnacleIncomeExpenses">Business expenses entered so far</label>
-              <input id="pinnacleIncomeExpenses" name="expenses" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              <div class="pinnacle-currency-wrap"><input id="pinnacleIncomeExpenses" name="expenses" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field full">
               <label for="pinnacleIncomeNotes">Notes</label>
               <textarea id="pinnacleIncomeNotes" name="notes" placeholder="Optional details about this income source."></textarea>
             </div>
           </div>
+          <div class="pinnacle-business-help" style="margin-top:14px">Enter dollar amounts without commas. Pinnacle will display saved totals in $3,000.00 format.</div>
           <div class="pinnacle-income-actions">
             <button type="submit">Save Income Source</button>
             <button type="button" class="secondary" id="pinnacleIncomeCancel">Cancel</button>
@@ -7314,7 +7343,7 @@
     let pinnacleIncomeStatusTimer=null;
 
     function pinnacleMoney(value){
-      return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(Number(value||0));
+      return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value||0));
     }
     function loadPinnacleIncomeSources(){
       try{
@@ -7332,6 +7361,17 @@
       if(pinnacleIncomeStatusTimer)window.clearTimeout(pinnacleIncomeStatusTimer);
       if(message) pinnacleIncomeStatusTimer=window.setTimeout(()=>{status.textContent="";pinnacleIncomeStatusTimer=null},duration);
     }
+    const PINNACLE_INCOME_COLLAPSE_KEY="pinnacleIncomeCollapsed.v1";
+    function loadPinnacleIncomeCollapseState(){
+      try{
+        const parsed=JSON.parse(localStorage.getItem(PINNACLE_INCOME_COLLAPSE_KEY)||"{}");
+        return parsed&&typeof parsed==="object"?parsed:{};
+      }catch(error){return {}}
+    }
+    function savePinnacleIncomeCollapseState(state){
+      localStorage.setItem(PINNACLE_INCOME_COLLAPSE_KEY,JSON.stringify(state||{}));
+    }
+
     function renderPinnacleIncomeSources(){
       const items=loadPinnacleIncomeSources();
       const list=document.getElementById("pinnacleIncomeSourceList");
@@ -7347,26 +7387,36 @@
         return;
       }
 
-      list.innerHTML=items.map(item=>`
-        <article class="pinnacle-income-source-card">
+      const collapsed=loadPinnacleIncomeCollapseState();
+      list.innerHTML=items.map(item=>{
+        const isCollapsed=collapsed[item.id]!==false;
+        return `
+        <article class="pinnacle-income-source-card ${isCollapsed?"is-collapsed":""}" data-income-card="${escapeHtml(item.id)}">
           <div class="pinnacle-income-source-head">
-            <div><h4>${escapeHtml(item.name||"Income Source")}</h4><p>${escapeHtml(item.type||"Other Income")} · ${escapeHtml(item.owner||"Owner not selected")}</p></div>
-            <span class="pinnacle-income-badge">Active</span>
+            <div class="pinnacle-income-source-summary">
+              <div class="pinnacle-income-source-primary">
+                <h4>${escapeHtml(item.name||"Income Source")}</h4>
+                <p>${escapeHtml(item.type||"Other Income")} · ${escapeHtml(item.owner||"Owner not selected")}</p>
+              </div>
+              <div class="pinnacle-income-source-compact-metric"><span>YTD Income</span><strong>${pinnacleMoney(item.ytd)}</strong></div>
+              <div class="pinnacle-income-source-compact-metric"><span>Expected Full Year</span><strong>${pinnacleMoney(item.expected)}</strong></div>
+              <button type="button" class="pinnacle-income-expand" data-income-toggle="${escapeHtml(item.id)}">${isCollapsed?"Expand":"Minimize"}</button>
+            </div>
           </div>
           <div class="pinnacle-income-source-body">
-            <div class="pinnacle-income-metric"><span>YTD Income</span><strong>${pinnacleMoney(item.ytd)}</strong></div>
-            <div class="pinnacle-income-metric"><span>Expected Full Year</span><strong>${pinnacleMoney(item.expected)}</strong></div>
             <div class="pinnacle-income-metric"><span>Federal Withholding</span><strong>${pinnacleMoney(item.federalWithholding)}</strong></div>
             <div class="pinnacle-income-metric"><span>State Withholding</span><strong>${pinnacleMoney(item.stateWithholding)}</strong></div>
             <div class="pinnacle-income-metric"><span>Expenses Entered</span><strong>${pinnacleMoney(item.expenses)}</strong></div>
+            <div class="pinnacle-income-metric"><span>Income Frequency</span><strong>${escapeHtml(item.frequency||"Not selected")}</strong></div>
+            <div class="pinnacle-income-metric"><span>Last Updated</span><strong>${item.updatedAt?new Date(item.updatedAt).toLocaleDateString():"Not available"}</strong></div>
           </div>
-          <div class="pinnacle-source-row">
+          <div class="pinnacle-source-row pinnacle-source-secondary-actions">
             <button type="button" data-income-edit="${escapeHtml(item.id)}">Edit</button>
             <button type="button" class="secondary" data-income-duplicate="${escapeHtml(item.id)}">Duplicate</button>
             <button type="button" class="secondary" data-income-delete="${escapeHtml(item.id)}">Delete</button>
           </div>
-        </article>
-      `).join("");
+        </article>`;
+      }).join("");
     }
     function openPinnacleIncomeModal(item=null){
       const modal=document.getElementById("pinnacleIncomeModal");
@@ -7408,10 +7458,20 @@
       closePinnacleIncomeModal();
     }
     function handlePinnacleIncomeListClick(event){
+      const toggle=event.target.closest("[data-income-toggle]");
       const edit=event.target.closest("[data-income-edit]");
       const duplicate=event.target.closest("[data-income-duplicate]");
       const remove=event.target.closest("[data-income-delete]");
       const items=loadPinnacleIncomeSources();
+
+      if(toggle){
+        const state=loadPinnacleIncomeCollapseState();
+        const id=toggle.dataset.incomeToggle;
+        state[id]=state[id]===false;
+        savePinnacleIncomeCollapseState(state);
+        renderPinnacleIncomeSources();
+        return;
+      }
 
       if(edit){
         const item=items.find(x=>x.id===edit.dataset.incomeEdit);
