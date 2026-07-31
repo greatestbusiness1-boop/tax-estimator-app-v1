@@ -1664,13 +1664,17 @@
     }
     .pinnacle-income-stat span{display:block;color:#63798a;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-income-stat strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
+    .pinnacle-income-toolbar-actions{
+      display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap
+    }
     .pinnacle-income-page-status{
-      display:none;margin:0 0 16px;padding:13px 16px;
-      border:1px solid #9fc9ad;border-left:5px solid #168447;border-radius:10px;
-      background:#edf9f1;color:#0d6635;font-size:14px;font-weight:900;
-      box-shadow:0 8px 20px rgba(15,92,48,.10);
-      opacity:0;transform:translateY(-8px);
-      transition:opacity .18s ease,transform .18s ease
+      display:none;min-height:42px;padding:10px 13px;
+      border:1px solid #9fc9ad;border-radius:10px;
+      background:#edf9f1;color:#0d6635;font-size:13px;font-weight:900;
+      box-shadow:0 6px 16px rgba(15,92,48,.10);
+      opacity:0;transform:translateY(-4px);
+      transition:opacity .18s ease,transform .18s ease;
+      white-space:nowrap
     }
     .pinnacle-income-filter-bar{
       display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.7fr));gap:12px;
@@ -3427,8 +3431,6 @@
           <strong>Business financial rollup:</strong> Each income source will ultimately combine year-to-date gross income, tracked expenses, mileage deductions, tax savings deposits, and estimated-tax payments. Pinnacle will use those records to calculate net business income and a Safe to Spend amount without requiring duplicate manual totals.
         </div>
 
-        <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="assertive"></div>
-
         <div class="pinnacle-income-summary">
           <div class="pinnacle-income-stat"><span>Income Sources</span><strong id="pinnacleIncomeSourceCount">0</strong></div>
           <div class="pinnacle-income-stat"><span>Year-to-Date Income</span><strong id="pinnacleIncomeYtdTotal">$0</strong></div>
@@ -3441,7 +3443,10 @@
             <h3>Your Income Sources</h3>
             <p>Use one source for each job, business, or income stream. Weekly pay and individual paychecks will be recorded as updates under that source instead of creating dozens of separate source cards.</p>
           </div>
-          <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
+          <div class="pinnacle-income-toolbar-actions">
+            <div class="pinnacle-income-page-status" id="pinnacleIncomePageStatus" role="status" aria-live="assertive"></div>
+            <button type="button" id="pinnacleAddIncomeSource">Add Income Source</button>
+          </div>
         </div>
 
         <div class="pinnacle-income-filter-bar">
@@ -7426,10 +7431,6 @@
       status.style.display=message?"block":"none";
       status.style.opacity=message?"1":"0";
       status.style.transform=message?"translateY(0)":"translateY(-8px)";
-
-      if(message){
-        status.scrollIntoView({behavior:"smooth",block:"nearest"});
-      }
 
       if(message&&duration>0){
         pinnacleIncomePageStatusTimer=window.setTimeout(()=>{
