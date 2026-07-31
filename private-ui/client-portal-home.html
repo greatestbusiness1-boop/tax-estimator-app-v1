@@ -1633,54 +1633,6 @@
       cursor:pointer;
     }
 
-    .pinnacle-preview-card{
-      margin:0 0 18px;padding:20px;border:1px solid #bfd4e3;border-radius:18px;
-      background:linear-gradient(135deg,#eef7fb,#fff8e8);box-shadow:0 10px 24px rgba(20,50,75,.07)
-    }
-    .pinnacle-preview-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:start}
-    .pinnacle-preview-copy h3{margin:4px 0 5px;color:#0f3159;font-size:22px}
-    .pinnacle-preview-copy p{margin:0;color:#526779;line-height:1.55}
-    .pinnacle-preview-controls{min-width:340px;display:grid;gap:12px;justify-items:end}
-    .pinnacle-billing-switch{
-      display:inline-grid;grid-template-columns:1fr 1fr;padding:4px;border:1px solid #a9c1d2;
-      border-radius:12px;background:#fff
-    }
-    .pinnacle-billing-switch button{
-      min-height:38px;padding:8px 14px;border:0;border-radius:8px;background:transparent;
-      color:#164667;font-weight:850;cursor:pointer
-    }
-    .pinnacle-billing-switch button.active{background:#0f355d;color:#fff}
-    .pinnacle-preview-checkout{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
-    .pinnacle-preview-checkout button{
-      min-height:44px;padding:10px 15px;border:1px solid #0f355d;border-radius:10px;
-      background:#0f355d;color:#fff;font-weight:850;cursor:pointer
-    }
-    .pinnacle-preview-checkout button.secondary{background:#fff;color:#0f355d}
-    .pinnacle-preview-note{font-size:12px;color:#36566d;text-align:right}
-    .pinnacle-preview-timer{
-      margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:16px;
-      padding:14px 16px;border-radius:14px;background:#10375e;color:#fff
-    }
-    .pinnacle-preview-timer-copy strong{display:block;font-size:17px}
-    .pinnacle-preview-timer-copy span{display:block;margin-top:4px;color:#dbeaf3;font-size:12px}
-    .pinnacle-preview-clock{display:flex;align-items:center;gap:5px}
-    .pinnacle-preview-clock-box{
-      min-width:42px;padding:8px 7px;border-radius:8px;background:rgba(255,255,255,.14);
-      text-align:center;font-size:18px;font-weight:900
-    }
-    .pinnacle-preview-progress{height:11px;margin-top:12px;border-radius:999px;background:#dbe7ee;overflow:hidden;border:1px solid #c7d8e2}
-    .pinnacle-preview-progress>div{height:100%;width:0;background:linear-gradient(90deg,#d29a22,#13805f);transition:width .4s ease}
-    .pinnacle-preview-card.activated .pinnacle-preview-checkout,
-    .pinnacle-preview-card.activated .pinnacle-billing-switch,
-    .pinnacle-preview-card.activated .pinnacle-preview-note{display:none}
-    @media(max-width:850px){
-      .pinnacle-preview-top{grid-template-columns:1fr}
-      .pinnacle-preview-controls{min-width:0;justify-items:start}
-      .pinnacle-preview-checkout{justify-content:flex-start}
-      .pinnacle-preview-note{text-align:left}
-      .pinnacle-preview-timer{align-items:flex-start;flex-direction:column}
-    }
-
     .pinnacle-profile-access-card{
       display:flex;align-items:center;justify-content:space-between;gap:20px;
       margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
@@ -3514,42 +3466,44 @@
           </div>
         </div>
 
-        <div class="pinnacle-preview-card" id="pinnaclePreviewCard">
-          <div class="pinnacle-preview-top">
-            <div class="pinnacle-preview-copy">
-              <div class="eyebrow" id="pinnaclePreviewEyebrow">Pinnacle 14-Day Preview</div>
-              <h3 id="pinnaclePreviewHeading">Your Pinnacle preview is active</h3>
-              <p id="pinnaclePreviewDates">Loading your preview dates...</p>
+        <div class="dashboard-preview-countdown" id="pinnaclePreviewCard">
+          <div class="dashboard-preview-status">
+            <div class="dashboard-preview-ring" aria-hidden="true">
+              <svg viewBox="0 0 70 70">
+                <circle class="preview-ring-track" cx="35" cy="35" r="29"></circle>
+                <circle class="preview-ring-fill" id="pinnaclePreviewRing" cx="35" cy="35" r="29" stroke-dasharray="182.212" stroke-dashoffset="0"></circle>
+              </svg>
+              <span class="dashboard-preview-days" id="pinnaclePreviewDays">14</span>
             </div>
-            <div class="pinnacle-preview-controls">
-              <div class="pinnacle-billing-switch" aria-label="Choose Pinnacle billing frequency">
-                <button type="button" class="active" data-pinnacle-billing-choice="monthly">Monthly</button>
-                <button type="button" data-pinnacle-billing-choice="annual">Annual</button>
-              </div>
-              <div class="pinnacle-preview-checkout" id="pinnacleMembershipCheckoutActions">
-                <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Open Monthly Checkout — $34.99</button>
-                <button type="button" class="secondary" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="annual" hidden>Open Annual Checkout — $349</button>
-              </div>
-              <span class="pinnacle-preview-note" id="pinnaclePreviewNote"><strong>No automatic charge.</strong> Stripe checkout opens only after you select a plan.</span>
+            <div class="dashboard-preview-copy">
+              <strong id="pinnaclePreviewHeading">Pinnacle preview running</strong>
+              <span id="pinnaclePreviewTimerStatus">Plenty of time left</span>
+              <span id="pinnaclePreviewDates">Loading preview dates...</span>
             </div>
           </div>
-          <div class="pinnacle-preview-timer">
-            <div class="pinnacle-preview-timer-copy">
-              <strong id="pinnaclePreviewTimerHeading">Preview running</strong>
-              <span id="pinnaclePreviewTimerStatus">14 days remaining</span>
+
+          <div class="dashboard-preview-checkout">
+            <div class="cx-billing-toggle" id="pinnacleBillingToggle" aria-label="Choose Pinnacle monthly or annual pricing">
+              <button class="active" type="button" data-pinnacle-billing-choice="monthly">Monthly</button>
+              <button type="button" data-pinnacle-billing-choice="annual">Annual <span>Save about 17%</span></button>
             </div>
-            <div class="pinnacle-preview-clock" aria-label="Pinnacle preview time remaining">
-              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewDays">14d</span>
-              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewHours">00</span>
-              <span>:</span>
-              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewMinutes">00</span>
-              <span>:</span>
-              <span class="pinnacle-preview-clock-box" id="pinnaclePreviewSeconds">00</span>
+            <div class="dashboard-preview-checkout-actions" id="pinnacleMembershipCheckoutActions" aria-label="Choose Pinnacle billing">
+              <button type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Open Monthly Checkout — $34.99</button>
+              <button class="secondary" type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="annual" hidden>Open Annual Checkout — $349</button>
             </div>
+            <span class="dashboard-preview-note" id="pinnaclePreviewNote"><strong>No automatic charge.</strong> Choose a plan only when you are ready.</span>
+            <div class="tax-watch-message" id="pinnacleCheckoutMessage" role="status" aria-live="polite"></div>
           </div>
-          <div class="pinnacle-preview-progress" role="progressbar" aria-label="Pinnacle preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pinnaclePreviewProgressTrack"><div id="pinnaclePreviewProgress"></div></div>
-          <div class="tax-watch-message" id="pinnacleCheckoutMessage" role="status" aria-live="polite"></div>
+
+          <div class="dashboard-preview-clock" aria-label="Pinnacle preview time remaining">
+            <span class="preview-clock-box" id="pinnaclePreviewHours">00</span>
+            <span class="preview-clock-separator">:</span>
+            <span class="preview-clock-box" id="pinnaclePreviewMinutes">00</span>
+            <span class="preview-clock-separator">:</span>
+            <span class="preview-clock-box" id="pinnaclePreviewSeconds">00</span>
+          </div>
         </div>
+        <div class="tax-watch-preview-progress" id="pinnaclePreviewProgressTrack" role="progressbar" aria-label="Pinnacle preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="pinnaclePreviewProgress"></div></div>
 
         <div class="pinnacle-profile-access-card">
           <div>
@@ -7792,11 +7746,16 @@
       document.getElementById("pinnaclePreviewDates").textContent=activeMembership
         ?"Your Pinnacle membership is active."
         :`Preview started ${formatPinnaclePreviewDate(state.startedAt)} · ends ${formatPinnaclePreviewDate(state.endsAt)}`;
-      document.getElementById("pinnaclePreviewDays").textContent=`${days}d`;
+      document.getElementById("pinnaclePreviewDays").textContent=String(days);
       document.getElementById("pinnaclePreviewHours").textContent=String(hours).padStart(2,"0");
       document.getElementById("pinnaclePreviewMinutes").textContent=String(minutes).padStart(2,"0");
       document.getElementById("pinnaclePreviewSeconds").textContent=String(seconds).padStart(2,"0");
       document.getElementById("pinnaclePreviewProgress").style.width=`${usedPct}%`;
+      const ring=document.getElementById("pinnaclePreviewRing");
+      if(ring){
+        const circumference=182.212;
+        ring.style.strokeDashoffset=String(circumference*(usedPct/100));
+      }
       document.getElementById("pinnaclePreviewProgressTrack").setAttribute("aria-valuenow",String(Math.round(usedPct)));
 
       const expired=!activeMembership&&remainingMs<=0;
@@ -7814,8 +7773,10 @@
         ?"Pinnacle membership access is active."
         :"No automatic charge. Choose a monthly or annual plan only when you are ready.";
 
-      card.classList.toggle("activated",activeMembership);
+      card.classList.toggle("preview-ended",expired);
       document.getElementById("pinnacleMembershipCheckoutActions").hidden=activeMembership;
+      document.getElementById("pinnacleBillingToggle").hidden=activeMembership;
+      document.getElementById("pinnaclePreviewNote").hidden=activeMembership;
 
       if(pinnaclePreviewTimer)window.clearInterval(pinnaclePreviewTimer);
       if(!activeMembership)pinnaclePreviewTimer=window.setInterval(renderPinnaclePreview,1000);
@@ -7824,7 +7785,9 @@
       document.querySelectorAll("[data-pinnacle-billing-choice]").forEach(button=>{
         button.addEventListener("click",()=>{
           const billing=button.dataset.pinnacleBillingChoice;
-          document.querySelectorAll("[data-pinnacle-billing-choice]").forEach(item=>item.classList.toggle("active",item===button));
+          document.querySelectorAll("[data-pinnacle-billing-choice]").forEach(item=>{
+            item.classList.toggle("active",item===button);
+          });
           document.querySelectorAll('#pinnacleMembershipCheckoutActions [data-membership-checkout-billing]').forEach(checkout=>{
             checkout.hidden=checkout.dataset.membershipCheckoutBilling!==billing;
           });
