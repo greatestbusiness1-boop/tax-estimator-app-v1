@@ -1641,8 +1641,20 @@
     .pinnacle-uniform-access-line span{color:#fff}
     .pinnacle-more-features{margin-top:14px;border:1px solid #d8b45b;border-radius:12px;background:#fffaf0;overflow:hidden}
     .pinnacle-more-features summary{cursor:pointer;padding:13px 15px;font-weight:900;color:#123a5b}
-    .pinnacle-more-features ul{margin:0;padding:0 22px 16px 38px}
-    .pinnacle-more-features li{margin:7px 0}
+    .pinnacle-more-features ul{
+      margin:0;
+      padding:0 22px 16px 38px;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px 28px;
+    }
+    .pinnacle-more-features li{margin:0;break-inside:avoid}
+    @media(max-width:980px){
+      .pinnacle-more-features ul{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:680px){
+      .pinnacle-more-features ul{grid-template-columns:1fr}
+    }
     .pinnacle-profile-access-card{
       display:flex;align-items:center;justify-content:space-between;gap:20px;
       margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
