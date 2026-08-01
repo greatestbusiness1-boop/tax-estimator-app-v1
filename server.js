@@ -4703,6 +4703,36 @@ async function loadClientPortalLeadCandidates() {
   return Array.from(byId.values());
 }
 
+async function findCompletedFreeEstimateByExactLeadId(
+  requestedLeadId
+) {
+  const cleanLeadId = String(
+    requestedLeadId || ""
+  ).trim();
+
+  if (!cleanLeadId) return null;
+
+  const candidates =
+    await loadClientPortalLeadCandidates();
+
+  return candidates.find((entry) => {
+    const primaryIds = [
+      entry.leadId,
+      getLeadIdValue(entry.lead || {}),
+      getLeadIdValue(entry.raw || {})
+    ]
+      .map((value) =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+    return (
+      primaryIds.includes(cleanLeadId) &&
+      isCompletedFreeEstimateRecord(entry)
+    );
+  }) || null;
+}
+
 async function findClientPortalLeadById(leadId) {
   const cleanId = String(leadId || "").trim();
   const candidates =
@@ -11364,7 +11394,7 @@ app.post(
     }
 
     const candidate =
-      await findClientPortalLeadById(
+      await findCompletedFreeEstimateByExactLeadId(
         codeRecord.leadId
       );
 
@@ -16367,7 +16397,7 @@ app.post(
 
       if (requestedLeadId) {
         const directEntry =
-          await findClientPortalLeadById(
+          await findCompletedFreeEstimateByExactLeadId(
             requestedLeadId
           );
 
