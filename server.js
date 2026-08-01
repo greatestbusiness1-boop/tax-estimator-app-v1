@@ -7840,9 +7840,11 @@ function getTaxWatchSnapshot(entry = {}) {
   const stateNet = getTaxWatchNumber(state.net);
   const combinedNet = federalNet + stateNet;
   const recordedAt = String(
-    lead.updatedAt ||
+    lead.taxWatchUpdate?.recordedAt ||
+    lead.freeEstimateUsage?.completedAt ||
     lead.timestamp ||
     entry.raw?.created_at ||
+    lead.updatedAt ||
     ""
   );
 
