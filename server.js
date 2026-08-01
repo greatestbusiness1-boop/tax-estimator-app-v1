@@ -16702,10 +16702,39 @@ app.post(
     }
 
     const session = req.clientPortalSession;
+    const accountLeadId = String(
+      session.payload.accountLeadId || ""
+    ).trim();
+
     let accessible =
       await getClientPortalAccessibleLeads(
         session.email
       );
+
+    if (
+      accountLeadId &&
+      !accessible.some(
+        (entry) =>
+          String(entry.leadId || "").trim() ===
+          accountLeadId
+      )
+    ) {
+      const accountEntry =
+        await findClientPortalLeadById(
+          accountLeadId
+        );
+
+      if (accountEntry) {
+        accessible = [
+          ...accessible.filter(
+            (entry) =>
+              String(entry.leadId || "").trim() !==
+              accountLeadId
+          ),
+          accountEntry
+        ];
+      }
+    }
 
     let summary =
       buildClientPortalTaxWatchSummary(
@@ -16869,10 +16898,28 @@ app.post(
       });
     }
 
-    const refreshedAccessible =
+    let refreshedAccessible =
       await getClientPortalAccessibleLeads(
         session.email
       );
+
+    if (accountLeadId) {
+      const refreshedAccountEntry =
+        await findClientPortalLeadById(
+          accountLeadId
+        );
+
+      if (refreshedAccountEntry) {
+        refreshedAccessible = [
+          ...refreshedAccessible.filter(
+            (entry) =>
+              String(entry.leadId || "").trim() !==
+              accountLeadId
+          ),
+          refreshedAccountEntry
+        ];
+      }
+    }
 
     return res.status(200).json({
       ok: true,
