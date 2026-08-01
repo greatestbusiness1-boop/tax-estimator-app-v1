@@ -9061,31 +9061,6 @@
           );
         }
 
-        if (intent.planKey === "tax-watch-pro") {
-          const trackerResponse = await fetch(
-            "/api/client-portal/tax-watch",
-            {
-              method: "POST",
-              headers: {"Content-Type":"application/json"},
-              credentials: "same-origin",
-              body: JSON.stringify({
-                objective:"track_changes",
-                targetAmount:0,
-                sourceLeadId: String(intent.leadId || "").trim()
-              })
-            }
-          );
-          const trackerData =
-            await trackerResponse.json()
-              .catch(() => ({}));
-
-          if (!trackerResponse.ok || !trackerData.ok) {
-            throw new Error(
-              trackerData.error ||
-              "Tax Watch Pro could not be prepared."
-            );
-          }
-        }
 
         if (intent.planKey === "pinnacle") {
           localStorage.setItem(
