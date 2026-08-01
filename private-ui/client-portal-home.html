@@ -7147,23 +7147,46 @@
       const trackerPercent = document.getElementById("taxWatchSavingsPercent");
       const trackerHistory = document.getElementById("taxWatchSavingsHistory");
       const trackerDisclaimer = document.getElementById("taxWatchSavingsDisclaimer");
-      const progressPercent = Math.max(
-        0,
-        Math.min(
-          100,
-          Number(tracker.progressPercent || 0)
-        )
-      );
+      const hasSavingsTarget =
+        tracker.hasSavingsTarget === true ||
+        Number(tracker.estimatedTaxMoneyNeeded || 0) > 0;
+      const progressPercent = hasSavingsTarget
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              Number(tracker.progressPercent || 0)
+            )
+          )
+        : 0;
+      const trackerStatusLabel = hasSavingsTarget
+        ? tracker.statusLabel || "No savings reported yet"
+        : "No savings target currently calculated";
+      const trackerStatusText = hasSavingsTarget
+        ? tracker.statusMessage || "Add your first savings entry when you report setting money aside for taxes."
+        : "Your current estimate does not show a balance due. Savings entries remain available for your records.";
+      const trackerStatusKey = hasSavingsTarget
+        ? tracker.statusKey || "none"
+        : "none";
 
       if (trackerTarget) trackerTarget.textContent = taxWatchTrackerMoney(tracker.estimatedTaxMoneyNeeded || 0);
       if (trackerSaved) trackerSaved.textContent = taxWatchTrackerMoney(tracker.moneyReportedSaved || 0);
       if (trackerRemaining) trackerRemaining.textContent = taxWatchTrackerMoney(tracker.amountStillNeeded || 0);
       if (trackerProgress) trackerProgress.style.width = `${progressPercent}%`;
-      if (trackerProgressTrack) trackerProgressTrack.setAttribute("aria-valuenow", String(progressPercent));
-      if (trackerStatus) trackerStatus.textContent = tracker.statusLabel || "No savings reported yet";
-      if (trackerStatusMessage) trackerStatusMessage.textContent = tracker.statusMessage || "Add your first savings entry when you report setting money aside for taxes.";
-      if (trackerStatusBox) trackerStatusBox.className = `tax-watch-progress-status ${tracker.statusKey || "none"}`.trim();
-      if (trackerPercent) trackerPercent.textContent = `${progressPercent}%`;
+      if (trackerProgressTrack) {
+        trackerProgressTrack.setAttribute("aria-valuenow", String(progressPercent));
+        if (hasSavingsTarget) {
+          trackerProgressTrack.removeAttribute("aria-valuetext");
+        } else {
+          trackerProgressTrack.setAttribute("aria-valuetext", "No savings target currently calculated");
+        }
+      }
+      if (trackerStatus) trackerStatus.textContent = trackerStatusLabel;
+      if (trackerStatusMessage) trackerStatusMessage.textContent = trackerStatusText;
+      if (trackerStatusBox) trackerStatusBox.className = `tax-watch-progress-status ${trackerStatusKey}`.trim();
+      if (trackerPercent) trackerPercent.textContent = hasSavingsTarget
+        ? `${progressPercent}%`
+        : "No target";
       if (trackerDisclaimer) trackerDisclaimer.innerHTML = `<strong>Important:</strong> ${escapeHtml(tracker.disclaimer || "Savings entries are entered by the client and do not verify an actual bank deposit.")}`;
 
       if (trackerHistory) {

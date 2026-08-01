@@ -8637,46 +8637,54 @@ function buildClientPortalTaxWatchSummary(
     generalTaxReserve - reportedSaved
   );
 
+  const hasSavingsTarget =
+    generalTaxReserve > 0;
+
   const progressPercent =
-    generalTaxReserve > 0
+    hasSavingsTarget
       ? Math.min(
           100,
           Math.round(
             (reportedSaved / generalTaxReserve) * 100
           )
         )
-      : reportedSaved > 0
-        ? 100
-        : 0;
+      : 0;
 
   const trackerStatus =
-    reportedSaved <= 0
+    !hasSavingsTarget
       ? {
           key: "none",
-          label: "No savings reported yet",
+          label: "No savings target currently calculated",
           message:
-            "Add your first savings entry when you report setting money aside for taxes."
+            "Your current estimate does not show a balance due. Savings entries remain available for your records."
         }
-      : stillNeeded <= 0
+      : reportedSaved <= 0
         ? {
-            key: "reached",
-            label: "Target reached",
+            key: "none",
+            label: "No savings reported yet",
             message:
-              "Your reported savings meet or exceed the current estimated tax money needed."
+              "Add your first savings entry when you report setting money aside for taxes."
           }
-        : progressPercent < 25
+        : stillNeeded <= 0
           ? {
-              key: "behind",
-              label: "Behind target",
+              key: "reached",
+              label: "Target reached",
               message:
-                "Your reported savings cover less than 25% of the current estimate. Keep building the balance."
+                "Your reported savings meet or exceed the current estimated tax money needed."
             }
-          : {
-              key: "progress",
-              label: "Making progress",
-              message:
-                "Your reported savings are building toward the current estimated tax money needed."
-            };
+          : progressPercent < 25
+            ? {
+                key: "behind",
+                label: "Behind target",
+                message:
+                  "Your reported savings cover less than 25% of the current estimate. Keep building the balance."
+              }
+            : {
+                key: "progress",
+                label: "Making progress",
+                message:
+                  "Your reported savings are building toward the current estimated tax money needed."
+              };
 
   return {
     available: Boolean(current),
@@ -8758,6 +8766,7 @@ function buildClientPortalTaxWatchSummary(
       disclaimer: "This is a general planning reserve, not a final self-employment tax calculation or tax return."
     },
     moneyTracker: {
+      hasSavingsTarget,
       estimatedTaxMoneyNeeded: generalTaxReserve,
       moneyReportedSaved: reportedSaved,
       amountStillNeeded: stillNeeded,
