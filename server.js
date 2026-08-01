@@ -16199,7 +16199,50 @@ app.get(
           source: "Client Portal Session"
         }
       );
-    const accessible = lifecycleResult.accessible;
+    let accessible = lifecycleResult.accessible;
+
+    const linkedEstimateLeadId =
+      accessible
+        .map((entry) =>
+          String(
+            entry.lead?.contactRequest
+              ?.membershipEnrollment
+              ?.sourceLeadId ||
+            entry.raw?.contactRequest
+              ?.membershipEnrollment
+              ?.sourceLeadId ||
+            entry.raw?.estimate
+              ?.contactRequest
+              ?.membershipEnrollment
+              ?.sourceLeadId ||
+            ""
+          ).trim()
+        )
+        .find(Boolean) || "";
+
+    if (
+      linkedEstimateLeadId &&
+      !accessible.some(
+        (entry) =>
+          String(entry.leadId || "").trim() ===
+          linkedEstimateLeadId
+      )
+    ) {
+      const linkedEstimate =
+        await findCompletedFreeEstimateByExactLeadId(
+          linkedEstimateLeadId
+        );
+
+      if (
+        linkedEstimate &&
+        getTaxWatchSnapshot(linkedEstimate)
+      ) {
+        accessible = [
+          ...accessible,
+          linkedEstimate
+        ];
+      }
+    }
 
     const records = accessible
       .map(buildClientPortalLeadSummary)
