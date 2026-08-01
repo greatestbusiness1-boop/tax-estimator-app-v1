@@ -2664,12 +2664,35 @@
     .tax-watch-entry-control.void{border-color:#b2332d;color:#9d201b}
     .tax-watch-entry-control.void:hover{background:#fff0ef}
     .tax-watch-entry-control:disabled{opacity:.6;cursor:not-allowed}
+    .tax-watch-entry-editor{grid-column:1/-1;margin-top:2px;padding:16px;border:1px solid #bfd1dc;border-radius:12px;background:#f4f8fb}
+    .tax-watch-entry-editor[hidden]{display:none}
+    .tax-watch-entry-editor.void{border-color:#e2b7b4;background:#fff8f7}
+    .tax-watch-entry-editor-heading{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+    .tax-watch-entry-editor-heading strong{display:block;color:#0f355d;font-size:17px}
+    .tax-watch-entry-editor-heading span{display:block;margin-top:3px;color:#53697a;font-size:13px}
+    .tax-watch-entry-editor-grid{display:grid;grid-template-columns:minmax(180px,.55fr) minmax(260px,1fr);gap:12px}
+    .tax-watch-entry-editor-grid label{display:block;color:#17354e;font-size:13px;font-weight:800}
+    .tax-watch-entry-editor-grid label.full{grid-column:1/-1}
+    .tax-watch-entry-editor-grid input{width:100%;margin-top:6px;padding:11px 12px;border:1px solid #afc4d1;border-radius:9px;background:#fff;color:#17354e;font:inherit}
+    .tax-watch-entry-editor-grid input:focus{outline:3px solid rgba(12,123,88,.2);border-color:#0c7b58}
+    .tax-watch-entry-editor-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px}
+    .tax-watch-entry-editor-actions button{border:1px solid #0f355d;border-radius:9px;padding:10px 14px;background:#0f355d;color:#fff;font-weight:900;cursor:pointer}
+    .tax-watch-entry-editor-actions button.secondary{background:#fff;color:#0f355d}
+    .tax-watch-entry-editor-actions button.danger{background:#a52b26;border-color:#a52b26}
+    .tax-watch-entry-editor-actions button:disabled{opacity:.6;cursor:not-allowed}
+    .tax-watch-entry-editor-message{margin-top:12px;padding:10px 12px;border-radius:9px;font-weight:800}
+    .tax-watch-entry-editor-message[hidden]{display:none}
+    .tax-watch-entry-editor-message.error{background:#fff0f0;color:#8a1c1c}
+    .tax-watch-entry-editor-message.success{background:#e8f7f1;color:#075b40}
+    .tax-watch-savings-entry-grid>.tax-watch-entry-editor-message{grid-column:1/-1}
+    .tax-watch-savings-entry-audit-list{margin:8px 0 0;padding-left:19px;color:#314b60}
+    .tax-watch-savings-entry-audit-list li+li{margin-top:7px}
     .tax-watch-entry-fallback{display:block;margin-top:4px;font-size:12px;color:#765d2f}
     .tax-watch-savings-empty{padding:18px;border:1px dashed #b8cbd7;border-radius:12px;background:#f8fbfc;color:#53697a}
     .tax-watch-document-card{background:#fff;border:1px solid #cbdce7;border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(20,50,75,.07)}
     .tax-watch-document-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
     @media(max-width:980px){.tax-watch-tracker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.tax-watch-tracker-grid,.tax-watch-savings-entry-grid{grid-template-columns:1fr}.tax-watch-savings-form{grid-template-columns:1fr}.tax-watch-savings-entry-note{grid-column:auto}.tax-watch-history-header{display:block}.tax-watch-history-toggle{margin-top:10px}.tax-watch-savings-entry-summary{grid-template-columns:1fr 1fr}.tax-watch-savings-entry-date{grid-column:1/-1}.tax-watch-savings-entry-action{justify-self:start}}
+    @media(max-width:760px){.tax-watch-tracker-grid,.tax-watch-savings-entry-grid,.tax-watch-entry-editor-grid{grid-template-columns:1fr}.tax-watch-savings-form{grid-template-columns:1fr}.tax-watch-savings-entry-note,.tax-watch-entry-editor-grid label.full{grid-column:auto}.tax-watch-history-header{display:block}.tax-watch-history-toggle{margin-top:10px}.tax-watch-savings-entry-summary{grid-template-columns:1fr 1fr}.tax-watch-savings-entry-date{grid-column:1/-1}.tax-watch-savings-entry-action{justify-self:start}}
 
 
     /* Tax Money Tracker preview countdown — V3.1.0 */
@@ -7166,16 +7189,35 @@
                   ? `<span class="tax-watch-savings-entry-status corrected">Corrected</span>`
                   : "";
               const originalAmount = Number(entry.originalAmount);
+              const currentAmount = Number(entry.amount || 0);
+              const correctionHistory = Array.isArray(entry.correctionHistory)
+                ? entry.correctionHistory
+                : [];
+              const correctionAuditRows = correctionHistory.length
+                ? correctionHistory.map((item) => {
+                    const previousAmount = Number(item.previousAmount || 0);
+                    const newAmount = Number(item.newAmount || 0);
+                    return `<li>
+                      <strong>${escapeHtml(taxWatchTrackerMoney(previousAmount))} → ${escapeHtml(taxWatchTrackerMoney(newAmount))}</strong>
+                      — ${escapeHtml(item.reason || "Correction reason not recorded")}
+                      ${item.correctedAt ? ` — ${escapeHtml(taxWatchSavingsDate(item.correctedAt))}` : ""}
+                    </li>`;
+                  }).join("")
+                : "";
               const correctionAudit = isCorrected
                 ? `<div class="tax-watch-savings-entry-audit">
                     <strong>Correction record</strong>
-                    <p>${Number.isFinite(originalAmount) ? `Original deposit: ${escapeHtml(taxWatchTrackerMoney(originalAmount))}. ` : ""}${escapeHtml(entry.correctionReason || "Correction reason not recorded")}${entry.correctedAt ? ` — ${escapeHtml(taxWatchSavingsDate(entry.correctedAt))}` : ""}</p>
+                    <p>Original deposit: ${escapeHtml(taxWatchTrackerMoney(Number.isFinite(originalAmount) ? originalAmount : currentAmount))}. Current corrected deposit: ${escapeHtml(taxWatchTrackerMoney(currentAmount))}.</p>
+                    ${correctionAuditRows
+                      ? `<ul class="tax-watch-savings-entry-audit-list">${correctionAuditRows}</ul>`
+                      : `<p><strong>Reason:</strong> ${escapeHtml(entry.correctionReason || "Correction reason not recorded")}${entry.correctedAt ? ` — ${escapeHtml(taxWatchSavingsDate(entry.correctedAt))}` : ""}</p>`}
                   </div>`
                 : "";
               const voidAudit = isVoided
                 ? `<div class="tax-watch-savings-entry-audit">
                     <strong>Voided entry</strong>
-                    <p>${escapeHtml(entry.voidReason || "Void reason not recorded")}${entry.voidedAt ? ` — ${escapeHtml(taxWatchSavingsDate(entry.voidedAt))}` : ""}. This entry remains in history but is excluded from savings totals.</p>
+                    <p>Voided deposit: ${escapeHtml(taxWatchTrackerMoney(currentAmount))}. <strong>Reason:</strong> ${escapeHtml(entry.voidReason || "Void reason not recorded")}${entry.voidedAt ? ` — ${escapeHtml(taxWatchSavingsDate(entry.voidedAt))}` : ""}.</p>
+                    <p>This entry remains in history but is excluded from savings totals.</p>
                   </div>`
                 : "";
               const controls = taxWatch.canEdit && !isVoided
@@ -7184,8 +7226,58 @@
                     <button class="tax-watch-entry-control void" type="button" data-tax-watch-void-entry="${escapeHtml(entry.id || "")}">Void Entry</button>
                   </div>`
                 : "";
+              const correctionPanel = taxWatch.canEdit && !isVoided
+                ? `<form class="tax-watch-entry-editor" data-tax-watch-correction-panel hidden>
+                    <div class="tax-watch-entry-editor-heading">
+                      <div>
+                        <strong>Correct Savings Entry</strong>
+                        <span>Original deposit currently shown: ${escapeHtml(taxWatchTrackerMoney(currentAmount))}</span>
+                      </div>
+                    </div>
+                    <div class="tax-watch-entry-editor-grid">
+                      <label>
+                        Corrected deposit amount
+                        <input type="number" min="0.01" max="1000000" step="0.01" value="${escapeHtml(currentAmount.toFixed(2))}" data-tax-watch-correction-amount required>
+                      </label>
+                      <label>
+                        Optional note
+                        <input type="text" maxlength="200" value="${escapeHtml(entry.note || "")}" data-tax-watch-correction-note>
+                      </label>
+                      <label class="full">
+                        Reason for correction
+                        <input type="text" maxlength="300" placeholder="Example: Entered 25 instead of 250" data-tax-watch-correction-reason required>
+                      </label>
+                    </div>
+                    <div class="tax-watch-entry-editor-message" data-tax-watch-correction-message role="status" aria-live="polite" hidden></div>
+                    <div class="tax-watch-entry-editor-actions">
+                      <button type="submit" data-tax-watch-save-correction>Save Correction</button>
+                      <button class="secondary" type="button" data-tax-watch-cancel-editor>Cancel</button>
+                    </div>
+                  </form>`
+                : "";
+              const voidPanel = taxWatch.canEdit && !isVoided
+                ? `<form class="tax-watch-entry-editor void" data-tax-watch-void-panel hidden>
+                    <div class="tax-watch-entry-editor-heading">
+                      <div>
+                        <strong>Void Savings Entry</strong>
+                        <span>The ${escapeHtml(taxWatchTrackerMoney(currentAmount))} deposit will remain in history but will be removed from savings totals.</span>
+                      </div>
+                    </div>
+                    <div class="tax-watch-entry-editor-grid">
+                      <label class="full">
+                        Reason for voiding this entry
+                        <input type="text" maxlength="300" placeholder="Example: Deposit entered by mistake" data-tax-watch-void-reason required>
+                      </label>
+                    </div>
+                    <div class="tax-watch-entry-editor-message" data-tax-watch-void-message role="status" aria-live="polite" hidden></div>
+                    <div class="tax-watch-entry-editor-actions">
+                      <button class="danger" type="submit" data-tax-watch-save-void>Void Entry</button>
+                      <button class="secondary" type="button" data-tax-watch-cancel-editor>Cancel</button>
+                    </div>
+                  </form>`
+                : "";
 
-              return `<article class="tax-watch-savings-entry${isVoided ? " voided" : ""}" data-tax-watch-history-entry${isExtraEntry ? " hidden" : ""}>
+              return `<article class="tax-watch-savings-entry${isVoided ? " voided" : ""}" data-tax-watch-history-entry data-tax-watch-entry-id="${escapeHtml(entry.id || "")}"${isExtraEntry ? " hidden" : ""}>
                 <button class="tax-watch-savings-entry-summary" type="button" aria-expanded="false">
                   <span class="tax-watch-savings-entry-date">${escapeHtml(taxWatchSavingsDate(entry.recordedAt))}${statusBadge}</span>
                   <span class="tax-watch-savings-entry-amount">
@@ -7224,6 +7316,8 @@
                     ${correctionAudit}
                     ${voidAudit}
                     ${controls}
+                    ${correctionPanel}
+                    ${voidPanel}
                   </div>
                 </div>
               </article>`;
@@ -7243,27 +7337,64 @@
         });
 
         trackerHistory.querySelectorAll("[data-tax-watch-correct-entry]").forEach((button) => {
-          button.addEventListener("click", async () => {
-            const entry = entries.find(
-              (item) =>
-                String(item.id || "") ===
-                String(button.dataset.taxWatchCorrectEntry || "")
-            );
-            if (entry) {
-              await correctTaxWatchSavingsEntry(entry, button);
-            }
+          button.addEventListener("click", () => {
+            openTaxWatchSavingsEditor(button, "correction");
           });
         });
 
         trackerHistory.querySelectorAll("[data-tax-watch-void-entry]").forEach((button) => {
-          button.addEventListener("click", async () => {
+          button.addEventListener("click", () => {
+            openTaxWatchSavingsEditor(button, "void");
+          });
+        });
+
+        trackerHistory.querySelectorAll("[data-tax-watch-cancel-editor]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const panel = button.closest(".tax-watch-entry-editor");
+            closeTaxWatchSavingsEditor(panel);
+          });
+        });
+
+        trackerHistory.querySelectorAll("[data-tax-watch-correction-panel]").forEach((panel) => {
+          panel.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const article = panel.closest("[data-tax-watch-history-entry]");
+            const entryId = String(article?.dataset.taxWatchEntryId || "");
             const entry = entries.find(
               (item) =>
                 String(item.id || "") ===
-                String(button.dataset.taxWatchVoidEntry || "")
+                entryId
             );
-            if (entry) {
-              await voidTaxWatchSavingsEntry(entry, button);
+            const saveButton = panel.querySelector("[data-tax-watch-save-correction]");
+
+            if (entry && saveButton) {
+              await correctTaxWatchSavingsEntry(
+                entry,
+                panel,
+                saveButton
+              );
+            }
+          });
+        });
+
+        trackerHistory.querySelectorAll("[data-tax-watch-void-panel]").forEach((panel) => {
+          panel.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const article = panel.closest("[data-tax-watch-history-entry]");
+            const entryId = String(article?.dataset.taxWatchEntryId || "");
+            const entry = entries.find(
+              (item) =>
+                String(item.id || "") ===
+                entryId
+            );
+            const saveButton = panel.querySelector("[data-tax-watch-save-void]");
+
+            if (entry && saveButton) {
+              await voidTaxWatchSavingsEntry(
+                entry,
+                panel,
+                saveButton
+              );
             }
           });
         });
@@ -7345,59 +7476,215 @@
       message.className = `tax-watch-tracker-message show ${type}`.trim();
     }
 
-    async function correctTaxWatchSavingsEntry(entry, button) {
-      const currentAmount = Number(entry.amount || 0);
-      const amountText = window.prompt(
-        "Enter the corrected deposit amount:",
-        Number.isFinite(currentAmount)
-          ? currentAmount.toFixed(2)
-          : ""
+    function setTaxWatchEntryEditorMessage(panel, text, type = "") {
+      const message = panel?.querySelector(
+        "[data-tax-watch-correction-message], [data-tax-watch-void-message]"
       );
 
-      if (amountText === null) return;
+      if (!message) return;
 
-      const correctedAmount = Number(
-        String(amountText).replace(/[$,\s]/g, "")
+      message.textContent = text;
+      message.className =
+        `tax-watch-entry-editor-message ${type}`.trim();
+      message.hidden = !text;
+    }
+
+    function closeTaxWatchSavingsEditor(panel) {
+      if (!panel) return;
+
+      panel.hidden = true;
+      setTaxWatchEntryEditorMessage(panel, "", "");
+      panel.reset();
+    }
+
+    function openTaxWatchSavingsEditor(button, mode) {
+      const article = button?.closest(
+        "[data-tax-watch-history-entry]"
       );
 
-      if (!Number.isFinite(correctedAmount) || correctedAmount <= 0) {
+      if (!article) return;
+
+      const details = article.querySelector(
+        ".tax-watch-savings-entry-details"
+      );
+      const summary = article.querySelector(
+        ".tax-watch-savings-entry-summary"
+      );
+      const action = article.querySelector(
+        ".tax-watch-savings-entry-action"
+      );
+
+      if (details) details.hidden = false;
+      if (summary) {
+        summary.setAttribute("aria-expanded", "true");
+      }
+      if (action) action.textContent = "Hide details";
+
+      article
+        .querySelectorAll(
+          "[data-tax-watch-correction-panel], [data-tax-watch-void-panel]"
+        )
+        .forEach((panel) => {
+          panel.hidden = true;
+          setTaxWatchEntryEditorMessage(panel, "", "");
+        });
+
+      const panel = article.querySelector(
+        mode === "void"
+          ? "[data-tax-watch-void-panel]"
+          : "[data-tax-watch-correction-panel]"
+      );
+
+      if (!panel) return;
+
+      panel.hidden = false;
+
+      const firstInput = panel.querySelector("input");
+
+      if (firstInput) {
+        firstInput.focus();
+        if (mode === "correction") {
+          firstInput.select();
+        }
+      }
+    }
+
+    function reopenTaxWatchSavingsHistoryEntry(
+      entryId,
+      messageText,
+      messageType = "success"
+    ) {
+      const article = Array.from(
+        document.querySelectorAll(
+          "[data-tax-watch-history-entry]"
+        )
+      ).find(
+        (item) =>
+          String(item.dataset.taxWatchEntryId || "") ===
+          String(entryId || "")
+      );
+
+      if (!article) {
         showTaxWatchSavingsMessage(
+          messageText,
+          messageType
+        );
+        return;
+      }
+
+      article.hidden = false;
+
+      const details = article.querySelector(
+        ".tax-watch-savings-entry-details"
+      );
+      const summary = article.querySelector(
+        ".tax-watch-savings-entry-summary"
+      );
+      const action = article.querySelector(
+        ".tax-watch-savings-entry-action"
+      );
+      const grid = article.querySelector(
+        ".tax-watch-savings-entry-grid"
+      );
+
+      if (details) details.hidden = false;
+      if (summary) {
+        summary.setAttribute("aria-expanded", "true");
+      }
+      if (action) action.textContent = "Hide details";
+
+      if (grid && messageText) {
+        const notice = document.createElement("div");
+        notice.className =
+          `tax-watch-entry-editor-message ${messageType}`.trim();
+        notice.textContent = messageText;
+        grid.prepend(notice);
+      }
+
+      article.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+
+    async function correctTaxWatchSavingsEntry(
+      entry,
+      panel,
+      button
+    ) {
+      const currentAmount = Number(entry.amount || 0);
+      const amountInput = panel.querySelector(
+        "[data-tax-watch-correction-amount]"
+      );
+      const noteInput = panel.querySelector(
+        "[data-tax-watch-correction-note]"
+      );
+      const reasonInput = panel.querySelector(
+        "[data-tax-watch-correction-reason]"
+      );
+      const correctedAmount = Number(
+        String(amountInput?.value || "")
+          .replace(/[$,\s]/g, "")
+      );
+      const correctedNote = String(
+        noteInput?.value || ""
+      ).trim();
+      const reason = String(
+        reasonInput?.value || ""
+      ).trim();
+
+      if (
+        !Number.isFinite(correctedAmount) ||
+        correctedAmount <= 0
+      ) {
+        setTaxWatchEntryEditorMessage(
+          panel,
           "Enter a valid corrected deposit amount.",
           "error"
         );
+        amountInput?.focus();
         return;
       }
 
-      const correctedNote = window.prompt(
-        "Correct the optional note, or leave it blank:",
-        String(entry.note || "")
-      );
+      if (correctedAmount > 1000000) {
+        setTaxWatchEntryEditorMessage(
+          panel,
+          "The corrected savings amount is larger than the supported limit.",
+          "error"
+        );
+        amountInput?.focus();
+        return;
+      }
 
-      if (correctedNote === null) return;
-
-      const reason = window.prompt(
-        "Enter the reason for this correction:",
-        "Incorrect deposit amount entered"
-      );
-
-      if (reason === null) return;
-
-      if (!String(reason).trim()) {
-        showTaxWatchSavingsMessage(
+      if (!reason) {
+        setTaxWatchEntryEditorMessage(
+          panel,
           "Enter the reason for correcting this savings entry.",
+          "error"
+        );
+        reasonInput?.focus();
+        return;
+      }
+
+      if (
+        correctedAmount === currentAmount &&
+        correctedNote === String(entry.note || "")
+      ) {
+        setTaxWatchEntryEditorMessage(
+          panel,
+          "Change the amount or note before saving the correction.",
           "error"
         );
         return;
       }
 
-      const confirmed = window.confirm(
-        `Correct this deposit from ${taxWatchTrackerMoney(currentAmount)} to ${taxWatchTrackerMoney(correctedAmount)}? The original amount will remain in the correction history.`
-      );
-
-      if (!confirmed) return;
-
       button.disabled = true;
       button.textContent = "Saving Correction...";
+      setTaxWatchEntryEditorMessage(
+        panel,
+        "Saving your correction...",
+        ""
+      );
 
       try {
         const data = await postJson(
@@ -7405,85 +7692,103 @@
           {
             entryId: entry.id,
             amount: correctedAmount,
-            note: String(correctedNote).trim(),
-            reason: String(reason).trim()
+            note: correctedNote,
+            reason
           }
         );
 
-        showTaxWatchSavingsMessage(
+        const successMessage =
           data.message ||
-          "Your savings entry was corrected.",
-          "success"
-        );
+          "Your savings entry was corrected.";
+
         await loadPortal();
         openPortalView(
           "tax-watch",
           { updateHash: true, scroll: false }
         );
+
+        requestAnimationFrame(() => {
+          reopenTaxWatchSavingsHistoryEntry(
+            entry.id,
+            successMessage,
+            "success"
+          );
+        });
       } catch (error) {
-        showTaxWatchSavingsMessage(
+        setTaxWatchEntryEditorMessage(
+          panel,
           error.message ||
           "The savings correction could not be saved.",
           "error"
         );
-      } finally {
         button.disabled = false;
-        button.textContent = "Correct Entry";
+        button.textContent = "Save Correction";
       }
     }
 
-    async function voidTaxWatchSavingsEntry(entry, button) {
-      const currentAmount = Number(entry.amount || 0);
-      const confirmed = window.confirm(
-        `Void the ${taxWatchTrackerMoney(currentAmount)} savings entry? It will remain in history but will be removed from the savings totals.`
+    async function voidTaxWatchSavingsEntry(
+      entry,
+      panel,
+      button
+    ) {
+      const reasonInput = panel.querySelector(
+        "[data-tax-watch-void-reason]"
       );
+      const reason = String(
+        reasonInput?.value || ""
+      ).trim();
 
-      if (!confirmed) return;
-
-      const reason = window.prompt(
-        "Enter the reason for voiding this entry:",
-        "Deposit entered by mistake"
-      );
-
-      if (reason === null) return;
-
-      if (!String(reason).trim()) {
-        showTaxWatchSavingsMessage(
+      if (!reason) {
+        setTaxWatchEntryEditorMessage(
+          panel,
           "Enter the reason for voiding this savings entry.",
           "error"
         );
+        reasonInput?.focus();
         return;
       }
 
       button.disabled = true;
       button.textContent = "Voiding Entry...";
+      setTaxWatchEntryEditorMessage(
+        panel,
+        "Voiding this entry and recalculating savings totals...",
+        ""
+      );
 
       try {
         const data = await postJson(
           "/api/client-portal/tax-watch/savings/void",
           {
             entryId: entry.id,
-            reason: String(reason).trim()
+            reason
           }
         );
 
-        showTaxWatchSavingsMessage(
+        const successMessage =
           data.message ||
-          "Your savings entry was voided.",
-          "success"
-        );
+          "Your savings entry was voided.";
+
         await loadPortal();
         openPortalView(
           "tax-watch",
           { updateHash: true, scroll: false }
         );
+
+        requestAnimationFrame(() => {
+          reopenTaxWatchSavingsHistoryEntry(
+            entry.id,
+            successMessage,
+            "success"
+          );
+        });
       } catch (error) {
-        showTaxWatchSavingsMessage(
+        setTaxWatchEntryEditorMessage(
+          panel,
           error.message ||
           "The savings entry could not be voided.",
           "error"
         );
-      } finally {
         button.disabled = false;
         button.textContent = "Void Entry";
       }
