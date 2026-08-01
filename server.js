@@ -4716,10 +4716,26 @@ async function findCompletedFreeEstimateByExactLeadId(
     await loadClientPortalLeadCandidates();
 
   return candidates.find((entry) => {
+    const lead = entry.lead || {};
+    const raw = entry.raw || {};
+    const rawEstimate =
+      raw.estimate &&
+      typeof raw.estimate === "object" &&
+      !Array.isArray(raw.estimate)
+        ? raw.estimate
+        : {};
+
     const primaryIds = [
       entry.leadId,
-      getLeadIdValue(entry.lead || {}),
-      getLeadIdValue(entry.raw || {})
+      lead.leadId,
+      lead.leadid,
+      lead.lead_id,
+      raw.leadId,
+      raw.leadid,
+      raw.lead_id,
+      rawEstimate.leadId,
+      rawEstimate.leadid,
+      rawEstimate.lead_id
     ]
       .map((value) =>
         String(value || "").trim()
