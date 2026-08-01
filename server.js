@@ -4620,8 +4620,11 @@ async function loadClientPortalLeadCandidates() {
           mapped.taxData ||
           existing.lead?.taxData,
         estimateSummary:
-          mapped.estimateSummary ||
-          existing.lead?.estimateSummary,
+          Object.keys(
+            asPlainObject(mapped.estimateSummary)
+          ).length
+            ? mapped.estimateSummary
+            : existing.lead?.estimateSummary,
         taxSavingsPlanner:
           mapped.taxSavingsPlanner ||
           existing.lead?.taxSavingsPlanner,
