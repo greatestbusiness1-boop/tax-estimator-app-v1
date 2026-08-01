@@ -8409,38 +8409,112 @@ function buildClientPortalTaxWatchSummary(
     trackerRecord.entries
   )
     ? trackerRecord.entries
-        .map((entry = {}) => ({
-          id: String(entry.id || ""),
-          amount: Math.max(
-            0,
-            getTaxWatchNumber(entry.amount)
-          ),
-          note: String(entry.note || ""),
-          recordedAt: String(
-            entry.recordedAt || ""
-          ),
-          estimatedTaxMoneyNeededAtEntry:
-            entry.estimatedTaxMoneyNeededAtEntry ===
-            undefined
-              ? null
-              : getTaxWatchNumber(
-                  entry.estimatedTaxMoneyNeededAtEntry
-                ),
-          savedBalanceAfterEntry:
-            entry.savedBalanceAfterEntry ===
-            undefined
-              ? null
-              : getTaxWatchNumber(
-                  entry.savedBalanceAfterEntry
-                ),
-          amountStillNeededAfterEntry:
-            entry.amountStillNeededAfterEntry ===
-            undefined
-              ? null
-              : getTaxWatchNumber(
-                  entry.amountStillNeededAfterEntry
-                )
-        }))
+        .map((entry = {}) => {
+          const status = String(
+            entry.status || ""
+          ).trim().toLowerCase();
+          const voidedAt = String(
+            entry.voidedAt || ""
+          ).trim();
+          const correctedAt = String(
+            entry.correctedAt || ""
+          ).trim();
+
+          return {
+            id: String(entry.id || ""),
+            amount: Math.max(
+              0,
+              getTaxWatchNumber(entry.amount)
+            ),
+            note: String(entry.note || ""),
+            recordedAt: String(
+              entry.recordedAt || ""
+            ),
+            status,
+            voided: Boolean(
+              voidedAt || status === "voided"
+            ),
+            voidedAt,
+            voidReason: String(
+              entry.voidReason || ""
+            ),
+            correctedAt,
+            correctionReason: String(
+              entry.correctionReason || ""
+            ),
+            originalAmount:
+              entry.originalAmount === undefined
+                ? null
+                : Math.max(
+                    0,
+                    getTaxWatchNumber(
+                      entry.originalAmount
+                    )
+                  ),
+            originalNote: String(
+              entry.originalNote || ""
+            ),
+            correctionHistory: Array.isArray(
+              entry.correctionHistory
+            )
+              ? entry.correctionHistory
+                  .filter(
+                    (item) =>
+                      item &&
+                      typeof item === "object" &&
+                      !Array.isArray(item)
+                  )
+                  .slice(-20)
+                  .map((item) => ({
+                    correctedAt: String(
+                      item.correctedAt || ""
+                    ),
+                    previousAmount: Math.max(
+                      0,
+                      getTaxWatchNumber(
+                        item.previousAmount
+                      )
+                    ),
+                    newAmount: Math.max(
+                      0,
+                      getTaxWatchNumber(
+                        item.newAmount
+                      )
+                    ),
+                    previousNote: String(
+                      item.previousNote || ""
+                    ),
+                    newNote: String(
+                      item.newNote || ""
+                    ),
+                    reason: String(
+                      item.reason || ""
+                    )
+                  }))
+              : [],
+            estimatedTaxMoneyNeededAtEntry:
+              entry.estimatedTaxMoneyNeededAtEntry ===
+              undefined
+                ? null
+                : getTaxWatchNumber(
+                    entry.estimatedTaxMoneyNeededAtEntry
+                  ),
+            savedBalanceAfterEntry:
+              entry.savedBalanceAfterEntry ===
+              undefined
+                ? null
+                : getTaxWatchNumber(
+                    entry.savedBalanceAfterEntry
+                  ),
+            amountStillNeededAfterEntry:
+              entry.amountStillNeededAfterEntry ===
+              undefined
+                ? null
+                : getTaxWatchNumber(
+                    entry.amountStillNeededAfterEntry
+                  )
+          };
+        })
         .filter((entry) => entry.amount > 0)
         .sort(
           (left, right) =>
@@ -8477,9 +8551,16 @@ function buildClientPortalTaxWatchSummary(
   let calculatedSavedBalance = 0;
   const trackerEntries = rawTrackerEntries
     .map((entry) => {
+      const effectiveAmount = entry.voided
+        ? 0
+        : entry.amount;
+
       calculatedSavedBalance =
         Math.round(
-          (calculatedSavedBalance + entry.amount) * 100
+          (
+            calculatedSavedBalance +
+            effectiveAmount
+          ) * 100
         ) / 100;
 
       const hasEstimateSnapshot =
@@ -8494,28 +8575,35 @@ function buildClientPortalTaxWatchSummary(
           : generalTaxReserve;
 
       const savedBalanceAfterEntry =
-        Number.isFinite(entry.savedBalanceAfterEntry) &&
-        entry.savedBalanceAfterEntry > 0
-          ? entry.savedBalanceAfterEntry
-          : calculatedSavedBalance;
+        calculatedSavedBalance;
 
       const amountStillNeededAfterEntry =
-        Number.isFinite(
-          entry.amountStillNeededAfterEntry
-        ) &&
-        entry.amountStillNeededAfterEntry >= 0
-          ? entry.amountStillNeededAfterEntry
-          : Math.max(
-              0,
-              estimatedAtEntry -
-                savedBalanceAfterEntry
-            );
+        Math.max(
+          0,
+          estimatedAtEntry -
+            savedBalanceAfterEntry
+        );
 
       return {
         id: entry.id,
         amount: entry.amount,
+        effectiveAmount,
         note: entry.note,
         recordedAt: entry.recordedAt,
+        status: entry.voided
+          ? "voided"
+          : entry.correctedAt
+            ? "corrected"
+            : "active",
+        voided: entry.voided,
+        voidedAt: entry.voidedAt,
+        voidReason: entry.voidReason,
+        correctedAt: entry.correctedAt,
+        correctionReason: entry.correctionReason,
+        originalAmount: entry.originalAmount,
+        originalNote: entry.originalNote,
+        correctionHistory:
+          entry.correctionHistory,
         estimatedTaxMoneyNeededAtEntry:
           estimatedAtEntry,
         savedBalanceAfterEntry,
@@ -8533,7 +8621,9 @@ function buildClientPortalTaxWatchSummary(
   const reportedSaved =
     Math.round(
       rawTrackerEntries.reduce(
-        (sum, entry) => sum + entry.amount,
+        (sum, entry) =>
+          sum +
+          (entry.voided ? 0 : entry.amount),
         0
       ) * 100
     ) / 100;
@@ -16663,6 +16753,594 @@ app.post(
         buildClientPortalTaxWatchSummary(
           refreshedAccessible,
           session.payload.accountLeadId
+        )
+    });
+  }
+);
+
+
+
+async function loadClientPortalTaxWatchSavingsEditContext(
+  session = {}
+) {
+  const accountLeadId = String(
+    session.payload?.accountLeadId || ""
+  ).trim();
+
+  let accessible =
+    await getClientPortalAccessibleLeads(
+      session.email
+    );
+
+  if (
+    accountLeadId &&
+    !accessible.some(
+      (entry) =>
+        String(entry.leadId || "").trim() ===
+        accountLeadId
+    )
+  ) {
+    const accountEntry =
+      await findClientPortalLeadById(
+        accountLeadId
+      );
+
+    if (accountEntry) {
+      accessible = [
+        ...accessible.filter(
+          (entry) =>
+            String(entry.leadId || "").trim() !==
+            accountLeadId
+        ),
+        accountEntry
+      ];
+    }
+  }
+
+  let summary =
+    buildClientPortalTaxWatchSummary(
+      accessible,
+      accountLeadId
+    );
+
+  if (!summary.current) {
+    const baselineLeadId = String(
+      accessible
+        .find(
+          (entry) =>
+            entry.lead?.taxWatchProfile
+        )
+        ?.lead?.taxWatchProfile
+        ?.baselineLeadId || ""
+    ).trim();
+
+    if (baselineLeadId) {
+      const baselineEstimate =
+        await findCompletedFreeEstimateByExactLeadId(
+          baselineLeadId
+        );
+
+      if (
+        baselineEstimate &&
+        getTaxWatchSnapshot(baselineEstimate)
+      ) {
+        accessible = [
+          ...accessible,
+          baselineEstimate
+        ];
+
+        summary =
+          buildClientPortalTaxWatchSummary(
+            accessible,
+            accountLeadId
+          );
+      }
+    }
+  }
+
+  const targetLeadId = String(
+    accountLeadId ||
+    summary.profileLeadId ||
+    summary.current?.leadId ||
+    ""
+  ).trim();
+
+  return {
+    accountLeadId,
+    accessible,
+    summary,
+    targetLeadId
+  };
+}
+
+async function getRefreshedClientPortalTaxWatchSavingsSummary(
+  session = {},
+  accountLeadId = ""
+) {
+  let refreshedAccessible =
+    await getClientPortalAccessibleLeads(
+      session.email
+    );
+
+  if (accountLeadId) {
+    const refreshedAccountEntry =
+      await findClientPortalLeadById(
+        accountLeadId
+      );
+
+    if (refreshedAccountEntry) {
+      refreshedAccessible = [
+        ...refreshedAccessible.filter(
+          (entry) =>
+            String(entry.leadId || "").trim() !==
+            accountLeadId
+        ),
+        refreshedAccountEntry
+      ];
+    }
+  }
+
+  const baselineLeadId = String(
+    refreshedAccessible
+      .find(
+        (entry) =>
+          entry.lead?.taxWatchProfile
+      )
+      ?.lead?.taxWatchProfile
+      ?.baselineLeadId || ""
+  ).trim();
+
+  if (baselineLeadId) {
+    const baselineEstimate =
+      await findCompletedFreeEstimateByExactLeadId(
+        baselineLeadId
+      );
+
+    if (
+      baselineEstimate &&
+      getTaxWatchSnapshot(baselineEstimate) &&
+      !refreshedAccessible.some(
+        (entry) =>
+          String(entry.leadId || "").trim() ===
+          baselineLeadId
+      )
+    ) {
+      refreshedAccessible = [
+        ...refreshedAccessible,
+        baselineEstimate
+      ];
+    }
+  }
+
+  return buildClientPortalTaxWatchSummary(
+    refreshedAccessible,
+    accountLeadId
+  );
+}
+
+
+app.post(
+  "/api/client-portal/tax-watch/savings/correct",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const entryId = String(
+      req.body?.entryId || ""
+    ).trim();
+    const amount = Math.max(
+      0,
+      getTaxWatchNumber(req.body?.amount)
+    );
+    const note = String(
+      req.body?.note || ""
+    ).trim().slice(0, 200);
+    const reason = String(
+      req.body?.reason || ""
+    ).trim().slice(0, 300);
+
+    if (!entryId) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The savings entry to correct was not selected."
+      });
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the corrected deposit amount."
+      });
+    }
+
+    if (amount > 1000000) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The corrected savings amount is larger than the supported limit."
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the reason for correcting this savings entry."
+      });
+    }
+
+    const session = req.clientPortalSession;
+    const context =
+      await loadClientPortalTaxWatchSavingsEditContext(
+        session
+      );
+
+    if (!context.summary.current) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "A saved Tax Watch estimate is required before correcting tax savings."
+      });
+    }
+
+    if (
+      context.summary.active &&
+      !context.summary.canEdit
+    ) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your Tax Watch Pro preview has ended. Choose a monthly or annual plan to correct savings entries."
+      });
+    }
+
+    if (!context.targetLeadId) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Your portal savings record could not be selected."
+      });
+    }
+
+    const now = new Date().toISOString();
+    const roundedAmount =
+      Math.round(amount * 100) / 100;
+    let matchedEntry = null;
+
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        context.targetLeadId,
+        (record = {}) => {
+          const existing =
+            record.taxWatchMoneyTracker &&
+            typeof record.taxWatchMoneyTracker === "object" &&
+            !Array.isArray(record.taxWatchMoneyTracker)
+              ? record.taxWatchMoneyTracker
+              : {};
+
+          const entries = Array.isArray(
+            existing.entries
+          )
+            ? existing.entries
+            : [];
+
+          const entryIndex = entries.findIndex(
+            (entry = {}) =>
+              String(entry.id || "").trim() ===
+              entryId
+          );
+
+          if (entryIndex < 0) {
+            return record;
+          }
+
+          const currentEntry = {
+            ...entries[entryIndex]
+          };
+
+          if (
+            currentEntry.voidedAt ||
+            String(currentEntry.status || "")
+              .trim()
+              .toLowerCase() === "voided"
+          ) {
+            matchedEntry = {
+              error:
+                "A voided savings entry cannot be corrected."
+            };
+            return record;
+          }
+
+          const previousAmount =
+            Math.max(
+              0,
+              getTaxWatchNumber(
+                currentEntry.amount
+              )
+            );
+          const previousNote = String(
+            currentEntry.note || ""
+          );
+
+          if (
+            previousAmount === roundedAmount &&
+            previousNote === note
+          ) {
+            matchedEntry = {
+              error:
+                "Change the amount or note before saving the correction."
+            };
+            return record;
+          }
+
+          const correctionHistory = Array.isArray(
+            currentEntry.correctionHistory
+          )
+            ? currentEntry.correctionHistory
+            : [];
+
+          const correctedEntry = {
+            ...currentEntry,
+            originalAmount:
+              currentEntry.originalAmount === undefined
+                ? previousAmount
+                : currentEntry.originalAmount,
+            originalNote:
+              currentEntry.originalNote === undefined
+                ? previousNote
+                : currentEntry.originalNote,
+            amount: roundedAmount,
+            note,
+            status: "corrected",
+            correctedAt: now,
+            correctionReason: reason,
+            correctionHistory: [
+              ...correctionHistory,
+              {
+                correctedAt: now,
+                previousAmount,
+                newAmount: roundedAmount,
+                previousNote,
+                newNote: note,
+                reason
+              }
+            ].slice(-20)
+          };
+
+          const updatedEntries = [
+            ...entries
+          ];
+          updatedEntries[entryIndex] =
+            correctedEntry;
+          matchedEntry = correctedEntry;
+
+          return {
+            ...record,
+            taxWatchMoneyTracker: {
+              ...existing,
+              version: 3,
+              updatedAt: now,
+              entries: updatedEntries
+            },
+            latestClientAction:
+              `Tax savings entry corrected: ${taxWatchOrganizerMoney(previousAmount)} to ${taxWatchOrganizerMoney(roundedAmount)}`,
+            latestClientActionAt: now,
+            updatedAt: now
+          };
+        }
+      );
+
+    if (matchedEntry?.error) {
+      return res.status(409).json({
+        ok: false,
+        error: matchedEntry.error
+      });
+    }
+
+    if (!matchedEntry) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The selected savings entry could not be found."
+      });
+    }
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "The tax savings correction could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your reported tax savings entry was corrected.",
+      taxWatch:
+        await getRefreshedClientPortalTaxWatchSavingsSummary(
+          session,
+          context.accountLeadId
+        )
+    });
+  }
+);
+
+
+app.post(
+  "/api/client-portal/tax-watch/savings/void",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const entryId = String(
+      req.body?.entryId || ""
+    ).trim();
+    const reason = String(
+      req.body?.reason || ""
+    ).trim().slice(0, 300);
+
+    if (!entryId) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The savings entry to void was not selected."
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Enter the reason for voiding this savings entry."
+      });
+    }
+
+    const session = req.clientPortalSession;
+    const context =
+      await loadClientPortalTaxWatchSavingsEditContext(
+        session
+      );
+
+    if (!context.summary.current) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "A saved Tax Watch estimate is required before voiding tax savings."
+      });
+    }
+
+    if (
+      context.summary.active &&
+      !context.summary.canEdit
+    ) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your Tax Watch Pro preview has ended. Choose a monthly or annual plan to void savings entries."
+      });
+    }
+
+    if (!context.targetLeadId) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Your portal savings record could not be selected."
+      });
+    }
+
+    const now = new Date().toISOString();
+    let matchedEntry = null;
+
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        context.targetLeadId,
+        (record = {}) => {
+          const existing =
+            record.taxWatchMoneyTracker &&
+            typeof record.taxWatchMoneyTracker === "object" &&
+            !Array.isArray(record.taxWatchMoneyTracker)
+              ? record.taxWatchMoneyTracker
+              : {};
+
+          const entries = Array.isArray(
+            existing.entries
+          )
+            ? existing.entries
+            : [];
+
+          const entryIndex = entries.findIndex(
+            (entry = {}) =>
+              String(entry.id || "").trim() ===
+              entryId
+          );
+
+          if (entryIndex < 0) {
+            return record;
+          }
+
+          const currentEntry = {
+            ...entries[entryIndex]
+          };
+
+          if (
+            currentEntry.voidedAt ||
+            String(currentEntry.status || "")
+              .trim()
+              .toLowerCase() === "voided"
+          ) {
+            matchedEntry = {
+              error:
+                "This savings entry is already voided."
+            };
+            return record;
+          }
+
+          const voidedEntry = {
+            ...currentEntry,
+            status: "voided",
+            voidedAt: now,
+            voidReason: reason
+          };
+
+          const updatedEntries = [
+            ...entries
+          ];
+          updatedEntries[entryIndex] =
+            voidedEntry;
+          matchedEntry = voidedEntry;
+
+          return {
+            ...record,
+            taxWatchMoneyTracker: {
+              ...existing,
+              version: 3,
+              updatedAt: now,
+              entries: updatedEntries
+            },
+            latestClientAction:
+              `Tax savings entry voided: ${taxWatchOrganizerMoney(currentEntry.amount)}`,
+            latestClientActionAt: now,
+            updatedAt: now
+          };
+        }
+      );
+
+    if (matchedEntry?.error) {
+      return res.status(409).json({
+        ok: false,
+        error: matchedEntry.error
+      });
+    }
+
+    if (!matchedEntry) {
+      return res.status(404).json({
+        ok: false,
+        error:
+          "The selected savings entry could not be found."
+      });
+    }
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "The tax savings entry could not be voided."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your reported tax savings entry was voided and removed from the savings totals.",
+      taxWatch:
+        await getRefreshedClientPortalTaxWatchSavingsSummary(
+          session,
+          context.accountLeadId
         )
     });
   }
