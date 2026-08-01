@@ -16702,16 +16702,51 @@ app.post(
     }
 
     const session = req.clientPortalSession;
-    const accessible =
+    let accessible =
       await getClientPortalAccessibleLeads(
         session.email
       );
 
-    const summary =
+    let summary =
       buildClientPortalTaxWatchSummary(
         accessible,
         session.payload.accountLeadId
       );
+
+    if (!summary.current) {
+      const baselineLeadId = String(
+        accessible
+          .find(
+            (entry) =>
+              entry.lead?.taxWatchProfile
+          )
+          ?.lead?.taxWatchProfile
+          ?.baselineLeadId || ""
+      ).trim();
+
+      if (baselineLeadId) {
+        const baselineEstimate =
+          await findCompletedFreeEstimateByExactLeadId(
+            baselineLeadId
+          );
+
+        if (
+          baselineEstimate &&
+          getTaxWatchSnapshot(baselineEstimate)
+        ) {
+          accessible = [
+            ...accessible,
+            baselineEstimate
+          ];
+
+          summary =
+            buildClientPortalTaxWatchSummary(
+              accessible,
+              session.payload.accountLeadId
+            );
+        }
+      }
+    }
 
     if (!summary.current) {
       return res.status(409).json({
