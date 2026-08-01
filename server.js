@@ -4841,12 +4841,21 @@ async function getFreeEstimateIdentityAccessibleLeads(email) {
   const candidates =
     await loadClientPortalLeadCandidates();
 
-  return candidates.filter(
-    (entry) =>
+  return candidates.filter((entry) => {
+    const mergedIdentity =
       getFreeEstimateIdentityKey(
-        getLeadEmailValue(entry.raw)
-      ) === identityEmail
-  );
+        getLeadEmailValue(entry.lead || {})
+      );
+    const rawIdentity =
+      getFreeEstimateIdentityKey(
+        getLeadEmailValue(entry.raw || {})
+      );
+
+    return (
+      mergedIdentity === identityEmail ||
+      rawIdentity === identityEmail
+    );
+  });
 }
 
 function normalizeFreeEstimateClientName(value) {
