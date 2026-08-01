@@ -15510,7 +15510,10 @@ app.post(
 
     const detailsMatch = Boolean(
       candidate &&
-      getLeadEmailValue(candidate.raw) === email
+      (
+        getLeadEmailValue(candidate.lead || {}) === email ||
+        getLeadEmailValue(candidate.raw || {}) === email
+      )
     );
 
     if (!detailsMatch) {
@@ -15586,7 +15589,7 @@ app.post(
     );
 
     const clientName = getLeadNameValue(
-      candidate.raw
+      candidate.lead || candidate.raw || {}
     );
 
     const activationUrl =
@@ -15717,7 +15720,10 @@ app.post(
 
     const matches = Boolean(
       candidate &&
-      getLeadEmailValue(candidate.raw) === email &&
+      (
+        getLeadEmailValue(candidate.lead || {}) === email ||
+        getLeadEmailValue(candidate.raw || {}) === email
+      ) &&
       normalizeEmail(portal.email) === email &&
       activation.hash &&
       activation.salt &&
