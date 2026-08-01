@@ -16343,50 +16343,46 @@ app.post(
       const accountLeadId = String(
         session.payload.accountLeadId || ""
       ).trim();
+
+      const membershipSourceLeadId =
+        accessible
+          .map((entry) =>
+            String(
+              entry.lead?.contactRequest
+                ?.membershipEnrollment
+                ?.sourceLeadId ||
+              entry.raw?.estimate
+                ?.contactRequest
+                ?.membershipEnrollment
+                ?.sourceLeadId ||
+              ""
+            ).trim()
+          )
+          .find(Boolean) || "";
+
       const requestedLeadId =
-        explicitSourceLeadId || accountLeadId;
+        explicitSourceLeadId ||
+        membershipSourceLeadId ||
+        accountLeadId;
 
       if (requestedLeadId) {
-        const allCandidates =
-          await loadClientPortalLeadCandidates();
-
-        const completedEstimateEntry =
-          allCandidates.find((entry) => {
-            const lead = entry.lead || {};
-          const raw = entry.raw || {};
-          const rawEstimate =
-            raw.estimate &&
-            typeof raw.estimate === "object" &&
-            !Array.isArray(raw.estimate)
-              ? raw.estimate
-              : {};
-
-          const candidateIds = [
-            entry.leadId,
-            getLeadIdValue(lead),
-            getLeadIdValue(raw),
-            lead.clientPortal?.sourceLeadId,
-            lead.portalAccount?.sourceLeadId,
-            raw.clientPortal?.sourceLeadId,
-            raw.portalAccount?.sourceLeadId,
-            rawEstimate.clientPortal?.sourceLeadId,
-            rawEstimate.portalAccount?.sourceLeadId
-          ]
-            .map((value) =>
-              String(value || "").trim()
-            )
-            .filter(Boolean);
-
-          return (
-            candidateIds.includes(requestedLeadId) &&
-            Boolean(getTaxWatchSnapshot(entry))
+        const directEntry =
+          await findClientPortalLeadById(
+            requestedLeadId
           );
-          }) || null;
 
-        if (completedEstimateEntry) {
+        if (
+          directEntry &&
+          getTaxWatchSnapshot(directEntry)
+        ) {
           accessible = [
-            ...accessible,
-            completedEstimateEntry
+            ...accessible.filter(
+              (entry) =>
+                String(
+                  entry.leadId || ""
+                ).trim() !== requestedLeadId
+            ),
+            directEntry
           ];
 
           currentSummary =
@@ -23258,6 +23254,9 @@ app.post(
         normalizeMembershipPlanKey(
           req.body?.planKey
         );
+      const sourceLeadId = String(
+        req.body?.sourceLeadId || ""
+      ).trim();
       const config =
         getMembershipCheckoutPlanConfig(
           planKey,
@@ -23306,6 +23305,10 @@ app.post(
               ),
               planKey: config.planKey,
               planName: config.planName,
+              sourceLeadId:
+                sourceLeadId ||
+                current.sourceLeadId ||
+                "",
               enrollmentStatus:
                 "Active Preview",
               paymentStatus: "No Charge",
