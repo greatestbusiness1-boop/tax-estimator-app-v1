@@ -2858,6 +2858,207 @@
       opacity:1 !important;
     }
 
+
+    /* Client-facing print and save controls */
+    .portal-print-header{display:none}
+    .portal-print-button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-sizing:border-box;
+      border:1px solid #d4a72c;
+      border-radius:11px;
+      background:#f4c95d;
+      color:#102f52;
+      padding:11px 15px;
+      font:inherit;
+      font-size:13px;
+      font-weight:900;
+      line-height:1.2;
+      cursor:pointer;
+      box-shadow:0 5px 14px rgba(15,47,89,.15);
+    }
+    .portal-print-button:hover{filter:brightness(.98)}
+    .portal-print-button.light{
+      background:#fff;
+      border-color:#9fb8cb;
+      color:#0f2f59;
+      box-shadow:none;
+    }
+    .tax-watch-badge .portal-print-button{
+      width:100%;
+      margin-top:16px;
+      background:#fff;
+      border-color:rgba(255,255,255,.55);
+      color:#0f2f59;
+      box-shadow:none;
+    }
+
+    @media print{
+      @page{size:auto;margin:.45in}
+      html,body{
+        background:#fff!important;
+        color:#111!important;
+      }
+      body[data-portal-print-view] .topbar,
+      body[data-portal-print-view] .portal-top-navigation{
+        display:none!important;
+      }
+      body[data-portal-print-view] .portal-layout,
+      body[data-portal-print-view] .portal-layout>.wrap{
+        display:block!important;
+        width:100%!important;
+        max-width:none!important;
+        margin:0!important;
+        padding:0!important;
+      }
+      body[data-portal-print-view="tax-watch"] .portal-view,
+      body[data-portal-print-view="pinnacle"] .portal-view{
+        display:none!important;
+      }
+      body[data-portal-print-view="tax-watch"] #taxWatchPro,
+      body[data-portal-print-view="pinnacle"] #pinnacleTaxActionPlan{
+        display:block!important;
+      }
+      body[data-portal-print-view] .section.portal-view{
+        border:0!important;
+        border-radius:0!important;
+        background:#fff!important;
+        box-shadow:none!important;
+        margin:0!important;
+        padding:0!important;
+      }
+      body[data-portal-print-view] .portal-print-header{
+        display:block!important;
+        padding:0 0 16px;
+        margin:0 0 18px;
+        border-bottom:3px solid #0f2f59;
+      }
+      body[data-portal-print-view] .portal-print-header .portal-print-brand{
+        margin-bottom:5px;
+        color:#8a5b00;
+        font-size:11px;
+        font-weight:900;
+        letter-spacing:.12em;
+        text-transform:uppercase;
+      }
+      body[data-portal-print-view] .portal-print-header h1{
+        margin:0 0 7px;
+        color:#0f2f59!important;
+        font-size:27px;
+        line-height:1.15;
+      }
+      body[data-portal-print-view] .portal-print-header p{
+        margin:0;
+        color:#334155!important;
+        font-size:12px;
+      }
+      body[data-portal-print-view] .portal-print-button,
+      body[data-portal-print-view] .portal-back-button,
+      body[data-portal-print-view] .portal-primary-link,
+      body[data-portal-print-view] .cx-page-actions,
+      body[data-portal-print-view] .tax-watch-actions,
+      body[data-portal-print-view] .tax-watch-savings-form,
+      body[data-portal-print-view] .tax-watch-tracker-message,
+      body[data-portal-print-view] .tax-watch-history-toggle,
+      body[data-portal-print-view] .tax-watch-savings-entry-controls,
+      body[data-portal-print-view] .tax-watch-entry-editor,
+      body[data-portal-print-view] .pinnacle-inline-actions,
+      body[data-portal-print-view] .pinnacle-profile-card-actions,
+      body[data-portal-print-view] .cx-billing-toggle,
+      body[data-portal-print-view] .dashboard-preview-countdown,
+      body[data-portal-print-view] .tax-watch-preview-progress,
+      body[data-portal-print-view] .tax-watch-preview-card,
+      body[data-portal-print-view] .tax-watch-preview-lifecycle-notice,
+      body[data-portal-print-view] .tax-watch-readonly-notice{
+        display:none!important;
+      }
+      body[data-portal-print-view="tax-watch"] #taxWatchSetupPanel{
+        display:none!important;
+      }
+      body[data-portal-print-view="tax-watch"] #taxWatchDashboard{
+        display:block!important;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-hero{
+        display:block!important;
+        padding:16px 18px!important;
+        margin:0 0 16px!important;
+        border:1px solid #9fb8cb!important;
+        border-radius:12px!important;
+        background:#fff!important;
+        color:#111!important;
+        box-shadow:none!important;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-hero h2,
+      body[data-portal-print-view="tax-watch"] .tax-watch-hero p{
+        color:#0f2f59!important;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-badge{
+        display:none!important;
+      }
+      body[data-portal-print-view] .tax-watch-panel,
+      body[data-portal-print-view] .tax-watch-stat,
+      body[data-portal-print-view] .tax-watch-tracker-card,
+      body[data-portal-print-view] .pinnacle-feature-card,
+      body[data-portal-print-view] .pinnacle-profile-access-card,
+      body[data-portal-print-view] .pinnacle-disclaimer,
+      body[data-portal-print-view] .cx-page-hero{
+        break-inside:avoid;
+        box-shadow:none!important;
+      }
+      body[data-portal-print-view] .tax-watch-panel{
+        border:1px solid #cbd5e1!important;
+        border-radius:12px!important;
+        padding:16px!important;
+        margin-bottom:14px!important;
+      }
+      body[data-portal-print-view] .tax-watch-summary-grid,
+      body[data-portal-print-view] .tax-watch-tracker-grid{
+        gap:8px!important;
+      }
+      body[data-portal-print-view] .tax-watch-stat,
+      body[data-portal-print-view] .tax-watch-tracker-card{
+        border:1px solid #d7e0e8!important;
+        padding:11px!important;
+      }
+      body[data-portal-print-view="tax-watch"] #taxWatchSavingsHistory [data-tax-watch-history-entry][hidden],
+      body[data-portal-print-view="tax-watch"] #taxWatchSavingsHistory .tax-watch-savings-entry-details[hidden]{
+        display:block!important;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-savings-entry{
+        break-inside:avoid;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-savings-entry-summary{
+        width:100%!important;
+        border:0!important;
+        background:transparent!important;
+        color:#111!important;
+        cursor:default!important;
+      }
+      body[data-portal-print-view="tax-watch"] .tax-watch-savings-entry-action{
+        display:none!important;
+      }
+      body[data-portal-print-view] details:not([open]) > :not(summary){
+        display:block!important;
+      }
+      body[data-portal-print-view="pinnacle"] #pinnacleTaxActionPlan .section-head{
+        display:block!important;
+        border:1px solid #cbd5e1!important;
+        border-radius:12px!important;
+        background:#fff!important;
+        padding:16px!important;
+        margin-bottom:14px!important;
+      }
+      body[data-portal-print-view="pinnacle"] #pinnacleTaxActionPlan .section-head h2,
+      body[data-portal-print-view="pinnacle"] #pinnacleTaxActionPlan .section-head p{
+        color:#0f2f59!important;
+      }
+      body[data-portal-print-view] a{
+        color:#0f2f59!important;
+        text-decoration:none!important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -2901,7 +3102,7 @@
             <span>Tax Watch Pro</span><span aria-hidden="true">▾</span>
           </button>
           <div class="portal-submenu" id="taxWatchMenu">
-            <button type="button" data-portal-open="tax-watch">Tax Watch Pro Overview &amp; Tracker</button>
+            <button type="button" data-portal-open="tax-watch">Tax Money Tracker &amp; Overview</button>
             <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
             <button type="button" data-portal-open="billing-history">Membership Billing History</button>
           </div>
@@ -3357,15 +3558,21 @@
 
 
     <section class="section portal-view tax-watch-page" id="taxWatchPro" data-portal-view="tax-watch">
+      <div class="portal-print-header" aria-hidden="true">
+        <div class="portal-print-brand">Greatest Business Solution LLC</div>
+        <h1>Tax Money Tracker &amp; Overview</h1>
+        <p>Prepared for <strong data-print-client-name>Client</strong> · Tax year <strong data-print-tax-year>—</strong> · Printed <span data-print-generated-at>—</span></p>
+      </div>
       <div class="tax-watch-hero">
         <div>
           <div class="eyebrow">Tax Watch Pro Membership</div>
-          <h2>Tax Money Tracker</h2>
+          <h2>Tax Money Tracker &amp; Overview</h2>
           <p><strong>Year-Round Income, Expense, and Tax Tracking.</strong> Track what you earned, organize business expenses, monitor estimated tax money needed, and record the money you reported saving.</p>
         </div>
         <div class="tax-watch-badge" id="taxWatchPreviewBadge">
           <span id="taxWatchPreviewBadgeStatus">14-Day Preview</span>
           <strong id="taxWatchPreviewBadgeText">No automatic charge. Choose a plan only when you are ready.</strong>
+          <button class="portal-print-button" id="printTaxWatchOverviewButton" type="button" hidden>Print / Save Tax Money Overview</button>
         </div>
       </div>
 
@@ -3572,13 +3779,21 @@
     </section>
 
     <section class="section portal-view pinnacle-overview-page" id="pinnacleTaxActionPlan" data-portal-view="pinnacle">
+      <div class="portal-print-header" aria-hidden="true">
+        <div class="portal-print-brand">Greatest Business Solution LLC</div>
+        <h1>Pinnacle Tax Action Plan Overview</h1>
+        <p>Prepared for <strong data-print-client-name>Client</strong> · Tax year <strong data-print-tax-year>—</strong> · Printed <span data-print-generated-at>—</span></p>
+      </div>
       <div class="section-head">
         <div>
           <div class="eyebrow">Pinnacle Level</div>
           <h2>Pinnacle Tax Action Plan</h2>
           <p>Your advanced year-round tax planning and small-business tracking workspace.</p>
         </div>
-        <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+        <div class="section-head-actions">
+          <button class="portal-print-button light" id="printPinnacleOverviewButton" type="button">Print / Save Pinnacle Overview</button>
+          <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
+        </div>
       </div>
       <div class="section-body">
         <div class="cx-page-hero cx-plans-hero pinnacle-uniform-enrollment-hero">
@@ -7049,6 +7264,58 @@
       return true;
     }
 
+
+    let portalPrintPreviousTitle = "";
+
+    function clearPortalPrintMode() {
+      if (portalPrintPreviousTitle) {
+        document.title = portalPrintPreviousTitle;
+      }
+      portalPrintPreviousTitle = "";
+      delete document.body.dataset.portalPrintView;
+    }
+
+    function printPortalOverview(view) {
+      const title = view === "pinnacle"
+        ? "Pinnacle Tax Action Plan Overview"
+        : "Tax Money Tracker & Overview";
+      const clientName = String(
+        currentPortalIdentity.name || "Client"
+      ).trim() || "Client";
+      const taxYear = String(
+        document.getElementById("taxWatchTaxYear")?.textContent ||
+        document.getElementById("planningYear")?.textContent ||
+        "Current year"
+      ).trim() || "Current year";
+      const generatedAt = new Intl.DateTimeFormat(
+        "en-US",
+        {
+          dateStyle: "medium",
+          timeStyle: "short"
+        }
+      ).format(new Date());
+
+      document.querySelectorAll("[data-print-client-name]").forEach((element) => {
+        element.textContent = clientName;
+      });
+      document.querySelectorAll("[data-print-tax-year]").forEach((element) => {
+        element.textContent = taxYear;
+      });
+      document.querySelectorAll("[data-print-generated-at]").forEach((element) => {
+        element.textContent = generatedAt;
+      });
+
+      portalPrintPreviousTitle = document.title;
+      document.title = `${title} - ${clientName}`;
+      document.body.dataset.portalPrintView = view;
+
+      window.requestAnimationFrame(() => {
+        window.print();
+      });
+    }
+
+    window.addEventListener("afterprint", clearPortalPrintMode);
+
     function renderTaxWatchPro(taxWatch = {}) {
       const setupPanel = document.getElementById("taxWatchSetupPanel");
       const setupWrap = document.getElementById("taxWatchSetupFormWrap");
@@ -7056,9 +7323,11 @@
       const dashboard = document.getElementById("taxWatchDashboard");
       const objective = document.getElementById("taxWatchObjective");
       const target = document.getElementById("taxWatchTargetAmount");
+      const printButton = document.getElementById("printTaxWatchOverviewButton");
 
       setupPanel.hidden = Boolean(taxWatch.active);
       dashboard.hidden = !taxWatch.active;
+      if (printButton) printButton.hidden = !taxWatch.active;
       noEstimate.hidden = Boolean(taxWatch.available);
       setupWrap.hidden = !taxWatch.available;
 
@@ -10171,11 +10440,19 @@
 
     document.getElementById("taxWatchObjective")?.addEventListener("change", updateTaxWatchTargetVisibility);
     document.getElementById("startTaxWatchButton")?.addEventListener("click", saveTaxWatchProfile);
+    document.getElementById("printTaxWatchOverviewButton")?.addEventListener("click", () => {
+      printPortalOverview("tax-watch");
+    });
+    document.getElementById("printPinnacleOverviewButton")?.addEventListener("click", () => {
+      printPortalOverview("pinnacle");
+    });
     document.getElementById("changeTaxWatchObjectiveButton")?.addEventListener("click", () => {
       const panel = document.getElementById("taxWatchSetupPanel");
       const dashboard = document.getElementById("taxWatchDashboard");
+      const printButton = document.getElementById("printTaxWatchOverviewButton");
       panel.hidden = false;
       dashboard.hidden = true;
+      if (printButton) printButton.hidden = true;
       document.getElementById("startTaxWatchButton").textContent = "Save My Tax Money Tracker Objective";
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
