@@ -7182,7 +7182,7 @@
               const isExtraEntry = index >= visibleHistoryLimit;
 
               const isVoided = Boolean(entry.voided);
-              const isCorrected = !isVoided && Boolean(entry.correctedAt);
+              const isCorrected = Boolean(entry.correctedAt);
               const statusBadge = isVoided
                 ? `<span class="tax-watch-savings-entry-status voided">Voided</span>`
                 : isCorrected
