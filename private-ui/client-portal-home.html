@@ -9128,20 +9128,19 @@
         const yearMatch=!filters.year||parts.year===filters.year;
         return monthMatch&&yearMatch;
       });
+      const matchesFinancialDate=(value)=>{
+        const parts=String(value||"").split("-");
+        return (!filters.month||String(Number(parts[1]||""))===filters.month)
+          &&(!filters.year||(parts[0]||"")===filters.year);
+      };
+      const filteredTrips=loadPinnacleTrips().filter((trip)=>matchesFinancialDate(trip.date));
+      const filteredDailyMileage=loadPinnacleDailyMileage().filter((entry)=>matchesFinancialDate(entry.date));
 
       const gross=items.reduce((sum,item)=>sum+Number(item.ytd||0),0);
       const expenses=items.reduce((sum,item)=>sum+Number(item.expenses||0),0);
-      const mileage=loadPinnacleTrips().filter((trip)=>{
-        const parts=String(trip.date||"").split("-");
-        return (!filters.month||String(Number(parts[1]||""))===filters.month)
-          &&(!filters.year||(parts[0]||"")===filters.year);
-      }).reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
-      +loadPinnacleDailyMileage().filter((entry)=>{
-        const parts=String(entry.date||"").split("-");
-        return (!filters.month||String(Number(parts[1]||""))===filters.month)
-          &&(!filters.year||(parts[0]||"")===filters.year);
-      }).reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
-      const net=Math.max(gross-expenses-mileage,0);
+      const mileage=filteredTrips.reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
+        +filteredDailyMileage.reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
+      const net=gross-expenses-mileage;
 
       const setMoney=(id,value)=>{
         const node=document.getElementById(id);
@@ -9156,21 +9155,30 @@
 
       const list=document.getElementById("pinnacleFinancialSourceList");
       if(!list)return;
-      if(!items.length){
+
+      const visibleSourceIds=new Set(items.map((item)=>item.id));
+      const unassignedMileage=filteredTrips
+        .filter((trip)=>!visibleSourceIds.has(trip.sourceId))
+        .reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
+        +filteredDailyMileage
+          .filter((entry)=>!visibleSourceIds.has(entry.sourceId))
+          .reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
+
+      if(!items.length&&unassignedMileage<=0){
         list.innerHTML='<div class="pinnacle-financial-empty">No income sources match the current month and tax-year filter.</div>';
         return;
       }
 
-      list.innerHTML=items.map((item)=>{
+      const sourceRows=items.map((item)=>{
         const sourceGross=Number(item.ytd||0);
         const sourceExpenses=Number(item.expenses||0);
-        const sourceMileage=loadPinnacleTrips().filter((trip)=>{
-          const parts=String(trip.date||"").split("-");
-          return trip.sourceId===item.id
-            &&(!filters.month||String(Number(parts[1]||""))===filters.month)
-            &&(!filters.year||(parts[0]||"")===filters.year);
-        }).reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0);
-        const sourceNet=Math.max(sourceGross-sourceExpenses-sourceMileage,0);
+        const sourceMileage=filteredTrips
+          .filter((trip)=>trip.sourceId===item.id)
+          .reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
+          +filteredDailyMileage
+            .filter((entry)=>entry.sourceId===item.id)
+            .reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
+        const sourceNet=sourceGross-sourceExpenses-sourceMileage;
         return `
           <article class="pinnacle-financial-source">
             <div class="pinnacle-financial-source-head">
@@ -9190,6 +9198,27 @@
             </div>
           </article>`;
       }).join("");
+
+      const unassignedRow=unassignedMileage>0?`
+        <article class="pinnacle-financial-source">
+          <div class="pinnacle-financial-source-head">
+            <div>
+              <h4>Mileage Records Needing Source Review</h4>
+              <p>These mileage records are not linked to an income source shown above.</p>
+            </div>
+            <span class="pinnacle-income-badge">Needs Review</span>
+          </div>
+          <div class="pinnacle-financial-source-body">
+            <div class="pinnacle-financial-metric"><span>Gross Income</span><strong>${pinnacleMoney(0)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(0)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(unassignedMileage)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(-unassignedMileage)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
+            <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
+          </div>
+        </article>`:"";
+
+      list.innerHTML=sourceRows+unassignedRow;
     }
 
 
