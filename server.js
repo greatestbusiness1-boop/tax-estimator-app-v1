@@ -11050,9 +11050,19 @@ app.use((req, res, next) => {
 
 function getLatestCompletedFreeEstimateEntry(accessible = []) {
   return accessible
-    .filter(isCompletedFreeEstimateRecord)
+    .filter((entry) => {
+      if (!isCompletedFreeEstimateRecord(entry)) {
+        return false;
+      }
+
+      const primaryLeadId =
+        getFreeEstimateRecordLeadId(entry);
+
+      return /^LEAD-/i.test(primaryLeadId);
+    })
     .map((entry) => {
-      const timestamp = getFreeEstimateRecordTimestamp(entry);
+      const timestamp =
+        getFreeEstimateRecordTimestamp(entry);
       const timestampMs = Date.parse(timestamp);
 
       return {
@@ -11217,7 +11227,11 @@ app.post(
     const savedEmail =
       getLeadEmailValue(record);
 
-    if (!leadId || !savedEmail) {
+    if (
+      !leadId ||
+      !/^LEAD-/i.test(leadId) ||
+      !savedEmail
+    ) {
       return res.status(200).json({
         ok: true,
         message: genericMessage
