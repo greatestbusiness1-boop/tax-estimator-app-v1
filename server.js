@@ -5994,10 +5994,14 @@ async function markTaxWatchProfilesMembershipActive(
     return { ok: false, skipped: true };
   }
 
+  const context =
+    await loadTaxWatchAccessibleContext({
+      email: normalizedEmail,
+      sourceLeadId:
+        details.sourceLeadId || ""
+    });
   const accessible =
-    await getClientPortalAccessibleLeads(
-      normalizedEmail
-    );
+    context.accessible;
   const now = String(
     details.activatedAt ||
     new Date().toISOString()
@@ -8802,6 +8806,191 @@ function buildClientPortalTaxWatchSummary(
     },
     history: [...deduped].reverse().slice(0, 12)
   };
+}
+
+function mergeClientPortalTaxWatchAccessibleEntry(
+  accessible = [],
+  candidate = null
+) {
+  if (!candidate) {
+    return Array.isArray(accessible)
+      ? [...accessible]
+      : [];
+  }
+
+  const candidateLeadId = String(
+    candidate.leadId || ""
+  ).trim();
+
+  if (!candidateLeadId) {
+    return Array.isArray(accessible)
+      ? [...accessible]
+      : [];
+  }
+
+  return [
+    ...(Array.isArray(accessible)
+      ? accessible
+      : []
+    ).filter(
+      (entry) =>
+        String(entry?.leadId || "").trim() !==
+        candidateLeadId
+    ),
+    candidate
+  ];
+}
+
+async function loadTaxWatchAccessibleContext(
+  options = {}
+) {
+  const email = normalizeEmail(
+    options.email || ""
+  );
+  const accountLeadId = String(
+    options.accountLeadId || ""
+  ).trim();
+  const explicitSourceLeadId = String(
+    options.sourceLeadId || ""
+  ).trim();
+
+  let accessible = Array.isArray(
+    options.accessible
+  )
+    ? [...options.accessible]
+    : await getClientPortalAccessibleLeads(
+        email
+      );
+
+  if (accountLeadId) {
+    const accountEntry =
+      await findClientPortalLeadById(
+        accountLeadId
+      );
+
+    if (accountEntry) {
+      accessible =
+        mergeClientPortalTaxWatchAccessibleEntry(
+          accessible,
+          accountEntry
+        );
+    }
+  }
+
+  const linkedLeadIds = [
+    explicitSourceLeadId,
+    accountLeadId,
+    ...accessible.map((entry) =>
+      String(
+        entry?.lead?.taxWatchProfile
+          ?.baselineLeadId ||
+        entry?.lead?.contactRequest
+          ?.membershipEnrollment
+          ?.sourceLeadId ||
+        entry?.raw?.contactRequest
+          ?.membershipEnrollment
+          ?.sourceLeadId ||
+        entry?.raw?.estimate
+          ?.contactRequest
+          ?.membershipEnrollment
+          ?.sourceLeadId ||
+        ""
+      ).trim()
+    )
+  ]
+    .filter(Boolean)
+    .filter(
+      (leadId, index, values) =>
+        values.indexOf(leadId) === index
+    );
+
+  for (const linkedLeadId of linkedLeadIds) {
+    const existingEntry = accessible.find(
+      (entry) =>
+        String(entry?.leadId || "").trim() ===
+        linkedLeadId
+    );
+
+    if (
+      existingEntry &&
+      getTaxWatchSnapshot(existingEntry)
+    ) {
+      continue;
+    }
+
+    const linkedEstimate =
+      await findCompletedFreeEstimateByExactLeadId(
+        linkedLeadId
+      );
+
+    if (
+      linkedEstimate &&
+      getTaxWatchSnapshot(linkedEstimate)
+    ) {
+      accessible =
+        mergeClientPortalTaxWatchAccessibleEntry(
+          accessible,
+          linkedEstimate
+        );
+    }
+  }
+
+  const summary =
+    buildClientPortalTaxWatchSummary(
+      accessible,
+      accountLeadId
+    );
+
+  const latest =
+    accessible
+      .map((entry) => ({
+        entry,
+        snapshot: getTaxWatchSnapshot(entry)
+      }))
+      .filter((item) => item.snapshot)
+      .sort(
+        (left, right) =>
+          Date.parse(
+            right.snapshot.recordedAt || 0
+          ) -
+          Date.parse(
+            left.snapshot.recordedAt || 0
+          )
+      )[0] || null;
+
+  const organizerEntry =
+    accessible.find(
+      (entry) =>
+        entry?.lead?.taxWatchOrganizer &&
+        typeof entry.lead.taxWatchOrganizer ===
+          "object" &&
+        !Array.isArray(
+          entry.lead.taxWatchOrganizer
+        )
+    ) || null;
+
+  return {
+    accountLeadId,
+    accessible,
+    summary,
+    latest,
+    organizerEntry
+  };
+}
+
+async function loadClientPortalTaxWatchContext(
+  session = {},
+  options = {}
+) {
+  return loadTaxWatchAccessibleContext({
+    email: session.email,
+    accountLeadId:
+      session.payload?.accountLeadId || "",
+    sourceLeadId:
+      options.sourceLeadId || "",
+    accessible:
+      options.accessible
+  });
 }
 
 function getClientPortalRecordSortTime(record = {}) {
@@ -16284,58 +16473,29 @@ app.get(
   requireClientPortalApiSession,
   async (req, res) => {
     const session = req.clientPortalSession;
+    let taxWatchContext =
+      await loadClientPortalTaxWatchContext(
+        session
+      );
+
     const lifecycleResult =
-      await reconcileTaxWatchPreviewLifecycleForEmail(
-        session.email,
+      await reconcileTaxWatchPreviewLifecycleForAccessible(
+        taxWatchContext.accessible,
         {
           sendEmail: true,
           source: "Client Portal Session"
         }
       );
-    let accessible = lifecycleResult.accessible;
 
-    const linkedEstimateLeadId =
-      accessible
-        .map((entry) =>
-          String(
-            entry.lead?.contactRequest
-              ?.membershipEnrollment
-              ?.sourceLeadId ||
-            entry.raw?.contactRequest
-              ?.membershipEnrollment
-              ?.sourceLeadId ||
-            entry.raw?.estimate
-              ?.contactRequest
-              ?.membershipEnrollment
-              ?.sourceLeadId ||
-            ""
-          ).trim()
-        )
-        .find(Boolean) || "";
-
-    if (
-      linkedEstimateLeadId &&
-      !accessible.some(
-        (entry) =>
-          String(entry.leadId || "").trim() ===
-          linkedEstimateLeadId
-      )
-    ) {
-      const linkedEstimate =
-        await findCompletedFreeEstimateByExactLeadId(
-          linkedEstimateLeadId
+    if (lifecycleResult.changed) {
+      taxWatchContext =
+        await loadClientPortalTaxWatchContext(
+          session
         );
-
-      if (
-        linkedEstimate &&
-        getTaxWatchSnapshot(linkedEstimate)
-      ) {
-        accessible = [
-          ...accessible,
-          linkedEstimate
-        ];
-      }
     }
+
+    const accessible =
+      taxWatchContext.accessible;
 
     const records = accessible
       .map(buildClientPortalLeadSummary)
@@ -16415,10 +16575,7 @@ app.get(
         );
 
     const taxWatch =
-      buildClientPortalTaxWatchSummary(
-        accessible,
-        accountLeadId
-      );
+      taxWatchContext.summary;
 
     const transcriptRequests =
       accessible
@@ -16539,71 +16696,18 @@ app.post(
     ).trim();
 
     const session = req.clientPortalSession;
-    let accessible =
-      await getClientPortalAccessibleLeads(
-        session.email
-      );
-
-    let currentSummary =
-      buildClientPortalTaxWatchSummary(
-        accessible,
-        session.payload.accountLeadId
-      );
-
-    if (!currentSummary.current) {
-      const accountLeadId = String(
-        session.payload.accountLeadId || ""
-      ).trim();
-
-      const membershipSourceLeadId =
-        accessible
-          .map((entry) =>
-            String(
-              entry.lead?.contactRequest
-                ?.membershipEnrollment
-                ?.sourceLeadId ||
-              entry.raw?.estimate
-                ?.contactRequest
-                ?.membershipEnrollment
-                ?.sourceLeadId ||
-              ""
-            ).trim()
-          )
-          .find(Boolean) || "";
-
-      const requestedLeadId =
-        explicitSourceLeadId ||
-        membershipSourceLeadId ||
-        accountLeadId;
-
-      if (requestedLeadId) {
-        const directEntry =
-          await findCompletedFreeEstimateByExactLeadId(
-            requestedLeadId
-          );
-
-        if (
-          directEntry &&
-          getTaxWatchSnapshot(directEntry)
-        ) {
-          accessible = [
-            ...accessible.filter(
-              (entry) =>
-                String(
-                  entry.leadId || ""
-                ).trim() !== requestedLeadId
-            ),
-            directEntry
-          ];
-
-          currentSummary =
-            buildClientPortalTaxWatchSummary(
-              accessible,
-              requestedLeadId
-            );
+    const taxWatchContext =
+      await loadClientPortalTaxWatchContext(
+        session,
+        {
+          sourceLeadId:
+            explicitSourceLeadId
         }
-      }
-    }
+      );
+    const accessible =
+      taxWatchContext.accessible;
+    const currentSummary =
+      taxWatchContext.summary;
 
     if (!currentSummary.current) {
       return res.status(409).json({
@@ -16738,9 +16842,9 @@ app.post(
       });
     }
 
-    const refreshedAccessible =
-      await getClientPortalAccessibleLeads(
-        session.email
+    const refreshedContext =
+      await loadClientPortalTaxWatchContext(
+        session
       );
 
     return res.status(200).json({
@@ -16750,10 +16854,7 @@ app.post(
           ? "Your Tax Watch Pro objective was updated."
           : "Your Tax Watch Pro preview is ready.",
       taxWatch:
-        buildClientPortalTaxWatchSummary(
-          refreshedAccessible,
-          session.payload.accountLeadId
-        )
+        refreshedContext.summary
     });
   }
 );
@@ -16763,159 +16864,33 @@ app.post(
 async function loadClientPortalTaxWatchSavingsEditContext(
   session = {}
 ) {
-  const accountLeadId = String(
-    session.payload?.accountLeadId || ""
-  ).trim();
-
-  let accessible =
-    await getClientPortalAccessibleLeads(
-      session.email
+  const context =
+    await loadClientPortalTaxWatchContext(
+      session
     );
-
-  if (
-    accountLeadId &&
-    !accessible.some(
-      (entry) =>
-        String(entry.leadId || "").trim() ===
-        accountLeadId
-    )
-  ) {
-    const accountEntry =
-      await findClientPortalLeadById(
-        accountLeadId
-      );
-
-    if (accountEntry) {
-      accessible = [
-        ...accessible.filter(
-          (entry) =>
-            String(entry.leadId || "").trim() !==
-            accountLeadId
-        ),
-        accountEntry
-      ];
-    }
-  }
-
-  let summary =
-    buildClientPortalTaxWatchSummary(
-      accessible,
-      accountLeadId
-    );
-
-  if (!summary.current) {
-    const baselineLeadId = String(
-      accessible
-        .find(
-          (entry) =>
-            entry.lead?.taxWatchProfile
-        )
-        ?.lead?.taxWatchProfile
-        ?.baselineLeadId || ""
-    ).trim();
-
-    if (baselineLeadId) {
-      const baselineEstimate =
-        await findCompletedFreeEstimateByExactLeadId(
-          baselineLeadId
-        );
-
-      if (
-        baselineEstimate &&
-        getTaxWatchSnapshot(baselineEstimate)
-      ) {
-        accessible = [
-          ...accessible,
-          baselineEstimate
-        ];
-
-        summary =
-          buildClientPortalTaxWatchSummary(
-            accessible,
-            accountLeadId
-          );
-      }
-    }
-  }
 
   const targetLeadId = String(
-    accountLeadId ||
-    summary.profileLeadId ||
-    summary.current?.leadId ||
+    context.accountLeadId ||
+    context.summary.profileLeadId ||
+    context.summary.current?.leadId ||
     ""
   ).trim();
 
   return {
-    accountLeadId,
-    accessible,
-    summary,
+    ...context,
     targetLeadId
   };
 }
 
 async function getRefreshedClientPortalTaxWatchSavingsSummary(
-  session = {},
-  accountLeadId = ""
+  session = {}
 ) {
-  let refreshedAccessible =
-    await getClientPortalAccessibleLeads(
-      session.email
+  const context =
+    await loadClientPortalTaxWatchContext(
+      session
     );
 
-  if (accountLeadId) {
-    const refreshedAccountEntry =
-      await findClientPortalLeadById(
-        accountLeadId
-      );
-
-    if (refreshedAccountEntry) {
-      refreshedAccessible = [
-        ...refreshedAccessible.filter(
-          (entry) =>
-            String(entry.leadId || "").trim() !==
-            accountLeadId
-        ),
-        refreshedAccountEntry
-      ];
-    }
-  }
-
-  const baselineLeadId = String(
-    refreshedAccessible
-      .find(
-        (entry) =>
-          entry.lead?.taxWatchProfile
-      )
-      ?.lead?.taxWatchProfile
-      ?.baselineLeadId || ""
-  ).trim();
-
-  if (baselineLeadId) {
-    const baselineEstimate =
-      await findCompletedFreeEstimateByExactLeadId(
-        baselineLeadId
-      );
-
-    if (
-      baselineEstimate &&
-      getTaxWatchSnapshot(baselineEstimate) &&
-      !refreshedAccessible.some(
-        (entry) =>
-          String(entry.leadId || "").trim() ===
-          baselineLeadId
-      )
-    ) {
-      refreshedAccessible = [
-        ...refreshedAccessible,
-        baselineEstimate
-      ];
-    }
-  }
-
-  return buildClientPortalTaxWatchSummary(
-    refreshedAccessible,
-    accountLeadId
-  );
+  return context.summary;
 }
 
 
@@ -17380,80 +17355,14 @@ app.post(
     }
 
     const session = req.clientPortalSession;
-    const accountLeadId = String(
-      session.payload.accountLeadId || ""
-    ).trim();
-
-    let accessible =
-      await getClientPortalAccessibleLeads(
-        session.email
+    const context =
+      await loadClientPortalTaxWatchContext(
+        session
       );
-
-    if (
-      accountLeadId &&
-      !accessible.some(
-        (entry) =>
-          String(entry.leadId || "").trim() ===
-          accountLeadId
-      )
-    ) {
-      const accountEntry =
-        await findClientPortalLeadById(
-          accountLeadId
-        );
-
-      if (accountEntry) {
-        accessible = [
-          ...accessible.filter(
-            (entry) =>
-              String(entry.leadId || "").trim() !==
-              accountLeadId
-          ),
-          accountEntry
-        ];
-      }
-    }
-
-    let summary =
-      buildClientPortalTaxWatchSummary(
-        accessible,
-        session.payload.accountLeadId
-      );
-
-    if (!summary.current) {
-      const baselineLeadId = String(
-        accessible
-          .find(
-            (entry) =>
-              entry.lead?.taxWatchProfile
-          )
-          ?.lead?.taxWatchProfile
-          ?.baselineLeadId || ""
-      ).trim();
-
-      if (baselineLeadId) {
-        const baselineEstimate =
-          await findCompletedFreeEstimateByExactLeadId(
-            baselineLeadId
-          );
-
-        if (
-          baselineEstimate &&
-          getTaxWatchSnapshot(baselineEstimate)
-        ) {
-          accessible = [
-            ...accessible,
-            baselineEstimate
-          ];
-
-          summary =
-            buildClientPortalTaxWatchSummary(
-              accessible,
-              session.payload.accountLeadId
-            );
-        }
-      }
-    }
+    const accountLeadId =
+      context.accountLeadId;
+    const summary =
+      context.summary;
 
     if (!summary.current) {
       return res.status(409).json({
@@ -17576,37 +17485,13 @@ app.post(
       });
     }
 
-    let refreshedAccessible =
-      await getClientPortalAccessibleLeads(
-        session.email
-      );
-
-    if (accountLeadId) {
-      const refreshedAccountEntry =
-        await findClientPortalLeadById(
-          accountLeadId
-        );
-
-      if (refreshedAccountEntry) {
-        refreshedAccessible = [
-          ...refreshedAccessible.filter(
-            (entry) =>
-              String(entry.leadId || "").trim() !==
-              accountLeadId
-          ),
-          refreshedAccountEntry
-        ];
-      }
-    }
-
     return res.status(200).json({
       ok: true,
       message:
         "Your reported tax savings entry was added.",
       taxWatch:
-        buildClientPortalTaxWatchSummary(
-          refreshedAccessible,
-          session.payload.accountLeadId
+        await getRefreshedClientPortalTaxWatchSavingsSummary(
+          session
         )
     });
   }
@@ -17985,34 +17870,16 @@ function buildTaxWatchOrganizerHtml({
 }
 
 async function getLatestTaxWatchOrganizerContext(session) {
-  const accessible = await getClientPortalAccessibleLeads(
-    session.email
-  );
-
-  const candidates = accessible
-    .map((entry) => ({
-      entry,
-      snapshot: getTaxWatchSnapshot(entry)
-    }))
-    .filter((item) => item.snapshot)
-    .sort(
-      (left, right) =>
-        Date.parse(right.snapshot.recordedAt || 0) -
-        Date.parse(left.snapshot.recordedAt || 0)
+  const context =
+    await loadClientPortalTaxWatchContext(
+      session
     );
 
-  const organizerEntry =
-    accessible.find(
-      (entry) =>
-        entry.lead?.taxWatchOrganizer &&
-        typeof entry.lead.taxWatchOrganizer === "object" &&
-        !Array.isArray(entry.lead.taxWatchOrganizer)
-    ) || null;
-
   return {
-    accessible,
-    latest: candidates[0] || null,
-    organizerEntry
+    accessible: context.accessible,
+    latest: context.latest,
+    organizerEntry:
+      context.organizerEntry
   };
 }
 
@@ -18370,16 +18237,12 @@ app.get(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const accessible =
-      await getClientPortalAccessibleLeads(
-        session.email
+    const taxWatchContext =
+      await loadClientPortalTaxWatchContext(
+        session
       );
-
     const taxWatchAccess =
-      buildClientPortalTaxWatchSummary(
-        accessible,
-        session.payload.accountLeadId
-      );
+      taxWatchContext.summary;
 
     if (taxWatchAccess.active && !taxWatchAccess.canEdit) {
       return res
@@ -18406,19 +18269,8 @@ app.get(
 </main></body></html>`);
     }
 
-    const candidates = accessible
-      .map((entry) => ({
-        entry,
-        snapshot: getTaxWatchSnapshot(entry)
-      }))
-      .filter((item) => item.snapshot)
-      .sort(
-        (left, right) =>
-          Date.parse(right.snapshot.recordedAt || 0) -
-          Date.parse(left.snapshot.recordedAt || 0)
-      );
-
-    const latest = candidates[0] || null;
+    const latest =
+      taxWatchContext.latest;
 
     if (!latest) {
       return res
@@ -18517,16 +18369,12 @@ app.get(
     setClientPortalNoStore(res);
 
     const session = req.clientPortalSession;
-    const accessible =
-      await getClientPortalAccessibleLeads(
-        session.email
+    const taxWatchContext =
+      await loadClientPortalTaxWatchContext(
+        session
       );
-
     const taxWatchAccess =
-      buildClientPortalTaxWatchSummary(
-        accessible,
-        session.payload.accountLeadId
-      );
+      taxWatchContext.summary;
 
     if (taxWatchAccess.active && !taxWatchAccess.canEdit) {
       return res.status(403).json({
@@ -18536,19 +18384,8 @@ app.get(
       });
     }
 
-    const candidates = accessible
-      .map((entry) => ({
-        entry,
-        snapshot: getTaxWatchSnapshot(entry)
-      }))
-      .filter((item) => item.snapshot)
-      .sort(
-        (left, right) =>
-          Date.parse(right.snapshot.recordedAt || 0) -
-          Date.parse(left.snapshot.recordedAt || 0)
-      );
-
-    const latest = candidates[0] || null;
+    const latest =
+      taxWatchContext.latest;
 
     if (!latest) {
       return res.status(409).json({
@@ -23602,7 +23439,12 @@ async function applyMembershipStripeUpdate(
               now,
             source:
               details.paymentSource ||
-              "Stripe Subscription"
+              "Stripe Subscription",
+            sourceLeadId:
+              updateResult.lead
+                ?.contactRequest
+                ?.membershipEnrollment
+                ?.sourceLeadId || ""
           }
         );
       } catch (error) {
@@ -24248,6 +24090,13 @@ app.post(
         buildMembershipEnrollmentBase(
           updateResult.lead || {}
         );
+      const taxWatchContext =
+        await loadClientPortalTaxWatchContext(
+          portalSession,
+          {
+            sourceLeadId
+          }
+        );
 
       return res.status(200).json({
         ok: true,
@@ -24259,9 +24108,7 @@ app.post(
           membership.previewEndsAt,
         membership:
           getClientPortalMembershipSummary(
-            await getClientPortalAccessibleLeads(
-              portalSession.email
-            )
+            taxWatchContext.accessible
           )
       });
     } catch (error) {
@@ -24337,11 +24184,13 @@ app.post(
 
       const portalSession =
         req.clientPortalSession;
+      const taxWatchContext =
+        await loadClientPortalTaxWatchContext(
+          portalSession
+        );
       const existingMembership =
         getClientPortalMembershipSummary(
-          await getClientPortalAccessibleLeads(
-            portalSession.email
-          )
+          taxWatchContext.accessible
         );
       const activeMembershipExists =
         existingMembership.enrollmentStatus ===
