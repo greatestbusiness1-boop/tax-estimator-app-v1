@@ -3161,8 +3161,8 @@
           </button>
           <div class="portal-submenu" id="taxWatchMenu">
             <button type="button" data-portal-open="tax-watch">Tax Money Tracker &amp; Overview</button>
-            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
             <button type="button" data-portal-open="billing-history">Membership Billing History</button>
+            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
           </div>
         </div>
 
@@ -3210,8 +3210,8 @@
           </button>
           <div class="portal-submenu" id="accountSecurityMenu">
             <button type="button" data-portal-open="account">Profile &amp; Portal Access</button>
-            <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
             <button type="button" data-portal-open="billing-history">Billing &amp; Payment History</button>
+            <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
             <button type="button" data-portal-open="questions">Questions &amp; Comments</button>
           </div>
         </div>
@@ -6631,9 +6631,11 @@
           </article>
         `).join("");
 
-        nav.innerHTML = activeItems.map((item) => `
-          <button type="button" data-portal-open="${escapeHtml(item.target)}">${escapeHtml(item.service)}</button>
-        `).join("");
+        nav.innerHTML = [...activeItems]
+          .sort((left, right) => String(left.service || "").localeCompare(String(right.service || "")))
+          .map((item) => `
+            <button type="button" data-portal-open="${escapeHtml(item.target)}">${escapeHtml(item.service)}</button>
+          `).join("");
       }
 
       const nextItem = activeItems[0];
