@@ -3751,7 +3751,7 @@
               <div class="tax-watch-stat"><span>Money You Can Spend</span><strong id="taxWatchAvailableToSpend">$0</strong></div>
             </div>
             <div class="tax-watch-cash-note">
-              <strong>Simple planning estimate.</strong> Based on the income and expenses you entered, this shows an estimated amount to set aside for taxes and an estimated amount you may have available to spend. It does not calculate final self-employment tax, prepare Schedule C, or replace professional tax preparation by Greatest Business Solution LLC.
+              <strong>Planning estimate only.</strong> Final tax results require professional tax preparation.
             </div>
           </div>
 
@@ -3974,8 +3974,8 @@
           <ul id="pinnacleAdditionalFeatureList">
             <li>Year-to-date gross business income totals</li>
             <li>Tracked business-expense totals</li>
-            <li>Date-sensitive mileage deduction calculations</li>
-            <li>Net business income rollup</li>
+            <li>Mileage deduction tracking</li>
+            <li>Net business income summary</li>
             <li>Recommended tax-savings reserve</li>
             <li>Deposited tax-savings tracking</li>
             <li>Estimated-tax payment tracking</li>
@@ -4077,10 +4077,6 @@
         <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
       </div>
       <div class="section-body">
-        <div class="pinnacle-safety-note" style="margin:0 0 18px">
-          <strong>Business financial rollup:</strong> Each income source will ultimately combine year-to-date gross income, tracked expenses, mileage deductions, tax savings deposits, and estimated-tax payments. Pinnacle will use those records to calculate net business income and a Safe to Spend amount without requiring duplicate manual totals.
-        </div>
-
         <div class="pinnacle-income-summary">
           <div class="pinnacle-income-stat"><span>Income Sources</span><strong id="pinnacleIncomeSourceCount">0</strong></div>
           <div class="pinnacle-income-stat"><span>Year-to-Date Income</span><strong id="pinnacleIncomeYtdTotal">$0</strong></div>
@@ -4327,23 +4323,21 @@
         </div>
 
         <div class="pinnacle-financial-grid">
-          <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong><small>Total from the income sources shown.</small></div>
-          <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong><small>Total from active Expense Tracker records shown.</small></div>
-          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><small>Total from the individual-trip and daily-odometer records shown.</small></div>
-          <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong><small>Gross income minus tracked expenses and mileage deduction.</small></div>
-          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong><small>This activates after the tax-reserve setup and projection logic are approved.</small></div>
-          <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><small>Will connect to the Tax Savings history.</small></div>
-          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong><small>Will connect to recorded federal and state payments.</small></div>
-          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">Pending</strong><small>Will activate after cash available, tax reserve, savings, and payment records are connected.</small></div>
+          <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong></div>
+          <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong></div>
+          <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong></div>
+          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">Pending</strong></div>
         </div>
 
         <div class="pinnacle-financial-source-list" id="pinnacleFinancialSourceList">
           <div class="pinnacle-financial-empty">Add at least one income source to create the Business Financial Snapshot.</div>
         </div>
 
-        <div class="pinnacle-financial-note">
-          <strong>How the final Safe to Spend calculation will work:</strong> Pinnacle will combine cash available, gross business income, tracked expenses, mileage deductions, recommended tax reserves, savings deposits, and estimated-tax payments. Safe to Spend will not be activated until those connected records are available, so the client is not shown an unreliable number.
-        </div>
+
       </div>
     </section>
 
@@ -4353,7 +4347,7 @@
         <div>
           <div class="eyebrow">Pinnacle Business Tracking</div>
           <h2>Mileage Tracker</h2>
-          <p>Record business trips, connect them to the correct income source, and calculate the date-sensitive mileage deduction.</p>
+          <p>Track business mileage and organize records by income source.</p>
         </div>
         <button class="portal-back-button" type="button" data-portal-open="pinnacle-financial-snapshot">Return to Financial Snapshot</button>
       </div>
@@ -4388,7 +4382,6 @@
           <button type="button" class="active" data-mileage-panel="trips">Individual Trips</button>
           <button type="button" data-mileage-panel="daily">Daily Odometer Log</button>
         </div>
-        <div class="pinnacle-daily-explanation"><strong>For high-volume drivers:</strong> use the Daily Odometer Log instead of typing 25–30 trips. Enter the beginning and ending odometer once, then subtract personal and commuting miles. Pinnacle calculates the remaining business miles for the day.</div>
         <div class="pinnacle-mileage-filters">
           <div class="pinnacle-mileage-filter"><label for="pinnacleMileageSearch">Search location or purpose</label><input id="pinnacleMileageSearch" placeholder="Search trips"></div>
           <div class="pinnacle-mileage-filter"><label for="pinnacleMileageSourceFilter">Income source</label><select id="pinnacleMileageSourceFilter"><option value="">All sources</option></select></div>
@@ -6765,8 +6758,8 @@
             <ul>
               <li>Year-to-date gross business income totals</li>
               <li>Tracked business-expense totals</li>
-              <li>Date-sensitive mileage deduction calculations</li>
-              <li>Net business income rollup</li>
+              <li>Mileage deduction tracking</li>
+              <li>Net business income summary</li>
               <li>Recommended tax-savings reserve</li>
               <li>Deposited tax-savings tracking</li>
               <li>Estimated-tax payment tracking</li>
