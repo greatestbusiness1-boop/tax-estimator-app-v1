@@ -1764,14 +1764,43 @@
     @media(max-width:760px){.pinnacle-mileage-vehicle-context,.pinnacle-mileage-panel-head{align-items:stretch;flex-direction:column}.pinnacle-mileage-vehicle-context button,.pinnacle-mileage-panel-head button{width:100%}}
     .pinnacle-mileage-page .section-body{padding:22px}
     .pinnacle-mileage-summary{
-      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px
     }
     .pinnacle-mileage-stat{
       padding:13px 14px;border:1px solid #c4d8e6;border-radius:13px;
       background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%)
     }
+    .pinnacle-mileage-stat.total{
+      border-color:#83aec8;background:linear-gradient(180deg,#f4fbff 0%,#e3f2f9 100%)
+    }
     .pinnacle-mileage-stat span{display:block;color:#687d8e;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
     .pinnacle-mileage-stat strong{display:block;margin-top:5px;color:#082f50;font-size:19px}
+    .pinnacle-mileage-warning{
+      margin:0 0 10px;padding:10px 13px;border:1px solid #e0c16f;border-left:4px solid #b98300;
+      border-radius:10px;background:#fff9e9;color:#654d13;font-size:12px;line-height:1.45
+    }
+    .pinnacle-mileage-warning strong{color:#513b08}
+    .pinnacle-mileage-history{
+      margin:0 0 10px;border:1px solid #c7dae7;border-radius:12px;background:#fbfdfe;overflow:hidden
+    }
+    .pinnacle-mileage-history summary{
+      cursor:pointer;padding:10px 13px;color:#0a3154;font-size:13px;font-weight:900;list-style-position:inside
+    }
+    .pinnacle-mileage-history[open] summary{border-bottom:1px solid #d9e6ee;background:#f3f8fb}
+    .pinnacle-mileage-history-body{padding:10px 12px;overflow-x:auto}
+    .pinnacle-mileage-history-note{margin:0 0 8px;color:#607789;font-size:12px}
+    .pinnacle-mileage-history-table{width:100%;min-width:880px;border-collapse:collapse}
+    .pinnacle-mileage-history-table th,.pinnacle-mileage-history-table td{
+      padding:8px 9px;border-bottom:1px solid #e1ebf1;text-align:right;font-size:12px;white-space:nowrap
+    }
+    .pinnacle-mileage-history-table th{
+      color:#5e7486;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase
+    }
+    .pinnacle-mileage-history-table th:first-child,.pinnacle-mileage-history-table td:first-child,
+    .pinnacle-mileage-history-table th:nth-child(2),.pinnacle-mileage-history-table td:nth-child(2){text-align:left}
+    .pinnacle-mileage-history-table tbody tr:last-child td{border-bottom:0}
+    .pinnacle-mileage-history-empty{padding:12px;color:#607789;text-align:center}
+    .pinnacle-mileage-record-count{display:block;margin-top:4px;color:#607789;font-size:11px;font-weight:800}
     .pinnacle-mileage-toolbar{
       display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
       padding:12px 15px;border:1px solid #c7dae7;border-radius:13px;background:#f5f9fc;margin-bottom:12px
@@ -1824,7 +1853,7 @@
     }
     .pinnacle-mileage-field textarea{min-height:80px;resize:vertical}
     .pinnacle-mileage-rate-note{padding:12px 14px;border-left:4px solid #c99a2e;background:#fff8e8;color:#6b4e0c;line-height:1.5}
-    @media(max-width:1120px){.pinnacle-mileage-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pinnacle-trip-head{grid-template-columns:1fr 1fr 1fr}.pinnacle-trip-actions{grid-column:1/-1}}
+    @media(max-width:1120px){.pinnacle-mileage-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-trip-head{grid-template-columns:1fr 1fr 1fr}.pinnacle-trip-actions{grid-column:1/-1}}
     @media(max-width:760px){.pinnacle-mileage-page .section-body{padding:16px}.pinnacle-mileage-summary,.pinnacle-mileage-filters,.pinnacle-mileage-form-grid,.pinnacle-trip-head{grid-template-columns:1fr}.pinnacle-mileage-field.wide{grid-column:auto}}
 
     .pinnacle-linked-expense-summary{display:grid;gap:7px;padding:11px 12px;border:1px solid #c9dce8;border-radius:10px;background:#f7fbfd}
@@ -4375,15 +4404,16 @@
       </div>
       <div class="section-body">
         <div class="pinnacle-mileage-summary">
+          <div class="pinnacle-mileage-stat total"><span>Total Miles Driven</span><strong id="pinnacleMileageTotalMiles">0.00</strong></div>
           <div class="pinnacle-mileage-stat"><span>Business Miles</span><strong id="pinnacleMileageBusinessTotal">0.00</strong></div>
           <div class="pinnacle-mileage-stat"><span>Personal Miles</span><strong id="pinnacleMileagePersonalTotal">0.00</strong></div>
-          <div class="pinnacle-mileage-stat"><span>Trips Shown</span><strong id="pinnacleMileageTripCount">0</strong></div>
+          <div class="pinnacle-mileage-stat"><span>Commuting Miles</span><strong id="pinnacleMileageCommutingTotal">0.00</strong></div>
+          <div class="pinnacle-mileage-stat"><span>Unclassified Miles</span><strong id="pinnacleMileageUnclassified">0.00</strong></div>
           <div class="pinnacle-mileage-stat"><span>Mileage Deduction</span><strong id="pinnacleMileageDeductionTotal">$0.00</strong></div>
-          <div class="pinnacle-mileage-stat"><span>Unclassified Trips</span><strong id="pinnacleMileageUnclassified">0</strong></div>
         </div>
 
         <div class="pinnacle-mileage-toolbar">
-          <div><h3>Mileage Records</h3><p>Review and filter individual trips or daily odometer records.</p></div>
+          <div><h3>Mileage Records</h3><p>Review and filter individual trips or daily odometer records.</p><small class="pinnacle-mileage-record-count" id="pinnacleMileageRecordCount">0 records shown</small></div>
           <div class="pinnacle-mileage-toolbar-actions">
             <div class="pinnacle-mileage-status" id="pinnacleMileageStatus" role="status" aria-live="assertive"></div>
             <button type="button" class="secondary" id="pinnacleMileageExport">Download CSV</button>
@@ -4399,15 +4429,27 @@
           <button type="button" id="pinnacleManageVehicles">Manage Vehicles</button>
         </div>
 
+        <details class="pinnacle-mileage-history">
+          <summary>View Mileage History by Tax Year and Vehicle</summary>
+          <div class="pinnacle-mileage-history-body">
+            <p class="pinnacle-mileage-history-note">Prior-year mileage remains available by tax year and vehicle.</p>
+            <div id="pinnacleMileageHistoryList"><div class="pinnacle-mileage-history-empty">No mileage history is available yet.</div></div>
+          </div>
+        </details>
+
+        <div class="pinnacle-mileage-warning">
+          <strong>Avoid duplicate mileage:</strong> Record the same drive in either Individual Trips or Daily Odometer—not both. If a trip is already included in a daily odometer record, do not add it again as an individual trip.
+        </div>
+
         <div class="pinnacle-mileage-mode-tabs" role="tablist" aria-label="Mileage entry method">
           <button type="button" class="active" data-mileage-panel="trips">Individual Trips</button>
           <button type="button" data-mileage-panel="daily">Daily Odometer Log</button>
         </div>
         <div class="pinnacle-mileage-filters">
-          <div class="pinnacle-mileage-filter"><label for="pinnacleMileageSearch">Search location or purpose</label><input id="pinnacleMileageSearch" placeholder="Search trips"></div>
+          <div class="pinnacle-mileage-filter"><label for="pinnacleMileageSearch">Search location, purpose, or vehicle</label><input id="pinnacleMileageSearch" placeholder="Search mileage records"></div>
           <div class="pinnacle-mileage-filter"><label for="pinnacleMileageSourceFilter">Income source</label><select id="pinnacleMileageSourceFilter"><option value="">All sources</option></select></div>
           <div class="pinnacle-mileage-filter"><label for="pinnacleMileageMonth">Month</label><select id="pinnacleMileageMonth"><option value="">All months</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
-          <div class="pinnacle-mileage-filter"><label for="pinnacleMileageYear">Tax year</label><select id="pinnacleMileageYear"><option value="">All years</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option></select></div>
+          <div class="pinnacle-mileage-filter"><label for="pinnacleMileageYear">Tax year</label><select id="pinnacleMileageYear"><option value="">All years</option></select></div>
         </div>
 
         <div class="pinnacle-mileage-panel" id="pinnacleTripsPanel" data-mileage-panel-content="trips">
@@ -10155,52 +10197,179 @@
         year:String(document.getElementById("pinnacleMileageYear")?.value||"")
       };
     }
+    function getPinnacleMileageYear(item){
+      const year=String(item?.date||"").slice(0,4);
+      return /^\d{4}$/.test(year)?year:"";
+    }
+    function getPinnacleDailyTotalMiles(item){
+      const start=Number(String(item?.startOdometer||"0").replace(/,/g,""));
+      const end=Number(String(item?.endOdometer||"0").replace(/,/g,""));
+      return Math.max(end-start,0);
+    }
+    function getPinnacleMileageBreakdown(item,type){
+      if(type==="daily"){
+        const total=getPinnacleDailyTotalMiles(item);
+        const personal=Math.max(Number(item?.personalMiles||0),0);
+        const commuting=Math.max(Number(item?.commutingMiles||0),0);
+        const business=getPinnacleDailyBusinessMiles(item);
+        return {
+          total,
+          business,
+          personal,
+          commuting,
+          unclassified:Math.max(total-business-personal-commuting,0),
+          deduction:getPinnacleDailyDeduction(item)
+        };
+      }
+      const total=getPinnacleTripMiles(item);
+      const classification=String(item?.classification||"").toLowerCase();
+      return {
+        total,
+        business:classification==="business"?total:0,
+        personal:classification==="personal"?total:0,
+        commuting:classification==="commuting"?total:0,
+        unclassified:["business","personal","commuting"].includes(classification)?0:total,
+        deduction:getPinnacleTripDeduction(item)
+      };
+    }
+    function summarizePinnacleMileageRecords(trips=[],dailyMileage=[]){
+      const totals={total:0,business:0,personal:0,commuting:0,unclassified:0,deduction:0,records:0};
+      const add=(item,type)=>{
+        const values=getPinnacleMileageBreakdown(item,type);
+        Object.keys(values).forEach((key)=>{totals[key]+=Number(values[key]||0)});
+        totals.records+=1;
+      };
+      trips.forEach((item)=>add(item,"trip"));
+      dailyMileage.forEach((item)=>add(item,"daily"));
+      return totals;
+    }
+    function populatePinnacleMileageYearOptions(){
+      const select=document.getElementById("pinnacleMileageYear");
+      if(!select)return;
+      const selected=String(select.value||"");
+      const currentYear=new Date().getFullYear();
+      const years=new Set();
+      for(let year=currentYear-4;year<=currentYear+1;year+=1)years.add(year);
+      [...loadPinnacleTrips(),...loadPinnacleDailyMileage()].forEach((item)=>{
+        const year=Number(getPinnacleMileageYear(item));
+        if(Number.isInteger(year)&&year>1900&&year<2200)years.add(year);
+      });
+      const ordered=[...years].sort((left,right)=>right-left);
+      select.innerHTML="<option value=''>All years</option>"+ordered
+        .map((year)=>`<option value="${year}">${year}</option>`)
+        .join("");
+      if(selected&&ordered.includes(Number(selected)))select.value=selected;
+    }
+    function pinnacleMileageRecordMatchesFilters(item,type,filters,sources,vehicles){
+      const parts=String(item?.date||"").split("-");
+      const sourceName=sources[item?.sourceId]||"";
+      const vehicleName=getPinnacleVehicleLabel(vehicles[item?.vehicleId]);
+      const text=type==="daily"
+        ?`${item?.purpose||""} ${item?.notes||""} ${sourceName} ${vehicleName}`.toLowerCase()
+        :`${formatPinnacleTripAddress(item,"start")} ${formatPinnacleTripAddress(item,"end")} ${item?.purpose||""} ${item?.notes||""} ${sourceName} ${vehicleName}`.toLowerCase();
+      return (!filters.search||text.includes(filters.search))
+        &&(!filters.source||item?.sourceId===filters.source)
+        &&(!filters.month||String(Number(parts[1]||""))===filters.month)
+        &&(!filters.year||(parts[0]||"")===filters.year);
+    }
+    function renderPinnacleMileageHistory(){
+      const target=document.getElementById("pinnacleMileageHistoryList");
+      if(!target)return;
+      const vehicles=Object.fromEntries(loadPinnacleVehicles().map((item)=>[item.id,item]));
+      const groups=new Map();
+      const add=(item,type)=>{
+        const year=getPinnacleMileageYear(item)||"Unassigned";
+        const vehicle=getPinnacleVehicleLabel(vehicles[item?.vehicleId])||"Vehicle not linked";
+        const key=`${year}|||${vehicle}`;
+        if(!groups.has(key)){
+          groups.set(key,{year,vehicle,total:0,business:0,personal:0,commuting:0,unclassified:0,deduction:0,records:0});
+        }
+        const group=groups.get(key);
+        const values=getPinnacleMileageBreakdown(item,type);
+        Object.keys(values).forEach((name)=>{group[name]+=Number(values[name]||0)});
+        group.records+=1;
+      };
+      loadPinnacleTrips().forEach((item)=>add(item,"trip"));
+      loadPinnacleDailyMileage().forEach((item)=>add(item,"daily"));
+      const rows=[...groups.values()].sort((left,right)=>{
+        const yearCompare=String(right.year).localeCompare(String(left.year));
+        return yearCompare||left.vehicle.localeCompare(right.vehicle);
+      });
+      if(!rows.length){
+        target.innerHTML='<div class="pinnacle-mileage-history-empty">No mileage history is available yet.</div>';
+        return;
+      }
+      target.innerHTML=`<table class="pinnacle-mileage-history-table">
+        <thead><tr>
+          <th>Tax Year</th><th>Vehicle</th><th>Total Miles</th><th>Business</th><th>Personal</th><th>Commuting</th><th>Unclassified</th><th>Deduction</th>
+        </tr></thead>
+        <tbody>${rows.map((row)=>`<tr>
+          <td><strong>${escapeHtml(row.year)}</strong></td>
+          <td>${escapeHtml(row.vehicle)}<br><small>${row.records} record${row.records===1?"":"s"}</small></td>
+          <td>${formatPinnacleMileageNumber(row.total,2)}</td>
+          <td>${formatPinnacleMileageNumber(row.business,2)}</td>
+          <td>${formatPinnacleMileageNumber(row.personal,2)}</td>
+          <td>${formatPinnacleMileageNumber(row.commuting,2)}</td>
+          <td>${formatPinnacleMileageNumber(row.unclassified,2)}</td>
+          <td><strong>${pinnacleMoney(row.deduction)}</strong></td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    }
     function renderPinnacleMileage(){
       refreshPinnacleMileageSourceOptions();
-      const sources=Object.fromEntries(loadPinnacleIncomeSources().map(x=>[x.id,x.name]));
+      populatePinnacleMileageYearOptions();
+      const sources=Object.fromEntries(loadPinnacleIncomeSources().map((item)=>[item.id,item.name]));
+      const vehicles=Object.fromEntries(loadPinnacleVehicles().map((item)=>[item.id,item]));
       const filters=getPinnacleMileageFilters();
-      const all=loadPinnacleTrips();
-      const items=all.filter((item)=>{
-        const text=`${formatPinnacleTripAddress(item,"start")} ${formatPinnacleTripAddress(item,"end")} ${item.purpose||""}`.toLowerCase();
-        const parts=String(item.date||"").split("-");
-        return (!filters.search||text.includes(filters.search))
-          &&(!filters.source||item.sourceId===filters.source)
-          &&(!filters.month||String(Number(parts[1]||""))===filters.month)
-          &&(!filters.year||(parts[0]||"")===filters.year);
-      });
-      const business=items.filter(x=>x.classification==="business").reduce((s,x)=>s+getPinnacleTripMiles(x),0);
-      const personal=items.filter(x=>x.classification==="personal").reduce((s,x)=>s+getPinnacleTripMiles(x),0);
-      const deduction=items.reduce((s,x)=>s+getPinnacleTripDeduction(x),0);
-      const unclassified=items.filter(x=>!x.classification||x.classification==="commuting").length;
-      document.getElementById("pinnacleMileageBusinessTotal").textContent=business.toFixed(2);
-      document.getElementById("pinnacleMileagePersonalTotal").textContent=personal.toFixed(2);
-      document.getElementById("pinnacleMileageTripCount").textContent=String(items.length);
-      document.getElementById("pinnacleMileageDeductionTotal").textContent=pinnacleMoney(deduction);
-      document.getElementById("pinnacleMileageUnclassified").textContent=String(unclassified);
-      const list=document.getElementById("pinnacleTripList");if(!list)return;
-      if(!items.length){list.innerHTML='<div class="pinnacle-trip-empty">No trips match the current filters.</div>';return}
-      list.innerHTML=items.map(item=>{
-        const miles=getPinnacleTripMiles(item),rate=getPinnacleBusinessMileageRate(item.date),ded=getPinnacleTripDeduction(item);
-        return `<article class="pinnacle-trip-card"><div class="pinnacle-trip-head">
-          <div><h4>${escapeHtml(formatPinnacleTripAddress(item,"start"))} → ${escapeHtml(formatPinnacleTripAddress(item,"end"))}</h4><p>${escapeHtml(item.purpose||"Purpose not selected")} · ${escapeHtml(sources[item.sourceId]||"Income source not linked")}</p></div>
-          <div class="pinnacle-trip-metric"><span>Date</span><strong>${item.date?new Date(item.date+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
-          <div class="pinnacle-trip-metric"><span>Classification</span><strong>${escapeHtml(item.classification||"Unclassified")}</strong></div>
-          <div class="pinnacle-trip-metric"><span>Miles</span><strong>${miles.toFixed(2)}</strong></div>
-          <div class="pinnacle-trip-metric"><span>Rate</span><strong>${rate===null?"Pending":`${(rate*100).toFixed(1)}¢`}</strong></div>
-          <div class="pinnacle-trip-metric"><span>Deduction</span><strong>${pinnacleMoney(ded)}</strong></div>
-          <div class="pinnacle-trip-actions"><button type="button" data-trip-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="secondary" data-trip-duplicate="${escapeHtml(item.id)}">Repeat Trip</button><button type="button" class="secondary" data-trip-delete="${escapeHtml(item.id)}">Delete</button></div>
-        </div></article>`;
-      }).join("");
+      const allTrips=loadPinnacleTrips();
+      const allDaily=loadPinnacleDailyMileage();
+      const trips=allTrips.filter((item)=>pinnacleMileageRecordMatchesFilters(item,"trip",filters,sources,vehicles));
+      const dailyMileage=allDaily.filter((item)=>pinnacleMileageRecordMatchesFilters(item,"daily",filters,sources,vehicles));
+      const totals=summarizePinnacleMileageRecords(trips,dailyMileage);
+      document.getElementById("pinnacleMileageTotalMiles").textContent=formatPinnacleMileageNumber(totals.total,2);
+      document.getElementById("pinnacleMileageBusinessTotal").textContent=formatPinnacleMileageNumber(totals.business,2);
+      document.getElementById("pinnacleMileagePersonalTotal").textContent=formatPinnacleMileageNumber(totals.personal,2);
+      document.getElementById("pinnacleMileageCommutingTotal").textContent=formatPinnacleMileageNumber(totals.commuting,2);
+      document.getElementById("pinnacleMileageUnclassified").textContent=formatPinnacleMileageNumber(totals.unclassified,2);
+      document.getElementById("pinnacleMileageDeductionTotal").textContent=pinnacleMoney(totals.deduction);
+      const count=document.getElementById("pinnacleMileageRecordCount");
+      if(count)count.textContent=`${totals.records} record${totals.records===1?"":"s"} shown`;
+      const list=document.getElementById("pinnacleTripList");
+      if(list){
+        if(!trips.length){
+          list.innerHTML='<div class="pinnacle-trip-empty">No individual trips match the current filters.</div>';
+        }else{
+          list.innerHTML=trips.map((item)=>{
+            const miles=getPinnacleTripMiles(item),rate=getPinnacleBusinessMileageRate(item.date),ded=getPinnacleTripDeduction(item);
+            return `<article class="pinnacle-trip-card"><div class="pinnacle-trip-head">
+              <div><h4>${escapeHtml(formatPinnacleTripAddress(item,"start"))} → ${escapeHtml(formatPinnacleTripAddress(item,"end"))}</h4><p>${escapeHtml(item.purpose||"Purpose not selected")} · ${escapeHtml(sources[item.sourceId]||"Income source not linked")}</p></div>
+              <div class="pinnacle-trip-metric"><span>Date</span><strong>${item.date?new Date(item.date+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
+              <div class="pinnacle-trip-metric"><span>Classification</span><strong>${escapeHtml(item.classification||"Unclassified")}</strong></div>
+              <div class="pinnacle-trip-metric"><span>Miles</span><strong>${miles.toFixed(2)}</strong></div>
+              <div class="pinnacle-trip-metric"><span>Rate</span><strong>${rate===null?"Pending":`${(rate*100).toFixed(1)}¢`}</strong></div>
+              <div class="pinnacle-trip-metric"><span>Deduction</span><strong>${pinnacleMoney(ded)}</strong></div>
+              <div class="pinnacle-trip-actions"><button type="button" data-trip-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="secondary" data-trip-duplicate="${escapeHtml(item.id)}">Repeat Trip</button><button type="button" class="secondary" data-trip-delete="${escapeHtml(item.id)}">Delete</button></div>
+            </div></article>`;
+          }).join("");
+        }
+      }
+      renderPinnacleDailyMileage(filters,sources,vehicles);
+      renderPinnacleMileageHistory();
       renderPinnacleFinancialSnapshot();
     }
-    function renderPinnacleDailyMileage(){
-      const sources=Object.fromEntries(loadPinnacleIncomeSources().map(x=>[x.id,x.name]));
-      const vehicles=Object.fromEntries(loadPinnacleVehicles().map(x=>[x.id,x]));
-      const list=document.getElementById("pinnacleDailyList");if(!list)return;
-      const items=loadPinnacleDailyMileage();
-      if(!items.length){list.innerHTML='<div class="pinnacle-trip-empty">No daily odometer records have been added yet.</div>';return}
-      list.innerHTML=items.map(item=>{
-        const total=Math.max(Number(String(item.endOdometer||"0").replace(/,/g,""))-Number(String(item.startOdometer||"0").replace(/,/g,"")),0);
+    function renderPinnacleDailyMileage(providedFilters=null,providedSources=null,providedVehicles=null){
+      const sources=providedSources||Object.fromEntries(loadPinnacleIncomeSources().map((item)=>[item.id,item.name]));
+      const vehicles=providedVehicles||Object.fromEntries(loadPinnacleVehicles().map((item)=>[item.id,item]));
+      const filters=providedFilters||getPinnacleMileageFilters();
+      const list=document.getElementById("pinnacleDailyList");
+      if(!list)return;
+      const items=loadPinnacleDailyMileage().filter((item)=>pinnacleMileageRecordMatchesFilters(item,"daily",filters,sources,vehicles));
+      if(!items.length){
+        list.innerHTML='<div class="pinnacle-trip-empty">No daily odometer records match the current filters.</div>';
+        return;
+      }
+      list.innerHTML=items.map((item)=>{
+        const total=getPinnacleDailyTotalMiles(item);
         const business=getPinnacleDailyBusinessMiles(item);
         return `<article class="pinnacle-daily-card" data-daily-card="${escapeHtml(item.id)}"><div class="pinnacle-daily-head">
           <div><h4>${escapeHtml(getPinnacleVehicleLabel(vehicles[item.vehicleId]))}</h4><p>${escapeHtml(sources[item.sourceId]||"Income source not linked")}</p></div>
