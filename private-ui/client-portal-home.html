@@ -1987,48 +1987,59 @@
     .pinnacle-currency-wrap input{
       border:0!important;box-shadow:none!important;min-height:42px;padding:10px 11px!important
     }
-    .pinnacle-income-source-card.is-collapsed .pinnacle-income-source-body,
-    .pinnacle-income-source-card.is-collapsed .pinnacle-source-secondary-actions{display:none}
-    .pinnacle-income-source-head{cursor:pointer}
-    .pinnacle-income-source-summary{
-      display:grid;grid-template-columns:minmax(180px,1.4fr) repeat(2,minmax(120px,.7fr)) auto;
-      gap:14px;align-items:center;width:100%
+    .pinnacle-income-source-card{
+      border:1px solid #c8dbe8;border-radius:14px;background:#fff;overflow:hidden;
+      box-shadow:0 4px 14px rgba(17,57,84,.045)
     }
-    .pinnacle-income-source-primary h4{margin:0;color:#082f50;font-size:17px}
-    .pinnacle-income-source-primary p{margin:5px 0 0;color:#607789;font-size:13px}
+    .pinnacle-income-source-summary{
+      display:flex;gap:14px;align-items:center;width:100%;padding:13px 15px;
+      background:linear-gradient(90deg,#f7fafc 0%,#edf6fb 100%)
+    }
+    .pinnacle-income-source-primary{flex:1 1 260px;min-width:220px}
+    .pinnacle-income-source-primary h4{
+      margin:0;color:#082f50;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .pinnacle-income-source-primary p{
+      margin:4px 0 0;color:#607789;font-size:12px;line-height:1.35;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .pinnacle-income-source-compact-metric{flex:0 0 112px}
+    .pinnacle-income-source-compact-metric[hidden]{display:none}
     .pinnacle-income-source-compact-metric span{
-      display:block;color:#718596;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em
+      display:block;color:#718596;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em
     }
     .pinnacle-income-source-compact-metric strong{
-      display:block;margin-top:4px;color:#173e5c;font-size:15px
+      display:block;margin-top:3px;color:#173e5c;font-size:14px
     }
-    .pinnacle-income-expand{
-      min-width:88px!important;background:#fff!important;color:#0b5685!important;border-color:#b9ccdc!important
+    .pinnacle-income-source-actions{
+      flex:0 0 auto;display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:nowrap;
+      margin-left:auto
     }
-    @media(max-width:820px){
-      .pinnacle-income-source-summary{grid-template-columns:1fr 1fr}
-      .pinnacle-income-source-primary{grid-column:1/-1}
+    .pinnacle-income-source-actions button{
+      min-height:36px!important;padding:7px 10px!important;border-radius:8px!important;font-size:12px;
+      white-space:nowrap
     }
-    .pinnacle-income-source-card{
-      border:1px solid #c8dbe8;border-radius:16px;background:#fff;overflow:hidden;
-      box-shadow:0 5px 16px rgba(17,57,84,.05)
+    .pinnacle-income-source-actions button.secondary{
+      background:#fff!important;color:#0b5685!important;border-color:#b9ccdc!important
     }
-    .pinnacle-income-source-head{
-      display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:16px 18px;
-      background:linear-gradient(90deg,#f6fafc 0%,#eaf4fa 100%);border-bottom:1px solid #d6e4ee
+    .pinnacle-income-source-actions button.danger{
+      background:#a52b2f!important;color:#fff!important;border-color:#a52b2f!important
     }
-    .pinnacle-income-source-head h4{margin:0;color:#082f50;font-size:17px}
-    .pinnacle-income-source-head p{margin:5px 0 0;color:#607789;font-size:13px}
-    .pinnacle-income-badge{
-      display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border-radius:999px;
-      background:#0b5d8d;color:#fff;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em
+    @media(max-width:1180px){
+      .pinnacle-income-source-summary{flex-wrap:wrap}
+      .pinnacle-income-source-primary{flex-basis:calc(100% - 340px)}
+      .pinnacle-income-source-actions{margin-left:0}
     }
-    .pinnacle-income-source-body{
-      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;padding:15px 18px
+    @media(max-width:900px){
+      .pinnacle-income-source-primary{flex:1 1 100%;min-width:100%}
+      .pinnacle-income-source-actions{flex:1 1 100%;justify-content:flex-start}
     }
-    .pinnacle-income-metric span{display:block;color:#718596;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
-    .pinnacle-income-metric strong{display:block;margin-top:5px;color:#173e5c;font-size:15px}
-    .pinnacle-source-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 16px}
+    @media(max-width:620px){
+      .pinnacle-income-source-summary{align-items:flex-start}
+      .pinnacle-income-source-compact-metric{flex:1 1 calc(50% - 8px)}
+      .pinnacle-income-source-actions button{flex:1 1 calc(50% - 6px)}
+      .pinnacle-income-source-actions{flex-wrap:wrap}
+    }
     .pinnacle-income-modal[hidden]{display:none}
     .pinnacle-income-modal{
       position:fixed;inset:0;z-index:3000;display:grid;place-items:center;padding:20px;
@@ -4073,7 +4084,7 @@
         <div class="pinnacle-income-summary">
           <div class="pinnacle-income-stat"><span>Income Sources</span><strong id="pinnacleIncomeSourceCount">0</strong></div>
           <div class="pinnacle-income-stat"><span>Year-to-Date Income</span><strong id="pinnacleIncomeYtdTotal">$0</strong></div>
-          <div class="pinnacle-income-stat"><span>Expected Full-Year Income</span><strong id="pinnacleIncomeAnnualTotal">$0</strong></div>
+          <div class="pinnacle-income-stat" id="pinnacleIncomeAnnualStat" hidden><span>Projected Year-End Income</span><strong id="pinnacleIncomeAnnualTotal">$0</strong></div>
           <div class="pinnacle-income-stat"><span>Federal Withholding</span><strong id="pinnacleIncomeWithholdingTotal">$0</strong></div>
         </div>
 
@@ -4161,7 +4172,7 @@
               <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeYtd" name="ytd" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
-              <label for="pinnacleIncomeExpected">Expected full-year income</label>
+              <label for="pinnacleIncomeExpected">Projected year-end income</label>
               <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeExpected" name="expected" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
@@ -9111,44 +9122,66 @@
         return nameMatch && monthMatch && yearMatch;
       });
 
+      const annualTotal=filtered.reduce((sum,item)=>sum+Number(item.expected||0),0);
       document.getElementById("pinnacleIncomeSourceCount").textContent=String(filtered.length);
-      document.getElementById("pinnacleIncomeYtdTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.ytd||0),0));
-      document.getElementById("pinnacleIncomeAnnualTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.expected||0),0));
-      document.getElementById("pinnacleIncomeWithholdingTotal").textContent=pinnacleMoney(filtered.reduce((s,x)=>s+Number(x.federalWithholding||0),0));
+      document.getElementById("pinnacleIncomeYtdTotal").textContent=pinnacleMoney(filtered.reduce((sum,item)=>sum+Number(item.ytd||0),0));
+      document.getElementById("pinnacleIncomeAnnualTotal").textContent=pinnacleMoney(annualTotal);
+      document.getElementById("pinnacleIncomeWithholdingTotal").textContent=pinnacleMoney(filtered.reduce((sum,item)=>sum+Number(item.federalWithholding||0),0));
+      const annualStat=document.getElementById("pinnacleIncomeAnnualStat");
+      if(annualStat)annualStat.hidden=annualTotal<=0;
 
       if(!filtered.length){
         list.innerHTML='<div class="pinnacle-income-empty">No income sources match the current month, year, or search filter.</div>';
         return;
       }
 
-      const collapsed=loadPinnacleIncomeCollapseState();
-      list.innerHTML=filtered.map(item=>{
-        const isCollapsed=collapsed[item.id]!==false;
+      list.innerHTML=filtered.map((item)=>{
+        const trackedExpenses=getPinnacleExpenseTotalForSource(item.id);
+        const totalWithholding=Number(item.federalWithholding||0)+Number(item.stateWithholding||0);
+        const projected=Number(item.expected||0);
+        const entryDate=item.entryDate
+          ? new Date(item.entryDate+"T00:00:00").toLocaleDateString()
+          : "Date not entered";
+        const updatedDate=item.updatedAt
+          ? new Date(item.updatedAt).toLocaleDateString()
+          : "Not available";
+        const details=[
+          item.type||"Other Income",
+          item.owner||"Owner not selected",
+          item.frequency||"Frequency not selected",
+          `Entry ${entryDate}`,
+          `Updated ${updatedDate}`
+        ].map((value)=>escapeHtml(value)).join(" · ");
+
         return `
-        <article class="pinnacle-income-source-card ${isCollapsed?"is-collapsed":""}" data-income-card="${escapeHtml(item.id)}">
-          <div class="pinnacle-income-source-head">
-            <div class="pinnacle-income-source-summary">
-              <div class="pinnacle-income-source-primary">
-                <h4>${escapeHtml(item.name||"Income Source")}</h4>
-                <p>${escapeHtml(item.type||"Other Income")} · ${escapeHtml(item.owner||"Owner not selected")}</p>
-              </div>
-              <div class="pinnacle-income-source-compact-metric"><span>YTD Income</span><strong>${pinnacleMoney(item.ytd)}</strong></div>
-              <div class="pinnacle-income-source-compact-metric"><span>Expected Full Year</span><strong>${pinnacleMoney(item.expected)}</strong></div>
-              <button type="button" class="pinnacle-income-expand" data-income-toggle="${escapeHtml(item.id)}">${isCollapsed?"Expand":"Minimize"}</button>
+        <article class="pinnacle-income-source-card" data-income-card="${escapeHtml(item.id)}">
+          <div class="pinnacle-income-source-summary">
+            <div class="pinnacle-income-source-primary">
+              <h4>${escapeHtml(item.name||"Income Source")}</h4>
+              <p>${details}</p>
             </div>
-          </div>
-          <div class="pinnacle-income-source-body">
-            <div class="pinnacle-income-metric"><span>Federal Withholding</span><strong>${pinnacleMoney(item.federalWithholding)}</strong></div>
-            <div class="pinnacle-income-metric"><span>State Withholding</span><strong>${pinnacleMoney(item.stateWithholding)}</strong></div>
-            <div class="pinnacle-income-metric"><span>Tracked Expenses</span><strong>${pinnacleMoney(getPinnacleExpenseTotalForSource(item.id))}</strong></div>
-            <div class="pinnacle-income-metric"><span>Income Frequency</span><strong>${escapeHtml(item.frequency||"Not selected")}</strong></div>
-            <div class="pinnacle-income-metric"><span>Entry Date</span><strong>${item.entryDate?new Date(item.entryDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
-            <div class="pinnacle-income-metric"><span>Last Updated</span><strong>${item.updatedAt?new Date(item.updatedAt).toLocaleDateString():"Not available"}</strong></div>
-          </div>
-          <div class="pinnacle-source-row pinnacle-source-secondary-actions">
-            <button type="button" data-income-edit="${escapeHtml(item.id)}">Edit</button>
-            <button type="button" class="secondary" data-income-duplicate="${escapeHtml(item.id)}">Duplicate</button>
-            <button type="button" class="secondary" data-income-delete="${escapeHtml(item.id)}">Delete</button>
+            <div class="pinnacle-income-source-compact-metric">
+              <span>YTD Income</span>
+              <strong>${pinnacleMoney(item.ytd)}</strong>
+            </div>
+            <div class="pinnacle-income-source-compact-metric">
+              <span>Tracked Expenses</span>
+              <strong>${pinnacleMoney(trackedExpenses)}</strong>
+            </div>
+            <div class="pinnacle-income-source-compact-metric" ${totalWithholding>0?"":"hidden"}>
+              <span>Total Withholding</span>
+              <strong>${pinnacleMoney(totalWithholding)}</strong>
+            </div>
+            <div class="pinnacle-income-source-compact-metric optional-projection" ${projected>0?"":"hidden"}>
+              <span>Projected Year-End</span>
+              <strong>${pinnacleMoney(projected)}</strong>
+            </div>
+            <div class="pinnacle-income-source-actions">
+              <button type="button" class="secondary" data-income-expenses="${escapeHtml(item.id)}">Manage Expenses</button>
+              <button type="button" data-income-edit="${escapeHtml(item.id)}">Edit</button>
+              <button type="button" class="secondary" data-income-duplicate="${escapeHtml(item.id)}">Duplicate</button>
+              <button type="button" class="danger" data-income-delete="${escapeHtml(item.id)}">Delete</button>
+            </div>
           </div>
         </article>`;
       }).join("");
@@ -9182,14 +9215,14 @@
         if(dateField && !dateField.value){
           const fallbackDate=item.updatedAt?new Date(item.updatedAt):new Date();
           dateField.value=Number.isNaN(fallbackDate.getTime())
-            ? new Date().toISOString().slice(0,10)
-            : fallbackDate.toISOString().slice(0,10);
+            ? getPinnacleLocalDateValue()
+            : `${fallbackDate.getFullYear()}-${String(fallbackDate.getMonth()+1).padStart(2,"0")}-${String(fallbackDate.getDate()).padStart(2,"0")}`;
         }
         formatPinnacleCurrencyInputsInScope(form);
       }else{
         const dateField=document.getElementById("pinnacleIncomeEntryDate");
         if(dateField && !dateField.value){
-          dateField.value=new Date().toISOString().slice(0,10);
+          dateField.value=getPinnacleLocalDateValue();
         }
       }
       updatePinnacleIncomeExpenseSummary(item);
@@ -9240,36 +9273,42 @@
       );
     }
     function handlePinnacleIncomeListClick(event){
-      const toggle=event.target.closest("[data-income-toggle]");
+      const expenses=event.target.closest("[data-income-expenses]");
       const edit=event.target.closest("[data-income-edit]");
       const duplicate=event.target.closest("[data-income-duplicate]");
       const remove=event.target.closest("[data-income-delete]");
       const items=loadPinnacleIncomeSources();
 
-      if(toggle){
-        const state=loadPinnacleIncomeCollapseState();
-        const id=toggle.dataset.incomeToggle;
-        state[id]=state[id]===false;
-        savePinnacleIncomeCollapseState(state);
-        renderPinnacleIncomeSources();
+      if(expenses){
+        openPinnacleExpenseTrackerForSource(expenses.dataset.incomeExpenses||"");
         return;
       }
-
       if(edit){
-        const item=items.find(x=>x.id===edit.dataset.incomeEdit);
+        const item=items.find((entry)=>entry.id===edit.dataset.incomeEdit);
         if(item)openPinnacleIncomeModal(item);
+        return;
       }
       if(duplicate){
-        const item=items.find(x=>x.id===duplicate.dataset.incomeDuplicate);
+        const item=items.find((entry)=>entry.id===duplicate.dataset.incomeDuplicate);
         if(item){
           const copy={...item,id:`INC-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,name:`${item.name} Copy`,updatedAt:new Date().toISOString()};
-          items.unshift(copy);savePinnacleIncomeSources(items);refreshPinnacleExpenseSourceOptions();renderPinnacleIncomeSources();renderPinnacleExpenses();renderPinnacleFinancialSnapshot();
+          items.unshift(copy);
+          savePinnacleIncomeSources(items);
+          refreshPinnacleExpenseSourceOptions();
+          renderPinnacleIncomeSources();
+          renderPinnacleExpenses();
+          renderPinnacleFinancialSnapshot();
         }
+        return;
       }
       if(remove){
         const id=remove.dataset.incomeDelete;
-        const next=items.filter(x=>x.id!==id);
-        savePinnacleIncomeSources(next);refreshPinnacleExpenseSourceOptions();renderPinnacleIncomeSources();renderPinnacleExpenses();renderPinnacleFinancialSnapshot();
+        const next=items.filter((entry)=>entry.id!==id);
+        savePinnacleIncomeSources(next);
+        refreshPinnacleExpenseSourceOptions();
+        renderPinnacleIncomeSources();
+        renderPinnacleExpenses();
+        renderPinnacleFinancialSnapshot();
       }
     }
 
