@@ -8829,10 +8829,10 @@
       e.preventDefault();const d=collectPinnacleBusinessDraft();
       if(!d.structure){showPinnacleBusinessStatus("Select the current business structure before saving.",{duration:5000});return}
       if(!String(d.fields.legalName||"").trim()){showPinnacleBusinessStatus("Enter the legal business name before saving.",{duration:5000});document.getElementById("pinnacleBusinessLegalName")?.focus();return}
-      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));showPinnacleBusinessStatus("Business profile has been saved.",{duration:3200});updatePinnacleBusinessProgress();updatePinnacleBusinessProfileAccess();
+      localStorage.setItem(PINNACLE_BUSINESS_DRAFT_KEY,JSON.stringify(d));schedulePinnacleWorkspaceSave();showPinnacleBusinessStatus("Business profile has been saved.",{duration:3200});updatePinnacleBusinessProgress();updatePinnacleBusinessProfileAccess();
     }
     function clearPinnacleBusinessDraft(){
-      localStorage.removeItem(PINNACLE_BUSINESS_DRAFT_KEY);document.getElementById("pinnacleBusinessProfileForm")?.reset();
+      localStorage.removeItem(PINNACLE_BUSINESS_DRAFT_KEY);schedulePinnacleWorkspaceSave();document.getElementById("pinnacleBusinessProfileForm")?.reset();
       document.querySelectorAll('input[name="pinnacleBusinessStructure"]').forEach(r=>r.checked=false);
       showPinnacleBusinessStatus("Draft cleared.",{duration:2600});updatePinnacleBusinessFields();updatePinnacleBusinessProfileAccess();
     }
@@ -8852,6 +8852,7 @@
     }
     function savePinnacleIncomeSources(items){
       localStorage.setItem(PINNACLE_INCOME_SOURCES_KEY,JSON.stringify(items));
+      schedulePinnacleWorkspaceSave();
     }
     let pinnacleIncomePageStatusTimer=null;
     function showPinnacleIncomePageStatus(message,duration=4200){
@@ -9224,7 +9225,7 @@
 
     const PINNACLE_VEHICLE_KEY="pinnacleVehicleProfiles.v1";
     function loadPinnacleVehicles(){try{const x=JSON.parse(localStorage.getItem(PINNACLE_VEHICLE_KEY)||"[]");return Array.isArray(x)?x:[]}catch(error){return []}}
-    function savePinnacleVehicles(items){localStorage.setItem(PINNACLE_VEHICLE_KEY,JSON.stringify(items))}
+    function savePinnacleVehicles(items){localStorage.setItem(PINNACLE_VEHICLE_KEY,JSON.stringify(items));schedulePinnacleWorkspaceSave()}
     function formatPinnacleMileageNumber(value,decimals=1){
       const parsed=Number(String(value??"0").replace(/,/g,""));
       const number=Number.isFinite(parsed)?parsed:0;
@@ -9313,7 +9314,7 @@
 
     const PINNACLE_DAILY_MILEAGE_KEY="pinnacleDailyMileage.v1";
     function loadPinnacleDailyMileage(){try{const x=JSON.parse(localStorage.getItem(PINNACLE_DAILY_MILEAGE_KEY)||"[]");return Array.isArray(x)?x:[]}catch(error){return []}}
-    function savePinnacleDailyMileage(items){localStorage.setItem(PINNACLE_DAILY_MILEAGE_KEY,JSON.stringify(items))}
+    function savePinnacleDailyMileage(items){localStorage.setItem(PINNACLE_DAILY_MILEAGE_KEY,JSON.stringify(items));schedulePinnacleWorkspaceSave()}
     function getPinnacleDailyBusinessMiles(item){
       return Math.max(Number(String(item.endOdometer||"0").replace(/,/g,""))-Number(String(item.startOdometer||"0").replace(/,/g,""))-Number(item.personalMiles||0)-Number(item.commutingMiles||0),0);
     }
@@ -9325,7 +9326,165 @@
     let pinnacleMileageStatusTimer=null;
 
     function loadPinnacleTrips(){try{const x=JSON.parse(localStorage.getItem(PINNACLE_MILEAGE_KEY)||"[]");return Array.isArray(x)?x:[]}catch(error){return []}}
-    function savePinnacleTrips(items){localStorage.setItem(PINNACLE_MILEAGE_KEY,JSON.stringify(items))}
+    function savePinnacleTrips(items){localStorage.setItem(PINNACLE_MILEAGE_KEY,JSON.stringify(items));schedulePinnacleWorkspaceSave()}
+
+    let pinnacleWorkspaceHydrated=false;
+    let pinnacleWorkspaceSaveTimer=null;
+    let pinnacleWorkspaceSaveChain=Promise.resolve();
+    let pinnacleWorkspaceLastSavedSignature="";
+
+    function readPinnacleStorageValue(key,fallback){
+      try{
+        const parsed=JSON.parse(localStorage.getItem(key)||"null");
+        return parsed===null?fallback:parsed;
+      }catch(error){
+        return fallback;
+      }
+    }
+
+    function collectPinnacleWorkspaceFromStorage(){
+      return {
+        version:2,
+        businessProfile:readPinnacleStorageValue(PINNACLE_BUSINESS_DRAFT_KEY,null),
+        incomeSources:Array.isArray(readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[])
+          :[],
+        vehicles:Array.isArray(readPinnacleStorageValue(PINNACLE_VEHICLE_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_VEHICLE_KEY,[])
+          :[],
+        trips:Array.isArray(readPinnacleStorageValue(PINNACLE_MILEAGE_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_MILEAGE_KEY,[])
+          :[],
+        dailyMileage:Array.isArray(readPinnacleStorageValue(PINNACLE_DAILY_MILEAGE_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_DAILY_MILEAGE_KEY,[])
+          :[]
+      };
+    }
+
+    function pinnacleWorkspaceHasData(workspace={}){
+      return Boolean(
+        workspace?.businessProfile||
+        workspace?.incomeSources?.length||
+        workspace?.vehicles?.length||
+        workspace?.trips?.length||
+        workspace?.dailyMileage?.length
+      );
+    }
+
+    function applyPinnacleWorkspaceToStorage(workspace={}){
+      const setOrRemove=(key,value,emptyValue)=>{
+        const isEmpty=Array.isArray(emptyValue)
+          ?!Array.isArray(value)||value.length===0
+          :!value;
+        if(isEmpty)localStorage.removeItem(key);
+        else localStorage.setItem(key,JSON.stringify(value));
+      };
+
+      setOrRemove(PINNACLE_BUSINESS_DRAFT_KEY,workspace.businessProfile,null);
+      setOrRemove(PINNACLE_INCOME_SOURCES_KEY,workspace.incomeSources,[]);
+      setOrRemove(PINNACLE_VEHICLE_KEY,workspace.vehicles,[]);
+      setOrRemove(PINNACLE_MILEAGE_KEY,workspace.trips,[]);
+      setOrRemove(PINNACLE_DAILY_MILEAGE_KEY,workspace.dailyMileage,[]);
+    }
+
+    function renderPinnacleWorkspaceFromStorage(){
+      restorePinnacleBusinessDraft();
+      renderPinnacleIncomeSources();
+      renderPinnacleVehicles();
+      renderPinnacleMileage();
+      renderPinnacleDailyMileage();
+      renderPinnacleFinancialSnapshot();
+    }
+
+    async function persistPinnacleWorkspace(options={}){
+      if(!pinnacleWorkspaceHydrated&&!options.force)return null;
+      const workspace=collectPinnacleWorkspaceFromStorage();
+      const signature=JSON.stringify(workspace);
+      if(!options.force&&signature===pinnacleWorkspaceLastSavedSignature)return null;
+
+      const response=await fetch("/api/client-portal/pinnacle/workspace",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Accept:"application/json"},
+        credentials:"same-origin",
+        cache:"no-store",
+        keepalive:Boolean(options.keepalive),
+        body:JSON.stringify({workspace})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.ok){
+        throw new Error(data.error||"Your Pinnacle workspace could not be saved.");
+      }
+      pinnacleWorkspaceLastSavedSignature=signature;
+      return data.pinnacleWorkspace||workspace;
+    }
+
+    function queuePinnacleWorkspaceSave(options={}){
+      pinnacleWorkspaceSaveChain=pinnacleWorkspaceSaveChain
+        .catch(()=>null)
+        .then(()=>persistPinnacleWorkspace(options))
+        .catch((error)=>{
+          console.error("Pinnacle workspace save failed:",error);
+          showPinnacleMileageStatus(
+            "Your Pinnacle changes are still on this device, but the secure account save did not finish."
+          );
+          return null;
+        });
+      return pinnacleWorkspaceSaveChain;
+    }
+
+    function schedulePinnacleWorkspaceSave(){
+      if(!pinnacleWorkspaceHydrated)return;
+      if(pinnacleWorkspaceSaveTimer)window.clearTimeout(pinnacleWorkspaceSaveTimer);
+      pinnacleWorkspaceSaveTimer=window.setTimeout(()=>{
+        pinnacleWorkspaceSaveTimer=null;
+        queuePinnacleWorkspaceSave();
+      },250);
+    }
+
+    async function hydratePinnacleWorkspace(serverWorkspace={}){
+      const localWorkspace=collectPinnacleWorkspaceFromStorage();
+      const serverHasData=Boolean(serverWorkspace?.hasData)||pinnacleWorkspaceHasData(serverWorkspace);
+      const localHasData=pinnacleWorkspaceHasData(localWorkspace);
+
+      if(serverHasData){
+        applyPinnacleWorkspaceToStorage(serverWorkspace);
+      }
+
+      pinnacleWorkspaceHydrated=true;
+      renderPinnacleWorkspaceFromStorage();
+
+      if(serverHasData){
+        pinnacleWorkspaceLastSavedSignature=JSON.stringify(
+          collectPinnacleWorkspaceFromStorage()
+        );
+        return;
+      }
+
+      if(localHasData){
+        await queuePinnacleWorkspaceSave({force:true});
+      }else{
+        pinnacleWorkspaceLastSavedSignature=JSON.stringify(
+          collectPinnacleWorkspaceFromStorage()
+        );
+      }
+    }
+
+    window.addEventListener("pagehide",()=>{
+      if(!pinnacleWorkspaceHydrated)return;
+      if(pinnacleWorkspaceSaveTimer){
+        window.clearTimeout(pinnacleWorkspaceSaveTimer);
+        pinnacleWorkspaceSaveTimer=null;
+      }
+      const workspace=collectPinnacleWorkspaceFromStorage();
+      fetch("/api/client-portal/pinnacle/workspace",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        credentials:"same-origin",
+        keepalive:true,
+        body:JSON.stringify({workspace})
+      }).catch(()=>{});
+    });
+
     function getPinnacleBusinessMileageRate(dateValue){
       const date=String(dateValue||"");
       if(date>="2026-01-01"&&date<="2026-06-30")return 0.725;
@@ -10140,6 +10299,10 @@
       }
 
       const portal = data.portal || {};
+
+      await hydratePinnacleWorkspace(
+        portal.pinnacleWorkspace || {}
+      );
 
       if (portal.taxWatch?.membership?.exists) {
         try {

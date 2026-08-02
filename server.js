@@ -1782,6 +1782,11 @@ function mapRowToLead(row) {
       row.taxWatchMoneyTracker ||
       row.tax_watch_money_tracker ||
       null,
+    pinnacleWorkspace:
+      estimate.pinnacleWorkspace ||
+      row.pinnacleWorkspace ||
+      row.pinnacle_workspace ||
+      null,
     clientPortal: sanitizeClientPortalRecord(
       estimate.clientPortal ||
       row.clientPortal ||
@@ -4607,6 +4612,16 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativePinnacleWorkspace = {
+      ...asPlainObject(
+        mapped.pinnacleWorkspace
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.pinnacleWorkspace
+      )
+    };
+
     byId.set(leadId, {
       ...existing,
       lead: {
@@ -4645,6 +4660,12 @@ async function loadClientPortalLeadCandidates() {
             authoritativeTaxWatchMoneyTracker
           ).length
             ? authoritativeTaxWatchMoneyTracker
+            : null,
+        pinnacleWorkspace:
+          Object.keys(
+            authoritativePinnacleWorkspace
+          ).length
+            ? authoritativePinnacleWorkspace
             : null,
         status:
           existing.lead?.status ||
@@ -16479,6 +16500,186 @@ app.post(
   }
 );
 
+
+function sanitizePinnacleWorkspaceValue(
+  value,
+  depth = 0
+) {
+  if (depth > 5) {
+    return null;
+  }
+
+  if (
+    value === null ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+
+  if (
+    typeof value === "number"
+  ) {
+    return Number.isFinite(value)
+      ? value
+      : 0;
+  }
+
+  if (typeof value === "string") {
+    return value.slice(0, 2000);
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 5000)
+      .map((item) =>
+        sanitizePinnacleWorkspaceValue(
+          item,
+          depth + 1
+        )
+      );
+  }
+
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) =>
+          ![
+            "__proto__",
+            "prototype",
+            "constructor"
+          ].includes(key)
+        )
+        .slice(0, 100)
+        .map(([key, item]) => [
+          String(key).slice(0, 100),
+          sanitizePinnacleWorkspaceValue(
+            item,
+            depth + 1
+          )
+        ])
+    );
+  }
+
+  return null;
+}
+
+function normalizeClientPortalPinnacleWorkspace(
+  value = {}
+) {
+  const source =
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+      ? value
+      : {};
+
+  const normalizeList = (
+    list,
+    maximum
+  ) => (
+    Array.isArray(list)
+      ? list
+          .slice(0, maximum)
+          .map((item) =>
+            sanitizePinnacleWorkspaceValue(
+              item
+            )
+          )
+          .filter(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              !Array.isArray(item)
+          )
+      : []
+  );
+
+  const businessProfile =
+    source.businessProfile &&
+    typeof source.businessProfile ===
+      "object" &&
+    !Array.isArray(
+      source.businessProfile
+    )
+      ? sanitizePinnacleWorkspaceValue(
+          source.businessProfile
+        )
+      : null;
+
+  return {
+    version: Math.max(
+      1,
+      Number(source.version || 1)
+    ),
+    businessProfile,
+    incomeSources: normalizeList(
+      source.incomeSources,
+      250
+    ),
+    vehicles: normalizeList(
+      source.vehicles,
+      100
+    ),
+    trips: normalizeList(
+      source.trips,
+      5000
+    ),
+    dailyMileage: normalizeList(
+      source.dailyMileage,
+      5000
+    ),
+    updatedAt: String(
+      source.updatedAt || ""
+    ).slice(0, 50),
+    recoveredAt: String(
+      source.recoveredAt || ""
+    ).slice(0, 50),
+    recoveryNote: String(
+      source.recoveryNote || ""
+    ).slice(0, 300)
+  };
+}
+
+function clientPortalPinnacleWorkspaceHasData(
+  workspace = {}
+) {
+  return Boolean(
+    workspace.businessProfile ||
+    workspace.incomeSources?.length ||
+    workspace.vehicles?.length ||
+    workspace.trips?.length ||
+    workspace.dailyMileage?.length
+  );
+}
+
+function getClientPortalPinnacleWorkspace(
+  entry = {}
+) {
+  const workspace =
+    entry?.lead?.pinnacleWorkspace ||
+    entry?.raw?.estimate
+      ?.pinnacleWorkspace ||
+    entry?.raw?.pinnacleWorkspace ||
+    {};
+
+  const normalized =
+    normalizeClientPortalPinnacleWorkspace(
+      workspace
+    );
+
+  return {
+    ...normalized,
+    hasData:
+      clientPortalPinnacleWorkspaceHasData(
+        normalized
+      )
+  };
+}
+
+
 app.get(
   "/api/client-portal/session",
   requireClientPortalApiSession,
@@ -16525,6 +16726,11 @@ app.get(
           entry.leadId ===
           session.payload.accountLeadId
       ) || accessible[0];
+
+    const pinnacleWorkspace =
+      getClientPortalPinnacleWorkspace(
+        primary
+      );
 
     const documentCenter =
       await getClientPortalDocumentCenterState(
@@ -16663,7 +16869,78 @@ app.get(
         extensionRequests,
         transcriptRequests,
         taxWatch,
+        pinnacleWorkspace,
         documentCenter
+      }
+    });
+  }
+);
+
+
+
+app.post(
+  "/api/client-portal/pinnacle/workspace",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const session =
+      req.clientPortalSession;
+    const accountLeadId = String(
+      session.payload?.accountLeadId ||
+      ""
+    ).trim();
+
+    if (!accountLeadId) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "Your Pinnacle workspace could not be linked to this portal account."
+      });
+    }
+
+    const requestedWorkspace =
+      normalizeClientPortalPinnacleWorkspace(
+        req.body?.workspace || {}
+      );
+    const now =
+      new Date().toISOString();
+    const savedWorkspace = {
+      ...requestedWorkspace,
+      version: 2,
+      updatedAt: now
+    };
+
+    const updateResult =
+      await updateLeadAfterStripePayment(
+        accountLeadId,
+        (record = {}) => ({
+          ...record,
+          pinnacleWorkspace:
+            savedWorkspace,
+          updatedAt: now
+        })
+      );
+
+    if (!updateResult.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "Your Pinnacle workspace could not be saved."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your Pinnacle workspace was saved securely.",
+      pinnacleWorkspace: {
+        ...savedWorkspace,
+        hasData:
+          clientPortalPinnacleWorkspaceHasData(
+            savedWorkspace
+          )
       }
     });
   }
