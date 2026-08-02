@@ -4049,7 +4049,6 @@
             <span class="pinnacle-save-status" id="pinnacleBusinessSaveStatus" role="status" aria-live="polite"></span>
           </div>
         </form>
-        <div class="pinnacle-safety-note"><strong>Business-structure notice:</strong> Pinnacle uses this information to organize planning questions. It does not create an entity, make a tax election, or provide a final legal determination.</div>
       </div>
     </section>
 
@@ -4199,7 +4198,7 @@
         <div>
           <div class="eyebrow">Pinnacle Business Tracking</div>
           <h2>Expense Tracker</h2>
-          <p>Add, categorize, review, and correct individual business expenses without hiding them inside an income-source form.</p>
+          <p>Add, categorize, review, and correct individual business expenses in one place.</p>
         </div>
         <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
       </div>
@@ -4236,7 +4235,7 @@
           <div class="pinnacle-expense-filter"><label for="pinnacleExpenseSourceFilter">Income source</label><select id="pinnacleExpenseSourceFilter"><option value="">All income sources</option></select></div>
           <div class="pinnacle-expense-filter"><label for="pinnacleExpenseMonth">Month</label><select id="pinnacleExpenseMonth"><option value="">All months</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
           <div class="pinnacle-expense-filter"><label for="pinnacleExpenseYear">Tax year</label><select id="pinnacleExpenseYear"><option value="">All years</option></select></div>
-          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseStatusFilter">Record status</label><select id="pinnacleExpenseStatusFilter"><option value="active">Active</option><option value="voided">Deleted / voided</option><option value="all">All records</option></select></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseStatusFilter">Record status</label><select id="pinnacleExpenseStatusFilter"><option value="active">Active</option><option value="voided">Voided</option><option value="all">All records</option></select></div>
         </div>
 
         <div class="pinnacle-expense-list" id="pinnacleExpenseList">
@@ -4268,13 +4267,13 @@
 
     <div class="pinnacle-expense-modal" id="pinnacleExpenseDeleteModal" hidden>
       <div class="pinnacle-expense-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleExpenseDeleteTitle">
-        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleExpenseDeleteTitle">Delete Expense</h3><button type="button" id="pinnacleExpenseDeleteClose" aria-label="Close">×</button></div>
+        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleExpenseDeleteTitle">Void Expense</h3><button type="button" id="pinnacleExpenseDeleteClose" aria-label="Close">×</button></div>
         <form class="pinnacle-expense-dialog-body" id="pinnacleExpenseDeleteForm" novalidate>
           <input type="hidden" id="pinnacleExpenseDeleteId" name="id">
           <p class="pinnacle-expense-delete-copy" id="pinnacleExpenseDeleteCopy">This expense will be removed from active totals and retained in the audit history.</p>
-          <div class="pinnacle-expense-field full"><label for="pinnacleExpenseDeleteReason">Reason for deleting this expense</label><textarea id="pinnacleExpenseDeleteReason" name="reason" placeholder="Example: Duplicate entry or wrong business amount"></textarea></div>
+          <div class="pinnacle-expense-field full"><label for="pinnacleExpenseDeleteReason">Reason for voiding this expense</label><textarea id="pinnacleExpenseDeleteReason" name="reason" placeholder="Example: Duplicate entry or wrong business amount"></textarea></div>
           <div class="pinnacle-expense-form-status" id="pinnacleExpenseDeleteStatus" role="status" aria-live="polite"></div>
-          <div class="pinnacle-expense-actions"><button type="submit" class="danger">Delete Expense</button><button type="button" class="secondary" id="pinnacleExpenseDeleteCancel">Cancel</button></div>
+          <div class="pinnacle-expense-actions"><button type="submit" class="danger">Void Expense</button><button type="button" class="secondary" id="pinnacleExpenseDeleteCancel">Cancel</button></div>
         </form>
       </div>
     </div>
@@ -9460,11 +9459,11 @@
             <div class="pinnacle-expense-metric"><span>Amount</span><strong>${pinnacleMoney(item.amount)}</strong></div>
             <div class="pinnacle-expense-metric"><span>Payment</span><strong>${escapeHtml(item.paymentMethod||"Not recorded")}</strong></div>
             <div class="pinnacle-expense-metric"><span>Receipt</span><strong>${escapeHtml(receiptLabels[item.receiptStatus]||"Not recorded")}</strong></div>
-            <div class="pinnacle-expense-metric"><span>Status</span><strong>${isVoided?"Deleted / voided":"Active"}</strong></div>
-            <div class="pinnacle-expense-row-actions">${isVoided?"":`<button type="button" data-expense-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="danger" data-expense-delete="${escapeHtml(item.id)}">Delete</button>`}</div>
+            <div class="pinnacle-expense-metric"><span>Status</span><strong>${isVoided?"Voided":"Active"}</strong></div>
+            <div class="pinnacle-expense-row-actions">${isVoided?"":`<button type="button" data-expense-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="danger" data-expense-delete="${escapeHtml(item.id)}">Void</button>`}</div>
           </div>
           ${item.notes?`<div class="pinnacle-expense-audit"><strong>Notes:</strong> ${escapeHtml(item.notes)}</div>`:""}
-          ${isVoided?`<div class="pinnacle-expense-audit"><strong>Deleted:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:""}
+          ${isVoided?`<div class="pinnacle-expense-audit"><strong>Voided:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:""}
         </article>`;
       }).join("");
     }
@@ -9548,7 +9547,7 @@
       event.preventDefault();
       const data=Object.fromEntries(new FormData(event.currentTarget).entries());
       const reason=String(data.reason||"").trim();
-      if(!reason)return showPinnacleExpenseFormStatus("Enter the reason for deleting this expense.","pinnacleExpenseDeleteStatus");
+      if(!reason)return showPinnacleExpenseFormStatus("Enter the reason for voiding this expense.","pinnacleExpenseDeleteStatus");
       const items=loadPinnacleExpenses();
       const index=items.findIndex((item)=>item.id===data.id);
       if(index<0)return showPinnacleExpenseFormStatus("The expense record could not be found.","pinnacleExpenseDeleteStatus");
@@ -9559,7 +9558,7 @@
       renderPinnacleExpenses();
       renderPinnacleIncomeSources();
       renderPinnacleFinancialSnapshot();
-      showPinnacleExpensePageStatus("Expense deleted from active totals. The audit record was retained.");
+      showPinnacleExpensePageStatus("Expense voided and removed from active totals. The audit record was retained.");
     }
     function handlePinnacleExpenseListClick(event){
       const edit=event.target.closest("[data-expense-edit]");
