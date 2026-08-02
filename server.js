@@ -16619,6 +16619,10 @@ function normalizeClientPortalPinnacleWorkspace(
       source.incomeSources,
       250
     ),
+    expenses: normalizeList(
+      source.expenses,
+      5000
+    ),
     vehicles: normalizeList(
       source.vehicles,
       100
@@ -16649,6 +16653,7 @@ function clientPortalPinnacleWorkspaceHasData(
   return Boolean(
     workspace.businessProfile ||
     workspace.incomeSources?.length ||
+    workspace.expenses?.length ||
     workspace.vehicles?.length ||
     workspace.trips?.length ||
     workspace.dailyMileage?.length
@@ -16907,7 +16912,7 @@ app.post(
       new Date().toISOString();
     const savedWorkspace = {
       ...requestedWorkspace,
-      version: 2,
+      version: 3,
       updatedAt: now
     };
 

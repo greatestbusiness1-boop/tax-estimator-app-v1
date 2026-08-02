@@ -1804,6 +1804,56 @@
     .pinnacle-mileage-rate-note{padding:12px 14px;border-left:4px solid #c99a2e;background:#fff8e8;color:#6b4e0c;line-height:1.5}
     @media(max-width:1120px){.pinnacle-mileage-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pinnacle-trip-head{grid-template-columns:1fr 1fr 1fr}.pinnacle-trip-actions{grid-column:1/-1}}
     @media(max-width:760px){.pinnacle-mileage-page .section-body{padding:16px}.pinnacle-mileage-summary,.pinnacle-mileage-filters,.pinnacle-mileage-form-grid,.pinnacle-trip-head{grid-template-columns:1fr}.pinnacle-mileage-field.wide{grid-column:auto}}
+
+    .pinnacle-linked-expense-summary{display:grid;gap:7px;padding:11px 12px;border:1px solid #c9dce8;border-radius:10px;background:#f7fbfd}
+    .pinnacle-linked-expense-summary strong{color:#082f50;font-size:18px}
+    .pinnacle-linked-expense-summary button{min-height:36px;padding:7px 10px;border:1px solid #0b5d8d;border-radius:8px;background:#fff;color:#0b5685;font-weight:850;cursor:pointer}
+    .pinnacle-linked-expense-summary button[disabled]{cursor:not-allowed;color:#778a98;border-color:#cbd7df;background:#eef3f6}
+    .pinnacle-linked-expense-summary small{color:#687e90;line-height:1.4}
+    .pinnacle-expense-page .section-body{padding:26px}
+    .pinnacle-expense-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+    .pinnacle-expense-stat{padding:17px;border:1px solid #c4d8e6;border-radius:15px;background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%)}
+    .pinnacle-expense-stat span{display:block;color:#687d8e;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+    .pinnacle-expense-stat strong{display:block;margin-top:7px;color:#082f50;font-size:21px}
+    .pinnacle-expense-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:18px 20px;border:1px solid #c7dae7;border-radius:16px;background:#f5f9fc;margin-bottom:14px}
+    .pinnacle-expense-toolbar h3{margin:0 0 5px;color:#0a3154}.pinnacle-expense-toolbar p{margin:0;color:#5c7183}
+    .pinnacle-expense-toolbar-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .pinnacle-expense-toolbar button,.pinnacle-expense-actions button,.pinnacle-expense-row-actions button{min-height:42px;padding:9px 14px;border:1px solid #0b5d8d;border-radius:9px;background:#0b5d8d;color:#fff;font-weight:800;cursor:pointer}
+    .pinnacle-expense-actions button.secondary,.pinnacle-expense-row-actions button.secondary{background:#fff;color:#0b5685;border-color:#b9ccdc}
+    .pinnacle-expense-actions button.danger,.pinnacle-expense-row-actions button.danger{background:#922f2f;border-color:#922f2f;color:#fff}
+    .pinnacle-expense-status{display:none;min-height:42px;padding:10px 13px;border:1px solid #9fc9ad;border-radius:10px;background:#edf9f1;color:#0d6635;font-size:13px;font-weight:900}
+    .pinnacle-expense-filters{display:grid;grid-template-columns:minmax(210px,1.25fr) repeat(5,minmax(125px,.7fr));gap:12px;padding:15px 18px;border:1px solid #c7dae7;border-radius:16px;background:#fbfdfe;margin-bottom:16px}
+    .pinnacle-expense-filter{display:flex;flex-direction:column;gap:7px}.pinnacle-expense-filter.wide{min-width:220px}
+    .pinnacle-expense-filter label{font-size:12px;font-weight:850;color:#173e5c}
+    .pinnacle-expense-filter input,.pinnacle-expense-filter select{min-height:42px;padding:9px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit}
+    .pinnacle-expense-list{display:grid;gap:10px}
+    .pinnacle-expense-empty{padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083}
+    .pinnacle-expense-card{border:1px solid #c7dae7;border-radius:14px;background:#fff;overflow:hidden}
+    .pinnacle-expense-card.is-voided{opacity:.76}
+    .pinnacle-expense-row{display:grid;grid-template-columns:minmax(190px,1.25fr) repeat(5,minmax(105px,.72fr)) auto;gap:12px;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%)}
+    .pinnacle-expense-row h4{margin:0;color:#082f50;font-size:16px}.pinnacle-expense-row p{margin:4px 0 0;color:#607789;font-size:12px}
+    .pinnacle-expense-metric span{display:block;color:#718596;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+    .pinnacle-expense-metric strong{display:block;margin-top:4px;color:#173e5c;font-size:14px;overflow-wrap:anywhere}
+    .pinnacle-expense-row-actions{display:flex;gap:7px;flex-wrap:wrap}.pinnacle-expense-row-actions button{min-height:36px;padding:7px 10px;font-size:12px}
+    .pinnacle-expense-audit{padding:10px 16px;border-top:1px solid #d9e6ee;background:#fff8e8;color:#6b4e0c;font-size:12px;line-height:1.45}
+    .pinnacle-expense-modal[hidden]{display:none}
+    .pinnacle-expense-modal{position:fixed;inset:0;z-index:3250;display:grid;place-items:center;padding:20px;background:rgba(5,31,53,.58)}
+    .pinnacle-expense-dialog{width:min(920px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 28px 70px rgba(0,0,0,.25)}
+    .pinnacle-expense-delete-dialog{width:min(620px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 28px 70px rgba(0,0,0,.25)}
+    .pinnacle-expense-dialog-head{display:flex;justify-content:space-between;align-items:center;padding:18px 21px;background:#0d3557;color:#fff}
+    .pinnacle-expense-dialog-head h3{margin:0}.pinnacle-expense-dialog-head button{width:38px;height:38px;border:1px solid rgba(255,255,255,.55);border-radius:9px;background:transparent;color:#fff;font-size:22px;cursor:pointer}
+    .pinnacle-expense-dialog-body{padding:22px}
+    .pinnacle-expense-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+    .pinnacle-expense-field{display:flex;flex-direction:column;gap:7px}.pinnacle-expense-field.full{grid-column:1/-1}
+    .pinnacle-expense-field label{color:#183e5c;font-size:13px;font-weight:800}
+    .pinnacle-expense-field input,.pinnacle-expense-field select,.pinnacle-expense-field textarea{width:100%;min-height:44px;padding:10px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit}
+    .pinnacle-expense-field textarea{min-height:86px;resize:vertical}
+    .pinnacle-expense-form-status{display:none;margin-top:14px;padding:10px 12px;border-radius:9px;background:#fff0f0;border:1px solid #e0aaaa;color:#8c2e2e;font-size:13px;font-weight:800}
+    .pinnacle-expense-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+    .pinnacle-expense-delete-copy{margin:0 0 16px;color:#425f75;line-height:1.55}
+    @media(max-width:1180px){.pinnacle-expense-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row-actions{grid-column:1/-1}}
+    @media(max-width:760px){.pinnacle-expense-page .section-body{padding:16px}.pinnacle-expense-summary,.pinnacle-expense-filters,.pinnacle-expense-form-grid,.pinnacle-expense-row{grid-template-columns:1fr}}
+
     .pinnacle-financial-page .section-body{padding:26px}
     .pinnacle-financial-control-bar{
       display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;
@@ -3114,10 +3164,10 @@
           </button>
           <div class="portal-submenu" id="pinnacleMenu">
             <button type="button" data-portal-open="pinnacle">Pinnacle Overview</button>
-            <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
-            <button type="button" data-portal-open="pinnacle-income-sources">Jobs, Gigs &amp; Business Income</button>
-            <button type="button" data-portal-open="pinnacle-financial-snapshot">Business Financial Snapshot</button>
+            <button type="button" data-portal-open="pinnacle-income-sources">Income Tracker</button>
+            <button type="button" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
             <button type="button" data-portal-open="pinnacle-mileage-tracker">Mileage Tracker</button>
+            <button type="button" data-portal-open="pinnacle-financial-snapshot">Business Financial Snapshot</button>
           </div>
         </div>
 
@@ -3152,6 +3202,7 @@
           </button>
           <div class="portal-submenu" id="accountSecurityMenu">
             <button type="button" data-portal-open="account">Profile &amp; Portal Access</button>
+            <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
             <button type="button" data-portal-open="billing-history">Billing &amp; Payment History</button>
             <button type="button" data-portal-open="questions">Questions &amp; Comments</button>
           </div>
@@ -3858,7 +3909,8 @@
           </div>
           <div class="pinnacle-profile-card-actions">
             <button type="button" data-portal-open="pinnacle-business-profile" id="pinnacleBusinessProfileStatusButton">Open / Edit Business Profile</button>
-            <button type="button" class="secondary" data-portal-open="pinnacle-income-sources">Manage Income Sources</button>
+            <button type="button" class="secondary" data-portal-open="pinnacle-income-sources">Income Tracker</button>
+            <button type="button" class="secondary" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
           </div>
         </div>
 
@@ -3879,6 +3931,7 @@
               <li>Unlimited businesses and income sources</li>
               <li>Business profiles with structure and ownership details</li>
               <li>Financial Snapshot with Safe to Spend planning</li>
+              <li>Expense Tracker with categorized, source-linked records</li>
               <li>Vehicle Profiles with a primary active vehicle</li>
               <li>Mileage Tracker with individual trips and daily odometer logs</li>
             </ul>
@@ -3928,11 +3981,11 @@
     <section class="section portal-view pinnacle-business-page" id="pinnacleBusinessProfile" data-portal-view="pinnacle-business-profile">
       <div class="section-head">
         <div>
-          <div class="eyebrow">Pinnacle Setup · Step 1</div>
-          <h2>Tell Us About Your Business</h2>
-          <p>Select the option that best matches how this business is currently organized and taxed.</p>
+          <div class="eyebrow">Account &amp; Security</div>
+          <h2>Business Profile</h2>
+          <p>Review the stable business information used across Pinnacle and professional-service workflows.</p>
         </div>
-        <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
+        <button class="portal-back-button" type="button" data-portal-open="account">Return to Account &amp; Security</button>
       </div>
       <div class="section-body">
         <div class="pinnacle-business-intro">
@@ -3984,7 +4037,7 @@
           <div class="pinnacle-business-actions">
             <button type="submit">Save Business Profile</button>
             <button class="secondary" type="button" id="pinnacleBusinessClear">Clear This Draft</button>
-            <button class="secondary" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
+            <button class="secondary" type="button" data-portal-open="account">Return to Account &amp; Security</button>
             <span class="pinnacle-save-status" id="pinnacleBusinessSaveStatus" role="status" aria-live="polite"></span>
           </div>
         </form>
@@ -3996,9 +4049,9 @@
     <section class="section portal-view pinnacle-income-page" id="pinnacleIncomeSources" data-portal-view="pinnacle-income-sources">
       <div class="section-head">
         <div>
-          <div class="eyebrow">Pinnacle Setup · Step 2</div>
-          <h2>Jobs, Gigs &amp; Business Income</h2>
-          <p>Add every source of income you expect to receive during the tax year. Pinnacle supports unlimited income sources.</p>
+          <div class="eyebrow">Pinnacle Business Tracking</div>
+          <h2>Income Tracker</h2>
+          <p>Add and maintain each job, gig, or business income source in one place.</p>
         </div>
         <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
       </div>
@@ -4110,8 +4163,12 @@
               <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeStateWithholding" name="stateWithholding" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
             <div class="pinnacle-income-field">
-              <label for="pinnacleIncomeExpenses">Business expenses entered so far</label>
-              <div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleIncomeExpenses" name="expenses" type="text" inputmode="decimal" placeholder="0.00"></div>
+              <label>Tracked expenses</label>
+              <div class="pinnacle-linked-expense-summary">
+                <strong id="pinnacleIncomeTrackedExpenses">$0.00</strong>
+                <button type="button" id="pinnacleIncomeManageExpenses">Manage Expenses</button>
+                <small id="pinnacleIncomeExpenseHelp">Save this income source first, then add individual expenses in Expense Tracker.</small>
+              </div>
             </div>
             <div class="pinnacle-income-field full">
               <label for="pinnacleIncomeNotes">Notes</label>
@@ -4124,6 +4181,84 @@
             <button type="button" class="secondary" id="pinnacleIncomeCancel">Cancel</button>
             <span class="pinnacle-income-save-status" id="pinnacleIncomeSaveStatus" role="status" aria-live="polite"></span>
           </div>
+        </form>
+      </div>
+    </div>
+
+
+    <section class="section portal-view pinnacle-expense-page" id="pinnacleExpenseTracker" data-portal-view="pinnacle-expense-tracker">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Pinnacle Business Tracking</div>
+          <h2>Expense Tracker</h2>
+          <p>Add, categorize, review, and correct individual business expenses without hiding them inside an income-source form.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
+      </div>
+      <div class="section-body">
+        <div class="pinnacle-expense-summary">
+          <div class="pinnacle-expense-stat"><span>Expenses Shown</span><strong id="pinnacleExpenseTotal">$0.00</strong></div>
+          <div class="pinnacle-expense-stat"><span>Active Records</span><strong id="pinnacleExpenseCount">0</strong></div>
+          <div class="pinnacle-expense-stat"><span>Receipts Available</span><strong id="pinnacleExpenseReceiptCount">0</strong></div>
+          <div class="pinnacle-expense-stat"><span>Needs Source Review</span><strong id="pinnacleExpenseUnassignedTotal">$0.00</strong></div>
+        </div>
+
+        <div class="pinnacle-expense-toolbar">
+          <div>
+            <h3>Business Expense Records</h3>
+            <p>Each record rolls into the correct income source and Business Financial Snapshot.</p>
+          </div>
+          <div class="pinnacle-expense-toolbar-actions">
+            <div class="pinnacle-expense-status" id="pinnacleExpensePageStatus" role="status" aria-live="polite"></div>
+            <button type="button" id="pinnacleAddExpense">Add Expense</button>
+          </div>
+        </div>
+
+        <div class="pinnacle-expense-filters">
+          <div class="pinnacle-expense-filter wide"><label for="pinnacleExpenseSearch">Search expenses</label><input id="pinnacleExpenseSearch" type="search" placeholder="Search vendor, category, source, or notes"></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseCategoryFilter">Category</label><select id="pinnacleExpenseCategoryFilter"><option value="">All categories</option></select></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseSourceFilter">Income source</label><select id="pinnacleExpenseSourceFilter"><option value="">All income sources</option></select></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseMonth">Month</label><select id="pinnacleExpenseMonth"><option value="">All months</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseYear">Tax year</label><select id="pinnacleExpenseYear"><option value="">All years</option></select></div>
+          <div class="pinnacle-expense-filter"><label for="pinnacleExpenseStatusFilter">Record status</label><select id="pinnacleExpenseStatusFilter"><option value="active">Active</option><option value="voided">Deleted / voided</option><option value="all">All records</option></select></div>
+        </div>
+
+        <div class="pinnacle-expense-list" id="pinnacleExpenseList">
+          <div class="pinnacle-expense-empty">No expense records match the current filters.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pinnacle-expense-modal" id="pinnacleExpenseModal" hidden>
+      <div class="pinnacle-expense-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleExpenseDialogTitle">
+        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleExpenseDialogTitle">Add Expense</h3><button type="button" id="pinnacleExpenseClose" aria-label="Close">×</button></div>
+        <form class="pinnacle-expense-dialog-body" id="pinnacleExpenseForm" novalidate>
+          <input type="hidden" id="pinnacleExpenseEditId" name="id">
+          <div class="pinnacle-expense-form-grid">
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseDate">Expense date</label><input id="pinnacleExpenseDate" name="date" type="date"></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseAmount">Amount</label><div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleExpenseAmount" name="amount" type="text" inputmode="decimal" placeholder="0.00"></div></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseCategory">Category</label><select id="pinnacleExpenseCategory" name="category"><option value="">Select category</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseVendor">Vendor or payee</label><input id="pinnacleExpenseVendor" name="vendor" placeholder="Example: Shell, Stripe, Office Depot"></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseSourceId">Related income source</label><select id="pinnacleExpenseSourceId" name="sourceId"><option value="">Not linked yet</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpensePaymentMethod">Payment method</label><select id="pinnacleExpensePaymentMethod" name="paymentMethod"><option value="">Select payment method</option><option>Business checking</option><option>Business credit card</option><option>Business debit card</option><option>Personal account</option><option>Cash</option><option>Payment app</option><option>Other</option><option>Not recorded</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleExpenseReceiptStatus">Receipt status</label><select id="pinnacleExpenseReceiptStatus" name="receiptStatus"><option value="not-recorded">Not recorded</option><option value="available">Receipt available</option><option value="missing">Receipt missing</option><option value="not-applicable">Not applicable</option></select></div>
+            <div class="pinnacle-expense-field full"><label for="pinnacleExpenseNotes">Notes</label><textarea id="pinnacleExpenseNotes" name="notes" placeholder="Add the business purpose or any detail that will help at tax time."></textarea></div>
+          </div>
+          <div class="pinnacle-expense-form-status" id="pinnacleExpenseFormStatus" role="status" aria-live="polite"></div>
+          <div class="pinnacle-expense-actions"><button type="submit">Save Expense</button><button type="button" class="secondary" id="pinnacleExpenseCancel">Cancel</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="pinnacle-expense-modal" id="pinnacleExpenseDeleteModal" hidden>
+      <div class="pinnacle-expense-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleExpenseDeleteTitle">
+        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleExpenseDeleteTitle">Delete Expense</h3><button type="button" id="pinnacleExpenseDeleteClose" aria-label="Close">×</button></div>
+        <form class="pinnacle-expense-dialog-body" id="pinnacleExpenseDeleteForm" novalidate>
+          <input type="hidden" id="pinnacleExpenseDeleteId" name="id">
+          <p class="pinnacle-expense-delete-copy" id="pinnacleExpenseDeleteCopy">This expense will be removed from active totals and retained in the audit history.</p>
+          <div class="pinnacle-expense-field full"><label for="pinnacleExpenseDeleteReason">Reason for deleting this expense</label><textarea id="pinnacleExpenseDeleteReason" name="reason" placeholder="Example: Duplicate entry or wrong business amount"></textarea></div>
+          <div class="pinnacle-expense-form-status" id="pinnacleExpenseDeleteStatus" role="status" aria-live="polite"></div>
+          <div class="pinnacle-expense-actions"><button type="submit" class="danger">Delete Expense</button><button type="button" class="secondary" id="pinnacleExpenseDeleteCancel">Cancel</button></div>
         </form>
       </div>
     </div>
@@ -4164,8 +4299,8 @@
 
         <div class="pinnacle-financial-grid">
           <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong><small>Total from the income sources shown.</small></div>
-          <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong><small>Temporary total from income-source entries until the Expense Tracker is connected.</small></div>
-          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><small>This will update automatically after the Mileage Tracker is installed.</small></div>
+          <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong><small>Total from active Expense Tracker records shown.</small></div>
+          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><small>Total from the individual-trip and daily-odometer records shown.</small></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong><small>Gross income minus tracked expenses and mileage deduction.</small></div>
           <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong><small>This activates after the tax-reserve setup and projection logic are approved.</small></div>
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><small>Will connect to the Tax Savings history.</small></div>
@@ -8598,6 +8733,7 @@
       pinnacle: "pinnacle",
       "pinnacle-business-profile": "pinnacle-business-profile",
       "pinnacle-income-sources": "pinnacle-income-sources",
+      "pinnacle-expense-tracker": "pinnacle-expense-tracker",
       "pinnacle-financial-snapshot": "pinnacle-financial-snapshot",
       "pinnacle-mileage-tracker": "pinnacle-mileage-tracker",
       "tax-preparation": "tax-preparation",
@@ -8890,7 +9026,7 @@
       return numeric.toFixed(2);
     }
     function formatPinnacleCurrencyInputsInScope(scope){
-      const fields=(scope||document).querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses");
+      const fields=(scope||document).querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding");
       fields.forEach((field)=>{
         const normalized=normalizePinnacleCurrencyValue(field.value);
         field.value=normalized || "";
@@ -8984,7 +9120,7 @@
           <div class="pinnacle-income-source-body">
             <div class="pinnacle-income-metric"><span>Federal Withholding</span><strong>${pinnacleMoney(item.federalWithholding)}</strong></div>
             <div class="pinnacle-income-metric"><span>State Withholding</span><strong>${pinnacleMoney(item.stateWithholding)}</strong></div>
-            <div class="pinnacle-income-metric"><span>Expenses Entered</span><strong>${pinnacleMoney(item.expenses)}</strong></div>
+            <div class="pinnacle-income-metric"><span>Tracked Expenses</span><strong>${pinnacleMoney(getPinnacleExpenseTotalForSource(item.id))}</strong></div>
             <div class="pinnacle-income-metric"><span>Income Frequency</span><strong>${escapeHtml(item.frequency||"Not selected")}</strong></div>
             <div class="pinnacle-income-metric"><span>Entry Date</span><strong>${item.entryDate?new Date(item.entryDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
             <div class="pinnacle-income-metric"><span>Last Updated</span><strong>${item.updatedAt?new Date(item.updatedAt).toLocaleDateString():"Not available"}</strong></div>
@@ -9036,6 +9172,7 @@
           dateField.value=new Date().toISOString().slice(0,10);
         }
       }
+      updatePinnacleIncomeExpenseSummary(item);
       if(modal)modal.hidden=false;
       document.getElementById("pinnacleIncomeName")?.focus();
     }
@@ -9065,9 +9202,12 @@
         id:data.id||`INC-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,
         updatedAt:new Date().toISOString()
       };
+      delete item.expenses;
       if(existingIndex>=0)items[existingIndex]=item;else items.unshift(item);
       savePinnacleIncomeSources(items);
       renderPinnacleIncomeSources();
+      refreshPinnacleExpenseSourceOptions();
+      renderPinnacleExpenses();
       renderPinnacleFinancialSnapshot();
       renderPinnacleMileage();
       if(saveButton){saveButton.disabled=false;saveButton.textContent="Save Income Source"}
@@ -9103,14 +9243,326 @@
         const item=items.find(x=>x.id===duplicate.dataset.incomeDuplicate);
         if(item){
           const copy={...item,id:`INC-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,name:`${item.name} Copy`,updatedAt:new Date().toISOString()};
-          items.unshift(copy);savePinnacleIncomeSources(items);renderPinnacleIncomeSources();renderPinnacleFinancialSnapshot();
+          items.unshift(copy);savePinnacleIncomeSources(items);refreshPinnacleExpenseSourceOptions();renderPinnacleIncomeSources();renderPinnacleExpenses();renderPinnacleFinancialSnapshot();
         }
       }
       if(remove){
         const id=remove.dataset.incomeDelete;
         const next=items.filter(x=>x.id!==id);
-        savePinnacleIncomeSources(next);renderPinnacleIncomeSources();renderPinnacleFinancialSnapshot();
+        savePinnacleIncomeSources(next);refreshPinnacleExpenseSourceOptions();renderPinnacleIncomeSources();renderPinnacleExpenses();renderPinnacleFinancialSnapshot();
       }
+    }
+
+
+    const PINNACLE_EXPENSES_KEY="pinnacleExpenses.v1";
+    const PINNACLE_EXPENSE_CATEGORIES=[
+      "Advertising & Marketing",
+      "Car & Truck Expenses (not mileage)",
+      "Commissions & Fees",
+      "Contract Labor",
+      "Cost of Goods Sold",
+      "Insurance",
+      "Interest",
+      "Legal & Professional Services",
+      "Meals",
+      "Merchant / Platform Fees",
+      "Office Expenses",
+      "Rent or Lease",
+      "Repairs & Maintenance",
+      "Supplies",
+      "Taxes & Licenses",
+      "Travel",
+      "Utilities & Business Phone",
+      "Other Business Expense"
+    ];
+    let pinnacleExpensePageStatusTimer=null;
+
+    function loadPinnacleExpenses(){
+      try{
+        const parsed=JSON.parse(localStorage.getItem(PINNACLE_EXPENSES_KEY)||"[]");
+        return Array.isArray(parsed)?parsed:[];
+      }catch(error){return []}
+    }
+    function savePinnacleExpenses(items){
+      localStorage.setItem(PINNACLE_EXPENSES_KEY,JSON.stringify(items));
+      schedulePinnacleWorkspaceSave();
+    }
+    function getActivePinnacleExpenses(){
+      return loadPinnacleExpenses().filter((item)=>!item.voidedAt);
+    }
+    function getPinnacleExpenseTotalForSource(sourceId){
+      return getActivePinnacleExpenses()
+        .filter((item)=>String(item.sourceId||"")===String(sourceId||""))
+        .reduce((sum,item)=>sum+Number(item.amount||0),0);
+    }
+    function updatePinnacleIncomeExpenseSummary(item=null){
+      const total=document.getElementById("pinnacleIncomeTrackedExpenses");
+      const button=document.getElementById("pinnacleIncomeManageExpenses");
+      const help=document.getElementById("pinnacleIncomeExpenseHelp");
+      const id=String(item?.id||document.getElementById("pinnacleIncomeEditId")?.value||"");
+      if(total)total.textContent=pinnacleMoney(id?getPinnacleExpenseTotalForSource(id):0);
+      if(button){
+        button.disabled=!id;
+        button.dataset.expenseSourceId=id;
+      }
+      if(help)help.textContent=id
+        ?"Add, edit, or review this source's individual records in Expense Tracker."
+        :"Save this income source first, then add individual expenses in Expense Tracker.";
+    }
+    function showPinnacleExpensePageStatus(message,duration=4600){
+      const status=document.getElementById("pinnacleExpensePageStatus");
+      if(!status)return;
+      if(pinnacleExpensePageStatusTimer)window.clearTimeout(pinnacleExpensePageStatusTimer);
+      status.textContent=message||"";
+      status.style.display=message?"block":"none";
+      if(message&&duration>0){
+        pinnacleExpensePageStatusTimer=window.setTimeout(()=>{
+          status.textContent="";
+          status.style.display="none";
+          pinnacleExpensePageStatusTimer=null;
+        },duration);
+      }
+    }
+    function showPinnacleExpenseFormStatus(message,targetId="pinnacleExpenseFormStatus"){
+      const status=document.getElementById(targetId);
+      if(!status)return;
+      status.textContent=message||"";
+      status.style.display=message?"block":"none";
+    }
+    function refreshPinnacleExpenseCategoryOptions(){
+      const options=PINNACLE_EXPENSE_CATEGORIES.map((category)=>`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
+      const formSelect=document.getElementById("pinnacleExpenseCategory");
+      const filterSelect=document.getElementById("pinnacleExpenseCategoryFilter");
+      const formValue=formSelect?.value||"";
+      const filterValue=filterSelect?.value||"";
+      if(formSelect){formSelect.innerHTML='<option value="">Select category</option>'+options;formSelect.value=formValue}
+      if(filterSelect){filterSelect.innerHTML='<option value="">All categories</option>'+options;filterSelect.value=filterValue}
+    }
+    function refreshPinnacleExpenseSourceOptions(){
+      const sources=loadPinnacleIncomeSources();
+      const options=sources.map((source)=>`<option value="${escapeHtml(source.id)}">${escapeHtml(source.name||"Income Source")}</option>`).join("");
+      [
+        ["pinnacleExpenseSourceId",'<option value="">Not linked yet</option>'],
+        ["pinnacleExpenseSourceFilter",'<option value="">All income sources</option>']
+      ].forEach(([id,first])=>{
+        const select=document.getElementById(id);
+        if(!select)return;
+        const value=select.value;
+        select.innerHTML=first+options;
+        if(Array.from(select.options).some((option)=>option.value===value))select.value=value;
+      });
+    }
+    function refreshPinnacleExpenseYearOptions(){
+      const select=document.getElementById("pinnacleExpenseYear");
+      if(!select)return;
+      const value=select.value;
+      const years=new Set(loadPinnacleExpenses().map((item)=>String(item.date||"").slice(0,4)).filter(Boolean));
+      const currentYear=new Date().getFullYear();
+      for(let year=currentYear-5;year<=currentYear+4;year+=1)years.add(String(year));
+      select.innerHTML='<option value="">All years</option>'+Array.from(years).sort((a,b)=>Number(b)-Number(a)).map((year)=>`<option value="${escapeHtml(year)}">${escapeHtml(year)}</option>`).join("");
+      if(Array.from(select.options).some((option)=>option.value===value))select.value=value;
+    }
+    function getPinnacleExpenseDateParts(item){
+      const parts=String(item?.date||"").split("-");
+      return {year:parts[0]||"",month:String(Number(parts[1]||""))};
+    }
+    function getPinnacleExpenseFilters(){
+      return {
+        search:String(document.getElementById("pinnacleExpenseSearch")?.value||"").trim().toLowerCase(),
+        category:String(document.getElementById("pinnacleExpenseCategoryFilter")?.value||""),
+        sourceId:String(document.getElementById("pinnacleExpenseSourceFilter")?.value||""),
+        month:String(document.getElementById("pinnacleExpenseMonth")?.value||""),
+        year:String(document.getElementById("pinnacleExpenseYear")?.value||""),
+        status:String(document.getElementById("pinnacleExpenseStatusFilter")?.value||"active")
+      };
+    }
+    function renderPinnacleExpenses(){
+      refreshPinnacleExpenseCategoryOptions();
+      refreshPinnacleExpenseSourceOptions();
+      refreshPinnacleExpenseYearOptions();
+      const list=document.getElementById("pinnacleExpenseList");
+      if(!list)return;
+      const sources=Object.fromEntries(loadPinnacleIncomeSources().map((source)=>[source.id,source.name||"Income Source"]));
+      const filters=getPinnacleExpenseFilters();
+      const filtered=loadPinnacleExpenses().filter((item)=>{
+        const isVoided=Boolean(item.voidedAt);
+        const statusMatch=filters.status==="all"||(filters.status==="voided"?isVoided:!isVoided);
+        const parts=getPinnacleExpenseDateParts(item);
+        const sourceLabel=sources[item.sourceId]||"Income source not linked";
+        const searchable=[item.vendor,item.category,item.notes,item.paymentMethod,sourceLabel].join(" ").toLowerCase();
+        return statusMatch
+          &&(!filters.search||searchable.includes(filters.search))
+          &&(!filters.category||item.category===filters.category)
+          &&(!filters.sourceId||item.sourceId===filters.sourceId)
+          &&(!filters.month||parts.month===filters.month)
+          &&(!filters.year||parts.year===filters.year);
+      }).sort((left,right)=>String(right.date||"").localeCompare(String(left.date||""))||String(right.updatedAt||"").localeCompare(String(left.updatedAt||"")));
+      const activeFiltered=filtered.filter((item)=>!item.voidedAt);
+      const activeTotal=activeFiltered.reduce((sum,item)=>sum+Number(item.amount||0),0);
+      const unassignedTotal=activeFiltered.filter((item)=>!item.sourceId||!sources[item.sourceId]).reduce((sum,item)=>sum+Number(item.amount||0),0);
+      document.getElementById("pinnacleExpenseTotal").textContent=pinnacleMoney(activeTotal);
+      document.getElementById("pinnacleExpenseCount").textContent=String(activeFiltered.length);
+      document.getElementById("pinnacleExpenseReceiptCount").textContent=String(activeFiltered.filter((item)=>item.receiptStatus==="available").length);
+      document.getElementById("pinnacleExpenseUnassignedTotal").textContent=pinnacleMoney(unassignedTotal);
+      if(!filtered.length){
+        list.innerHTML='<div class="pinnacle-expense-empty">No expense records match the current filters.</div>';
+        return;
+      }
+      list.innerHTML=filtered.map((item)=>{
+        const isVoided=Boolean(item.voidedAt);
+        const dateLabel=item.date?new Date(item.date+"T00:00:00").toLocaleDateString():"Date not entered";
+        const receiptLabels={available:"Available",missing:"Missing","not-applicable":"Not applicable","not-recorded":"Not recorded"};
+        return `<article class="pinnacle-expense-card ${isVoided?"is-voided":""}">
+          <div class="pinnacle-expense-row">
+            <div><h4>${escapeHtml(item.vendor||item.category||"Business Expense")}</h4><p>${escapeHtml(item.category||"Category not selected")} · ${escapeHtml(sources[item.sourceId]||"Income source not linked")}</p></div>
+            <div class="pinnacle-expense-metric"><span>Date</span><strong>${escapeHtml(dateLabel)}</strong></div>
+            <div class="pinnacle-expense-metric"><span>Amount</span><strong>${pinnacleMoney(item.amount)}</strong></div>
+            <div class="pinnacle-expense-metric"><span>Payment</span><strong>${escapeHtml(item.paymentMethod||"Not recorded")}</strong></div>
+            <div class="pinnacle-expense-metric"><span>Receipt</span><strong>${escapeHtml(receiptLabels[item.receiptStatus]||"Not recorded")}</strong></div>
+            <div class="pinnacle-expense-metric"><span>Status</span><strong>${isVoided?"Deleted / voided":"Active"}</strong></div>
+            <div class="pinnacle-expense-row-actions">${isVoided?"":`<button type="button" data-expense-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="danger" data-expense-delete="${escapeHtml(item.id)}">Delete</button>`}</div>
+          </div>
+          ${item.notes?`<div class="pinnacle-expense-audit"><strong>Notes:</strong> ${escapeHtml(item.notes)}</div>`:""}
+          ${isVoided?`<div class="pinnacle-expense-audit"><strong>Deleted:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:""}
+        </article>`;
+      }).join("");
+    }
+    function openPinnacleExpenseModal(item=null,sourceId=""){
+      const form=document.getElementById("pinnacleExpenseForm");
+      form?.reset();
+      showPinnacleExpenseFormStatus("");
+      document.getElementById("pinnacleExpenseEditId").value=item?.id||"";
+      document.getElementById("pinnacleExpenseDialogTitle").textContent=item?"Edit Expense":"Add Expense";
+      refreshPinnacleExpenseCategoryOptions();
+      refreshPinnacleExpenseSourceOptions();
+      if(item&&form){
+        Object.entries(item).forEach(([name,value])=>{
+          const field=form.elements.namedItem(name);
+          if(field&&"value" in field)field.value=value??"";
+        });
+      }else{
+        document.getElementById("pinnacleExpenseDate").value=new Date().toISOString().slice(0,10);
+        if(sourceId)document.getElementById("pinnacleExpenseSourceId").value=sourceId;
+      }
+      const amount=document.getElementById("pinnacleExpenseAmount");
+      if(amount)amount.value=normalizePinnacleCurrencyValue(amount.value)||"";
+      document.getElementById("pinnacleExpenseModal").hidden=false;
+      document.getElementById("pinnacleExpenseDate")?.focus();
+    }
+    function closePinnacleExpenseModal(){
+      document.getElementById("pinnacleExpenseModal").hidden=true;
+      showPinnacleExpenseFormStatus("");
+    }
+    function submitPinnacleExpense(event){
+      event.preventDefault();
+      const form=event.currentTarget;
+      const data=Object.fromEntries(new FormData(form).entries());
+      data.amount=normalizePinnacleCurrencyValue(data.amount);
+      if(!data.date)return showPinnacleExpenseFormStatus("Select the expense date.");
+      if(!data.amount||Number(data.amount)<=0)return showPinnacleExpenseFormStatus("Enter an expense amount greater than zero.");
+      if(!String(data.category||"").trim())return showPinnacleExpenseFormStatus("Select an expense category.");
+      if(!String(data.vendor||"").trim())return showPinnacleExpenseFormStatus("Enter the vendor or payee.");
+      const items=loadPinnacleExpenses();
+      const index=items.findIndex((item)=>item.id===data.id);
+      const previous=index>=0?items[index]:{};
+      const now=new Date().toISOString();
+      const item={
+        ...previous,
+        ...data,
+        id:data.id||`EXP-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,
+        amount:Number(data.amount).toFixed(2),
+        createdAt:previous.createdAt||now,
+        updatedAt:now
+      };
+      delete item.voidedAt;
+      delete item.voidReason;
+      if(index>=0)items[index]=item;else items.unshift(item);
+      savePinnacleExpenses(items);
+      closePinnacleExpenseModal();
+      renderPinnacleExpenses();
+      renderPinnacleIncomeSources();
+      renderPinnacleFinancialSnapshot();
+      showPinnacleExpensePageStatus(index>=0?"Expense updated successfully.":"Expense saved successfully.");
+    }
+    function openPinnacleExpenseDeleteModal(item){
+      if(!item)return;
+      document.getElementById("pinnacleExpenseDeleteForm")?.reset();
+      document.getElementById("pinnacleExpenseDeleteId").value=item.id;
+      document.getElementById("pinnacleExpenseDeleteCopy").textContent=`${item.vendor||item.category||"This expense"} · ${pinnacleMoney(item.amount)} will be removed from active totals and retained in the audit history.`;
+      showPinnacleExpenseFormStatus("","pinnacleExpenseDeleteStatus");
+      document.getElementById("pinnacleExpenseDeleteModal").hidden=false;
+      document.getElementById("pinnacleExpenseDeleteReason")?.focus();
+    }
+    function closePinnacleExpenseDeleteModal(){
+      document.getElementById("pinnacleExpenseDeleteModal").hidden=true;
+      showPinnacleExpenseFormStatus("","pinnacleExpenseDeleteStatus");
+    }
+    function submitPinnacleExpenseDelete(event){
+      event.preventDefault();
+      const data=Object.fromEntries(new FormData(event.currentTarget).entries());
+      const reason=String(data.reason||"").trim();
+      if(!reason)return showPinnacleExpenseFormStatus("Enter the reason for deleting this expense.","pinnacleExpenseDeleteStatus");
+      const items=loadPinnacleExpenses();
+      const index=items.findIndex((item)=>item.id===data.id);
+      if(index<0)return showPinnacleExpenseFormStatus("The expense record could not be found.","pinnacleExpenseDeleteStatus");
+      const now=new Date().toISOString();
+      items[index]={...items[index],voidedAt:now,voidReason:reason,updatedAt:now};
+      savePinnacleExpenses(items);
+      closePinnacleExpenseDeleteModal();
+      renderPinnacleExpenses();
+      renderPinnacleIncomeSources();
+      renderPinnacleFinancialSnapshot();
+      showPinnacleExpensePageStatus("Expense deleted from active totals. The audit record was retained.");
+    }
+    function handlePinnacleExpenseListClick(event){
+      const edit=event.target.closest("[data-expense-edit]");
+      const remove=event.target.closest("[data-expense-delete]");
+      const items=loadPinnacleExpenses();
+      if(edit){const item=items.find((entry)=>entry.id===edit.dataset.expenseEdit);if(item)openPinnacleExpenseModal(item)}
+      if(remove){const item=items.find((entry)=>entry.id===remove.dataset.expenseDelete);if(item)openPinnacleExpenseDeleteModal(item)}
+    }
+    function openPinnacleExpenseTrackerForSource(sourceId=""){
+      closePinnacleIncomeModal();
+      openPortalView("pinnacle-expense-tracker");
+      refreshPinnacleExpenseSourceOptions();
+      const filter=document.getElementById("pinnacleExpenseSourceFilter");
+      if(filter)filter.value=sourceId||"";
+      renderPinnacleExpenses();
+    }
+    function migrateLegacyPinnacleExpenses(){
+      const sources=loadPinnacleIncomeSources();
+      const existing=loadPinnacleExpenses();
+      const legacySources=sources.filter((source)=>Number(source.expenses||0)>0);
+      if(!legacySources.length)return false;
+      const existingLegacyIds=new Set(existing.map((item)=>item.legacySourceId).filter(Boolean));
+      const now=new Date().toISOString();
+      const migrated=[];
+      legacySources.forEach((source)=>{
+        if(existingLegacyIds.has(source.id))return;
+        const fallbackDate=String(source.entryDate||source.updatedAt||now).slice(0,10);
+        migrated.push({
+          id:`EXP-LEGACY-${source.id}`,
+          date:/^\d{4}-\d{2}-\d{2}$/.test(fallbackDate)?fallbackDate:new Date().toISOString().slice(0,10),
+          amount:Number(source.expenses||0).toFixed(2),
+          category:"Other Business Expense",
+          vendor:"Opening expense balance",
+          sourceId:source.id,
+          paymentMethod:"Not recorded",
+          receiptStatus:"not-recorded",
+          notes:"Migrated from the previous lump-sum expense total so the amount remains in the Financial Snapshot. Review and edit this record when the original expense details are available.",
+          legacySourceId:source.id,
+          createdAt:source.updatedAt||now,
+          updatedAt:now
+        });
+      });
+      const cleanedSources=sources.map((source)=>{
+        const next={...source};
+        delete next.expenses;
+        return next;
+      });
+      localStorage.setItem(PINNACLE_INCOME_SOURCES_KEY,JSON.stringify(cleanedSources));
+      if(migrated.length)localStorage.setItem(PINNACLE_EXPENSES_KEY,JSON.stringify([...migrated,...existing]));
+      return true;
     }
 
 
@@ -9136,9 +9588,10 @@
       };
       const filteredTrips=loadPinnacleTrips().filter((trip)=>matchesFinancialDate(trip.date));
       const filteredDailyMileage=loadPinnacleDailyMileage().filter((entry)=>matchesFinancialDate(entry.date));
+      const filteredExpenses=getActivePinnacleExpenses().filter((expense)=>matchesFinancialDate(expense.date));
 
       const gross=items.reduce((sum,item)=>sum+Number(item.ytd||0),0);
-      const expenses=items.reduce((sum,item)=>sum+Number(item.expenses||0),0);
+      const expenses=filteredExpenses.reduce((sum,item)=>sum+Number(item.amount||0),0);
       const mileage=filteredTrips.reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
         +filteredDailyMileage.reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
       const net=gross-expenses-mileage;
@@ -9158,6 +9611,10 @@
       if(!list)return;
 
       const visibleSourceIds=new Set(items.map((item)=>item.id));
+      const allSourceIds=new Set(allItems.map((item)=>item.id));
+      const unassignedExpenses=filteredExpenses
+        .filter((expense)=>!expense.sourceId||!allSourceIds.has(expense.sourceId))
+        .reduce((sum,expense)=>sum+Number(expense.amount||0),0);
       const unassignedMileage=filteredTrips
         .filter((trip)=>!visibleSourceIds.has(trip.sourceId))
         .reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
@@ -9165,14 +9622,16 @@
           .filter((entry)=>!visibleSourceIds.has(entry.sourceId))
           .reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
 
-      if(!items.length&&unassignedMileage<=0){
+      if(!items.length&&unassignedMileage<=0&&unassignedExpenses<=0){
         list.innerHTML='<div class="pinnacle-financial-empty">No income sources match the current month and tax-year filter.</div>';
         return;
       }
 
       const sourceRows=items.map((item)=>{
         const sourceGross=Number(item.ytd||0);
-        const sourceExpenses=Number(item.expenses||0);
+        const sourceExpenses=filteredExpenses
+          .filter((expense)=>expense.sourceId===item.id)
+          .reduce((sum,expense)=>sum+Number(expense.amount||0),0);
         const sourceMileage=filteredTrips
           .filter((trip)=>trip.sourceId===item.id)
           .reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
@@ -9200,20 +9659,20 @@
           </article>`;
       }).join("");
 
-      const unassignedRow=unassignedMileage>0?`
+      const unassignedRow=(unassignedMileage>0||unassignedExpenses>0)?`
         <article class="pinnacle-financial-source">
           <div class="pinnacle-financial-source-head">
             <div>
-              <h4>Mileage Records Needing Source Review</h4>
-              <p>These mileage records are not linked to an income source shown above.</p>
+              <h4>Records Needing Source Review</h4>
+              <p>These expense or mileage records are not linked to an active income source.</p>
             </div>
             <span class="pinnacle-income-badge">Needs Review</span>
           </div>
           <div class="pinnacle-financial-source-body">
             <div class="pinnacle-financial-metric"><span>Gross Income</span><strong>${pinnacleMoney(0)}</strong></div>
-            <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(0)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(unassignedExpenses)}</strong></div>
             <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(unassignedMileage)}</strong></div>
-            <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(-unassignedMileage)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(-(unassignedExpenses+unassignedMileage))}</strong></div>
             <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
             <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
           </div>
@@ -9344,10 +9803,13 @@
 
     function collectPinnacleWorkspaceFromStorage(){
       return {
-        version:2,
+        version:3,
         businessProfile:readPinnacleStorageValue(PINNACLE_BUSINESS_DRAFT_KEY,null),
         incomeSources:Array.isArray(readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[]))
           ?readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[])
+          :[],
+        expenses:Array.isArray(readPinnacleStorageValue(PINNACLE_EXPENSES_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_EXPENSES_KEY,[])
           :[],
         vehicles:Array.isArray(readPinnacleStorageValue(PINNACLE_VEHICLE_KEY,[]))
           ?readPinnacleStorageValue(PINNACLE_VEHICLE_KEY,[])
@@ -9365,6 +9827,7 @@
       return Boolean(
         workspace?.businessProfile||
         workspace?.incomeSources?.length||
+        workspace?.expenses?.length||
         workspace?.vehicles?.length||
         workspace?.trips?.length||
         workspace?.dailyMileage?.length
@@ -9382,6 +9845,7 @@
 
       setOrRemove(PINNACLE_BUSINESS_DRAFT_KEY,workspace.businessProfile,null);
       setOrRemove(PINNACLE_INCOME_SOURCES_KEY,workspace.incomeSources,[]);
+      setOrRemove(PINNACLE_EXPENSES_KEY,workspace.expenses,[]);
       setOrRemove(PINNACLE_VEHICLE_KEY,workspace.vehicles,[]);
       setOrRemove(PINNACLE_MILEAGE_KEY,workspace.trips,[]);
       setOrRemove(PINNACLE_DAILY_MILEAGE_KEY,workspace.dailyMileage,[]);
@@ -9389,7 +9853,9 @@
 
     function renderPinnacleWorkspaceFromStorage(){
       restorePinnacleBusinessDraft();
+      refreshPinnacleExpenseSourceOptions();
       renderPinnacleIncomeSources();
+      renderPinnacleExpenses();
       renderPinnacleVehicles();
       renderPinnacleMileage();
       renderPinnacleDailyMileage();
@@ -9450,13 +9916,18 @@
         applyPinnacleWorkspaceToStorage(serverWorkspace);
       }
 
+      const migratedLegacyExpenses=migrateLegacyPinnacleExpenses();
       pinnacleWorkspaceHydrated=true;
       renderPinnacleWorkspaceFromStorage();
 
       if(serverHasData){
-        pinnacleWorkspaceLastSavedSignature=JSON.stringify(
-          collectPinnacleWorkspaceFromStorage()
-        );
+        if(migratedLegacyExpenses){
+          await queuePinnacleWorkspaceSave({force:true});
+        }else{
+          pinnacleWorkspaceLastSavedSignature=JSON.stringify(
+            collectPinnacleWorkspaceFromStorage()
+          );
+        }
         return;
       }
 
@@ -9854,7 +10325,7 @@
       document.getElementById("pinnacleIncomeClose")?.addEventListener("click",closePinnacleIncomeModal);
       document.getElementById("pinnacleIncomeCancel")?.addEventListener("click",closePinnacleIncomeModal);
       document.getElementById("pinnacleIncomeForm")?.addEventListener("submit",submitPinnacleIncomeSource);
-      document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding,#pinnacleIncomeExpenses").forEach((field)=>{
+      document.querySelectorAll("#pinnacleIncomeYtd,#pinnacleIncomeExpected,#pinnacleIncomeFederalWithholding,#pinnacleIncomeStateWithholding").forEach((field)=>{
         field.addEventListener("input",()=>{
           const cleaned=sanitizePinnacleCurrencyInput(field.value);
           if(field.value!==cleaned)field.value=cleaned;
@@ -9870,6 +10341,24 @@
       document.getElementById("pinnacleIncomeModal")?.addEventListener("click",(event)=>{
         if(event.target===event.currentTarget)closePinnacleIncomeModal();
       });
+
+      document.getElementById("pinnacleIncomeManageExpenses")?.addEventListener("click",(event)=>openPinnacleExpenseTrackerForSource(event.currentTarget.dataset.expenseSourceId||""));
+      document.getElementById("pinnacleAddExpense")?.addEventListener("click",()=>openPinnacleExpenseModal());
+      document.getElementById("pinnacleExpenseClose")?.addEventListener("click",closePinnacleExpenseModal);
+      document.getElementById("pinnacleExpenseCancel")?.addEventListener("click",closePinnacleExpenseModal);
+      document.getElementById("pinnacleExpenseForm")?.addEventListener("submit",submitPinnacleExpense);
+      document.getElementById("pinnacleExpenseAmount")?.addEventListener("input",(event)=>{const cleaned=sanitizePinnacleCurrencyInput(event.currentTarget.value);if(event.currentTarget.value!==cleaned)event.currentTarget.value=cleaned});
+      document.getElementById("pinnacleExpenseAmount")?.addEventListener("blur",(event)=>{event.currentTarget.value=normalizePinnacleCurrencyValue(event.currentTarget.value)||""});
+      document.getElementById("pinnacleExpenseList")?.addEventListener("click",handlePinnacleExpenseListClick);
+      ["pinnacleExpenseSearch","pinnacleExpenseCategoryFilter","pinnacleExpenseSourceFilter","pinnacleExpenseMonth","pinnacleExpenseYear","pinnacleExpenseStatusFilter"].forEach((id)=>{
+        const field=document.getElementById(id);
+        field?.addEventListener(id==="pinnacleExpenseSearch"?"input":"change",renderPinnacleExpenses);
+      });
+      document.getElementById("pinnacleExpenseModal")?.addEventListener("click",(event)=>{if(event.target===event.currentTarget)closePinnacleExpenseModal()});
+      document.getElementById("pinnacleExpenseDeleteClose")?.addEventListener("click",closePinnacleExpenseDeleteModal);
+      document.getElementById("pinnacleExpenseDeleteCancel")?.addEventListener("click",closePinnacleExpenseDeleteModal);
+      document.getElementById("pinnacleExpenseDeleteForm")?.addEventListener("submit",submitPinnacleExpenseDelete);
+      document.getElementById("pinnacleExpenseDeleteModal")?.addEventListener("click",(event)=>{if(event.target===event.currentTarget)closePinnacleExpenseDeleteModal()});
 
       document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
       document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
@@ -9918,6 +10407,7 @@
         restorePinnacleBusinessDraft,
         updatePinnacleBusinessProfileAccess,
         renderPinnacleIncomeSources,
+        renderPinnacleExpenses,
         renderPinnacleFinancialSnapshot,
         renderPinnacleVehicles,
         renderPinnacleMileage,
@@ -9947,7 +10437,10 @@
 
       const pinnacleToggle = document.querySelector('[data-submenu-toggle="pinnacleMenu"]');
       if (pinnacleToggle) {
-        pinnacleToggle.classList.toggle("is-active", requestedView.startsWith("pinnacle"));
+        pinnacleToggle.classList.toggle(
+          "is-active",
+          requestedView.startsWith("pinnacle") && requestedView !== "pinnacle-business-profile"
+        );
       }
 
       const taxWatchToggle = document.querySelector('[data-submenu-toggle="taxWatchMenu"]');
@@ -9990,6 +10483,7 @@
 
       const accountSecurityViews = new Set([
         "account",
+        "pinnacle-business-profile",
         "billing-history",
         "questions"
       ]);
