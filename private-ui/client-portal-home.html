@@ -1715,7 +1715,28 @@
     .pinnacle-vehicle-actions button.secondary{background:#fff;color:#0b5685;border-color:#b9ccdc}
     @media(max-width:1050px){.pinnacle-vehicle-row{grid-template-columns:repeat(2,minmax(0,1fr))}.pinnacle-vehicle-actions{grid-column:1/-1}}
     @media(max-width:700px){.pinnacle-vehicle-row{grid-template-columns:1fr}}
-    .pinnacle-mileage-mode-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .pinnacle-mileage-vehicle-context{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+      margin-bottom:12px;padding:11px 14px;border:1px solid #c7dae7;border-radius:12px;background:#f8fbfd
+    }
+    .pinnacle-mileage-vehicle-context span{display:block;color:#6a7f90;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+    .pinnacle-mileage-vehicle-context strong{display:block;margin-top:3px;color:#0a3154;font-size:15px}
+    .pinnacle-mileage-vehicle-context p{margin:3px 0 0;color:#607789;font-size:12px}
+    .pinnacle-mileage-vehicle-context button{
+      min-height:38px;padding:8px 12px;border:1px solid #0b5d8d;border-radius:9px;
+      background:#fff;color:#0b5685;font-weight:850;cursor:pointer
+    }
+    .pinnacle-mileage-panel-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin-bottom:10px;padding:11px 13px;border:1px solid #c7dae7;border-radius:12px;background:#f8fbfd
+    }
+    .pinnacle-mileage-panel-head h3{margin:0;color:#0a3154;font-size:16px}
+    .pinnacle-mileage-panel-head p{margin:3px 0 0;color:#607789;font-size:12px}
+    .pinnacle-mileage-panel-head button{
+      min-height:40px;padding:8px 13px;border:1px solid #0b5d8d;border-radius:9px;
+      background:#0b5d8d;color:#fff;font-weight:850;cursor:pointer
+    }
+    .pinnacle-mileage-mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
     .pinnacle-mileage-mode-tabs button{min-height:42px;padding:9px 15px;border:1px solid #aac4d7;border-radius:10px;background:#fff;color:#174a6f;font-weight:850;cursor:pointer}
     .pinnacle-mileage-mode-tabs button.active{background:#0b5d8d;color:#fff;border-color:#0b5d8d}
     .pinnacle-mileage-panel[hidden]{display:none}
@@ -1740,19 +1761,20 @@
     .pinnacle-daily-explanation{margin:0 0 16px;padding:14px 16px;border-left:5px solid #c99a2e;border-radius:10px;background:#fff8e8;color:#6b4e0c;line-height:1.5}
     @media(max-width:1200px){.pinnacle-daily-head{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-daily-head .pinnacle-trip-actions{grid-column:1/-1}}
     @media(max-width:760px){.pinnacle-daily-head{grid-template-columns:1fr}}
-    .pinnacle-mileage-page .section-body{padding:26px}
+    @media(max-width:760px){.pinnacle-mileage-vehicle-context,.pinnacle-mileage-panel-head{align-items:stretch;flex-direction:column}.pinnacle-mileage-vehicle-context button,.pinnacle-mileage-panel-head button{width:100%}}
+    .pinnacle-mileage-page .section-body{padding:22px}
     .pinnacle-mileage-summary{
-      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:18px
+      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px
     }
     .pinnacle-mileage-stat{
-      padding:17px;border:1px solid #c4d8e6;border-radius:15px;
+      padding:13px 14px;border:1px solid #c4d8e6;border-radius:13px;
       background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%)
     }
     .pinnacle-mileage-stat span{display:block;color:#687d8e;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
-    .pinnacle-mileage-stat strong{display:block;margin-top:7px;color:#082f50;font-size:21px}
+    .pinnacle-mileage-stat strong{display:block;margin-top:5px;color:#082f50;font-size:19px}
     .pinnacle-mileage-toolbar{
       display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
-      padding:18px 20px;border:1px solid #c7dae7;border-radius:16px;background:#f5f9fc;margin-bottom:14px
+      padding:12px 15px;border:1px solid #c7dae7;border-radius:13px;background:#f5f9fc;margin-bottom:12px
     }
     .pinnacle-mileage-toolbar h3{margin:0 0 5px;color:#0a3154}.pinnacle-mileage-toolbar p{margin:0;color:#5c7183}
     .pinnacle-mileage-toolbar-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1769,7 +1791,7 @@
     }
     .pinnacle-mileage-filters{
       display:grid;grid-template-columns:minmax(180px,1fr) repeat(3,minmax(140px,.65fr));gap:12px;
-      padding:15px 18px;border:1px solid #c7dae7;border-radius:16px;background:#fbfdfe;margin-bottom:16px
+      padding:12px 14px;border:1px solid #c7dae7;border-radius:13px;background:#fbfdfe;margin-bottom:12px
     }
     .pinnacle-mileage-filter{display:flex;flex-direction:column;gap:7px}
     .pinnacle-mileage-filter label{font-size:12px;font-weight:850;color:#173e5c}
@@ -4361,21 +4383,20 @@
         </div>
 
         <div class="pinnacle-mileage-toolbar">
-          <div><h3>Trip History</h3><p>Use one entry per trip. Filter by source, month, or year instead of searching a long list.</p></div>
+          <div><h3>Mileage Records</h3><p>Review and filter individual trips or daily odometer records.</p></div>
           <div class="pinnacle-mileage-toolbar-actions">
             <div class="pinnacle-mileage-status" id="pinnacleMileageStatus" role="status" aria-live="assertive"></div>
             <button type="button" class="secondary" id="pinnacleMileageExport">Download CSV</button>
-            <button type="button" id="pinnacleAddDailyMileage">Add Daily Odometer</button>
-            <button type="button" id="pinnacleAddTrip">Add Trip</button>
           </div>
         </div>
 
-        <div class="pinnacle-vehicle-panel">
-          <div class="pinnacle-vehicle-panel-head">
-            <div><h3>Vehicle Profiles</h3><p>Enter each vehicle once. The primary active vehicle is selected automatically for new mileage records.</p></div>
-            <button type="button" id="pinnacleAddVehicle">Add Vehicle</button>
+        <div class="pinnacle-mileage-vehicle-context">
+          <div>
+            <span>Current vehicle</span>
+            <strong id="pinnacleMileageCurrentVehicle">No active vehicle profile</strong>
+            <p id="pinnacleMileageCurrentVehicleStatus">Set up a vehicle before adding mileage records.</p>
           </div>
-          <div class="pinnacle-vehicle-list" id="pinnacleVehicleList"><div class="pinnacle-trip-empty">No vehicle profile has been added yet.</div></div>
+          <button type="button" id="pinnacleManageVehicles">Manage Vehicles</button>
         </div>
 
         <div class="pinnacle-mileage-mode-tabs" role="tablist" aria-label="Mileage entry method">
@@ -4390,10 +4411,40 @@
         </div>
 
         <div class="pinnacle-mileage-panel" id="pinnacleTripsPanel" data-mileage-panel-content="trips">
+          <div class="pinnacle-mileage-panel-head">
+            <div><h3>Individual Trips</h3><p>Add a record for each business, personal, or commuting trip.</p></div>
+            <button type="button" id="pinnacleAddTrip">Add Trip</button>
+          </div>
           <div class="pinnacle-trip-list" id="pinnacleTripList"><div class="pinnacle-trip-empty">No trips have been added yet.</div></div>
         </div>
         <div class="pinnacle-mileage-panel" id="pinnacleDailyPanel" data-mileage-panel-content="daily" hidden>
+          <div class="pinnacle-mileage-panel-head">
+            <div><h3>Daily Odometer Log</h3><p>Record one day’s beginning and ending odometer readings.</p></div>
+            <button type="button" id="pinnacleAddDailyMileage">Add Daily Odometer</button>
+          </div>
           <div class="pinnacle-daily-list" id="pinnacleDailyList"><div class="pinnacle-trip-empty">No daily odometer records have been added yet.</div></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section portal-view pinnacle-mileage-page" id="pinnacleVehicleProfilesPage" data-portal-view="pinnacle-vehicle-profiles">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Mileage Settings</div>
+          <h2>Vehicle Profiles</h2>
+          <p>Add or update the vehicles used for business mileage records.</p>
+        </div>
+        <button class="portal-back-button" type="button" data-portal-open="pinnacle-mileage-tracker">Return to Mileage Tracker</button>
+      </div>
+      <div class="section-body">
+        <div class="pinnacle-vehicle-panel">
+          <div class="pinnacle-vehicle-panel-head">
+            <div><h3>Saved Vehicles</h3><p>The primary active vehicle is selected automatically for new mileage records.</p></div>
+            <button type="button" id="pinnacleAddVehicle">Add Vehicle</button>
+          </div>
+          <div class="pinnacle-mileage-status" id="pinnacleVehiclePageStatus" role="status" aria-live="assertive"></div>
+          <div class="pinnacle-vehicle-list" id="pinnacleVehicleList"><div class="pinnacle-trip-empty">No vehicle profile has been added yet.</div></div>
         </div>
       </div>
     </section>
@@ -4433,7 +4484,6 @@
             <div class="pinnacle-mileage-field wide"><label for="pinnacleDailyPurpose">Business purpose / platforms worked</label><input id="pinnacleDailyPurpose" name="purpose" placeholder="Example: Uber, Lyft, DoorDash deliveries"></div>
             <div class="pinnacle-mileage-field full"><label for="pinnacleDailyNotes">Notes</label><textarea id="pinnacleDailyNotes" name="notes" placeholder="Optional daily notes"></textarea></div>
           </div>
-          <div class="pinnacle-mileage-rate-note">Business miles = ending odometer − beginning odometer − personal miles − commuting miles.</div>
           <div class="pinnacle-mileage-actions"><button type="submit">Save Daily Record</button><button type="button" class="secondary" id="pinnacleDailyCancel">Cancel</button></div>
         </form>
       </div>
@@ -8760,6 +8810,7 @@
       "pinnacle-expense-tracker": "pinnacle-expense-tracker",
       "pinnacle-financial-snapshot": "pinnacle-financial-snapshot",
       "pinnacle-mileage-tracker": "pinnacle-mileage-tracker",
+      "pinnacle-vehicle-profiles": "pinnacle-vehicle-profiles",
       "tax-preparation": "tax-preparation",
       "contractor-1099": "contractor-1099",
       "tax-extension": "tax-extension",
@@ -9810,16 +9861,32 @@
       });
     }
     function renderPinnacleVehicles(){
-      const list=document.getElementById("pinnacleVehicleList");if(!list)return;
+      const list=document.getElementById("pinnacleVehicleList");
       const items=loadPinnacleVehicles();
-      if(!items.length){list.innerHTML='<div class="pinnacle-trip-empty">No vehicle profile has been added yet.</div>';refreshPinnacleVehicleOptions();return}
-      list.innerHTML=items.map(v=>`<article class="pinnacle-vehicle-row">
-        <div><h4>${escapeHtml(getPinnacleVehicleLabel(v))}</h4><p>${v.status==="retired"?"Retired vehicle":"Active vehicle"}</p></div>
-        <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${formatPinnacleMileageNumber(v.beginningOdometer)}</strong></div>
-        <div class="pinnacle-daily-metric"><span>Placed in Service</span><strong>${v.serviceDate?new Date(v.serviceDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
-        <div><span class="pinnacle-vehicle-badge">${v.primary==="yes"?"Primary":"Secondary"}</span></div>
-        <div class="pinnacle-vehicle-actions"><button type="button" data-vehicle-edit="${escapeHtml(v.id)}">Edit</button><button type="button" class="secondary" data-vehicle-primary="${escapeHtml(v.id)}">Make Primary</button></div>
-      </article>`).join("");
+      const primary=getPinnaclePrimaryVehicle();
+      const currentVehicle=document.getElementById("pinnacleMileageCurrentVehicle");
+      const currentStatus=document.getElementById("pinnacleMileageCurrentVehicleStatus");
+      const manageButton=document.getElementById("pinnacleManageVehicles");
+
+      if(currentVehicle)currentVehicle.textContent=primary?getPinnacleVehicleLabel(primary):"No active vehicle profile";
+      if(currentStatus)currentStatus.textContent=primary
+        ?`${primary.primary==="yes"?"Primary":"Active"} · ${primary.status==="retired"?"Retired":"Ready for new mileage records"}`
+        :"Set up a vehicle before adding mileage records.";
+      if(manageButton)manageButton.textContent=items.length?"Manage Vehicles":"Set Up Vehicle";
+
+      if(list){
+        if(!items.length){
+          list.innerHTML='<div class="pinnacle-trip-empty">No vehicle profile has been added yet.</div>';
+        }else{
+          list.innerHTML=items.map(v=>`<article class="pinnacle-vehicle-row">
+            <div><h4>${escapeHtml(getPinnacleVehicleLabel(v))}</h4><p>${v.status==="retired"?"Retired vehicle":"Active vehicle"}</p></div>
+            <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${formatPinnacleMileageNumber(v.beginningOdometer)}</strong></div>
+            <div class="pinnacle-daily-metric"><span>Placed in Service</span><strong>${v.serviceDate?new Date(v.serviceDate+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
+            <div><span class="pinnacle-vehicle-badge">${v.primary==="yes"?"Primary":"Secondary"}</span></div>
+            <div class="pinnacle-vehicle-actions"><button type="button" data-vehicle-edit="${escapeHtml(v.id)}">Edit</button><button type="button" class="secondary" data-vehicle-primary="${escapeHtml(v.id)}">Make Primary</button></div>
+          </article>`).join("");
+        }
+      }
       refreshPinnacleVehicleOptions();
     }
     function openPinnacleVehicleModal(item=null){
@@ -10059,10 +10126,15 @@
       return rate===null?0:getPinnacleTripMiles(item)*rate;
     }
     function showPinnacleMileageStatus(message,duration=4200){
-      const node=document.getElementById("pinnacleMileageStatus");if(!node)return;
-      node.textContent=message||"";node.style.display=message?"block":"none";
+      const nodes=["pinnacleMileageStatus","pinnacleVehiclePageStatus"]
+        .map((id)=>document.getElementById(id))
+        .filter(Boolean);
+      if(!nodes.length)return;
+      nodes.forEach((node)=>{node.textContent=message||"";node.style.display=message?"block":"none"});
       if(pinnacleMileageStatusTimer)window.clearTimeout(pinnacleMileageStatusTimer);
-      if(message)pinnacleMileageStatusTimer=window.setTimeout(()=>{node.textContent="";node.style.display="none"},duration);
+      if(message)pinnacleMileageStatusTimer=window.setTimeout(()=>{
+        nodes.forEach((node)=>{node.textContent="";node.style.display="none"});
+      },duration);
     }
     function refreshPinnacleMileageSourceOptions(){
       const items=loadPinnacleIncomeSources();
@@ -10158,7 +10230,7 @@
       document.getElementById("pinnacleDailyId").value=item?.id||"";
       document.getElementById("pinnacleDailyDialogTitle").textContent=item?"Edit Daily Odometer Record":"Add Daily Odometer Record";
       if(item&&form)Object.entries(item).forEach(([name,value])=>{const field=form.elements.namedItem(name);if(field&&"value" in field)field.value=value??""});
-      else document.getElementById("pinnacleDailyDate").value=new Date().toISOString().slice(0,10);
+      else document.getElementById("pinnacleDailyDate").value=getPinnacleLocalDateValue();
       document.getElementById("pinnacleDailyVehicleId").value=getPinnacleMileageVehicleId(item?.vehicleId||"");
       document.getElementById("pinnacleDailyMileageModal").hidden=false;
     }
@@ -10189,9 +10261,15 @@
       if(edit){const item=items.find(x=>x.id===edit.dataset.dailyEdit);if(item)openPinnacleDailyModal(item)}
       if(remove){savePinnacleDailyMileage(items.filter(x=>x.id!==remove.dataset.dailyDelete));renderPinnacleDailyMileage();renderPinnacleMileage();renderPinnacleFinancialSnapshot()}
     }
-    function showPinnacleMileagePanel(name){
-      document.querySelectorAll("[data-mileage-panel-content]").forEach(panel=>panel.hidden=panel.dataset.mileagePanelContent!==name);
-      document.querySelectorAll("[data-mileage-panel]").forEach(button=>button.classList.toggle("active",button.dataset.mileagePanel===name));
+    const PINNACLE_MILEAGE_PANEL_KEY="pinnacleMileagePanel.v1";
+    function showPinnacleMileagePanel(name,options={}){
+      const selected=name==="daily"?"daily":"trips";
+      document.querySelectorAll("[data-mileage-panel-content]").forEach(panel=>panel.hidden=panel.dataset.mileagePanelContent!==selected);
+      document.querySelectorAll("[data-mileage-panel]").forEach(button=>button.classList.toggle("active",button.dataset.mileagePanel===selected));
+      if(options.remember!==false)localStorage.setItem(PINNACLE_MILEAGE_PANEL_KEY,selected);
+    }
+    function restorePinnacleMileagePanel(){
+      showPinnacleMileagePanel(localStorage.getItem(PINNACLE_MILEAGE_PANEL_KEY)||"trips",{remember:false});
     }
     function openPinnacleMileageModal(item=null){
       refreshPinnacleMileageSourceOptions();
@@ -10200,7 +10278,7 @@
       document.getElementById("pinnacleTripId").value=item?.id||"";
       document.getElementById("pinnacleMileageDialogTitle").textContent=item?(item.id?"Edit Trip":"Repeat Trip"):"Add Trip";
       if(item&&form)Object.entries(item).forEach(([name,value])=>{const field=form.elements.namedItem(name);if(field&&"value" in field)field.value=value??""});
-      else document.getElementById("pinnacleTripDate").value=new Date().toISOString().slice(0,10);
+      else document.getElementById("pinnacleTripDate").value=getPinnacleLocalDateValue();
       document.getElementById("pinnacleTripVehicleId").value=getPinnacleMileageVehicleId(item?.vehicleId||"");
       document.getElementById("pinnacleMileageModal").hidden=false;
     }
@@ -10219,7 +10297,7 @@
       const items=loadPinnacleTrips();
       const edit=event.target.closest("[data-trip-edit]"),copy=event.target.closest("[data-trip-duplicate]"),remove=event.target.closest("[data-trip-delete]");
       if(edit){const item=items.find(x=>x.id===edit.dataset.tripEdit);if(item)openPinnacleMileageModal(item)}
-      if(copy){const item=items.find(x=>x.id===copy.dataset.tripDuplicate);if(item){const clone={...item,id:"",date:new Date().toISOString().slice(0,10)};openPinnacleMileageModal(clone)}}
+      if(copy){const item=items.find(x=>x.id===copy.dataset.tripDuplicate);if(item){const clone={...item,id:"",date:getPinnacleLocalDateValue()};openPinnacleMileageModal(clone)}}
       if(remove){savePinnacleTrips(items.filter(x=>x.id!==remove.dataset.tripDelete));renderPinnacleMileage()}
     }
     function buildPinnacleMileageCsv(){
@@ -10471,6 +10549,7 @@
           field.value=normalizePinnacleOdometerValue(field.value);
         });
       });
+      document.getElementById("pinnacleManageVehicles")?.addEventListener("click",()=>openPortalView("pinnacle-vehicle-profiles"));
       document.getElementById("pinnacleAddVehicle")?.addEventListener("click",()=>openPinnacleVehicleModal());
       document.getElementById("pinnacleVehicleClose")?.addEventListener("click",closePinnacleVehicleModal);
       document.getElementById("pinnacleVehicleCancel")?.addEventListener("click",closePinnacleVehicleModal);
@@ -10508,7 +10587,8 @@
         renderPinnacleFinancialSnapshot,
         renderPinnacleVehicles,
         renderPinnacleMileage,
-        renderPinnacleDailyMileage
+        renderPinnacleDailyMileage,
+        restorePinnacleMileagePanel
       ];
       pinnacleStartupSteps.forEach((step)=>{
         try{step()}catch(error){console.error("Pinnacle startup step failed:",step.name,error)}
