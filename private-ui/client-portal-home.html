@@ -1832,16 +1832,19 @@
     .pinnacle-expense-filter{display:flex;flex-direction:column;gap:7px}.pinnacle-expense-filter.wide{min-width:220px}
     .pinnacle-expense-filter label{font-size:12px;font-weight:850;color:#173e5c}
     .pinnacle-expense-filter input,.pinnacle-expense-filter select{min-height:42px;padding:9px 11px;border:1px solid #b9ccda;border-radius:10px;background:#fff;color:#1f3e57;font:inherit}
-    .pinnacle-expense-list{display:grid;gap:10px}
+    .pinnacle-expense-list{display:grid;gap:8px}
     .pinnacle-expense-empty{padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083}
     .pinnacle-expense-card{border:1px solid #c7dae7;border-radius:14px;background:#fff;overflow:hidden}
-    .pinnacle-expense-card.is-voided{opacity:.76}
-    .pinnacle-expense-row{display:grid;grid-template-columns:minmax(190px,1.25fr) repeat(5,minmax(105px,.72fr)) auto;gap:12px;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%)}
-    .pinnacle-expense-row h4{margin:0;color:#082f50;font-size:16px}.pinnacle-expense-row p{margin:4px 0 0;color:#607789;font-size:12px}
-    .pinnacle-expense-metric span{display:block;color:#718596;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
-    .pinnacle-expense-metric strong{display:block;margin-top:4px;color:#173e5c;font-size:14px;overflow-wrap:anywhere}
-    .pinnacle-expense-row-actions{display:flex;gap:7px;flex-wrap:wrap}.pinnacle-expense-row-actions button{min-height:36px;padding:7px 10px;font-size:12px}
-    .pinnacle-expense-audit{padding:10px 16px;border-top:1px solid #d9e6ee;background:#fff8e8;color:#6b4e0c;font-size:12px;line-height:1.45}
+    .pinnacle-expense-card.is-voided{opacity:.82}
+    .pinnacle-expense-row{display:grid;grid-template-columns:minmax(190px,1.25fr) repeat(5,minmax(105px,.72fr)) auto;gap:10px;align-items:center;padding:10px 14px;background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%)}
+    .pinnacle-expense-row h4{margin:0;color:#082f50;font-size:15px}.pinnacle-expense-row p{margin:3px 0 0;color:#607789;font-size:11px}
+    .pinnacle-expense-metric span{display:block;color:#718596;font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+    .pinnacle-expense-metric strong{display:block;margin-top:3px;color:#173e5c;font-size:13px;overflow-wrap:anywhere}
+    .pinnacle-expense-row-actions{display:flex;gap:6px;flex-wrap:wrap}.pinnacle-expense-row-actions button{min-height:32px;padding:6px 9px;font-size:11px}
+    .pinnacle-expense-detail-row{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,.85fr);gap:18px;align-items:start;padding:8px 14px;border-top:1px solid #d9e6ee;background:#fff8e8;color:#6b4e0c;font-size:11px;line-height:1.35}
+    .pinnacle-expense-detail-row.single{grid-template-columns:minmax(0,1fr)}
+    .pinnacle-expense-detail{min-width:0;overflow-wrap:anywhere}
+    .pinnacle-expense-detail.audit{text-align:right}
     .pinnacle-expense-modal[hidden]{display:none}
     .pinnacle-expense-modal{position:fixed;inset:0;z-index:3250;display:grid;place-items:center;padding:20px;background:rgba(5,31,53,.58)}
     .pinnacle-expense-dialog{width:min(920px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 28px 70px rgba(0,0,0,.25)}
@@ -1859,7 +1862,7 @@
     .pinnacle-expense-form-status{display:none;margin-top:14px;padding:10px 12px;border-radius:9px;background:#fff0f0;border:1px solid #e0aaaa;color:#8c2e2e;font-size:13px;font-weight:800}
     .pinnacle-expense-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
     .pinnacle-expense-delete-copy{margin:0 0 16px;color:#425f75;line-height:1.55}
-    @media(max-width:1180px){.pinnacle-expense-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row-actions{grid-column:1/-1}}
+    @media(max-width:1180px){.pinnacle-expense-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-expense-row-actions{grid-column:1/-1}.pinnacle-expense-detail-row{grid-template-columns:minmax(0,1fr)}.pinnacle-expense-detail.audit{text-align:left}}
     @media(max-width:760px){.pinnacle-expense-page .section-body{padding:16px}.pinnacle-expense-summary,.pinnacle-expense-filters,.pinnacle-expense-form-grid,.pinnacle-expense-row{grid-template-columns:1fr}}
 
     .pinnacle-financial-page .section-body{padding:26px}
@@ -9462,8 +9465,10 @@
             <div class="pinnacle-expense-metric"><span>Status</span><strong>${isVoided?"Voided":"Active"}</strong></div>
             <div class="pinnacle-expense-row-actions">${isVoided?"":`<button type="button" data-expense-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="danger" data-expense-delete="${escapeHtml(item.id)}">Void</button>`}</div>
           </div>
-          ${item.notes?`<div class="pinnacle-expense-audit"><strong>Notes:</strong> ${escapeHtml(item.notes)}</div>`:""}
-          ${isVoided?`<div class="pinnacle-expense-audit"><strong>Voided:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:""}
+          ${(item.notes||isVoided)?`<div class="pinnacle-expense-detail-row ${item.notes&&isVoided?"":"single"}">
+            ${item.notes?`<div class="pinnacle-expense-detail"><strong>Notes:</strong> ${escapeHtml(item.notes)}</div>`:""}
+            ${isVoided?`<div class="pinnacle-expense-detail audit"><strong>Voided:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:""}
+          </div>`:""}
         </article>`;
       }).join("");
     }
