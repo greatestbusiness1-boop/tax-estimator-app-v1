@@ -9509,12 +9509,173 @@
       if(copy){const item=items.find(x=>x.id===copy.dataset.tripDuplicate);if(item){const clone={...item,id:"",date:new Date().toISOString().slice(0,10)};openPinnacleMileageModal(clone)}}
       if(remove){savePinnacleTrips(items.filter(x=>x.id!==remove.dataset.tripDelete));renderPinnacleMileage()}
     }
+    function buildPinnacleMileageCsv(){
+      const sources=Object.fromEntries(
+        loadPinnacleIncomeSources().map((item)=>[
+          item.id,
+          item.name||"Income Source"
+        ])
+      );
+      const vehicles=Object.fromEntries(
+        loadPinnacleVehicles().map((item)=>[
+          item.id,
+          getPinnacleVehicleLabel(item)
+        ])
+      );
+      const resolveSource=(item)=>sources[item.sourceId]||"Not linked";
+      const resolveVehicle=(item)=>
+        vehicles[item.vehicleId]
+        ||String(item.vehicle||"").trim()
+        ||"Not linked";
+      const numberValue=(value)=>{
+        const parsed=Number(String(value??"0").replace(/,/g,""));
+        return Number.isFinite(parsed)?parsed:0;
+      };
+      const trips=loadPinnacleTrips();
+      const dailyMileage=loadPinnacleDailyMileage();
+      const records=[];
+
+      trips.forEach((item)=>{
+        const miles=getPinnacleTripMiles(item);
+        const classification=String(item.classification||"unclassified").toLowerCase();
+        const rate=getPinnacleBusinessMileageRate(item.date);
+        records.push({
+          sortDate:String(item.date||""),
+          row:[
+            "Individual Trip",
+            item.date||"",
+            String(item.date||"").slice(0,4),
+            resolveSource(item),
+            resolveVehicle(item),
+            formatPinnacleTripAddress(item,"start"),
+            formatPinnacleTripAddress(item,"end"),
+            item.purpose||"",
+            classification||"unclassified",
+            item.roundTrip==="yes"?"Yes":"No",
+            miles.toFixed(2),
+            "",
+            "",
+            miles.toFixed(2),
+            classification==="personal"?miles.toFixed(2):"0.00",
+            classification==="commuting"?miles.toFixed(2):"0.00",
+            classification==="business"?miles.toFixed(2):"0.00",
+            !["business","personal","commuting"].includes(classification)?miles.toFixed(2):"0.00",
+            rate===null?"":rate.toFixed(3),
+            getPinnacleTripDeduction(item).toFixed(2),
+            item.notes||""
+          ]
+        });
+      });
+
+      dailyMileage.forEach((item)=>{
+        const beginning=numberValue(item.startOdometer);
+        const ending=numberValue(item.endOdometer);
+        const total=Math.max(ending-beginning,0);
+        const personal=Math.max(numberValue(item.personalMiles),0);
+        const commuting=Math.max(numberValue(item.commutingMiles),0);
+        const business=getPinnacleDailyBusinessMiles(item);
+        const rate=getPinnacleBusinessMileageRate(item.date);
+        records.push({
+          sortDate:String(item.date||""),
+          row:[
+            "Daily Odometer",
+            item.date||"",
+            String(item.date||"").slice(0,4),
+            resolveSource(item),
+            resolveVehicle(item),
+            "",
+            "",
+            item.purpose||"",
+            "Daily mileage split",
+            "",
+            "",
+            beginning.toFixed(1),
+            ending.toFixed(1),
+            total.toFixed(2),
+            personal.toFixed(2),
+            commuting.toFixed(2),
+            business.toFixed(2),
+            "0.00",
+            rate===null?"":rate.toFixed(3),
+            getPinnacleDailyDeduction(item).toFixed(2),
+            item.notes||""
+          ]
+        });
+      });
+
+      records.sort((a,b)=>
+        b.sortDate.localeCompare(a.sortDate)
+        ||String(a.row[0]).localeCompare(String(b.row[0]))
+      );
+
+      const headers=[
+        "Record Type",
+        "Date",
+        "Tax Year",
+        "Income Source",
+        "Vehicle",
+        "Starting Location",
+        "Ending Location",
+        "Business Purpose",
+        "Classification",
+        "Round Trip",
+        "Trip Miles",
+        "Beginning Odometer",
+        "Ending Odometer",
+        "Total Miles",
+        "Personal Miles",
+        "Commuting Miles",
+        "Business Miles",
+        "Other / Unclassified Miles",
+        "Mileage Rate ($/mile)",
+        "Deduction",
+        "Notes"
+      ];
+      const dataRows=records.map((record)=>record.row);
+      const totalAt=(index)=>dataRows.reduce(
+        (sum,row)=>sum+numberValue(row[index]),
+        0
+      );
+      const totals=[
+        "TOTALS",
+        "",
+        "",
+        "All sources",
+        "All vehicles",
+        "",
+        "",
+        "",
+        "",
+        "",
+        totalAt(10).toFixed(2),
+        "",
+        "",
+        totalAt(13).toFixed(2),
+        totalAt(14).toFixed(2),
+        totalAt(15).toFixed(2),
+        totalAt(16).toFixed(2),
+        totalAt(17).toFixed(2),
+        "",
+        totalAt(19).toFixed(2),
+        `${trips.length} individual trip(s); ${dailyMileage.length} daily odometer record(s)`
+      ];
+      const rows=[headers,...dataRows,totals];
+      return rows.map((row)=>
+        row.map((value)=>
+          `"${String(value??"").replace(/"/g,'""')}"`
+        ).join(",")
+      ).join("\r\n");
+    }
     function exportPinnacleMileageCsv(){
-      const items=loadPinnacleTrips();
-      const rows=[["Date","Source ID","Vehicle","Start","End","Purpose","Classification","Miles","Rate","Deduction"]];
-      items.forEach(x=>rows.push([x.date,x.sourceId,x.vehicle,x.startLocation,x.endLocation,x.purpose,x.classification,getPinnacleTripMiles(x),getPinnacleBusinessMileageRate(x.date)??"",getPinnacleTripDeduction(x).toFixed(2)]));
-      const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
-      const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));const a=document.createElement("a");a.href=url;a.download="Pinnacle-Mileage-Report.csv";a.click();URL.revokeObjectURL(url);
+      const csv=buildPinnacleMileageCsv();
+      const url=URL.createObjectURL(
+        new Blob(["\uFEFF",csv],{type:"text/csv;charset=utf-8"})
+      );
+      const anchor=document.createElement("a");
+      anchor.href=url;
+      anchor.download="Pinnacle-Mileage-Report.csv";
+      anchor.click();
+      window.setTimeout(()=>URL.revokeObjectURL(url),0);
     }
 
     let pinnacleFeaturesInitialized=false;
