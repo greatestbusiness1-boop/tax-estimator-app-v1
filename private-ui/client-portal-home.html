@@ -9251,14 +9251,19 @@
       const active=loadPinnacleVehicles().filter(x=>x.status!=="retired");
       return active.find(x=>x.primary==="yes")||active[0]||null;
     }
-    function refreshPinnacleVehicleOptions(){
+    function getPinnacleMileageVehicleId(requestedId=""){
       const vehicles=loadPinnacleVehicles().filter(x=>x.status!=="retired");
-      const primary=getPinnaclePrimaryVehicle();
+      const requested=String(requestedId||"").trim();
+      if(requested&&vehicles.some(vehicle=>vehicle.id===requested))return requested;
+      return getPinnaclePrimaryVehicle()?.id||vehicles[0]?.id||"";
+    }
+    function refreshPinnacleVehicleOptions(preferredVehicleId=""){
+      const vehicles=loadPinnacleVehicles().filter(x=>x.status!=="retired");
       ["pinnacleTripVehicleId","pinnacleDailyVehicleId"].forEach(id=>{
         const select=document.getElementById(id);if(!select)return;
-        const current=select.value;
+        const requested=String(preferredVehicleId||select.value||"").trim();
         select.innerHTML='<option value="">Select vehicle</option>'+vehicles.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(getPinnacleVehicleLabel(v))}</option>`).join("");
-        select.value=current||primary?.id||"";
+        select.value=getPinnacleMileageVehicleId(requested);
       });
     }
     function renderPinnacleVehicles(){
@@ -9436,21 +9441,19 @@
     function openPinnacleDailyModal(item=null){
       refreshPinnacleMileageSourceOptions();
       const form=document.getElementById("pinnacleDailyMileageForm");form?.reset();
+      refreshPinnacleVehicleOptions(item?.vehicleId||"");
       document.getElementById("pinnacleDailyId").value=item?.id||"";
       document.getElementById("pinnacleDailyDialogTitle").textContent=item?"Edit Daily Odometer Record":"Add Daily Odometer Record";
       if(item&&form)Object.entries(item).forEach(([name,value])=>{const field=form.elements.namedItem(name);if(field&&"value" in field)field.value=value??""});
-      else{
-        document.getElementById("pinnacleDailyDate").value=new Date().toISOString().slice(0,10);
-        refreshPinnacleVehicleOptions();
-        const primary=getPinnaclePrimaryVehicle();
-        if(primary)document.getElementById("pinnacleDailyVehicleId").value=primary.id;
-      }
+      else document.getElementById("pinnacleDailyDate").value=new Date().toISOString().slice(0,10);
+      document.getElementById("pinnacleDailyVehicleId").value=getPinnacleMileageVehicleId(item?.vehicleId||"");
       document.getElementById("pinnacleDailyMileageModal").hidden=false;
     }
     function closePinnacleDailyModal(){document.getElementById("pinnacleDailyMileageModal").hidden=true}
     function submitPinnacleDailyMileage(event){
       event.preventDefault();
       const data=Object.fromEntries(new FormData(event.currentTarget).entries());
+      data.vehicleId=getPinnacleMileageVehicleId(data.vehicleId);
       data.startOdometer=normalizePinnacleOdometerValue(data.startOdometer);
       data.endOdometer=normalizePinnacleOdometerValue(data.endOdometer);
       if(!data.date||Number(String(data.endOdometer||"0").replace(/,/g,""))<Number(String(data.startOdometer||"0").replace(/,/g,"")))return;
@@ -9480,20 +9483,18 @@
     function openPinnacleMileageModal(item=null){
       refreshPinnacleMileageSourceOptions();
       const form=document.getElementById("pinnacleMileageForm");form?.reset();
+      refreshPinnacleVehicleOptions(item?.vehicleId||"");
       document.getElementById("pinnacleTripId").value=item?.id||"";
-      document.getElementById("pinnacleMileageDialogTitle").textContent=item?"Edit Trip":"Add Trip";
+      document.getElementById("pinnacleMileageDialogTitle").textContent=item?(item.id?"Edit Trip":"Repeat Trip"):"Add Trip";
       if(item&&form)Object.entries(item).forEach(([name,value])=>{const field=form.elements.namedItem(name);if(field&&"value" in field)field.value=value??""});
-      else{
-        document.getElementById("pinnacleTripDate").value=new Date().toISOString().slice(0,10);
-        refreshPinnacleVehicleOptions();
-        const primary=getPinnaclePrimaryVehicle();
-        if(primary)document.getElementById("pinnacleTripVehicleId").value=primary.id;
-      }
+      else document.getElementById("pinnacleTripDate").value=new Date().toISOString().slice(0,10);
+      document.getElementById("pinnacleTripVehicleId").value=getPinnacleMileageVehicleId(item?.vehicleId||"");
       document.getElementById("pinnacleMileageModal").hidden=false;
     }
     function closePinnacleMileageModal(){document.getElementById("pinnacleMileageModal").hidden=true}
     function submitPinnacleTrip(event){
       event.preventDefault();const data=Object.fromEntries(new FormData(event.currentTarget).entries());
+      data.vehicleId=getPinnacleMileageVehicleId(data.vehicleId);
       if(!data.date||!Number(data.miles||0)){return}
       const items=loadPinnacleTrips();const index=items.findIndex(x=>x.id===data.id);
       const item={...data,id:data.id||`TRIP-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,updatedAt:new Date().toISOString()};
