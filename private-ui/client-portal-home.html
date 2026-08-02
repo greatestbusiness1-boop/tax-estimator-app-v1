@@ -1811,6 +1811,12 @@
     .pinnacle-linked-expense-summary button[disabled]{cursor:not-allowed;color:#778a98;border-color:#cbd7df;background:#eef3f6}
     .pinnacle-linked-expense-summary small{color:#687e90;line-height:1.4}
     .pinnacle-expense-page .section-body{padding:26px}
+    .pinnacle-expense-context{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:15px 18px;border:1px solid #8fbad2;border-left:5px solid #0b5d8d;border-radius:14px;background:#edf7fc}
+    .pinnacle-expense-context[hidden]{display:none}
+    .pinnacle-expense-context span{display:block;color:#55758b;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+    .pinnacle-expense-context strong{display:block;margin-top:3px;color:#082f50;font-size:18px}
+    .pinnacle-expense-context small{display:block;margin-top:4px;color:#587083;font-size:12px}
+    .pinnacle-expense-context button{min-height:38px;padding:8px 12px;border:1px solid #0b5d8d;border-radius:9px;background:#fff;color:#0b5685;font-weight:850;cursor:pointer}
     .pinnacle-expense-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
     .pinnacle-expense-stat{padding:17px;border:1px solid #c4d8e6;border-radius:15px;background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%)}
     .pinnacle-expense-stat span{display:block;color:#687d8e;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
@@ -1841,7 +1847,9 @@
     .pinnacle-expense-dialog{width:min(920px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 28px 70px rgba(0,0,0,.25)}
     .pinnacle-expense-delete-dialog{width:min(620px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 28px 70px rgba(0,0,0,.25)}
     .pinnacle-expense-dialog-head{display:flex;justify-content:space-between;align-items:center;padding:18px 21px;background:#0d3557;color:#fff}
-    .pinnacle-expense-dialog-head h3{margin:0}.pinnacle-expense-dialog-head button{width:38px;height:38px;border:1px solid rgba(255,255,255,.55);border-radius:9px;background:transparent;color:#fff;font-size:22px;cursor:pointer}
+    .pinnacle-expense-dialog-head h3{margin:0}
+    .pinnacle-expense-dialog-context{display:block;margin:4px 0 0;color:#d9edf8;font-size:12px;font-weight:750}
+    .pinnacle-expense-dialog-head button{width:38px;height:38px;border:1px solid rgba(255,255,255,.55);border-radius:9px;background:transparent;color:#fff;font-size:22px;cursor:pointer}
     .pinnacle-expense-dialog-body{padding:22px}
     .pinnacle-expense-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
     .pinnacle-expense-field{display:flex;flex-direction:column;gap:7px}.pinnacle-expense-field.full{grid-column:1/-1}
@@ -4196,6 +4204,14 @@
         <button class="portal-back-button" type="button" data-portal-open="pinnacle">Return to Pinnacle</button>
       </div>
       <div class="section-body">
+        <div class="pinnacle-expense-context" id="pinnacleExpenseContext" hidden>
+          <div>
+            <span>Expense workspace</span>
+            <strong>Managing expenses for: <b id="pinnacleExpenseContextName">Income source</b></strong>
+            <small id="pinnacleExpenseContextSummary">0 active expenses · $0.00</small>
+          </div>
+          <button type="button" id="pinnacleExpenseViewAll">View all expenses</button>
+        </div>
         <div class="pinnacle-expense-summary">
           <div class="pinnacle-expense-stat"><span>Expenses Shown</span><strong id="pinnacleExpenseTotal">$0.00</strong></div>
           <div class="pinnacle-expense-stat"><span>Active Records</span><strong id="pinnacleExpenseCount">0</strong></div>
@@ -4231,7 +4247,7 @@
 
     <div class="pinnacle-expense-modal" id="pinnacleExpenseModal" hidden>
       <div class="pinnacle-expense-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleExpenseDialogTitle">
-        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleExpenseDialogTitle">Add Expense</h3><button type="button" id="pinnacleExpenseClose" aria-label="Close">×</button></div>
+        <div class="pinnacle-expense-dialog-head"><div><h3 id="pinnacleExpenseDialogTitle">Add Expense</h3><span class="pinnacle-expense-dialog-context" id="pinnacleExpenseDialogContext">Income source: Not linked yet</span></div><button type="button" id="pinnacleExpenseClose" aria-label="Close">×</button></div>
         <form class="pinnacle-expense-dialog-body" id="pinnacleExpenseForm" novalidate>
           <input type="hidden" id="pinnacleExpenseEditId" name="id">
           <div class="pinnacle-expense-form-grid">
@@ -9416,6 +9432,17 @@
       document.getElementById("pinnacleExpenseCount").textContent=String(activeFiltered.length);
       document.getElementById("pinnacleExpenseReceiptCount").textContent=String(activeFiltered.filter((item)=>item.receiptStatus==="available").length);
       document.getElementById("pinnacleExpenseUnassignedTotal").textContent=pinnacleMoney(unassignedTotal);
+      const context=document.getElementById("pinnacleExpenseContext");
+      const contextName=document.getElementById("pinnacleExpenseContextName");
+      const contextSummary=document.getElementById("pinnacleExpenseContextSummary");
+      const selectedSourceName=filters.sourceId?sources[filters.sourceId]||"Income source not found":"";
+      if(context){
+        context.hidden=!filters.sourceId;
+        if(filters.sourceId){
+          if(contextName)contextName.textContent=selectedSourceName;
+          if(contextSummary)contextSummary.textContent=`${activeFiltered.length} active expense${activeFiltered.length===1?"":"s"} · ${pinnacleMoney(activeTotal)}`;
+        }
+      }
       if(!filtered.length){
         list.innerHTML='<div class="pinnacle-expense-empty">No expense records match the current filters.</div>';
         return;
@@ -9447,6 +9474,10 @@
       document.getElementById("pinnacleExpenseDialogTitle").textContent=item?"Edit Expense":"Add Expense";
       refreshPinnacleExpenseCategoryOptions();
       refreshPinnacleExpenseSourceOptions();
+      const effectiveSourceId=String(item?.sourceId||sourceId||"");
+      const sourceName=loadPinnacleIncomeSources().find((source)=>source.id===effectiveSourceId)?.name||"Not linked yet";
+      const dialogContext=document.getElementById("pinnacleExpenseDialogContext");
+      if(dialogContext)dialogContext.textContent=item?`Income source: ${sourceName}`:`Adding expense for: ${sourceName}`;
       if(item&&form){
         Object.entries(item).forEach(([name,value])=>{
           const field=form.elements.namedItem(name);
@@ -9454,8 +9485,9 @@
         });
       }else{
         document.getElementById("pinnacleExpenseDate").value=getPinnacleLocalDateValue();
-        if(sourceId)document.getElementById("pinnacleExpenseSourceId").value=sourceId;
       }
+      const sourceSelect=document.getElementById("pinnacleExpenseSourceId");
+      if(sourceSelect&&effectiveSourceId&&Array.from(sourceSelect.options).some((option)=>option.value===effectiveSourceId))sourceSelect.value=effectiveSourceId;
       const amount=document.getElementById("pinnacleExpenseAmount");
       if(amount)amount.value=normalizePinnacleCurrencyValue(amount.value)||"";
       document.getElementById("pinnacleExpenseModal").hidden=false;
@@ -9500,7 +9532,8 @@
       if(!item)return;
       document.getElementById("pinnacleExpenseDeleteForm")?.reset();
       document.getElementById("pinnacleExpenseDeleteId").value=item.id;
-      document.getElementById("pinnacleExpenseDeleteCopy").textContent=`${item.vendor||item.category||"This expense"} · ${pinnacleMoney(item.amount)} will be removed from active totals and retained in the audit history.`;
+      const sourceName=loadPinnacleIncomeSources().find((source)=>source.id===item.sourceId)?.name||"Income source not linked";
+      document.getElementById("pinnacleExpenseDeleteCopy").textContent=`${item.vendor||item.category||"This expense"} · ${pinnacleMoney(item.amount)} · Income source: ${sourceName}. It will be removed from active totals and retained in the audit history.`;
       showPinnacleExpenseFormStatus("","pinnacleExpenseDeleteStatus");
       document.getElementById("pinnacleExpenseDeleteModal").hidden=false;
       document.getElementById("pinnacleExpenseDeleteReason")?.focus();
@@ -10355,12 +10388,26 @@
       });
 
       document.getElementById("pinnacleIncomeManageExpenses")?.addEventListener("click",(event)=>openPinnacleExpenseTrackerForSource(event.currentTarget.dataset.expenseSourceId||""));
-      document.getElementById("pinnacleAddExpense")?.addEventListener("click",()=>openPinnacleExpenseModal());
+      document.getElementById("pinnacleAddExpense")?.addEventListener("click",()=>{
+        const sourceId=String(document.getElementById("pinnacleExpenseSourceFilter")?.value||"");
+        openPinnacleExpenseModal(null,sourceId);
+      });
+      document.getElementById("pinnacleExpenseViewAll")?.addEventListener("click",()=>{
+        const filter=document.getElementById("pinnacleExpenseSourceFilter");
+        if(filter)filter.value="";
+        renderPinnacleExpenses();
+      });
       document.getElementById("pinnacleExpenseClose")?.addEventListener("click",closePinnacleExpenseModal);
       document.getElementById("pinnacleExpenseCancel")?.addEventListener("click",closePinnacleExpenseModal);
       document.getElementById("pinnacleExpenseForm")?.addEventListener("submit",submitPinnacleExpense);
       document.getElementById("pinnacleExpenseAmount")?.addEventListener("input",(event)=>{const cleaned=sanitizePinnacleCurrencyInput(event.currentTarget.value);if(event.currentTarget.value!==cleaned)event.currentTarget.value=cleaned});
       document.getElementById("pinnacleExpenseAmount")?.addEventListener("blur",(event)=>{event.currentTarget.value=normalizePinnacleCurrencyValue(event.currentTarget.value)||""});
+      document.getElementById("pinnacleExpenseSourceId")?.addEventListener("change",(event)=>{
+        const sourceName=loadPinnacleIncomeSources().find((source)=>source.id===event.currentTarget.value)?.name||"Not linked yet";
+        const isEditing=Boolean(document.getElementById("pinnacleExpenseEditId")?.value);
+        const context=document.getElementById("pinnacleExpenseDialogContext");
+        if(context)context.textContent=isEditing?`Income source: ${sourceName}`:`Adding expense for: ${sourceName}`;
+      });
       document.getElementById("pinnacleExpenseList")?.addEventListener("click",handlePinnacleExpenseListClick);
       ["pinnacleExpenseSearch","pinnacleExpenseCategoryFilter","pinnacleExpenseSourceFilter","pinnacleExpenseMonth","pinnacleExpenseYear","pinnacleExpenseStatusFilter"].forEach((id)=>{
         const field=document.getElementById(id);
