@@ -9266,9 +9266,12 @@
       "Legal & Professional Services",
       "Meals",
       "Merchant / Platform Fees",
+      "Bank & Processing Fees",
       "Office Expenses",
+      "Postage & Shipping",
       "Rent or Lease",
       "Repairs & Maintenance",
+      "Software & Subscriptions",
       "Supplies",
       "Taxes & Licenses",
       "Travel",
@@ -9276,6 +9279,15 @@
       "Other Business Expense"
     ];
     let pinnacleExpensePageStatusTimer=null;
+
+    function getPinnacleLocalDateValue(date=new Date()){
+      const localDate=date instanceof Date?date:new Date(date);
+      if(Number.isNaN(localDate.getTime()))return "";
+      const year=localDate.getFullYear();
+      const month=String(localDate.getMonth()+1).padStart(2,"0");
+      const day=String(localDate.getDate()).padStart(2,"0");
+      return `${year}-${month}-${day}`;
+    }
 
     function loadPinnacleExpenses(){
       try{
@@ -9441,7 +9453,7 @@
           if(field&&"value" in field)field.value=value??"";
         });
       }else{
-        document.getElementById("pinnacleExpenseDate").value=new Date().toISOString().slice(0,10);
+        document.getElementById("pinnacleExpenseDate").value=getPinnacleLocalDateValue();
         if(sourceId)document.getElementById("pinnacleExpenseSourceId").value=sourceId;
       }
       const amount=document.getElementById("pinnacleExpenseAmount");
