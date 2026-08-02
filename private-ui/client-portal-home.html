@@ -1743,24 +1743,35 @@
     .pinnacle-daily-list{display:grid;gap:10px}
     .pinnacle-daily-card{border:1px solid #c7dae7;border-radius:12px;background:#fff;overflow:hidden}
     .pinnacle-daily-head{
-      display:grid!important;
-      grid-template-columns:minmax(135px,1fr) repeat(4,minmax(85px,.55fr)) auto!important;
-      gap:9px!important;align-items:center;padding:10px 12px!important
+      display:grid;grid-template-columns:minmax(220px,1fr) minmax(110px,.45fr) auto;
+      gap:12px;align-items:center;padding:11px 13px;
+      background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%)
     }
-    .pinnacle-daily-head h4{font-size:14px!important}
-    .pinnacle-daily-head p{font-size:11px!important}
-    .pinnacle-daily-details{display:none;padding:12px 14px;border-top:1px solid #d9e6ee;background:#fbfdfe}
+    .pinnacle-daily-head h4{margin:0;color:#082f50;font-size:15px}
+    .pinnacle-daily-head p{margin:3px 0 0;color:#607789;font-size:11px}
+    .pinnacle-daily-summary{
+      grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));
+      gap:8px;padding-top:9px;border-top:1px solid #d5e3ec
+    }
+    .pinnacle-daily-summary .pinnacle-daily-metric{
+      min-width:0;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.72)
+    }
+    .pinnacle-daily-details{display:none;padding:10px 13px;border-top:1px solid #d9e6ee;background:#fbfdfe}
     .pinnacle-daily-card.expanded .pinnacle-daily-details{display:block}
-    .pinnacle-daily-details-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .pinnacle-daily-details-grid{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr);gap:10px}
     .pinnacle-daily-toggle{background:#fff!important;color:#0b5685!important;border-color:#b9ccdc!important}
-    .pinnacle-daily-head{display:grid;grid-template-columns:minmax(180px,1.15fr) repeat(6,minmax(95px,.65fr)) auto;gap:12px;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%)}
-    .pinnacle-daily-head h4{margin:0;color:#082f50;font-size:16px}
-    .pinnacle-daily-head p{margin:4px 0 0;color:#607789;font-size:12px}
     .pinnacle-daily-metric span{display:block;color:#718596;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
-    .pinnacle-daily-metric strong{display:block;margin-top:4px;color:#173e5c;font-size:14px}
+    .pinnacle-daily-metric strong{display:block;margin-top:3px;color:#173e5c;font-size:13px}
     .pinnacle-daily-explanation{margin:0 0 16px;padding:14px 16px;border-left:5px solid #c99a2e;border-radius:10px;background:#fff8e8;color:#6b4e0c;line-height:1.5}
-    @media(max-width:1200px){.pinnacle-daily-head{grid-template-columns:repeat(3,minmax(0,1fr))}.pinnacle-daily-head .pinnacle-trip-actions{grid-column:1/-1}}
-    @media(max-width:760px){.pinnacle-daily-head{grid-template-columns:1fr}}
+    @media(max-width:1200px){
+      .pinnacle-daily-summary{grid-template-columns:repeat(4,minmax(105px,1fr))}
+    }
+    @media(max-width:760px){
+      .pinnacle-daily-head{grid-template-columns:1fr}
+      .pinnacle-daily-head .pinnacle-trip-actions{justify-content:flex-start}
+      .pinnacle-daily-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pinnacle-daily-details-grid{grid-template-columns:1fr}
+    }
     @media(max-width:760px){.pinnacle-mileage-vehicle-context,.pinnacle-mileage-panel-head{align-items:stretch;flex-direction:column}.pinnacle-mileage-vehicle-context button,.pinnacle-mileage-panel-head button{width:100%}}
     .pinnacle-mileage-page .section-body{padding:22px}
     .pinnacle-mileage-summary{
@@ -10371,21 +10382,27 @@
       list.innerHTML=items.map((item)=>{
         const total=getPinnacleDailyTotalMiles(item);
         const business=getPinnacleDailyBusinessMiles(item);
+        const beginning=String(item.startOdometer||"0").replace(/,/g,"");
+        const ending=String(item.endOdometer||"0").replace(/,/g,"");
+        const personal=Number(item.personalMiles||0);
+        const commuting=Number(item.commutingMiles||0);
         return `<article class="pinnacle-daily-card" data-daily-card="${escapeHtml(item.id)}"><div class="pinnacle-daily-head">
           <div><h4>${escapeHtml(getPinnacleVehicleLabel(vehicles[item.vehicleId]))}</h4><p>${escapeHtml(sources[item.sourceId]||"Income source not linked")}</p></div>
           <div class="pinnacle-daily-metric"><span>Date</span><strong>${item.date?new Date(item.date+"T00:00:00").toLocaleDateString():"Not entered"}</strong></div>
-          <div class="pinnacle-daily-metric"><span>Total</span><strong>${formatPinnacleMileageNumber(total)}</strong></div>
-          <div class="pinnacle-daily-metric"><span>Business</span><strong>${formatPinnacleMileageNumber(business)}</strong></div>
-          <div class="pinnacle-daily-metric"><span>Deduction</span><strong>${pinnacleMoney(getPinnacleDailyDeduction(item))}</strong></div>
-          <div class="pinnacle-trip-actions"><button type="button" class="pinnacle-daily-toggle" data-daily-toggle="${escapeHtml(item.id)}">Open</button><button type="button" data-daily-edit="${escapeHtml(item.id)}">Edit</button></div>
+          <div class="pinnacle-trip-actions"><button type="button" class="pinnacle-daily-toggle" data-daily-toggle="${escapeHtml(item.id)}">Details</button><button type="button" data-daily-edit="${escapeHtml(item.id)}">Edit</button></div>
+          <div class="pinnacle-daily-summary">
+            <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${formatPinnacleMileageNumber(beginning)}</strong></div>
+            <div class="pinnacle-daily-metric"><span>Ending Odometer</span><strong>${formatPinnacleMileageNumber(ending)}</strong></div>
+            <div class="pinnacle-daily-metric"><span>Total Miles</span><strong>${formatPinnacleMileageNumber(total)} miles</strong></div>
+            <div class="pinnacle-daily-metric"><span>Business Miles</span><strong>${formatPinnacleMileageNumber(business)} miles</strong></div>
+            <div class="pinnacle-daily-metric"><span>Personal Miles</span><strong>${formatPinnacleMileageNumber(personal)} miles</strong></div>
+            <div class="pinnacle-daily-metric"><span>Commuting Miles</span><strong>${formatPinnacleMileageNumber(commuting)} miles</strong></div>
+            <div class="pinnacle-daily-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(getPinnacleDailyDeduction(item))}</strong></div>
+          </div>
         </div>
         <div class="pinnacle-daily-details">
           <div class="pinnacle-daily-details-grid">
-            <div class="pinnacle-daily-metric"><span>Beginning Odometer</span><strong>${formatPinnacleMileageNumber(String(item.startOdometer||"0").replace(/,/g,""))}</strong></div>
-            <div class="pinnacle-daily-metric"><span>Ending Odometer</span><strong>${formatPinnacleMileageNumber(String(item.endOdometer||"0").replace(/,/g,""))}</strong></div>
-            <div class="pinnacle-daily-metric"><span>Personal</span><strong>${formatPinnacleMileageNumber(item.personalMiles||0)}</strong></div>
-            <div class="pinnacle-daily-metric"><span>Commuting</span><strong>${formatPinnacleMileageNumber(item.commutingMiles||0)}</strong></div>
-            <div class="pinnacle-daily-metric"><span>Purpose</span><strong>${escapeHtml(item.purpose||"Not entered")}</strong></div>
+            <div class="pinnacle-daily-metric"><span>Business Purpose / Platforms Worked</span><strong>${escapeHtml(item.purpose||"Not entered")}</strong></div>
             <div class="pinnacle-daily-metric"><span>Notes</span><strong>${escapeHtml(item.notes||"None")}</strong></div>
           </div>
           <div class="pinnacle-trip-actions" style="margin-top:10px"><button type="button" class="secondary" data-daily-delete="${escapeHtml(item.id)}">Delete</button></div>
@@ -10424,7 +10441,7 @@
         const card=toggle.closest("[data-daily-card]");
         if(card){
           card.classList.toggle("expanded");
-          toggle.textContent=card.classList.contains("expanded")?"Close":"Open";
+          toggle.textContent=card.classList.contains("expanded")?"Close Details":"Details";
         }
       }
       if(edit){const item=items.find(x=>x.id===edit.dataset.dailyEdit);if(item)openPinnacleDailyModal(item)}
