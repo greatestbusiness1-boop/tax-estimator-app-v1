@@ -1678,6 +1678,49 @@
         grid-template-columns:1fr !important;
       }
     }
+
+    /* Keep the Pinnacle Overview feature list balanced as three uniform columns. */
+    #pinnaclePage details.pinnacle-more-features > ul{
+      list-style:none;
+      padding:16px 24px 18px !important;
+      grid-auto-flow:column;
+      grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      grid-template-rows:repeat(6,minmax(36px,auto));
+      column-gap:30px !important;
+      row-gap:6px !important;
+      align-items:stretch;
+    }
+    #pinnaclePage details.pinnacle-more-features > ul > li{
+      list-style:none;
+      display:grid;
+      grid-template-columns:10px minmax(0,1fr);
+      align-items:start;
+      min-height:36px;
+      line-height:1.35;
+    }
+    #pinnaclePage details.pinnacle-more-features > ul > li::before{
+      content:"•";
+      color:#fff;
+      font-weight:900;
+      line-height:1.35;
+    }
+    @media(max-width:980px){
+      #pinnaclePage details.pinnacle-more-features > ul{
+        grid-auto-flow:column;
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        grid-template-rows:repeat(9,minmax(36px,auto));
+      }
+    }
+    @media(max-width:680px){
+      #pinnaclePage details.pinnacle-more-features > ul{
+        grid-auto-flow:row;
+        grid-template-columns:1fr !important;
+        grid-template-rows:none;
+      }
+      #pinnaclePage details.pinnacle-more-features > ul > li{
+        min-height:0;
+      }
+    }
     .pinnacle-profile-access-card{
       display:flex;align-items:center;justify-content:space-between;gap:20px;
       margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;
@@ -3261,7 +3304,7 @@
             <span>Pinnacle Tax Action Plan</span><span aria-hidden="true">▾</span>
           </button>
           <div class="portal-submenu" id="pinnacleMenu">
-            <button type="button" data-portal-open="pinnacle">Pinnacle Overview</button>
+            <button type="button" data-portal-open="pinnacle">Pinnacle Tax Action Plan</button>
             <button type="button" data-portal-open="pinnacle-financial-snapshot">Business Financial Snapshot</button>
             <button type="button" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
             <button type="button" data-portal-open="pinnacle-income-sources">Income Tracker</button>
@@ -4059,7 +4102,7 @@
             <li>Income-source detail rows and update history</li>
             <li>Separated start and end trip addresses</li>
             <li>Business, personal, commuting, and unclassified mileage totals</li>
-            <li>Compact daily odometer history with expandable details</li>
+            <li>Daily odometer records with visible beginning and ending readings</li>
             <li>Mileage CSV download</li>
             <li>Expense categories and receipt organization</li>
             <li>Quarterly-payment and W-2 withholding guidance</li>
@@ -6884,7 +6927,7 @@
               <li>Income-source detail rows and update history</li>
               <li>Separated start and end trip addresses</li>
               <li>Business, personal, commuting, and unclassified mileage totals</li>
-              <li>Compact daily odometer history with expandable details</li>
+              <li>Daily odometer records with visible beginning and ending readings</li>
               <li>Mileage CSV download</li>
               <li>Expense categories and receipt organization</li>
               <li>Quarterly-payment and W-2 withholding guidance</li>
