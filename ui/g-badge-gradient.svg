@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 420" role="img" aria-labelledby="title desc">
+<title id="title">Greatest Business Solution LLC</title><desc id="desc">Rounded G badge and company wordmark</desc>
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3F6656"/><stop offset=".55" stop-color="#6B7850"/><stop offset="1" stop-color="#C08A2E"/></linearGradient>
+  <filter id="s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1B2A41" flood-opacity=".16"/></filter>
+</defs>
+<rect width="1800" height="420" fill="none"/>
+<rect x="45" y="60" width="300" height="300" rx="72" fill="url(#g)" stroke="#D9D4C8" stroke-width="4" filter="url(#s)"/>
+<text x="195" y="280" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="184" font-weight="700" fill="#fff">G</text>
+<text x="405" y="180" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="700" fill="#1B2A41">Greatest Business Solution</text>
+<text x="410" y="250" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" letter-spacing="2" fill="#3F6656">LLC — TAX &amp; FINANCIAL SERVICES</text>
+</svg>

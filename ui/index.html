@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tax Estimator Portal - Greatest Business Solution LLC</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/g-badge-flat.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap"
@@ -385,26 +386,32 @@
     <span>&#x1F512; Secure &bull; Confidential &bull; No Account Required &bull; Free Estimate</span>
   </div>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="header-brand">
-        <div class="brand-logo">
-          <span class="brand-logo-letter">G</span>
+<header class="site-header marketing-header">
+  <div class="marketing-header-inner">
+    <a class="marketing-brand" href="/" aria-label="Greatest Business Solution LLC home">
+      <span class="gbs-badge gbs-badge-header" aria-hidden="true">G</span>
+      <span class="marketing-brand-copy">
+        <strong>Greatest Business Solution</strong>
+        <span>LLC — Tax &amp; Financial Services</span>
+      </span>
+    </a>
+    <nav class="marketing-nav" aria-label="Primary navigation">
+      <a href="/">Free estimate</a>
+      <a href="#homePlans">Plans and pricing</a>
+      <a href="/professional-tax-services">Tax services</a>
+      <a href="/client-portal">Client portal</a>
+      <details class="marketing-more">
+        <summary>More</summary>
+        <div class="marketing-more-menu">
+          <a href="/contact">Contact</a>
+          <a href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes">Schedule a consultation</a>
+          <a href="/privacy">Privacy policy</a>
+          <a href="/terms">Terms of use</a>
         </div>
-        <div class="brand-text">
-          <div class="brand-name">Greatest Business Solution</div>
-          <div class="brand-sub">LLC &mdash; Tax &amp; Financial Services</div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="header-contact">
-          <span class="header-contact-label">Questions?</span>
-          <a class="header-contact-link" href="/professional-tax-services">Contact a Tax Professional</a>
-        </div>
-        <div class="header-badge">Tax Estimator Portal</div>
-      </div>
-    </div>
-  </header>
+      </details>
+    </nav>
+  </div>
+</header>
 
   <nav class="progress-nav" id="progressNav">
     <div class="progress-inner">
@@ -547,7 +554,7 @@
         <ul>
           <li>Year-to-date gross business income totals</li>
           <li>Tracked business-expense totals</li>
-          <li>Date-sensitive mileage deduction calculations</li>
+          <li>Mileage deduction tracking</li>
           <li>Net business income rollup</li>
           <li>Recommended tax-savings reserve</li>
           <li>Deposited tax-savings tracking</li>
@@ -556,7 +563,7 @@
           <li>Income-source detail rows and update history</li>
           <li>Separated start and end trip addresses</li>
           <li>Business, personal, commuting, and unclassified mileage totals</li>
-          <li>Compact daily odometer history with expandable details</li>
+          <li>Daily odometer records with visible beginning and ending readings</li>
           <li>Mileage CSV download</li>
           <li>Expense categories and receipt organization</li>
           <li>Quarterly-payment and W-2 withholding guidance</li>
@@ -733,368 +740,195 @@
 
   <main class="main-content">
 
-    <section class="screen active" id="screen-welcome">
-
-      <div class="welcome-hero-section">
-        <div class="welcome-hero-inner">
-          <div class="welcome-hero-content">
-            <div class="welcome-pill">Free Tax Estimator &mdash; Tax Years 2022-2025</div>
-            <h1 class="welcome-title">
-              Get a Realistic Tax Estimate<br>
-              <span class="welcome-title-accent">Before Paying for Full Tax Preparation</span>
-            </h1>
-            <p class="welcome-desc">
-              Most tax professionals can't give you a reliable number without preparing your full return first.
-              Get a free estimate now &mdash; then decide if you want a written review, full preparation, or additional help.
-            </p>
-            <div class="welcome-actions">
-              <button class="btn-hero" onclick="goToScreen('form')">
-                Start My Free Estimate
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 8h10M9 4l4 4-4 4" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onclick="showSavedEstimateReturn()"
-                style="
-                  border:2px solid #0f2c56;
-                  background:#ffffff;
-                  color:#0f2c56;
-                  border-radius:12px;
-                  padding:13px 18px;
-                  font-size:15px;
-                  font-weight:900;
-                  cursor:pointer;
-                "
-              >
-                Return to a Saved Estimate
-              </button>
-              <div class="welcome-note">
-                &#x2714; No account needed &nbsp;&bull;&nbsp;
-                &#x2714; Takes about 5 minutes &nbsp;&bull;&nbsp;
-                &#x2714; 100% confidential
-              </div>
-
-              <div class="welcome-service-links" aria-label="Other tax services">
-                <a href="/start-my-tax-return">
-                  Start Tax Preparation
-                </a>
-                <a href="/contractor-1099-service">
-                  Prepare Contractor Forms 1099
-                </a>
-                <a href="/request-tax-extension">
-                  Request a Tax Extension
-                </a>
-                <a href="/plans-pricing">
-                  Plans &amp; Pricing
-                </a>
-                <a href="/professional-tax-services">
-                  Professional Tax Services
-                </a>
-                <a href="/client-portal">
-                  Secure Client Portal
-                </a>
-              </div>
-            </div>
+<section class="screen active home-v2" id="screen-welcome">
+  <section class="home-v2-hero" aria-labelledby="homeHeroTitle">
+    <div class="home-v2-shell home-v2-hero-grid">
+      <div class="home-v2-hero-copy">
+        <div class="home-v2-eyebrow">Free Tax Estimator — 2026 planning</div>
+        <h1 id="homeHeroTitle">Get a realistic tax estimate before paying for full tax preparation.</h1>
+        <p class="home-v2-lead">See where your federal and state taxes may be heading, understand the result in plain English, and decide what help you need next.</p>
+        <div class="home-v2-hero-actions">
+          <button class="btn-hero home-v2-primary-cta" type="button" onclick="goToScreen('form')">
+            Start my free estimate
+            <svg class="home-v2-button-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="home-v2-text-action" type="button" onclick="showSavedEstimateReturn()">Return to a saved estimate</button>
+        </div>
+        <ul class="home-v2-trust-list" aria-label="Estimator benefits">
+          <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>No account required to begin</span></li>
+          <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Usually takes about five minutes</span></li>
+          <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Secure and confidential</span></li>
+        </ul>
+      </div>
+      <aside class="home-v2-estimate-card" aria-label="Example estimate preview">
+        <div class="home-v2-card-topline">
+          <span class="gbs-badge gbs-badge-card" aria-hidden="true">G</span>
+          <div>
+            <span>Example planning snapshot</span>
+            <strong>Estimate at a glance</strong>
           </div>
-          <div class="welcome-hero-graphic">
-            <div class="hero-card-stack">
-              <div class="hero-mini-card">
-                <div class="hero-mini-label">Federal Estimate</div>
-                <div class="hero-mini-amount refund">+$2,840</div>
-                <div class="hero-mini-sub">Estimated Refund</div>
-              </div>
-              <div class="hero-mini-card secondary">
-                <div class="hero-mini-label">State Estimate</div>
-                <div class="hero-mini-amount refund">+$614</div>
-                <div class="hero-mini-sub">Estimated Refund</div>
-              </div>
-              <div class="hero-badge-float">
-                <span class="hero-badge-icon">&#x1F4CA;</span>
-                <span>Real-time estimate</span>
-              </div>
-            </div>
-          </div>
+        </div>
+        <div class="home-v2-data-row">
+          <span>Federal estimate</span>
+          <strong>+$2,840</strong>
+        </div>
+        <div class="home-v2-data-row">
+          <span>State estimate</span>
+          <strong>+$614</strong>
+        </div>
+        <div class="home-v2-data-row home-v2-data-total">
+          <span>Combined estimate</span>
+          <strong>+$3,454</strong>
+        </div>
+        <p>Planning example only. Your result is based on the information you enter and supported tax-year rules.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="home-v2-section home-v2-how" aria-labelledby="homeHowTitle">
+    <div class="home-v2-shell">
+      <div class="home-v2-section-heading">
+        <span>How it works</span>
+        <h2 id="homeHowTitle">Three clear steps from questions to estimate.</h2>
+        <p>Start with the facts you already know. The estimator organizes the information and presents a planning result you can understand.</p>
+      </div>
+      <div class="home-v2-step-grid">
+        <article class="home-v2-step-card">
+          <div class="home-v2-step-number">01</div>
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h3>Tell us about your household</h3>
+          <p>Enter filing status, age, dependents, state, and the basic details that affect the estimate.</p>
+        </article>
+        <article class="home-v2-step-card">
+          <div class="home-v2-step-number">02</div>
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h3M14 8h3M7 12h10M7 16h5"/></svg></div>
+          <h3>Add income and withholding</h3>
+          <p>Use W-2 amounts, self-employment income, withholding, credits, and other information you have available.</p>
+        </article>
+        <article class="home-v2-step-card">
+          <div class="home-v2-step-number">03</div>
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/><path d="M2 19h21"/></svg></div>
+          <h3>Review the result and next step</h3>
+          <p>See the federal and state estimate, save your progress, and choose planning or professional help when needed.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-v2-section home-v2-why" aria-labelledby="homeWhyTitle">
+    <div class="home-v2-shell">
+      <div class="home-v2-section-heading home-v2-section-heading-centered">
+        <span>Why choose us</span>
+        <h2 id="homeWhyTitle">Tax guidance built for clarity, security, and action.</h2>
+        <p>Greatest Business Solution LLC connects the estimate, year-round tracking, secure documents, and professional services in one client experience.</p>
+      </div>
+      <div class="home-v2-benefit-grid">
+        <article class="home-v2-benefit-card">
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 13h6M9 17h6"/></svg></div>
+          <h3>Plain-English results</h3>
+          <p>See the major numbers and what they mean without digging through tax jargon or disconnected worksheets.</p>
+        </article>
+        <article class="home-v2-benefit-card">
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>Secure saved progress</h3>
+          <p>Return to saved estimates and keep documents, service requests, and status updates connected to your portal.</p>
+        </article>
+        <article class="home-v2-benefit-card">
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18"/></svg></div>
+          <h3>Built for working households and business owners</h3>
+          <p>Track W-2 changes, gig work, self-employment income, business expenses, mileage, and tax funding.</p>
+        </article>
+        <article class="home-v2-benefit-card">
+          <div class="home-v2-icon-wrap"><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3"/></svg></div>
+          <h3>A clear path to the next service</h3>
+          <p>Move from a free estimate to Tax Watch Pro, Pinnacle, tax preparation, transcript help, or another professional service.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-v2-section home-v2-pricing" id="homePlans" aria-labelledby="homePlansTitle">
+    <div class="home-v2-shell">
+      <div class="home-v2-pricing-header">
+        <div class="home-v2-section-heading">
+          <span>Plans and pricing</span>
+          <h2 id="homePlansTitle">Start free. Add year-round guidance when it becomes useful.</h2>
+          <p>Choose the level that matches the question you need answered now. Upgrade later without starting over.</p>
+        </div>
+        <div class="billing-switch home-v2-billing-switch" aria-label="Choose monthly or annual pricing">
+          <button class="billing-choice active" type="button" data-public-billing="monthly">Monthly</button>
+          <button class="billing-choice" type="button" data-public-billing="annual">Annual <span>Save about 17%</span></button>
         </div>
       </div>
 
-      <div class="how-section">
-        <div class="how-inner">
-          <div class="section-label-row">
-            <div class="section-overline">How It Works</div>
-            <h2 class="section-heading">Three Simple Steps to Your Estimate</h2>
+      <div class="home-v2-plan-grid">
+        <article class="home-v2-plan-card">
+          <div class="home-v2-plan-kicker">Free estimator</div>
+          <h3>Know where you stand</h3>
+          <div class="home-v2-price"><strong>$0</strong><span>to get started</span></div>
+          <p class="home-v2-plan-summary">A clear federal and state planning estimate based on the information you enter.</p>
+          <ul>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Federal and state estimate</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Plain-English result summary</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Saved estimate access</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Secure path to professional services</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No account required to begin</li>
+          </ul>
+          <div class="home-v2-plan-actions">
+            <button class="home-v2-plan-primary" type="button" onclick="goToScreen('form')">Start my free estimate</button>
+            <button class="home-v2-plan-secondary" type="button" onclick="showSavedEstimateReturn()">Return to a saved estimate</button>
           </div>
-          <div class="how-steps">
-            <div class="how-step">
-              <div class="how-step-num">01</div>
-              <div class="how-step-icon">&#x1F4CB;</div>
-              <div class="how-step-title">Tell Us About You</div>
-              <div class="how-step-desc">Filing status, age, dependents, and your state of residence.</div>
-            </div>
-            <div class="how-connector"></div>
-            <div class="how-step">
-              <div class="how-step-num">02</div>
-              <div class="how-step-icon">&#x1F4B5;</div>
-              <div class="how-step-title">Share Your Numbers</div>
-              <div class="how-step-desc">W-2 wages, withholding, and any other income sources.</div>
-            </div>
-            <div class="how-connector"></div>
-            <div class="how-step">
-              <div class="how-step-num">03</div>
-              <div class="how-step-icon">&#x1F4CA;</div>
-              <div class="how-step-title">Get Your Estimate</div>
-              <div class="how-step-desc">A clear federal and state breakdown in plain English.</div>
-            </div>
+        </article>
+
+        <article class="home-v2-plan-card home-v2-plan-featured">
+          <div class="home-v2-plan-label">Most popular</div>
+          <div class="home-v2-plan-kicker">Tax Watch Pro</div>
+          <h3>Track what changed</h3>
+          <div class="home-v2-price"><strong data-monthly-price="$11.99" data-annual-price="$119">$11.99</strong><span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span></div>
+          <p class="home-v2-plan-summary">Year-round estimate updates and savings accountability when income, withholding, or family details change.</p>
+          <ul>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Year-round estimate updates</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Up to five income sources</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tax Money Tracker</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Detailed change history</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Business-expense organizer</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Secure documents and saved progress</li>
+          </ul>
+          <div class="home-v2-plan-actions">
+            <button class="home-v2-plan-primary home-v2-plan-primary-featured" type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly" data-monthly-button="Purchase monthly — $11.99" data-annual-button="Purchase annual — $119">Purchase monthly — $11.99</button>
+            <button class="home-v2-plan-secondary" type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="preview">Start 14-day preview</button>
           </div>
-          <div class="how-cta-row">
-            <button class="btn-primary" onclick="goToScreen('form')">
-              Begin My Estimate
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 8h10M9 4l4 4-4 4" />
-              </svg>
-            </button>
+          <p class="home-v2-plan-note">Preview does not charge automatically.</p>
+        </article>
+
+        <article class="home-v2-plan-card">
+          <div class="home-v2-plan-kicker">Pinnacle Tax Action Plan</div>
+          <h3>Know what to adjust</h3>
+          <div class="home-v2-price"><strong data-monthly-price="$34.99" data-annual-price="$349">$34.99</strong><span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span></div>
+          <p class="home-v2-plan-summary">Business-income tracking, mileage, expenses, tax funding, and an action plan for self-employed clients.</p>
+          <ul>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Unlimited income sources</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Mileage and daily odometer records</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Expense and receipt organization</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Recommended tax savings target</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Safe-to-spend snapshot</li>
+            <li><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Downloadable Tax Action Plan</li>
+          </ul>
+          <div class="home-v2-plan-actions">
+            <button class="home-v2-plan-primary" type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly" data-monthly-button="Purchase monthly — $34.99" data-annual-button="Purchase annual — $349">Purchase monthly — $34.99</button>
+            <button class="home-v2-plan-secondary" type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="preview">Start 14-day preview</button>
           </div>
-        </div>
+          <p class="home-v2-plan-note">Preview does not charge automatically.</p>
+        </article>
       </div>
 
-      <div class="why-section">
-        <div class="why-inner">
-          <div class="section-label-row centered">
-            <div class="section-overline">Why Choose Us</div>
-            <h2 class="section-heading">Why Work With Greatest Business Solution LLC</h2>
-            <p class="section-subhead">We go beyond filing. We help you understand your full financial picture so you
-              can make smarter decisions year-round.</p>
-          </div>
-          <div class="why-grid">
-            <div class="why-card">
-              <div class="why-icon">&#x1F3AF;</div>
-              <div class="why-title">Accurate &amp; Thorough</div>
-              <div class="why-desc">Our licensed professionals review every line of your return to maximize deductions
-                and minimize what you owe.</div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon">&#x1F4CB;</div>
-              <div class="why-title">Multi-State Filing</div>
-              <div class="why-desc">Worked in more than one state? We specialize in multi-state returns and ensure you
-                are compliant everywhere.</div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon">&#x1F512;</div>
-              <div class="why-title">Completely Secure</div>
-              <div class="why-desc">Your data is handled with the highest level of confidentiality. We never share or
-                sell your personal information.</div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon">&#x1F91D;</div>
-              <div class="why-title">Year-Round Support</div>
-              <div class="why-desc">Tax questions don't stop after April 15. Our team is available year-round for
-                planning, audits, and life events.</div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon">&#x1F4C8;</div>
-              <div class="why-title">Proactive Planning</div>
-              <div class="why-desc">We don't just file &mdash; we help you plan ahead so you are never surprised at
-                filing time again.</div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon">&#x2B50;</div>
-              <div class="why-title">Trusted by Clients</div>
-              <div class="why-desc">From individual filers to small business owners, our clients trust us with their
-                most important financial documents.</div>
-            </div>
-          </div>
-        </div>
+      <div class="home-v2-pricing-footer">
+        <a href="/plans-pricing">Compare every plan and feature <svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <p><strong>$20 tax-preparation credit:</strong> Eligibility applies to qualifying active annual members and qualifying monthly members with at least 90 consecutive paid days. Full terms are shown on the comparison page.</p>
       </div>
-
-
-
-      <div class="home-pricing-section" id="homePlans">
-        <div class="home-pricing-inner">
-          <div class="home-pricing-toolbar">
-            <div class="section-label-row">
-              <div class="section-overline">Estimate. Track. Take Action.</div>
-              <h2 class="section-heading">Start Free and Add More Tax Guidance When You Need It</h2>
-              <p class="section-subhead">Every level answers a bigger question: Where do I stand? What changed? What should I adjust?</p>
-            </div>
-            <div class="billing-switch home-billing-switch" aria-label="Choose monthly or annual pricing">
-              <button class="billing-choice active" type="button" data-public-billing="monthly">Monthly</button>
-              <button class="billing-choice" type="button" data-public-billing="annual">Annual <span>Save about 17%</span></button>
-            </div>
-          </div>
-
-          <div class="pricing-journey-strip" aria-label="Three levels of tax guidance">
-            <div class="pricing-journey-step">
-              <span>1</span>
-              <div><strong>Estimate</strong><small>Know whether you may receive a refund or owe.</small></div>
-            </div>
-            <div class="pricing-journey-arrow">&rarr;</div>
-            <div class="pricing-journey-step">
-              <span>2</span>
-              <div><strong>Track</strong><small>See how a job, gig, child, or withholding change affects you.</small></div>
-            </div>
-            <div class="pricing-journey-arrow">&rarr;</div>
-            <div class="pricing-journey-step">
-              <span>3</span>
-              <div><strong>Take Action</strong><small>Know what to adjust per paycheck or set aside.</small></div>
-            </div>
-          </div>
-
-          <div class="home-pricing-grid">
-            <article class="home-plan-card free-plan">
-              <div class="home-plan-step">Level 1</div>
-              <div class="home-plan-status available">Available Now</div>
-              <div class="home-plan-label">Know Where You Stand</div>
-              <h3>Free Tax Estimator</h3>
-              <div class="home-plan-price"><strong>$0</strong><span>no monthly fee</span></div>
-              <div class="home-plan-best-for"><strong>Best for:</strong> Getting a clear starting estimate before deciding what help you need.</div>
-              <ul>
-                <li>Federal and state estimate</li>
-                <li>Estimate up to 2 jobs, gigs, or business income sources</li>
-                <li>Refund or balance-due direction</li>
-                <li>Main reasons behind the result</li>
-                <li>Plain-language estimate summary</li>
-                <li>Saved progress</li>
-                <li>Secure Client Portal access</li>
-                <li>Professional service suggestions when useful</li>
-              </ul>
-              <button class="home-plan-button" type="button" onclick="goToScreen('form')">Start My Free Tax Estimate</button>
-            </article>
-
-            <article class="home-plan-card watch-plan">
-              <div class="home-plan-ribbon">Most Popular</div>
-              <div class="home-plan-step">Level 2</div>
-              <div class="home-plan-status available">14-Day Preview Available</div>
-              <div class="home-plan-label">Year-Round Accountability</div>
-              <h3>Tax Watch Pro</h3>
-              <div class="home-plan-price">
-                <strong data-monthly-price="$11.99" data-annual-price="$119">$11.99</strong>
-                <span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span>
-              </div>
-              <div class="home-plan-best-for"><strong>Best for:</strong> Gig workers and self-employed people who want year-round organization and tax-savings accountability.</div>
-              <ul>
-                <li>Everything in Free Tax Estimator</li>
-                <li>Tax Money Tracker with dated savings accountability</li>
-                <li>Track up to 5 income sources</li>
-                <li>Categorized business expenses and general tax reserve</li>
-                <li>Money reported saving, amount still needed, and progress</li>
-                <li>What Changed and Why plus one clear next step</li>
-                <li>Business Income and Expense Organizer</li>
-                <li>Annual members and monthly members with at least 90 consecutive paid days may receive one $20 tax-preparation credit per tax year</li>
-              </ul>
-              <div class="home-membership-actions">
-                <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="preview">Start 14-Day Preview</button>
-                <button type="button" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $11.99</button>
-                <button type="button" class="annual" data-estimator-membership-plan="tax-watch-pro" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $119</button>
-              </div>
-              <div class="home-plan-footnote">No automatic charge for the preview. Secure Client Portal access is created or connected before continuing.</div>
-            </article>
-
-            <article class="home-plan-card pinnacle-plan">
-              <div class="home-plan-ribbon pinnacle">Pinnacle Level</div>
-              <div class="home-plan-step">Level 3</div>
-              <div class="home-plan-status available">14-Day Preview Available</div>
-              <div class="home-plan-label">Know What to Adjust</div>
-              <h3>Pinnacle Tax Action Plan</h3>
-              <div class="home-plan-price">
-                <strong data-monthly-price="$34.99" data-annual-price="$349">$34.99</strong>
-                <span data-monthly-copy="per month" data-annual-copy="billed once per year">per month</span>
-              </div>
-              <div class="home-plan-best-for"><strong>Best for:</strong> People who want advanced targets, business tracking, tax-exposure estimates, and planning comparisons.</div>
-              <ul>
-                <li>Everything in Tax Watch Pro</li>
-                <li>Unlimited jobs, gigs, and business income sources</li>
-                <li>Business Profiles and Business Financial Snapshot</li>
-                <li>Safe to Spend, tax reserve, savings, and estimated-payment tracking</li>
-                <li>Vehicle Profiles with a saved primary vehicle</li>
-                <li>Individual trip and Daily Odometer mileage tracking</li>
-                <li>Quarterly payment or W-2 withholding guidance</li>
-                <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
-                <li>Downloadable Pinnacle Tax Action Plan</li>
-              </ul>
-              <details class="home-pinnacle-feature-details">
-                <summary>Plus 18 additional Pinnacle features</summary>
-                <ul>
-                  <li>Year-to-date gross business income totals</li>
-                  <li>Tracked business-expense totals</li>
-                  <li>Date-sensitive mileage deduction calculations</li>
-                  <li>Net business income rollup</li>
-                  <li>Recommended tax-savings reserve</li>
-                  <li>Deposited tax-savings tracking</li>
-                  <li>Estimated-tax payment tracking</li>
-                  <li>Month and tax-year financial filters</li>
-                  <li>Income-source detail rows and update history</li>
-                  <li>Separated start and end trip addresses</li>
-                  <li>Business, personal, commuting, and unclassified mileage totals</li>
-                  <li>Compact daily odometer history with expandable details</li>
-                  <li>Mileage CSV download</li>
-                  <li>Expense categories and receipt organization</li>
-                  <li>Quarterly-payment and W-2 withholding guidance</li>
-                  <li>QBI, SEP-IRA, and Solo 401(k) planning comparisons</li>
-                  <li>Before-and-after scenario comparisons</li>
-                  <li>Downloadable Pinnacle Tax Action Plan</li>
-                </ul>
-              </details>
-              <div class="home-plan-best-for"><strong>Designed for freelancers and self-employed individuals.</strong> Complex business bookkeeping remains a separate professional service.</div>
-              <div class="home-membership-actions">
-                <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="preview">Start 14-Day Preview</button>
-                <button type="button" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="monthly">Purchase Monthly — $34.99</button>
-                <button type="button" class="annual" data-estimator-membership-plan="pinnacle" data-estimator-membership-action="purchase" data-estimator-membership-billing="annual">Purchase Annual — $349</button>
-              </div>
-              <div class="home-plan-footnote">No automatic charge for the preview. Secure Client Portal access is created or connected before continuing.</div>
-            </article>
-          </div>
-
-          <div class="home-pricing-outcomes">
-            <div><strong>Free Tax Estimator</strong><span>“Am I getting a refund or will I owe?”</span></div>
-            <div><strong>Tax Watch Pro</strong><span>“Why did my estimate change?”</span></div>
-            <div><strong>Pinnacle Tax Action Plan</strong><span>“How much should I adjust or set aside?”</span></div>
-          </div>
-
-          <div class="home-pricing-actions">
-            <a class="btn-primary" href="/plans-pricing">Compare Every Plan and Benefit</a>
-            <a class="btn-secondary-link" href="/professional-tax-services">Need a Tax Professional? See Professional Tax Services</a>
-          </div>
-
-          <div class="tax-credit-policy home-credit-policy">
-            <strong>$20 tax-preparation credit eligibility:</strong> Annual members and monthly members with at least 90 consecutive paid days may receive one credit per tax year when Greatest Business Solution LLC prepares the return. The membership must be active and current when the return is accepted for preparation. The credit is noncash, nontransferable, nonstackable, and cannot exceed the tax-preparation fee.
-          </div>
-        </div>
-      </div>
-
-      <div class="trust-section">
-        <div class="trust-inner">
-          <div class="trust-item">
-            <div class="trust-icon">&#x1F512;</div>
-            <div class="trust-text">256-bit secure</div>
-          </div>
-          <div class="trust-divider"></div>
-          <div class="trust-item">
-            <div class="trust-icon">&#x1F4C4;</div>
-            <div class="trust-text">Supported tax-year rules</div>
-          </div>
-          <div class="trust-divider"></div>
-          <div class="trust-item">
-            <div class="trust-icon">&#x1F91D;</div>
-            <div class="trust-text">Licensed professionals</div>
-          </div>
-          <div class="trust-divider"></div>
-          <div class="trust-item">
-            <div class="trust-icon">&#x1F4AC;</div>
-            <div class="trust-text">Free consultation</div>
-          </div>
-          <div class="trust-divider"></div>
-          <div class="trust-item">
-            <div class="trust-icon">&#x2B50;</div>
-            <div class="trust-text">5-star client service</div>
-          </div>
-        </div>
-        <div class="trust-estimate-note">Estimates use supported tax-year rules and the information entered. They are not final tax returns, filing results, or tax advice.</div>
-      </div>
-
-    </section>
+    </div>
+  </section>
+</section>
 
     <section class="screen" id="screen-form">
       <div id="taxWatchUpdateBanner" class="tax-watch-update-banner" hidden>
@@ -1770,7 +1604,7 @@
                 <ul>
                   <li>Year-to-date gross business income totals</li>
                   <li>Tracked business-expense totals</li>
-                  <li>Date-sensitive mileage deduction calculations</li>
+                  <li>Mileage deduction tracking</li>
                   <li>Net business income rollup</li>
                   <li>Recommended tax-savings reserve</li>
                   <li>Deposited tax-savings tracking</li>
@@ -1779,7 +1613,7 @@
                   <li>Income-source detail rows and update history</li>
                   <li>Separated start and end trip addresses</li>
                   <li>Business, personal, commuting, and unclassified mileage totals</li>
-                  <li>Compact daily odometer history with expandable details</li>
+                  <li>Daily odometer records with visible beginning and ending readings</li>
                   <li>Mileage CSV download</li>
                   <li>Expense categories and receipt organization</li>
                   <li>Quarterly-payment and W-2 withholding guidance</li>
@@ -2025,114 +1859,86 @@
 
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-newsletter-shell">
-      <div class="footer-newsletter-copy">
-        <div class="footer-newsletter-badge">One useful email each month</div>
+<section class="home-v2-newsletter" aria-labelledby="taxUpdatesTitle">
+  <div class="home-v2-shell">
+    <div class="home-v2-newsletter-card">
+      <div class="home-v2-newsletter-copy">
+        <div class="home-v2-newsletter-brand">
+          <span class="gbs-badge gbs-badge-newsletter" aria-hidden="true">G</span>
+          <span>Greatest Business Solution LLC</span>
+        </div>
+        <div class="home-v2-newsletter-kicker">One useful email each month</div>
         <h2 id="taxUpdatesTitle">Tax Updates That Matter</h2>
-        <p class="footer-newsletter-lead">
-          Get tax deadlines, one money-saving idea, one common myth explained, and one practical step you can take now.
-          We verify changing dates and dollar amounts before each edition.
-        </p>
-
-        <div class="footer-newsletter-preview" aria-label="What each monthly edition includes">
-          <div>
-            <strong>The One Thing to Know</strong>
-            <span>The month&rsquo;s most useful tax change or warning in plain English.</span>
-          </div>
-          <div>
-            <strong>Dates That Matter</strong>
-            <span>Upcoming federal and state deadlines that may affect you.</span>
-          </div>
-          <div>
-            <strong>Myth vs. Reality</strong>
-            <span>One tax belief people repeat &mdash; and the truth behind it.</span>
-          </div>
-          <div>
-            <strong>Quick Win</strong>
-            <span>One specific action you can take that month.</span>
-          </div>
+        <p>Get practical deadlines, one money-saving idea, one common tax myth explained, and one clear action you can take now.</p>
+        <div class="home-v2-newsletter-points" aria-label="What each monthly edition includes">
+          <div><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span><strong>Dates that matter</strong> Federal and state deadlines that may affect you.</span></div>
+          <div><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg><span><strong>One useful update</strong> A tax change or warning explained in plain English.</span></div>
+          <div><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 13h6M9 17h6"/></svg><span><strong>Myth versus reality</strong> A common belief and the practical truth behind it.</span></div>
+          <div><svg class="" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M7 9H5v2M17 15h2v-2"/></svg><span><strong>Quick win</strong> One specific step to consider that month.</span></div>
         </div>
       </div>
-
-      <form class="footer-newsletter-form" id="taxUpdatesForm" novalidate>
-        <div class="footer-newsletter-form-heading">Join the monthly list</div>
+      <form class="footer-newsletter-form home-v2-newsletter-form" id="taxUpdatesForm" novalidate>
+        <div class="home-v2-form-heading">Join the monthly list</div>
         <label for="taxUpdatesEmail">Email address</label>
-        <div class="footer-newsletter-input-row">
-          <input
-            id="taxUpdatesEmail"
-            name="email"
-            type="email"
-            inputmode="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            required
-          >
-          <button type="submit" id="taxUpdatesSubmit">Send Me Tax Updates</button>
-        </div>
-        <label class="footer-newsletter-consent" for="taxUpdatesConsent">
-          <input id="taxUpdatesConsent" name="consent" type="checkbox" required>
+        <input autocomplete="email" id="taxUpdatesEmail" inputmode="email" name="email" placeholder="you@example.com" required type="email">
+        <label class="home-v2-newsletter-consent" for="taxUpdatesConsent">
+          <input id="taxUpdatesConsent" name="consent" required type="checkbox">
           <span>Yes, send me <strong>Tax Updates That Matter</strong> once per month. I can unsubscribe at any time.</span>
         </label>
+        <button id="taxUpdatesSubmit" type="submit">Send me tax updates</button>
         <p class="footer-newsletter-status" id="taxUpdatesStatus" role="status" aria-live="polite"></p>
-        <p class="footer-newsletter-privacy">
-          Educational tax information and paid service offers are clearly separated. No daily messages. No selling your email address.
-        </p>
+        <p class="home-v2-newsletter-privacy">Educational tax information and paid service offers are clearly separated. No daily messages. Your email address is not sold.</p>
       </form>
     </div>
+  </div>
+</section>
 
-    <div class="footer-inner footer-main-grid">
-      <div class="footer-company-column">
-        <div class="footer-brand-block">
-          <div class="footer-logo">G</div>
-          <div>
-            <div class="footer-brand-name">Greatest Business Solution LLC</div>
-            <div class="footer-brand-tagline">Tax guidance, preparation, and secure client support</div>
-          </div>
-        </div>
-        <p>
-          Understand where your taxes are heading, what changed, and what to do next &mdash; without being buried in tax jargon.
-        </p>
-        <div class="footer-company-details">
-          <span>Litchfield Park, Arizona</span>
-          <span>Serving Phoenix&rsquo;s West Valley and remote clients nationwide</span>
-          <a href="mailto:greatestbusiness1@gmail.com">greatestbusiness1@gmail.com</a>
+<footer class="site-footer home-v2-footer">
+  <div class="home-v2-shell home-v2-footer-grid">
+    <div class="home-v2-footer-company">
+      <div class="home-v2-footer-brand">
+        <span class="gbs-badge gbs-badge-footer" aria-hidden="true">G</span>
+        <div>
+          <strong>Greatest Business Solution LLC</strong>
+          <span>Tax &amp; Financial Services</span>
         </div>
       </div>
-
-      <div class="footer-link-group">
-        <div class="footer-link-title">Plans</div>
-        <a class="footer-link" href="/">Free Tax Estimator</a>
-        <a class="footer-link" href="/plans-pricing">Tax Watch Pro</a>
-        <a class="footer-link" href="/plans-pricing">Pinnacle Tax Action Plan</a>
-        <a class="footer-link" href="/plans-pricing">Compare Plans &amp; Pricing</a>
-      </div>
-
-      <div class="footer-link-group">
-        <div class="footer-link-title">Professional Tax Services</div>
-        <a class="footer-link" href="/start-my-tax-return">Tax Return Preparation</a>
-        <a class="footer-link" href="/professional-tax-services">Written Tax Review</a>
-        <a class="footer-link" href="/transcript-help.html?return=professional-tax-services">IRS Transcript Help</a>
-        <a class="footer-link" href="/contractor-1099-service?return=professional-tax-services">Contractor Forms 1099</a>
-        <a class="footer-link" href="/request-tax-extension?return=professional-tax-services">Tax Extension Requests</a>
-        <a class="footer-link" href="/professional-tax-services">Tax Planning &amp; Business Support</a>
-      </div>
-
-      <div class="footer-link-group">
-        <div class="footer-link-title">Client Resources</div>
-        <a class="footer-link" href="/client-portal">Secure Client Portal</a>
-        <a class="footer-link" href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes">Schedule a Consultation</a>
-        <a class="footer-link" href="/contact">Questions or Comments</a>
-        <a class="footer-link" href="/privacy">Privacy Policy</a>
-        <a class="footer-link" href="/terms">Terms of Use</a>
+      <p>Understand where your taxes are heading, what changed, and what to do next without being buried in tax jargon.</p>
+      <div class="home-v2-footer-details">
+        <span>Litchfield Park, Arizona</span>
+        <span>Serving Phoenix’s West Valley and remote clients nationwide</span>
+        <a href="mailto:greatestbusiness1@gmail.com">greatestbusiness1@gmail.com</a>
       </div>
     </div>
-
-    <div class="footer-inner footer-bottom">
-      <div class="footer-legal">&copy; 2026 Greatest Business Solution LLC. All rights reserved.</div>
-      <div class="footer-disclaimer">Estimates are for planning purposes and are not filed tax returns.</div>
+    <div class="home-v2-footer-links">
+      <strong>Plans</strong>
+      <a href="/">Free Tax Estimator</a>
+      <a href="/plans-pricing">Tax Watch Pro</a>
+      <a href="/plans-pricing">Pinnacle Tax Action Plan</a>
+      <a href="/plans-pricing">Compare plans and pricing</a>
     </div>
-  </footer>
+    <div class="home-v2-footer-links">
+      <strong>Professional Tax Services</strong>
+      <a href="/start-my-tax-return">Tax return preparation</a>
+      <a href="/professional-tax-services">Written tax review</a>
+      <a href="/transcript-help.html?return=professional-tax-services">IRS transcript help</a>
+      <a href="/contractor-1099-service?return=professional-tax-services">Contractor Forms 1099</a>
+      <a href="/request-tax-extension?return=professional-tax-services">Tax extension requests</a>
+    </div>
+    <div class="home-v2-footer-links">
+      <strong>Client Resources</strong>
+      <a href="/client-portal">Secure Client Portal</a>
+      <a href="https://calendly.com/ngmsllc/tax-estimate-review-15-minutes">Schedule a consultation</a>
+      <a href="/contact">Questions or comments</a>
+      <a href="/privacy">Privacy policy</a>
+      <a href="/terms">Terms of use</a>
+    </div>
+  </div>
+  <div class="home-v2-shell home-v2-footer-bottom">
+    <span>© 2026 Greatest Business Solution LLC. All rights reserved.</span>
+    <span>Estimates are for planning purposes and are not filed tax returns.</span>
+  </div>
+</footer>
 
   <script>
     (function () {
@@ -2313,6 +2119,13 @@
           copy.textContent = mode === "annual"
             ? copy.getAttribute("data-annual-copy")
             : copy.getAttribute("data-monthly-copy");
+        });
+
+        document.querySelectorAll("[data-monthly-button]").forEach(function (button) {
+          button.textContent = mode === "annual"
+            ? button.getAttribute("data-annual-button")
+            : button.getAttribute("data-monthly-button");
+          button.setAttribute("data-estimator-membership-billing", mode);
         });
       }
 
