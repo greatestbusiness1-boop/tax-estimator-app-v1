@@ -2016,6 +2016,9 @@
     .pinnacle-financial-card.funding-needed{
       border:2px solid #c77a1c;background:linear-gradient(180deg,#fff8eb 0%,#fbe9c8 100%)
     }
+    .pinnacle-financial-card.funding-surplus{
+      border:2px solid #3d8b66;background:linear-gradient(180deg,#f2fbf6 0%,#dff2e8 100%)
+    }
     .pinnacle-financial-source-list{display:grid;gap:8px}
     .pinnacle-financial-source{
       display:grid;grid-template-columns:minmax(235px,1.25fr) minmax(0,4.75fr);align-items:stretch;
@@ -4531,7 +4534,7 @@
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddDeposit">Add Deposit</button></div>
           <div class="pinnacle-financial-card"><span>Estimated Tax Payments Made</span><strong id="pinnacleFinancialPayments">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddPayment">Add Payment</button></div>
           <div class="pinnacle-financial-card"><span>Total Covered Toward Taxes</span><strong id="pinnacleFinancialCovered">$0.00</strong></div>
-          <div class="pinnacle-financial-card wide funding-needed"><span>Remaining Tax Funding Needed</span><strong id="pinnacleFinancialRemaining">$0.00</strong></div>
+          <div class="pinnacle-financial-card wide funding-needed" id="pinnacleFinancialFundingCard"><span id="pinnacleFinancialFundingLabel">Remaining Tax Funding Needed</span><strong id="pinnacleFinancialRemaining">$0.00</strong></div>
           <div class="pinnacle-financial-card wide gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">$0.00</strong></div>
         </div>
 
@@ -9320,7 +9323,9 @@
         Math.round(Math.max(0,netBusinessIncome)*(Number(reserveRate||25)/100))
       );
       const recommendedTaxSavings=Math.max(0,baseReserve-paymentAmount);
-      const amountStillNeeded=Math.max(0,recommendedTaxSavings-depositedAmount);
+      const totalCovered=paymentAmount+depositedAmount;
+      const amountStillNeeded=Math.max(0,baseReserve-totalCovered);
+      const fundingSurplus=Math.max(0,totalCovered-baseReserve);
       const safeToSpend=Math.max(
         0,
         cashAfterExpenses-paymentAmount-depositedAmount-amountStillNeeded
@@ -9332,7 +9337,9 @@
         recommendedTaxSavings:roundPinnacleMoney(recommendedTaxSavings),
         deposited:roundPinnacleMoney(depositedAmount),
         payments:roundPinnacleMoney(paymentAmount),
+        totalCovered:roundPinnacleMoney(totalCovered),
         amountStillNeeded:roundPinnacleMoney(amountStillNeeded),
+        fundingSurplus:roundPinnacleMoney(fundingSurplus),
         safeToSpend:roundPinnacleMoney(safeToSpend)
       };
     }
@@ -10339,8 +10346,21 @@
       setMoney("pinnacleFinancialReserve",overallPlan.baseReserve);
       setMoney("pinnacleFinancialDeposited",overallPlan.deposited);
       setMoney("pinnacleFinancialPayments",overallPlan.payments);
-      setMoney("pinnacleFinancialCovered",overallPlan.deposited+overallPlan.payments);
-      setMoney("pinnacleFinancialRemaining",overallPlan.amountStillNeeded);
+      setMoney("pinnacleFinancialCovered",overallPlan.totalCovered);
+      const fundingCard=document.getElementById("pinnacleFinancialFundingCard");
+      const fundingLabel=document.getElementById("pinnacleFinancialFundingLabel");
+      const hasFundingSurplus=overallPlan.fundingSurplus>0;
+      if(fundingLabel)fundingLabel.textContent=hasFundingSurplus
+        ?"Tax Funding Surplus"
+        :"Remaining Tax Funding Needed";
+      if(fundingCard){
+        fundingCard.classList.toggle("funding-surplus",hasFundingSurplus);
+        fundingCard.classList.toggle("funding-needed",!hasFundingSurplus);
+      }
+      setMoney(
+        "pinnacleFinancialRemaining",
+        hasFundingSurplus?overallPlan.fundingSurplus:overallPlan.amountStillNeeded
+      );
       setMoney("pinnacleFinancialSafe",overallPlan.safeToSpend);
       renderPinnacleTaxActivity();
 
