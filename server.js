@@ -16635,6 +16635,10 @@ function normalizeClientPortalPinnacleWorkspace(
       source.dailyMileage,
       5000
     ),
+    taxActivity: normalizeList(
+      source.taxActivity,
+      5000
+    ),
     updatedAt: String(
       source.updatedAt || ""
     ).slice(0, 50),
@@ -16656,7 +16660,8 @@ function clientPortalPinnacleWorkspaceHasData(
     workspace.expenses?.length ||
     workspace.vehicles?.length ||
     workspace.trips?.length ||
-    workspace.dailyMileage?.length
+    workspace.dailyMileage?.length ||
+    workspace.taxActivity?.length
   );
 }
 
@@ -16912,7 +16917,7 @@ app.post(
       new Date().toISOString();
     const savedWorkspace = {
       ...requestedWorkspace,
-      version: 3,
+      version: 4,
       updatedAt: now
     };
 

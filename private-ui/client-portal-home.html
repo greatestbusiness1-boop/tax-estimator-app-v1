@@ -2040,15 +2040,51 @@
     .pinnacle-financial-empty{
       padding:28px;border:1px dashed #9ebbd0;border-radius:16px;background:#fbfdfe;text-align:center;color:#587083
     }
+    .pinnacle-tax-activity-panel{
+      margin:0 0 18px;padding:16px;border:1px solid #c7dae7;border-radius:14px;background:#f8fbfd
+    }
+    .pinnacle-tax-activity-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .pinnacle-tax-activity-head h3{margin:0;color:#082f50;font-size:17px}
+    .pinnacle-tax-activity-head p{margin:4px 0 0;color:#607789;font-size:12px;line-height:1.45}
+    .pinnacle-tax-activity-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .pinnacle-tax-activity-actions button{padding:8px 11px;border:1px solid #0b5d8d;border-radius:8px;background:#0b5d8d;color:#fff;font-weight:850;cursor:pointer}
+    .pinnacle-tax-activity-actions button.secondary{background:#fff;color:#0b5d8d}
+    .pinnacle-tax-activity-linked{margin:12px 0 0;padding:9px 11px;border-left:4px solid #c89b35;border-radius:8px;background:#fff8e7;color:#604817;font-size:12px;line-height:1.45}
+    .pinnacle-tax-activity-linked[hidden]{display:none}
+    .pinnacle-tax-activity-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+    .pinnacle-tax-activity-filter{display:flex;flex-direction:column;gap:5px}
+    .pinnacle-tax-activity-filter label{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#687d8e}
+    .pinnacle-tax-activity-filter select{min-height:38px;padding:7px 9px;border:1px solid #b9ccda;border-radius:8px;background:#fff;color:#1f3e57;font:inherit}
+    .pinnacle-tax-activity-status{display:none;margin-top:10px;padding:9px 11px;border-radius:8px;background:#eaf7ee;border:1px solid #9bcbae;color:#225b36;font-size:12px;font-weight:800}
+    .pinnacle-tax-activity-list{display:grid;gap:7px;margin-top:12px}
+    .pinnacle-tax-activity-row{border:1px solid #cbdde8;border-radius:10px;background:#fff;overflow:hidden}
+    .pinnacle-tax-activity-main{display:grid;grid-template-columns:minmax(220px,1.7fr) repeat(4,minmax(105px,.8fr)) auto;gap:10px;align-items:center;padding:9px 11px}
+    .pinnacle-tax-activity-main h4{margin:0;color:#082f50;font-size:14px}
+    .pinnacle-tax-activity-main p{margin:3px 0 0;color:#607789;font-size:10px;line-height:1.3}
+    .pinnacle-tax-activity-metric span{display:block;color:#718596;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+    .pinnacle-tax-activity-metric strong{display:block;margin-top:2px;color:#173e5c;font-size:13px}
+    .pinnacle-tax-activity-row-actions{display:flex;gap:6px;justify-content:flex-end}
+    .pinnacle-tax-activity-row-actions button{padding:6px 8px;border:1px solid #7fa8c3;border-radius:7px;background:#fff;color:#0a4f7a;font-size:11px;font-weight:850;cursor:pointer}
+    .pinnacle-tax-activity-row-actions button.danger{border-color:#c98f8f;color:#8c2e2e}
+    .pinnacle-tax-activity-detail{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;padding:7px 11px;border-top:1px solid #e2ebf1;background:#fbfdfe;color:#4c6679;font-size:11px;line-height:1.4}
+    .pinnacle-tax-activity-detail.audit{text-align:right}
+    .pinnacle-tax-activity-empty{padding:18px;border:1px dashed #9ebbd0;border-radius:10px;background:#fff;text-align:center;color:#587083}
+    .pinnacle-tax-activity-dialog-context{display:block;margin-top:3px;color:#d7e9f4;font-size:12px;font-weight:700}
+    .pinnacle-tax-activity-business{background:#f2f7fa!important;color:#35576e!important}
     @media(max-width:1100px){
       .pinnacle-financial-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
       .pinnacle-financial-source{grid-template-columns:1fr}
       .pinnacle-financial-source-head{border-right:0;border-bottom:1px solid #d8e5ee}
       .pinnacle-financial-source-body{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .pinnacle-tax-activity-main{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .pinnacle-tax-activity-main>div:first-child{grid-column:1/-1}
+      .pinnacle-tax-activity-row-actions{grid-column:1/-1;justify-content:flex-start}
     }
     @media(max-width:720px){
       .pinnacle-financial-page .section-body{padding:16px}
-      .pinnacle-financial-grid,.pinnacle-financial-source-body{grid-template-columns:1fr}
+      .pinnacle-financial-grid,.pinnacle-financial-source-body,.pinnacle-tax-activity-filters,.pinnacle-tax-activity-main{grid-template-columns:1fr}
+      .pinnacle-tax-activity-detail{grid-template-columns:1fr}
+      .pinnacle-tax-activity-detail.audit{text-align:left}
     }
     .pinnacle-income-page .section-body{padding:26px}
     .pinnacle-income-summary{
@@ -4412,6 +4448,42 @@
     </div>
 
 
+    <div class="pinnacle-expense-modal" id="pinnacleTaxActivityModal" hidden>
+      <div class="pinnacle-expense-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleTaxActivityDialogTitle">
+        <div class="pinnacle-expense-dialog-head"><div><h3 id="pinnacleTaxActivityDialogTitle">Add Tax Savings Deposit</h3><span class="pinnacle-tax-activity-dialog-context" id="pinnacleTaxActivityDialogContext">Business: Not selected</span></div><button type="button" id="pinnacleTaxActivityClose" aria-label="Close">×</button></div>
+        <form class="pinnacle-expense-dialog-body" id="pinnacleTaxActivityForm" novalidate>
+          <input type="hidden" id="pinnacleTaxActivityEditId" name="id">
+          <input type="hidden" id="pinnacleTaxActivityRecordType" name="recordType">
+          <div class="pinnacle-expense-form-grid">
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityDate">Record date</label><input id="pinnacleTaxActivityDate" name="date" type="date"></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityTaxYear">Tax year</label><select id="pinnacleTaxActivityTaxYear" name="taxYear"><option value="">Select tax year</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityAmount">Amount</label><div class="pinnacle-currency-wrap"><span class="pinnacle-currency-symbol">$</span><input id="pinnacleTaxActivityAmount" name="amount" type="text" inputmode="decimal" placeholder="0.00"></div></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityPaymentType">Payment type</label><select id="pinnacleTaxActivityPaymentType" name="paymentType"><option value="">Select payment type</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivitySourceId">Related income source</label><select id="pinnacleTaxActivitySourceId" name="sourceId"><option value="">Whole business / not assigned</option></select></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityBusinessName">Business</label><input class="pinnacle-tax-activity-business" id="pinnacleTaxActivityBusinessName" name="businessName" readonly></div>
+            <div class="pinnacle-expense-field"><label for="pinnacleTaxActivityReference">Confirmation or reference</label><input id="pinnacleTaxActivityReference" name="reference" placeholder="Optional confirmation number"></div>
+            <div class="pinnacle-expense-field full"><label for="pinnacleTaxActivityNotes">Notes</label><textarea id="pinnacleTaxActivityNotes" name="notes" placeholder="Optional details for your records."></textarea></div>
+          </div>
+          <div class="pinnacle-expense-form-status" id="pinnacleTaxActivityFormStatus" role="status" aria-live="polite"></div>
+          <div class="pinnacle-expense-actions"><button type="submit">Save Record</button><button type="button" class="secondary" id="pinnacleTaxActivityCancel">Cancel</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="pinnacle-expense-modal" id="pinnacleTaxActivityVoidModal" hidden>
+      <div class="pinnacle-expense-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="pinnacleTaxActivityVoidTitle">
+        <div class="pinnacle-expense-dialog-head"><h3 id="pinnacleTaxActivityVoidTitle">Void Record</h3><button type="button" id="pinnacleTaxActivityVoidClose" aria-label="Close">×</button></div>
+        <form class="pinnacle-expense-dialog-body" id="pinnacleTaxActivityVoidForm" novalidate>
+          <input type="hidden" id="pinnacleTaxActivityVoidId" name="id">
+          <p class="pinnacle-expense-delete-copy" id="pinnacleTaxActivityVoidCopy">This record will be removed from active totals and retained in the audit history.</p>
+          <div class="pinnacle-expense-field full"><label for="pinnacleTaxActivityVoidReason">Reason for voiding this record</label><textarea id="pinnacleTaxActivityVoidReason" name="reason" placeholder="Example: Duplicate entry or payment applied to the wrong tax year"></textarea></div>
+          <div class="pinnacle-expense-form-status" id="pinnacleTaxActivityVoidStatus" role="status" aria-live="polite"></div>
+          <div class="pinnacle-expense-actions"><button type="submit" class="danger">Void Record</button><button type="button" class="secondary" id="pinnacleTaxActivityVoidCancel">Cancel</button></div>
+        </form>
+      </div>
+    </div>
+
+
     <section class="section portal-view pinnacle-financial-page" id="pinnacleFinancialSnapshot" data-portal-view="pinnacle-financial-snapshot">
       <div class="section-head">
         <div>
@@ -4451,10 +4523,25 @@
           <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialMileageDetails">View Mileage Details</button></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddDeposit">Add Deposit</button></div>
+          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddPayment">Add Payment</button></div>
           <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">$0.00</strong></div>
         </div>
+
+        <section class="pinnacle-tax-activity-panel" aria-labelledby="pinnacleTaxActivityHeading">
+          <div class="pinnacle-tax-activity-head">
+            <div><h3 id="pinnacleTaxActivityHeading">Tax Savings &amp; Estimated Payments</h3><p>Keep dated records of money set aside for taxes and estimated tax payments already made. The Month and Tax Year filters above apply to this list.</p></div>
+            <div class="pinnacle-tax-activity-actions"><button type="button" id="pinnacleTaxActivityAddDeposit">Add Tax Savings Deposit</button><button type="button" class="secondary" id="pinnacleTaxActivityAddPayment">Add Estimated Tax Payment</button></div>
+          </div>
+          <div class="pinnacle-tax-activity-linked" id="pinnacleTaxActivityLinkedNotice" hidden></div>
+          <div class="pinnacle-tax-activity-filters">
+            <div class="pinnacle-tax-activity-filter"><label for="pinnacleTaxActivityTypeFilter">Record type</label><select id="pinnacleTaxActivityTypeFilter"><option value="">All record types</option><option value="deposit">Tax savings deposits</option><option value="estimated-payment">Estimated tax payments</option></select></div>
+            <div class="pinnacle-tax-activity-filter"><label for="pinnacleTaxActivitySourceFilter">Income source</label><select id="pinnacleTaxActivitySourceFilter"><option value="">All income sources</option><option value="__business__">Whole business / not assigned</option></select></div>
+            <div class="pinnacle-tax-activity-filter"><label for="pinnacleTaxActivityStatusFilter">Record status</label><select id="pinnacleTaxActivityStatusFilter"><option value="active">Active</option><option value="voided">Voided</option><option value="all">All records</option></select></div>
+          </div>
+          <div class="pinnacle-tax-activity-status" id="pinnacleTaxActivityStatus" role="status" aria-live="polite"></div>
+          <div class="pinnacle-tax-activity-list" id="pinnacleTaxActivityList"><div class="pinnacle-tax-activity-empty">No tax savings deposits or estimated tax payments match the current filters.</div></div>
+        </section>
 
         <div class="pinnacle-financial-source-list" id="pinnacleFinancialSourceList">
           <div class="pinnacle-financial-empty">Add at least one income source to create the Business Financial Snapshot.</div>
@@ -9244,6 +9331,282 @@
     }
 
 
+    const PINNACLE_TAX_ACTIVITY_KEY="pinnacleTaxActivity.v1";
+    const PINNACLE_TAX_ACTIVITY_PAYMENT_TYPES={
+      deposit:[
+        "Transfer to tax savings account",
+        "Cash set aside for taxes",
+        "Other tax savings deposit"
+      ],
+      "estimated-payment":[
+        "Federal estimated tax payment",
+        "State estimated tax payment",
+        "Local estimated tax payment",
+        "Extension payment",
+        "Other estimated tax payment"
+      ]
+    };
+    let pinnacleTaxActivityStatusTimer=null;
+
+    function loadPinnacleTaxActivity(){
+      try{
+        const parsed=JSON.parse(localStorage.getItem(PINNACLE_TAX_ACTIVITY_KEY)||"[]");
+        return Array.isArray(parsed)?parsed:[];
+      }catch(error){return []}
+    }
+    function savePinnacleTaxActivity(items){
+      localStorage.setItem(PINNACLE_TAX_ACTIVITY_KEY,JSON.stringify(items));
+      schedulePinnacleWorkspaceSave();
+    }
+    function getActivePinnacleTaxActivity(){
+      return loadPinnacleTaxActivity().filter((item)=>!item.voidedAt);
+    }
+    function getPinnacleBusinessProfileName(){
+      const draft=readPinnacleStorageValue(PINNACLE_BUSINESS_DRAFT_KEY,null);
+      return String(draft?.fields?.legalName||"").trim()||"Business profile not named";
+    }
+    function getPinnacleTaxActivityDateParts(item={}){
+      const parts=String(item.date||"").split("-");
+      return {year:String(item.taxYear||parts[0]||""),month:String(Number(parts[1]||""))};
+    }
+    function pinnacleTaxActivityMatchesFinancialFilters(item,filters={}){
+      const parts=getPinnacleTaxActivityDateParts(item);
+      return (!filters.month||parts.month===String(filters.month))
+        &&(!filters.year||parts.year===String(filters.year));
+    }
+    function summarizePinnacleTaxActivity(items=[]){
+      return items.reduce((totals,item)=>{
+        const amount=Math.max(0,Number(item.amount||0));
+        if(item.recordType==="deposit")totals.deposited+=amount;
+        if(item.recordType==="estimated-payment")totals.payments+=amount;
+        totals.records+=1;
+        return totals;
+      },{deposited:0,payments:0,records:0});
+    }
+    function refreshPinnacleTaxActivitySourceOptions(){
+      const sources=loadPinnacleIncomeSources();
+      const options=sources.map((source)=>`<option value="${escapeHtml(source.id)}">${escapeHtml(source.name||"Income Source")}</option>`).join("");
+      [
+        ["pinnacleTaxActivitySourceId",'<option value="">Whole business / not assigned</option>'],
+        ["pinnacleTaxActivitySourceFilter",'<option value="">All income sources</option><option value="__business__">Whole business / not assigned</option>']
+      ].forEach(([id,first])=>{
+        const select=document.getElementById(id);
+        if(!select)return;
+        const value=select.value;
+        select.innerHTML=first+options;
+        if(Array.from(select.options).some((option)=>option.value===value))select.value=value;
+      });
+    }
+    function refreshPinnacleTaxActivityYearOptions(preferredYear=""){
+      const select=document.getElementById("pinnacleTaxActivityTaxYear");
+      if(!select)return;
+      const selected=String(preferredYear||select.value||"");
+      const years=new Set(["2026"]);
+      const currentYear=new Date().getFullYear();
+      for(let year=2026;year<=Math.max(2030,currentYear+4);year+=1)years.add(String(year));
+      loadPinnacleTaxActivity().forEach((item)=>{if(/^\d{4}$/.test(String(item.taxYear||"")))years.add(String(item.taxYear))});
+      const options=Array.from(years).sort((a,b)=>Number(a)-Number(b));
+      select.innerHTML='<option value="">Select tax year</option>'+options.map((year)=>`<option value="${year}">${year}</option>`).join("");
+      if(options.includes(selected))select.value=selected;
+    }
+    function refreshPinnacleTaxActivityPaymentTypes(recordType,preferred=""){
+      const select=document.getElementById("pinnacleTaxActivityPaymentType");
+      if(!select)return;
+      const types=PINNACLE_TAX_ACTIVITY_PAYMENT_TYPES[recordType]||[];
+      select.innerHTML='<option value="">Select payment type</option>'+types.map((type)=>`<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("");
+      if(types.includes(preferred))select.value=preferred;
+    }
+    function showPinnacleTaxActivityStatus(message,duration=4200){
+      const status=document.getElementById("pinnacleTaxActivityStatus");
+      if(!status)return;
+      if(pinnacleTaxActivityStatusTimer)window.clearTimeout(pinnacleTaxActivityStatusTimer);
+      status.textContent=message||"";
+      status.style.display=message?"block":"none";
+      if(message&&duration>0){
+        pinnacleTaxActivityStatusTimer=window.setTimeout(()=>{
+          status.textContent="";
+          status.style.display="none";
+          pinnacleTaxActivityStatusTimer=null;
+        },duration);
+      }
+    }
+    function showPinnacleTaxActivityFormStatus(message,targetId="pinnacleTaxActivityFormStatus"){
+      const status=document.getElementById(targetId);
+      if(!status)return;
+      status.textContent=message||"";
+      status.style.display=message?"block":"none";
+    }
+    function getPinnacleTaxActivityPanelFilters(){
+      const financial=getPinnacleFinancialFilters();
+      return {
+        ...financial,
+        recordType:String(document.getElementById("pinnacleTaxActivityTypeFilter")?.value||""),
+        sourceId:String(document.getElementById("pinnacleTaxActivitySourceFilter")?.value||""),
+        status:String(document.getElementById("pinnacleTaxActivityStatusFilter")?.value||"active")
+      };
+    }
+    function renderPinnacleTaxActivity(){
+      const list=document.getElementById("pinnacleTaxActivityList");
+      if(!list)return;
+      refreshPinnacleTaxActivitySourceOptions();
+      const sources=Object.fromEntries(loadPinnacleIncomeSources().map((source)=>[source.id,source.name||"Income Source"]));
+      const filters=getPinnacleTaxActivityPanelFilters();
+      const items=loadPinnacleTaxActivity().filter((item)=>{
+        const isVoided=Boolean(item.voidedAt);
+        const statusMatch=filters.status==="all"||(filters.status==="voided"?isVoided:!isVoided);
+        const sourceMatch=!filters.sourceId
+          ||(filters.sourceId==="__business__"?!item.sourceId:item.sourceId===filters.sourceId);
+        return statusMatch
+          &&(!filters.recordType||item.recordType===filters.recordType)
+          &&sourceMatch
+          &&pinnacleTaxActivityMatchesFinancialFilters(item,filters);
+      }).sort((left,right)=>String(right.date||"").localeCompare(String(left.date||""))||String(right.updatedAt||"").localeCompare(String(left.updatedAt||"")));
+
+      const filteredIncomeItems=loadPinnacleIncomeSources().filter((item)=>{
+        const parts=getPinnacleIncomeEntryDateParts(item);
+        return (!filters.month||parts.month===filters.month)&&(!filters.year||parts.year===filters.year);
+      });
+      const planningYear=getPinnacleFinancialPlanningYear(filteredIncomeItems,filters);
+      const planningInputs=getPinnacleFinancialPlanningInputs(filteredIncomeItems,filters);
+      const linked=document.getElementById("pinnacleTaxActivityLinkedNotice");
+      if(linked){
+        const hasLinked=planningInputs.payments>0||planningInputs.deposited>0;
+        linked.hidden=!hasLinked;
+        if(hasLinked)linked.textContent=`Matching Tax Watch Pro totals are included for tax year ${planningInputs.connectedTaxYear||planningYear||"selected"}: ${pinnacleMoney(planningInputs.deposited)} saved and ${pinnacleMoney(planningInputs.payments)} paid. Do not enter the same deposit or payment again.`;
+      }
+
+      if(!items.length){
+        list.innerHTML='<div class="pinnacle-tax-activity-empty">No tax savings deposits or estimated tax payments match the current filters.</div>';
+        return;
+      }
+      const typeLabel=(item)=>item.recordType==="deposit"?"Tax Savings Deposit":"Estimated Tax Payment";
+      list.innerHTML=items.map((item)=>{
+        const isVoided=Boolean(item.voidedAt);
+        const dateLabel=item.date?new Date(item.date+"T00:00:00").toLocaleDateString():"Date not entered";
+        const sourceLabel=item.sourceId?sources[item.sourceId]||"Income source not found":"Whole business";
+        const details=[item.reference?`Reference: ${escapeHtml(item.reference)}`:"",item.notes?`Notes: ${escapeHtml(item.notes)}`:""].filter(Boolean).join(" · ");
+        return `<article class="pinnacle-tax-activity-row ${isVoided?"is-voided":""}">
+          <div class="pinnacle-tax-activity-main">
+            <div><h4>${escapeHtml(item.paymentType||typeLabel(item))}</h4><p>${escapeHtml(typeLabel(item))} · ${escapeHtml(sourceLabel)} · ${escapeHtml(item.businessName||getPinnacleBusinessProfileName())}</p></div>
+            <div class="pinnacle-tax-activity-metric"><span>Date</span><strong>${escapeHtml(dateLabel)}</strong></div>
+            <div class="pinnacle-tax-activity-metric"><span>Tax Year</span><strong>${escapeHtml(item.taxYear||"Not entered")}</strong></div>
+            <div class="pinnacle-tax-activity-metric"><span>Amount</span><strong>${pinnacleMoney(item.amount)}</strong></div>
+            <div class="pinnacle-tax-activity-metric"><span>Status</span><strong>${isVoided?"Voided":"Active"}</strong></div>
+            <div class="pinnacle-tax-activity-row-actions">${isVoided?"":`<button type="button" data-tax-activity-edit="${escapeHtml(item.id)}">Edit</button><button type="button" class="danger" data-tax-activity-void="${escapeHtml(item.id)}">Void</button>`}</div>
+          </div>
+          ${(details||isVoided)?`<div class="pinnacle-tax-activity-detail">
+            <div>${details||"No additional notes."}</div>
+            ${isVoided?`<div class="pinnacle-tax-activity-detail audit"><strong>Voided:</strong> ${item.voidedAt?escapeHtml(new Date(item.voidedAt).toLocaleString()):"Date not recorded"} · ${escapeHtml(item.voidReason||"Reason not recorded")}</div>`:"<div></div>"}
+          </div>`:""}
+        </article>`;
+      }).join("");
+    }
+    function openPinnacleTaxActivityModal(recordType="deposit",item=null){
+      const form=document.getElementById("pinnacleTaxActivityForm");
+      form?.reset();
+      showPinnacleTaxActivityFormStatus("");
+      const type=item?.recordType||recordType||"deposit";
+      const title=type==="deposit"?"Tax Savings Deposit":"Estimated Tax Payment";
+      document.getElementById("pinnacleTaxActivityEditId").value=item?.id||"";
+      document.getElementById("pinnacleTaxActivityRecordType").value=type;
+      document.getElementById("pinnacleTaxActivityDialogTitle").textContent=`${item?"Edit":"Add"} ${title}`;
+      const businessName=item?.businessName||getPinnacleBusinessProfileName();
+      document.getElementById("pinnacleTaxActivityBusinessName").value=businessName;
+      document.getElementById("pinnacleTaxActivityDialogContext").textContent=`Business: ${businessName}`;
+      refreshPinnacleTaxActivitySourceOptions();
+      const financialYear=String(document.getElementById("pinnacleFinancialYear")?.value||"");
+      const defaultDate=getPinnacleLocalDateValue();
+      const defaultYear=financialYear||defaultDate.slice(0,4);
+      refreshPinnacleTaxActivityYearOptions(item?.taxYear||defaultYear);
+      refreshPinnacleTaxActivityPaymentTypes(type,item?.paymentType||"");
+      if(item&&form){
+        Object.entries(item).forEach(([name,value])=>{
+          const field=form.elements.namedItem(name);
+          if(field&&"value" in field)field.value=value??"";
+        });
+      }else{
+        document.getElementById("pinnacleTaxActivityDate").value=defaultDate;
+        document.getElementById("pinnacleTaxActivityTaxYear").value=defaultYear;
+      }
+      const amount=document.getElementById("pinnacleTaxActivityAmount");
+      if(amount)amount.value=normalizePinnacleCurrencyValue(amount.value)||"";
+      document.getElementById("pinnacleTaxActivityModal").hidden=false;
+      document.getElementById("pinnacleTaxActivityDate")?.focus();
+    }
+    function closePinnacleTaxActivityModal(){
+      document.getElementById("pinnacleTaxActivityModal").hidden=true;
+      showPinnacleTaxActivityFormStatus("");
+    }
+    function submitPinnacleTaxActivity(event){
+      event.preventDefault();
+      const data=Object.fromEntries(new FormData(event.currentTarget).entries());
+      data.amount=normalizePinnacleCurrencyValue(data.amount);
+      if(!data.date)return showPinnacleTaxActivityFormStatus("Select the record date.");
+      if(!/^\d{4}$/.test(String(data.taxYear||"")))return showPinnacleTaxActivityFormStatus("Select the tax year.");
+      if(!data.amount||Number(data.amount)<=0)return showPinnacleTaxActivityFormStatus("Enter an amount greater than zero.");
+      if(!String(data.paymentType||"").trim())return showPinnacleTaxActivityFormStatus("Select the payment type.");
+      const items=loadPinnacleTaxActivity();
+      const index=items.findIndex((item)=>item.id===data.id);
+      const previous=index>=0?items[index]:{};
+      const now=new Date().toISOString();
+      const prefix=data.recordType==="deposit"?"TSD":"ETP";
+      const item={
+        ...previous,
+        ...data,
+        id:data.id||`${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,
+        amount:Number(data.amount).toFixed(2),
+        businessName:String(data.businessName||getPinnacleBusinessProfileName()),
+        createdAt:previous.createdAt||now,
+        updatedAt:now
+      };
+      delete item.voidedAt;
+      delete item.voidReason;
+      if(index>=0)items[index]=item;else items.unshift(item);
+      savePinnacleTaxActivity(items);
+      closePinnacleTaxActivityModal();
+      renderPinnacleTaxActivity();
+      renderPinnacleFinancialSnapshot();
+      showPinnacleTaxActivityStatus(index>=0?"Record updated successfully.":"Record saved successfully.");
+    }
+    function openPinnacleTaxActivityVoidModal(item){
+      if(!item)return;
+      document.getElementById("pinnacleTaxActivityVoidForm")?.reset();
+      document.getElementById("pinnacleTaxActivityVoidId").value=item.id;
+      const sourceName=loadPinnacleIncomeSources().find((source)=>source.id===item.sourceId)?.name||"Whole business";
+      document.getElementById("pinnacleTaxActivityVoidCopy").textContent=`${item.paymentType||"This record"} · ${pinnacleMoney(item.amount)} · Tax year ${item.taxYear||"not entered"} · ${sourceName}. It will be removed from active totals and retained in the audit history.`;
+      showPinnacleTaxActivityFormStatus("","pinnacleTaxActivityVoidStatus");
+      document.getElementById("pinnacleTaxActivityVoidModal").hidden=false;
+      document.getElementById("pinnacleTaxActivityVoidReason")?.focus();
+    }
+    function closePinnacleTaxActivityVoidModal(){
+      document.getElementById("pinnacleTaxActivityVoidModal").hidden=true;
+      showPinnacleTaxActivityFormStatus("","pinnacleTaxActivityVoidStatus");
+    }
+    function submitPinnacleTaxActivityVoid(event){
+      event.preventDefault();
+      const data=Object.fromEntries(new FormData(event.currentTarget).entries());
+      const reason=String(data.reason||"").trim();
+      if(!reason)return showPinnacleTaxActivityFormStatus("Enter the reason for voiding this record.","pinnacleTaxActivityVoidStatus");
+      const items=loadPinnacleTaxActivity();
+      const index=items.findIndex((item)=>item.id===data.id);
+      if(index<0)return showPinnacleTaxActivityFormStatus("The record could not be found.","pinnacleTaxActivityVoidStatus");
+      const now=new Date().toISOString();
+      items[index]={...items[index],voidedAt:now,voidReason:reason,updatedAt:now};
+      savePinnacleTaxActivity(items);
+      closePinnacleTaxActivityVoidModal();
+      renderPinnacleTaxActivity();
+      renderPinnacleFinancialSnapshot();
+      showPinnacleTaxActivityStatus("Record voided and removed from active totals. The audit record was retained.");
+    }
+    function handlePinnacleTaxActivityListClick(event){
+      const edit=event.target.closest("[data-tax-activity-edit]");
+      const voidButton=event.target.closest("[data-tax-activity-void]");
+      const items=loadPinnacleTaxActivity();
+      if(edit){const item=items.find((entry)=>entry.id===edit.dataset.taxActivityEdit);if(item)openPinnacleTaxActivityModal(item.recordType,item)}
+      if(voidButton){const item=items.find((entry)=>entry.id===voidButton.dataset.taxActivityVoid);if(item)openPinnacleTaxActivityVoidModal(item)}
+    }
+
+
     const PINNACLE_INCOME_SOURCES_KEY="pinnacleIncomeSources.v1";
     let pinnacleIncomeStatusTimer=null;
 
@@ -9946,12 +10309,14 @@
       const mileage=filteredTrips.reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
         +filteredDailyMileage.reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
       const planningInputs=getPinnacleFinancialPlanningInputs(items,filters);
+      const filteredTaxActivity=getActivePinnacleTaxActivity().filter((item)=>pinnacleTaxActivityMatchesFinancialFilters(item,filters));
+      const localTaxActivityTotals=summarizePinnacleTaxActivity(filteredTaxActivity);
       const overallPlan=calculatePinnacleFinancialPlan({
         gross,
         expenses,
         mileage,
-        payments:planningInputs.payments,
-        deposited:planningInputs.deposited,
+        payments:planningInputs.payments+localTaxActivityTotals.payments,
+        deposited:planningInputs.deposited+localTaxActivityTotals.deposited,
         reserveRate:planningInputs.reserveRate
       });
       const net=overallPlan.netBusinessIncome;
@@ -9968,6 +10333,7 @@
       setMoney("pinnacleFinancialDeposited",overallPlan.deposited);
       setMoney("pinnacleFinancialPayments",overallPlan.payments);
       setMoney("pinnacleFinancialSafe",overallPlan.safeToSpend);
+      renderPinnacleTaxActivity();
 
       const list=document.getElementById("pinnacleFinancialSourceList");
       if(!list)return;
@@ -10011,12 +10377,14 @@
       const sourceRows=sourceFinancials.map((entry)=>{
         const {item,sourceGross,sourceExpenses,sourceMileage,sourceNet}=entry;
         const share=positiveNetTotal>0?Math.max(0,sourceNet)/positiveNetTotal:0;
+        const directActivity=summarizePinnacleTaxActivity(filteredTaxActivity.filter((record)=>record.sourceId===item.id));
+        const unassignedActivity=summarizePinnacleTaxActivity(filteredTaxActivity.filter((record)=>!record.sourceId));
         const sourcePlan=calculatePinnacleFinancialPlan({
           gross:sourceGross,
           expenses:sourceExpenses,
           mileage:sourceMileage,
-          payments:overallPlan.payments*share,
-          deposited:overallPlan.deposited*share,
+          payments:directActivity.payments+(planningInputs.payments+unassignedActivity.payments)*share,
+          deposited:directActivity.deposited+(planningInputs.deposited+unassignedActivity.deposited)*share,
           reserveRate:planningInputs.reserveRate
         });
         return `
@@ -10205,7 +10573,7 @@
 
     function collectPinnacleWorkspaceFromStorage(){
       return {
-        version:3,
+        version:4,
         businessProfile:readPinnacleStorageValue(PINNACLE_BUSINESS_DRAFT_KEY,null),
         incomeSources:Array.isArray(readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[]))
           ?readPinnacleStorageValue(PINNACLE_INCOME_SOURCES_KEY,[])
@@ -10221,6 +10589,9 @@
           :[],
         dailyMileage:Array.isArray(readPinnacleStorageValue(PINNACLE_DAILY_MILEAGE_KEY,[]))
           ?readPinnacleStorageValue(PINNACLE_DAILY_MILEAGE_KEY,[])
+          :[],
+        taxActivity:Array.isArray(readPinnacleStorageValue(PINNACLE_TAX_ACTIVITY_KEY,[]))
+          ?readPinnacleStorageValue(PINNACLE_TAX_ACTIVITY_KEY,[])
           :[]
       };
     }
@@ -10232,7 +10603,8 @@
         workspace?.expenses?.length||
         workspace?.vehicles?.length||
         workspace?.trips?.length||
-        workspace?.dailyMileage?.length
+        workspace?.dailyMileage?.length||
+        workspace?.taxActivity?.length
       );
     }
 
@@ -10251,6 +10623,7 @@
       setOrRemove(PINNACLE_VEHICLE_KEY,workspace.vehicles,[]);
       setOrRemove(PINNACLE_MILEAGE_KEY,workspace.trips,[]);
       setOrRemove(PINNACLE_DAILY_MILEAGE_KEY,workspace.dailyMileage,[]);
+      setOrRemove(PINNACLE_TAX_ACTIVITY_KEY,workspace.taxActivity,[]);
     }
 
     function renderPinnacleWorkspaceFromStorage(){
@@ -10261,6 +10634,7 @@
       renderPinnacleVehicles();
       renderPinnacleMileage();
       renderPinnacleDailyMileage();
+      renderPinnacleTaxActivity();
       renderPinnacleFinancialSnapshot();
     }
 
@@ -10925,6 +11299,22 @@
       document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
       document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
       document.getElementById("pinnacleFinancialMileageDetails")?.addEventListener("click",()=>openPinnacleMileageDetails());
+      document.getElementById("pinnacleFinancialAddDeposit")?.addEventListener("click",()=>openPinnacleTaxActivityModal("deposit"));
+      document.getElementById("pinnacleFinancialAddPayment")?.addEventListener("click",()=>openPinnacleTaxActivityModal("estimated-payment"));
+      document.getElementById("pinnacleTaxActivityAddDeposit")?.addEventListener("click",()=>openPinnacleTaxActivityModal("deposit"));
+      document.getElementById("pinnacleTaxActivityAddPayment")?.addEventListener("click",()=>openPinnacleTaxActivityModal("estimated-payment"));
+      document.getElementById("pinnacleTaxActivityClose")?.addEventListener("click",closePinnacleTaxActivityModal);
+      document.getElementById("pinnacleTaxActivityCancel")?.addEventListener("click",closePinnacleTaxActivityModal);
+      document.getElementById("pinnacleTaxActivityForm")?.addEventListener("submit",submitPinnacleTaxActivity);
+      document.getElementById("pinnacleTaxActivityAmount")?.addEventListener("input",(event)=>{const cleaned=sanitizePinnacleCurrencyInput(event.currentTarget.value);if(event.currentTarget.value!==cleaned)event.currentTarget.value=cleaned});
+      document.getElementById("pinnacleTaxActivityAmount")?.addEventListener("blur",(event)=>{event.currentTarget.value=normalizePinnacleCurrencyValue(event.currentTarget.value)||""});
+      document.getElementById("pinnacleTaxActivityList")?.addEventListener("click",handlePinnacleTaxActivityListClick);
+      ["pinnacleTaxActivityTypeFilter","pinnacleTaxActivitySourceFilter","pinnacleTaxActivityStatusFilter"].forEach((id)=>document.getElementById(id)?.addEventListener("change",renderPinnacleTaxActivity));
+      document.getElementById("pinnacleTaxActivityModal")?.addEventListener("click",(event)=>{if(event.target===event.currentTarget)closePinnacleTaxActivityModal()});
+      document.getElementById("pinnacleTaxActivityVoidClose")?.addEventListener("click",closePinnacleTaxActivityVoidModal);
+      document.getElementById("pinnacleTaxActivityVoidCancel")?.addEventListener("click",closePinnacleTaxActivityVoidModal);
+      document.getElementById("pinnacleTaxActivityVoidForm")?.addEventListener("submit",submitPinnacleTaxActivityVoid);
+      document.getElementById("pinnacleTaxActivityVoidModal")?.addEventListener("click",(event)=>{if(event.target===event.currentTarget)closePinnacleTaxActivityVoidModal()});
       document.getElementById("pinnacleFinancialSourceList")?.addEventListener("click",(event)=>{
         const button=event.target.closest("[data-financial-mileage-source]");
         if(button)openPinnacleMileageDetails(button.dataset.financialMileageSource||"");
