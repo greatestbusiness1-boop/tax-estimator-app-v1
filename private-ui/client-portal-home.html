@@ -2012,6 +2012,10 @@
     .pinnacle-financial-card.gold{
       border:2px solid #c89b35;background:linear-gradient(180deg,#fffaf0 0%,#f9efd8 100%)
     }
+    .pinnacle-financial-card.wide{grid-column:span 2}
+    .pinnacle-financial-card.funding-needed{
+      border:2px solid #c77a1c;background:linear-gradient(180deg,#fff8eb 0%,#fbe9c8 100%)
+    }
     .pinnacle-financial-source-list{display:grid;gap:8px}
     .pinnacle-financial-source{
       display:grid;grid-template-columns:minmax(235px,1.25fr) minmax(0,4.75fr);align-items:stretch;
@@ -2073,6 +2077,7 @@
     .pinnacle-tax-activity-business{background:#f2f7fa!important;color:#35576e!important}
     @media(max-width:1100px){
       .pinnacle-financial-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pinnacle-financial-card.wide{grid-column:span 1}
       .pinnacle-financial-source{grid-template-columns:1fr}
       .pinnacle-financial-source-head{border-right:0;border-bottom:1px solid #d8e5ee}
       .pinnacle-financial-source-body{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -4522,10 +4527,12 @@
           <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialMileageDetails">View Mileage Details</button></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Recommended Tax Savings Target</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddDeposit">Add Deposit</button></div>
-          <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddPayment">Add Payment</button></div>
-          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Estimated Tax Payments Made</span><strong id="pinnacleFinancialPayments">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddPayment">Add Payment</button></div>
+          <div class="pinnacle-financial-card"><span>Total Covered Toward Taxes</span><strong id="pinnacleFinancialCovered">$0.00</strong></div>
+          <div class="pinnacle-financial-card wide funding-needed"><span>Remaining Tax Funding Needed</span><strong id="pinnacleFinancialRemaining">$0.00</strong></div>
+          <div class="pinnacle-financial-card wide gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">$0.00</strong></div>
         </div>
 
         <section class="pinnacle-tax-activity-panel" aria-labelledby="pinnacleTaxActivityHeading">
@@ -10329,9 +10336,11 @@
       setMoney("pinnacleFinancialExpenses",expenses);
       setMoney("pinnacleFinancialMileage",mileage);
       setMoney("pinnacleFinancialNet",net);
-      setMoney("pinnacleFinancialReserve",overallPlan.recommendedTaxSavings);
+      setMoney("pinnacleFinancialReserve",overallPlan.baseReserve);
       setMoney("pinnacleFinancialDeposited",overallPlan.deposited);
       setMoney("pinnacleFinancialPayments",overallPlan.payments);
+      setMoney("pinnacleFinancialCovered",overallPlan.deposited+overallPlan.payments);
+      setMoney("pinnacleFinancialRemaining",overallPlan.amountStillNeeded);
       setMoney("pinnacleFinancialSafe",overallPlan.safeToSpend);
       renderPinnacleTaxActivity();
 
