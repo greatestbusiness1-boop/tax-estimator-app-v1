@@ -1942,6 +1942,7 @@
       display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px
     }
     .pinnacle-financial-card{
+      display:flex;flex-direction:column;
       border:1px solid #c3d8e6;border-radius:16px;background:linear-gradient(180deg,#fbfdfe 0%,#eef6fa 100%);
       padding:17px;box-shadow:0 5px 15px rgba(16,56,84,.05)
     }
@@ -1950,6 +1951,14 @@
     }
     .pinnacle-financial-card strong{display:block;margin-top:7px;color:#082f50;font-size:22px}
     .pinnacle-financial-card small{display:block;margin-top:7px;color:#5b7183;line-height:1.45}
+    .pinnacle-financial-detail-link{
+      display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;
+      margin-top:10px;padding:7px 10px;border:1px solid #7fa8c3;border-radius:8px;
+      background:#fff;color:#0a4f7a;font-size:12px;font-weight:850;line-height:1.2;cursor:pointer
+    }
+    .pinnacle-financial-detail-link:hover,.pinnacle-financial-detail-link:focus-visible{background:#e8f4fa;border-color:#0b6d9f}
+    .pinnacle-financial-card .pinnacle-financial-detail-link{margin-top:auto;padding-top:8px}
+    .pinnacle-financial-metric .pinnacle-financial-detail-link{margin-top:7px}
     .pinnacle-financial-card.emphasis{
       border:2px solid #0b5d8d;background:linear-gradient(180deg,#eef8fd 0%,#dceef8 100%)
     }
@@ -4387,7 +4396,7 @@
         <div class="pinnacle-financial-grid">
           <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialMileageDetails">View Mileage Details</button></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong></div>
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong></div>
@@ -9759,6 +9768,28 @@
         year:String(document.getElementById("pinnacleFinancialYear")?.value||"")
       };
     }
+    function openPinnacleMileageDetails(sourceId=""){
+      const filters=getPinnacleFinancialFilters();
+      openPortalView("pinnacle-mileage-tracker");
+      refreshPinnacleMileageSourceOptions();
+      populatePinnacleMileageYearOptions();
+
+      const sourceFilter=document.getElementById("pinnacleMileageSourceFilter");
+      const monthFilter=document.getElementById("pinnacleMileageMonth");
+      const yearFilter=document.getElementById("pinnacleMileageYear");
+
+      if(sourceFilter)sourceFilter.value=String(sourceId||"");
+      if(monthFilter)monthFilter.value=String(filters.month||"");
+      if(yearFilter){
+        const requestedYear=String(filters.year||"");
+        if(requestedYear&&!Array.from(yearFilter.options).some((option)=>option.value===requestedYear)){
+          yearFilter.add(new Option(requestedYear,requestedYear));
+        }
+        yearFilter.value=requestedYear;
+      }
+
+      renderPinnacleMileage();
+    }
     function renderPinnacleFinancialSnapshot(){
       const allItems=loadPinnacleIncomeSources();
       const filters=getPinnacleFinancialFilters();
@@ -9838,7 +9869,7 @@
             <div class="pinnacle-financial-source-body">
               <div class="pinnacle-financial-metric"><span>Gross Income</span><strong>${pinnacleMoney(sourceGross)}</strong></div>
               <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(sourceExpenses)}</strong></div>
-              <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(sourceMileage)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(sourceMileage)}</strong><button type="button" class="pinnacle-financial-detail-link" data-financial-mileage-source="${escapeHtml(item.id)}">View Mileage Details</button></div>
               <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(sourceNet)}</strong></div>
               <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
               <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
@@ -10261,6 +10292,8 @@
       const currentYear=new Date().getFullYear();
       const years=new Set();
       for(let year=currentYear-4;year<=currentYear+1;year+=1)years.add(year);
+      const selectedYear=Number(selected);
+      if(Number.isInteger(selectedYear)&&selectedYear>1900&&selectedYear<2200)years.add(selectedYear);
       [...loadPinnacleTrips(),...loadPinnacleDailyMileage()].forEach((item)=>{
         const year=Number(getPinnacleMileageYear(item));
         if(Number.isInteger(year)&&year>1900&&year<2200)years.add(year);
@@ -10723,6 +10756,11 @@
 
       document.getElementById("pinnacleFinancialMonth")?.addEventListener("change",renderPinnacleFinancialSnapshot);
       document.getElementById("pinnacleFinancialYear")?.addEventListener("change",renderPinnacleFinancialSnapshot);
+      document.getElementById("pinnacleFinancialMileageDetails")?.addEventListener("click",()=>openPinnacleMileageDetails());
+      document.getElementById("pinnacleFinancialSourceList")?.addEventListener("click",(event)=>{
+        const button=event.target.closest("[data-financial-mileage-source]");
+        if(button)openPinnacleMileageDetails(button.dataset.financialMileageSource||"");
+      });
 
       ["pinnacleVehicleBeginningOdometer","pinnacleDailyStartOdometer","pinnacleDailyEndOdometer"].forEach((id)=>{
         const field=document.getElementById(id);
