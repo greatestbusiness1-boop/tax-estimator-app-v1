@@ -4450,10 +4450,10 @@
           <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialMileageDetails">View Mileage Details</button></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">Pending</strong></div>
+          <div class="pinnacle-financial-card"><span>Recommended Tax Savings</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Estimated Tax Payments</span><strong id="pinnacleFinancialPayments">$0.00</strong></div>
-          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">Pending</strong></div>
+          <div class="pinnacle-financial-card gold"><span>Safe to Spend</span><strong id="pinnacleFinancialSafe">$0.00</strong></div>
         </div>
 
         <div class="pinnacle-financial-source-list" id="pinnacleFinancialSourceList">
@@ -7640,6 +7640,8 @@
     window.addEventListener("afterprint", clearPortalPrintMode);
 
     function renderTaxWatchPro(taxWatch = {}) {
+      currentPinnacleTaxWatch = taxWatch || {};
+      window.setTimeout(()=>renderPinnacleFinancialSnapshot(),0);
       const setupPanel = document.getElementById("taxWatchSetupPanel");
       const setupWrap = document.getElementById("taxWatchSetupFormWrap");
       const noEstimate = document.getElementById("taxWatchNoEstimate");
@@ -9163,6 +9165,85 @@
     }
 
 
+    let currentPinnacleTaxWatch = {};
+
+    function roundPinnacleMoney(value){
+      return Math.round((Number(value||0)+Number.EPSILON)*100)/100;
+    }
+
+    function getPinnacleFinancialPlanningYear(items=[],filters={}){
+      if(filters.year)return String(filters.year);
+      const years=new Set(
+        items
+          .map((item)=>getPinnacleIncomeEntryDateParts(item).year)
+          .filter((year)=>/^\d{4}$/.test(String(year||"")))
+      );
+      return years.size===1?Array.from(years)[0]:"";
+    }
+
+    function getPinnacleFinancialPlanningInputs(items=[],filters={}){
+      const taxWatch=currentPinnacleTaxWatch||{};
+      const cash=taxWatch.businessCashSnapshot||{};
+      const current=taxWatch.current||{};
+      const tracker=taxWatch.moneyTracker||{};
+      const reserveRate=Math.max(0,Math.min(60,Number(cash.reserveRate||25)));
+      const planningYear=getPinnacleFinancialPlanningYear(items,filters);
+      const taxWatchYear=String(current.taxYear||"");
+      const useConnectedTaxWatchAmounts=Boolean(
+        planningYear&&taxWatchYear&&planningYear===taxWatchYear
+      );
+
+      return {
+        reserveRate,
+        planningYear,
+        connectedTaxYear:useConnectedTaxWatchAmounts?taxWatchYear:"",
+        payments:useConnectedTaxWatchAmounts
+          ?Math.max(0,Number(current.estimatedTaxPayments||cash.estimatedPaymentsAlreadyMade||0))
+          :0,
+        deposited:useConnectedTaxWatchAmounts
+          ?Math.max(0,Number(tracker.moneyReportedSaved||0))
+          :0
+      };
+    }
+
+    function calculatePinnacleFinancialPlan({
+      gross=0,
+      expenses=0,
+      mileage=0,
+      payments=0,
+      deposited=0,
+      reserveRate=25
+    }={}){
+      const grossAmount=Number(gross||0);
+      const expenseAmount=Math.max(0,Number(expenses||0));
+      const mileageAmount=Math.max(0,Number(mileage||0));
+      const paymentAmount=Math.max(0,Number(payments||0));
+      const depositedAmount=Math.max(0,Number(deposited||0));
+      const netBusinessIncome=grossAmount-expenseAmount-mileageAmount;
+      const cashAfterExpenses=Math.max(0,grossAmount-expenseAmount);
+      const baseReserve=Math.max(
+        0,
+        Math.round(Math.max(0,netBusinessIncome)*(Number(reserveRate||25)/100))
+      );
+      const recommendedTaxSavings=Math.max(0,baseReserve-paymentAmount);
+      const amountStillNeeded=Math.max(0,recommendedTaxSavings-depositedAmount);
+      const safeToSpend=Math.max(
+        0,
+        cashAfterExpenses-paymentAmount-depositedAmount-amountStillNeeded
+      );
+
+      return {
+        netBusinessIncome:roundPinnacleMoney(netBusinessIncome),
+        baseReserve:roundPinnacleMoney(baseReserve),
+        recommendedTaxSavings:roundPinnacleMoney(recommendedTaxSavings),
+        deposited:roundPinnacleMoney(depositedAmount),
+        payments:roundPinnacleMoney(paymentAmount),
+        amountStillNeeded:roundPinnacleMoney(amountStillNeeded),
+        safeToSpend:roundPinnacleMoney(safeToSpend)
+      };
+    }
+
+
     const PINNACLE_INCOME_SOURCES_KEY="pinnacleIncomeSources.v1";
     let pinnacleIncomeStatusTimer=null;
 
@@ -9864,7 +9945,16 @@
       const expenses=filteredExpenses.reduce((sum,item)=>sum+Number(item.amount||0),0);
       const mileage=filteredTrips.reduce((sum,trip)=>sum+getPinnacleTripDeduction(trip),0)
         +filteredDailyMileage.reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
-      const net=gross-expenses-mileage;
+      const planningInputs=getPinnacleFinancialPlanningInputs(items,filters);
+      const overallPlan=calculatePinnacleFinancialPlan({
+        gross,
+        expenses,
+        mileage,
+        payments:planningInputs.payments,
+        deposited:planningInputs.deposited,
+        reserveRate:planningInputs.reserveRate
+      });
+      const net=overallPlan.netBusinessIncome;
 
       const setMoney=(id,value)=>{
         const node=document.getElementById(id);
@@ -9874,8 +9964,10 @@
       setMoney("pinnacleFinancialExpenses",expenses);
       setMoney("pinnacleFinancialMileage",mileage);
       setMoney("pinnacleFinancialNet",net);
-      setMoney("pinnacleFinancialDeposited",0);
-      setMoney("pinnacleFinancialPayments",0);
+      setMoney("pinnacleFinancialReserve",overallPlan.recommendedTaxSavings);
+      setMoney("pinnacleFinancialDeposited",overallPlan.deposited);
+      setMoney("pinnacleFinancialPayments",overallPlan.payments);
+      setMoney("pinnacleFinancialSafe",overallPlan.safeToSpend);
 
       const list=document.getElementById("pinnacleFinancialSourceList");
       if(!list)return;
@@ -9897,7 +9989,7 @@
         return;
       }
 
-      const sourceRows=items.map((item)=>{
+      const sourceFinancials=items.map((item)=>{
         const sourceGross=Number(item.ytd||0);
         const sourceExpenses=filteredExpenses
           .filter((expense)=>expense.sourceId===item.id)
@@ -9909,6 +10001,24 @@
             .filter((entry)=>entry.sourceId===item.id)
             .reduce((sum,entry)=>sum+getPinnacleDailyDeduction(entry),0);
         const sourceNet=sourceGross-sourceExpenses-sourceMileage;
+        return {item,sourceGross,sourceExpenses,sourceMileage,sourceNet};
+      });
+      const positiveNetTotal=sourceFinancials.reduce(
+        (sum,entry)=>sum+Math.max(0,entry.sourceNet),
+        0
+      );
+
+      const sourceRows=sourceFinancials.map((entry)=>{
+        const {item,sourceGross,sourceExpenses,sourceMileage,sourceNet}=entry;
+        const share=positiveNetTotal>0?Math.max(0,sourceNet)/positiveNetTotal:0;
+        const sourcePlan=calculatePinnacleFinancialPlan({
+          gross:sourceGross,
+          expenses:sourceExpenses,
+          mileage:sourceMileage,
+          payments:overallPlan.payments*share,
+          deposited:overallPlan.deposited*share,
+          reserveRate:planningInputs.reserveRate
+        });
         return `
           <article class="pinnacle-financial-source">
             <div class="pinnacle-financial-source-head">
@@ -9923,12 +10033,18 @@
               <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(sourceExpenses)}</strong></div>
               <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(sourceMileage)}</strong><button type="button" class="pinnacle-financial-detail-link" data-financial-mileage-source="${escapeHtml(item.id)}">View Mileage Details</button></div>
               <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(sourceNet)}</strong></div>
-              <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
-              <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
+              <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>${pinnacleMoney(sourcePlan.recommendedTaxSavings)}</strong></div>
+              <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>${pinnacleMoney(sourcePlan.safeToSpend)}</strong></div>
             </div>
           </article>`;
       }).join("");
 
+      const unassignedPlan=calculatePinnacleFinancialPlan({
+        gross:0,
+        expenses:unassignedExpenses,
+        mileage:unassignedMileage,
+        reserveRate:planningInputs.reserveRate
+      });
       const unassignedRow=(unassignedMileage>0||unassignedExpenses>0)?`
         <article class="pinnacle-financial-source">
           <div class="pinnacle-financial-source-head">
@@ -9943,8 +10059,8 @@
             <div class="pinnacle-financial-metric"><span>Expenses</span><strong>${pinnacleMoney(unassignedExpenses)}</strong></div>
             <div class="pinnacle-financial-metric"><span>Mileage Deduction</span><strong>${pinnacleMoney(unassignedMileage)}</strong></div>
             <div class="pinnacle-financial-metric"><span>Net Business Income</span><strong>${pinnacleMoney(-(unassignedExpenses+unassignedMileage))}</strong></div>
-            <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>Pending</strong></div>
-            <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>Pending</strong></div>
+            <div class="pinnacle-financial-metric"><span>Tax Reserve</span><strong>${pinnacleMoney(unassignedPlan.recommendedTaxSavings)}</strong></div>
+            <div class="pinnacle-financial-metric"><span>Safe to Spend</span><strong>${pinnacleMoney(unassignedPlan.safeToSpend)}</strong></div>
           </div>
         </article>`:"";
 
@@ -11246,6 +11362,7 @@
       }
 
       const portal = data.portal || {};
+      currentPinnacleTaxWatch = portal.taxWatch || {};
 
       await hydratePinnacleWorkspace(
         portal.pinnacleWorkspace || {}
