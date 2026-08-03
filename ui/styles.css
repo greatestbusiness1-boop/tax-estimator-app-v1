@@ -743,7 +743,7 @@ button { font-family: var(--font-sans); }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #fff;
+  background-color: #C08A2E;
   color: var(--navy);
   padding: 16px 34px;
   border-radius: var(--radius);
