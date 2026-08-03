@@ -5369,13 +5369,10 @@ body:has(#screen-welcome.active) #progressNav { display: none !important; }
 }
 .home-v2-card-topline { display: flex; align-items: center; gap: 12px; padding-bottom: 22px; border-bottom: 1px solid var(--home-line); }
 .gbs-badge-card {
-  width: 48px;
-  height: 48px;
-  font-size: 25px;
-  border-color: rgba(27,42,65,.12);
-  background: var(--home-teal-dark);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(27,42,65,.16);
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  font-size: 24px;
 }
 .home-v2-card-topline div { display: grid; gap: 2px; }
 .home-v2-card-topline span { color: var(--home-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
@@ -5506,18 +5503,22 @@ body:has(#screen-welcome.active) #progressNav { display: none !important; }
   grid-template-columns: minmax(290px,1.35fr) repeat(3,minmax(150px,.7fr));
   gap: 36px;
 }
-.home-v2-footer-brand { display: flex; align-items: center; gap: 14px; }
+.home-v2-footer-brand { display: flex; align-items: center; gap: 12px; }
 .gbs-badge-footer {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
-  border-radius: 16px;
-  font-size: 28px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  font-size: 24px;
 }
-.home-v2-footer-brand div { display: grid; gap: 3px; }
-.home-v2-footer-brand strong { color: #fff; font-family: var(--font-display); font-size: 19px; line-height: 1.12; }
-.home-v2-footer-brand span { color: #AAB5C0; font-size: 12px; font-weight: 700; line-height: 1.25; }
+.home-v2-footer-brand div { display: grid; gap: 2px; }
+.home-v2-footer-brand strong {
+  color: #E2E7EB;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+.home-v2-footer-brand span { color: #AAB5C0; font-size: 11px; font-weight: 700; line-height: 1.25; }
 .home-v2-footer-company > p { max-width: 390px; margin: 22px 0; color: #AEB9C4; font-size: 13px; line-height: 1.7; }
 .home-v2-footer-details { display: grid; gap: 6px; color: #929FAC; font-size: 11px; line-height: 1.5; }
 .home-v2-footer-details a { color: #C7D8CF; font-weight: 800; }
