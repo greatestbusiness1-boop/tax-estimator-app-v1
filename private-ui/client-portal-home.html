@@ -3300,6 +3300,7 @@
 
 
 
+    /* Part 1 final navigation polish: logo blend, single identity, active state, useful stat */
     /* Greatest Business Solution Design System — Part 1: foundation, sidebar, dashboard */
     :root{
       --portal-ink:#1B2A41;
@@ -3316,7 +3317,7 @@
     .topbar{
       min-height:72px;
       padding:10px clamp(18px,3vw,42px);
-      background:var(--portal-ink);
+      background:linear-gradient(180deg,#081f37 0%,#13304f 100%);
       box-shadow:0 2px 12px rgba(27,42,65,.16);
       position:sticky;
       top:0;
@@ -3355,8 +3356,10 @@
     .portal-nav-label-wrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
     .portal-nav-icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;color:currentColor}
     .portal-nav-icon svg,.dashboard-business-profile-mark svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    .portal-nav-chevron{margin-left:auto;font-size:16px;transition:transform .16s ease}
+    .portal-nav-chevron{margin-left:auto;font-size:20px;font-weight:800;line-height:1;transition:transform .16s ease}
     .portal-nav-toggle[aria-expanded="true"] .portal-nav-chevron{transform:rotate(180deg)}
+    .portal-nav-toggle.is-active{box-shadow:inset 3px 0 0 var(--portal-teal)!important}
+    .portal-submenu button.is-active{background:#e1ebe6!important;color:#21483a!important;font-weight:800!important;box-shadow:inset 3px 0 0 var(--portal-teal)!important}
     .portal-nav-group,.portal-top-navigation .portal-nav-group{display:block!important;position:static!important}
     .portal-submenu,.portal-top-navigation .portal-submenu{display:none!important;position:static!important;min-width:0!important;max-width:none!important;margin:3px 0 7px 28px!important;padding:3px 0 3px 9px!important;border:0!important;border-left:1px solid #d6dfda!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:none!important}
     .portal-submenu.is-open,.portal-top-navigation .portal-submenu.is-open{display:grid!important}
@@ -3470,9 +3473,9 @@
   <div class="portal-layout">
     <aside class="portal-sidebar" aria-label="Secure Client Portal navigation">
       <div class="portal-sidebar-head">
-        <span>Secure Client Portal</span>
+        <span>Signed in as</span>
         <strong id="sidebarClientName">My Client Portal</strong>
-        <small>Version 2.6.1</small>
+        <small>Secure workspace</small>
       </div>
       <nav class="portal-nav" id="portalNavigation">
         <button class="portal-nav-item" type="button" data-portal-open="dashboard">
@@ -3567,7 +3570,7 @@
         <div class="cx-dashboard-stat"><span>Active Services</span><strong id="activeServiceCount">0</strong></div>
         <div class="cx-dashboard-stat"><span>Completed Services</span><strong id="completedServiceCount">0</strong></div>
         <div class="cx-dashboard-stat"><span>Documents Awaiting Review</span><strong id="dashboardDocumentAwaiting">0</strong></div>
-        <div class="cx-dashboard-stat"><span>Current Access</span><strong id="currentAccessLevel">Secure Portal</strong></div>
+        <div class="cx-dashboard-stat"><span>Plan Tools Available</span><strong id="planToolCount">0</strong></div>
       </div>
 
       <article class="dashboard-business-profile" id="dashboardBusinessProfileCard">
@@ -8850,31 +8853,10 @@
         ? membership.paymentHistory
         : [];
 
-      const currentAccess =
-        document.getElementById(
-          "currentAccessLevel"
-        );
       const dashboardSummary =
         document.getElementById(
           "dashboardMembershipSummary"
         );
-
-      if (active) {
-        currentAccess.textContent =
-          `${membership.planName || "Tax Watch Pro"} — Active`;
-      } else if (
-        membership.enrollmentStatus === "Past Due"
-      ) {
-        currentAccess.textContent =
-          `${membership.planName || "Tax Watch Pro"} — Payment Due`;
-      } else if (
-        ["Cancelled", "Expired"].includes(
-          membership.enrollmentStatus
-        )
-      ) {
-        currentAccess.textContent =
-          `${membership.planName || "Tax Watch Pro"} — ${membership.enrollmentStatus}`;
-      }
 
       if (membership.exists) {
         dashboardSummary.hidden = false;
@@ -9105,23 +9087,6 @@
       const membership =
         portal.taxWatch?.membership || {};
 
-      document.getElementById(
-        "currentAccessLevel"
-      ).textContent =
-        portal.taxWatch?.active
-          ? (
-              membership.enrollmentStatus === "Active Membership" &&
-              membership.paymentStatus === "Paid / Confirmed"
-                ? `${membership.planName || "Tax Watch Pro"} — Active`
-                : portal.taxWatch?.preview?.expired
-                  ? "Tax Watch Pro Preview Ended"
-                  : "Tax Watch Pro Preview"
-            )
-          : (portal.records || []).length ||
-            (portal.olderRecords || []).length
-            ? "Free Tax Estimator"
-            : "Secure Portal";
-
       renderMembershipBillingHistory(
         membership
       );
@@ -9236,6 +9201,14 @@
       const visiblePlans = portalPlanNavigationConfig.filter(
         (plan) => portalProgramAccessState[plan.planKey]?.hasAccess
       );
+      const planToolCount = visiblePlans.reduce(
+        (total, plan) => total + plan.pages.length,
+        0
+      );
+      const planToolCountNode = document.getElementById("planToolCount");
+      if (planToolCountNode) {
+        planToolCountNode.textContent = String(planToolCount);
+      }
 
       root.innerHTML = visiblePlans.map((plan) => {
         const submenuId = `portalPlanMenu-${plan.planKey}`;
@@ -9278,13 +9251,6 @@
         return;
       }
       plan.textContent = activePlans.map((item) => item.label).join(" + ");
-      const currentAccess = document.getElementById("currentAccessLevel");
-      if (currentAccess) {
-        const previewCount = activePlans.filter((item) => access[item.planKey]?.previewActive).length;
-        currentAccess.textContent = activePlans.length > 1
-          ? `${activePlans.length} active ${previewCount === activePlans.length ? "previews" : "plans"}`
-          : `${activePlans[0].label}${previewCount ? " Preview" : " Active"}`;
-      }
       const previewAccess = activePlans
         .map((item) => ({ plan: item, access: access[item.planKey] || {} }))
         .find((item) => item.access.previewActive && item.access.previewEndsAt);
@@ -9305,9 +9271,22 @@
       if (!name || !summary) return;
       const legalName = String(profile?.fields?.legalName || "").trim();
       const structure = String(profile?.structure || "").trim();
+      const structureLabels = {
+        "sole-no-ein": "Sole Proprietor — No EIN",
+        "sole-ein": "Sole Proprietor — Has EIN",
+        "single-llc": "Single-Member LLC",
+        "multi-llc": "Multi-Member LLC",
+        "llc-scorp": "LLC Taxed as an S Corporation",
+        "llc-ccorp": "LLC Taxed as a C Corporation",
+        scorp: "S Corporation",
+        ccorp: "C Corporation",
+        partnership: "Partnership",
+        "not-sure": "Structure not yet confirmed"
+      };
+      const structureLabel = structureLabels[structure] || structure;
       name.textContent = legalName || "Not started";
       summary.textContent = legalName
-        ? `${structure ? `${structure} · ` : ""}Your saved business details are available to review or update.`
+        ? `${structureLabel ? `${structureLabel} · ` : ""}Your saved business details are available to review or update.`
         : "Add or review the business details used across your secure planning workspace.";
     }
 
@@ -11757,12 +11736,24 @@
       });
 
       document.querySelectorAll("[data-portal-open]").forEach((button) => {
-        button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
+        const isActive = button.dataset.portalOpen === requestedView;
+        button.classList.toggle("is-active", isActive);
+        if (isActive) {
+          button.setAttribute("aria-current", "page");
+        } else {
+          button.removeAttribute("aria-current");
+        }
       });
 
       document.querySelectorAll(".portal-plan-group").forEach((group) => {
         const containsActiveView = Boolean(group.querySelector(`[data-portal-open="${CSS.escape(requestedView)}"]`));
-        group.querySelector(".portal-nav-toggle")?.classList.toggle("is-active", containsActiveView);
+        const toggle = group.querySelector(".portal-nav-toggle");
+        const submenu = group.querySelector(".portal-submenu");
+        toggle?.classList.toggle("is-active", containsActiveView);
+        if (containsActiveView) {
+          submenu?.classList.add("is-open");
+          toggle?.setAttribute("aria-expanded", "true");
+        }
       });
 
       const accountSecurityViews = new Set([
@@ -11772,7 +11763,14 @@
         "questions"
       ]);
       const accountSecurityToggle = document.querySelector('[data-submenu-toggle="accountSecurityMenu"]');
-      if (accountSecurityToggle) accountSecurityToggle.classList.toggle("is-active", accountSecurityViews.has(requestedView));
+      if (accountSecurityToggle) {
+        const accountIsActive = accountSecurityViews.has(requestedView);
+        accountSecurityToggle.classList.toggle("is-active", accountIsActive);
+        if (accountIsActive) {
+          document.getElementById("accountSecurityMenu")?.classList.add("is-open");
+          accountSecurityToggle.setAttribute("aria-expanded", "true");
+        }
+      }
 
       configurePortalServiceView(requestedView);
       configureDocumentView(requestedView);
