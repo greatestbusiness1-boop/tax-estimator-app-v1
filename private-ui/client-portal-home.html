@@ -3457,7 +3457,555 @@
       .portal-sidebar-utilities{grid-template-columns:1fr}
       .document-history-filter{grid-template-columns:1fr}
     }
-  </style>
+  
+    /* Tax Money Tracker statement layout — Part 1, Section 5B */
+    .tax-watch-statement-page {
+      --tws-ink: #1b2a41;
+      --tws-paper: #f7f5f1;
+      --tws-teal: #3f6656;
+      --tws-teal-soft: #e9f0ec;
+      --tws-line: #d8d3c9;
+      --tws-gold: #c08a2e;
+    }
+
+    .tax-watch-statement-page .section-body {
+      padding-top: 18px;
+    }
+
+    .tax-watch-statement-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 26px 30px 22px;
+      border-bottom: 1px solid var(--tws-line);
+      background: var(--tws-paper);
+    }
+
+    .tax-watch-statement-header h2 {
+      margin: 3px 0 6px;
+      color: var(--tws-ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1.02;
+    }
+
+    .tax-watch-statement-header p {
+      max-width: 720px;
+      margin: 0;
+      color: #536174;
+    }
+
+    .tax-watch-statement-card,
+    .tax-watch-organizer-card,
+    .tax-watch-reference-disclosure {
+      border: 1px solid var(--tws-line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 14px 32px rgba(27, 42, 65, 0.06);
+    }
+
+    .tax-watch-statement-card {
+      overflow: hidden;
+    }
+
+    .tax-watch-statement-title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: start;
+      padding: 24px 26px 18px;
+      background: linear-gradient(135deg, #fff, #f4f7f5);
+      border-bottom: 1px solid var(--tws-line);
+    }
+
+    .tax-watch-statement-title-row h3,
+    .tax-watch-savings-inline h3,
+    .tax-watch-organizer-card h3 {
+      margin: 3px 0 6px;
+      color: var(--tws-ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 2vw, 2rem);
+      line-height: 1.08;
+    }
+
+    .tax-watch-statement-title-row p {
+      margin: 0;
+      color: #5f6a79;
+    }
+
+    .tax-watch-statement-basis {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+      gap: 9px 10px;
+      min-width: 310px;
+    }
+
+    .tax-watch-statement-basis label {
+      display: grid;
+      gap: 5px;
+      color: #4f5b6c;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .tax-watch-statement-basis select {
+      min-height: 38px;
+      border: 1px solid #bdc8c2;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--tws-ink);
+      font: inherit;
+      font-weight: 700;
+      padding: 7px 30px 7px 10px;
+    }
+
+    .tax-watch-statement-basis > span {
+      grid-column: 1 / -1;
+      color: #687487;
+      font-size: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .tax-watch-statement-basis a,
+    .tax-watch-edit-link {
+      color: var(--tws-teal);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .tax-watch-statement-context {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+      align-items: stretch;
+      border-bottom: 1px solid var(--tws-line);
+      background: #fcfbf8;
+    }
+
+    .tax-watch-statement-context > div {
+      display: grid;
+      gap: 4px;
+      padding: 13px 18px;
+      border-right: 1px solid var(--tws-line);
+    }
+
+    .tax-watch-statement-context span {
+      color: #697486;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .tax-watch-statement-context strong {
+      color: var(--tws-ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tax-watch-text-action {
+      border: 0;
+      background: transparent;
+      color: var(--tws-teal);
+      padding: 13px 18px;
+      font: inherit;
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .tax-watch-ledger {
+      padding: 8px 26px 0;
+    }
+
+    .tax-watch-ledger-row {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 58px;
+      border-bottom: 1px solid var(--tws-line);
+      color: #435064;
+    }
+
+    .tax-watch-ledger-row strong {
+      min-width: 130px;
+      color: var(--tws-ink);
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 1.25rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tax-watch-ledger-operator {
+      color: var(--tws-teal);
+      font-size: 1.15rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .tax-watch-ledger-row.subtotal {
+      color: var(--tws-ink);
+      font-weight: 800;
+      border-bottom-width: 2px;
+    }
+
+    .tax-watch-ledger-row.safe-to-spend {
+      margin: 10px 0 0;
+      padding: 7px 12px;
+      border: 1px solid #aec5b9;
+      border-radius: 12px;
+      background: var(--tws-teal-soft);
+      color: var(--tws-ink);
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+
+    .tax-watch-ledger-row.safe-to-spend strong {
+      color: #254f40;
+      font-size: 1.55rem;
+    }
+
+    .tax-watch-statement-card > .tax-watch-cash-note {
+      margin: 12px 26px 0;
+    }
+
+    .tax-watch-savings-inline {
+      margin-top: 18px;
+      padding: 22px 26px 24px;
+      border-top: 1px solid var(--tws-line);
+      background: #fbfcfb;
+    }
+
+    .tax-watch-savings-inline-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(430px, auto);
+      gap: 24px;
+      align-items: end;
+    }
+
+    .tax-watch-savings-figures {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(92px, 1fr));
+      border: 1px solid var(--tws-line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .tax-watch-savings-figures > div {
+      display: grid;
+      gap: 3px;
+      padding: 10px 12px;
+      border-right: 1px solid var(--tws-line);
+    }
+
+    .tax-watch-savings-figures > div:last-child {
+      border-right: 0;
+    }
+
+    .tax-watch-savings-figures span {
+      color: #6a7586;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .tax-watch-savings-figures strong {
+      color: var(--tws-ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tax-watch-savings-inline .tax-watch-progress {
+      margin-top: 16px;
+    }
+
+    .tax-watch-savings-inline-form {
+      grid-template-columns: minmax(150px, .65fr) minmax(240px, 1.35fr) auto;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .tax-watch-inline-save-button {
+      min-height: 42px;
+      border: 1px solid var(--tws-ink);
+      border-radius: 9px;
+      background-color: var(--tws-ink);
+      color: #fff;
+      padding: 10px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tax-watch-change-summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+      padding: 17px 26px 20px;
+      border-top: 1px solid var(--tws-line);
+      background: #fff;
+    }
+
+    .tax-watch-change-summary .tax-watch-change-list {
+      display: grid;
+      gap: 2px;
+      margin: 4px 0 0;
+      padding-left: 18px;
+      color: #4d596a;
+    }
+
+    .tax-watch-change-summary .tax-watch-change-list li {
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .tax-watch-organizer-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+      margin-top: 18px;
+      padding: 22px 24px;
+      border-color: #b8cbbf;
+      background: linear-gradient(135deg, #f2f7f4, #fff);
+    }
+
+    .tax-watch-organizer-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--tws-teal);
+      color: #fff;
+    }
+
+    .tax-watch-organizer-icon svg {
+      width: 27px;
+      height: 27px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tax-watch-organizer-copy p {
+      margin: 4px 0;
+      color: #536174;
+    }
+
+    .tax-watch-next-action {
+      font-size: 0.87rem;
+    }
+
+    .tax-watch-organizer-copy .tax-watch-cash-note {
+      margin-top: 10px;
+    }
+
+    .tax-watch-organizer-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      border: 1px solid #a87219;
+      border-radius: 10px;
+      background-color: var(--tws-gold);
+      color: #fff;
+      padding: 11px 18px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 9px 20px rgba(192, 138, 46, 0.22);
+      white-space: nowrap;
+    }
+
+    .tax-watch-reference-disclosure {
+      margin-top: 18px;
+      overflow: hidden;
+    }
+
+    .tax-watch-reference-disclosure > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 22px;
+      color: var(--tws-ink);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .tax-watch-reference-disclosure > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .tax-watch-reference-disclosure > summary span:first-child {
+      display: grid;
+      gap: 3px;
+    }
+
+    .tax-watch-reference-disclosure > summary small {
+      color: #6a7586;
+      font-weight: 500;
+    }
+
+    .tax-watch-reference-disclosure > summary span:last-child {
+      color: var(--tws-teal);
+      font-size: 1.5rem;
+      font-weight: 900;
+      transition: transform .2s ease;
+    }
+
+    .tax-watch-reference-disclosure[open] > summary span:last-child {
+      transform: rotate(45deg);
+    }
+
+    .tax-watch-reference-body {
+      display: grid;
+      gap: 22px;
+      padding: 0 22px 22px;
+      border-top: 1px solid var(--tws-line);
+    }
+
+    .tax-watch-reference-section {
+      padding-top: 20px;
+    }
+
+    .tax-watch-table-wrap {
+      overflow-x: auto;
+    }
+
+    .tax-watch-statement-page-actions {
+      justify-content: flex-start;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 980px) {
+      .tax-watch-statement-title-row,
+      .tax-watch-savings-inline-head,
+      .tax-watch-organizer-card {
+        grid-template-columns: 1fr;
+      }
+
+      .tax-watch-statement-basis {
+        min-width: 0;
+      }
+
+      .tax-watch-savings-inline-head {
+        align-items: start;
+      }
+
+      .tax-watch-organizer-primary {
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .tax-watch-statement-header {
+        align-items: flex-start;
+        padding: 22px 18px;
+      }
+
+      .tax-watch-statement-title-row,
+      .tax-watch-savings-inline,
+      .tax-watch-change-summary {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .tax-watch-statement-context {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tax-watch-statement-context > div:nth-child(2) {
+        border-right: 0;
+      }
+
+      .tax-watch-text-action {
+        grid-column: 1 / -1;
+        text-align: left;
+      }
+
+      .tax-watch-ledger {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .tax-watch-savings-figures {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tax-watch-savings-figures > div:nth-child(2) {
+        border-right: 0;
+      }
+
+      .tax-watch-savings-figures > div:nth-child(-n+2) {
+        border-bottom: 1px solid var(--tws-line);
+      }
+
+      .tax-watch-savings-inline-form {
+        grid-template-columns: 1fr;
+      }
+
+      .tax-watch-change-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .tax-watch-statement-header {
+        display: grid;
+      }
+
+      .tax-watch-statement-basis {
+        grid-template-columns: 1fr;
+      }
+
+      .tax-watch-statement-basis > span {
+        grid-column: auto;
+      }
+
+      .tax-watch-statement-context {
+        grid-template-columns: 1fr;
+      }
+
+      .tax-watch-statement-context > div {
+        border-right: 0;
+      }
+
+      .tax-watch-ledger-row {
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 7px;
+        padding: 10px 0;
+      }
+
+      .tax-watch-ledger-row strong {
+        grid-column: 2;
+        min-width: 0;
+        text-align: left;
+      }
+
+      .tax-watch-savings-figures {
+        grid-template-columns: 1fr;
+      }
+
+      .tax-watch-savings-figures > div {
+        border-right: 0;
+        border-bottom: 1px solid var(--tws-line);
+      }
+
+      .tax-watch-savings-figures > div:last-child {
+        border-bottom: 0;
+      }
+    }
+
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -3939,23 +4487,20 @@
     </section>
 
 
-    <section class="section portal-view tax-watch-page" id="taxWatchPro" data-portal-view="tax-watch">
+    <section class="section portal-view tax-watch-page tax-watch-statement-page" id="taxWatchPro" data-portal-view="tax-watch">
       <div class="portal-print-header" aria-hidden="true">
         <div class="portal-print-brand">Greatest Business Solution LLC</div>
         <h1>Tax Money Tracker &amp; Overview</h1>
         <p>Prepared for <strong data-print-client-name>Client</strong> · Tax year <strong data-print-tax-year>—</strong> · Printed <span data-print-generated-at>—</span></p>
       </div>
-      <div class="tax-watch-hero">
+
+      <div class="tax-watch-statement-header">
         <div>
-          <div class="eyebrow">Tax Watch Pro Membership</div>
+          <div class="eyebrow">Tax Watch Pro</div>
           <h2>Tax Money Tracker &amp; Overview</h2>
-          <p><strong>Year-Round Income, Expense, and Tax Tracking.</strong> Track what you earned, organize business expenses, monitor estimated tax money needed, and record the money you reported saving.</p>
+          <p>See what you earned, what to set aside, and what may be safe to spend in one clear statement.</p>
         </div>
-        <div class="tax-watch-badge" id="taxWatchPreviewBadge">
-          <span id="taxWatchPreviewBadgeStatus">14-Day Preview</span>
-          <strong id="taxWatchPreviewBadgeText">No automatic charge. Choose a plan only when you are ready.</strong>
-          <button class="portal-print-button" id="printTaxWatchOverviewButton" type="button" hidden>Print / Save Tax Money Overview</button>
-        </div>
+        <button class="portal-print-button light" id="printTaxWatchOverviewButton" type="button" hidden>Print / Save Overview</button>
       </div>
 
       <div class="section-body">
@@ -3992,173 +4537,172 @@
           <div class="tax-watch-message" id="taxWatchMessage" role="status" aria-live="polite"></div>
         </div>
 
-        <div id="taxWatchDashboard" hidden>
-          <div class="tax-watch-preview-card" id="taxWatchPreviewCard" hidden>
-            <div class="tax-watch-preview-top">
-              <div class="tax-watch-preview-copy">
-                <div class="eyebrow" id="taxWatchMembershipCardEyebrow">Tax Watch Pro Preview</div>
-                <h3 id="taxWatchPreviewHeading">Your preview is active</h3>
-                <p id="taxWatchPreviewDates">Loading your preview dates...</p>
-                <div class="tax-watch-preview-actions" id="taxWatchMembershipCheckoutActions">
-                  <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
-                  <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
-                </div>
-                <p class="tax-watch-preview-note" id="taxWatchPreviewNote"><strong>No automatic charge.</strong> Select a monthly or annual option only when you are ready to open secure Stripe subscription checkout.</p>
-                <div class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"></div>
-              </div>
-              <div class="tax-watch-inline-preview-card" id="taxWatchInlinePreviewCard" data-preview-compact hidden>
-                <div class="tax-watch-inline-preview-top">
-                  <div class="tax-watch-inline-preview-ring" aria-hidden="true">
-                    <svg viewBox="0 0 52 52">
-                      <circle class="preview-ring-track" cx="26" cy="26" r="22"></circle>
-                      <circle class="preview-ring-fill" id="taxWatchInlinePreviewRing" cx="26" cy="26" r="22" stroke-dasharray="138.230" stroke-dashoffset="0"></circle>
-                    </svg>
-                    <span class="tax-watch-inline-preview-days" id="taxWatchInlinePreviewDays">14</span>
-                  </div>
-                  <div class="tax-watch-inline-preview-copy">
-                    <strong id="taxWatchInlinePreviewHeading">Preview running</strong>
-                    <span id="taxWatchInlinePreviewStatus">Plenty of time left</span>
-                  </div>
-                </div>
-                <div class="tax-watch-inline-preview-clock" aria-label="Preview time remaining">
-                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewHours">00</span>
-                  <span class="tax-watch-inline-preview-clock-separator">:</span>
-                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewMinutes">00</span>
-                  <span class="tax-watch-inline-preview-clock-separator">:</span>
-                  <span class="tax-watch-inline-preview-clock-box" id="taxWatchInlinePreviewSeconds">00</span>
-                </div>
-                <button class="tax-watch-inline-preview-button" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
-                <span class="tax-watch-inline-preview-note" id="taxWatchInlinePreviewNote">No card is ever charged automatically</span>
-              </div>
-            </div>
-            <div class="tax-watch-preview-progress" id="taxWatchPreviewProgressTrack" role="progressbar" aria-label="Tax Watch Pro preview time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchPreviewProgress"></div></div>
-          </div>
-          <div class="tax-watch-preview-lifecycle-notice" id="taxWatchPreviewLifecycleNotice" role="status" aria-live="polite" aria-atomic="true" hidden>
-            <strong id="taxWatchPreviewLifecycleTitle">Preview reminder</strong>
-            <span id="taxWatchPreviewLifecycleMessage"></span>
-          </div>
-          <div class="tax-watch-readonly-notice" id="taxWatchPreviewExpiredNotice" hidden>Your preview has ended. No charge occurred. Your saved records remain available, but new updates and savings entries are paused until you choose a plan.</div>
-          <div class="tax-watch-summary-grid">
-            <div class="tax-watch-stat"><span>Current projection</span><strong id="taxWatchCurrentResult">—</strong></div>
-            <div class="tax-watch-stat"><span>My objective</span><strong id="taxWatchObjectiveLabel">—</strong></div>
-            <div class="tax-watch-stat"><span>Tax year</span><strong id="taxWatchTaxYear">—</strong></div>
-            <div class="tax-watch-stat"><span>Saved updates</span><strong id="taxWatchUpdateCount">0</strong></div>
-          </div>
 
-          <div class="tax-watch-panel tax-watch-cash-panel">
-            <div class="tax-watch-panel-heading">
+        <div id="taxWatchDashboard" hidden>
+          <div class="tax-watch-readonly-notice" id="taxWatchPreviewExpiredNotice" hidden>Your preview has ended. No charge occurred. Your saved records remain available, but new updates and savings entries are paused until you choose a plan.</div>
+
+          <section class="tax-watch-statement-card" aria-labelledby="taxWatchStatementHeading">
+            <div class="tax-watch-statement-title-row">
               <div>
                 <div class="eyebrow">Your Business Money</div>
-                <h3>What to Save and What You Can Spend</h3>
+                <h3 id="taxWatchStatementHeading">Your tax money statement</h3>
+                <p>Planning view based on the filing status and tax year saved with your latest estimate.</p>
               </div>
-              <span class="tax-watch-plan-chip">Included in Tax Watch Pro</span>
+              <div class="tax-watch-statement-basis" aria-label="Planning basis">
+                <label for="taxWatchFilingStatusSelect">Filing status
+                  <select id="taxWatchFilingStatusSelect">
+                    <option>Loading…</option>
+                  </select>
+                </label>
+                <label for="taxWatchTaxYearSelect">Tax year
+                  <select id="taxWatchTaxYearSelect">
+                    <option>Loading…</option>
+                  </select>
+                </label>
+                <span>Use <a id="taxWatchBasisEditLink" href="/client-portal/tax-watch/update-estimate">Edit estimate details</a> to change these values.</span>
+              </div>
             </div>
-            <div class="tax-watch-summary-grid">
-              <div class="tax-watch-stat"><span>Money You Earned</span><strong id="taxWatchBusinessIncome">$0</strong></div>
-              <div class="tax-watch-stat"><span>Business Expenses</span><strong id="taxWatchBusinessExpenses">$0</strong></div>
-              <div class="tax-watch-stat"><span>Money to Set Aside for Taxes</span><strong id="taxWatchGeneralReserve">$0</strong></div>
-              <div class="tax-watch-stat"><span>Money You Can Spend</span><strong id="taxWatchAvailableToSpend">$0</strong></div>
+
+            <div class="tax-watch-statement-context">
+              <div><span>Current projection</span><strong id="taxWatchCurrentResult">—</strong></div>
+              <div><span>Objective</span><strong id="taxWatchObjectiveLabel">—</strong></div>
+              <div><span>Saved updates</span><strong id="taxWatchUpdateCount">0</strong></div>
+              <button class="tax-watch-text-action" id="changeTaxWatchObjectiveButton" type="button">Change objective</button>
+              <span id="taxWatchTaxYear" hidden>—</span>
             </div>
+
+            <div class="tax-watch-ledger" role="table" aria-label="Tax Money Tracker statement">
+              <div class="tax-watch-ledger-row" role="row">
+                <span class="tax-watch-ledger-operator" aria-hidden="true"></span>
+                <span role="cell">Money you earned</span>
+                <strong id="taxWatchBusinessIncome" role="cell">$0.00</strong>
+              </div>
+              <div class="tax-watch-ledger-row" role="row">
+                <span class="tax-watch-ledger-operator" aria-hidden="true">−</span>
+                <span role="cell">Business expenses</span>
+                <strong id="taxWatchBusinessExpenses" role="cell">$0.00</strong>
+              </div>
+              <div class="tax-watch-ledger-row subtotal" role="row">
+                <span class="tax-watch-ledger-operator" aria-hidden="true">=</span>
+                <span role="cell">Net income</span>
+                <strong id="taxWatchNetIncome" role="cell">$0.00</strong>
+              </div>
+              <div class="tax-watch-ledger-row" role="row">
+                <span class="tax-watch-ledger-operator" aria-hidden="true">−</span>
+                <span role="cell">Estimated set-aside for taxes</span>
+                <strong id="taxWatchGeneralReserve" role="cell">$0.00</strong>
+              </div>
+              <div class="tax-watch-ledger-row safe-to-spend" role="row">
+                <span class="tax-watch-ledger-operator" aria-hidden="true">=</span>
+                <span role="cell">Safe to spend</span>
+                <strong id="taxWatchAvailableToSpend" role="cell">$0.00</strong>
+              </div>
+            </div>
+
             <div class="tax-watch-cash-note">
               <strong>Planning estimate only.</strong> Final tax results require professional tax preparation.
             </div>
-          </div>
 
-          <div class="tax-watch-panel">
-            <div class="tax-watch-panel-heading">
+            <div class="tax-watch-savings-inline" aria-labelledby="taxWatchSavingsHeading">
+              <div class="tax-watch-savings-inline-head">
+                <div>
+                  <div class="eyebrow">Savings progress</div>
+                  <h3 id="taxWatchSavingsHeading">Build the amount set aside for taxes</h3>
+                </div>
+                <div class="tax-watch-savings-figures">
+                  <div><span>Saved</span><strong id="taxWatchSavingsReported">$0.00</strong></div>
+                  <div><span>Target</span><strong id="taxWatchSavingsTarget">$0.00</strong></div>
+                  <div><span>Still needed</span><strong id="taxWatchSavingsRemaining">$0.00</strong></div>
+                  <div><span>Progress</span><strong id="taxWatchSavingsPercent">0%</strong></div>
+                </div>
+              </div>
+              <div class="tax-watch-progress" id="taxWatchSavingsProgressTrack" role="progressbar" aria-label="Tax savings progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchSavingsProgress"></div></div>
+              <p class="tax-watch-progress-status" id="taxWatchSavingsStatusBox">
+                <strong id="taxWatchSavingsStatus">No savings reported yet</strong>
+                <span id="taxWatchSavingsStatusMessage">Add your first savings entry when you report setting money aside for taxes.</span>
+              </p>
+              <form class="tax-watch-savings-form tax-watch-savings-inline-form" id="taxWatchSavingsForm">
+                <label>Amount saved
+                  <input id="taxWatchSavingsAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="100.00">
+                </label>
+                <label>Optional note
+                  <input id="taxWatchSavingsNote" maxlength="200" placeholder="Example: Set aside after this week's payout">
+                </label>
+                <button class="tax-watch-inline-save-button" id="taxWatchSavingsButton" type="submit">Add savings entry</button>
+              </form>
+              <div class="tax-watch-tracker-message" id="taxWatchSavingsMessage" role="status" aria-live="polite"></div>
+              <div class="tax-watch-tracker-disclaimer" id="taxWatchSavingsDisclaimer">
+                <strong>Important:</strong> Savings entries are entered by the client and do not verify an actual bank deposit.
+              </div>
+            </div>
+
+            <div class="tax-watch-change-summary">
               <div>
-                <div class="eyebrow">Tax Money Tracker</div>
-                <h3>What You Need, What You Reported Saving, and What Is Left</h3>
+                <div class="eyebrow">What changed since last update</div>
+                <ul class="tax-watch-change-list" id="taxWatchChangeList"></ul>
               </div>
-              <span class="tax-watch-plan-chip">Included in Tax Watch Pro</span>
+              <a class="tax-watch-edit-link" id="beginTaxWatchUpdateButton" href="/client-portal/tax-watch/update-estimate">Edit estimate details</a>
             </div>
-            <p>Enter money you report setting aside for taxes. Each entry creates a dated accountability record.</p>
-            <div class="tax-watch-tracker-grid">
-              <div class="tax-watch-tracker-card"><span>Estimated Tax Money Needed</span><strong id="taxWatchSavingsTarget">$0</strong></div>
-              <div class="tax-watch-tracker-card"><span>Money You Reported Saving</span><strong id="taxWatchSavingsReported">$0</strong></div>
-              <div class="tax-watch-tracker-card"><span>Amount You Still Need</span><strong id="taxWatchSavingsRemaining">$0</strong></div>
-              <div class="tax-watch-tracker-card"><span>Progress</span><strong id="taxWatchSavingsPercent">0%</strong></div>
-            </div>
-            <div class="tax-watch-progress" id="taxWatchSavingsProgressTrack" role="progressbar" aria-label="Tax savings progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="taxWatchSavingsProgress"></div></div>
-            <p class="tax-watch-progress-status" id="taxWatchSavingsStatusBox">
-              <strong id="taxWatchSavingsStatus">No savings reported yet</strong>
-              <span id="taxWatchSavingsStatusMessage">Add your first savings entry when you report setting money aside for taxes.</span>
-            </p>
-            <form class="tax-watch-savings-form" id="taxWatchSavingsForm">
-              <label>Deposit amount reported
-                <input id="taxWatchSavingsAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Example: 100.00">
-              </label>
-              <label>Optional note
-                <input id="taxWatchSavingsNote" maxlength="200" placeholder="Example: Set aside money after this week's DoorDash payout">
-              </label>
-              <button class="tax-watch-action-button" id="taxWatchSavingsButton" type="submit">Add Savings Entry</button>
-            </form>
-            <div class="tax-watch-tracker-message" id="taxWatchSavingsMessage" role="status" aria-live="polite"></div>
-            <div class="tax-watch-tracker-disclaimer" id="taxWatchSavingsDisclaimer">
-              <strong>Important:</strong> Savings entries are entered by the client and do not verify an actual bank deposit.
-            </div>
-            <div class="tax-watch-history-header">
-              <div>
-                <h4 class="tax-watch-history-heading">Deposit History</h4>
-                <p class="tax-watch-history-intro" id="taxWatchHistoryIntro">Newest entries appear first. Open an entry to see its full details.</p>
-              </div>
-              <button class="portal-back-button tax-watch-history-toggle" id="taxWatchHistoryToggle" type="button" hidden>Show All History</button>
-            </div>
-            <div class="tax-watch-savings-history" id="taxWatchSavingsHistory">
-              <div class="tax-watch-savings-empty">No savings entries yet.</div>
-            </div>
-          </div>
+          </section>
 
-          <div class="tax-watch-columns">
-            <div class="tax-watch-panel">
-              <h3>What Changed and Why</h3>
-              <p>Tax Money Tracker compares your newest saved estimate with the one before it.</p>
-              <ul class="tax-watch-change-list" id="taxWatchChangeList"></ul>
+          <section class="tax-watch-organizer-card" aria-labelledby="taxWatchOrganizerHeading">
+            <div class="tax-watch-organizer-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 6h6M9 10h6M9 14h4M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Zm2-1v3h6V2"/></svg>
             </div>
-            <div class="tax-watch-panel">
-              <h3>Your Next Step</h3>
-              <div class="tax-watch-callout">
-                <strong>Recommended next action</strong>
-                <p id="taxWatchNextAction">—</p>
-              </div>
-              <div class="tax-watch-actions">
-                <a class="tax-watch-action-button secondary" id="beginTaxWatchUpdateButton" href="/client-portal/tax-watch/update-estimate">Update My Tax Money Tracker Estimate</a>
-                <button class="portal-back-button" id="changeTaxWatchObjectiveButton" type="button">Change My Objective</button>
+            <div class="tax-watch-organizer-copy">
+              <div class="eyebrow">Strongest next step</div>
+              <h3 id="taxWatchOrganizerHeading">Open My Business Organizer</h3>
+              <p>Move your organized income, expenses, and tax-planning records toward professional tax preparation.</p>
+              <p class="tax-watch-next-action"><strong>Recommended next action:</strong> <span id="taxWatchNextAction">—</span></p>
+              <div class="tax-watch-cash-note" id="taxWatchOrganizerStatus">
+                <strong>Organizer status:</strong> Not created
               </div>
             </div>
-          </div>
+            <a class="tax-watch-organizer-primary" id="taxWatchOrganizerButton" href="/client-portal/tax-watch/organizer">Open My Business Organizer</a>
+          </section>
 
-          <div class="tax-watch-panel tax-watch-protection-panel">
-            <h3>Your Records Stay Organized. Professional Tax Preparation Stays Separate.</h3>
-            <p>Tax Watch Pro helps organize income and expenses. Greatest Business Solution LLC determines the final tax treatment, prepares Schedule C and the complete return, and handles filing as a separate professional service.</p>
-            <div class="tax-watch-actions">
-              <a class="tax-watch-action-button secondary" id="taxWatchOrganizerButton" href="/client-portal/tax-watch/organizer">Create My Business Organizer</a>
-            </div>
-            <div class="tax-watch-cash-note" id="taxWatchOrganizerStatus">
-              <strong>Organizer status:</strong> Not created
-            </div>
-            <p class="tax-watch-credit-note"><strong>Your choice:</strong> Use Greatest Business Solution LLC for professional tax preparation, or print, save, and share your organizer with the qualified tax professional of your choice.</p>
-            <p class="tax-watch-credit-note"><strong>$20 tax-preparation credit eligibility:</strong> Annual members and monthly members with at least 90 consecutive paid days may receive one credit per tax year when Greatest Business Solution LLC prepares the return. The membership must be active and current when the return is accepted. The credit is noncash, nontransferable, nonstackable, and cannot exceed the preparation fee.</p>
-          </div>
+          <details class="tax-watch-reference-disclosure" id="taxWatchReferenceHistory">
+            <summary>
+              <span>
+                <strong>Deposit and estimate update history</strong>
+                <small>Reference records are collapsed by default.</small>
+              </span>
+              <span aria-hidden="true">+</span>
+            </summary>
+            <div class="tax-watch-reference-body">
+              <section class="tax-watch-reference-section">
+                <div class="tax-watch-history-header">
+                  <div>
+                    <h4 class="tax-watch-history-heading">Deposit History</h4>
+                    <p class="tax-watch-history-intro" id="taxWatchHistoryIntro">Newest entries appear first. Open an entry to see its full details.</p>
+                  </div>
+                  <button class="portal-back-button tax-watch-history-toggle" id="taxWatchHistoryToggle" type="button" hidden>Show All History</button>
+                </div>
+                <div class="tax-watch-savings-history" id="taxWatchSavingsHistory">
+                  <div class="tax-watch-savings-empty">No savings entries yet.</div>
+                </div>
+              </section>
 
-          <div class="tax-watch-panel">
-            <h3>Estimate Update History</h3>
-            <p>Update the estimate with the same portal email. Tax Watch Pro can track up to <strong>5 jobs, gigs, or business income sources</strong> in this plan. New saved estimates appear here after you return to the portal.</p>
-            <div style="overflow-x:auto">
-              <table class="tax-watch-history">
-                <thead><tr><th>Saved</th><th>Tax year</th><th>Income entered</th><th>Withholding</th><th>Projected result</th></tr></thead>
-                <tbody id="taxWatchHistoryBody"></tbody>
-              </table>
+              <section class="tax-watch-reference-section">
+                <h4 class="tax-watch-history-heading">Estimate Update History</h4>
+                <p>Tax Watch Pro can track up to <strong>5 jobs, gigs, or business income sources</strong>. New saved estimates appear here after you return to the portal.</p>
+                <div class="tax-watch-table-wrap">
+                  <table class="tax-watch-history">
+                    <thead><tr><th>Saved</th><th>Tax year</th><th>Income entered</th><th>Withholding</th><th>Projected result</th></tr></thead>
+                    <tbody id="taxWatchHistoryBody"></tbody>
+                  </table>
+                </div>
+              </section>
             </div>
-          </div>
+          </details>
 
-          <div class="cx-page-actions">
+          <div class="cx-page-actions tax-watch-statement-page-actions">
             <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
-            <button class="portal-primary-link" type="button" data-portal-open="plans">See Plans &amp; Pricing</button>
           </div>
         </div>
       </div>
     </section>
+
 
     <section class="section portal-view pinnacle-overview-page" id="pinnacleTaxActionPlan" data-portal-view="pinnacle">
       <div class="portal-print-header" aria-hidden="true">
@@ -7950,8 +8494,26 @@
       const cash = taxWatch.businessCashSnapshot || {};
       document.getElementById("taxWatchBusinessIncome").textContent = taxWatchMoney(cash.incomeReceived || 0);
       document.getElementById("taxWatchBusinessExpenses").textContent = taxWatchMoney(cash.organizedExpenses || 0);
+      const netIncomeValue = Number.isFinite(Number(cash.netBusinessIncome))
+        ? Number(cash.netBusinessIncome)
+        : Number(cash.incomeReceived || 0) - Number(cash.organizedExpenses || 0);
+      const netIncomeElement = document.getElementById("taxWatchNetIncome");
+      if (netIncomeElement) netIncomeElement.textContent = taxWatchMoney(netIncomeValue);
       document.getElementById("taxWatchGeneralReserve").textContent = taxWatchMoney(cash.generalTaxReserve || 0);
       document.getElementById("taxWatchAvailableToSpend").textContent = taxWatchMoney(cash.estimatedAvailableToSpend || 0);
+
+      const filingStatusSelect = document.getElementById("taxWatchFilingStatusSelect");
+      const taxYearSelect = document.getElementById("taxWatchTaxYearSelect");
+      const filingStatusValue = String(current.filingStatus || "Not recorded");
+      const taxYearValue = String(current.taxYear || "Not recorded");
+      if (filingStatusSelect) {
+        filingStatusSelect.innerHTML = `<option selected>${escapeHtml(filingStatusValue)}</option>`;
+        filingStatusSelect.setAttribute("aria-label", `Filing status: ${filingStatusValue}`);
+      }
+      if (taxYearSelect) {
+        taxYearSelect.innerHTML = `<option selected>${escapeHtml(taxYearValue)}</option>`;
+        taxYearSelect.setAttribute("aria-label", `Tax year: ${taxYearValue}`);
+      }
 
       const organizer = taxWatch.organizer || {};
       const organizerButton = document.getElementById("taxWatchOrganizerButton");
@@ -8312,9 +8874,12 @@
       if (documentOpen) documentOpen.textContent = organizer.exists ? "Open My Business Organizer" : "Create My Business Organizer";
 
       const changeList = document.getElementById("taxWatchChangeList");
-      changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])
-        .map((item) => `<li>${escapeHtml(item)}</li>`)
-        .join("");
+      if (changeList) {
+        changeList.innerHTML = (taxWatch.changes || ["No estimate comparison is available yet."])
+          .slice(0, 2)
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("");
+      }
 
       const history = document.getElementById("taxWatchHistoryBody");
       const rows = taxWatch.history || [];
