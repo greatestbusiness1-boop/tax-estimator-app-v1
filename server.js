@@ -10832,6 +10832,37 @@ async function requireClientPortalPageSession(
   return next();
 }
 
+const CLIENT_PORTAL_VIEW_PLAN_ACCESS = Object.freeze({
+  pinnacle: "pinnacle",
+  "pinnacle-financial-snapshot": "pinnacle",
+  "pinnacle-expense-tracker": "pinnacle",
+  "pinnacle-income-sources": "pinnacle",
+  "pinnacle-mileage-tracker": "pinnacle",
+  "pinnacle-vehicle-profiles": "pinnacle",
+  "tax-watch": "tax-watch-pro",
+  "tax-watch-documents": "tax-watch-pro"
+});
+
+async function getClientPortalProgramAccessForSession(session) {
+  const accessible = await getClientPortalAccessibleLeads(session.email);
+  const membership = getClientPortalMembershipSummary(accessible);
+  return membership.programAccess || {};
+}
+
+async function clientPortalSessionCanAccessView(session, view) {
+  const normalizedView = String(view || "").trim();
+  const requiredPlan = CLIENT_PORTAL_VIEW_PLAN_ACCESS[normalizedView] || "";
+  if (!requiredPlan) {
+    return { allowed: true, requiredPlan: "", programAccess: {} };
+  }
+  const programAccess = await getClientPortalProgramAccessForSession(session);
+  return {
+    allowed: Boolean(programAccess[requiredPlan]?.hasAccess),
+    requiredPlan,
+    programAccess
+  };
+}
+
 async function clientPortalSessionCanAccessLead(
   session,
   leadId
@@ -16886,6 +16917,36 @@ app.get(
   }
 );
 
+
+app.get(
+  "/api/client-portal/view-access",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    const view = String(req.query?.view || "").trim();
+    const access = await clientPortalSessionCanAccessView(
+      req.clientPortalSession,
+      view
+    );
+
+    if (!access.allowed) {
+      return res.status(403).json({
+        ok: false,
+        allowed: false,
+        view,
+        requiredPlan: access.requiredPlan,
+        redirectView: "plans",
+        error: "That portal page is not included in your current plan."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      allowed: true,
+      view,
+      requiredPlan: access.requiredPlan
+    });
+  }
+);
 
 
 app.post(

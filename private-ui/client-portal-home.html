@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>My Secure Tax Portal | Greatest Business Solution LLC</title>
+  <title>Secure Client Portal | Greatest Business Solution LLC</title>
   <style>
     :root{
       --navy:#102b46;
@@ -3298,126 +3298,263 @@
       }
     }
 
+
+
+    /* Greatest Business Solution Design System — Part 1: foundation, sidebar, dashboard */
+    :root{
+      --portal-ink:#1B2A41;
+      --portal-paper:#F7F5F1;
+      --portal-teal:#3F6656;
+      --portal-teal-soft:#e8f0ec;
+      --portal-ochre:#C08A2E;
+      --portal-line:#d8d3ca;
+      --portal-rust:#a54835;
+      --portal-tabular:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    }
+    html{scroll-padding-top:86px}
+    body{background:var(--portal-paper);color:var(--portal-ink);font-family:Inter,IBM Plex Sans,system-ui,-apple-system,"Segoe UI",sans-serif}
+    .topbar{
+      min-height:72px;
+      padding:10px clamp(18px,3vw,42px);
+      background:var(--portal-ink);
+      box-shadow:0 2px 12px rgba(27,42,65,.16);
+      position:sticky;
+      top:0;
+      z-index:120;
+    }
+    .topbar .brand img{display:block;width:292px;max-width:min(54vw,292px);height:auto;background:transparent;padding:0;border:0;border-radius:0;box-shadow:none}
+    .portal-product-label{display:grid;text-align:right;gap:2px}
+    .portal-product-label strong{font-family:Georgia,"Times New Roman",serif;font-size:19px;color:#fff}
+    .portal-product-label span{font-size:12px;color:#c9d1dc}
+    .portal-layout{width:min(1540px,calc(100% - 28px));margin:20px auto 48px;display:grid;grid-template-columns:282px minmax(0,1fr);gap:24px;align-items:start;overflow:visible!important}
+    .portal-sidebar,.portal-top-navigation{
+      position:sticky!important;
+      top:92px!important;
+      display:flex!important;
+      flex-direction:column;
+      width:auto!important;
+      max-height:calc(100vh - 108px);
+      min-height:620px;
+      border:1px solid var(--portal-line)!important;
+      border-radius:18px!important;
+      background:#fff!important;
+      box-shadow:0 14px 34px rgba(27,42,65,.08)!important;
+      overflow:hidden!important;
+      isolation:auto!important;
+    }
+    .portal-sidebar-head,.portal-top-navigation .portal-sidebar-head{padding:20px 18px 17px!important;background:var(--portal-teal)!important;color:#fff!important;border-radius:0!important;min-width:0!important}
+    .portal-sidebar-head span,.portal-top-navigation .portal-sidebar-head span{display:block;margin:0 0 5px!important;color:#dceae3!important;font-size:10px!important;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+    .portal-sidebar-head strong,.portal-top-navigation .portal-sidebar-head strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:20px!important;line-height:1.22}
+    .portal-sidebar-head small{display:block;margin-top:5px;color:#dceae3;font-size:11px}
+    .portal-nav,.portal-top-navigation .portal-nav{display:block!important;flex:0 1 auto!important;padding:10px!important;overflow-x:hidden!important;overflow-y:auto!important}
+    .portal-nav>.portal-nav-item,.portal-nav>.portal-nav-group>.portal-nav-item,.portal-top-navigation .portal-nav>.portal-nav-item,.portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item{
+      width:100%!important;min-height:43px!important;display:flex!important;justify-content:flex-start!important;align-items:center!important;gap:10px!important;padding:10px 11px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:var(--portal-ink)!important;white-space:normal!important;font-size:13px!important;font-weight:730!important;text-align:left!important;box-shadow:none!important;
+    }
+    .portal-nav>.portal-nav-item:hover,.portal-nav>.portal-nav-item:focus-visible,.portal-nav>.portal-nav-group>.portal-nav-item:hover,.portal-nav>.portal-nav-group>.portal-nav-item:focus-visible{background:#eef3f0!important;color:var(--portal-teal)!important;outline:none}
+    .portal-nav-item.is-active,.portal-nav-toggle.is-active,.portal-submenu button.is-active,.portal-top-navigation .portal-nav>.portal-nav-item.is-active,.portal-top-navigation .portal-nav>.portal-nav-group>.portal-nav-item.is-active{background:var(--portal-teal-soft)!important;color:#294b3e!important;border-color:transparent!important;box-shadow:none!important}
+    .portal-nav-label-wrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+    .portal-nav-icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;color:currentColor}
+    .portal-nav-icon svg,.dashboard-business-profile-mark svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .portal-nav-chevron{margin-left:auto;font-size:16px;transition:transform .16s ease}
+    .portal-nav-toggle[aria-expanded="true"] .portal-nav-chevron{transform:rotate(180deg)}
+    .portal-nav-group,.portal-top-navigation .portal-nav-group{display:block!important;position:static!important}
+    .portal-submenu,.portal-top-navigation .portal-submenu{display:none!important;position:static!important;min-width:0!important;max-width:none!important;margin:3px 0 7px 28px!important;padding:3px 0 3px 9px!important;border:0!important;border-left:1px solid #d6dfda!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:none!important}
+    .portal-submenu.is-open,.portal-top-navigation .portal-submenu.is-open{display:grid!important}
+    .portal-submenu button,.portal-top-navigation .portal-submenu button{padding:8px 9px!important;border-radius:8px!important;color:#526071!important;font-size:12.5px!important;font-weight:650!important}
+    .portal-submenu button:hover,.portal-submenu button:focus-visible{background:#eef3f0!important;color:var(--portal-teal)!important}
+    #activeServiceNav{display:none!important}
+    .portal-sidebar-utilities{margin-top:auto;padding:10px;border-top:1px solid var(--portal-line);background:#fbfaf7;display:grid;gap:3px}
+    .portal-sidebar-utilities button{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:#4d5969;font:inherit;font-size:12.5px;font-weight:700;text-align:left;cursor:pointer}
+    .portal-sidebar-utilities button:hover,.portal-sidebar-utilities button:focus-visible{background:#eef3f0;color:var(--portal-teal);outline:none}
+    .portal-layout>.wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+    .portal-status-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 14px;padding:13px 16px;border:1px solid #cddbd4;border-radius:14px;background:#f3f7f5}
+    .portal-status-strip span{display:block;color:#657266;font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .portal-status-strip strong{display:inline-block;margin-top:3px;color:var(--portal-teal);font-size:15px}
+    .portal-status-strip small{display:inline;margin-left:8px;color:#66717e;font-size:12px}
+    .portal-status-strip button{border:0;background:transparent;color:var(--portal-teal);font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+    .portal-access-message{margin:0 0 14px;padding:12px 14px;border-left:4px solid var(--portal-rust);background:#fff3ef;color:#713428;font-weight:700;border-radius:0 10px 10px 0}
+    .cx-dashboard{margin:0 0 22px;border:1px solid var(--portal-line);border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(27,42,65,.07);overflow:hidden}
+    .cx-dashboard-hero{padding:30px;grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);background:linear-gradient(135deg,#fff 0%,#f0f5f2 100%)}
+    .cx-dashboard-hero .eyebrow{color:var(--portal-teal)}
+    .cx-dashboard-hero h1{margin:7px 0 10px;font-family:Georgia,"Times New Roman",serif;font-size:36px;line-height:1.12;color:var(--portal-ink)}
+    .cx-dashboard-hero p{max-width:720px;color:#586474;font-size:15px;line-height:1.65}
+    .dashboard-primary-action{margin-top:19px;padding:12px 17px;border:1px solid #a97520;border-radius:10px;background-color:var(--portal-ochre);color:#fff;font-weight:850;cursor:pointer;box-shadow:0 8px 18px rgba(192,138,46,.18)}
+    .dashboard-primary-action:hover{background-color:#aa7621}
+    .cx-next-step{border:1px solid #cddbd4;border-radius:14px;background:#fff;padding:18px}
+    .cx-next-step span{color:var(--portal-teal)}
+    .cx-next-step strong{color:var(--portal-ink)}
+    .cx-dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--portal-line);border-bottom:1px solid var(--portal-line);background:#fff}
+    .cx-dashboard-stat{padding:16px 18px;border-right:1px solid var(--portal-line)}
+    .cx-dashboard-stat span{color:#66717e;font-size:11px}
+    .cx-dashboard-stat strong,.metric strong,.cx-dashboard-membership strong{font-family:var(--portal-tabular);font-variant-numeric:tabular-nums;color:var(--portal-ink)}
+    .dashboard-business-profile{margin:20px 24px 0;padding:18px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid #bdd0c6;border-radius:14px;background:#f1f6f3}
+    .dashboard-business-profile-mark{width:42px;height:42px;padding:10px;border-radius:12px;background:var(--portal-teal);color:#fff}
+    .dashboard-business-profile span{display:block;color:var(--portal-teal);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .dashboard-business-profile strong{display:block;margin-top:3px;font-family:Georgia,"Times New Roman",serif;font-size:19px;color:var(--portal-ink)}
+    .dashboard-business-profile p{margin:4px 0 0;color:#66717e;font-size:13px}
+    .dashboard-business-profile button{border:1px solid #9eb5aa;border-radius:9px;background:#fff;color:var(--portal-teal);padding:9px 13px;font-weight:800;cursor:pointer}
+    .dashboard-action-groups{padding:20px 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .dashboard-action-groups>section{padding:18px;border:1px solid var(--portal-line);border-radius:14px;background:#fff}
+    .dashboard-action-groups>section>span{color:var(--portal-teal);font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+    .dashboard-action-groups h2{margin:6px 0 12px;font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.25;color:var(--portal-ink)}
+    .dashboard-action-list{display:grid;gap:2px}
+    .dashboard-action-list button{padding:8px 0;border:0;border-bottom:1px solid #ece8e1;background:transparent;color:#4d5969;font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+    .dashboard-action-list button:last-child{border-bottom:0}
+    .dashboard-action-list button:hover{color:var(--portal-teal)}
+    .dashboard-preview-countdown{margin:0 24px 20px;padding:17px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;border:1px solid #cddbd4;border-radius:14px;background:#f7faf8;box-shadow:none;text-align:left}
+    .dashboard-preview-copy>span{display:block;color:var(--portal-teal);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .dashboard-preview-copy strong{display:block;margin-top:4px;color:var(--portal-ink);font-size:17px}
+    .dashboard-preview-copy p{margin:4px 0 0;color:#66717e;font-size:13px}
+    .dashboard-preview-checkout{display:grid;grid-template-columns:auto auto;gap:9px;align-items:center}
+    .dashboard-preview-billing-toggle{display:flex;padding:3px;border:1px solid var(--portal-line);border-radius:9px;background:#fff}
+    .dashboard-preview-billing-toggle button{padding:7px 10px;border:0;border-radius:6px;background:transparent;color:#596574;font-weight:800;cursor:pointer}
+    .dashboard-preview-billing-toggle button.active{background:var(--portal-ink);color:#fff}
+    #dashboardPreviewCheckoutButton{padding:10px 13px;border:1px solid #9f701f;border-radius:9px;background-color:var(--portal-ochre);color:#fff;font-weight:850;cursor:pointer}
+    .dashboard-preview-note{grid-column:1/-1;color:#75808b;font-size:11px;text-align:right}
+    .dashboard-preview-ring,.dashboard-preview-clock,.preview-pill-ring,.tax-watch-inline-preview-ring,.tax-watch-inline-preview-clock{display:none!important}
+    .cx-dashboard-membership{margin:0 24px 24px;border:1px solid var(--portal-line);border-radius:14px;background:#fff;display:block}
+    .cx-dashboard-membership[hidden]{display:none!important}
+    .cx-dashboard-membership>div{display:grid;grid-template-columns:minmax(140px,.8fr) minmax(0,1.2fr);align-items:center;padding:11px 14px;border-bottom:1px solid #ece8e1}
+    .cx-dashboard-membership>div:last-child{border-bottom:0}
+    .cx-dashboard-membership span{font-size:12px;color:#66717e}
+    .cx-dashboard-membership strong{text-align:right;font-size:13px}
+    .document-history-filter{display:grid;grid-template-columns:auto minmax(160px,230px);align-items:center;justify-content:space-between;gap:12px;margin:14px 0;padding:10px 12px;border:1px solid var(--portal-line);border-radius:10px;background:#fbfaf7}
+    .document-history-filter span{font-size:12px;font-weight:800;color:#596574}
+    .document-history-filter select{min-height:38px;border:1px solid #cfd5dc;border-radius:8px;background:#fff;padding:7px 9px;color:var(--portal-ink)}
+    #portalAccountMetrics{display:none!important}
+    .portal-view.is-active{animation:portalPartOneIn .16s ease-out}
+    @keyframes portalPartOneIn{from{opacity:.7;transform:translateY(4px)}to{opacity:1;transform:none}}
+    @media(max-width:1100px){
+      .portal-layout{grid-template-columns:242px minmax(0,1fr);gap:16px}
+      .dashboard-action-groups{grid-template-columns:1fr 1fr}
+      .dashboard-action-groups>section:last-child{grid-column:1/-1}
+      .cx-dashboard-stats{grid-template-columns:1fr 1fr}
+      .cx-dashboard-stat:nth-child(2){border-right:0}.cx-dashboard-stat:nth-child(-n+2){border-bottom:1px solid var(--portal-line)}
+    }
+    @media(max-width:820px){
+      .topbar{position:static}.portal-product-label{display:none}
+      .portal-layout{width:calc(100% - 16px);margin-top:8px;display:block}
+      .portal-sidebar,.portal-top-navigation{position:static!important;max-height:none;min-height:0;margin-bottom:14px}
+      .portal-nav,.portal-top-navigation .portal-nav{max-height:none}
+      .portal-sidebar-utilities{grid-template-columns:repeat(3,1fr)}
+      .portal-sidebar-utilities button{justify-content:center;text-align:center}
+      .cx-dashboard-hero{grid-template-columns:1fr;padding:24px 18px}
+      .cx-dashboard-hero h1{font-size:31px}
+      .dashboard-action-groups{padding:16px 18px;grid-template-columns:1fr}
+      .dashboard-action-groups>section:last-child{grid-column:auto}
+      .dashboard-business-profile{margin:16px 18px 0;grid-template-columns:42px 1fr}.dashboard-business-profile button{grid-column:1/-1;width:100%}
+      .dashboard-preview-countdown{margin:0 18px 18px;grid-template-columns:1fr}
+      .dashboard-preview-checkout{grid-template-columns:1fr}.dashboard-preview-note{text-align:left}
+    }
+    @media(max-width:560px){
+      .topbar .brand img{max-width:80vw}
+      .portal-status-strip{align-items:flex-start;flex-direction:column}.portal-status-strip small{display:block;margin:4px 0 0}
+      .cx-dashboard-stats{grid-template-columns:1fr}.cx-dashboard-stat{border-right:0;border-bottom:1px solid var(--portal-line)}
+      .cx-dashboard-stat:last-child{border-bottom:0}
+      .portal-sidebar-utilities{grid-template-columns:1fr}
+      .document-history-filter{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="/logo.png" alt="Greatest Business Solution LLC">
-      <div class="brand-text">
-        <strong>Secure Client Portal</strong>
-        <span>Client Experience V2 — Portal 2.6.1</span>
-      </div>
+      <img src="/logo-greatest-business-original.webp" alt="Greatest Business Solution LLC — Tax & Financial Services">
     </div>
-    <div class="top-actions">
-      <div class="preview-topbar-pill" id="taxWatchPreviewTopbarPill" data-preview-compact hidden>
-        <div class="preview-pill-ring" aria-hidden="true">
-          <svg viewBox="0 0 32 32">
-            <circle class="preview-ring-track" cx="16" cy="16" r="12"></circle>
-            <circle class="preview-ring-fill" id="taxWatchPreviewPillRing" cx="16" cy="16" r="12" stroke-dasharray="75.398" stroke-dashoffset="0"></circle>
-          </svg>
-          <span class="preview-pill-days" id="taxWatchPreviewPillDays">14</span>
-        </div>
-        <div class="preview-pill-copy">
-          <strong id="taxWatchPreviewPillHeading">Preview active</strong>
-          <small id="taxWatchPreviewPillSub">14 days left · no charge</small>
-        </div>
-        <button class="preview-pill-button" type="button" data-portal-open="plans">Plans</button>
-      </div>
-      <button class="signout" id="signOutButton" type="button">Sign Out</button>
+    <div class="portal-product-label" aria-label="Portal product and version">
+      <strong>Secure Client Portal</strong>
+      <span>Version 2.6.1</span>
     </div>
   </header>
 
   <div class="portal-layout">
-    <aside class="portal-sidebar portal-top-navigation" aria-label="Secure portal navigation">
+    <aside class="portal-sidebar" aria-label="Secure Client Portal navigation">
       <div class="portal-sidebar-head">
-        <span>Secure workspace</span>
+        <span>Secure Client Portal</span>
         <strong id="sidebarClientName">My Client Portal</strong>
+        <small>Version 2.6.1</small>
       </div>
       <nav class="portal-nav" id="portalNavigation">
-        <button class="portal-nav-item" type="button" data-portal-open="dashboard">Dashboard</button>
-        <div class="portal-nav-group portal-nav-tax-watch-group" id="taxWatchNavigationGroup" hidden>
-          <button class="portal-nav-item portal-nav-toggle portal-nav-tax-watch" type="button" data-submenu-toggle="taxWatchMenu" aria-expanded="false">
-            <span>Tax Watch Pro</span><span aria-hidden="true">▾</span>
-          </button>
-          <div class="portal-submenu" id="taxWatchMenu">
-            <button type="button" data-portal-open="tax-watch">Tax Money Tracker &amp; Overview</button>
-            <button type="button" data-portal-open="billing-history">Membership Billing History</button>
-            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
-          </div>
-        </div>
+        <button class="portal-nav-item" type="button" data-portal-open="dashboard">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>
+          <span>Dashboard</span>
+        </button>
 
-        <div class="portal-nav-group portal-nav-pinnacle-group" id="pinnacleNavigationGroup" hidden>
-          <button class="portal-nav-item portal-nav-toggle portal-nav-pinnacle" type="button" data-submenu-toggle="pinnacleMenu" aria-expanded="false">
-            <span>Pinnacle Tax Action Plan</span><span aria-hidden="true">▾</span>
-          </button>
-          <div class="portal-submenu" id="pinnacleMenu">
-            <button type="button" data-portal-open="pinnacle">Pinnacle Tax Action Plan</button>
-            <button type="button" data-portal-open="pinnacle-financial-snapshot">Business Financial Snapshot</button>
-            <button type="button" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
-            <button type="button" data-portal-open="pinnacle-income-sources">Income Tracker</button>
-            <button type="button" data-portal-open="pinnacle-mileage-tracker">Mileage Tracker</button>
-          </div>
-        </div>
+        <div id="portalPlanNavigation" class="portal-plan-navigation" aria-live="polite"></div>
 
-        <div class="portal-nav-group">
-          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="activeServicesMenu" aria-expanded="false">
-            <span>My Active Services</span><span aria-hidden="true">▾</span>
-          </button>
-          <div class="portal-submenu" id="activeServicesMenu">
-            <button type="button" data-portal-open="active-services">Active Service Summary</button>
-            <div class="portal-active-nav" id="activeServiceNav"></div>
-          </div>
-        </div>
+        <button class="portal-nav-item" type="button" data-portal-open="active-services">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5V3h8v2"/><path d="M3 11h18"/></svg></span>
+          <span>My Active Services</span>
+        </button>
+        <div class="portal-active-nav" id="activeServiceNav" hidden></div>
 
-        <div class="portal-nav-group">
-          <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="documentsMenu" aria-expanded="false">
-            <span>Documents</span><span aria-hidden="true">▾</span>
-          </button>
-          <div class="portal-submenu" id="documentsMenu">
-            <button type="button" data-portal-open="tax-watch-documents">Tax Watch Documents</button>
-            <button type="button" data-portal-open="document-upload">Upload Documents</button>
-            <button type="button" data-portal-open="document-history">Uploaded Documents</button>
-          </div>
-        </div>
+        <button class="portal-nav-item" type="button" data-portal-open="documents">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></span>
+          <span>Documents</span>
+        </button>
 
-        <button class="portal-nav-item" type="button" data-portal-open="completed">Completed Services</button>
-        <button class="portal-nav-item" type="button" data-portal-open="plans">Plans &amp; Pricing</button>
-        <button class="portal-nav-item" type="button" data-portal-open="professional-services">Professional Tax Services</button>
+        <button class="portal-nav-item" type="button" data-portal-open="completed">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></span>
+          <span>Completed Services</span>
+        </button>
+        <button class="portal-nav-item" type="button" data-portal-open="plans">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>
+          <span>Plans &amp; Pricing</span>
+        </button>
+        <button class="portal-nav-item" type="button" data-portal-open="professional-services">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M9 6V4h6v2M3 11h18"/></svg></span>
+          <span>Professional Tax Services</span>
+        </button>
 
         <div class="portal-nav-group">
           <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="accountSecurityMenu" aria-expanded="false">
-            <span>Account &amp; Security</span><span aria-hidden="true">▾</span>
+            <span class="portal-nav-label-wrap"><span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg></span><span>Account &amp; Security</span></span>
+            <span class="portal-nav-chevron" aria-hidden="true">⌄</span>
           </button>
           <div class="portal-submenu" id="accountSecurityMenu">
             <button type="button" data-portal-open="account">Profile &amp; Portal Access</button>
-            <button type="button" data-portal-open="billing-history">Billing &amp; Payment History</button>
+            <button type="button" data-portal-open="billing-history">Billing and Payment History</button>
             <button type="button" data-portal-open="pinnacle-business-profile">Business Profile</button>
-            <button type="button" data-portal-open="questions">Questions &amp; Comments</button>
+            <button type="button" data-portal-open="questions">Questions and Comments</button>
           </div>
         </div>
       </nav>
+
+      <div class="portal-sidebar-utilities" aria-label="Portal utilities">
+        <button type="button" id="printPortalPageButton">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg></span>
+          <span>Print this page</span>
+        </button>
+        <button type="button" data-portal-open="questions">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.7 2.7 0 115 1.5c-.9.8-2.5 1.2-2.5 3M12 17h.01"/></svg></span>
+          <span>Help</span>
+        </button>
+        <button type="button" id="signOutButton">
+          <span class="portal-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M14 3h6v18h-6"/></svg></span>
+          <span>Sign out</span>
+        </button>
+      </div>
     </aside>
 
   <main class="wrap">
-    <section class="hero portal-view" data-portal-view="dashboard">
+    <div class="portal-status-strip" id="portalAccessStatusStrip">
       <div>
-        <div class="eyebrow">Welcome back</div>
-        <h1 id="clientName">Your secure tax portal</h1>
-        <p>Your tax preparation, written tax reviews, IRS transcript services, Contractor Forms 1099 filings, Tax Savings Planner records, and secure document history stay connected to your client profile—even when you change your password.</p>
+        <span>Current access</span>
+        <strong id="portalAccessStatusPlan">Secure Portal</strong>
+        <small id="portalAccessStatusDetail">Your secure workspace is active.</small>
       </div>
-      <div class="security-box">
-        <strong>Private portal session</strong>
-        <span>Your secure sign-in session is protected and automatically expires. Sign out when using a shared or public computer.</span>
-      </div>
-    </section>
+      <button type="button" data-portal-open="plans">Plans and pricing</button>
+    </div>
+
+    <div class="portal-access-message" id="portalAccessMessage" role="status" aria-live="polite" hidden></div>
 
     <section class="cx-dashboard portal-view" id="myDashboard" data-portal-view="dashboard">
       <div class="cx-dashboard-hero">
         <div>
-          <div class="eyebrow">My Dashboard</div>
-          <h2 id="dashboardGreeting">Here is what needs your attention</h2>
-          <p id="dashboardSummary">See what is active, what needs your attention, and what is already finished. Plans and professional services you have not chosen stay on their own pages.</p>
+          <div class="eyebrow">Secure Client Portal</div>
+          <h1 id="dashboardGreeting">Welcome to your secure portal</h1>
+          <p id="dashboardSummary">Review what is active, track the work that matters, and take the next clear step from one secure workspace.</p>
+          <button class="dashboard-primary-action" type="button" data-portal-open="active-services">Open my active services</button>
         </div>
         <div class="cx-next-step" id="dashboardNextStep">
           <span>Next thing to do</span>
@@ -3425,82 +3562,77 @@
           <p>We are checking your current records.</p>
         </div>
       </div>
+
       <div class="cx-dashboard-stats">
-        <div class="cx-dashboard-stat">
-          <span>Active Services</span>
-          <strong id="activeServiceCount">0</strong>
-        </div>
-        <div class="cx-dashboard-stat">
-          <span>Completed Services</span>
-          <strong id="completedServiceCount">0</strong>
-        </div>
-        <div class="cx-dashboard-stat">
-          <span>Documents Awaiting Review</span>
-          <strong id="dashboardDocumentAwaiting">0</strong>
-        </div>
-        <div class="cx-dashboard-stat">
-          <span>Current Access</span>
-          <strong id="currentAccessLevel">Secure Portal</strong>
-        </div>
+        <div class="cx-dashboard-stat"><span>Active Services</span><strong id="activeServiceCount">0</strong></div>
+        <div class="cx-dashboard-stat"><span>Completed Services</span><strong id="completedServiceCount">0</strong></div>
+        <div class="cx-dashboard-stat"><span>Documents Awaiting Review</span><strong id="dashboardDocumentAwaiting">0</strong></div>
+        <div class="cx-dashboard-stat"><span>Current Access</span><strong id="currentAccessLevel">Secure Portal</strong></div>
       </div>
-      <div class="pinnacle-dashboard-card">
+
+      <article class="dashboard-business-profile" id="dashboardBusinessProfileCard">
+        <div class="dashboard-business-profile-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M9 6V4h6v2M3 11h18"/></svg></div>
         <div>
-          <span class="cx-status-pill">Coming Soon</span>
-          <h3>Pinnacle Tax Action Plan</h3>
-          <p>Explore the advanced year-round workspace for unlimited income sources, mileage, expenses, receipts, tax scenarios, reminders, and personalized action steps.</p>
+          <span>Business profile</span>
+          <strong id="dashboardBusinessProfileName">Not started</strong>
+          <p id="dashboardBusinessProfileSummary">Add or review the business details used across your secure planning workspace.</p>
         </div>
-        <button type="button" data-portal-open="pinnacle">Explore Pinnacle</button>
+        <button type="button" data-portal-open="pinnacle-business-profile">Edit</button>
+      </article>
+
+      <div class="dashboard-action-groups">
+        <section>
+          <span>Plan the outcome</span>
+          <h2>Understand what may be ahead</h2>
+          <div class="dashboard-action-list">
+            <button type="button" data-dashboard-plan-link="tax-watch-pro" data-portal-open="tax-watch">Tax Money Tracker &amp; Overview</button>
+            <button type="button" data-dashboard-plan-link="pinnacle" data-portal-open="pinnacle">Pinnacle Tax Action Plan</button>
+            <button type="button" data-portal-open="plans">Review plans and pricing</button>
+          </div>
+        </section>
+        <section>
+          <span>Track the business</span>
+          <h2>Keep business activity organized</h2>
+          <div class="dashboard-action-list">
+            <button type="button" data-dashboard-plan-link="pinnacle" data-portal-open="pinnacle-income-sources">Income Tracker</button>
+            <button type="button" data-dashboard-plan-link="pinnacle" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
+            <button type="button" data-dashboard-plan-link="pinnacle" data-portal-open="pinnacle-mileage-tracker">Mileage Tracker</button>
+            <button type="button" data-portal-open="documents">Documents</button>
+          </div>
+        </section>
+        <section>
+          <span>Follow the plan</span>
+          <h2>Stay connected to the next action</h2>
+          <div class="dashboard-action-list">
+            <button type="button" data-portal-open="active-services">My Active Services</button>
+            <button type="button" data-portal-open="completed">Completed Services</button>
+            <button type="button" data-portal-open="questions">Questions and Comments</button>
+          </div>
+        </section>
       </div>
+
       <div class="dashboard-preview-countdown" id="taxWatchDashboardPreviewCountdown" data-preview-compact hidden>
-        <div class="dashboard-preview-status">
-          <div class="dashboard-preview-ring" aria-hidden="true">
-            <svg viewBox="0 0 70 70">
-              <circle class="preview-ring-track" cx="35" cy="35" r="29"></circle>
-              <circle class="preview-ring-fill" id="taxWatchDashboardPreviewRing" cx="35" cy="35" r="29" stroke-dasharray="182.212" stroke-dashoffset="0"></circle>
-            </svg>
-            <span class="dashboard-preview-days" id="taxWatchDashboardPreviewDays">14</span>
-          </div>
-          <div class="dashboard-preview-copy">
-            <strong id="taxWatchDashboardPreviewHeading">Tax Watch Pro preview running</strong>
-            <span id="taxWatchDashboardPreviewStatus">Plenty of time left</span>
-          </div>
+        <div class="dashboard-preview-copy">
+          <span>Tax Watch Pro preview</span>
+          <strong id="taxWatchDashboardPreviewHeading">Preview active</strong>
+          <p id="taxWatchDashboardPreviewStatus">Loading preview status...</p>
         </div>
         <div class="dashboard-preview-checkout">
-          <div class="dashboard-preview-checkout-actions" aria-label="Choose Tax Watch Pro billing">
-            <button type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Open Monthly Checkout — $11.99</button>
-            <button class="secondary" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="annual">Open Annual Checkout — $119</button>
+          <div class="dashboard-preview-billing-toggle" role="group" aria-label="Choose Tax Watch Pro billing">
+            <button class="active" type="button" data-dashboard-preview-billing="monthly">Monthly</button>
+            <button type="button" data-dashboard-preview-billing="annual">Annual</button>
           </div>
-          <span class="dashboard-preview-note" id="taxWatchDashboardPreviewNote"><strong>No automatic charge.</strong> Choose a plan only when you are ready.</span>
-        </div>
-        <div class="dashboard-preview-clock" aria-label="Preview time remaining">
-          <span class="preview-clock-box" id="taxWatchDashboardPreviewHours">00</span>
-          <span class="preview-clock-separator">:</span>
-          <span class="preview-clock-box" id="taxWatchDashboardPreviewMinutes">00</span>
-          <span class="preview-clock-separator">:</span>
-          <span class="preview-clock-box" id="taxWatchDashboardPreviewSeconds">00</span>
+          <button id="dashboardPreviewCheckoutButton" type="button" data-membership-checkout-plan="tax-watch-pro" data-membership-checkout-billing="monthly">Continue monthly — $11.99</button>
+          <span class="dashboard-preview-note" id="taxWatchDashboardPreviewNote">No automatic charge. Choose a plan only when you are ready.</span>
         </div>
       </div>
+
       <div class="cx-dashboard-membership" id="dashboardMembershipSummary" hidden>
-        <div>
-          <span>Membership</span>
-          <strong id="dashboardMembershipPlan">Not active</strong>
-        </div>
-        <div>
-          <span>Billing</span>
-          <strong id="dashboardMembershipBilling">Not recorded</strong>
-        </div>
-        <div>
-          <span>Next Renewal</span>
-          <strong id="dashboardMembershipRenewal">Not recorded</strong>
-        </div>
-        <div>
-          <span>Paid This Year</span>
-          <strong id="dashboardMembershipPaidYear">$0.00</strong>
-        </div>
-        <div>
-          <span>Payment Method</span>
-          <strong id="dashboardMembershipMethod">Not recorded</strong>
-        </div>
+        <div><span>Membership</span><strong id="dashboardMembershipPlan">Not active</strong></div>
+        <div><span>Billing</span><strong id="dashboardMembershipBilling">Not recorded</strong></div>
+        <div><span>Next Renewal</span><strong id="dashboardMembershipRenewal">Not recorded</strong></div>
+        <div><span>Paid This Year</span><strong id="dashboardMembershipPaidYear">$0.00</strong></div>
+        <div><span>Payment Method</span><strong id="dashboardMembershipMethod">Not recorded</strong></div>
       </div>
     </section>
 
@@ -3519,7 +3651,7 @@
       </div>
     </section>
 
-    <section class="metrics portal-view" id="portalAccountMetrics" data-portal-view="dashboard">
+    <section class="metrics portal-view" id="portalAccountMetrics" data-portal-view="portal-account-metrics">
       <div class="metric">
         <span>Portal Status</span>
         <strong id="portalStatus">Active</strong>
@@ -3658,11 +3790,11 @@
       </div>
     </section>
 
-    <section class="section portal-view" id="documentCenter" data-portal-view="document-upload document-history">
+    <section class="section portal-view" id="documentCenter" data-portal-view="documents document-upload document-history">
       <div class="section-head">
         <div>
           <h2 id="documentCenterPageTitle">Secure Document Center</h2>
-          <p>Use the My Documents menu to upload a file or review files you already sent.</p>
+          <p>Upload files and review documents you already sent from one secure page.</p>
         </div>
         <button class="portal-back-button" type="button" data-portal-open="dashboard">Return to My Dashboard</button>
       </div>
@@ -3734,6 +3866,13 @@
           <div class="document-history-card">
             <h3>My Uploaded Documents</h3>
             <p>Download your own copy here at any time. Each file stays connected to your portal profile and selected tax year, and the status shows where it is in the office-review process.</p>
+
+            <label class="document-history-filter" for="documentCategoryFilter">
+              <span>Filter by category</span>
+              <select id="documentCategoryFilter">
+                <option value="">All categories</option>
+              </select>
+            </label>
 
             <div class="document-summary">
               <div class="document-summary-item">
@@ -4923,6 +5062,7 @@
     }
 
     let currentDocumentCenter = null;
+    let currentDocumentList = [];
     let pendingTranscriptUploadLeadId = "";
     let taxWatchPreviewTimer = null;
     let currentMembershipCheckout = {};
@@ -6106,6 +6246,18 @@
           )
           .join("");
 
+      const historyFilter = document.getElementById("documentCategoryFilter");
+      if (historyFilter) {
+        const previousFilter = historyFilter.value;
+        historyFilter.innerHTML = '<option value="">All categories</option>' +
+          (center.categories || [])
+            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`)
+            .join("");
+        if ([...historyFilter.options].some((option) => option.value === previousFilter)) {
+          historyFilter.value = previousFilter;
+        }
+      }
+
       if (
         currentTaxYear &&
         [
@@ -6138,6 +6290,11 @@
     function renderDocumentList(
       documents = []
     ) {
+      currentDocumentList = Array.isArray(documents) ? documents : [];
+      const selectedCategory = document.getElementById("documentCategoryFilter")?.value || "";
+      documents = selectedCategory
+        ? currentDocumentList.filter((document) => String(document.category || "") === selectedCategory)
+        : currentDocumentList;
       const container =
         document.getElementById(
           "documentList"
@@ -7217,13 +7374,10 @@
     }
 
     function taxWatchPreviewCountdownText(remainingMs) {
-      const totalSeconds = Math.max(0, Math.floor(Number(remainingMs || 0) / 1000));
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      return `${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+      const days = Math.max(0, Math.ceil(Number(remainingMs || 0) / 86400000));
+      return days > 0
+        ? `${days} ${days === 1 ? "day" : "days"} remaining in your preview`
+        : "Preview ended — no payment was taken";
     }
 
     function compactPreviewColor(days, remainingMs) {
@@ -7233,10 +7387,9 @@
     }
 
     function setCompactPreviewState(preview = {}, visible = false) {
-      const pill = document.getElementById("taxWatchPreviewTopbarPill");
       const dashboardCard = document.getElementById("taxWatchDashboardPreviewCountdown");
       const inlineCard = document.getElementById("taxWatchInlinePreviewCard");
-      [pill, dashboardCard, inlineCard].forEach((element) => {
+      [dashboardCard, inlineCard].forEach((element) => {
         if (!element) return;
         element.hidden = !visible;
         if (visible) {
@@ -7313,16 +7466,15 @@
       if (secondsBox) secondsBox.textContent = pad(seconds);
       if (dashboardHeading) dashboardHeading.textContent = expired
         ? "Tax Watch Pro preview ended"
-        : "Tax Watch Pro preview running";
-      if (dashboardStatus) dashboardStatus.textContent = expired
-        ? "Your saved records remain available"
-        : lessThanOneDay
-          ? "Ending within 24 hours"
-          : days <= 4
-            ? "Getting close"
-            : "Plenty of time left";
+        : "Tax Watch Pro preview active";
+      if (dashboardStatus) {
+        const endDate = new Date(endMs).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+        dashboardStatus.textContent = expired
+          ? "Your saved records remain available."
+          : `${days} ${days === 1 ? "day" : "days"} remaining · ends ${endDate}.`;
+      }
       if (dashboardNote) dashboardNote.textContent = expired
-        ? "Preview ended — no payment was taken"
+        ? "Preview ended — no payment was taken."
         : "No automatic charge. Choose a plan only when you are ready.";
       if (dashboardCard) {
         dashboardCard.classList.toggle("preview-ending", !expired && days <= 4);
@@ -7379,7 +7531,7 @@
         const remainingMs = Math.max(0, endsAtMs - now);
         element.textContent = remainingMs > 0
           ? taxWatchPreviewCountdownText(remainingMs)
-          : "Preview ended — 0d 0h 0m 0s remaining";
+          : "Preview ended — no payment was taken";
         element.classList.toggle("expired", remainingMs <= 0);
       });
     }
@@ -9013,6 +9165,179 @@
 
 
 
+    const portalPlanNavigationConfig = [
+      {
+        planKey: "pinnacle",
+        label: "Pinnacle Tax Plan",
+        pages: [
+          { view: "pinnacle", label: "Pinnacle Tax Action Plan" },
+          { view: "pinnacle-financial-snapshot", label: "Business Financial Snapshot" },
+          { view: "pinnacle-expense-tracker", label: "Expense Tracker" },
+          { view: "pinnacle-income-sources", label: "Income Tracker" },
+          { view: "pinnacle-mileage-tracker", label: "Mileage Tracker" }
+        ]
+      },
+      {
+        planKey: "tax-watch-pro",
+        label: "Tax Watch Pro",
+        pages: [
+          { view: "tax-watch", label: "Tax Money Tracker & Overview" },
+          { view: "billing-history", label: "Membership Billing History" },
+          { view: "tax-watch-documents", label: "Tax Watch Documents" }
+        ]
+      }
+    ];
+
+    const portalRestrictedViews = {
+      pinnacle: "pinnacle",
+      "pinnacle-financial-snapshot": "pinnacle",
+      "pinnacle-expense-tracker": "pinnacle",
+      "pinnacle-income-sources": "pinnacle",
+      "pinnacle-mileage-tracker": "pinnacle",
+      "pinnacle-vehicle-profiles": "pinnacle",
+      "tax-watch": "tax-watch-pro",
+      "tax-watch-documents": "tax-watch-pro"
+    };
+
+    let portalProgramAccessState = {
+      "tax-watch-pro": { hasAccess: false },
+      pinnacle: { hasAccess: false }
+    };
+    const portalViewAccessCache = new Map();
+
+    function portalNavIconSvg(planKey) {
+      return planKey === "pinnacle"
+        ? '<svg viewBox="0 0 24 24"><path d="M4 19h16M6 16V8l6-4 6 4v8"/><path d="M9 16v-5h6v5"/></svg>'
+        : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    }
+
+    function renderPortalPlanNavigation(portal = {}) {
+      const root = document.getElementById("portalPlanNavigation");
+      if (!root) return;
+      const membership = portal.taxWatch?.membership || {};
+      const access = membership.programAccess || {};
+      const taxWatch = portal.taxWatch || {};
+      portalProgramAccessState = {
+        "tax-watch-pro": {
+          ...(access["tax-watch-pro"] || {}),
+          hasAccess: Boolean(
+            access["tax-watch-pro"]?.hasAccess ||
+            taxWatch.active ||
+            taxWatch.status === "preview" ||
+            taxWatch.status === "active-preview"
+          )
+        },
+        pinnacle: {
+          ...(access.pinnacle || {}),
+          hasAccess: Boolean(access.pinnacle?.hasAccess)
+        }
+      };
+
+      const visiblePlans = portalPlanNavigationConfig.filter(
+        (plan) => portalProgramAccessState[plan.planKey]?.hasAccess
+      );
+
+      root.innerHTML = visiblePlans.map((plan) => {
+        const submenuId = `portalPlanMenu-${plan.planKey}`;
+        return `
+          <div class="portal-nav-group portal-plan-group" data-plan-key="${escapeHtml(plan.planKey)}">
+            <button class="portal-nav-item portal-nav-toggle" type="button" data-submenu-toggle="${escapeHtml(submenuId)}" aria-expanded="false">
+              <span class="portal-nav-label-wrap"><span class="portal-nav-icon" aria-hidden="true">${portalNavIconSvg(plan.planKey)}</span><span>${escapeHtml(plan.label)}</span></span>
+              <span class="portal-nav-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div class="portal-submenu" id="${escapeHtml(submenuId)}">
+              ${plan.pages.map((page) => `<button type="button" data-portal-open="${escapeHtml(page.view)}">${escapeHtml(page.label)}</button>`).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-dashboard-plan-link]").forEach((button) => {
+        button.hidden = !portalProgramAccessState[button.dataset.dashboardPlanLink]?.hasAccess;
+      });
+    }
+
+    function formatPortalAccessDate(value) {
+      const date = new Date(value || "");
+      return Number.isFinite(date.getTime())
+        ? date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })
+        : "";
+    }
+
+    function updatePortalAccessStatus(portal = {}) {
+      const plan = document.getElementById("portalAccessStatusPlan");
+      const detail = document.getElementById("portalAccessStatusDetail");
+      if (!plan || !detail) return;
+      const access = portalProgramAccessState;
+      const activePlans = portalPlanNavigationConfig.filter((item) => access[item.planKey]?.hasAccess);
+      if (!activePlans.length) {
+        plan.textContent = (portal.records || []).length || (portal.olderRecords || []).length
+          ? "Free Tax Estimator"
+          : "Secure Portal";
+        detail.textContent = "Your secure workspace is active.";
+        return;
+      }
+      plan.textContent = activePlans.map((item) => item.label).join(" + ");
+      const currentAccess = document.getElementById("currentAccessLevel");
+      if (currentAccess) {
+        const previewCount = activePlans.filter((item) => access[item.planKey]?.previewActive).length;
+        currentAccess.textContent = activePlans.length > 1
+          ? `${activePlans.length} active ${previewCount === activePlans.length ? "previews" : "plans"}`
+          : `${activePlans[0].label}${previewCount ? " Preview" : " Active"}`;
+      }
+      const previewAccess = activePlans
+        .map((item) => ({ plan: item, access: access[item.planKey] || {} }))
+        .find((item) => item.access.previewActive && item.access.previewEndsAt);
+      if (previewAccess) {
+        const endsAt = Date.parse(previewAccess.access.previewEndsAt || "");
+        const days = Number.isFinite(endsAt) ? Math.max(0, Math.ceil((endsAt - Date.now()) / 86400000)) : 0;
+        const date = formatPortalAccessDate(previewAccess.access.previewEndsAt);
+        detail.textContent = `${days} ${days === 1 ? "day" : "days"} remaining in your preview${date ? ` · ends ${date}` : ""}. No automatic charge.`;
+      } else {
+        detail.textContent = "Your plan access is active.";
+      }
+    }
+
+    function renderDashboardBusinessProfile(portal = {}) {
+      const profile = portal.pinnacleWorkspace?.businessProfile || readPinnacleStorageValue(PINNACLE_BUSINESS_DRAFT_KEY, null);
+      const name = document.getElementById("dashboardBusinessProfileName");
+      const summary = document.getElementById("dashboardBusinessProfileSummary");
+      if (!name || !summary) return;
+      const legalName = String(profile?.fields?.legalName || "").trim();
+      const structure = String(profile?.structure || "").trim();
+      name.textContent = legalName || "Not started";
+      summary.textContent = legalName
+        ? `${structure ? `${structure} · ` : ""}Your saved business details are available to review or update.`
+        : "Add or review the business details used across your secure planning workspace.";
+    }
+
+    async function serverAllowsPortalView(view) {
+      const requiredPlan = portalRestrictedViews[view];
+      if (!requiredPlan) return true;
+      if (portalViewAccessCache.has(view)) return portalViewAccessCache.get(view);
+      try {
+        const response = await fetch(`/api/client-portal/view-access?view=${encodeURIComponent(view)}`, {
+          credentials: "same-origin",
+          cache: "no-store"
+        });
+        const data = await response.json().catch(() => ({}));
+        const allowed = Boolean(response.ok && data.ok && data.allowed);
+        portalViewAccessCache.set(view, allowed);
+        return allowed;
+      } catch (error) {
+        console.error("Portal view access check failed:", error);
+        return false;
+      }
+    }
+
+    function showPortalAccessMessage(text) {
+      const message = document.getElementById("portalAccessMessage");
+      if (!message) return;
+      message.textContent = text;
+      message.hidden = !text;
+      if (text) window.setTimeout(() => { if (message.textContent === text) message.hidden = true; }, 6000);
+    }
+
     const portalViewHashes = {
       dashboard: "dashboard",
       "active-services": "active-services",
@@ -9030,6 +9355,7 @@
       "transcript-help": "transcript-help",
       "tax-records": "tax-records",
       "tax-watch-documents": "tax-watch-documents",
+      documents: "documents",
       "document-upload": "documents-upload",
       "document-history": "uploaded-documents",
       questions: "questions-comments",
@@ -9071,11 +9397,15 @@
     function configureDocumentView(view) {
       const grid = document.querySelector("#documentCenter .document-center-grid");
       const title = document.getElementById("documentCenterPageTitle");
-      if (!grid || !["document-upload", "document-history"].includes(view)) return;
+      if (!grid || !["documents", "document-upload", "document-history"].includes(view)) return;
 
       grid.classList.toggle("upload-only", view === "document-upload");
       grid.classList.toggle("history-only", view === "document-history");
-      title.textContent = view === "document-upload" ? "Upload My Documents" : "My Uploaded Documents";
+      title.textContent = view === "document-upload"
+        ? "Upload My Documents"
+        : view === "document-history"
+          ? "My Uploaded Documents"
+          : "Documents";
     }
 
 
@@ -9136,8 +9466,11 @@
       document.getElementById("pinnaclePreviewHeading").textContent=activeMembership
         ?"Your Pinnacle membership is active"
         :expired?"Your Pinnacle preview has ended":"Your Pinnacle preview is active";
-      document.getElementById("pinnaclePreviewTimerHeading").textContent=activeMembership
-        ?"Membership active":expired?"Preview ended":"Preview running";
+      const pinnaclePreviewTimerHeading=document.getElementById("pinnaclePreviewTimerHeading");
+      if(pinnaclePreviewTimerHeading){
+        pinnaclePreviewTimerHeading.textContent=activeMembership
+          ?"Membership active":expired?"Preview ended":"Preview running";
+      }
       document.getElementById("pinnaclePreviewTimerStatus").textContent=activeMembership
         ?"Checkout controls are hidden after activation."
         :expired?"No charge occurred. Choose a plan to continue.":`${days} day${days===1?"":"s"} remaining`;
@@ -11406,68 +11739,31 @@
       });
     }
 
-    function openPortalView(view, options = {}) {
-      const { updateHash = true, scroll = true } = options;
+    async function openPortalView(view, options = {}) {
+      const { updateHash = true, scroll = true, skipAccessCheck = false } = options;
       const requestedView = portalViewHashes[view] ? view : "dashboard";
+
+      if (!skipAccessCheck && portalRestrictedViews[requestedView]) {
+        const allowed = await serverAllowsPortalView(requestedView);
+        if (!allowed) {
+          showPortalAccessMessage("That page is not included in your current plan. Review Plans and Pricing to change access.");
+          return openPortalView("plans", { updateHash, scroll, skipAccessCheck: true });
+        }
+      }
 
       document.querySelectorAll("[data-portal-view]").forEach((element) => {
         const views = String(element.dataset.portalView || "").split(/\s+/).filter(Boolean);
         element.classList.toggle("is-active", views.includes(requestedView));
       });
 
-  
-    document.querySelectorAll("[data-portal-open]").forEach((button) => {
+      document.querySelectorAll("[data-portal-open]").forEach((button) => {
         button.classList.toggle("is-active", button.dataset.portalOpen === requestedView);
       });
 
-      const plansButton = document.querySelector('[data-portal-open="plans"].portal-nav-item');
-      if (plansButton) plansButton.classList.toggle("is-active", requestedView === "plans");
-
-      const pinnacleToggle = document.querySelector('[data-submenu-toggle="pinnacleMenu"]');
-      if (pinnacleToggle) {
-        pinnacleToggle.classList.toggle(
-          "is-active",
-          requestedView.startsWith("pinnacle") && requestedView !== "pinnacle-business-profile"
-        );
-      }
-
-      const taxWatchToggle = document.querySelector('[data-submenu-toggle="taxWatchMenu"]');
-      if (taxWatchToggle) {
-        taxWatchToggle.classList.toggle(
-          "is-active",
-          ["tax-watch","tax-watch-documents"].includes(requestedView)
-        );
-      }
-
-      const activeServiceViews = new Set([
-        "active-services",
-        "tax-preparation",
-        "contractor-1099",
-        "tax-extension",
-        "transcript-help",
-        "tax-records",
-        "tax-watch"
-      ]);
-      const activeServicesToggle = document.querySelector(
-        '[data-submenu-toggle="activeServicesMenu"]'
-      );
-      if (activeServicesToggle) {
-        activeServicesToggle.classList.toggle(
-          "is-active",
-          activeServiceViews.has(requestedView)
-        );
-      }
-
-      const documentViews = new Set(["tax-watch-documents", "document-upload", "document-history"]);
-      const documentsToggle = document.querySelector(
-        '[data-submenu-toggle="documentsMenu"]'
-      );
-      if (documentsToggle) {
-        documentsToggle.classList.toggle(
-          "is-active",
-          documentViews.has(requestedView)
-        );
-      }
+      document.querySelectorAll(".portal-plan-group").forEach((group) => {
+        const containsActiveView = Boolean(group.querySelector(`[data-portal-open="${CSS.escape(requestedView)}"]`));
+        group.querySelector(".portal-nav-toggle")?.classList.toggle("is-active", containsActiveView);
+      });
 
       const accountSecurityViews = new Set([
         "account",
@@ -11475,15 +11771,8 @@
         "billing-history",
         "questions"
       ]);
-      const accountSecurityToggle = document.querySelector(
-        '[data-submenu-toggle="accountSecurityMenu"]'
-      );
-      if (accountSecurityToggle) {
-        accountSecurityToggle.classList.toggle(
-          "is-active",
-          accountSecurityViews.has(requestedView)
-        );
-      }
+      const accountSecurityToggle = document.querySelector('[data-submenu-toggle="accountSecurityMenu"]');
+      if (accountSecurityToggle) accountSecurityToggle.classList.toggle("is-active", accountSecurityViews.has(requestedView));
 
       configurePortalServiceView(requestedView);
       configureDocumentView(requestedView);
@@ -11542,15 +11831,28 @@
       );
     }
 
+    function initializeDashboardPreviewBillingToggle() {
+      const checkout = document.getElementById("dashboardPreviewCheckoutButton");
+      document.querySelectorAll("[data-dashboard-preview-billing]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const billing = button.dataset.dashboardPreviewBilling;
+          document.querySelectorAll("[data-dashboard-preview-billing]").forEach((item) => item.classList.toggle("active", item === button));
+          if (!checkout) return;
+          checkout.dataset.membershipCheckoutBilling = billing;
+          checkout.textContent = billing === "annual"
+            ? "Continue annual — $119"
+            : "Continue monthly — $11.99";
+        });
+      });
+    }
+
     function initializePortalNavigation() {
       const navigation = document.getElementById("portalNavigation");
-      const hoverCapable = window.matchMedia("(hover: hover) and (pointer: fine)");
 
       document.addEventListener("click", (event) => {
         const openButton = event.target.closest("[data-portal-open]");
         if (openButton) {
           event.preventDefault();
-          closePortalSubmenus();
           openPortalView(openButton.dataset.portalOpen);
           return;
         }
@@ -11558,53 +11860,12 @@
         const toggle = event.target.closest("[data-submenu-toggle]");
         if (toggle) {
           event.preventDefault();
-          const submenuId = toggle.dataset.submenuToggle;
-          const submenu = document.getElementById(submenuId);
-          const shouldOpen = hoverCapable.matches
-            ? true
-            : !submenu?.classList.contains("is-open");
-          cancelPortalSubmenuClose();
-
-          if (submenuId === "activeServicesMenu") {
-            openPortalView("active-services");
-          }
-
-          if (submenuId === "accountSecurityMenu") {
-            openPortalView("account");
-          }
-
-          setPortalSubmenu(toggle, shouldOpen);
+          const submenu = document.getElementById(toggle.dataset.submenuToggle);
+          setPortalSubmenu(toggle, !submenu?.classList.contains("is-open"));
           return;
         }
 
-        if (navigation && !navigation.contains(event.target)) {
-          closePortalSubmenus();
-        }
-      });
-
-      document.querySelectorAll(".portal-nav-group").forEach((group) => {
-        const toggle = group.querySelector("[data-submenu-toggle]");
-        if (!toggle) return;
-
-        const submenu = document.getElementById(toggle.dataset.submenuToggle);
-
-        group.addEventListener("mouseenter", () => {
-          cancelPortalSubmenuClose();
-          if (hoverCapable.matches) setPortalSubmenu(toggle, true);
-        });
-
-        group.addEventListener("mouseleave", () => {
-          if (hoverCapable.matches) schedulePortalSubmenuClose();
-        });
-
-        submenu?.addEventListener("mouseenter", cancelPortalSubmenuClose);
-        submenu?.addEventListener("mouseleave", () => {
-          if (hoverCapable.matches) schedulePortalSubmenuClose();
-        });
-
-        group.addEventListener("focusout", (event) => {
-          if (!group.contains(event.relatedTarget)) schedulePortalSubmenuClose(80);
-        });
+        if (navigation && !navigation.contains(event.target)) closePortalSubmenus();
       });
 
       document.addEventListener("keydown", (event) => {
@@ -11612,15 +11873,14 @@
       });
 
       initializePinnacleFeatures();
-      syncPortalNavigationOffset();
-      window.addEventListener("resize", syncPortalNavigationOffset);
+      initializeDashboardPreviewBillingToggle();
 
       window.addEventListener("hashchange", () => {
         closePortalSubmenus();
         openPortalView(portalViewFromHash(), { updateHash: false });
       });
 
-      openPortalView(portalViewFromHash(), { updateHash: false, scroll: false });
+      openPortalView("dashboard", { updateHash: false, scroll: false, skipAccessCheck: true });
     }
 
     function showPortalQuestionMessage(text, type = "") {
@@ -11649,24 +11909,9 @@
     }
 
     function updateProgramNavigationAccess(portal = {}) {
-      const taxWatchGroup = document.getElementById("taxWatchNavigationGroup");
-      const pinnacleGroup = document.getElementById("pinnacleNavigationGroup");
-      const membership = portal.taxWatch?.membership || {};
-      const programAccess = membership.programAccess || {};
-      const taxWatch = portal.taxWatch || {};
-
-      const taxWatchAccess = Boolean(
-        programAccess["tax-watch-pro"]?.hasAccess ||
-        taxWatch.active ||
-        taxWatch.status === "preview" ||
-        taxWatch.status === "active-preview"
-      );
-      const pinnacleAccess = Boolean(
-        programAccess.pinnacle?.hasAccess
-      );
-
-      if (taxWatchGroup) taxWatchGroup.hidden = !taxWatchAccess;
-      if (pinnacleGroup) pinnacleGroup.hidden = !pinnacleAccess;
+      renderPortalPlanNavigation(portal);
+      updatePortalAccessStatus(portal);
+      renderDashboardBusinessProfile(portal);
     }
 
     async function processPendingEstimateMembershipIntent(portal = {}) {
@@ -11834,11 +12079,10 @@
       const olderRecords =
         portal.olderRecords || [];
 
-      document.getElementById(
-        "clientName"
-      ).textContent =
-        portal.clientName ||
-        "Your secure tax portal";
+      const clientNameHeading = document.getElementById("clientName");
+      if (clientNameHeading) {
+        clientNameHeading.textContent = portal.clientName || "Your secure tax portal";
+      }
 
       document.getElementById(
         "portalStatus"
@@ -11904,6 +12148,7 @@
 
       renderClientExperienceV2(portal);
       updateProgramNavigationAccess(portal);
+      renderDashboardBusinessProfile(portal);
 
       try {
         const handledMembershipIntent = await processPendingEstimateMembershipIntent(portal);
@@ -11965,6 +12210,11 @@
       "click",
       prepareHarmlessTestUpload
     );
+
+
+    document.getElementById("documentCategoryFilter")?.addEventListener("change", () => {
+      renderDocumentList(currentDocumentList);
+    });
 
     document.getElementById(
       "documentUploadForm"
@@ -12350,6 +12600,10 @@
       "submit",
       saveTaxWatchSavingsEntry
     );
+
+    document.getElementById("printPortalPageButton")?.addEventListener("click", () => {
+      window.print();
+    });
 
     document.getElementById(
       "signOutButton"
