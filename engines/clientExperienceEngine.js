@@ -152,6 +152,13 @@ function buildSummary(input, federal, state, combined) {
     `and a ${fmt(fed.standardDeduction)} standard deduction.`
   );
 
+  if ((fed.enhancedSeniorDeduction || 0) > 0) {
+    lines.push(
+      `Your estimate also includes a ${fmt(fed.enhancedSeniorDeduction)} enhanced senior deduction ` +
+      `for 2025 based on the ages and filing status you entered.`
+    );
+  }
+
   // Federal result explanation
   if (fed.isRefund) {
     lines.push(
@@ -291,14 +298,37 @@ function buildKeyDrivers(input, federal, state) {
     });
   }
 
-  // Child Tax Credit
-  if (fed.childTaxCredit > 0) {
+  // Dependent credits
+  if ((fed.childTaxCredit || 0) > 0 || (fed.otherDependentCredit || 0) > 0) {
+    const qualifyingChildren = Number(input.ctcQualifyingChildren || 0);
     drivers.push({
-      label:       "Child Tax Credit",
-      value:       fmt(fed.childTaxCredit),
-      explanation: `With ${depWord(deps)}, you may qualify for the Child Tax Credit, ` +
-                   `which reduced your estimated tax by ${fmt(fed.childTaxCredit)}. ` +
-                   `A portion of this credit may be refundable even if your tax is zero.`,
+      label:       "Dependent Credits",
+      value:       fmt((fed.childTaxCredit || 0) + (fed.otherDependentCredit || 0)),
+      explanation:
+        `${qualifyingChildren} qualifying child${qualifyingChildren === 1 ? "" : "ren"} under age 17 ` +
+        `were used for the Child Tax Credit. Other claimed dependents were considered for the ` +
+        `nonrefundable Credit for Other Dependents. Refundable ACTC is limited by earned income.`,
+    });
+  }
+
+  if ((fed.enhancedSeniorDeduction || 0) > 0) {
+    drivers.push({
+      label:       "Enhanced Senior Deduction",
+      value:       fmt(fed.enhancedSeniorDeduction),
+      explanation:
+        `For tax year 2025, the estimate includes the additional senior deduction based on ` +
+        `the ages and filing status you entered. Higher income can reduce this deduction.`,
+    });
+  }
+
+  if ((fed.additionalMedicareTax || 0) > 0) {
+    drivers.push({
+      label:       "Additional Medicare Tax",
+      value:       fmt(fed.additionalMedicareTax),
+      explanation:
+        `Your Medicare wages and self-employment earnings were compared with the ` +
+        `Additional Medicare Tax threshold for your filing status. Any employer ` +
+        `Additional Medicare Tax withholding reflected in W-2 Box 6 is credited in the estimate.`,
     });
   }
 
@@ -431,6 +461,18 @@ function buildWhatCouldChange(input, federal, state) {
       label:  "Child and Dependent Care Credit",
       detail: "If you paid for childcare so you could work or look for work, you may " +
               "qualify for this additional credit, which was not included in this estimate.",
+      impact: "positive",
+    });
+  }
+
+  if (fed.actcThreeChildAlternativeMayApply) {
+    factors.push({
+      label:  "Refundable Child Tax Credit may need an alternate calculation",
+      detail:
+        "With three or more qualifying children, Schedule 8812 has an alternate payroll-tax method " +
+        "that can increase the Additional Child Tax Credit in some cases. This planning estimate " +
+        "uses the standard earned-income method; a written review can verify whether the alternate " +
+        "method produces a larger refundable credit.",
       impact: "positive",
     });
   }

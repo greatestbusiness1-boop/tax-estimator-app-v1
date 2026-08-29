@@ -6,6 +6,91 @@
 
 const TAX_RULES = {
 
+  2026: {
+    // Internal federal support only; 2026 is not exposed to clients yet.
+    standardDeduction: { single: 16100, mfj: 32200, mfs: 16100, hoh: 24150, qw: 32200 },
+    dependentDeduction: { floor: 1350, earnedBonus: 450 },
+    seniorAdditional: { single: 2050, mfj: 1650, mfs: 1650, hoh: 2050, qw: 1650 },
+    enhancedSeniorDeduction: {
+      perEligiblePerson: 6000,
+      phaseOutStart: { single: 75000, mfj: 150000, hoh: 75000, qw: 75000 },
+      phaseOutRate: 0.06,
+    },
+    mileageRatePerMile: null,
+    mileageRateSchedule: {
+      firstHalf: 0.725,
+      secondHalf: 0.76,
+      changeDate: "2026-07-01",
+    },
+    selfEmploymentNetEarningsFactor: 0.9235,
+    socialSecurityTaxRate: 0.124,
+    socialSecurityWageBase: 184500,
+    medicareTaxRate: 0.029,
+    selfEmploymentTaxDeductionRate: 0.50,
+    brackets: {
+      single: [
+        { min: 0, max: 12400, rate: 0.10 },
+        { min: 12400, max: 50400, rate: 0.12 },
+        { min: 50400, max: 105700, rate: 0.22 },
+        { min: 105700, max: 201775, rate: 0.24 },
+        { min: 201775, max: 256225, rate: 0.32 },
+        { min: 256225, max: 640600, rate: 0.35 },
+        { min: 640600, max: null, rate: 0.37 },
+      ],
+      mfj: [
+        { min: 0, max: 24800, rate: 0.10 },
+        { min: 24800, max: 100800, rate: 0.12 },
+        { min: 100800, max: 211400, rate: 0.22 },
+        { min: 211400, max: 403550, rate: 0.24 },
+        { min: 403550, max: 512450, rate: 0.32 },
+        { min: 512450, max: 768700, rate: 0.35 },
+        { min: 768700, max: null, rate: 0.37 },
+      ],
+      mfs: [
+        { min: 0, max: 12400, rate: 0.10 },
+        { min: 12400, max: 50400, rate: 0.12 },
+        { min: 50400, max: 105700, rate: 0.22 },
+        { min: 105700, max: 201775, rate: 0.24 },
+        { min: 201775, max: 256225, rate: 0.32 },
+        { min: 256225, max: 384350, rate: 0.35 },
+        { min: 384350, max: null, rate: 0.37 },
+      ],
+      hoh: [
+        { min: 0, max: 17700, rate: 0.10 },
+        { min: 17700, max: 67450, rate: 0.12 },
+        { min: 67450, max: 105700, rate: 0.22 },
+        { min: 105700, max: 201750, rate: 0.24 },
+        { min: 201750, max: 256200, rate: 0.32 },
+        { min: 256200, max: 640600, rate: 0.35 },
+        { min: 640600, max: null, rate: 0.37 },
+      ],
+      qw: [
+        { min: 0, max: 24800, rate: 0.10 },
+        { min: 24800, max: 100800, rate: 0.12 },
+        { min: 100800, max: 211400, rate: 0.22 },
+        { min: 211400, max: 403550, rate: 0.24 },
+        { min: 403550, max: 512450, rate: 0.32 },
+        { min: 512450, max: 768700, rate: 0.35 },
+        { min: 768700, max: null, rate: 0.37 },
+      ],
+    },
+    americanOpportunityCredit: {
+      maxCredit: 2500, refundableRate: 0.40, tier1Cap: 2000, tier2Cap: 2000, tier2Rate: 0.25,
+      phaseOutStart: { single: 80000, mfj: 160000 },
+      phaseOutEnd: { single: 90000, mfj: 180000 },
+    },
+    lifetimeLearningCredit: {
+      rate: 0.20, maxExpenses: 10000, maxCredit: 2000,
+      phaseOutStart: { single: 80000, mfj: 160000 },
+      phaseOutEnd: { single: 90000, mfj: 180000 },
+    },
+    childTaxCredit: {
+      perChild: 2200, refundablePortion: 1700,
+      phaseOutThreshold: { single: 200000, mfj: 400000, mfs: 200000, hoh: 200000, qw: 400000 },
+      phaseOutPer1000: 50,
+    },
+  },
+
   2025: {
     standardDeduction: {
       single: 15750,
@@ -25,8 +110,21 @@ const TAX_RULES = {
       hoh:    2000,
       qw:     1600,
     },
+    enhancedSeniorDeduction: {
+      perEligiblePerson: 6000,
+      phaseOutStart: {
+        single: 75000,
+        mfj:    150000,
+        hoh:    75000,
+        qw:     75000,
+      },
+      phaseOutRate: 0.06,
+    },
     mileageRatePerMile: 0.70,
-    selfEmploymentTaxRate: 0.1530,
+    selfEmploymentNetEarningsFactor: 0.9235,
+    socialSecurityTaxRate: 0.124,
+    socialSecurityWageBase: 176100, // SSA 2025 contribution and benefit base
+    medicareTaxRate: 0.029,
     selfEmploymentTaxDeductionRate: 0.50,
     brackets: {
       single: [
@@ -124,7 +222,10 @@ const TAX_RULES = {
       qw:     1550,
     },
     mileageRatePerMile: 0.67,
-    selfEmploymentTaxRate: 0.1530,
+    selfEmploymentNetEarningsFactor: 0.9235,
+    socialSecurityTaxRate: 0.124,
+    socialSecurityWageBase: 168600, // SSA 2024 contribution and benefit base
+    medicareTaxRate: 0.029,
     selfEmploymentTaxDeductionRate: 0.50,
     brackets: {
       single: [
@@ -214,15 +315,18 @@ const TAX_RULES = {
     dependentDeduction: { floor: 1250, earnedBonus: 400 },
     seniorAdditional:   { single: 1850, mfj: 1500, mfs: 1500, hoh: 1850, qw: 1500 },
     mileageRatePerMile: 0.655,
-    selfEmploymentTaxRate: 0.1530,
+    selfEmploymentNetEarningsFactor: 0.9235,
+    socialSecurityTaxRate: 0.124,
+    socialSecurityWageBase: 160200, // SSA 2023 contribution and benefit base
+    medicareTaxRate: 0.029,
     selfEmploymentTaxDeductionRate: 0.50,
     brackets: {
       single: [
         { min: 0,      max: 11000,  rate: 0.10 },
         { min: 11000,  max: 44725,  rate: 0.12 },
         { min: 44725,  max: 95375,  rate: 0.22 },
-        { min: 95375,  max: 182050, rate: 0.24 },
-        { min: 182050, max: 231250, rate: 0.32 },
+        { min: 95375,  max: 182100, rate: 0.24 },
+        { min: 182100, max: 231250, rate: 0.32 },
         { min: 231250, max: 578125, rate: 0.35 },
         { min: 578125, max: null,   rate: 0.37 },
       ],
@@ -239,8 +343,8 @@ const TAX_RULES = {
         { min: 0,      max: 11000,  rate: 0.10 },
         { min: 11000,  max: 44725,  rate: 0.12 },
         { min: 44725,  max: 95375,  rate: 0.22 },
-        { min: 95375,  max: 182050, rate: 0.24 },
-        { min: 182050, max: 231250, rate: 0.32 },
+        { min: 95375,  max: 182100, rate: 0.24 },
+        { min: 182100, max: 231250, rate: 0.32 },
         { min: 231250, max: 346875, rate: 0.35 },
         { min: 346875, max: null,   rate: 0.37 },
       ],
@@ -248,8 +352,8 @@ const TAX_RULES = {
         { min: 0,      max: 15700,  rate: 0.10 },
         { min: 15700,  max: 59850,  rate: 0.12 },
         { min: 59850,  max: 95350,  rate: 0.22 },
-        { min: 95350,  max: 182050, rate: 0.24 },
-        { min: 182050, max: 231250, rate: 0.32 },
+        { min: 95350,  max: 182100, rate: 0.24 },
+        { min: 182100, max: 231250, rate: 0.32 },
         { min: 231250, max: 578100, rate: 0.35 },
         { min: 578100, max: null,   rate: 0.37 },
       ],
@@ -297,8 +401,16 @@ const TAX_RULES = {
     },
     dependentDeduction: { floor: 1150, earnedBonus: 400 },
     seniorAdditional:   { single: 1750, mfj: 1400, mfs: 1400, hoh: 1750, qw: 1400 },
-    mileageRatePerMile: 0.585,
-    selfEmploymentTaxRate: 0.1530,
+    mileageRatePerMile: null,
+    mileageRateSchedule: {
+      firstHalf: 0.585,
+      secondHalf: 0.625,
+      changeDate: "2022-07-01",
+    },
+    selfEmploymentNetEarningsFactor: 0.9235,
+    socialSecurityTaxRate: 0.124,
+    socialSecurityWageBase: 147000, // SSA 2022 contribution and benefit base
+    medicareTaxRate: 0.029,
     selfEmploymentTaxDeductionRate: 0.50,
     brackets: {
       single: [
@@ -400,6 +512,19 @@ function phaseOutKey(filingStatus) {
   return filingStatus === "mfj" ? "mfj" : "single";
 }
 
+const ADDITIONAL_MEDICARE_TAX_RATE = 0.009;
+const ADDITIONAL_MEDICARE_THRESHOLDS = {
+  single: 200000,
+  mfj:    250000,
+  mfs:    125000,
+  hoh:    200000,
+  qw:     200000,
+};
+
+const ACTC_EARNED_INCOME_THRESHOLD = 2500;
+const ACTC_EARNED_INCOME_RATE = 0.15;
+const OTHER_DEPENDENT_CREDIT_PER_PERSON = 500;
+
 // =============================================================================
 // STEP 1 â€” SELF-EMPLOYMENT INCOME
 // =============================================================================
@@ -407,34 +532,111 @@ function phaseOutKey(filingStatus) {
 function computeSelfEmployment(input, rules) {
   const seIncome    = input.selfEmploymentIncome || 0;
   const businessExp = input.businessExpenses || 0;
-  const mileage     = input.businessMileage || 0;
+  const mileage     = Math.max(0, Number(input.businessMileage || 0));
+  const mileageJanJun = Math.max(0, Number(input.businessMileageJanJun || 0));
+  const mileageJulDec = Math.max(0, Number(input.businessMileageJulDec || 0));
+  const w2SocialSecurityWages = Math.max(
+    0,
+    Number(input.w2SocialSecurityWages || 0)
+  );
 
   if (seIncome === 0) {
     return {
-      selfEmploymentIncome:    0,
-      businessExpenses:        0,
-      mileageDeduction:        0,
-      netSelfEmploymentIncome: 0,
-      selfEmploymentTax:       0,
-      seAboveLineDeduction:    0,
-      hasSelfEmployment:       false,
+      selfEmploymentIncome:            0,
+      businessExpenses:                0,
+      mileageDeduction:                0,
+      businessMileage:                 0,
+      businessMileageJanJun:           0,
+      businessMileageJulDec:           0,
+      netSelfEmploymentIncome:         0,
+      netEarningsFromSelfEmployment:   0,
+      socialSecurityTaxableEarnings:   0,
+      remainingSocialSecurityWageBase: Math.max(
+        0,
+        rules.socialSecurityWageBase -
+          Math.min(w2SocialSecurityWages, rules.socialSecurityWageBase)
+      ),
+      socialSecurityTax:               0,
+      medicareTax:                     0,
+      selfEmploymentTax:               0,
+      seAboveLineDeduction:            0,
+      hasSelfEmployment:               false,
     };
   }
 
-  const mileageDeduction     = dollars(mileage * rules.mileageRatePerMile);
-  const netSE = seIncome - businessExp - mileageDeduction;
-  const seTaxBase            = Math.max(0, netSE);
-const selfEmploymentTax    = dollars(seTaxBase * rules.selfEmploymentTaxRate);
-const seAboveLineDeduction = dollars(selfEmploymentTax * rules.selfEmploymentTaxDeductionRate);
+  let mileageDeduction = 0;
+  let totalBusinessMileage = mileage;
+
+  if (rules.mileageRateSchedule) {
+    if (mileage > 0) {
+      throw new Error(
+        "federalEngine: This tax year uses split business mileage rates. " +
+        "Use businessMileageJanJun and businessMileageJulDec instead of one annual mileage total."
+      );
+    }
+
+    totalBusinessMileage = mileageJanJun + mileageJulDec;
+    mileageDeduction = dollars(
+      (mileageJanJun * Number(rules.mileageRateSchedule.firstHalf || 0)) +
+      (mileageJulDec * Number(rules.mileageRateSchedule.secondHalf || 0))
+    );
+  } else {
+    if (mileageJanJun > 0 || mileageJulDec > 0) {
+      throw new Error(
+        "federalEngine: Split mileage fields are only valid for a tax year with split mileage rates."
+      );
+    }
+
+    mileageDeduction = dollars(
+      mileage * Number(rules.mileageRatePerMile || 0)
+    );
+  }
+  const netSE            = seIncome - businessExp - mileageDeduction;
+  const seTaxBase        = Math.max(0, netSE);
+
+  const netEarningsFromSelfEmployment =
+    seTaxBase * rules.selfEmploymentNetEarningsFactor;
+
+  const remainingSocialSecurityWageBase = Math.max(
+    0,
+    rules.socialSecurityWageBase -
+      Math.min(w2SocialSecurityWages, rules.socialSecurityWageBase)
+  );
+
+  const socialSecurityTaxableEarnings = Math.min(
+    netEarningsFromSelfEmployment,
+    remainingSocialSecurityWageBase
+  );
+
+  const socialSecurityTax = dollars(
+    socialSecurityTaxableEarnings * rules.socialSecurityTaxRate
+  );
+
+  const medicareTax = dollars(
+    netEarningsFromSelfEmployment * rules.medicareTaxRate
+  );
+
+  const selfEmploymentTax    = socialSecurityTax + medicareTax;
+  const seAboveLineDeduction = dollars(
+    selfEmploymentTax * rules.selfEmploymentTaxDeductionRate
+  );
 
   return {
-    selfEmploymentIncome:    dollars(seIncome),
-    businessExpenses:        dollars(businessExp),
+    selfEmploymentIncome:            dollars(seIncome),
+    businessExpenses:                dollars(businessExp),
+    businessMileage:                 dollars(totalBusinessMileage),
+    businessMileageJanJun:           dollars(mileageJanJun),
+    businessMileageJulDec:           dollars(mileageJulDec),
     mileageDeduction,
-    netSelfEmploymentIncome: dollars(netSE),
+    netSelfEmploymentIncome:         dollars(netSE),
+    netEarningsFromSelfEmployment:   dollars(netEarningsFromSelfEmployment),
+    socialSecurityTaxableEarnings:   dollars(socialSecurityTaxableEarnings),
+    remainingSocialSecurityWageBase: dollars(remainingSocialSecurityWageBase),
+    socialSecurityTax,
+    medicareTax,
     selfEmploymentTax,
     seAboveLineDeduction,
-    hasSelfEmployment:       true,
+    hasSelfEmployment:               true,
   };
 }
 
@@ -484,19 +686,84 @@ function computeAGI(grossIncome, seAboveLineDeduction) {
   };
 }
 
+function computeEnhancedSeniorDeduction(input, agi, rules) {
+  const cfg = rules.enhancedSeniorDeduction;
+
+  if (!cfg) {
+    return {
+      enhancedSeniorDeduction: 0,
+      eligibleSeniorCount: 0,
+      phaseOutReduction: 0,
+      planningMagi: dollars(agi),
+    };
+  }
+
+  const filingStatus = input.filingStatus;
+  const taxpayerEligible = Number(input.age || 0) >= 65;
+  const spouseEligible =
+    filingStatus === "mfj" && Number(input.spouseAge || 0) >= 65;
+
+  if (filingStatus === "mfs") {
+    return {
+      enhancedSeniorDeduction: 0,
+      eligibleSeniorCount: 0,
+      phaseOutReduction: 0,
+      planningMagi: dollars(agi),
+    };
+  }
+
+  const eligibleSeniorCount =
+    (taxpayerEligible ? 1 : 0) + (spouseEligible ? 1 : 0);
+
+  if (eligibleSeniorCount === 0) {
+    return {
+      enhancedSeniorDeduction: 0,
+      eligibleSeniorCount: 0,
+      phaseOutReduction: 0,
+      planningMagi: dollars(agi),
+    };
+  }
+
+  const phaseOutStart =
+    cfg.phaseOutStart[filingStatus] ?? cfg.phaseOutStart.single;
+
+  const planningMagi = Math.max(0, Number(agi || 0));
+  const maximumDeduction = cfg.perEligiblePerson * eligibleSeniorCount;
+  const phaseOutReduction = Math.max(
+    0,
+    (planningMagi - phaseOutStart) * cfg.phaseOutRate
+  );
+
+  return {
+    enhancedSeniorDeduction: dollars(
+      Math.max(0, maximumDeduction - phaseOutReduction)
+    ),
+    eligibleSeniorCount,
+    phaseOutReduction: dollars(phaseOutReduction),
+    planningMagi: dollars(planningMagi),
+  };
+}
+
 // =============================================================================
 // STEP 5 â€” STANDARD DEDUCTION
 // =============================================================================
 
 function computeStandardDeduction(input, rules) {
-  const { filingStatus, age, canBeClaimedAsDependent, w2Income } = input;
+  const {
+    filingStatus,
+    age,
+    spouseAge,
+    canBeClaimedAsDependent,
+    w2Income,
+  } = input;
+
   const base     = rules.standardDeduction[filingStatus] || rules.standardDeduction.single;
   const depRules = rules.dependentDeduction;
   const senior   = rules.seniorAdditional;
 
   let deduction      = base;
   let isDependentAdj = false;
-  let isSeniorAdj    = false;
+  let seniorCount    = 0;
 
   if (canBeClaimedAsDependent) {
     const earnedIncome = w2Income || 0;
@@ -505,16 +772,19 @@ function computeStandardDeduction(input, rules) {
     isDependentAdj     = true;
   }
 
-  if (age >= 65) {
+  if (Number(age || 0) >= 65) seniorCount += 1;
+  if (filingStatus === "mfj" && Number(spouseAge || 0) >= 65) seniorCount += 1;
+
+  if (seniorCount > 0) {
     const additionalAmt = senior[filingStatus] || senior.single;
-    deduction += additionalAmt;
-    isSeniorAdj = true;
+    deduction += additionalAmt * seniorCount;
   }
 
   return {
     standardDeduction: dollars(deduction),
     isDependentAdjusted: isDependentAdj,
-    isSeniorAdjusted: isSeniorAdj,
+    isSeniorAdjusted: seniorCount > 0,
+    seniorCount,
   };
 }
 
@@ -522,8 +792,17 @@ function computeStandardDeduction(input, rules) {
 // STEP 6 â€” TAXABLE INCOME
 // =============================================================================
 
-function computeTaxableIncome(agi, standardDeduction) {
-  return dollars(Math.max(0, agi - standardDeduction));
+function computeTaxableIncome(
+  agi,
+  standardDeduction,
+  enhancedSeniorDeduction = 0
+) {
+  return dollars(
+    Math.max(
+      0,
+      agi - standardDeduction - enhancedSeniorDeduction
+    )
+  );
 }
 
 // =============================================================================
@@ -624,22 +903,136 @@ function computeEducationCredit(input, agi, rules) {
 // STEP 9 â€” CHILD TAX CREDIT
 // =============================================================================
 
-function computeChildTaxCredit(input, agi, rules) {
-  const deps = input.numberOfDependents || 0;
-  if (deps === 0 || input.canBeClaimedAsDependent) {
-    return { childTaxCredit: 0, childTaxCreditRefundable: 0 };
+function computeChildTaxCredit(input, agi, rules, seResult) {
+  const qualifyingChildren = Math.max(
+    0,
+    Math.min(
+      Number(input.ctcQualifyingChildren || 0),
+      Number(input.numberOfDependents || 0)
+    )
+  );
+  const otherDependents = Math.max(
+    0,
+    Number(input.numberOfDependents || 0) - qualifyingChildren
+  );
+
+  if (
+    (qualifyingChildren === 0 && otherDependents === 0) ||
+    input.canBeClaimedAsDependent
+  ) {
+    return {
+      childTaxCreditAvailable: 0,
+      otherDependentCreditAvailable: 0,
+      totalDependentCreditAvailable: 0,
+      actcIncomeBasedMaximum: 0,
+      qualifyingChildren,
+      otherDependents,
+      earnedIncomeForActc: 0,
+      threeChildAlternativeMayApply: false,
+    };
   }
-  const ctc       = rules.childTaxCredit;
-  const threshold = ctc.phaseOutThreshold[input.filingStatus] || ctc.phaseOutThreshold.single;
-  let credit = deps * ctc.perChild;
+
+  const ctc = rules.childTaxCredit;
+  const threshold =
+    ctc.phaseOutThreshold[input.filingStatus] ||
+    ctc.phaseOutThreshold.single;
+
+  const childCreditBeforePhaseOut =
+    qualifyingChildren * ctc.perChild;
+  const otherDependentCreditBeforePhaseOut =
+    otherDependents * OTHER_DEPENDENT_CREDIT_PER_PERSON;
+  const combinedBeforePhaseOut =
+    childCreditBeforePhaseOut + otherDependentCreditBeforePhaseOut;
+
+  let combinedAfterPhaseOut = combinedBeforePhaseOut;
   if (agi > threshold) {
-    const reduction = Math.ceil((agi - threshold) / 1000) * ctc.phaseOutPer1000;
-    credit          = Math.max(0, credit - reduction);
+    const reduction =
+      Math.ceil((agi - threshold) / 1000) *
+      ctc.phaseOutPer1000;
+    combinedAfterPhaseOut = Math.max(
+      0,
+      combinedBeforePhaseOut - reduction
+    );
   }
-  const refundable = Math.min(credit, deps * ctc.refundablePortion);
+
+  const childTaxCreditAvailable = Math.min(
+    childCreditBeforePhaseOut,
+    combinedAfterPhaseOut
+  );
+  const otherDependentCreditAvailable = Math.max(
+    0,
+    combinedAfterPhaseOut - childTaxCreditAvailable
+  );
+
+  const earnedIncomeForActc = Math.max(
+    0,
+    Number(input.w2Income || 0) +
+      Number(seResult?.netSelfEmploymentIncome || 0)
+  );
+  const actcIncomeBasedMaximum = Math.max(
+    0,
+    (earnedIncomeForActc - ACTC_EARNED_INCOME_THRESHOLD) *
+      ACTC_EARNED_INCOME_RATE
+  );
+
   return {
-    childTaxCredit: dollars(credit),
-    childTaxCreditRefundable: dollars(refundable),
+    childTaxCreditAvailable: dollars(childTaxCreditAvailable),
+    otherDependentCreditAvailable: dollars(otherDependentCreditAvailable),
+    totalDependentCreditAvailable: dollars(combinedAfterPhaseOut),
+    actcIncomeBasedMaximum: dollars(actcIncomeBasedMaximum),
+    qualifyingChildren,
+    otherDependents,
+    earnedIncomeForActc: dollars(earnedIncomeForActc),
+    threeChildAlternativeMayApply: qualifyingChildren >= 3,
+  };
+}
+
+function computeAdditionalMedicareTax(input, seResult) {
+  const filingStatus = input.filingStatus || "single";
+  const threshold =
+    ADDITIONAL_MEDICARE_THRESHOLDS[filingStatus] ??
+    ADDITIONAL_MEDICARE_THRESHOLDS.single;
+
+  const medicareWages = Math.max(
+    0,
+    Number(input.w2MedicareWages || 0)
+  );
+  const medicareTaxWithheld = Math.max(
+    0,
+    Number(input.w2MedicareTaxWithheld || 0)
+  );
+
+  const wageAdditionalMedicareTax =
+    Math.max(0, medicareWages - threshold) *
+    ADDITIONAL_MEDICARE_TAX_RATE;
+
+  const reducedSeThreshold = Math.max(
+    0,
+    threshold - medicareWages
+  );
+  const netSeEarnings = Math.max(
+    0,
+    Number(seResult?.netEarningsFromSelfEmployment || 0)
+  );
+  const seAdditionalMedicareTax =
+    Math.max(0, netSeEarnings - reducedSeThreshold) *
+    ADDITIONAL_MEDICARE_TAX_RATE;
+
+  const regularMedicareWithholding =
+    medicareWages * 0.0145;
+  const additionalMedicareWithheld = Math.max(
+    0,
+    medicareTaxWithheld - regularMedicareWithholding
+  );
+
+  return {
+    threshold: dollars(threshold),
+    wageAdditionalMedicareTax: dollars(wageAdditionalMedicareTax),
+    seAdditionalMedicareTax: dollars(seAdditionalMedicareTax),
+    additionalMedicareTax: dollars(
+      wageAdditionalMedicareTax + seAdditionalMedicareTax
+    ),
+    additionalMedicareWithheld: dollars(additionalMedicareWithheld),
   };
 }
 
@@ -650,37 +1043,92 @@ function computeChildTaxCredit(input, agi, rules) {
 function computeFederalResult(
   bracketTax,
   selfEmploymentTax,
+  additionalMedicareResult,
   educationResult,
   ctcResult,
   federalWithheld,
-  estimatedTaxPayments
+  estimatedTaxPayments,
+  rules
 ) {
-  const childNonRefundable = Math.max(
+  const taxAfterEducationCredit = Math.max(
     0,
-    (ctcResult.childTaxCredit || 0) - (ctcResult.childTaxCreditRefundable || 0)
+    bracketTax -
+      (educationResult.educationCreditNonRefundable || 0)
   );
 
-  const nonRefundableCredits =
-    (educationResult.educationCreditNonRefundable || 0) + childNonRefundable;
+  const dependentCreditAvailable =
+    ctcResult.totalDependentCreditAvailable || 0;
+  const dependentCreditNonRefundable = Math.min(
+    dependentCreditAvailable,
+    taxAfterEducationCredit
+  );
+  const taxAfterNonRefundable = Math.max(
+    0,
+    taxAfterEducationCredit - dependentCreditNonRefundable
+  );
+
+  const unusedDependentCredit = Math.max(
+    0,
+    dependentCreditAvailable - dependentCreditNonRefundable
+  );
+  const actcPerChildCap =
+    (ctcResult.qualifyingChildren || 0) *
+    (rules.childTaxCredit.refundablePortion || 0);
+
+  const childTaxCreditRefundable = Math.min(
+    unusedDependentCredit,
+    ctcResult.childTaxCreditAvailable || 0,
+    ctcResult.actcIncomeBasedMaximum || 0,
+    actcPerChildCap
+  );
 
   const refundableCredits =
     (educationResult.educationCreditRefundable || 0) +
-    (ctcResult.childTaxCreditRefundable || 0);
+    childTaxCreditRefundable;
 
-  const taxAfterNonRefundable = Math.max(0, bracketTax - nonRefundableCredits);
-  const totalLiability = Math.max(0, taxAfterNonRefundable + selfEmploymentTax);
-  const extraRefund = Math.max(0, refundableCredits - totalLiability);
-  const netLiability = Math.max(0, totalLiability - refundableCredits);
-  const taxAfterCredits = dollars(netLiability);
+  const totalTaxLiability = Math.max(
+    0,
+    taxAfterNonRefundable +
+      (selfEmploymentTax || 0) +
+      (additionalMedicareResult.additionalMedicareTax || 0)
+  );
 
-  const totalPayments = dollars((federalWithheld || 0) + (estimatedTaxPayments || 0) + extraRefund);
-  const net = dollars(totalPayments - netLiability);
+  const totalPayments =
+    (federalWithheld || 0) +
+    (estimatedTaxPayments || 0) +
+    (additionalMedicareResult.additionalMedicareWithheld || 0) +
+    refundableCredits;
+
+  const net = dollars(totalPayments - totalTaxLiability);
 
   return {
-    totalCredits: dollars(nonRefundableCredits + refundableCredits),
-    educationCredit: dollars(educationResult.educationCredit || 0),
-    childTaxCredit: dollars(ctcResult.childTaxCredit || 0),
-    taxAfterCredits,
+    totalCredits: dollars(
+      (educationResult.educationCreditNonRefundable || 0) +
+      dependentCreditNonRefundable +
+      refundableCredits
+    ),
+    educationCredit: dollars(
+      educationResult.educationCredit || 0
+    ),
+    childTaxCredit: dollars(
+      ctcResult.childTaxCreditAvailable || 0
+    ),
+    otherDependentCredit: dollars(
+      ctcResult.otherDependentCreditAvailable || 0
+    ),
+    childTaxCreditRefundable: dollars(
+      childTaxCreditRefundable
+    ),
+    dependentCreditNonRefundable: dollars(
+      dependentCreditNonRefundable
+    ),
+    additionalMedicareTax: dollars(
+      additionalMedicareResult.additionalMedicareTax || 0
+    ),
+    additionalMedicareWithheld: dollars(
+      additionalMedicareResult.additionalMedicareWithheld || 0
+    ),
+    taxAfterCredits: dollars(totalTaxLiability),
     federalWithheld: dollars(federalWithheld),
     estimatedTaxPayments: dollars(estimatedTaxPayments),
     net,
@@ -719,17 +1167,37 @@ function calculateFederal(input) {
   );
   const agiResult         = computeAGI(incomeResult.grossIncome, seResult.seAboveLineDeduction);
   const deductionResult   = computeStandardDeduction(input, rules);
-  const taxableIncome     = computeTaxableIncome(agiResult.agi, deductionResult.standardDeduction);
+  const enhancedSeniorResult = computeEnhancedSeniorDeduction(
+    input,
+    agiResult.agi,
+    rules
+  );
+  const taxableIncome     = computeTaxableIncome(
+    agiResult.agi,
+    deductionResult.standardDeduction,
+    enhancedSeniorResult.enhancedSeniorDeduction
+  );
   const bracketResult     = computeBracketTax(taxableIncome, filingStatus, rules);
   const educationResult   = computeEducationCredit(input, agiResult.agi, rules);
-  const ctcResult         = computeChildTaxCredit(input, agiResult.agi, rules);
+  const ctcResult         = computeChildTaxCredit(
+    input,
+    agiResult.agi,
+    rules,
+    seResult
+  );
+  const additionalMedicareResult = computeAdditionalMedicareTax(
+    input,
+    seResult
+  );
   const finalResult       = computeFederalResult(
     bracketResult.bracketTax,
     seResult.selfEmploymentTax,
+    additionalMedicareResult,
     educationResult,
     ctcResult,
     federalWithheld,
-    estimatedTaxPayments
+    estimatedTaxPayments,
+    rules
   );
 
   return {
@@ -738,18 +1206,32 @@ function calculateFederal(input) {
       agi: agiResult.agi,
       selfEmploymentIncome: seResult.selfEmploymentIncome,
       businessExpenses: seResult.businessExpenses,
+      businessMileage: seResult.businessMileage,
+      businessMileageJanJun: seResult.businessMileageJanJun,
+      businessMileageJulDec: seResult.businessMileageJulDec,
       mileageDeduction: seResult.mileageDeduction,
       netSelfEmploymentIncome: seResult.netSelfEmploymentIncome,
       selfEmploymentTax: seResult.selfEmploymentTax,
       seAboveLineDeduction: seResult.seAboveLineDeduction,
       hasSelfEmployment: seResult.hasSelfEmployment,
       standardDeduction: deductionResult.standardDeduction,
+      enhancedSeniorDeduction: enhancedSeniorResult.enhancedSeniorDeduction,
+      totalDeduction: dollars(
+        deductionResult.standardDeduction +
+        enhancedSeniorResult.enhancedSeniorDeduction
+      ),
       taxableIncome,
       taxBeforeCredits: bracketResult.bracketTax,
       marginalRate: bracketResult.marginalRate,
       effectiveRate: bracketResult.effectiveRate,
       educationCredit: finalResult.educationCredit,
       childTaxCredit: finalResult.childTaxCredit,
+      otherDependentCredit: finalResult.otherDependentCredit,
+      childTaxCreditRefundable: finalResult.childTaxCreditRefundable,
+      actcThreeChildAlternativeMayApply:
+        ctcResult.threeChildAlternativeMayApply,
+      additionalMedicareTax: finalResult.additionalMedicareTax,
+      additionalMedicareWithheld: finalResult.additionalMedicareWithheld,
       taxAfterCredits: finalResult.taxAfterCredits,
       federalWithheld: finalResult.federalWithheld,
       estimatedTaxPayments: finalResult.estimatedTaxPayments,
@@ -768,10 +1250,12 @@ function calculateFederal(input) {
       incomeResult,
       agiResult,
       deductionResult,
+      enhancedSeniorResult,
       taxableIncome,
       bracketResult,
       educationResult,
       ctcResult,
+      additionalMedicareResult,
       finalResult,
     },
   };
@@ -783,11 +1267,13 @@ module.exports = {
   computeTaxableScholarships,
   computeGrossIncome,
   computeAGI,
+  computeEnhancedSeniorDeduction,
   computeStandardDeduction,
   computeTaxableIncome,
   computeBracketTax,
   computeEducationCredit,
   computeChildTaxCredit,
+  computeAdditionalMedicareTax,
   computeFederalResult,
   getRules,
 };

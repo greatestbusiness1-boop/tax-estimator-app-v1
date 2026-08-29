@@ -40,6 +40,9 @@ const scheduleCCodeMaps = new Map([
 const nodemailer = require("nodemailer");
 const PDFDocument = require("pdfkit");
 const { estimate } = require("./taxEstimator");
+const {
+  getStateSupport
+} = require("./engines/stateEngine");
 
 require("dotenv").config();
 const STRIPE_SECRET_KEY = String(
@@ -87,8 +90,9 @@ const LEADS_FILE = path.join(__dirname, "leads.json");
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
 const recentLeads = new Map();
 
-const FREE_ESTIMATE_LIMIT = 3;
+const FREE_ESTIMATE_LIMIT = 1;
 const FREE_ESTIMATE_LIMIT_SCOPE = "tax-year";
+const FREE_ESTIMATE_CORRECTION_WINDOW_HOURS = 48;
 const FREE_ESTIMATE_TEST_EMAILS = new Set(
   [
     "greatestbusiness1+1099test@gmail.com",
@@ -131,6 +135,14 @@ const CLIENT_PORTAL_PRODUCTION_HOST = Boolean(
   process.env.RENDER ||
   String(process.env.NODE_ENV || "").toLowerCase() === "production"
 );
+
+const CLIENT_PORTAL_SHOW_TEST_TOOLS =
+  !CLIENT_PORTAL_PRODUCTION_HOST &&
+  /^(1|true|yes|on)$/i.test(
+    String(
+      process.env.CLIENT_PORTAL_SHOW_TEST_TOOLS || ""
+    ).trim()
+  );
 
 const CLIENT_PORTAL_SESSION_SECRET = String(
   process.env.CLIENT_PORTAL_SESSION_SECRET || ""
@@ -5109,7 +5121,8 @@ async function getFreeEstimateUsage(email, taxYear) {
         identityEmail
       )
     : [];
-  const completed = accessible
+
+  const completedRecords = accessible
     .filter(isCompletedFreeEstimateRecord)
     .filter(
       (entry) =>
@@ -5121,11 +5134,18 @@ async function getFreeEstimateUsage(email, taxYear) {
       const timestamp =
         getFreeEstimateRecordTimestamp(entry);
       const parsedTimestamp = Date.parse(timestamp);
+      const leadId =
+        getFreeEstimateRecordLeadId(entry);
+      const estimateFamilyId =
+        resolveFreeEstimateFamilyId(
+          entry,
+          accessible
+        ) || leadId;
 
       return {
         entry,
-        leadId:
-          getFreeEstimateRecordLeadId(entry),
+        leadId,
+        estimateFamilyId,
         taxYear:
           getFreeEstimateRecordTaxYear(entry),
         timestamp,
@@ -5139,6 +5159,59 @@ async function getFreeEstimateUsage(email, taxYear) {
       (left, right) =>
         right.timestampMs - left.timestampMs
     );
+
+  // Recalculations of the same saved estimate stay in one estimate family.
+  // They do not consume another annual free-estimate allowance.
+  const familyMap = new Map();
+
+  for (const item of completedRecords) {
+    const familyId =
+      item.estimateFamilyId ||
+      item.leadId;
+
+    if (!familyId) continue;
+
+    const existing =
+      familyMap.get(familyId);
+
+    if (!existing) {
+      familyMap.set(familyId, {
+        estimateFamilyId: familyId,
+        latest: item,
+        firstTimestampMs:
+          item.timestampMs,
+        firstTimestamp:
+          item.timestamp,
+        revisionCount: 1
+      });
+      continue;
+    }
+
+    existing.revisionCount += 1;
+
+    if (
+      item.timestampMs > 0 &&
+      (
+        existing.firstTimestampMs <= 0 ||
+        item.timestampMs <
+          existing.firstTimestampMs
+      )
+    ) {
+      existing.firstTimestampMs =
+        item.timestampMs;
+      existing.firstTimestamp =
+        item.timestamp;
+    }
+  }
+
+  const completedFamilies =
+    Array.from(familyMap.values())
+      .sort(
+        (left, right) =>
+          right.latest.timestampMs -
+          left.latest.timestampMs
+      );
+
   const membership =
     getClientPortalMembershipSummary(accessible);
   const activeMembership =
@@ -5165,15 +5238,42 @@ async function getFreeEstimateUsage(email, taxYear) {
       : activePreview
         ? "active-preview"
         : "";
-  const used = completed.length;
+
+  const used =
+    completedFamilies.length;
   const remaining = Math.max(
     0,
     FREE_ESTIMATE_LIMIT - used
   );
 
+  const latestFamily =
+    completedFamilies[0] || null;
+  const correctionWindowMs =
+    FREE_ESTIMATE_CORRECTION_WINDOW_HOURS *
+    60 * 60 * 1000;
+  const correctionWindowEndsAt =
+    latestFamily?.firstTimestampMs > 0
+      ? new Date(
+          latestFamily.firstTimestampMs +
+          correctionWindowMs
+        ).toISOString()
+      : "";
+  const correctionWindowEligible =
+    Boolean(
+      latestFamily &&
+      latestFamily.firstTimestampMs > 0 &&
+      Date.now() <=
+        latestFamily.firstTimestampMs +
+          correctionWindowMs
+    );
+
   return {
     limit: FREE_ESTIMATE_LIMIT,
     limitScope: FREE_ESTIMATE_LIMIT_SCOPE,
+    correctionWindowHours:
+      FREE_ESTIMATE_CORRECTION_WINDOW_HOURS,
+    correctionWindowEligible,
+    correctionWindowEndsAt,
     taxYear: selectedTaxYear,
     used,
     remaining,
@@ -5183,7 +5283,9 @@ async function getFreeEstimateUsage(email, taxYear) {
     exempt: Boolean(exemptionReason),
     exemptionReason,
     latestSavedLeadId:
-      completed[0]?.leadId || "",
+      latestFamily?.latest?.leadId || "",
+    latestEstimateFamilyId:
+      latestFamily?.estimateFamilyId || "",
     identityEmail,
     profileType: "lightweight-free-estimate",
     portalCreatedAutomatically: false
@@ -7789,6 +7891,78 @@ function getClientPortalTaxYear(lead = {}, planner = {}) {
   );
 }
 
+function isClientPortalCompletedServiceRecord(
+  lead = {},
+  planner = {},
+  summary = {}
+) {
+  const statusText = [
+    summary.plannerStatus,
+    lead.status,
+    lead.workStatus,
+    lead.writtenReview?.status,
+    lead.transcriptRequest?.internalStatus,
+    lead.transcriptRequest?.workStatus,
+    lead.taxPreparationIntake?.workStatus,
+    lead.taxPreparationIntake?.status,
+    lead.contractor1099Request?.workStatus,
+    lead.contractor1099Request?.status,
+    lead.extensionRequest?.workStatus,
+    lead.extensionRequest?.status,
+    lead.contactRequest?.membershipEnrollment?.enrollmentStatus,
+    lead.contactRequest?.membershipEnrollment?.paymentStatus,
+    lead.taxWatchProfile?.status
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const hasExplicitCompletion = Boolean(
+    lead.completedAt ||
+    lead.writtenReviewDeliveredAt ||
+    lead.writtenReviewCompletedAt ||
+    lead.writtenReview?.deliveredAt ||
+    lead.writtenReview?.completedAt ||
+    lead.transcriptRequest?.completedAt ||
+    lead.transcriptRequest?.deliveredAt ||
+    lead.taxPreparationIntake?.completedAt ||
+    lead.taxPreparationIntake?.deliveredAt ||
+    lead.contractor1099Request?.completedAt ||
+    lead.contractor1099Request?.deliveredAt ||
+    lead.extensionRequest?.completedAt ||
+    lead.extensionRequest?.confirmationDeliveredAt ||
+    planner.completedAt
+  );
+
+  const hasCompletedStatus =
+    /\b(completed?|delivered|filed|finished|resolved)\b/.test(
+      statusText
+    );
+
+  const isInactiveWithoutCompletion =
+    /\b(active|preview|new|requested|pending|open|draft|scheduled|awaiting|started|in progress)\b/.test(
+      statusText
+    ) &&
+    !hasCompletedStatus;
+
+  const isClosedWithoutService =
+    /not moving forward|cancelled|canceled|declined|voided|no[- ]show/.test(
+      statusText
+    );
+
+  if (
+    isInactiveWithoutCompletion ||
+    isClosedWithoutService
+  ) {
+    return false;
+  }
+
+  return (
+    hasExplicitCompletion ||
+    hasCompletedStatus
+  );
+}
+
 function buildClientPortalLeadSummary(entry) {
   const lead = entry.lead || {};
   const planner = lead.taxSavingsPlanner || {};
@@ -7804,6 +7978,11 @@ function buildClientPortalLeadSummary(entry) {
       planner
     ),
     service,
+    isCompleted: isClientPortalCompletedServiceRecord(
+      lead,
+      planner,
+      summary
+    ),
     status: String(
       summary.plannerStatus ||
       lead.status ||
@@ -8372,6 +8551,38 @@ function getTaxWatchRecommendedNextAction(profile = {}, current = null) {
   return "Update your estimate after a new job, gig, withholding change, or family change to see what moved and why.";
 }
 
+function computeSelfEmploymentTaxReserve(taxData = {}) {
+  const seIncome = getTaxWatchNumber(taxData.selfEmploymentIncome);
+  if (seIncome <= 0) {
+    return { available: false };
+  }
+
+  const withSE = estimate(taxData);
+  const withoutSE = estimate({
+    ...taxData,
+    selfEmploymentIncome: 0,
+    businessExpenses: 0,
+    businessMileage: 0,
+    selfEmploymentStreams: []
+  });
+
+  if (!withSE.ok || !withoutSE.ok) {
+    return { available: false };
+  }
+
+  const seTax = getTaxWatchNumber(withSE.result.federal.summary.selfEmploymentTax);
+  const liabilityWith = getTaxWatchNumber(withSE.result.federal.summary.taxAfterCredits);
+  const liabilityWithout = getTaxWatchNumber(withoutSE.result.federal.summary.taxAfterCredits);
+  const marginalImpact = Math.max(0, liabilityWith - liabilityWithout);
+
+  return {
+    available: true,
+    selfEmploymentTax: seTax,
+    incomeTaxImpact: Math.max(0, marginalImpact - seTax),
+    totalReserve: Math.round(marginalImpact)
+  };
+}
+
 function buildClientPortalTaxWatchSummary(
   accessible = [],
   accountLeadId = ""
@@ -8553,11 +8764,79 @@ function buildClientPortalTaxWatchSummary(
   const current = deduped[deduped.length - 1] || null;
   const previous = deduped[deduped.length - 2] || null;
   const baseline = profile.baselineSnapshot || deduped[0] || null;
+  const currentEntry = current
+    ? accessible.find(
+        (entry) =>
+          String(entry.leadId || entry.lead?.leadId || "") ===
+          current.leadId
+      )
+    : null;
+  const currentTaxData = currentEntry?.lead?.taxData || null;
   const isActive = Boolean(profileEntry);
   const previewWindow = getTaxWatchPreviewWindow(profile);
   const membership = getClientPortalMembershipSummary(
     accessible
   );
+
+  if (
+    isActive &&
+    !previewWindow.expired &&
+    previewWindow.endsAt
+  ) {
+    const currentProgramAccess =
+      membership.programAccess &&
+      typeof membership.programAccess === "object"
+        ? membership.programAccess
+        : {};
+    const currentTaxWatchAccess =
+      currentProgramAccess["tax-watch-pro"] &&
+      typeof currentProgramAccess["tax-watch-pro"] === "object"
+        ? currentProgramAccess["tax-watch-pro"]
+        : {};
+
+    membership.programAccess = {
+      ...currentProgramAccess,
+      "tax-watch-pro": {
+        ...currentTaxWatchAccess,
+        previewActive: true,
+        hasAccess: true,
+        previewStartedAt: previewWindow.startedAt,
+        previewEndsAt: previewWindow.endsAt,
+        enrollmentStatus:
+          currentTaxWatchAccess.enrollmentStatus ||
+          "Active Preview",
+        paymentStatus:
+          currentTaxWatchAccess.paymentStatus ||
+          "No Charge"
+      }
+    };
+
+    // An active Tax Watch profile preview is the source of truth until
+    // Stripe confirms a paid membership. Pricing-page Monthly/Annual
+    // selection is presentation-only and must never make Billing History
+    // look like checkout or payment occurred.
+    const paidMembershipConfirmed =
+      membership.enrollmentStatus ===
+        "Active Membership" &&
+      membership.paymentStatus ===
+        "Paid / Confirmed";
+
+    if (!paidMembershipConfirmed) {
+      membership.planKey = "tax-watch-pro";
+      membership.planName = "Tax Watch Pro";
+      membership.billingFrequency = "preview";
+      membership.billingLabel = "Preview";
+      membership.selectedPriceDisplay =
+        "No charge during preview";
+      membership.enrollmentStatus =
+        "Active Preview";
+      membership.paymentStatus = "No Charge";
+      membership.nextRenewalAt = "";
+      membership.paymentMethodBrand = "";
+      membership.paymentMethodLast4 = "";
+    }
+  }
+
   const membershipIsActive =
     membership.enrollmentStatus === "Active Membership" &&
     membership.paymentStatus === "Paid / Confirmed";
@@ -8571,7 +8850,13 @@ function buildClientPortalTaxWatchSummary(
   const organizedExpenses = getTaxWatchNumber(current?.businessExpenses);
   const netBusinessIncome = Math.max(0, businessIncome - organizedExpenses);
   const paymentsAlreadyMade = getTaxWatchNumber(current?.estimatedTaxPayments);
-  const generalReserveBeforePayments = Math.round(netBusinessIncome * 0.25);
+  const preciseReserve = currentTaxData
+    ? computeSelfEmploymentTaxReserve(currentTaxData)
+    : { available: false };
+  const usesPreciseReserve = preciseReserve.available;
+  const generalReserveBeforePayments = usesPreciseReserve
+    ? preciseReserve.totalReserve
+    : Math.round(netBusinessIncome * 0.25);
   const generalTaxReserve = Math.max(0, generalReserveBeforePayments - paymentsAlreadyMade);
   const estimatedAvailableToSpend = Math.max(0, netBusinessIncome - generalTaxReserve);
 
@@ -8784,9 +9069,14 @@ function buildClientPortalTaxWatchSummary(
       netBusinessIncome,
       generalTaxReserve,
       estimatedAvailableToSpend,
-      reserveRate: 25,
+      reserveRate: usesPreciseReserve ? null : 25,
+      reserveMethod: usesPreciseReserve ? "precise" : "flat-rate-fallback",
+      selfEmploymentTax: usesPreciseReserve ? preciseReserve.selfEmploymentTax : null,
+      incomeTaxImpact: usesPreciseReserve ? preciseReserve.incomeTaxImpact : null,
       estimatedPaymentsAlreadyMade: paymentsAlreadyMade,
-      disclaimer: "This is a general planning reserve, not a final self-employment tax calculation or tax return."
+      disclaimer: usesPreciseReserve
+        ? "This reserve is calculated from your saved estimate: actual self-employment tax plus the federal income tax impact of your self-employment income. It does not include state tax or the Additional Medicare Tax, and it updates only when you re-run and save an estimate."
+        : "No saved estimate is available yet, so this is a general 25% planning reserve, not a calculated tax figure. Run and save a free estimate for a precise number."
     },
     moneyTracker: {
       hasSavingsTarget,
@@ -9220,6 +9510,7 @@ function buildClientPortalRecordGroups(records = []) {
 
   const serviceHistoryRecords = records.filter(
     (record) =>
+      record.isCompleted === true &&
       normalizeClientPortalServiceLabel(
         record.service
       ) !== "General Question"
@@ -9384,6 +9675,10 @@ async function getClientPortalDocumentCenterState(
     clientDocumentStore.mode ===
     "local-development";
 
+  const showLocalTestTools =
+    localTesting &&
+    CLIENT_PORTAL_SHOW_TEST_TOOLS;
+
   if (!available) {
     return {
       version: "1.1.0",
@@ -9442,14 +9737,13 @@ async function getClientPortalDocumentCenterState(
     enabled: !loadError,
     status: loadError
       ? "Your secure document list could not be loaded."
-      : localTesting
-        ? "Local testing storage is active. Do not upload real client documents until private cloud storage is configured and validated."
-        : "Private client document storage is active.",
+      : "Private client document storage is active.",
     storageMode:
       clientDocumentStore.mode,
     liveStorageReady:
       clientDocumentStore.isLiveReady(),
     localTesting,
+    showLocalTestTools,
     maxFileBytes:
       CLIENT_DOCUMENT_MAX_BYTES,
     maxFileMegabytes: 15,
@@ -10844,9 +11138,17 @@ const CLIENT_PORTAL_VIEW_PLAN_ACCESS = Object.freeze({
 });
 
 async function getClientPortalProgramAccessForSession(session) {
-  const accessible = await getClientPortalAccessibleLeads(session.email);
-  const membership = getClientPortalMembershipSummary(accessible);
-  return membership.programAccess || {};
+  const taxWatchContext =
+    await loadClientPortalTaxWatchContext(
+      session
+    );
+
+  return (
+    taxWatchContext.summary
+      ?.membership
+      ?.programAccess ||
+    {}
+  );
 }
 
 async function clientPortalSessionCanAccessView(session, view) {
@@ -11872,6 +12174,383 @@ app.post(
 );
 
 // =============================================================================
+// TAX ESTIMATE WHOLE-DOLLAR NORMALIZATION
+// Preserve cents while adding component amounts, then round only the final
+// amount sent to the tax engine for each return line.
+// =============================================================================
+
+function taxEstimateMoneyToCents(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return 0;
+  }
+
+  if (
+    typeof value === "number" &&
+    Number.isFinite(value)
+  ) {
+    return Math.max(
+      0,
+      Math.round(value * 100)
+    );
+  }
+
+  let text = String(value)
+    .replace(/[$,\s]/g, "")
+    .replace(/[^\d.]/g, "");
+
+  const firstDecimal = text.indexOf(".");
+  if (firstDecimal >= 0) {
+    text =
+      text.slice(0, firstDecimal + 1) +
+      text
+        .slice(firstDecimal + 1)
+        .replace(/\./g, "");
+  }
+
+  const [wholePart = "0", centsPart = ""] =
+    text.split(".");
+
+  const whole = Number.parseInt(
+    wholePart || "0",
+    10
+  );
+  const cents = Number.parseInt(
+    `${centsPart}00`.slice(0, 2),
+    10
+  );
+
+  if (
+    !Number.isFinite(whole) ||
+    !Number.isFinite(cents)
+  ) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    (whole * 100) + cents
+  );
+}
+
+function roundTaxEstimateMoney(value) {
+  return Math.round(
+    taxEstimateMoneyToCents(value) / 100
+  );
+}
+
+function normalizeTaxEstimateMoneyInput(input = {}) {
+  const normalized = {
+    ...input
+  };
+
+  const wholeDollarFields = [
+    "w2Income",
+    "otherIncome",
+    "scholarships",
+    "educationExpenses",
+    "federalWithheld",
+    "stateWithheld",
+    "selfEmploymentIncome",
+    "businessExpenses",
+    "estimatedTaxPayments",
+    "alItemizedDeductions",
+    "alExemptIncome",
+    "alEstimatedTaxPayments",
+    "miOtherAdditions",
+    "miTaxableSocialSecurity",
+    "miOtherSubtractions",
+    "miFederalEICAmount",
+    "miUseTax",
+    "miEstimatedAndExtensionPayments",
+    "wvTotalAdditions",
+    "wvOtherSubtractions",
+    "wvTaxableSocialSecurity",
+    "wvLowIncomeEarnedIncome",
+    "wvTaxExemptInterestForFamilyCredit",
+    "wvFederalChildDependentCareCredit",
+    "wvUseTax",
+    "wvEstimatedAndExtensionPayments",
+    "vaIncomeBasedCreditAmount",
+    "vaUseTax",
+    "vaEstimatedTaxPayments",
+    "vaPriorYearOverpaymentApplied",
+    "vaExtensionPayment",
+    "vaOtherWithholding",
+    "scEstimatedTaxPayments",
+    "scExtensionPayment",
+    "scOtherWithholding",
+    "okFederalChildCareCredit",
+    "okFederalChildTaxCreditTotal",
+    "okFederalEIC2020Law",
+    "okUseTax",
+    "okEstimatedTaxPayments",
+    "okExtensionPayment",
+    "arItemizedDeductions",
+    "arEstimatedTaxPayments",
+    "arExtensionPayment",
+    "laEstimatedTaxPayments",
+    "laExtensionPayment",
+    "kyItemizedDeductions",
+    "kyTaxpayerRetirementIncome",
+    "kySpouseRetirementIncome",
+    "msItemizedDeductions",
+    "msExemptRetirementIncome",
+    "msSpouseShareOfMississippiAGI"
+  ];
+
+  wholeDollarFields.forEach((field) => {
+    normalized[field] =
+      roundTaxEstimateMoney(
+        input[field]
+      );
+  });
+
+  [
+    "w2SocialSecurityWages",
+    "w2MedicareWages",
+    "w2MedicareTaxWithheld"
+  ].forEach((field) => {
+    const raw = input[field];
+
+    normalized[field] =
+      raw === null ||
+      raw === undefined ||
+      String(raw).trim() === ""
+        ? null
+        : roundTaxEstimateMoney(raw);
+  });
+
+  normalized.businessMileage = Math.round(
+    Math.max(
+      0,
+      Number(input.businessMileage || 0)
+    )
+  );
+
+  normalized.businessMileageJanJun = Math.round(
+    Math.max(
+      0,
+      Number(input.businessMileageJanJun || 0)
+    )
+  );
+
+  normalized.businessMileageJulDec = Math.round(
+    Math.max(
+      0,
+      Number(input.businessMileageJulDec || 0)
+    )
+  );
+
+  normalized.dependentsUnder17 =
+    input.dependentsUnder17 === null ||
+    input.dependentsUnder17 === undefined ||
+    String(input.dependentsUnder17).trim() === ""
+      ? null
+      : Math.max(
+          0,
+          Math.round(
+            Number(input.dependentsUnder17 || 0)
+          )
+        );
+
+  [
+    "scTotalAdditions",
+    "scOtherSubtractions",
+    "scFederalChildCareExpense",
+    "scTaxpayerQualifiedEarnedIncome",
+    "scSpouseQualifiedEarnedIncome",
+    "scFederalEICAmount",
+    "scUseTax",
+    "okOklahomaAGI",
+    "okOklahomaIncomeAfterAdjustments",
+    "okItemizedDeductions",
+    "arArkansasTotalIncome",
+    "arArkansasAGI"
+  ].forEach((field) => {
+    const raw = input[field];
+    normalized[field] =
+      raw === null ||
+      raw === undefined ||
+      String(raw).trim() === ""
+        ? null
+        : roundTaxEstimateMoney(raw);
+  });
+
+  [
+    "scDependentsUnder6",
+    "scChildCareQualifyingPersons",
+    "okRegularExemptions",
+    "okSpecial65Exemptions",
+    "okBlindExemptions",
+    "okQualifyingDependents"
+  ].forEach((field) => {
+    const raw = input[field];
+    normalized[field] =
+      raw === null ||
+      raw === undefined ||
+      String(raw).trim() === ""
+        ? null
+        : Math.max(0, Math.round(Number(raw)));
+  });
+
+  normalized.arQualifyingDependents = Math.max(
+    0,
+    Math.round(Number(input.arQualifyingDependents || 0))
+  );
+  normalized.arAdditionalPersonalCreditBoxes = Math.max(
+    0,
+    Math.round(Number(input.arAdditionalPersonalCreditBoxes || 0))
+  );
+
+  normalized.alFederalIncomeTaxDeduction =
+    input.alFederalIncomeTaxDeduction === null ||
+    input.alFederalIncomeTaxDeduction === undefined ||
+    String(input.alFederalIncomeTaxDeduction).trim() === ""
+      ? null
+      : roundTaxEstimateMoney(
+          input.alFederalIncomeTaxDeduction
+        );
+
+  normalized.laScheduleEAdjustedGrossIncome =
+    input.laScheduleEAdjustedGrossIncome === null ||
+    input.laScheduleEAdjustedGrossIncome === undefined ||
+    String(input.laScheduleEAdjustedGrossIncome).trim() === ""
+      ? null
+      : roundTaxEstimateMoney(
+          input.laScheduleEAdjustedGrossIncome
+        );
+
+  normalized.laFederalMedicalDentalDeduction =
+    input.laFederalMedicalDentalDeduction === null ||
+    input.laFederalMedicalDentalDeduction === undefined ||
+    String(input.laFederalMedicalDentalDeduction).trim() === ""
+      ? null
+      : roundTaxEstimateMoney(
+          input.laFederalMedicalDentalDeduction
+        );
+
+  normalized.laFederalEICAmount =
+    input.laFederalEICAmount === null ||
+    input.laFederalEICAmount === undefined ||
+    String(input.laFederalEICAmount).trim() === ""
+      ? null
+      : roundTaxEstimateMoney(
+          input.laFederalEICAmount
+        );
+
+  normalized.alQualifyingDependents =
+    input.alQualifyingDependents === null ||
+    input.alQualifyingDependents === undefined ||
+    String(input.alQualifyingDependents).trim() === ""
+      ? null
+      : Math.max(
+          0,
+          Math.round(
+            Number(input.alQualifyingDependents || 0)
+          )
+        );
+
+  normalized.ncSpouseItemizes =
+    input.ncSpouseItemizes === null ||
+    input.ncSpouseItemizes === undefined ||
+    String(input.ncSpouseItemizes).trim() === ""
+      ? null
+      : input.ncSpouseItemizes === true ||
+        String(input.ncSpouseItemizes)
+          .trim()
+          .toLowerCase() === "true" ||
+        String(input.ncSpouseItemizes)
+          .trim()
+          .toLowerCase() === "yes";
+
+  normalized.gaUnbornDependents =
+    Math.max(
+      0,
+      Math.round(
+        Number(input.gaUnbornDependents || 0)
+      )
+    );
+
+  if (Array.isArray(input.workingChildren)) {
+    normalized.workingChildren =
+      input.workingChildren.map((child) => {
+        if (
+          !child ||
+          typeof child !== "object" ||
+          Array.isArray(child)
+        ) {
+          return child;
+        }
+
+        const normalizedChild = {
+          ...child
+        };
+
+        [
+          "wages",
+          "gigIncome",
+          "unearnedIncome",
+          "federalWithheld",
+          "stateWithheld"
+        ].forEach((field) => {
+          normalizedChild[field] =
+            roundTaxEstimateMoney(
+              child[field]
+            );
+        });
+
+        return normalizedChild;
+      });
+  }
+
+  return normalized;
+}
+
+// =============================================================================
+// GET /api/state-tax-support
+// Exact-year support only. This endpoint never authorizes silent fallback.
+// =============================================================================
+
+app.get("/api/state-tax-support", (req, res) => {
+  const stateCode =
+    String(req.query?.stateCode || "")
+      .trim()
+      .toUpperCase();
+
+  const taxYear =
+    Number(req.query?.taxYear || 0);
+
+  if (!/^[A-Z]{2}$/.test(stateCode)) {
+    return res.status(400).json({
+      ok: false,
+      error: "Select a valid state."
+    });
+  }
+
+  if (!Number.isInteger(taxYear)) {
+    return res.status(400).json({
+      ok: false,
+      error: "Select a valid tax year."
+    });
+  }
+
+  const support =
+    getStateSupport(
+      stateCode,
+      taxYear
+    );
+
+  return res.status(200).json({
+    ok: true,
+    support
+  });
+});
+
+// =============================================================================
 // POST /api/estimate
 // =============================================================================
 
@@ -11885,7 +12564,11 @@ app.post("/api/estimate", (req, res) => {
 
   let engineResult;
   try {
-    engineResult = estimate(req.body);
+    engineResult = estimate(
+      normalizeTaxEstimateMoneyInput(
+        req.body
+      )
+    );
   } catch (err) {
     console.error("[/api/estimate] Engine error:", err);
     return res.status(500).json({
@@ -11897,7 +12580,9 @@ app.post("/api/estimate", (req, res) => {
   if (!engineResult.ok) {
     return res.status(400).json({
       ok: false,
-      errors: engineResult.errors || ["Validation failed. Please check your inputs."]
+      code: engineResult.code || "VALIDATION_FAILED",
+      errors: engineResult.errors || ["Validation failed. Please check your inputs."],
+      stateSupport: engineResult.stateSupport || null
     });
   }
 
@@ -11977,6 +12662,7 @@ app.post("/api/lead", async (req, res) => {
   let freeEstimateAccessible = [];
   let freeEstimateRevisionSource = null;
   let stableFreeEstimateFamilyId = "";
+  let isFreeEstimateCorrection = false;
 
   if (
     isFreeEstimateSubmission &&
@@ -12054,6 +12740,16 @@ app.post("/api/lead", async (req, res) => {
           email,
           freeEstimateTaxYear
         );
+
+      isFreeEstimateCorrection = Boolean(
+        freeEstimateRevisionSource &&
+        freeEstimateUsageBefore
+          ?.correctionWindowEligible &&
+        stableFreeEstimateFamilyId &&
+        stableFreeEstimateFamilyId ===
+          freeEstimateUsageBefore
+            ?.latestEstimateFamilyId
+      );
     } catch (error) {
       console.error(
         "[/api/lead] Free-estimate usage check failed:",
@@ -12068,7 +12764,10 @@ app.post("/api/lead", async (req, res) => {
       });
     }
 
-    if (freeEstimateUsageBefore.capReached) {
+    if (
+      freeEstimateUsageBefore.capReached &&
+      !isFreeEstimateCorrection
+    ) {
       recordFreeEstimateCapReached(
         email,
         freeEstimateUsageBefore
@@ -12083,7 +12782,9 @@ app.post("/api/lead", async (req, res) => {
         ok: false,
         code: "FREE_ESTIMATE_LIMIT_REACHED",
         errors: [
-          `You have completed your 3 free estimates for tax year ${freeEstimateTaxYear}.`
+          `Your free estimate for tax year ${freeEstimateTaxYear} has already been used. ` +
+          `Corrections may be recalculated for ${FREE_ESTIMATE_CORRECTION_WINDOW_HOURS} hours after the original estimate. ` +
+          "After that, use your saved estimate or Tax Watch Pro for ongoing changes."
         ],
         freeEstimateUsage: freeEstimateUsageBefore
       });
@@ -12164,7 +12865,11 @@ app.post("/api/lead", async (req, res) => {
                 ?.editStartedAt ||
               ""
             ).trim() || null,
-            recalculatedAt: new Date().toISOString()
+            recalculatedAt: new Date().toISOString(),
+            isCorrection:
+              Boolean(isFreeEstimateCorrection),
+            correctionWindowHours:
+              FREE_ESTIMATE_CORRECTION_WINDOW_HOURS
           }
         : null,
     taxWatchUpdate:
@@ -12247,7 +12952,14 @@ app.post("/api/lead", async (req, res) => {
         FREE_ESTIMATE_LIMIT,
         Math.max(
           0,
-          Number(freeEstimateUsageBefore?.used || 0) + 1
+          Number(
+            freeEstimateUsageBefore?.used || 0
+          ) +
+          (
+            freeEstimateRevisionSource
+              ? 0
+              : 1
+          )
         )
       );
 
@@ -15964,7 +16676,7 @@ app.post(
         from: EMAIL_USER,
         to: email,
         subject:
-          "Your Tax Savings Planner Secure Portal Code",
+          "Your Secure Client Portal Code",
         text:
 `Hello ${clientName},
 
@@ -16168,7 +16880,8 @@ app.post(
           current.activatedAt || now,
         lastLoginAt: now,
         lastActivityAt: now
-      })
+      }),
+      { awaitPrimary: true }
     );
 
     setClientPortalSessionCookie(
@@ -16316,7 +17029,8 @@ app.post(
           currentPortal.activatedAt || "",
         lastLoginAt: now,
         lastActivityAt: now
-      })
+      }),
+      { awaitPrimary: true }
     );
 
     setClientPortalSessionCookie(
@@ -18656,12 +19370,30 @@ app.get(
     }
 
     const lead = latest.entry.lead || {};
-    const taxData =
+    const sourceTaxData =
       lead.taxData &&
       typeof lead.taxData === "object" &&
       !Array.isArray(lead.taxData)
         ? lead.taxData
         : {};
+    const requestedFilingStatus = String(
+      req.query?.filingStatus || ""
+    )
+      .trim()
+      .toLowerCase();
+    const allowedFilingStatuses = new Set([
+      "single",
+      "mfj",
+      "mfs",
+      "hoh",
+      "qss"
+    ]);
+    const taxData = {
+      ...sourceTaxData,
+      ...(allowedFilingStatuses.has(requestedFilingStatus)
+        ? { filingStatus:requestedFilingStatus }
+        : {})
+    };
 
     const context = {
       version: 1,
@@ -24225,13 +24957,18 @@ app.post(
         await getClientPortalAccessibleLeads(
           req.clientPortalSession.email
         );
+      const refreshedTaxWatchContext =
+        await loadClientPortalTaxWatchContext(
+          req.clientPortalSession,
+          {
+            accessible: refreshed
+          }
+        );
 
       return res.status(200).json({
         ok: true,
         membership:
-          getClientPortalMembershipSummary(
-            refreshed
-          )
+          refreshedTaxWatchContext.summary.membership
       });
     } catch (error) {
       console.error(
