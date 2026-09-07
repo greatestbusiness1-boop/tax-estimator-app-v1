@@ -5262,6 +5262,57 @@
     })();
   </script>
 
+
+  <!-- RELEASE READINESS FIX 06B - MOBILE MORE MENU -->
+  <style id="release-readiness-fix06b-more-menu">
+    .marketing-more > summary::after {
+      content: "\25BE" !important;
+    }
+
+    .marketing-more[open] > summary::after {
+      content: "\25B4" !important;
+    }
+  </style>
+
+  <script id="release-readiness-fix06b-more-menu-script">
+    (function () {
+      var details = document.querySelector(".marketing-more");
+      if (!details) return;
+
+      var summary = details.querySelector("summary");
+      if (!summary) return;
+
+      function syncExpandedState() {
+        summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+      }
+
+      summary.addEventListener("click", function (event) {
+        event.preventDefault();
+        details.open = !details.open;
+        syncExpandedState();
+      });
+
+      details.addEventListener("toggle", syncExpandedState);
+
+      document.addEventListener("click", function (event) {
+        if (details.open && !details.contains(event.target)) {
+          details.open = false;
+          syncExpandedState();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && details.open) {
+          details.open = false;
+          syncExpandedState();
+          summary.focus();
+        }
+      });
+
+      syncExpandedState();
+    })();
+  </script>
+
   <script src="app.js"></script>
 </body>
 
