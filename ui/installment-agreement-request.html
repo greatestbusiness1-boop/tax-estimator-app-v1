@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request a Tax Extension | Greatest Business Solution LLC</title>
+  <title>Request an Installment Agreement | Greatest Business Solution LLC</title>
   <meta
     name="description"
-    content="Request professional help reviewing, preparing, filing, and confirming an eligible individual or business tax extension."
+    content="Request professional assistance preparing and requesting a federal or state installment agreement when you cannot pay your full tax balance at once."
   >
   <style>
     :root{
@@ -124,25 +124,6 @@
       margin-top:5px;
       font-size:25px;
     }
-    .price-card-tier{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:8px;
-      margin-top:7px;
-    }
-    .price-card-tier strong{
-      display:inline;
-      margin:0;
-      font-size:19px;
-    }
-    .price-card-tier em{
-      font-style:normal;
-      color:#dbeafe;
-      font-size:11px;
-      font-weight:700;
-      text-align:right;
-    }
     .notice{
       margin-top:18px;
       border-left:6px solid var(--orange);
@@ -229,6 +210,10 @@
       padding:11px 12px;
       color:var(--ink);
       font:inherit;
+    }
+    textarea{
+      resize:vertical;
+      min-height:80px;
     }
     input:focus,select:focus,textarea:focus{
       outline:3px solid rgba(40,88,140,.16);
@@ -444,7 +429,7 @@
       <img src="/logo.png" alt="Greatest Business Solution LLC">
       <div>
         <strong>Greatest Business Solution LLC</strong>
-        <span>Professional Tax Extension Service</span>
+        <span>Professional Installment Agreement Service</span>
       </div>
     </div>
     <a href="/">Return to Tax Estimator</a>
@@ -452,65 +437,54 @@
 
   <main class="wrap">
     <div class="cancelled" id="cancelledMessage">
-      Payment was not completed. Your request remains saved, but it is not marked paid or ready to file.
+      Payment was not completed. Your request remains saved, but it is not marked paid or submitted.
     </div>
 
     <section class="hero">
-      <div class="eyebrow">Professional extension service</div>
-      <h1>Request a Tax Extension</h1>
+      <div class="eyebrow">Professional installment agreement service</div>
+      <h1>Request an Installment Agreement</h1>
       <p>
-        Submit the information needed for Greatest Business Solution LLC to review deadline eligibility, prepare an eligible extension, file it, and provide confirmation. This is a professional service—not an IRS filing fee.
+        Get professional assistance requesting a payment arrangement when you cannot pay your full tax balance at once.
       </p>
 
       <div class="price-row">
         <div class="price-card">
-          <span>Individual Federal Extension</span>
+          <span>Federal Installment Agreement</span>
           <strong>$150</strong>
         </div>
         <div class="price-card">
-          <span>Individual Federal + One State</span>
-          <strong>$150</strong>
+          <span>One State Installment Agreement</span>
+          <strong>$125</strong>
         </div>
         <div class="price-card">
-          <span>Business Extension</span>
-          <div class="price-card-tier">
-            <strong>$175</strong>
-            <em>Federal</em>
-          </div>
-          <div class="price-card-tier">
-            <strong>$300</strong>
-            <em>Federal + One State</em>
-          </div>
+          <span>Federal + One State Installment Agreement Package</span>
+          <strong>$250</strong>
         </div>
       </div>
     </section>
 
     <div class="notice">
-      An extension gives additional time to <strong>file</strong> a return. It does not extend the deadline to <strong>pay</strong> tax that may be owed. Deadline eligibility and any estimated payment must be reviewed before filing.
-    </div>
-
-    <div class="notice" id="unusualSituationNotice" style="display:none;">
-      Additional-state or unusual filing situations may require a separate quote.
+      Approval, payment terms, penalties, interest, and government fees are determined by the IRS or applicable state taxing authority. Our fee covers professional preparation and assistance with the request. This is not a guarantee of approval.
     </div>
 
     <div class="layout">
       <section class="panel">
         <div class="panel-head">
-          <h2>Extension Request Information</h2>
-          <p>Do not enter Social Security numbers, bank information, passwords, or upload tax documents on this page.</p>
+          <h2>Installment Agreement Request Information</h2>
+          <p>Do not enter Social Security numbers, bank account numbers, passwords, or upload tax documents on this page.</p>
         </div>
 
         <div class="before-you-begin">
           <strong>Before you begin, have this information ready:</strong>
           <ul>
-            <li>Client or business contact name, email address, and 10-digit phone number</li>
-            <li>Tax year, filing status or business return type, and deadline situation</li>
-            <li>Federal-only or federal-plus-one-state service choice</li>
-            <li>Estimated total tax, withholding or prior payments, estimated balance due, and planned payment</li>
+            <li>Full name or business contact, email address, and 10-digit phone number</li>
+            <li>Tax year, and whether this is for an individual or business</li>
+            <li>Federal and/or state balance due, and the state if applicable</li>
+            <li>What you can pay now, and a proposed monthly payment if you have one in mind</li>
           </ul>
         </div>
 
-        <form class="panel-body" id="extensionForm" novalidate>
+        <form class="panel-body" id="installmentForm" novalidate>
           <h3 class="section-title">Client Information</h3>
           <div class="grid">
             <div class="field full">
@@ -535,18 +509,17 @@
             </div>
           </div>
 
-          <h3 class="section-title">Return &amp; Extension Type</h3>
+          <h3 class="section-title">Service &amp; Balance Information</h3>
           <div class="grid">
             <div class="field full">
-              <label for="servicePackage">Extension service</label>
-              <select id="servicePackage" required>
-                <option value="individual-federal">Individual Federal Extension — $150</option>
-                <option value="individual-federal-state">Individual Federal + One State — $150</option>
-                <option value="business-federal">Business Federal Extension — $175</option>
-                <option value="business-federal-state">Business Federal + One State Extension — $300</option>
+              <label for="serviceTier">Installment agreement service</label>
+              <select id="serviceTier" required>
+                <option value="federal">Federal Installment Agreement — $150</option>
+                <option value="state">One State Installment Agreement — $125</option>
+                <option value="package">Federal + One State Installment Agreement Package — $250</option>
               </select>
               <div class="service-note" id="serviceNote">
-                This is the Federal extension only. It does not include a state extension.
+                This service covers the Federal installment-agreement request only. It does not include a state installment agreement.
               </div>
             </div>
 
@@ -560,40 +533,22 @@
               <div class="year-note">Defaults to the current filing season. Use the arrows to change it.</div>
             </div>
 
-            <div class="field" id="filingStatusWrap">
-              <label for="filingStatus">Individual filing status</label>
-              <select id="filingStatus">
-                <option value="">Select filing status</option>
-                <option>Single</option>
-                <option>Married Filing Jointly</option>
-                <option>Married Filing Separately</option>
-                <option>Head of Household</option>
-                <option>Qualifying Surviving Spouse</option>
-                <option>Not Sure</option>
+            <div class="field">
+              <label for="entityCategory">Individual or business</label>
+              <select id="entityCategory" required>
+                <option value="individual">Individual</option>
+                <option value="business">Business</option>
               </select>
             </div>
 
-            <div class="field conditional" id="entityTypeWrap">
-              <label for="entityType">Business return type</label>
-              <select id="entityType">
-                <option value="">Select return type</option>
-                <option value="Partnership / Form 1065">Partnership / Form 1065</option>
-                <option value="S Corporation / Form 1120-S">S Corporation / Form 1120-S</option>
-                <option value="C Corporation / Form 1120">C Corporation / Form 1120</option>
-                <option value="Trust or Estate / Form 1041">Trust or Estate / Form 1041</option>
-                <option value="Exempt Organization / Form 990">Exempt Organization / Form 990</option>
-                <option value="Other / Needs Review">Other / Needs Review</option>
-              </select>
+            <div class="field">
+              <label for="federalBalanceDue">Federal balance due</label>
+              <input id="federalBalanceDue" type="number" min="0" step="1" value="0">
             </div>
 
-            <div class="field full">
-              <label for="deadlineStatus">Deadline situation</label>
-              <select id="deadlineStatus" required>
-                <option value="">Select the situation that applies</option>
-                <option value="before_due_date">I am submitting before the applicable original filing deadline</option>
-                <option value="relief_or_special_rule">I may qualify for disaster, military, overseas, or another special deadline rule</option>
-                <option value="unsure_or_late">The regular deadline may have passed or I am not sure</option>
-              </select>
+            <div class="field conditional" id="stateBalanceWrap">
+              <label for="stateBalanceDue">State balance due</label>
+              <input id="stateBalanceDue" type="number" min="0" step="1" value="0">
             </div>
 
             <div class="field conditional" id="stateCodeWrap">
@@ -653,41 +608,74 @@
                 <option value="WY">WY</option>
               </select>
             </div>
+
+            <div class="field">
+              <label for="amountPayableNow">Amount you can pay immediately</label>
+              <input id="amountPayableNow" type="number" min="0" step="1" value="0">
+            </div>
+
+            <div class="field">
+              <label for="proposedMonthlyPayment">Proposed monthly payment (if known)</label>
+              <input id="proposedMonthlyPayment" type="number" min="0" step="1" value="0">
+            </div>
           </div>
 
-          <h3 class="section-title">Estimated Payment Information</h3>
+          <h3 class="section-title">Compliance Background</h3>
           <div class="grid">
             <div class="field">
-              <label for="estimatedTotalTax">Estimated total tax</label>
-              <input id="estimatedTotalTax" type="number" min="0" step="1" value="0">
+              <label for="hasExistingNotice">Existing IRS or state notices?</label>
+              <select id="hasExistingNotice">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
             </div>
+
             <div class="field">
-              <label for="totalPayments">Withholding and prior payments</label>
-              <input id="totalPayments" type="number" min="0" step="1" value="0">
+              <label for="hasExistingAgreement">Existing installment agreement?</label>
+              <select id="hasExistingAgreement">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
             </div>
+
             <div class="field">
-              <label for="estimatedBalanceDue">Estimated balance due</label>
-              <input id="estimatedBalanceDue" type="number" min="0" step="1" value="0">
+              <label for="priorDefault">Prior defaulted agreement?</label>
+              <select id="priorDefault">
+                <option value="unknown">Not sure</option>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
             </div>
+
             <div class="field">
-              <label for="paymentWithExtension">Amount planned with extension</label>
-              <input id="paymentWithExtension" type="number" min="0" step="1" value="0">
+              <label for="filingCompliant">Are all required tax returns filed?</label>
+              <select id="filingCompliant">
+                <option value="yes">Yes, up to date</option>
+                <option value="no">No, some returns are missing</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="bestContactMethod">Best contact method</label>
+              <select id="bestContactMethod">
+                <option value="email">Email</option>
+                <option value="phone">Phone call</option>
+                <option value="text">Text message</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="notes">Notes</label>
+              <textarea id="notes" placeholder="Anything else the office should know before reviewing your request."></textarea>
             </div>
           </div>
-
-          <h3 class="section-title">Optional Next Step</h3>
-
-          <label class="check">
-            <input id="requestPreparationQuote" type="checkbox">
-            <span>I would like information about having Greatest Business Solution LLC prepare my full tax return after my extension is filed.</span>
-          </label>
 
           <h3 class="section-title">Required Acknowledgment</h3>
 
           <label class="check">
             <input id="acknowledgmentAccepted" type="checkbox" required>
             <span>
-              I understand that an extension provides additional time to file, not additional time to pay; tax, penalties, and interest may still be due; and this professional service fee is separate from any tax payment or government charge.
+              I understand that approval, payment terms, penalties, interest, and government fees are determined by the IRS or applicable state taxing authority, not by Greatest Business Solution LLC; this professional service fee is not a tax payment or government fee; and this request is not approved until the taxing authority confirms it.
             </span>
           </label>
 
@@ -695,7 +683,7 @@
           <div class="success" id="formSuccess"></div>
 
           <button class="submit" id="submitButton" type="submit">
-            Submit Extension Request &amp; Continue to Secure Payment
+            Submit Installment Agreement Request &amp; Continue to Secure Payment
           </button>
         </form>
       </section>
@@ -706,40 +694,36 @@
         <div class="breakdown">
           <div>
             <span>Selected service</span>
-            <strong id="selectedServiceLabel">Individual Federal Extension</strong>
-          </div>
-          <div>
-            <span>State included</span>
-            <strong id="stateIncludedLabel">No</strong>
+            <strong id="selectedServiceLabel">Federal Installment Agreement</strong>
           </div>
         </div>
 
         <div class="price-total">
-          <span id="totalPriceLabel">Professional service fee</span>
+          <span>One-time professional fee</span>
           <strong id="totalPrice">$150</strong>
         </div>
 
-        <div class="notice" id="sideQuoteNotice" style="display:none; margin-top:12px;">
-          This package covers one state. Additional states, multi-state filings, or unusual filing situations are not included and may require a separate quote.
+        <div class="notice" id="packageScopeNotice" style="display:none; margin-top:12px;">
+          Includes assistance with one Federal installment agreement and one state installment agreement. Additional states or unusual collection situations may require an additional fee.
         </div>
 
         <div class="standalone">
           <strong>Standalone service:</strong>
-          You may use another tax professional for the full return. Purchasing this extension service does not require you to hire Greatest Business Solution LLC for tax preparation.
+          You may use another tax professional for the full return or other tax matters. Purchasing this service does not require you to hire Greatest Business Solution LLC for tax preparation.
         </div>
 
         <div class="scope">
-          <strong>Service includes:</strong> request review, deadline and return-type review, preparation and filing of an eligible extension, and delivery of confirmation.
+          <strong>Service includes:</strong> review of your balance and payment information, preparation of the installment agreement request, and submission assistance.
           <br><br>
-          <strong>Not included:</strong> full return preparation, payment of tax, representation, penalty abatement, or a guarantee that a late or ineligible extension will be accepted.
+          <strong>Not included:</strong> payment of tax owed, IRS or state setup fees, penalties, interest, monthly tax payments, representation, or a guarantee of approval.
         </div>
 
         <div class="security">
-          Use the Secure Client Portal when documents are requested. Do not email or enter Social Security numbers, tax documents, bank details, or passwords here.
+          Use the Secure Client Portal when documents are requested. Do not email or enter Social Security numbers, bank account numbers, tax documents, or passwords here.
         </div>
 
         <div class="service-note" style="margin-top:14px;">
-          Owe tax you cannot pay in full? <a href="/request-installment-agreement?return=professional-tax-services">Learn about Installment Agreement assistance</a>.
+          Need to file a return first? <a href="/start-my-tax-return">Learn about tax return preparation</a> or <a href="/">return to Tax Estimate Review</a>.
         </div>
       </aside>
     </div>
@@ -748,10 +732,9 @@
   <script>
     "use strict";
 
-    const form = document.getElementById("extensionForm");
-    const servicePackage = document.getElementById("servicePackage");
-    const entityTypeWrap = document.getElementById("entityTypeWrap");
-    const filingStatusWrap = document.getElementById("filingStatusWrap");
+    const form = document.getElementById("installmentForm");
+    const serviceTier = document.getElementById("serviceTier");
+    const stateBalanceWrap = document.getElementById("stateBalanceWrap");
     const stateCodeWrap = document.getElementById("stateCodeWrap");
     const stateCode = document.getElementById("stateCode");
     const phoneInput = document.getElementById("clientPhone");
@@ -759,64 +742,26 @@
     const errors = document.getElementById("formErrors");
     const success = document.getElementById("formSuccess");
 
-    const taxYearInput =
-      document.getElementById("taxYear");
-    const currentTaxSeason =
-      new Date().getFullYear() - 1;
+    const taxYearInput = document.getElementById("taxYear");
+    const currentTaxSeason = new Date().getFullYear() - 1;
 
-    taxYearInput.min =
-      String(currentTaxSeason - 10);
-    taxYearInput.max =
-      String(new Date().getFullYear());
-    taxYearInput.value =
-      String(currentTaxSeason);
+    taxYearInput.min = String(currentTaxSeason - 10);
+    taxYearInput.max = String(new Date().getFullYear());
+    taxYearInput.value = String(currentTaxSeason);
 
     function changeTaxYear(step) {
-      const current =
-        Number.parseInt(
-          taxYearInput.value,
-          10
-        );
-      const minimum =
-        Number.parseInt(
-          taxYearInput.min,
-          10
-        );
-      const maximum =
-        Number.parseInt(
-          taxYearInput.max,
-          10
-        );
-      const safeCurrent =
-        Number.isFinite(current)
-          ? current
-          : currentTaxSeason;
+      const current = Number.parseInt(taxYearInput.value, 10);
+      const minimum = Number.parseInt(taxYearInput.min, 10);
+      const maximum = Number.parseInt(taxYearInput.max, 10);
+      const safeCurrent = Number.isFinite(current) ? current : currentTaxSeason;
 
-      taxYearInput.value =
-        String(
-          Math.min(
-            maximum,
-            Math.max(
-              minimum,
-              safeCurrent + step
-            )
-          )
-        );
+      taxYearInput.value = String(
+        Math.min(maximum, Math.max(minimum, safeCurrent + step))
+      );
     }
 
-    document.getElementById(
-      "taxYearDown"
-    ).addEventListener(
-      "click",
-      () => changeTaxYear(-1)
-    );
-
-    document.getElementById(
-      "taxYearUp"
-    ).addEventListener(
-      "click",
-      () => changeTaxYear(1)
-    );
+    document.getElementById("taxYearDown").addEventListener("click", () => changeTaxYear(-1));
+    document.getElementById("taxYearUp").addEventListener("click", () => changeTaxYear(1));
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "cancelled") {
@@ -831,38 +776,8 @@
       }).format(Number(value || 0));
     }
 
-    function getServiceSelection() {
-      const value = String(servicePackage.value || "");
-      const business = value.startsWith("business-");
-      const stateRequested = value.endsWith("-state");
-      return {
-        business,
-        stateRequested
-      };
-    }
-
-    const EXTENSION_PRICE_DOLLARS = {
-      "individual-federal": 150,
-      "individual-federal-state": 150,
-      "business-federal": 175,
-      "business-federal-state": 300
-    };
-
-    const SERVICE_NOTES = {
-      "individual-federal":
-        "This is the Federal extension only. It does not include a state extension.",
-      "individual-federal-state":
-        "State review and one state's applicable extension filing is included at no extra charge with this $150 package. The office confirms what applies before filing.",
-      "business-federal":
-        "This is the Federal business extension only. It does not include a state extension. If a state extension is also needed, select Business Federal + One State.",
-      "business-federal-state":
-        "This $300 package includes the Federal business extension plus review and applicable filing for one state. Additional states, multi-state filings, or unusual filing situations may require a separate quote."
-    };
-
     function formatPhoneInput(value) {
-      const digits = String(value || "")
-        .replace(/\D/g, "")
-        .slice(0, 10);
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
 
       if (digits.length < 4) {
         return digits ? `(${digits}` : "";
@@ -875,53 +790,44 @@
       return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
     }
 
+    const SERVICE_PRICES = { federal: 150, state: 125, package: 250 };
+    const SERVICE_LABELS = {
+      federal: "Federal Installment Agreement",
+      state: "One State Installment Agreement",
+      package: "Federal + One State Installment Agreement Package"
+    };
+    const SERVICE_NOTES = {
+      federal: "This service covers the Federal installment-agreement request only. It does not include a state installment agreement.",
+      state: "This service covers one state installment-agreement request only. It does not include a Federal installment agreement.",
+      package: "This package includes the Federal installment agreement plus one state installment agreement, saving $25 compared with purchasing the two services separately. Additional states or unusual collection situations may require an additional fee."
+    };
+
     function updateFormDisplay() {
-      const value = String(servicePackage.value || "");
-      const selection = getServiceSelection();
-      const business = selection.business;
-      const stateRequested = selection.stateRequested;
+      const tier = serviceTier.value;
+      const needsState = tier === "state" || tier === "package";
 
-      entityTypeWrap.style.display = business ? "grid" : "none";
-      filingStatusWrap.style.display = business ? "none" : "grid";
-      stateCodeWrap.style.display = stateRequested ? "grid" : "none";
+      stateBalanceWrap.style.display = needsState ? "grid" : "none";
+      stateCodeWrap.style.display = needsState ? "grid" : "none";
 
-      if (!stateRequested) {
+      if (!needsState) {
         stateCode.value = "";
       }
 
-      const serviceLabel = business
-        ? (stateRequested ? "Business Federal + One State Extension" : "Business Federal Extension")
-        : (stateRequested ? "Individual Federal + One State Extension" : "Individual Federal Extension");
+      document.getElementById("selectedServiceLabel").textContent = SERVICE_LABELS[tier];
+      document.getElementById("totalPrice").textContent = money(SERVICE_PRICES[tier]);
+      document.getElementById("serviceNote").textContent = SERVICE_NOTES[tier] || SERVICE_NOTES.federal;
 
-      document.getElementById("selectedServiceLabel").textContent = serviceLabel;
-      document.getElementById("stateIncludedLabel").textContent = stateRequested ? "Yes" : "No";
-      document.getElementById("serviceNote").textContent =
-        SERVICE_NOTES[value] || SERVICE_NOTES["individual-federal"];
-
-      const unusualNotice = document.getElementById("unusualSituationNotice");
-      const sideQuoteNotice = document.getElementById("sideQuoteNotice");
-      const totalPriceLabel = document.getElementById("totalPriceLabel");
-      const totalPriceEl = document.getElementById("totalPrice");
-
-      const price = EXTENSION_PRICE_DOLLARS[value] || 150;
-      totalPriceLabel.textContent = "One-time professional fee";
-      totalPriceEl.textContent = money(price);
-
-      // The additional-state / unusual-situation notice is most relevant once
-      // a business filer has already selected the one-state package -- it
-      // clarifies that MORE than one state, or an unusual situation, is still
-      // outside this fixed-price package and would need a separate quote.
-      const showMultiStateNotice = business && stateRequested;
-      unusualNotice.style.display = showMultiStateNotice ? "block" : "none";
-      sideQuoteNotice.style.display = showMultiStateNotice ? "block" : "none";
-      submitButton.textContent = "Submit Extension Request & Continue to Secure Payment";
+      const packageScopeNotice = document.getElementById("packageScopeNotice");
+      if (packageScopeNotice) {
+        packageScopeNotice.style.display = tier === "package" ? "block" : "none";
+      }
     }
 
     phoneInput.addEventListener("input", () => {
       phoneInput.value = formatPhoneInput(phoneInput.value);
     });
 
-    servicePackage.addEventListener("change", updateFormDisplay);
+    serviceTier.addEventListener("change", updateFormDisplay);
     updateFormDisplay();
 
     function showErrors(messages) {
@@ -981,46 +887,30 @@
           email: document.getElementById("clientEmail").value.trim(),
           phone: document.getElementById("clientPhone").value.trim()
         },
-        extension: {
-          serviceType: getServiceSelection().business ? "business" : "individual",
-          taxYear: document.getElementById("taxYear").value.trim(),
-          filingStatus: document.getElementById("filingStatus").value,
-          entityType: document.getElementById("entityType").value,
-          deadlineStatus: document.getElementById("deadlineStatus").value,
-          stateExtensionRequested: getServiceSelection().stateRequested,
+        installment: {
+          serviceTier: serviceTier.value,
+          taxYear: taxYearInput.value.trim(),
+          entityCategory: document.getElementById("entityCategory").value,
+          federalBalanceDue: Number(document.getElementById("federalBalanceDue").value || 0),
+          stateBalanceDue: Number(document.getElementById("stateBalanceDue").value || 0),
           stateCode: stateCode.value,
-          estimatedTotalTax: Number(document.getElementById("estimatedTotalTax").value || 0),
-          totalPayments: Number(document.getElementById("totalPayments").value || 0),
-          estimatedBalanceDue: Number(document.getElementById("estimatedBalanceDue").value || 0),
-          paymentWithExtension: Number(document.getElementById("paymentWithExtension").value || 0),
-          consideringFullPreparation: document.getElementById("requestPreparationQuote").checked,
+          amountPayableNow: Number(document.getElementById("amountPayableNow").value || 0),
+          proposedMonthlyPayment: Number(document.getElementById("proposedMonthlyPayment").value || 0),
+          hasExistingNotice: document.getElementById("hasExistingNotice").value === "yes",
+          hasExistingAgreement: document.getElementById("hasExistingAgreement").value === "yes",
+          priorDefault: document.getElementById("priorDefault").value,
+          filingCompliant: document.getElementById("filingCompliant").value === "yes",
+          bestContactMethod: document.getElementById("bestContactMethod").value,
+          notes: document.getElementById("notes").value.trim(),
           acknowledgmentAccepted: document.getElementById("acknowledgmentAccepted").checked
         }
       };
 
       submitButton.disabled = true;
-      submitButton.textContent = "Saving Extension Request...";
+      submitButton.textContent = "Saving Installment Agreement Request...";
 
       try {
-        const saved = await postJson("/api/extension-request", payload);
-
-        if (saved.quoteNeeded) {
-          showSuccess(
-            `Request ${saved.leadId} was saved. Additional-state or unusual filing situations require a separate quote — no payment was charged. The office will follow up with pricing before any payment is requested.`,
-            true
-          );
-          submitButton.textContent = "Saved — Quote Needed";
-          return;
-        }
-
-        if (!saved.checkoutEligible) {
-          showSuccess(
-            `Request ${saved.leadId} was saved for deadline eligibility review. No payment was charged. The office will contact you before requesting payment.`,
-            true
-          );
-          submitButton.textContent = "Saved — Deadline Review Needed";
-          return;
-        }
+        const saved = await postJson("/api/installment-agreement-request", payload);
 
         showSuccess(
           `Request ${saved.leadId} was saved. Opening secure payment for ${money(saved.totalPrice)}...`
@@ -1029,7 +919,7 @@
         submitButton.textContent = "Opening Secure Payment...";
 
         const checkout = await postJson(
-          "/api/create-extension-checkout",
+          "/api/create-installment-agreement-checkout",
           {
             leadId: saved.leadId,
             clientEmail: payload.contact.email
@@ -1040,7 +930,7 @@
       } catch (error) {
         showErrors(error.messages || error.message);
         submitButton.disabled = false;
-        submitButton.textContent = "Submit Extension Request & Continue to Secure Payment";
+        submitButton.textContent = "Submit Installment Agreement Request & Continue to Secure Payment";
       }
     });
   </script>

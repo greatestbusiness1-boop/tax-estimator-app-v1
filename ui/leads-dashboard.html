@@ -598,6 +598,18 @@
       margin-top: 14px;
     }
 
+    .membership-lifecycle-note {
+      flex-basis: 100%;
+      border: 1px solid #99f6e4;
+      border-radius: 8px;
+      background: #f0fdfa;
+      color: #115e59;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 10px;
+      line-height: 1.4;
+    }
+
     .membership-lifecycle-actions button {
       border: 1px solid #0f2f59;
       background: #0f2f59;
@@ -1266,6 +1278,47 @@
       padding: 10px;
       margin-top: 10px;
       line-height: 1.45;
+    }
+
+    .ia-detail-section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #dbe4f0;
+    }
+
+    .ia-detail-section > span {
+      display: block;
+      margin-bottom: 6px;
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .ia-detail-section label {
+      display: block;
+      font-weight: 900;
+      color: #0f2f55;
+      margin-bottom: 5px;
+      margin-top: 10px;
+    }
+
+    .ia-detail-section label:first-of-type {
+      margin-top: 0;
+    }
+
+    .ia-detail-section select,
+    .ia-detail-section textarea {
+      width: 100%;
+      border: 1px solid #b9c8d9;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font: inherit;
+    }
+
+    .ia-detail-section textarea {
+      min-height: 80px;
     }
 
     .office-empty {
@@ -2025,6 +2078,54 @@
       font-size:11px;
       font-weight:850;
       line-height:1.45;
+    }
+
+    .stripe-reference-block {
+      margin-top:4px;
+      max-width:100%;
+    }
+
+    .stripe-id-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      flex-wrap:wrap;
+      max-width:100%;
+      color:#52637a;
+      font-weight:600;
+    }
+
+    .stripe-id-chip code {
+      background:#eef2f7;
+      border:1px solid #dbe4f0;
+      border-radius:5px;
+      padding:1px 5px;
+      font-size:11px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      overflow-wrap:anywhere;
+      word-break:break-all;
+    }
+
+    .stripe-id-copy-btn {
+      border:1px solid #cbd5e1;
+      border-radius:6px;
+      background:#ffffff;
+      color:#334155;
+      font-size:10px;
+      font-weight:700;
+      padding:1px 6px;
+      cursor:pointer;
+      line-height:1.6;
+    }
+
+    .stripe-id-copy-btn:hover {
+      background:#f1f5f9;
+    }
+
+    .stripe-id-inline {
+      margin-top:2px;
+      font-size:11px;
+      font-weight:500;
     }
 
     .taxprep-basket-actions {
@@ -3188,6 +3289,34 @@
       >0</span>
     </button>
     <button
+      id="installmentAgreementRequestsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="installmentagreements"
+      data-title="Installment Agreement Requests"
+      type="button"
+    >
+      <span>Installment Agreement Requests</span>
+      <span
+        id="installmentAgreementRequestsSidebarCount"
+        class="extension-sidebar-count"
+        aria-label="0 active installment agreement requests"
+      >0</span>
+    </button>
+    <button
+      id="completedInstallmentAgreementsSidebarButton"
+      class="sidebar-btn transcript-sidebar-link"
+      data-view="installmentagreementscompleted"
+      data-title="Completed & Closed Installment Agreements"
+      type="button"
+    >
+      <span>Completed &amp; Closed Installment Agreements</span>
+      <span
+        id="completedInstallmentAgreementsSidebarCount"
+        class="extension-sidebar-count"
+        aria-label="0 completed or closed installment agreement requests"
+      >0</span>
+    </button>
+    <button
       id="completedTaxReturnsSidebarButton"
       class="sidebar-btn transcript-sidebar-link"
       data-view="taxprepcompleted"
@@ -3243,7 +3372,22 @@
     <button class="sidebar-btn" onclick="window.open('/client-portal','_blank','noopener')">Client Portal Sign In</button>
     <button class="sidebar-btn" onclick="window.location.href='/office-document-review'">Document Review Queue</button>
     <button class="sidebar-btn" onclick="window.location.href='/office-document-review#production-readiness'">Production Readiness</button>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-group">Marketing</div>
+    <button class="sidebar-btn" onclick="window.location.href='/newsletter-admin'">Small Business Tax &amp; Money Brief</button>
+    <button class="sidebar-btn" onclick="openRevenueSummaryModal()">Revenue Summary</button>
   </aside>
+
+  <div id="revenueSummaryOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:85vh;overflow:auto;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;color:#0f2f55;">Revenue Summary</h2>
+        <button type="button" onclick="closeRevenueSummaryModal()" style="border:none;background:#e5e7eb;border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer;">Close</button>
+      </div>
+      <div id="revenueSummaryBody" style="font-size:14px;color:#334155;">Loading...</div>
+    </div>
+  </div>
 
   <main class="main">
     <h1 id="viewTitle">All Leads</h1>
@@ -3748,6 +3892,125 @@ function escapeOfficeHtml(value){
 
 function officeNl2br(value){
   return escapeOfficeHtml(value).replace(/\n/g, "<br>");
+}
+
+function truncateStripeId(value, keep){
+  const text = String(value || "").trim();
+  const limit = keep || 14;
+
+  if(text.length <= limit + 3){
+    return text;
+  }
+
+  return text.slice(0, limit) + "...";
+}
+
+function stripeIdCopyHtml(label, fullId){
+  const id = String(fullId || "").trim();
+
+  if(!id){
+    return "";
+  }
+
+  const truncated = truncateStripeId(id);
+
+  return (
+    `<span class="stripe-id-chip" title="${escapeOfficeHtml(id)}">` +
+    `${escapeOfficeHtml(label)}: <code>${escapeOfficeHtml(truncated)}</code>` +
+    `<button type="button" class="stripe-id-copy-btn" data-client-reference="${escapeOfficeHtml(id)}" onclick="copyClientReference(this.dataset.clientReference, this)">Copy</button>` +
+    `</span>`
+  );
+}
+
+function stripeReferenceLine(sub){
+  const record = sub && typeof sub === "object" ? sub : {};
+  const sessionId = String(record.stripeCheckoutSessionId || "").trim();
+  const intentId = String(record.stripePaymentIntentId || "").trim();
+  const refundStatus = String(record.refundStatus || "").trim();
+  const refundedCents = Number(record.refundedAmountCents || 0);
+
+  // The lead-level refundStatus/refundedAmountCents are an aggregate across
+  // every payment. The Stripe reference above only ever shows the latest
+  // PaymentIntent, which for a multi-payment record is not necessarily the
+  // one that was refunded -- attaching the aggregate badge to it here would
+  // misattribute a refund to the wrong payment. When more than one payment
+  // exists, the per-payment breakdown (paymentHistoryLines) and the
+  // Gross/Refunded/Net summary carry that information accurately instead.
+  const hasMultiplePayments =
+    Array.isArray(record.paymentHistory) &&
+    record.paymentHistory.length > 1;
+
+  if(!sessionId && !intentId && !refundStatus){
+    return "";
+  }
+
+  const chips = [];
+  if(sessionId) chips.push(stripeIdCopyHtml("Checkout Session", sessionId));
+  if(intentId) chips.push(stripeIdCopyHtml("Payment Intent", intentId));
+
+  let line =
+    `<div class="stripe-reference-block">` +
+    (chips.length ? chips.join("<br>") : "Stripe reference: Not available");
+
+  if(!hasMultiplePayments){
+    if(refundStatus === "refunded"){
+      line += ` <span style="color:#991b1b;font-weight:700;">(Refunded${refundedCents ? " $" + (refundedCents/100).toFixed(2) : ""})</span>`;
+    }else if(refundStatus === "partial"){
+      line += ` <span style="color:#991b1b;font-weight:700;">(Partially refunded${refundedCents ? " $" + (refundedCents/100).toFixed(2) : ""})</span>`;
+    }
+  }
+
+  line += `</div>`;
+
+  return line;
+}
+
+function paymentHistoryCompactSummary(sub){
+  const record = sub && typeof sub === "object" ? sub : {};
+  const history = Array.isArray(record.paymentHistory) ? record.paymentHistory : [];
+
+  if(history.length <= 1){
+    return "";
+  }
+
+  const refundedCount = history.filter((e) => e.refundStatus === "refunded" || e.refundStatus === "partial").length;
+  return `<br><span title="${escapeOfficeHtml(history.map((e,i) => "Payment " + (i+1) + ": $" + (Number(e.amountPaidCents||0)/100).toFixed(2)).join(" | "))}">${history.length} payments${refundedCount ? ", " + refundedCount + " refunded" : ""}</span>`;
+}
+
+function paymentHistoryLines(sub){
+  const record = sub && typeof sub === "object" ? sub : {};
+  const history = Array.isArray(record.paymentHistory) ? record.paymentHistory : [];
+
+  if(!history.length){
+    return "";
+  }
+
+  const rows = history
+    .slice()
+    .sort((a, b) => String(a.paidAt || "").localeCompare(String(b.paidAt || "")))
+    .map((entry, index) => {
+      const amount = "$" + (Number(entry.amountPaidCents || 0) / 100).toFixed(2);
+      const date = entry.paidAt ? formatLeadDate(entry.paidAt) : "Date not recorded";
+      const pi = String(entry.paymentIntentId || "").trim();
+      const entryPaidCents = Number(entry.amountPaidCents || 0);
+      const entryRefundedCents = Math.max(0, Number(entry.refundedAmountCents || 0));
+      let refundNote = "";
+      if(entryRefundedCents > 0){
+        const isFullRefund =
+          entryPaidCents > 0
+            ? entryRefundedCents >= entryPaidCents
+            : entry.refundStatus === "refunded";
+        refundNote = isFullRefund
+          ? ` <span style="color:#991b1b;font-weight:700;">(Fully refunded $${(entryRefundedCents/100).toFixed(2)})</span>`
+          : ` <span style="color:#991b1b;font-weight:700;">(Partially refunded $${(entryRefundedCents/100).toFixed(2)})</span>`;
+      }
+      const piLine = pi
+        ? `<div class="stripe-id-inline">${stripeIdCopyHtml("Payment Intent", pi)}</div>`
+        : "";
+      return `Payment ${index + 1}: ${escapeOfficeHtml(amount)} on ${escapeOfficeHtml(date)}${refundNote}${piLine}`;
+    });
+
+  return `<div style="margin-top:6px;font-size:12px;color:#52637a;">${rows.join("<br>")}</div>`;
 }
 
 function getLeadEnteredAt(lead){
@@ -4401,6 +4664,20 @@ function getAllLeadTypeKey(lead){
   }
 
   if(
+    isInstallmentAgreementLead(lead) ||
+    status.includes("installment agreement")
+  ){
+    return "installment-agreement";
+  }
+
+  if(
+    isExtensionLead(lead) ||
+    status.includes("extension request")
+  ){
+    return "extension";
+  }
+
+  if(
     lead?.estimateSummary ||
     lead?.taxData ||
     leadId.includes("lead-")
@@ -4419,6 +4696,8 @@ function getAllLeadTypeLabel(lead){
     "tax-watch-enrollment": "Tax Watch Pro Enrollment",
     "pinnacle-enrollment": "Pinnacle Tax Action Plan Enrollment",
     "website-contact": "Website Contact",
+    "installment-agreement": "Installment Agreement",
+    "extension": "Tax Extension",
     "transcript": "Transcript Help",
     "estimate": "Free Estimate",
     "other": "Other"
@@ -5039,6 +5318,23 @@ function getContractor1099AmountPaid(lead){
   );
 }
 
+function getContractor1099RefundedAmount(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.contractor1099Work?.refundedAmountCents ||
+      0
+    ) / 100
+  );
+}
+
+function getContractor1099NetCollected(lead){
+  return Math.max(
+    0,
+    getContractor1099AmountPaid(lead) - getContractor1099RefundedAmount(lead)
+  );
+}
+
 function getContractor1099PaymentUrl(lead){
   return String(
     lead?.contractor1099Work
@@ -5555,6 +5851,72 @@ function isExtensionLead(lead){
     status.includes("extension request");
 }
 
+function isInstallmentAgreementLead(lead){
+  const status = String(lead?.status || "").toLowerCase();
+
+  return Boolean(lead && lead.installmentAgreementRequest) ||
+    String(lead?.leadId || "").startsWith("IA-") ||
+    status.includes("installment agreement request");
+}
+
+function isCompletedInstallmentAgreement(lead){
+  if (!isInstallmentAgreementLead(lead)) return false;
+  const workStatus = String(lead?.installmentAgreementRequest?.workStatus || "").toLowerCase();
+  return workStatus === "completed" || workStatus === "cancelled" || workStatus === "declined";
+}
+
+function getInstallmentAgreementWorkStatus(lead){
+  return String(lead?.installmentAgreementRequest?.workStatus || "New");
+}
+
+function getInstallmentAgreementPaymentStatus(lead){
+  return String(lead?.installmentAgreementRequest?.paymentStatus || "Payment Pending");
+}
+
+function installmentAgreementPaymentIsPaid(lead){
+  return /paid|verified/i.test(getInstallmentAgreementPaymentStatus(lead));
+}
+
+function getInstallmentAgreementServiceLabel(lead){
+  return String(lead?.installmentAgreementRequest?.serviceLabel || "Installment Agreement");
+}
+
+function updateInstallmentAgreementCounts(){
+  const active = (allLeads || [])
+    .filter(isInstallmentAgreementLead)
+    .filter(lead => !isCompletedInstallmentAgreement(lead));
+
+  const completed = (allLeads || [])
+    .filter(isInstallmentAgreementLead)
+    .filter(isCompletedInstallmentAgreement);
+
+  const setCount = (id, value) => {
+    const element = document.getElementById(id);
+    if(element){
+      element.textContent = String(value);
+    }
+  };
+
+  setCount("installmentAgreementRequestsSidebarCount", active.length);
+  setCount("completedInstallmentAgreementsSidebarCount", completed.length);
+
+  const activeSidebarCount = document.getElementById("installmentAgreementRequestsSidebarCount");
+  if(activeSidebarCount){
+    activeSidebarCount.setAttribute(
+      "aria-label",
+      `${active.length} active installment agreement request${active.length === 1 ? "" : "s"}`
+    );
+  }
+
+  const completedSidebarCount = document.getElementById("completedInstallmentAgreementsSidebarCount");
+  if(completedSidebarCount){
+    completedSidebarCount.setAttribute(
+      "aria-label",
+      `${completed.length} completed or closed installment agreement request${completed.length === 1 ? "" : "s"}`
+    );
+  }
+}
+
 function isWebsiteContactLead(lead){
   return Boolean(lead && lead.contactRequest) ||
     String(lead?.leadId || "").startsWith("CONTACT-") ||
@@ -5903,6 +6265,23 @@ function getTaxPrepPaymentRequestAmount(lead){
   );
 }
 
+function getTaxPrepRefundedAmount(lead){
+  return Math.max(
+    0,
+    Number(
+      lead?.taxPreparationWork?.refundedAmountCents ||
+      0
+    ) / 100
+  );
+}
+
+function getTaxPrepNetCollected(lead){
+  return Math.max(
+    0,
+    getTaxPrepAmountPaid(lead) - getTaxPrepRefundedAmount(lead)
+  );
+}
+
 function taxPrepPaymentIsSatisfied(lead){
   if(
     getTaxPrepPaymentRequirement(lead) ===
@@ -5917,7 +6296,7 @@ function taxPrepPaymentIsSatisfied(lead){
   return (
     quote > 0 &&
     paid >= quote
-  ) || /paid\s*\/\s*verified|paid in full/i.test(
+  ) || /^paid\s*\/\s*verified$|^paid in full$/i.test(
     getTaxPrepPaymentStatus(lead)
   );
 }
@@ -5956,7 +6335,7 @@ function taxPrepChecklistItems(lead){
   const acceptanceDone =
     /accepted|not applicable/i.test(acceptance);
   const finalDone =
-    /delivered/i.test(getTaxPrepFinalCopyStatus(lead));
+    getTaxPrepFinalCopyStatus(lead) === "Delivered in Secure Portal";
 
   return [
     { label: "Portal activated", done: portalDone },
@@ -6076,7 +6455,7 @@ function validateTaxPrepCompletionValues(values){
     missing.push("Federal and state acceptance must be confirmed or marked not applicable");
   }
 
-  if(!/delivered/i.test(values.finalReturnDeliveryStatus)){
+  if(values.finalReturnDeliveryStatus !== "Delivered in Secure Portal"){
     missing.push("The final client copy must be delivered");
   }
 
@@ -6412,10 +6791,11 @@ function getExtensionStateActionStatus(lead){
 function extensionConfirmationDelivered(lead){
   const confirmation = String(
     lead?.extensionRequest?.confirmationStatus || ""
-  ).toLowerCase();
+  ).trim();
 
   return (
-    confirmation.includes("delivered") ||
+    confirmation === "Delivered to Secure Portal" ||
+    confirmation === "Delivered by Email" ||
     getExtensionWorkStatus(lead)
       .toLowerCase()
       .includes("completed")
@@ -7116,6 +7496,34 @@ function getVisibleLeads(){
           a?.extensionRequest?.completedAt ||
           getLeadClosedAt(a) ||
           a?.extensionRequest?.filedAt ||
+          0
+        )
+      );
+  }
+
+  if(currentView==="installmentagreements"){
+    return allLeads
+      .filter(isInstallmentAgreementLead)
+      .filter(lead => !isCompletedInstallmentAgreement(lead))
+      .sort((a,b) =>
+        new Date(getLeadEnteredAt(b) || 0) -
+        new Date(getLeadEnteredAt(a) || 0)
+      );
+  }
+
+  if(currentView==="installmentagreementscompleted"){
+    return allLeads
+      .filter(isInstallmentAgreementLead)
+      .filter(isCompletedInstallmentAgreement)
+      .sort((a,b) =>
+        new Date(
+          b?.installmentAgreementRequest?.completedAt ||
+          getLeadClosedAt(b) ||
+          0
+        ) -
+        new Date(
+          a?.installmentAgreementRequest?.completedAt ||
+          getLeadClosedAt(a) ||
           0
         )
       );
@@ -8027,6 +8435,46 @@ function getConversionCommandItems(){
         status:
           status ||
           `Extension Request - ${extensionStatus}`
+      }));
+
+      return;
+    }
+
+    if(isInstallmentAgreementLead(lead) && !isCompletedInstallmentAgreement(lead)){
+      const iaStatus =
+        getInstallmentAgreementWorkStatus(lead);
+      const iaPaymentStatus =
+        getInstallmentAgreementPaymentStatus(lead);
+      const iaPaid =
+        iaPaymentStatus
+          .toLowerCase()
+          .includes("paid");
+
+      items.push(makeConversionWorkItem(lead, {
+        stage:
+          iaPaid
+            ? "Paid Work"
+            : "Hot Lead",
+        stageRank:
+          iaPaid
+            ? 1
+            : 2,
+        bucket:
+          iaPaid
+            ? "paid-work"
+            : "follow-up",
+        workType: "Installment Agreement",
+        currentStep:
+          `${getInstallmentAgreementServiceLabel(lead)} — ${iaStatus}`,
+        nextAction:
+          iaPaid
+            ? "Review balance and payment information, then move to Ready to Submit."
+            : "Awaiting client payment before office work begins.",
+        reason:
+          "Client submitted a paid or pending Installment Agreement request that requires office handling.",
+        status:
+          status ||
+          `Installment Agreement Request - ${iaStatus}`
       }));
 
       return;
@@ -9098,6 +9546,9 @@ function getMembershipLifecycleHtml(lead){
     .slice()
     .reverse()
     .slice(0, 8);
+  const isActiveMembership = record.enrollmentStatus === "Active Membership";
+  const cancelScheduled = record.cancelAtPeriodEnd === true;
+  const leadIdRef = escapeOfficeHtml(String(lead?.leadId || ""));
 
   return `
     <div class="membership-lifecycle-card">
@@ -9177,10 +9628,31 @@ function getMembershipLifecycleHtml(lead){
           <span>Membership Started</span>
           <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.membershipStartedAt))}</strong>
         </div>
-        <div class="membership-lifecycle-item">
-          <span>Next Renewal</span>
-          <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.nextRenewalAt))}</strong>
-        </div>
+        ${record.cancelAtPeriodEnd
+          ? `
+            <div class="membership-lifecycle-item">
+              <span>Membership</span>
+              <strong>Active through ${escapeOfficeHtml(formatMembershipLifecycleDate(record.cancelAt || record.nextRenewalAt))}</strong>
+            </div>
+            <div class="membership-lifecycle-item">
+              <span>Paid Access Through</span>
+              <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.cancelAt || record.nextRenewalAt))}</strong>
+            </div>
+            <div class="membership-lifecycle-item">
+              <span>Renewal</span>
+              <strong>Cancellation scheduled — will not renew</strong>
+            </div>
+            <div class="membership-lifecycle-item">
+              <span>Billing</span>
+              <strong>No further recurring charge scheduled after the current paid period</strong>
+            </div>
+          `
+          : `
+            <div class="membership-lifecycle-item">
+              <span>Next Renewal</span>
+              <strong>${escapeOfficeHtml(formatMembershipLifecycleDate(record.nextRenewalAt))}</strong>
+            </div>
+          `}
         <div class="membership-lifecycle-item">
           <span>Portal Access</span>
           <strong>${portalActive ? "Active" : "Not active"}</strong>
@@ -9196,13 +9668,15 @@ function getMembershipLifecycleHtml(lead){
       </div>
 
       <div class="membership-lifecycle-actions">
-        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'steps-sent')">Mark Enrollment Steps Sent</button>
-        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'payment-pending')">Mark Payment Pending</button>
-        <button type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'activate')">Activate Membership</button>
-        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'past-due')">Mark Past Due</button>
-        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'cancel')">Cancel Membership</button>
-        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'expire')">Mark Expired</button>
-        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${escapeOfficeHtml(String(lead?.leadId || ""))}', 'close')">Close Enrollment</button>
+        ${!isActiveMembership ? `<button type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'steps-sent')">Mark Enrollment Steps Sent</button>` : ""}
+        ${!isActiveMembership ? `<button type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'payment-pending')">Mark Payment Pending</button>` : ""}
+        ${!isActiveMembership ? `<button type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'activate')">Activate Membership</button>` : ""}
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'past-due')">Mark Past Due</button>
+        ${cancelScheduled
+          ? `<div class="membership-lifecycle-note">Cancellation is already scheduled with Stripe — paid access continues through ${escapeOfficeHtml(formatMembershipLifecycleDate(record.cancelAt || record.nextRenewalAt))}, then billing stops automatically. Reversing a scheduled Stripe cancellation is not yet a supported admin action in this build.</div>`
+          : `<button class="secondary" type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'cancel')">Cancel Membership</button>`}
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'expire')">Mark Expired (office override — does not call Stripe)</button>
+        <button class="secondary" type="button" onclick="updateMembershipLifecycle('${leadIdRef}', 'close')">Close Enrollment (office override — does not call Stripe)</button>
       </div>
 
       ${getMembershipPaymentHistoryHtml(lead)}
@@ -9501,6 +9975,117 @@ function openPanel(lead){
       ? "Membership Status: " + getMembershipEnrollmentStatus(lead)
       : "Status: " + (lead.status||"New");
 
+  if(isInstallmentAgreementLead(lead)){
+    const request = lead.installmentAgreementRequest || {};
+    const enteredAt = formatLeadDate(getLeadEnteredAt(lead));
+    const closedAt = formatLeadDate(getLeadClosedAt(lead));
+    const iaMoney = (value) => "$" + Number(value || 0).toFixed(2);
+    const isPaid = installmentAgreementPaymentIsPaid(lead);
+
+    const entityLabel =
+      request.entityCategory === "business"
+        ? "Business"
+        : request.entityCategory === "individual"
+          ? "Individual"
+          : "Not specified";
+
+    const contactMethodLabel =
+      {
+        email: "Email",
+        phone: "Phone call",
+        text: "Text message"
+      }[request.bestContactMethod] || "Not specified";
+
+    const priorDefaultLabel =
+      {
+        yes: "Yes",
+        no: "No",
+        unknown: "Not sure"
+      }[request.priorDefault] || "Not sure";
+
+    const agencyResultOptions = [
+      { value: "", label: "Not recorded" },
+      { value: "Pending / Waiting on Agency", label: "Pending / Waiting on Agency" },
+      { value: "Approved", label: "Approved" },
+      { value: "Modified / Different Terms Offered", label: "Modified / Different Terms Offered" },
+      { value: "Declined / Not Approved", label: "Declined / Not Approved" }
+    ];
+
+    document.getElementById("dpTaxYear").innerText =
+      "Tax Year: " + (request.taxYear || lead.taxData?.taxYear || "");
+
+    document.getElementById("dpRefund").innerHTML = `
+      <div class="opportunity-detail-card">
+        <strong>${escapeOfficeHtml(getInstallmentAgreementServiceLabel(lead))}</strong>
+
+        <div class="ia-detail-section">
+          <span>Client &amp; Intake Information</span>
+          Name: ${escapeOfficeHtml(lead.contact?.name || "Not provided")}<br>
+          Email: ${escapeOfficeHtml(lead.contact?.email || "Not provided")}<br>
+          Phone: ${escapeOfficeHtml(formatDashboardPhone(lead.contact?.phone || "") || "Not provided")}<br>
+          Individual or business: ${escapeOfficeHtml(entityLabel)}<br>
+          Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
+          Best contact method: ${escapeOfficeHtml(contactMethodLabel)}<br>
+          Existing IRS/state notice: ${request.hasExistingNotice ? "Yes" : "No"}<br>
+          Existing installment agreement: ${request.hasExistingAgreement ? "Yes" : "No"}<br>
+          Prior default: ${escapeOfficeHtml(priorDefaultLabel)}<br>
+          All required tax returns filed: ${request.filingCompliant ? "Yes" : "No"}<br>
+          Client notes: ${request.clientNotes ? officeNl2br(request.clientNotes) : "None provided"}
+        </div>
+
+        <div class="ia-detail-section">
+          <span>Client Tax Debt (owed to IRS/State — not paid to our office)</span>
+          Federal tax balance: ${escapeOfficeHtml(iaMoney(request.federalBalanceDue))}<br>
+          State tax balance: ${escapeOfficeHtml(iaMoney(request.stateBalanceDue))}${request.stateCode ? " (" + escapeOfficeHtml(request.stateCode) + ")" : ""}<br>
+          Client can pay toward tax debt now: ${escapeOfficeHtml(iaMoney(request.amountPayableNow))}<br>
+          Client proposed monthly tax payment: ${escapeOfficeHtml(iaMoney(request.proposedMonthlyPayment))}
+        </div>
+
+        <div class="ia-detail-section">
+          <span>Professional Service Fee (paid to our office)</span>
+          Professional service fee: <strong>${escapeOfficeHtml(iaMoney(request.totalPrice))}</strong><br>
+          Payment status: ${escapeOfficeHtml(getInstallmentAgreementPaymentStatus(lead))}
+          ${isPaid
+            ? `<div class="extension-payment-link-status paid" style="margin-top:8px;">Payment completed — ${escapeOfficeHtml(iaMoney(request.totalPrice))} received.</div>`
+            : ""}
+          ${stripeReferenceLine(request)}
+        </div>
+
+        <div class="ia-detail-section">
+          <span>Office Action Area</span>
+          <label for="iaWorkStatusSelect">Workflow status</label>
+          <select id="iaWorkStatusSelect">
+            ${["New","Needs Review","Waiting on Client","Ready to Submit","Submitted","Pending Agency","Approved","Declined","Completed","Cancelled"]
+              .map((option) => `<option value="${option}" ${getInstallmentAgreementWorkStatus(lead) === option ? "selected" : ""}>${option}</option>`)
+              .join("")}
+          </select>
+
+          <label for="iaAgencyResultSelect">Agency result</label>
+          <select id="iaAgencyResultSelect">
+            ${agencyResultOptions
+              .map((option) => `<option value="${escapeOfficeHtml(option.value)}" ${(request.agencyResult || "") === option.value ? "selected" : ""}>${escapeOfficeHtml(option.label)}</option>`)
+              .join("")}
+          </select>
+
+          <label for="iaNotesInput">Office notes</label>
+          <textarea id="iaNotesInput">${escapeOfficeHtml(lead.notes || "")}</textarea>
+
+          <button
+            type="button"
+            onclick="saveInstallmentAgreementStatus('${escapeOfficeHtml(String(lead?.leadId || ""))}')"
+            style="width:100%;margin-top:10px;border:0;border-radius:8px;background:#f59e0b;color:#111827;padding:11px 12px;font-weight:900;cursor:pointer;"
+          >
+            Save Status &amp; Notes
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("dpEntered").innerText = enteredAt ? "Entered: " + enteredAt : "";
+    document.getElementById("dpClosed").innerText = closedAt ? "Closed: " + closedAt : "";
+    return;
+  }
+
   if(isCalendarLead(lead)){
     const appointment = lead.calendarAppointment || {};
     const start = formatLeadDate(appointment.startTime);
@@ -9564,8 +10149,24 @@ function openPanel(lead){
   const detailContent = document.getElementById("dpRefund");
   const existingDetail = detailContent.innerText;
 
+  const paidServiceSub =
+    lead.writtenReview && typeof lead.writtenReview === "object" && lead.writtenReview.stripePaymentIntentId
+      ? { label: "Written Review", sub: lead.writtenReview }
+      : lead.transcriptRequest && typeof lead.transcriptRequest === "object" && lead.transcriptRequest.stripePaymentIntentId
+        ? { label: "Transcript Help", sub: lead.transcriptRequest }
+        : null;
+
+  const paidServiceHtml = paidServiceSub
+    ? `<div class="opportunity-detail-card" style="margin-top:10px;">
+        <strong>${escapeOfficeHtml(paidServiceSub.label)} Payment</strong><br>
+        ${paidServiceSub.sub.amountPaidCents ? "Amount paid: $" + (Number(paidServiceSub.sub.amountPaidCents) / 100).toFixed(2) + "<br>" : ""}
+        Payment status: ${escapeOfficeHtml(paidServiceSub.sub.paymentStatus || "Not recorded")}<br>
+        ${stripeReferenceLine(paidServiceSub.sub)}
+      </div>`
+    : "";
+
   detailContent.innerHTML =
-    `<div>${officeNl2br(existingDetail)}</div>`;
+    `<div>${officeNl2br(existingDetail)}</div>${paidServiceHtml}`;
 
   appendTaxPlannerCrmToDetail(lead);
 }
@@ -10315,6 +10916,7 @@ function renderLeads(){
   updateTaxPrepRequestCounts();
   updateContractor1099Counts();
   updateMembershipEnrollmentCounts();
+  updateInstallmentAgreementCounts();
 
   const list=document.getElementById("leadList");
   const visible=getVisibleLeads();
@@ -10961,8 +11563,26 @@ function renderLeads(){
             getContractor1099QuotedFee(lead);
           const paid =
             getContractor1099AmountPaid(lead);
+          const refundedAmount =
+            getContractor1099RefundedAmount(lead);
+          const netCollected =
+            getContractor1099NetCollected(lead);
           const outstanding =
             Math.max(0, quote - paid);
+          const c1099FeeQuoteLine =
+            quote > 0
+              ? `Approved fee quote: $${contractor1099Money(quote)}`
+              : "Approved fee quote: Not set";
+          const c1099PaymentSummaryLine =
+            paid > 0
+              ? [
+                  `Payment status: ${escapeOfficeHtml(getContractor1099PaymentStatus(lead))}`,
+                  `Gross paid: $${contractor1099Money(paid)}`,
+                  refundedAmount > 0 ? `Refunded: $${contractor1099Money(refundedAmount)}` : null,
+                  `Net collected: $${contractor1099Money(netCollected)}`,
+                  c1099FeeQuoteLine + (quote > 0 ? ` · Outstanding $${contractor1099Money(outstanding)}` : "")
+                ].filter(Boolean).join("<br>")
+              : `Payment status: ${escapeOfficeHtml(getContractor1099PaymentStatus(lead))} · ${c1099FeeQuoteLine}`;
           const nextAction =
             contractor1099NextAction(lead);
           const workStatus =
@@ -11121,8 +11741,13 @@ function renderLeads(){
                     ${escapeOfficeHtml(paymentStatus)}
                   </strong>
                   <small>
-                    Quote: $${contractor1099Money(quote)}<br>
-                    Paid: $${contractor1099Money(paid)}
+                    ${quote > 0 ? `Quote: $${contractor1099Money(quote)}` : "Quote: Not set"}<br>
+                    ${refundedAmount > 0
+                      ? `Gross paid: $${contractor1099Money(paid)}<br>
+                         Refunded: $${contractor1099Money(refundedAmount)}<br>
+                         Net collected: $${contractor1099Money(netCollected)}<br>`
+                      : `Paid: $${contractor1099Money(paid)}<br>`}
+                    ${stripeReferenceLine(work)}${paymentHistoryCompactSummary(work)}
                   </small>
                 </div>
 
@@ -11611,11 +12236,7 @@ function renderLeads(){
                     </label>
 
                     <div class="c1099-payment-summary">
-                      Payment status:
-                      ${escapeOfficeHtml(paymentStatus)}
-                      · Collected $${contractor1099Money(paid)}
-                      of $${contractor1099Money(quote)}
-                      · Outstanding $${contractor1099Money(outstanding)}
+                      ${c1099PaymentSummaryLine}
                     </div>
                   </div>
 
@@ -11825,7 +12446,23 @@ function renderLeads(){
           const work = lead.taxPreparationWork || {};
           const quote = getTaxPrepQuotedFee(lead);
           const paid = getTaxPrepAmountPaid(lead);
+          const refundedAmount = getTaxPrepRefundedAmount(lead);
+          const netCollected = getTaxPrepNetCollected(lead);
           const outstanding = Math.max(0, quote - paid);
+          const feeQuoteLine =
+            quote > 0
+              ? `Approved fee quote: $${taxPrepMoney(quote)}`
+              : "Approved fee quote: Not set";
+          const paymentSummaryLine =
+            paid > 0
+              ? [
+                  `Payment status: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}`,
+                  `Gross paid: $${taxPrepMoney(paid)}`,
+                  refundedAmount > 0 ? `Refunded: $${taxPrepMoney(refundedAmount)}` : null,
+                  `Net collected: $${taxPrepMoney(netCollected)}`,
+                  feeQuoteLine + (quote > 0 ? ` · Outstanding $${taxPrepMoney(outstanding)}` : "")
+                ].filter(Boolean).join("<br>")
+              : `Payment status: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))} · ${feeQuoteLine}`;
           const paymentUrl = getTaxPrepPaymentUrl(lead);
           const nextAction = getTaxPrepNextOfficeAction(lead);
           const needsAttention =
@@ -12011,7 +12648,7 @@ function renderLeads(){
                     ${escapeOfficeHtml(compactPaymentStatus)}
                   </strong>
                   <small>
-                    Quote: $${taxPrepMoney(quote)}<br>
+                    ${quote > 0 ? `Quote: $${taxPrepMoney(quote)}` : "Quote: Not set"}<br>
                     Collected: $${taxPrepMoney(paid)}
                   </small>
                 </div>
@@ -12557,10 +13194,20 @@ function renderLeads(){
 
                 <div class="taxprep-card-block">
                   <span>Fee &amp; Payment</span>
-                  Total fee quote: <strong>$${taxPrepMoney(quote)}</strong><br>
-                  Amount collected: <strong>$${taxPrepMoney(paid)}</strong><br>
-                  Outstanding: <strong>$${taxPrepMoney(outstanding)}</strong><br>
-                  Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
+                  ${quote > 0
+                    ? `Total fee quote: <strong>$${taxPrepMoney(quote)}</strong><br>`
+                    : `Approved fee quote: <strong>Not set</strong><br>`}
+                  ${refundedAmount > 0
+                    ? `Gross payments: <strong>$${taxPrepMoney(paid)}</strong><br>
+                       Refunded: <strong>$${taxPrepMoney(refundedAmount)}</strong><br>
+                       Net collected: <strong>$${taxPrepMoney(netCollected)}</strong><br>`
+                    : `Amount collected: <strong>$${taxPrepMoney(paid)}</strong><br>`}
+                  ${quote > 0
+                    ? `Outstanding: <strong>$${taxPrepMoney(outstanding)}</strong><br>`
+                    : `Outstanding: <strong>Not applicable</strong><br>`}
+                  Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}<br>
+                  ${stripeReferenceLine(lead.taxPreparationWork)}
+                  ${paymentHistoryLines(lead.taxPreparationWork)}
                 </div>
 
                 <div class="taxprep-card-block">
@@ -12732,7 +13379,7 @@ function renderLeads(){
                 </div>
 
                 <div class="taxprep-payment-summary">
-                  Payment status: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))} · Collected $${taxPrepMoney(paid)} of $${taxPrepMoney(quote)} · Outstanding $${taxPrepMoney(outstanding)}
+                  ${paymentSummaryLine}
                 </div>
 
                 <div class="taxprep-basket-actions">
@@ -13014,8 +13661,8 @@ function renderLeads(){
             const preparationInterest =
               request.preparationQuoteRequested === true ||
               request.consideringFullPreparation === true
-                ? "Tax preparation quote requested"
-                : "Extension service only";
+                ? "Tax Preparation Interest: Yes"
+                : "Tax Preparation Interest: No";
             const portalStatus =
               getExtensionPortalStatus(lead);
             const phone =
@@ -13097,6 +13744,7 @@ function renderLeads(){
                     <span>Fee &amp; Payment</span>
                     Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
                     Payment: ${escapeOfficeHtml(paymentStatus)}<br>
+                    ${stripeReferenceLine(request)}<br>
                     Planned tax payment: $${Number(request.paymentWithExtension || 0).toLocaleString()}
                   </div>
 
@@ -13235,10 +13883,15 @@ function renderLeads(){
                   </div>
 
                   ${paymentUrl
-                    ? `
-                      <div class="extension-payment-link-status">
-                        Secure payment link is saved on this card${paymentLinkSentAt ? ` and was last created or sent ${escapeOfficeHtml(paymentLinkSentAt)}` : ""}.
-                      </div>`
+                    ? extensionPaymentIsPaid(lead)
+                      ? `
+                        <div class="extension-payment-link-status paid">
+                          Payment completed — $${Number(request.totalPrice || 0).toFixed(2)} received.
+                        </div>`
+                      : `
+                        <div class="extension-payment-link-status">
+                          Secure payment link is saved on this card${paymentLinkSentAt ? ` and was last created or sent ${escapeOfficeHtml(paymentLinkSentAt)}` : ""}.
+                        </div>`
                     : ""}
 
                   <div class="extension-card-actions">
@@ -13261,7 +13914,7 @@ function renderLeads(){
                         </button>`
                       : ""}
 
-                    ${paymentUrl
+                    ${paymentUrl && !extensionPaymentIsPaid(lead)
                       ? `
                         <button
                           class="extension-basket-button secondary"
@@ -13277,8 +13930,11 @@ function renderLeads(){
                           onclick="openExtensionPaymentLink(${index})"
                         >
                           Open Payment Link
-                        </button>
+                        </button>`
+                      : ""}
 
+                    ${paymentUrl
+                      ? `
                         <button
                           class="extension-basket-button secondary"
                           type="button"
@@ -15830,7 +16486,9 @@ function openCompletedTaxPreparation(index){
         <strong>Fee &amp; Payment</strong><br>
         Fee quote: $${taxPrepMoney(getTaxPrepQuotedFee(lead))}<br>
         Collected: $${taxPrepMoney(getTaxPrepAmountPaid(lead))}<br>
-        Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}
+        Payment: ${escapeOfficeHtml(getTaxPrepPaymentStatus(lead))}<br>
+        ${stripeReferenceLine(work)}
+        ${paymentHistoryLines(work)}
       </div>
       <div class="service-workspace-card">
         <strong>Client Completion Email</strong><br>
@@ -16095,7 +16753,10 @@ function validateExtensionCompletion(lead, update){
     return "Save the work status as Filed before marking this request Completed.";
   }
 
-  if(!String(update.confirmationStatus).includes("Delivered")){
+  if(
+    update.confirmationStatus !== "Delivered to Secure Portal" &&
+    update.confirmationStatus !== "Delivered by Email"
+  ){
     return "The confirmation status must show Delivered before this request can be marked Completed.";
   }
 
@@ -16139,6 +16800,60 @@ async function patchExtensionLead(lead, update){
   }
 
   return data;
+}
+
+async function saveInstallmentAgreementStatus(leadId){
+  const select = document.getElementById("iaWorkStatusSelect");
+  const agencyResultSelect = document.getElementById("iaAgencyResultSelect");
+  const notesInput = document.getElementById("iaNotesInput");
+
+  if(!leadId || !select){
+    alert("The installment agreement request could not be identified.");
+    return;
+  }
+
+  const workStatus = select.value;
+  const agencyResult = agencyResultSelect ? agencyResultSelect.value : "";
+  const notes = notesInput ? notesInput.value : "";
+  const now = new Date().toISOString();
+  const isClosed = ["Completed","Cancelled","Declined"].includes(workStatus);
+
+  try{
+    const response = await fetch(
+      `/api/leads/${encodeURIComponent(leadId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: `Installment Agreement Request - ${workStatus}`,
+          notes,
+          completedAt: isClosed ? now : "",
+          closedAt: isClosed ? now : "",
+          installmentAgreementRequest: {
+            workStatus,
+            agencyResult,
+            updatedAt: now
+          }
+        })
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if(!response.ok || !data.ok){
+      throw new Error(
+        data.error || "The installment agreement request could not be saved."
+      );
+    }
+
+    clearDetailPanel();
+    await loadLeads();
+    alert("Installment agreement status saved.");
+  }catch(error){
+    alert(error.message || "The installment agreement request could not be saved.");
+  }
 }
 
 async function saveExtensionCard(index){
@@ -16551,8 +17266,8 @@ function openExtensionWorkspace(lead){
   const preparationInterest =
     request.preparationQuoteRequested === true ||
     request.consideringFullPreparation === true
-      ? "Tax preparation quote requested"
-      : "Extension service only — no preparation quote requested";
+      ? "Tax Preparation Interest: Yes"
+      : "Tax Preparation Interest: No";
 
   const portalStatus =
     getExtensionPortalStatus(lead);
@@ -16595,13 +17310,14 @@ function openExtensionWorkspace(lead){
         Tax year: ${escapeOfficeHtml(request.taxYear || lead.taxData?.taxYear || "Not set")}<br>
         Filing status / return type: ${escapeOfficeHtml(returnType)}<br>
         Deadline situation: ${escapeOfficeHtml(getExtensionDeadlineLabel(lead))}<br>
-        Preparation interest: ${escapeOfficeHtml(preparationInterest)}
+        ${escapeOfficeHtml(preparationInterest)}
       </div>
 
       <div class="service-workspace-card">
         <strong>Fee, Tax Estimate &amp; Payment Review</strong><br>
         Professional fee: <strong>$${Number(request.totalPrice || 0).toLocaleString()}</strong><br>
         Service payment: ${escapeOfficeHtml(getExtensionPaymentStatus(lead))}<br>
+        ${stripeReferenceLine(request)}<br>
         Estimated total tax: $${Number(request.estimatedTotalTax || 0).toLocaleString()}<br>
         Withholding / prior payments: $${Number(request.totalPayments || 0).toLocaleString()}<br>
         Estimated balance due: <strong>$${Number(request.estimatedBalanceDue || 0).toLocaleString()}</strong><br>
@@ -16763,6 +17479,63 @@ function openClosedLead(index){
   if(lead) openPanel(lead);
 }
 
+async function openRevenueSummaryModal(){
+  const overlay = document.getElementById("revenueSummaryOverlay");
+  const body = document.getElementById("revenueSummaryBody");
+  if(!overlay || !body) return;
+
+  overlay.style.display = "flex";
+  body.innerHTML = "Loading...";
+
+  try{
+    const response = await fetch("/api/admin/revenue-summary", { credentials: "same-origin" });
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "The revenue summary could not be loaded.");
+    }
+
+    const summary = result.summary;
+    const rows = summary.byCategory.map((cat) => `
+      <tr>
+        <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;">${escapeOfficeHtml(cat.label)}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;text-align:right;">${escapeOfficeHtml(cat.collectedDisplay)}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;text-align:right;">${cat.refundedDisplay ? escapeOfficeHtml(cat.refundedDisplay) : "—"}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;text-align:right;">${cat.transactionCount}</td>
+      </tr>
+    `).join("");
+
+    body.innerHTML = `
+      <div style="margin-bottom:14px;padding:12px 14px;background:#f0f7ff;border-radius:10px;">
+        <div style="font-size:13px;color:#52637a;font-weight:700;">Total Collected</div>
+        <div style="font-size:26px;font-weight:900;color:#0f2f55;">${escapeOfficeHtml(summary.totalCollectedDisplay)}</div>
+        <div style="font-size:12px;color:#52637a;">${summary.totalTransactionCount} transaction(s) across all services</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="text-align:left;color:#52637a;">
+            <th style="padding:7px 6px;">Service</th>
+            <th style="padding:7px 6px;text-align:right;">Collected</th>
+            <th style="padding:7px 6px;text-align:right;">Refunded</th>
+            <th style="padding:7px 6px;text-align:right;">Transactions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:14px;font-size:12px;color:#94a3b8;">
+        Generated ${escapeOfficeHtml(formatLeadDate(summary.generatedAt) || summary.generatedAt)}. Operational revenue visibility only -- not a bookkeeping/accounting report. Tax Preparation and Contractor 1099 transaction counts reflect one entry per lead with a recorded payment (not a full per-installment ledger).
+      </div>
+    `;
+  }catch(error){
+    body.innerHTML = `<div style="color:#991b1b;">${escapeOfficeHtml(error.message || "The revenue summary could not be loaded.")}</div>`;
+  }
+}
+
+function closeRevenueSummaryModal(){
+  const overlay = document.getElementById("revenueSummaryOverlay");
+  if(overlay) overlay.style.display = "none";
+}
+
 async function updateMembershipLifecycle(leadId, action){
   const cleanLeadId = String(leadId || "").trim();
   const labels = {
@@ -16770,7 +17543,7 @@ async function updateMembershipLifecycle(leadId, action){
     "payment-pending": "mark payment as pending",
     activate: "confirm payment and activate this membership",
     "past-due": "mark this membership as past due",
-    cancel: "cancel this membership",
+    cancel: "schedule this membership to cancel (a Stripe subscription cancels at the end of the current paid billing period, not immediately; a record with no Stripe subscription on file cancels right away)",
     expire: "mark this membership as expired",
     close: "close this enrollment record"
   };
@@ -16814,6 +17587,20 @@ async function updateMembershipLifecycle(leadId, action){
 
     if(updatedLead){
       openPanel(updatedLead);
+    }
+
+    if(action === "cancel"){
+      if(result.alreadyCancelled){
+        window.alert("This membership is already cancelled.");
+      }else if(result.cancelAtPeriodEnd && result.cancelAt){
+        window.alert(
+          "Cancellation scheduled with Stripe. The customer keeps paid access through " +
+          new Date(result.cancelAt).toLocaleDateString() +
+          ", and will not be billed again after that."
+        );
+      }else if(result.noStripeSubscriptionOnFile){
+        window.alert("No Stripe subscription was on file for this enrollment, so it was cancelled immediately.");
+      }
     }
   }catch(error){
     window.alert(
@@ -16882,6 +17669,8 @@ document.addEventListener("DOMContentLoaded", () => {
         contractor1099completed: "Completed Contractor 1099 Filings",
         extensions: "Extension Requests",
         extensionscompleted: "Completed & Closed Extensions",
+        installmentagreements: "Installment Agreement Requests",
+        installmentagreementscompleted: "Completed & Closed Installment Agreements",
         taxprepcompleted: "Completed Tax Returns",
         taxwatchenrollments: "Tax Watch Pro Preview & Enrollments",
         pinnacleenrollments: "Pinnacle Tax Action Plan Enrollments",

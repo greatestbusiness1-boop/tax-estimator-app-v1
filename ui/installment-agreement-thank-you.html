@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tax Extension Request Received</title>
+  <title>Installment Agreement Request Received</title>
   <meta name="robots" content="noindex,nofollow,noarchive">
   <style>
     :root{
@@ -164,8 +164,8 @@
   <main class="card">
     <section class="head">
       <div class="check">✓</div>
-      <h1>Tax Extension Request Received</h1>
-      <p>Your payment was submitted through Stripe. The office will verify the payment and review the request before filing.</p>
+      <h1>Installment Agreement Request Received</h1>
+      <p>Your payment was submitted through Stripe. The office will review your balance and payment information before submitting the request.</p>
     </section>
 
     <section class="body">
@@ -177,38 +177,24 @@
       <div class="steps">
         <div class="step">
           <strong>1. Office review</strong><br>
-          Greatest Business Solution LLC will review deadline eligibility, the return type, estimated payment information, and any state-extension request.
+          Greatest Business Solution LLC will review your balance, proposed payment, and filing compliance information.
         </div>
         <div class="step">
           <strong>2. Secure document request</strong><br>
           When documents are needed, use the Secure Client Portal instead of email.
         </div>
         <div class="step">
-          <strong>3. Filing confirmation</strong><br>
-          The request is not complete until the office records it as Filed and provides confirmation.
+          <strong>3. Agency result</strong><br>
+          The request is not approved until the IRS or applicable state taxing authority confirms it. The office will update you once a result is available.
         </div>
       </div>
 
       <div class="warning">
-        An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed. Pay as much as possible by the applicable payment deadline to reduce possible penalties and interest.
+        Approval, payment terms, penalties, interest, and government fees are determined by the IRS or applicable state taxing authority. Our fee covers professional preparation and assistance with the request — it is not a guarantee of approval.
       </div>
 
       <div class="standalone">
-        This is a standalone extension service. You may use any tax professional to prepare the full return. Purchasing the extension service does not require you to hire Greatest Business Solution LLC for tax preparation.
-      </div>
-
-      <div class="standalone" id="prepInterestNote" style="display:none; background:#eff6ff; border-color:#bfdbfe; color:var(--navy);">
-        The office has recorded your interest in having Greatest Business Solution LLC prepare your full tax return. This does not affect or delay your extension, and no tax preparation fee has been charged yet.
-      </div>
-
-      <div class="step" style="margin-top:18px;">
-        <strong>Need help preparing the full return?</strong><br>
-        If you would like Greatest Business Solution LLC to prepare your full tax return, you can request that separately at any time. Pricing for tax preparation is quoted individually for each return.
-        <div style="margin-top:10px;">
-          <a class="secondary" href="/start-my-tax-return?return=professional-tax-services" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;border-radius:9px;background:#fff;color:var(--navy);border:2px solid var(--navy);padding:10px 16px;text-decoration:none;font-weight:900;">
-            Request Tax Preparation
-          </a>
-        </div>
+        This is a standalone installment agreement service. Purchasing this service does not require you to hire Greatest Business Solution LLC for tax preparation.
       </div>
 
       <div class="actions">
@@ -228,7 +214,6 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const leadId = String(params.get("leadId") || "").trim();
-    const prepInterest = params.get("prep") === "1";
 
     document.getElementById("referenceNumber").textContent =
       leadId || "Check your confirmation email";
@@ -237,10 +222,6 @@
       leadId
         ? `/client-portal?activate=1&leadId=${encodeURIComponent(leadId)}`
         : "/client-portal?activate=1";
-
-    if (prepInterest) {
-      document.getElementById("prepInterestNote").style.display = "block";
-    }
   </script>
 
 <script id="SERVICE-RETURN-NAVIGATION">

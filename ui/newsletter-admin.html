@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsletter Admin | Greatest Business Solution LLC</title>
+<style>
+  :root{
+    --navy:#0f2c56;
+    --blue:#28588c;
+    --gold:#c69a37;
+    --orange:#f59e0b;
+    --ink:#12233d;
+    --muted:#52637a;
+    --line:#dbe4f0;
+    --green:#166534;
+    --red:#991b1b;
+    --paper:#ffffff;
+    --bg:#eef3f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  .topbar{background:var(--navy);color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .topbar h1{margin:0;font-size:18px;}
+  .topbar span{color:#cfe0f2;font-size:13px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px;display:grid;grid-template-columns:320px 1fr;gap:20px;}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr;}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px;}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--navy);}
+  .btn{display:inline-block;border:none;border-radius:9px;padding:10px 14px;font-weight:700;font-size:14px;cursor:pointer;}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-gold{background:var(--gold);color:#22160a;}
+  .btn-outline{background:#fff;color:var(--blue);border:1px solid var(--blue);}
+  .btn-danger{background:var(--red);color:#fff;}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .issue-list{list-style:none;margin:0;padding:0;}
+  .issue-list li{padding:10px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;margin-bottom:6px;}
+  .issue-list li:hover{background:#f4f8fc;}
+  .issue-list li.active{border-color:var(--blue);background:#eaf1fb;}
+  .issue-list li .title{font-weight:700;font-size:14px;}
+  .issue-list li .meta{font-size:12px;color:var(--muted);}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
+  .badge-draft{background:#e5e7eb;color:#374151;}
+  .badge-ready{background:#fef3c7;color:#92400e;}
+  .badge-sent{background:#dcfce7;color:#166534;}
+  label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 5px;}
+  input[type=text], input[type=email]{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;}
+  textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:Arial,sans-serif;resize:vertical;}
+  .section-label{font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.04em;margin-top:18px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;}
+  .status-line{font-size:13px;color:var(--muted);margin-top:8px;}
+  .empty-state{color:var(--muted);font-size:14px;padding:20px 0;text-align:center;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:9px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:none;z-index:50;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>The Small Business Tax &amp; Money Brief — Admin</h1>
+  <span>Draft &rarr; Ready &rarr; Sent</span>
+</div>
+
+<div class="wrap">
+  <div>
+    <div class="card">
+      <h2>Issues</h2>
+      <button class="btn btn-primary" id="newIssueBtn" style="width:100%;">+ New Issue</button>
+
+      <div id="newIssuePanel" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#f9fbfd;">
+        <label>Internal title</label>
+        <input type="text" id="newIssueTitleInput" value="The Small Business Tax & Money Brief">
+        <label>Topic calendar month (optional starting point)</label>
+        <select id="newIssueMonthSelect" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;">
+          <option value="">— No starting topic —</option>
+        </select>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="newIssueCreateBtn">Create Draft</button>
+          <button class="btn btn-outline" id="newIssueCancelBtn">Cancel</button>
+        </div>
+      </div>
+
+      <ul class="issue-list" id="issueList" style="margin-top:14px;"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Subscribers</h2>
+      <div id="subscriberSummary" class="status-line">Loading...</div>
+      <div style="max-height:280px;overflow:auto;margin-top:10px;">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+          <tbody id="subscriberRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" id="editorCard" style="display:none;">
+      <h2 id="editorTitleLabel">Issue</h2>
+
+      <label>Internal title</label>
+      <input type="text" id="issueTitle" placeholder="The Small Business Tax & Money Brief">
+
+      <label>Month label (shown in email header, e.g. "October 2026")</label>
+      <input type="text" id="issueMonthLabel" placeholder="October 2026">
+
+      <label>Topic calendar focus (starting point only -- edit or replace freely)</label>
+      <input type="text" id="issueTopic" placeholder="e.g. Extensions + tax payment obligations">
+
+      <div id="sectionFields"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" id="saveDraftBtn">Save Draft</button>
+        <button class="btn btn-gold" id="markReadyBtn">Mark Ready</button>
+        <button class="btn btn-outline" id="revertDraftBtn">Revert to Draft</button>
+        <button class="btn btn-outline" id="previewBtn">Preview</button>
+        <button class="btn btn-outline" id="testSendBtn">Send Test</button>
+        <button class="btn btn-primary" id="sendNowBtn">Send to All Active Subscribers</button>
+        <button class="btn btn-danger" id="deleteBtn">Delete Draft</button>
+      </div>
+      <div class="status-line" id="editorStatusLine"></div>
+    </div>
+
+    <div class="card" id="emptyCard">
+      <div class="empty-state">Select an issue on the left, or create a new one.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SECTIONS = [
+  { key: "brief", label: "1. This Month's 5-Minute Brief" },
+  { key: "taxTip", label: "2. Tax Tip of the Month" },
+  { key: "watchMoney", label: "3. Watch Your Money" },
+  { key: "merchantFee", label: "4. Merchant Fee Check" },
+  { key: "dates", label: "5. Dates to Know" },
+  { key: "couldApply", label: "6. Could This Apply to You?" },
+  { key: "action", label: "7. This Month's Action" }
+];
+
+let issues = [];
+let currentIssue = null;
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.style.display = "none"; }, 3200);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    ...options
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (!res.ok || !data || data.ok === false) {
+    throw new Error((data && data.error) || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+function badgeFor(status){
+  const cls = status === "sent" ? "badge-sent" : status === "ready" ? "badge-ready" : "badge-draft";
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function renderIssueList(){
+  const list = document.getElementById("issueList");
+  if (!issues.length) {
+    list.innerHTML = '<li class="empty-state" style="cursor:default;">No issues yet.</li>';
+    return;
+  }
+  list.innerHTML = issues.map((issue) => `
+    <li data-id="${issue.issueId}" class="${currentIssue && currentIssue.issueId === issue.issueId ? "active" : ""}">
+      <div class="title">${escapeHtml(issue.title || "Untitled")}</div>
+      <div class="meta">${escapeHtml(issue.monthLabel || "")} ${badgeFor(issue.status)}</div>
+    </li>
+  `).join("");
+  list.querySelectorAll("li[data-id]").forEach((li) => {
+    li.addEventListener("click", () => selectIssue(li.getAttribute("data-id")));
+  });
+}
+
+function escapeHtml(v){
+  return String(v || "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+
+function renderSectionFields(issue){
+  const container = document.getElementById("sectionFields");
+  container.innerHTML = SECTIONS.map((s) => `
+    <div class="section-label">${s.label}</div>
+    <textarea data-key="${s.key}">${escapeHtml(issue.sections?.[s.key] || "")}</textarea>
+  `).join("");
+}
+
+function collectSections(){
+  const out = {};
+  document.querySelectorAll("#sectionFields textarea[data-key]").forEach((ta) => {
+    out[ta.getAttribute("data-key")] = ta.value;
+  });
+  return out;
+}
+
+async function loadIssues(){
+  const data = await api("/api/newsletter/issues");
+  issues = data.issues || [];
+  renderIssueList();
+}
+
+function selectIssue(issueId){
+  currentIssue = issues.find((i) => i.issueId === issueId) || null;
+  renderIssueList();
+  renderEditor();
+}
+
+function renderEditor(){
+  const editorCard = document.getElementById("editorCard");
+  const emptyCard = document.getElementById("emptyCard");
+  if (!currentIssue) {
+    editorCard.style.display = "none";
+    emptyCard.style.display = "block";
+    return;
+  }
+  editorCard.style.display = "block";
+  emptyCard.style.display = "none";
+
+  document.getElementById("editorTitleLabel").innerHTML =
+    `Issue ${badgeFor(currentIssue.status)}`;
+  document.getElementById("issueTitle").value = currentIssue.title || "";
+  document.getElementById("issueMonthLabel").value = currentIssue.monthLabel || "";
+  document.getElementById("issueTopic").value = currentIssue.topic || "";
+  renderSectionFields(currentIssue);
+
+  const isSent = currentIssue.status === "sent";
+  const isReady = currentIssue.status === "ready";
+
+  document.getElementById("issueTitle").disabled = isSent;
+  document.getElementById("issueMonthLabel").disabled = isSent;
+  document.getElementById("issueTopic").disabled = isSent;
+  document.querySelectorAll("#sectionFields textarea").forEach((ta) => { ta.disabled = isSent; });
+
+  document.getElementById("saveDraftBtn").disabled = isSent;
+  document.getElementById("markReadyBtn").disabled = isSent || isReady;
+  document.getElementById("revertDraftBtn").disabled = isSent || !isReady;
+  document.getElementById("sendNowBtn").disabled = !isReady;
+  document.getElementById("deleteBtn").disabled = isSent;
+
+  const statusLine = document.getElementById("editorStatusLine");
+  if (isSent) {
+    statusLine.textContent = `Sent ${currentIssue.sentAt || ""} — ${currentIssue.sentCount || 0} delivered, ${currentIssue.failedCount || 0} failed.`;
+  } else {
+    const testCount = (currentIssue.testSends || []).length;
+    statusLine.textContent = testCount ? `${testCount} test send(s) so far.` : "No test sends yet.";
+  }
+}
+
+async function saveDraft(markReady){
+  if (!currentIssue) return;
+  const body = {
+    title: document.getElementById("issueTitle").value,
+    monthLabel: document.getElementById("issueMonthLabel").value,
+    topic: document.getElementById("issueTopic").value,
+    sections: collectSections()
+  };
+  if (markReady !== undefined) body.status = markReady ? "ready" : "draft";
+
+  const data = await api(`/api/newsletter/issues/${encodeURIComponent(currentIssue.issueId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body)
+  });
+  const idx = issues.findIndex((i) => i.issueId === data.issue.issueId);
+  if (idx >= 0) issues[idx] = data.issue;
+  currentIssue = data.issue;
+  renderIssueList();
+  renderEditor();
+}
+
+let monthlyTopics = {};
+
+async function loadMonthlyTopics(){
+  try {
+    const data = await api("/api/newsletter/monthly-topics");
+    monthlyTopics = data.topics || {};
+    const select = document.getElementById("newIssueMonthSelect");
+    Object.keys(monthlyTopics)
+      .sort((a, b) => Number(a) - Number(b))
+      .forEach((monthNum) => {
+        const entry = monthlyTopics[monthNum];
+        const option = document.createElement("option");
+        option.value = monthNum;
+        option.textContent = `${entry.month} — ${entry.topic}`;
+        select.appendChild(option);
+      });
+  } catch (e) {
+    // Non-fatal -- issue creation still works without the calendar preloaded.
+  }
+}
+
+document.getElementById("newIssueBtn").addEventListener("click", () => {
+  document.getElementById("newIssuePanel").style.display = "block";
+  document.getElementById("newIssueTitleInput").focus();
+});
+
+document.getElementById("newIssueCancelBtn").addEventListener("click", () => {
+  document.getElementById("newIssuePanel").style.display = "none";
+});
+
+document.getElementById("newIssueCreateBtn").addEventListener("click", async () => {
+  const title = document.getElementById("newIssueTitleInput").value || "The Small Business Tax & Money Brief";
+  const month = document.getElementById("newIssueMonthSelect").value;
+
+  try {
+    const data = await api("/api/newsletter/issues", {
+      method: "POST",
+      body: JSON.stringify(month ? { title, month } : { title, sections: {} })
+    });
+    issues.unshift(data.issue);
+    currentIssue = data.issue;
+    document.getElementById("newIssuePanel").style.display = "none";
+    renderIssueList();
+    renderEditor();
+    toast("Draft created.");
+  } catch (e) {
+    toast(e.message);
+  }
+});
+
+document.getElementById("saveDraftBtn").addEventListener("click", async () => {
+  try { await saveDraft(); toast("Draft saved."); } catch (e) { toast(e.message); }
+});
+
+document.getElementById("markReadyBtn").addEventListener("click", async () => {
+  try { await saveDraft(true); toast("Marked Ready."); } catch (e) { toast(e.message); }
+});
+
+document.getElementById("revertDraftBtn").addEventListener("click", async () => {
+  try { await saveDraft(false); toast("Reverted to Draft."); } catch (e) { toast(e.message); }
+});
+
+document.getElementById("previewBtn").addEventListener("click", () => {
+  if (!currentIssue) return;
+  window.open(`/api/newsletter/issues/${encodeURIComponent(currentIssue.issueId)}/preview`, "_blank");
+});
+
+document.getElementById("testSendBtn").addEventListener("click", async () => {
+  if (!currentIssue) return;
+  const testEmail = prompt("Send a test copy to which email address?", "");
+  if (!testEmail) return;
+  try {
+    await saveDraft();
+    const data = await api(`/api/newsletter/issues/${encodeURIComponent(currentIssue.issueId)}/test-send`, {
+      method: "POST",
+      body: JSON.stringify({ testEmail })
+    });
+    toast(`Test sent to ${data.sentTo}.`);
+    await loadIssues();
+    selectIssue(currentIssue.issueId);
+  } catch (e) {
+    toast(e.message);
+  }
+});
+
+document.getElementById("sendNowBtn").addEventListener("click", async () => {
+  if (!currentIssue) return;
+  if (!confirm("Send this issue to every active subscriber right now? This cannot be undone.")) return;
+  try {
+    const data = await api(`/api/newsletter/issues/${encodeURIComponent(currentIssue.issueId)}/send`, {
+      method: "POST"
+    });
+    toast(`Sent to ${data.sentCount} subscriber(s). ${data.failedCount} failed.`);
+    await loadIssues();
+    selectIssue(currentIssue.issueId);
+  } catch (e) {
+    toast(e.message);
+  }
+});
+
+document.getElementById("deleteBtn").addEventListener("click", async () => {
+  if (!currentIssue) return;
+  if (!confirm("Delete this draft issue? This cannot be undone.")) return;
+  try {
+    await api(`/api/newsletter/issues/${encodeURIComponent(currentIssue.issueId)}`, { method: "DELETE" });
+    issues = issues.filter((i) => i.issueId !== currentIssue.issueId);
+    currentIssue = null;
+    renderIssueList();
+    renderEditor();
+    toast("Draft deleted.");
+  } catch (e) {
+    toast(e.message);
+  }
+});
+
+async function loadSubscribers(){
+  try {
+    const data = await api("/api/newsletter/subscribers");
+    document.getElementById("subscriberSummary").textContent =
+      `${data.activeCount} active, ${data.inactiveCount} unsubscribed.`;
+    document.getElementById("subscriberRows").innerHTML = (data.subscribers || []).slice(0, 200).map((s) => `
+      <tr>
+        <td>${escapeHtml(s.firstName || "(no name)")}${s.businessName ? " — " + escapeHtml(s.businessName) : ""}</td>
+        <td>${escapeHtml(s.email)}</td>
+        <td>${s.status === "active" ? "Active" : "Unsubscribed"}</td>
+      </tr>
+    `).join("");
+  } catch (e) {
+    document.getElementById("subscriberSummary").textContent = "Could not load subscribers.";
+  }
+}
+
+(async function init(){
+  try {
+    await loadIssues();
+  } catch (e) {
+    toast(e.message);
+  }
+  loadSubscribers();
+  loadMonthlyTopics();
+})();
+</script>
+</body>
+</html>

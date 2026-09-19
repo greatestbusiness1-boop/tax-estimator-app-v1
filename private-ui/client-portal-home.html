@@ -9455,12 +9455,18 @@
             (membership.membershipStartedAt
               ? ` started ${formatDate(membership.membershipStartedAt)}.`
               : ".") +
-            (membership.nextRenewalAt
-              ? ` Next renewal: ${formatDate(membership.nextRenewalAt)}.`
-              : "");
+            (membership.cancelAtPeriodEnd
+              ? (membership.cancelAt
+                  ? ` Cancellation scheduled -- access continues through ${formatDate(membership.cancelAt)}, then billing stops.`
+                  : " Cancellation scheduled -- access continues through the end of the current billing period, then billing stops.")
+              : (membership.nextRenewalAt
+                  ? ` Next renewal: ${formatDate(membership.nextRenewalAt)}.`
+                  : ""));
         }
         if (progressTrack) progressTrack.hidden = true;
-        if (note) note.innerHTML = "<strong>Payment confirmed.</strong> Your year-round tracking access is active. Tax preparation and filing remain separate professional services.";
+        if (note) note.innerHTML = membership.cancelAtPeriodEnd
+          ? "<strong>Cancellation scheduled.</strong> Your access remains active through the paid-through date above. You will not be billed again after that."
+          : "<strong>Payment confirmed.</strong> Your year-round tracking access is active. Tax preparation and filing remain separate professional services.";
         if (actions) {
           actions.hidden = true;
           actions.style.display = "none";

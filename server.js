@@ -87,8 +87,43 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 const LEADS_FILE = path.join(__dirname, "leads.json");
+const NEWSLETTER_ISSUES_FILE = path.join(__dirname, "newsletter-issues.json");
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://tax-estimator-app-v1.onrender.com";
 const recentLeads = new Map();
+
+// =============================================================================
+// PROFESSIONAL SERVICE PRICING -- single source of truth per service.
+// Referenced from both the "save request" route (computes + stores the
+// price) and the matching "create checkout" route (recomputes and
+// cross-checks the stored price before ever charging Stripe). Never trust
+// a browser-submitted amount for either service.
+// =============================================================================
+
+const EXTENSION_PRICE_CENTS = {
+  individual_federal: 15000,       // Individual Federal Extension
+  individual_federal_state: 15000, // Individual Federal + One State (same price as federal-only)
+  business_federal: 17500,         // Business Federal Extension (federal only)
+  business_federal_state: 30000    // Business Federal + One State Extension ($50 package savings vs 17500+17500)
+};
+
+// Maps a saved extension request's serviceType/stateExtensionRequested to its
+// canonical pricing tier key -- the single source of truth used both when the
+// price is first computed (save route) and when it is revalidated before ever
+// charging Stripe (checkout route). Additional states, multi-state filings, or
+// unusual situations outside these four tiers remain quote-needed (see
+// request.multiStateOrUnusualSituation) and are never auto-priced.
+function getExtensionServiceTier(serviceType, stateExtensionRequested) {
+  const business = String(serviceType || "").toLowerCase() === "business";
+  return business
+    ? (stateExtensionRequested ? "business_federal_state" : "business_federal")
+    : (stateExtensionRequested ? "individual_federal_state" : "individual_federal");
+}
+
+const INSTALLMENT_AGREEMENT_PRICE_CENTS = {
+  federal: 15000,  // Federal Installment Agreement
+  state: 12500,    // One State Installment Agreement
+  package: 25000   // Federal + One State Installment Agreement Package (covers one federal + one state request)
+};
 
 const FREE_ESTIMATE_LIMIT = 1;
 const FREE_ESTIMATE_LIMIT_SCOPE = "tax-year";
@@ -481,6 +516,11 @@ function getSafeOfficeDocumentReviewRedirect(
       "/transcript-requests" ||
     target.startsWith(
       "/transcript-requests?"
+    ) ||
+    target ===
+      "/newsletter-admin" ||
+    target.startsWith(
+      "/newsletter-admin?"
     );
 
   return allowed
@@ -845,14 +885,51 @@ function requireClientPortalProductionConfiguration(
 
 const EMAIL_USER = process.env.EMAIL_USER || "";
 const EMAIL_APP_PASSWORD = process.env.EMAIL_APP_PASSWORD || "";
+const EMAIL_DELIVERY_CONFIGURED = Boolean(EMAIL_USER && EMAIL_APP_PASSWORD);
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_APP_PASSWORD
-  }
-});
+// Production always sets EMAIL_USER/EMAIL_APP_PASSWORD, so this always uses
+// real Gmail delivery there. Only when both are blank (local/dev/test
+// environments) does it fall back to nodemailer's built-in jsonTransport --
+// sendMail still fully executes and resolves successfully (so every calling
+// route's "confirmationSent"-style logic behaves exactly as it would with
+// real delivery), but no network call is made and no real email is sent.
+// The last few "sent" messages are kept in memory for local test inspection
+// via GET /api/dev/sent-test-emails (see below); nothing here changes what
+// happens when real credentials are present.
+const sentTestEmails = [];
+
+const transporter = EMAIL_DELIVERY_CONFIGURED
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_APP_PASSWORD
+      }
+    })
+  : (() => {
+      console.warn(
+        "[email] EMAIL_USER/EMAIL_APP_PASSWORD not configured -- using a local test transport. No real email will be sent."
+      );
+      const jsonTransport = nodemailer.createTransport({ jsonTransport: true });
+      return {
+        sendMail: async (mailOptions) => {
+          const info = await jsonTransport.sendMail(mailOptions);
+          sentTestEmails.push({
+            sentAt: new Date().toISOString(),
+            from: mailOptions.from || "",
+            to: mailOptions.to || "",
+            replyTo: mailOptions.replyTo || "",
+            subject: mailOptions.subject || "",
+            text: mailOptions.text || "",
+            html: mailOptions.html || ""
+          });
+          if (sentTestEmails.length > 50) {
+            sentTestEmails.splice(0, sentTestEmails.length - 50);
+          }
+          return info;
+        }
+      };
+    })();
 
 // =============================================================================
 // LEADS FILE HELPERS
@@ -876,6 +953,31 @@ function writeLeads(leads) {
   fs.renameSync(tmp, LEADS_FILE);
 }
 
+// =============================================================================
+// NEWSLETTER ISSUE FILE HELPERS
+// Newsletter issues are internal admin content (not client/lead records), so
+// they are stored locally rather than in the "leads" table. Same
+// read/write-with-temp-file pattern as readLeads/writeLeads above.
+// =============================================================================
+
+function readNewsletterIssues() {
+  try {
+    if (!fs.existsSync(NEWSLETTER_ISSUES_FILE)) return [];
+    const raw = fs.readFileSync(NEWSLETTER_ISSUES_FILE, "utf8").trim();
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error("[newsletter issues] Read error:", err.message);
+    return [];
+  }
+}
+
+function writeNewsletterIssues(issues) {
+  const tmp = NEWSLETTER_ISSUES_FILE + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(issues, null, 2), "utf8");
+  fs.renameSync(tmp, NEWSLETTER_ISSUES_FILE);
+}
+
 async function appendLead(lead) {
   const row = {
     leadId: lead.leadId,
@@ -895,6 +997,7 @@ async function appendLead(lead) {
       contractor1099Request: lead.contractor1099Request || null,
       contractor1099Work: lead.contractor1099Work || null,
       extensionRequest: lead.extensionRequest || null,
+      installmentAgreementRequest: lead.installmentAgreementRequest || null,
       contactRequest: lead.contactRequest || null,
       calendarAppointment: lead.calendarAppointment || null,
       submissionType: lead.submissionType || null,
@@ -1724,6 +1827,11 @@ function mapRowToLead(row) {
       row.extensionRequest ||
       row.extension_request ||
       null,
+    installmentAgreementRequest:
+      estimate.installmentAgreementRequest ||
+      row.installmentAgreementRequest ||
+      row.installment_agreement_request ||
+      null,
     contactRequest:
       estimate.contactRequest ||
       row.contactRequest ||
@@ -1733,6 +1841,11 @@ function mapRowToLead(row) {
       estimate.calendarAppointment ||
       row.calendarAppointment ||
       row.calendar_appointment ||
+      null,
+    transcriptRequest:
+      estimate.transcriptRequest ||
+      row.transcriptRequest ||
+      row.transcript_request ||
       null,
     writtenReview:
       estimate.writtenReview ||
@@ -1823,13 +1936,16 @@ function getNewsletterSubscriptionRecord(lead = {}) {
       ? lead.Request
       : {};
 
+  const NEWSLETTER_SERVICE_PATTERN =
+    /tax updates that matter newsletter|small business tax (?:&|and) money brief/i;
+
   const candidate =
-    /tax updates that matter newsletter/i.test(
+    NEWSLETTER_SERVICE_PATTERN.test(
       String(contactRequest.service || "")
     )
       ? contactRequest
       : (
-          /tax updates that matter newsletter/i.test(
+          NEWSLETTER_SERVICE_PATTERN.test(
             String(request.service || request.type || "")
           )
             ? request
@@ -1856,6 +1972,7 @@ function isNewsletterOnlyLead(lead = {}) {
     lead.contractor1099Request ||
     lead.contractor1099Work ||
     lead.extensionRequest ||
+    lead.installmentAgreementRequest ||
     lead.calendarAppointment ||
     lead.writtenReview ||
     lead.taxSavingsPlanner ||
@@ -2156,9 +2273,55 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
   return { ok: false, error: "Lead not found." };
 }
 
+async function findLeadRecordById(leadId) {
+  const cleanId = String(leadId || "").trim();
+  if (!cleanId) return null;
+
+  function matchesLeadId(obj = {}) {
+    const estimate = obj.estimate || {};
+    const possibleIds = [
+      obj.leadId,
+      obj.leadid,
+      obj.lead_id,
+      obj.id,
+      obj.estimateId,
+      estimate.leadId,
+      estimate.leadid,
+      estimate.lead_id,
+      estimate.id,
+      estimate.estimateId
+    ];
+    return possibleIds.some((id) => String(id || "").trim() === cleanId);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(data)) {
+      const matchingRow = data.find(matchesLeadId);
+      if (matchingRow) {
+        return mapRowToLead(matchingRow);
+      }
+    }
+  } catch (err) {
+    console.error("[findLeadRecordById] Supabase lookup failed:", err.message || err);
+  }
+
+  const localMatch = readLeads().find(matchesLeadId);
+  return localMatch ? mapRowToLead(localMatch) : null;
+}
+
 async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
   const nowIso = new Date().toISOString();
   const nowDisplay = new Date().toLocaleString();
+  const incomingSessionId = String(paymentInfo.sessionId || "").trim();
+  const amountPaidCents = Math.max(
+    0,
+    Number.parseInt(paymentInfo.amountPaidCents, 10) || 0
+  );
 
   return updateLeadAfterStripePayment(leadId, function applyTranscriptPaid(record = {}) {
     const updated = { ...record };
@@ -2168,8 +2331,25 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
       updated.Request ||
       {};
 
+    const processedSessions = Array.isArray(
+      existingTranscriptRequest.processedStripeSessions
+    )
+      ? existingTranscriptRequest.processedStripeSessions
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+      : [];
+
+    if (
+      incomingSessionId &&
+      processedSessions.includes(incomingSessionId)
+    ) {
+      // Already recorded (e.g. a Stripe webhook retry) -- do not double-append notes.
+      return updated;
+    }
+
     const paymentNote =
-      "[" + nowDisplay + "] Stripe confirmed IRS Transcript Help payment." +
+      "[" + nowDisplay + "] Stripe confirmed IRS Transcript Help payment" +
+      (amountPaidCents ? " of $" + (amountPaidCents / 100).toFixed(2) : "") + "." +
       (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
       (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
 
@@ -2179,8 +2359,17 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
       paymentStatus: "Paid / Verified",
       paymentVerifiedAt: nowIso,
       paidAt: nowIso,
+      amountPaidCents: amountPaidCents || existingTranscriptRequest.amountPaidCents || 0,
+      amountPaid: Number(
+        ((amountPaidCents || existingTranscriptRequest.amountPaidCents || 0) / 100).toFixed(2)
+      ),
+      refundStatus: existingTranscriptRequest.refundStatus || "none",
+      refundedAmountCents: existingTranscriptRequest.refundedAmountCents || 0,
       stripeCheckoutSessionId: paymentInfo.sessionId || existingTranscriptRequest.stripeCheckoutSessionId || "",
       stripePaymentIntentId: paymentInfo.paymentIntentId || existingTranscriptRequest.stripePaymentIntentId || "",
+      processedStripeSessions: incomingSessionId
+        ? Array.from(new Set([...processedSessions, incomingSessionId]))
+        : processedSessions,
       paymentSource: "Stripe Checkout",
       updatedAt: nowIso
     };
@@ -2204,6 +2393,11 @@ async function applyStripePaidUpdate(leadId, paymentInfo = {}) {
 async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
   const nowIso = new Date().toISOString();
   const nowDisplay = new Date().toLocaleString();
+  const incomingSessionId = String(paymentInfo.sessionId || "").trim();
+  const amountPaidCents = Math.max(
+    0,
+    Number.parseInt(paymentInfo.amountPaidCents, 10) || 0
+  );
 
   return updateLeadAfterStripePayment(leadId, function applyWrittenPaid(record = {}) {
     const updated = { ...record };
@@ -2219,8 +2413,25 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
       return updated;
     }
 
+    const processedSessions = Array.isArray(
+      existingWrittenReview.processedStripeSessions
+    )
+      ? existingWrittenReview.processedStripeSessions
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+      : [];
+
+    if (
+      incomingSessionId &&
+      processedSessions.includes(incomingSessionId)
+    ) {
+      // Already recorded (e.g. a Stripe webhook retry) -- do not double-append notes.
+      return updated;
+    }
+
     const paymentNote =
-      "[" + nowDisplay + "] Stripe confirmed Written Estimate Red Flag Review payment." +
+      "[" + nowDisplay + "] Stripe confirmed Written Estimate Red Flag Review payment" +
+      (amountPaidCents ? " of $" + (amountPaidCents / 100).toFixed(2) : "") + "." +
       (paymentInfo.sessionId ? " Checkout Session: " + paymentInfo.sessionId + "." : "") +
       (paymentInfo.paymentIntentId ? " Payment Intent: " + paymentInfo.paymentIntentId + "." : "");
 
@@ -2231,8 +2442,17 @@ async function applyWrittenReviewPaidUpdate(leadId, paymentInfo = {}) {
       paymentStatus: "Paid / Verified",
       paymentVerifiedAt: nowIso,
       paidAt: nowIso,
+      amountPaidCents: amountPaidCents || existingWrittenReview.amountPaidCents || 0,
+      amountPaid: Number(
+        ((amountPaidCents || existingWrittenReview.amountPaidCents || 0) / 100).toFixed(2)
+      ),
+      refundStatus: existingWrittenReview.refundStatus || "none",
+      refundedAmountCents: existingWrittenReview.refundedAmountCents || 0,
       stripeCheckoutSessionId: paymentInfo.sessionId || existingWrittenReview.stripeCheckoutSessionId || "",
       stripePaymentIntentId: paymentInfo.paymentIntentId || existingWrittenReview.stripePaymentIntentId || "",
+      processedStripeSessions: incomingSessionId
+        ? Array.from(new Set([...processedSessions, incomingSessionId]))
+        : processedSessions,
       paymentSource: "Stripe Checkout",
       updatedAt: nowIso
     };
@@ -2379,6 +2599,129 @@ async function applyExtensionPaidUpdate(
   );
 }
 
+async function applyInstallmentAgreementPaidUpdate(
+  leadId,
+  paymentInfo = {}
+) {
+  const cleanId =
+    String(leadId || "").trim();
+
+  const current =
+    await findClientPortalLeadById(
+      cleanId
+    );
+
+  const currentLead =
+    current?.lead || {};
+
+  const currentRequest =
+    currentLead.installmentAgreementRequest || {};
+
+  const incomingSessionId =
+    String(
+      paymentInfo.sessionId || ""
+    ).trim();
+
+  const existingSessionId =
+    String(
+      currentRequest
+        .stripeCheckoutSessionId ||
+      ""
+    ).trim();
+
+  const alreadyPaid =
+    /paid|verified/i.test(
+      String(
+        currentRequest.paymentStatus ||
+        ""
+      )
+    ) &&
+    (
+      !incomingSessionId ||
+      !existingSessionId ||
+      incomingSessionId ===
+        existingSessionId
+    );
+
+  if (alreadyPaid) {
+    return {
+      ok: true,
+      alreadyPaid: true,
+      source:
+        current?.source ||
+        "existing-record",
+      lead: currentLead
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  const nowDisplay =
+    new Date().toLocaleString();
+
+  return updateLeadAfterStripePayment(
+    cleanId,
+    function applyInstallmentAgreementPaid(
+      record = {}
+    ) {
+      const updated = { ...record };
+      const existing =
+        updated.installmentAgreementRequest &&
+        typeof updated.installmentAgreementRequest ===
+          "object"
+          ? updated.installmentAgreementRequest
+          : {};
+
+      const paymentNote =
+        "[" + nowDisplay + "] Stripe confirmed Installment Agreement service payment." +
+        (paymentInfo.sessionId
+          ? " Checkout Session: " +
+            paymentInfo.sessionId +
+            "."
+          : "") +
+        (paymentInfo.paymentIntentId
+          ? " Payment Intent: " +
+            paymentInfo.paymentIntentId +
+            "."
+          : "");
+
+      updated.installmentAgreementRequest = {
+        ...existing,
+        requested: true,
+        paymentStatus: "Paid / Verified",
+        workStatus: "Needs Review",
+        paymentVerifiedAt: nowIso,
+        paidAt:
+          existing.paidAt ||
+          nowIso,
+        stripeCheckoutSessionId:
+          paymentInfo.sessionId ||
+          existing.stripeCheckoutSessionId ||
+          "",
+        stripePaymentIntentId:
+          paymentInfo.paymentIntentId ||
+          existing.stripePaymentIntentId ||
+          "",
+        paymentSource: "Stripe Checkout",
+        updatedAt: nowIso
+      };
+
+      updated.status =
+        "Installment Agreement Request - Needs Review";
+      updated.updatedAt = nowIso;
+
+      const oldNotes =
+        typeof updated.notes === "string"
+          ? updated.notes.trim()
+          : "";
+
+      updated.notes = oldNotes
+        ? oldNotes + "\n" + paymentNote
+        : paymentNote;
+
+      return updated;
+    }
+  );
+}
 
 
 async function applyTaxPreparationPaidUpdate(
@@ -2484,6 +2827,32 @@ async function applyTaxPreparationPaidUpdate(
           ? " Payment Intent: " + paymentInfo.paymentIntentId + "."
           : "");
 
+      // Preserve each individual payment (not just the running total) so a
+      // refund against an OLDER payment can still be matched correctly even
+      // after later payments have been made. Purely additive -- the existing
+      // cumulative amountPaidCents/amountPaid fields above are unchanged.
+      const existingHistory = Array.isArray(existing.paymentHistory)
+        ? existing.paymentHistory
+        : [];
+      const nextHistory = [
+        ...existingHistory,
+        {
+          id:
+            paymentInfo.paymentIntentId ||
+            incomingSessionId ||
+            ("payment-" + Date.now()),
+          paymentIntentId: paymentInfo.paymentIntentId || "",
+          checkoutSessionId: incomingSessionId || "",
+          amountPaidCents: paidAmountCents,
+          paidAt: nowIso,
+          paymentPurpose: String(paymentInfo.paymentPurpose || "").trim(),
+          paymentStatus: "Paid",
+          refundStatus: "none",
+          refundedAmountCents: 0,
+          processedStripeRefundIds: []
+        }
+      ];
+
       updated.taxPreparationWork = {
         ...existing,
         paymentStatus,
@@ -2517,6 +2886,7 @@ async function applyTaxPreparationPaidUpdate(
                 ])
               )
             : processedSessions,
+        paymentHistory: nextHistory,
         paymentSource: "Stripe Checkout",
         workStatus: nextWorkStatus,
         updatedAt: nowIso
@@ -2649,6 +3019,32 @@ async function applyContractor1099PaidUpdate(
           ? " Payment Intent: " + paymentInfo.paymentIntentId + "."
           : "");
 
+      // Preserve each individual payment (not just the running total) so a
+      // refund against an OLDER payment can still be matched correctly even
+      // after later payments have been made. Purely additive -- the existing
+      // cumulative amountPaidCents/amountPaid fields above are unchanged.
+      const existingHistory = Array.isArray(existing.paymentHistory)
+        ? existing.paymentHistory
+        : [];
+      const nextHistory = [
+        ...existingHistory,
+        {
+          id:
+            paymentInfo.paymentIntentId ||
+            incomingSessionId ||
+            ("payment-" + Date.now()),
+          paymentIntentId: paymentInfo.paymentIntentId || "",
+          checkoutSessionId: incomingSessionId || "",
+          amountPaidCents: paidAmountCents,
+          paidAt: nowIso,
+          paymentPurpose: String(paymentInfo.paymentPurpose || "").trim(),
+          paymentStatus: "Paid",
+          refundStatus: "none",
+          refundedAmountCents: 0,
+          processedStripeRefundIds: []
+        }
+      ];
+
       updated.contractor1099Work = {
         ...existing,
         paymentStatus,
@@ -2682,6 +3078,7 @@ async function applyContractor1099PaidUpdate(
                 ])
               )
             : processedSessions,
+        paymentHistory: nextHistory,
         paymentSource: "Stripe Checkout",
         workStatus: nextWorkStatus,
         updatedAt: nowIso
@@ -2705,6 +3102,445 @@ async function applyContractor1099PaidUpdate(
   );
 }
 
+// =============================================================================
+// REFUND TRACKING (operational revenue visibility, not a full accounting
+// system) -- matches an incoming Stripe refund back to the one-time-payment
+// service sub-object that recorded the same PaymentIntent, and marks it
+// refunded/partially refunded so revenue reporting stops counting it as
+// fully collected. Subscription (Tax Watch Pro / Pinnacle) refunds are not
+// covered here -- that billing history already has its own Stripe-verified
+// paymentHistory ledger and is a materially different (recurring) case.
+// =============================================================================
+
+const REFUND_TRACKED_SERVICES = [
+  { field: "transcriptRequest", amountField: "amountPaidCents", multiPayment: false },
+  { field: "writtenReview", amountField: "amountPaidCents", multiPayment: false },
+  { field: "extensionRequest", amountField: "totalPriceCents", multiPayment: false },
+  { field: "installmentAgreementRequest", amountField: "totalPriceCents", multiPayment: false },
+  // Tax Preparation and Contractor 1099 accept multiple/partial payments, so a
+  // single top-level stripePaymentIntentId field can't identify which of
+  // several payments a refund belongs to -- each payment is preserved in
+  // paymentHistory (see applyTaxPreparationPaidUpdate/applyContractor1099PaidUpdate)
+  // and refunds are matched against that history instead.
+  { field: "taxPreparationWork", amountField: "amountPaidCents", multiPayment: true },
+  { field: "contractor1099Work", amountField: "amountPaidCents", multiPayment: true }
+];
+
+function findHistoryEntryByPaymentIntentId(sub, paymentIntentId) {
+  if (!sub || !Array.isArray(sub.paymentHistory)) return null;
+  return (
+    sub.paymentHistory.find(
+      (entry) =>
+        String(entry?.paymentIntentId || "").trim() === paymentIntentId
+    ) || null
+  );
+}
+
+async function findLeadServiceByPaymentIntentId(paymentIntentId) {
+  const cleanPI = String(paymentIntentId || "").trim();
+  if (!cleanPI) return null;
+
+  function matchInLead(lead) {
+    for (const svc of REFUND_TRACKED_SERVICES) {
+      const sub = lead?.[svc.field];
+      if (!sub || typeof sub !== "object") continue;
+
+      if (svc.multiPayment) {
+        if (findHistoryEntryByPaymentIntentId(sub, cleanPI)) {
+          return svc;
+        }
+        continue;
+      }
+
+      if (String(sub.stripePaymentIntentId || "").trim() === cleanPI) {
+        return svc;
+      }
+    }
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(data)) {
+      for (const row of data) {
+        const mapped = mapRowToLead(row);
+        const svc = matchInLead(mapped);
+        if (svc) {
+          return { leadId: mapped.leadId, service: svc };
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[refund] Supabase lookup failed:", err.message || err);
+  }
+
+  for (const row of readLeads()) {
+    const mapped = mapRowToLead(row);
+    const svc = matchInLead(mapped);
+    if (svc) {
+      return { leadId: mapped.leadId, service: svc };
+    }
+  }
+
+  return null;
+}
+
+async function applyRefundToLead(leadId, service, refundInfo = {}) {
+  const nowIso = new Date().toISOString();
+  const nowDisplay = new Date().toLocaleString();
+  const refundId = String(refundInfo.refundId || "").trim();
+  const paymentIntentId = String(refundInfo.paymentIntentId || "").trim();
+
+  return updateLeadAfterStripePayment(leadId, function applyRefund(record = {}) {
+    const updated = { ...record };
+    const existing =
+      updated[service.field] &&
+      typeof updated[service.field] === "object"
+        ? updated[service.field]
+        : {};
+
+    if (service.multiPayment) {
+      const history = Array.isArray(existing.paymentHistory)
+        ? existing.paymentHistory.map((entry) => ({ ...entry }))
+        : [];
+      const entryIndex = history.findIndex(
+        (entry) =>
+          String(entry?.paymentIntentId || "").trim() === paymentIntentId
+      );
+
+      if (entryIndex === -1) {
+        // Matched at lookup time but no longer present -- nothing safe to do.
+        return updated;
+      }
+
+      const entry = history[entryIndex];
+      const entryProcessedRefunds = Array.isArray(
+        entry.processedStripeRefundIds
+      )
+        ? entry.processedStripeRefundIds
+            .map((value) => String(value || "").trim())
+            .filter(Boolean)
+        : [];
+
+      if (refundId && entryProcessedRefunds.includes(refundId)) {
+        // Already recorded against this specific payment (webhook retry) --
+        // idempotent no-op, does not touch any other payment's history entry.
+        return updated;
+      }
+
+      const originalAmountCents = Math.max(
+        0,
+        Number(entry.amountPaidCents || 0)
+      );
+      const refundedAmountCents = Math.max(
+        0,
+        Number(refundInfo.amountRefundedCents || 0)
+      );
+      const isFullRefund =
+        originalAmountCents > 0
+          ? refundedAmountCents >= originalAmountCents
+          : Number(refundInfo.amountRemainingCents || 0) <= 0;
+      const entryRefundStatus = isFullRefund ? "refunded" : "partial";
+
+      history[entryIndex] = {
+        ...entry,
+        refundStatus: entryRefundStatus,
+        refundedAmountCents,
+        lastRefundAt: nowIso,
+        paymentStatus:
+          entryRefundStatus === "refunded" ? "Refunded" : "Partially Refunded",
+        processedStripeRefundIds: refundId
+          ? Array.from(new Set([...entryProcessedRefunds, refundId]))
+          : entryProcessedRefunds
+      };
+
+      // Roll up refund totals across ALL payments for this lead's service so
+      // the existing top-level refundStatus/refundedAmountCents fields (read
+      // by the admin detail view and the revenue summary) stay accurate,
+      // without altering the gross cumulative amountPaidCents total -- net
+      // collected is computed as gross minus this rolled-up refunded total.
+      const totalRefundedCents = history.reduce(
+        (sum, item) =>
+          sum + Math.max(0, Number(item.refundedAmountCents || 0)),
+        0
+      );
+      const totalPaidCents = Math.max(
+        0,
+        Number(existing.amountPaidCents || 0)
+      );
+      const aggregateRefundStatus =
+        totalRefundedCents <= 0
+          ? "none"
+          : totalRefundedCents >= totalPaidCents
+            ? "refunded"
+            : "partial";
+
+      const note =
+        "[" + nowDisplay + "] Stripe reported a " +
+        (entryRefundStatus === "refunded" ? "full" : "partial") +
+        " refund of $" + (refundedAmountCents / 100).toFixed(2) +
+        " against payment " + (paymentIntentId || "unknown") + "." +
+        (refundInfo.chargeId ? " Charge: " + refundInfo.chargeId + "." : "");
+
+      updated[service.field] = {
+        ...existing,
+        paymentHistory: history,
+        refundStatus: aggregateRefundStatus,
+        refundedAmountCents: totalRefundedCents,
+        lastRefundAt: nowIso,
+        updatedAt: nowIso
+      };
+
+      const oldNotes =
+        typeof updated.notes === "string" ? updated.notes.trim() : "";
+      updated.notes = oldNotes ? oldNotes + "\n" + note : note;
+      updated.updatedAt = nowIso;
+
+      return updated;
+    }
+
+    const processedRefunds = Array.isArray(existing.processedStripeRefundIds)
+      ? existing.processedStripeRefundIds
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+      : [];
+
+    if (refundId && processedRefunds.includes(refundId)) {
+      // Already recorded (webhook retry) -- idempotent no-op.
+      return updated;
+    }
+
+    const originalAmountCents = Math.max(
+      0,
+      Number(existing[service.amountField] || 0)
+    );
+    const refundedAmountCents = Math.max(
+      0,
+      Number(refundInfo.amountRefundedCents || 0)
+    );
+    const isFullRefund =
+      originalAmountCents > 0
+        ? refundedAmountCents >= originalAmountCents
+        : Number(refundInfo.amountRemainingCents || 0) <= 0;
+    const refundStatus = isFullRefund ? "refunded" : "partial";
+
+    const note =
+      "[" + nowDisplay + "] Stripe reported a " +
+      (refundStatus === "refunded" ? "full" : "partial") +
+      " refund of $" + (refundedAmountCents / 100).toFixed(2) + "." +
+      (refundInfo.chargeId ? " Charge: " + refundInfo.chargeId + "." : "");
+
+    updated[service.field] = {
+      ...existing,
+      refundStatus,
+      refundedAmountCents,
+      lastRefundAt: nowIso,
+      paymentStatus:
+        refundStatus === "refunded" ? "Refunded" : "Partially Refunded",
+      processedStripeRefundIds: refundId
+        ? Array.from(new Set([...processedRefunds, refundId]))
+        : processedRefunds,
+      updatedAt: nowIso
+    };
+
+    const oldNotes =
+      typeof updated.notes === "string" ? updated.notes.trim() : "";
+    updated.notes = oldNotes ? oldNotes + "\n" + note : note;
+    updated.updatedAt = nowIso;
+
+    return updated;
+  });
+}
+
+async function processStripeChargeRefund(charge = {}, eventId = "") {
+  const paymentIntentId = getStripeObjectId(charge.payment_intent);
+
+  if (!paymentIntentId) {
+    return { ok: true, ignored: true, reason: "No payment_intent on charge." };
+  }
+
+  const match = await findLeadServiceByPaymentIntentId(paymentIntentId);
+
+  if (!match) {
+    console.warn(
+      "[refund] No lead/service found for PaymentIntent " + paymentIntentId +
+      " -- this can happen if the refunded payment was never recorded on any lead."
+    );
+    return { ok: true, ignored: true, reason: "No matching lead/service found." };
+  }
+
+  const result = await applyRefundToLead(match.leadId, match.service, {
+    refundId: eventId || charge.id,
+    chargeId: charge.id,
+    paymentIntentId,
+    amountRefundedCents: charge.amount_refunded,
+    amountRemainingCents:
+      Number(charge.amount || 0) - Number(charge.amount_refunded || 0)
+  });
+
+  return { ...result, leadId: match.leadId, service: match.service.field };
+}
+
+// =============================================================================
+// ADMIN REVENUE SUMMARY (operational visibility only -- total collected,
+// revenue by service, transaction count by service. Not a bookkeeping or
+// accounting system: figures come straight from the same per-lead payment
+// fields the rest of the admin dashboard already reads, net of any refunds
+// recorded via the webhook handler above.)
+// =============================================================================
+
+async function computeAdminRevenueSummary() {
+  const byId = new Map();
+
+  function consider(rawLead) {
+    const mapped = mapRowToLead(rawLead || {});
+    if (mapped?.leadId) {
+      byId.set(mapped.leadId, mapped);
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && Array.isArray(data)) {
+      data.forEach(consider);
+    }
+  } catch (err) {
+    console.error("[revenue summary] Supabase lookup failed:", err.message || err);
+  }
+
+  readLeads().forEach(consider);
+
+  const categories = {
+    written_review: { label: "Written Review", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    transcript_help: { label: "Transcript Help", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    extension: { label: "Extensions", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    installment_agreement: { label: "Installment Agreements", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    tax_preparation: { label: "Tax Preparation", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    contractor_1099: { label: "Contractor 1099", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    tax_watch_pro: { label: "Tax Watch Pro", collectedCents: 0, refundedCents: 0, transactionCount: 0 },
+    pinnacle: { label: "Pinnacle", collectedCents: 0, refundedCents: 0, transactionCount: 0 }
+  };
+
+  function addFlatService(categoryKey, sub, amountField) {
+    if (!sub || typeof sub !== "object") return;
+    const paymentStatus = String(sub.paymentStatus || "").toLowerCase();
+    const grossCents = Math.max(0, Number(sub[amountField] || 0));
+    const refundedCents = Math.max(0, Number(sub.refundedAmountCents || 0));
+
+    if (!grossCents || !paymentStatus.includes("paid")) {
+      return;
+    }
+
+    categories[categoryKey].collectedCents += Math.max(0, grossCents - refundedCents);
+    categories[categoryKey].refundedCents += refundedCents;
+    categories[categoryKey].transactionCount += 1;
+  }
+
+  for (const lead of byId.values()) {
+    addFlatService("written_review", lead.writtenReview, "amountPaidCents");
+    addFlatService("transcript_help", lead.transcriptRequest, "amountPaidCents");
+    addFlatService("extension", lead.extensionRequest, "totalPriceCents");
+    addFlatService("installment_agreement", lead.installmentAgreementRequest, "totalPriceCents");
+    addFlatService("tax_preparation", lead.taxPreparationWork, "amountPaidCents");
+    addFlatService("contractor_1099", lead.contractor1099Work, "amountPaidCents");
+
+    const enrollment = lead.contactRequest?.membershipEnrollment || lead.Request?.membershipEnrollment;
+    if (enrollment && Array.isArray(enrollment.paymentHistory)) {
+      const categoryKey = enrollment.planKey === "pinnacle" ? "pinnacle" : "tax_watch_pro";
+
+      enrollment.paymentHistory.forEach((entry) => {
+        if (String(entry?.status || "") !== "Paid") return;
+        const amountCents = Math.max(0, Number(entry.amountPaidCents || 0));
+        if (!amountCents) return;
+        categories[categoryKey].collectedCents += amountCents;
+        categories[categoryKey].transactionCount += 1;
+      });
+    }
+  }
+
+  const byCategory = Object.entries(categories).map(([key, value]) => ({
+    key,
+    label: value.label,
+    collectedCents: value.collectedCents,
+    collectedDisplay: "$" + (value.collectedCents / 100).toFixed(2),
+    refundedCents: value.refundedCents,
+    refundedDisplay: value.refundedCents ? "$" + (value.refundedCents / 100).toFixed(2) : "",
+    transactionCount: value.transactionCount
+  }));
+
+  const totalCollectedCents = byCategory.reduce((sum, c) => sum + c.collectedCents, 0);
+  const totalTransactionCount = byCategory.reduce((sum, c) => sum + c.transactionCount, 0);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    totalCollectedCents,
+    totalCollectedDisplay: "$" + (totalCollectedCents / 100).toFixed(2),
+    totalTransactionCount,
+    byCategory
+  };
+}
+
+app.get(
+  "/api/admin/revenue-summary",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    try {
+      const summary = await computeAdminRevenueSummary();
+      return res.status(200).json({ ok: true, summary });
+    } catch (error) {
+      console.error("[revenue summary] Failed:", error.message || error);
+      return res.status(500).json({
+        ok: false,
+        error: "The revenue summary could not be generated."
+      });
+    }
+  }
+);
+
+
+// =============================================================================
+// LOCAL/TEST ONLY: Inspect emails sent through the local jsonTransport stub
+// (only ever populated when EMAIL_USER/EMAIL_APP_PASSWORD are blank -- see
+// the transporter setup above). Lets tests verify subject/recipient/HTML/
+// text content without needing real SMTP credentials, and without sending
+// any real email.
+// =============================================================================
+
+app.get("/api/dev/sent-test-emails", (req, res) => {
+  const host = String(req.headers.host || "").toLowerCase();
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+
+  if (!isLocal) {
+    const expectedKey = String(process.env.LIVE_TEST_KEY || "").trim();
+    const suppliedKey = String(req.get("x-live-test-key") || "").trim();
+
+    if (!expectedKey || !suppliedKey || suppliedKey !== expectedKey) {
+      return res.status(403).json({ ok: false, error: "Invalid or missing protected live-test key." });
+    }
+  }
+
+  if (EMAIL_DELIVERY_CONFIGURED) {
+    return res.status(200).json({
+      ok: true,
+      usingTestTransport: false,
+      note: "Real email delivery is configured -- no test messages are captured here.",
+      emails: []
+    });
+  }
+
+  return res.status(200).json({
+    ok: true,
+    usingTestTransport: true,
+    emails: sentTestEmails
+  });
+});
 
 // =============================================================================
 // LOCAL ONLY: Simulate $150 transcript payment without Stripe charge
@@ -2750,7 +3586,8 @@ app.get("/api/dev/simulate-transcript-paid", async (req, res) => {
 
     const result = await applyStripePaidUpdate(leadId, {
       sessionId: "LOCAL_SIMULATED_CHECKOUT_SESSION",
-      paymentIntentId: "LOCAL_SIMULATED_PAYMENT_INTENT"
+      paymentIntentId: "LOCAL_SIMULATED_PAYMENT_INTENT",
+      amountPaidCents: Number(process.env.TRANSCRIPT_HELP_PRICE_CENTS || 15000)
     });
 
     return res.json({
@@ -2812,7 +3649,8 @@ app.get("/api/dev/simulate-written-review-paid", async (req, res) => {
 
     const result = await applyWrittenReviewPaidUpdate(leadId, {
       sessionId: "LOCAL_SIMULATED_WRITTEN_REVIEW_SESSION",
-      paymentIntentId: "LOCAL_SIMULATED_WRITTEN_REVIEW_PAYMENT"
+      paymentIntentId: "LOCAL_SIMULATED_WRITTEN_REVIEW_PAYMENT",
+      amountPaidCents: Number(process.env.WRITTEN_REVIEW_PRICE_CENTS || 2900)
     });
 
     if (!result.ok) {
@@ -3650,7 +4488,8 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
       if ((service === "irs_transcript_help" || service === "irs__help") && session.payment_status === "paid") {
         const result = await applyStripePaidUpdate(leadId, {
           sessionId: session.id,
-          paymentIntentId: session.payment_intent
+          paymentIntentId: session.payment_intent,
+          amountPaidCents: session.amount_total
         });
 
         if (!result.ok) {
@@ -3733,6 +4572,85 @@ Greatest Business Solution LLC`
             }).catch((emailError) => {
               console.error(
                 "[stripe webhook] Extension payment confirmation email failed:",
+                leadId,
+                emailError.message || emailError
+              );
+            });
+          }
+        }
+      }
+
+      if (
+        service === "installment_agreement" &&
+        session.payment_status === "paid"
+      ) {
+        const result = await applyInstallmentAgreementPaidUpdate(
+          leadId,
+          {
+            sessionId: session.id,
+            paymentIntentId:
+              session.payment_intent
+          }
+        );
+
+        if (!result.ok) {
+          console.error(
+            "[stripe webhook] Could not mark installment agreement request paid:",
+            result.error || result
+          );
+        } else {
+          console.log(
+            result.alreadyPaid
+              ? "[stripe webhook] Installment agreement request was already marked paid:"
+              : "[stripe webhook] Installment agreement request marked paid:",
+            leadId,
+            result.source
+          );
+
+          const paidLead = result.lead || {};
+          const clientEmail =
+            String(
+              paidLead.contact?.email || ""
+            ).trim();
+
+          if (
+            !result.alreadyPaid &&
+            clientEmail &&
+            EMAIL_USER &&
+            EMAIL_APP_PASSWORD
+          ) {
+            const portalUrl =
+              String(APP_BASE_URL || "")
+                .replace(/\/+$/, "") +
+              "/client-portal?activate=1&leadId=" +
+              encodeURIComponent(leadId);
+
+            void transporter.sendMail({
+              from: EMAIL_USER,
+              to: clientEmail,
+              subject:
+                "Your Installment Agreement Request Payment Was Received",
+              text:
+`Hello ${paidLead.contact?.name || "Client"},
+
+Your payment for the Installment Agreement service was received.
+
+Reference number:
+${leadId}
+
+The office will review your balance and payment information and begin preparing your installment agreement request.
+
+Approval, payment terms, penalties, interest, and government fees are determined by the IRS or applicable state taxing authority. Our fee covers professional preparation and assistance with the request -- it is not a guarantee of approval.
+
+Use your secure client portal for documents and office updates:
+${portalUrl}
+
+Thank you,
+
+Greatest Business Solution LLC`
+            }).catch((emailError) => {
+              console.error(
+                "[stripe webhook] Installment agreement payment confirmation email failed:",
                 leadId,
                 emailError.message || emailError
               );
@@ -3964,7 +4882,8 @@ Greatest Business Solution LLC`
       if (service === "written_review" && session.payment_status === "paid") {
         const result = await applyWrittenReviewPaidUpdate(leadId, {
           sessionId: session.id,
-          paymentIntentId: session.payment_intent
+          paymentIntentId: session.payment_intent,
+          amountPaidCents: session.amount_total
         });
 
         if (!result.ok) {
@@ -4039,6 +4958,26 @@ Greatest Business Solution LLC`
         console.error(
           "[stripe webhook] Membership subscription could not be synchronized:",
           result.error || result
+        );
+      }
+    }
+
+    if (event.type === "charge.refunded") {
+      const result = await processStripeChargeRefund(
+        event.data.object || {},
+        event.id
+      );
+
+      if (!result.ok) {
+        console.error(
+          "[stripe webhook] Refund could not be recorded:",
+          result.error || result
+        );
+      } else if (!result.ignored) {
+        console.log(
+          "[stripe webhook] Refund recorded:",
+          result.leadId,
+          result.service
         );
       }
     }
@@ -4574,6 +5513,16 @@ async function loadClientPortalLeadCandidates() {
       )
     };
 
+    const authoritativeInstallmentAgreementRequest = {
+      ...asPlainObject(
+        mapped.installmentAgreementRequest
+      ),
+      ...asPlainObject(
+        existing.lead
+          ?.installmentAgreementRequest
+      )
+    };
+
     const authoritativeContractor1099Request = {
       ...asPlainObject(
         mapped.contractor1099Request
@@ -4710,6 +5659,12 @@ async function loadClientPortalLeadCandidates() {
             authoritativeExtensionRequest
           ).length
             ? authoritativeExtensionRequest
+            : null,
+        installmentAgreementRequest:
+          Object.keys(
+            authoritativeInstallmentAgreementRequest
+          ).length
+            ? authoritativeInstallmentAgreementRequest
             : null,
         contractor1099Request:
           Object.keys(
@@ -13445,10 +14400,16 @@ function getNewsletterSourcePageLabel(sourcePage) {
 app.post("/api/newsletter-signup", async (req, res) => {
   const body = req.body || {};
   const email = normalizeEmail(body.email || "");
+  const firstName = String(body.firstName || "").trim().slice(0, 80);
+  const businessName = String(body.businessName || "").trim().slice(0, 120);
   const consent = body.consent === true;
   const sourcePage = String(body.sourcePage || "/").trim().slice(0, 200);
   const sourcePageLabel = getNewsletterSourcePageLabel(sourcePage);
   const errors = [];
+
+  if (!firstName) {
+    errors.push("First name is required.");
+  }
 
   if (!email) {
     errors.push("Email address is required.");
@@ -13497,11 +14458,19 @@ app.post("/api/newsletter-signup", async (req, res) => {
             updated.Request ||
             {}
           ),
-          service: "Tax Updates That Matter Newsletter",
+          service: "The Small Business Tax & Money Brief",
           preferredContact: "Email",
           message: "Monthly newsletter opt-in.",
           newsletterStatus: "active",
           frequency: "monthly",
+          firstName:
+            firstName ||
+            updated.contactRequest?.firstName ||
+            "",
+          businessName:
+            businessName ||
+            updated.contactRequest?.businessName ||
+            "",
           consentAt: submittedAt,
           resubscribedAt: submittedAt,
           sourcePage,
@@ -13514,8 +14483,9 @@ app.post("/api/newsletter-signup", async (req, res) => {
         updated.contact = {
           ...(updated.contact || {}),
           name:
+            firstName ||
             String(updated.contact?.name || "").trim() ||
-            "Tax Updates Subscriber",
+            "Subscriber",
           email,
           phone: ""
         };
@@ -13552,11 +14522,13 @@ app.post("/api/newsletter-signup", async (req, res) => {
       Math.random().toString(36).slice(2, 7).toUpperCase();
 
     const contactRequest = {
-      service: "Tax Updates That Matter Newsletter",
+      service: "The Small Business Tax & Money Brief",
       preferredContact: "Email",
       message: "Monthly newsletter opt-in.",
       newsletterStatus: "active",
       frequency: "monthly",
+      firstName,
+      businessName,
       consentAt: submittedAt,
       sourcePage,
       sourcePageLabel,
@@ -13569,11 +14541,11 @@ app.post("/api/newsletter-signup", async (req, res) => {
       updatedAt: submittedAt,
       priority: "low",
       status: "Newsletter Subscriber - Active",
-      source: "Tax Updates That Matter",
+      source: "The Small Business Tax & Money Brief",
       notes:
-        "Subscriber requested one Tax Updates That Matter email per month.",
+        "Subscriber requested one Small Business Tax & Money Brief email per month.",
       contact: {
-        name: "Tax Updates Subscriber",
+        name: firstName || "Subscriber",
         email,
         phone: ""
       },
@@ -13624,10 +14596,10 @@ app.post("/api/newsletter-signup", async (req, res) => {
   let emailError = "";
 
   try {
-    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
-      throw new Error("Email delivery is not configured.");
-    }
-
+    // No hard guard here: the transporter itself falls back to a safe local
+    // test stub in dev/test environments with no EMAIL_USER/EMAIL_APP_PASSWORD
+    // (see EMAIL_DELIVERY_CONFIGURED / transporter setup), so sendMail below
+    // always resolves and this code path can be exercised end to end.
     const businessRecipient =
       process.env.CONTACT_EMAIL ||
       "greatestbusiness1@gmail.com";
@@ -13636,9 +14608,15 @@ app.post("/api/newsletter-signup", async (req, res) => {
       from: EMAIL_USER,
       to: businessRecipient,
       replyTo: email,
-      subject: "New Tax Updates That Matter Subscriber",
+      subject: "New Small Business Tax & Money Brief Subscriber",
       text:
-`A new subscriber joined the once-per-month Tax Updates That Matter list.
+`A new subscriber joined the once-per-month Small Business Tax & Money Brief list.
+
+Name:
+${firstName || "(not provided)"}
+
+Business:
+${businessName || "(not provided)"}
 
 Email:
 ${email}
@@ -13657,16 +14635,18 @@ Educational content and paid service offers will remain clearly separated.`
     await transporter.sendMail({
       from: EMAIL_USER,
       to: email,
-      subject: "You’re on the Tax Updates That Matter List",
+      subject: "You’re on The Small Business Tax & Money Brief List",
       text:
-`Thank you for joining Tax Updates That Matter from Greatest Business Solution LLC.
+`Thank you for joining The Small Business Tax & Money Brief from Greatest Business Solution LLC${firstName ? ", " + firstName : ""}.
 
 You will receive one useful email per month with:
-- The one tax update to know
-- Important upcoming deadlines
-- One common tax myth explained
-- One quick action you can take
-- A clearly labeled service offer only when it connects to that month’s topic
+- This month's 5-minute brief
+- Tax tip of the month
+- Watch your money
+- Merchant fee check
+- Dates to know
+- Could this apply to you?
+- This month's action
 
 Changing dates and dollar amounts will be checked against current official sources before each edition.
 
@@ -13714,7 +14694,7 @@ app.get("/newsletter/unsubscribe", async (req, res) => {
 </head>
 <body style="margin:0;background:#eef4f7;color:#163550;font-family:Arial,sans-serif;">
   <main style="max-width:680px;margin:70px auto;padding:34px;background:#fff;border:1px solid #d7e1e8;border-radius:18px;box-shadow:0 18px 42px rgba(18,54,80,.12);">
-    <p style="color:#9a6d00;font-weight:800;text-transform:uppercase;letter-spacing:.08em;">Tax Updates That Matter</p>
+    <p style="color:#9a6d00;font-weight:800;text-transform:uppercase;letter-spacing:.08em;">The Small Business Tax & Money Brief</p>
     <h1 style="font-family:Georgia,serif;font-size:36px;line-height:1.1;margin:8px 0 16px;">${title}</h1>
     <p style="font-size:17px;line-height:1.7;">${message}</p>
     <a href="/" style="display:inline-block;margin-top:12px;padding:13px 18px;border-radius:9px;background:#123a5c;color:#fff;text-decoration:none;font-weight:800;">Return to Home Page</a>
@@ -13763,7 +14743,7 @@ app.get("/newsletter/unsubscribe", async (req, res) => {
   ) {
     return renderPage(
       "You Are Already Unsubscribed",
-      "No more Tax Updates That Matter emails will be sent to this address."
+      "No more Small Business Tax & Money Brief emails will be sent to this address."
     );
   }
 
@@ -13804,9 +14784,562 @@ app.get("/newsletter/unsubscribe", async (req, res) => {
 
   return renderPage(
     "You Have Been Unsubscribed",
-    "You will not receive future Tax Updates That Matter emails. You may join again from the home page whenever you choose."
+    "You will not receive future Small Business Tax & Money Brief emails. You may join again from the home page whenever you choose."
   );
 });
+
+// =============================================================================
+// THE SMALL BUSINESS TAX & MONEY BRIEF - ISSUE AUTHORING / SEND WORKFLOW
+// Admin-only. Draft -> Ready -> Sent. Preview and test-send are actions, not
+// stored statuses. Once an issue is "sent" it is immutable (no edits/delete).
+// =============================================================================
+
+const NEWSLETTER_SECTION_DEFS = [
+  { key: "brief", label: "1. This Month's 5-Minute Brief" },
+  { key: "taxTip", label: "2. Tax Tip of the Month" },
+  { key: "watchMoney", label: "3. Watch Your Money" },
+  { key: "merchantFee", label: "4. Merchant Fee Check" },
+  { key: "dates", label: "5. Dates to Know" },
+  { key: "couldApply", label: "6. Could This Apply to You?" },
+  { key: "action", label: "7. This Month's Action" }
+];
+
+// Starting/default topic per calendar month. Purely a starting point for a
+// new issue's "brief" section -- every issue remains fully editable
+// afterward, and this calendar can be changed here without touching the
+// admin UI or the issue data model.
+const NEWSLETTER_MONTHLY_TOPICS = {
+  1: { month: "January", topic: "1099s + getting books ready for taxes" },
+  2: { month: "February", topic: "Schedule C deductions + missing documents" },
+  3: { month: "March", topic: "Tax filing + preparing for balances due" },
+  4: { month: "April", topic: "Extensions + tax payment obligations" },
+  5: { month: "May", topic: "Federal/state installment agreements" },
+  6: { month: "June", topic: "Estimated taxes + mid-year bookkeeping review" },
+  7: { month: "July", topic: "Mileage + business vehicle records" },
+  8: { month: "August", topic: "Merchant-processing fees + Free Statement Scan" },
+  9: { month: "September", topic: "Estimated taxes + start year-end planning" },
+  10: { month: "October", topic: "Extension returns + bookkeeping cleanup" },
+  11: { month: "November", topic: "Tax optimization + year-end actions" },
+  12: { month: "December", topic: "Year-end records + 1099 preparation + planning" }
+};
+
+function newNewsletterIssueId() {
+  return (
+    "ISSUE-" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).slice(2, 7).toUpperCase()
+  );
+}
+
+function sanitizeNewsletterSections(rawSections = {}) {
+  const sections = {};
+  for (const def of NEWSLETTER_SECTION_DEFS) {
+    sections[def.key] = String(rawSections?.[def.key] || "").slice(0, 4000);
+  }
+  return sections;
+}
+
+function findNewsletterIssueById(issues, issueId) {
+  const cleanId = String(issueId || "").trim();
+  return issues.find((issue) => issue.issueId === cleanId) || null;
+}
+
+async function listNewsletterSubscribers() {
+  const byId = new Map();
+
+  function consider(rawLead) {
+    const mapped = mapRowToLead(rawLead || {});
+    if (!isNewsletterSubscriptionLead(mapped)) return;
+
+    const record = getNewsletterSubscriptionRecord(mapped) || {};
+    const mappedId = String(mapped.leadId || "").trim();
+    if (!mappedId) return;
+
+    byId.set(mappedId, {
+      leadId: mappedId,
+      firstName: String(record.firstName || "").trim(),
+      businessName: String(record.businessName || "").trim(),
+      email: normalizeEmail(mapped.contact?.email || ""),
+      status:
+        String(record.newsletterStatus || "active").trim().toLowerCase() ===
+        "inactive"
+          ? "inactive"
+          : "active",
+      unsubscribeToken: String(record.unsubscribeToken || ""),
+      subscribedAt: record.consentAt || mapped.timestamp || "",
+      sourcePageLabel: record.sourcePageLabel || ""
+    });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    (data || []).forEach(consider);
+  } catch (error) {
+    console.warn(
+      "[newsletter subscribers] Supabase lookup unavailable:",
+      error.message || error
+    );
+  }
+
+  readLeads().forEach(consider);
+
+  return Array.from(byId.values());
+}
+
+function escapeNewsletterHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function newsletterTextToHtmlParagraphs(text) {
+  const escaped = escapeNewsletterHtml(text).trim();
+  if (!escaped) {
+    return '<p style="margin:0 0 14px;color:#5b6b78;">(Not yet written.)</p>';
+  }
+  return escaped
+    .split(/\n{2,}/)
+    .map(
+      (block) =>
+        `<p style="margin:0 0 14px;font-size:16px;line-height:1.6;color:#1c2b39;">${block.replace(
+          /\n/g,
+          "<br>"
+        )}</p>`
+    )
+    .join("");
+}
+
+function buildNewsletterIssueEmailHtml(issue, opts = {}) {
+  const greetingName = String(opts.firstName || "").trim();
+  const unsubscribeUrl = String(opts.unsubscribeUrl || "#");
+  const monthLabel = escapeNewsletterHtml(issue.monthLabel || "");
+  const title = escapeNewsletterHtml(issue.title || "The Small Business Tax & Money Brief");
+
+  // "action" (section 7) is the issue's one designated primary call-to-action --
+  // it gets a visually distinct highlighted treatment so it reads as the single
+  // emphasized CTA, while every other section stays plain informational text.
+  const sectionsHtml = NEWSLETTER_SECTION_DEFS.map((def) => {
+    const isPrimaryCta = def.key === "action";
+
+    if (isPrimaryCta) {
+      return `
+    <tr>
+      <td style="padding:6px 24px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff7e6;border:1px solid #f4b400;border-radius:10px;">
+          <tr>
+            <td style="padding:16px 18px;">
+              <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#9a6d00;">${escapeNewsletterHtml(
+                def.label
+              )}</p>
+              ${newsletterTextToHtmlParagraphs(issue.sections?.[def.key])}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+    }
+
+    return `
+    <tr>
+      <td style="padding:0 24px 8px;">
+        <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#9a6d00;">${escapeNewsletterHtml(
+          def.label
+        )}</p>
+        ${newsletterTextToHtmlParagraphs(issue.sections?.[def.key])}
+      </td>
+    </tr>
+    <tr><td style="padding:0 24px;"><hr style="border:none;border-top:1px solid #e2e9ee;margin:8px 0 18px;"></td></tr>`;
+  }).join("");
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+</head>
+<body style="margin:0;padding:0;background:#eef4f7;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4f7;padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #d7e1e8;border-radius:14px;overflow:hidden;">
+<tr>
+  <td style="padding:26px 24px 10px;background:#123a5c;">
+    <p style="margin:0 0 4px;color:#f4b400;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:13px;">The Small Business Tax &amp; Money Brief</p>
+    <p style="margin:0;color:#ffffff;font-family:Georgia,serif;font-size:22px;font-weight:700;">${monthLabel || "Monthly Brief"}</p>
+  </td>
+</tr>
+<tr>
+  <td style="padding:20px 24px 0;">
+    <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#1c2b39;">Hello${greetingName ? " " + escapeNewsletterHtml(greetingName) : ""},</p>
+  </td>
+</tr>
+${sectionsHtml}
+<tr>
+  <td style="padding:0 24px 26px;">
+    <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#5b6b78;">Greatest Business Solution LLC sends this email once per month. Dates and dollar amounts are checked against current official sources before each edition. This email is educational information, not individualized tax, legal, or financial advice.</p>
+    <p style="margin:0;font-size:13px;line-height:1.6;color:#5b6b78;">
+      <a href="${escapeNewsletterHtml(unsubscribeUrl)}" style="color:#123a5c;">Unsubscribe from this list</a>
+    </p>
+  </td>
+</tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function buildNewsletterIssueEmailText(issue, opts = {}) {
+  const greetingName = String(opts.firstName || "").trim();
+  const unsubscribeUrl = String(opts.unsubscribeUrl || "");
+  const sectionsText = NEWSLETTER_SECTION_DEFS.map((def) => {
+    const body = String(issue.sections?.[def.key] || "").trim() || "(Not yet written.)";
+    return `${def.label}\n${body}`;
+  }).join("\n\n");
+
+  return `The Small Business Tax & Money Brief${issue.monthLabel ? " - " + issue.monthLabel : ""}
+
+Hello${greetingName ? " " + greetingName : ""},
+
+${sectionsText}
+
+---
+Greatest Business Solution LLC sends this email once per month. Dates and dollar amounts are checked against current official sources before each edition. This email is educational information, not individualized tax, legal, or financial advice.
+
+Unsubscribe at any time:
+${unsubscribeUrl}`;
+}
+
+app.get(
+  "/api/newsletter/monthly-topics",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    return res.status(200).json({ ok: true, topics: NEWSLETTER_MONTHLY_TOPICS });
+  }
+);
+
+app.get(
+  "/api/newsletter/issues",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const issues = readNewsletterIssues()
+      .slice()
+      .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+    return res.status(200).json({ ok: true, issues });
+  }
+);
+
+app.post(
+  "/api/newsletter/issues",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const body = req.body || {};
+    const now = new Date().toISOString();
+    const monthNumber = Number.parseInt(body.month, 10);
+    const monthDefault =
+      Number.isInteger(monthNumber) && NEWSLETTER_MONTHLY_TOPICS[monthNumber]
+        ? NEWSLETTER_MONTHLY_TOPICS[monthNumber]
+        : null;
+
+    const topic = String(
+      body.topic !== undefined ? body.topic : (monthDefault?.topic || "")
+    ).trim().slice(0, 200);
+
+    const sections = sanitizeNewsletterSections(body.sections);
+    if (!body.sections && monthDefault && !sections.brief) {
+      sections.brief =
+        `This month's focus: ${monthDefault.topic}.\n\n(Starting point from the topic calendar -- edit freely.)`;
+    }
+
+    const issue = {
+      issueId: newNewsletterIssueId(),
+      status: "draft",
+      title: String(body.title || "The Small Business Tax & Money Brief").trim().slice(0, 200),
+      monthLabel: String(
+        body.monthLabel || (monthDefault ? `${monthDefault.month} ${new Date().getFullYear()}` : "")
+      ).trim().slice(0, 60),
+      topic,
+      sections,
+      createdAt: now,
+      updatedAt: now,
+      sentAt: null,
+      sentCount: 0,
+      failedCount: 0,
+      testSends: []
+    };
+
+    const issues = readNewsletterIssues();
+    issues.push(issue);
+    writeNewsletterIssues(issues);
+
+    return res.status(201).json({ ok: true, issue });
+  }
+);
+
+app.get(
+  "/api/newsletter/issues/:issueId",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const issue = findNewsletterIssueById(readNewsletterIssues(), req.params.issueId);
+    if (!issue) {
+      return res.status(404).json({ ok: false, error: "Issue not found." });
+    }
+    return res.status(200).json({ ok: true, issue });
+  }
+);
+
+app.patch(
+  "/api/newsletter/issues/:issueId",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const issues = readNewsletterIssues();
+    const issue = findNewsletterIssueById(issues, req.params.issueId);
+    if (!issue) {
+      return res.status(404).json({ ok: false, error: "Issue not found." });
+    }
+    if (issue.status === "sent") {
+      return res.status(400).json({ ok: false, error: "A sent issue cannot be edited." });
+    }
+
+    const body = req.body || {};
+    if (body.title !== undefined) {
+      issue.title = String(body.title || "").trim().slice(0, 200);
+    }
+    if (body.monthLabel !== undefined) {
+      issue.monthLabel = String(body.monthLabel || "").trim().slice(0, 60);
+    }
+    if (body.topic !== undefined) {
+      issue.topic = String(body.topic || "").trim().slice(0, 200);
+    }
+    if (body.sections !== undefined) {
+      issue.sections = sanitizeNewsletterSections(body.sections);
+    }
+    if (body.status !== undefined) {
+      const nextStatus = String(body.status || "").trim().toLowerCase();
+      if (!["draft", "ready"].includes(nextStatus)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Status must be 'draft' or 'ready' (use the send endpoint to send)."
+        });
+      }
+      issue.status = nextStatus;
+    }
+    issue.updatedAt = new Date().toISOString();
+
+    writeNewsletterIssues(issues);
+    return res.status(200).json({ ok: true, issue });
+  }
+);
+
+app.delete(
+  "/api/newsletter/issues/:issueId",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const issues = readNewsletterIssues();
+    const issue = findNewsletterIssueById(issues, req.params.issueId);
+    if (!issue) {
+      return res.status(404).json({ ok: false, error: "Issue not found." });
+    }
+    if (issue.status === "sent") {
+      return res.status(400).json({ ok: false, error: "A sent issue cannot be deleted." });
+    }
+
+    writeNewsletterIssues(issues.filter((item) => item.issueId !== issue.issueId));
+    return res.status(200).json({ ok: true });
+  }
+);
+
+app.get(
+  "/api/newsletter/issues/:issueId/preview",
+  requireOfficeDocumentReviewApi,
+  (req, res) => {
+    const issue = findNewsletterIssueById(readNewsletterIssues(), req.params.issueId);
+    if (!issue) {
+      return res.status(404).send("Issue not found.");
+    }
+
+    const html = buildNewsletterIssueEmailHtml(issue, {
+      firstName: "Sample Subscriber",
+      unsubscribeUrl: "#preview-unsubscribe-link"
+    });
+
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return res.status(200).send(html);
+  }
+);
+
+app.post(
+  "/api/newsletter/issues/:issueId/test-send",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const issues = readNewsletterIssues();
+    const issue = findNewsletterIssueById(issues, req.params.issueId);
+    if (!issue) {
+      return res.status(404).json({ ok: false, error: "Issue not found." });
+    }
+
+    const testEmail = normalizeEmail(
+      req.body?.testEmail || process.env.CONTACT_EMAIL || "greatestbusiness1@gmail.com"
+    );
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
+      return res.status(400).json({ ok: false, error: "Enter a valid test email address." });
+    }
+
+    // No hard guard: transporter falls back to a local test stub when
+    // EMAIL_USER/EMAIL_APP_PASSWORD are blank, so this always resolves.
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: testEmail,
+        subject: `[TEST] ${issue.title || "The Small Business Tax & Money Brief"}${issue.monthLabel ? " - " + issue.monthLabel : ""}`,
+        text: buildNewsletterIssueEmailText(issue, {
+          firstName: "Test Subscriber",
+          unsubscribeUrl: "https://www.taxestimatereview.com/newsletter/unsubscribe?leadId=TEST&token=test"
+        }),
+        html: buildNewsletterIssueEmailHtml(issue, {
+          firstName: "Test Subscriber",
+          unsubscribeUrl: "https://www.taxestimatereview.com/newsletter/unsubscribe?leadId=TEST&token=test"
+        })
+      });
+    } catch (error) {
+      return res.status(500).json({
+        ok: false,
+        error: error.message || "Test send failed."
+      });
+    }
+
+    issue.testSends = issue.testSends || [];
+    issue.testSends.push({ sentAt: new Date().toISOString(), to: testEmail });
+    issue.updatedAt = new Date().toISOString();
+    writeNewsletterIssues(issues);
+
+    return res.status(200).json({ ok: true, sentTo: testEmail });
+  }
+);
+
+app.post(
+  "/api/newsletter/issues/:issueId/send",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const issues = readNewsletterIssues();
+    const issue = findNewsletterIssueById(issues, req.params.issueId);
+    if (!issue) {
+      return res.status(404).json({ ok: false, error: "Issue not found." });
+    }
+    if (issue.status !== "ready") {
+      return res.status(400).json({
+        ok: false,
+        error: "Only an issue marked 'Ready' can be sent. Mark it Ready first."
+      });
+    }
+    // No hard guard: transporter falls back to a local test stub when
+    // EMAIL_USER/EMAIL_APP_PASSWORD are blank, so bulk send can be exercised
+    // end to end in dev/test without real SMTP credentials.
+    const subscribers = (await listNewsletterSubscribers()).filter(
+      (subscriber) => subscriber.status === "active" && subscriber.email
+    );
+
+    const configuredNewsletterBaseUrl = String(APP_BASE_URL || "").trim();
+    const newsletterBaseUrl =
+      !configuredNewsletterBaseUrl ||
+      /tax-estimator-app-v1\.onrender\.com/i.test(configuredNewsletterBaseUrl)
+        ? "https://www.taxestimatereview.com"
+        : configuredNewsletterBaseUrl.replace(/\/+$/, "");
+
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const subscriber of subscribers) {
+      const unsubscribeUrl =
+        newsletterBaseUrl +
+        "/newsletter/unsubscribe?leadId=" +
+        encodeURIComponent(subscriber.leadId) +
+        "&token=" +
+        encodeURIComponent(subscriber.unsubscribeToken);
+
+      try {
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: subscriber.email,
+          subject: `${issue.title || "The Small Business Tax & Money Brief"}${issue.monthLabel ? " - " + issue.monthLabel : ""}`,
+          text: buildNewsletterIssueEmailText(issue, {
+            firstName: subscriber.firstName,
+            unsubscribeUrl
+          }),
+          html: buildNewsletterIssueEmailHtml(issue, {
+            firstName: subscriber.firstName,
+            unsubscribeUrl
+          })
+        });
+        sentCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        console.error(
+          `[newsletter send] Failed for ${subscriber.leadId}:`,
+          error.message || error
+        );
+      }
+    }
+
+    issue.status = "sent";
+    issue.sentAt = new Date().toISOString();
+    issue.sentCount = sentCount;
+    issue.failedCount = failedCount;
+    issue.updatedAt = issue.sentAt;
+    writeNewsletterIssues(issues);
+
+    return res.status(200).json({
+      ok: true,
+      sentCount,
+      failedCount,
+      totalActiveSubscribers: subscribers.length
+    });
+  }
+);
+
+app.get(
+  "/api/newsletter/subscribers",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const subscribers = await listNewsletterSubscribers();
+    const activeCount = subscribers.filter((s) => s.status === "active").length;
+    const inactiveCount = subscribers.length - activeCount;
+
+    return res.status(200).json({
+      ok: true,
+      subscribers: subscribers
+        .map((s) => ({
+          leadId: s.leadId,
+          firstName: s.firstName,
+          businessName: s.businessName,
+          email: s.email,
+          status: s.status,
+          subscribedAt: s.subscribedAt,
+          sourcePageLabel: s.sourcePageLabel
+        }))
+        .sort((a, b) => String(b.subscribedAt || "").localeCompare(String(a.subscribedAt || ""))),
+      activeCount,
+      inactiveCount
+    });
+  }
+);
+
+app.get(
+  "/newsletter-admin",
+  requireOfficeDocumentReviewPage,
+  (req, res) => {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    res.sendFile(path.join(__dirname, "ui", "newsletter-admin.html"));
+  }
+);
 
 // =============================================================================
 // POST /api/contact-request
@@ -15724,20 +17257,41 @@ app.post("/api/extension-request", async (req, res) => {
     });
   }
 
-  const basePrice =
-    serviceType === "business"
-      ? 99
-      : 49;
+  // Business Federal + One State is now a normal fixed-price package (see
+  // EXTENSION_PRICE_CENTS.business_federal_state). Quote-needed is reserved
+  // only for situations outside the four published tiers -- additional
+  // states, multi-state filings, or other unusual situations -- signaled by
+  // an explicit multiStateOrUnusualSituation flag (not currently exposed on
+  // the public form, but preserved here for office/manual use).
+  const multiStateOrUnusualSituation =
+    request.multiStateOrUnusualSituation === true;
 
-  const stateAddOn =
-    stateExtensionRequested
-      ? 25
-      : 0;
+  const serviceTier =
+    getExtensionServiceTier(serviceType, stateExtensionRequested);
+
+  const quoteNeeded = multiStateOrUnusualSituation;
+
+  const totalPriceCents =
+    quoteNeeded
+      ? 0
+      : EXTENSION_PRICE_CENTS[serviceTier];
 
   const totalPrice =
-    basePrice + stateAddOn;
+    totalPriceCents / 100;
+
+  const serviceLabel =
+    quoteNeeded
+      ? "Business Extension — Multi-State / Unusual Situation (Quote Needed)"
+      : serviceTier === "business_federal_state"
+        ? "Business Federal + One State Extension"
+        : serviceTier === "business_federal"
+          ? "Business Federal Extension"
+          : serviceTier === "individual_federal_state"
+            ? "Individual Federal + One State Extension"
+            : "Individual Federal Extension";
 
   const checkoutEligible =
+    !quoteNeeded &&
     deadlineStatus !== "unsure_or_late";
 
   const now = new Date().toISOString();
@@ -15751,26 +17305,34 @@ app.post("/api/extension-request", async (req, res) => {
       .toUpperCase();
 
   const workStatus =
-    checkoutEligible
-      ? "Payment Pending"
-      : "Deadline Review Needed";
+    quoteNeeded
+      ? "Needs Quote"
+      : checkoutEligible
+        ? "Payment Pending"
+        : "Deadline Review Needed";
 
   const lead = {
     leadId,
     timestamp: now,
     updatedAt: now,
     priority:
-      checkoutEligible
+      quoteNeeded
         ? "high"
-        : "critical",
+        : checkoutEligible
+          ? "high"
+          : "critical",
     status:
-      checkoutEligible
-        ? "Extension Request - Payment Pending"
-        : "Extension Request - Deadline Review Needed",
+      quoteNeeded
+        ? "Extension Request - Needs Quote"
+        : checkoutEligible
+          ? "Extension Request - Payment Pending"
+          : "Extension Request - Deadline Review Needed",
     notes:
-      checkoutEligible
-        ? "Tax Extension request submitted and awaiting Stripe payment."
-        : "Tax Extension request submitted for deadline eligibility review before payment.",
+      quoteNeeded
+        ? "Multi-state or unusual filing situation requested. This is outside the standard extension packages and requires a separate office quote before payment."
+        : checkoutEligible
+          ? "Tax Extension request submitted and awaiting Stripe payment."
+          : "Tax Extension request submitted for deadline eligibility review before payment.",
     contact: {
       name,
       email,
@@ -15803,17 +17365,20 @@ app.post("/api/extension-request", async (req, res) => {
           : "",
       deadlineStatus,
       deadlineReviewRequired:
-        !checkoutEligible,
+        deadlineStatus === "unsure_or_late",
       deadlineDecision:
-        checkoutEligible
-          ? "Eligible"
-          : "Not Reviewed",
+        deadlineStatus === "unsure_or_late"
+          ? "Not Reviewed"
+          : "Eligible",
       informationStatus: "Needs Review",
       stateActionStatus:
         stateExtensionRequested
           ? "Not Reviewed"
           : "Not Applicable",
       checkoutEligible,
+      quoteNeeded,
+      serviceTier,
+      serviceLabel,
       estimatedTotalTax:
         Math.max(
           0,
@@ -15840,15 +17405,14 @@ app.post("/api/extension-request", async (req, res) => {
         request.consideringFullPreparation === true,
       acknowledgmentAccepted: true,
       feeCreditTowardPreparation: false,
-      basePrice,
-      stateAddOn,
       totalPrice,
-      totalPriceCents:
-        totalPrice * 100,
+      totalPriceCents,
       paymentStatus:
-        checkoutEligible
-          ? "Payment Pending"
-          : "Not Charged - Deadline Review",
+        quoteNeeded
+          ? "Not Charged - Quote Needed"
+          : checkoutEligible
+            ? "Payment Pending"
+            : "Not Charged - Deadline Review",
       stripeCheckoutUrl: "",
       paymentLinkSentAt: "",
       paymentLinkEmailSent: false,
@@ -15875,9 +17439,15 @@ app.post("/api/extension-request", async (req, res) => {
         );
       }
 
-      const nextStep = checkoutEligible
-        ? "You may continue to the secure payment page. The office will review your request before filing."
-        : "The regular deadline may have passed or may require a special rule. The office will review eligibility before any payment is requested.";
+      const nextStep = quoteNeeded
+        ? "Additional states, multi-state filings, or unusual filing situations are not a standard-priced package. The office will review your request and follow up with a quote before any payment is requested."
+        : checkoutEligible
+          ? "You may continue to the secure payment page. The office will review your request before filing."
+          : "The regular deadline may have passed or may require a special rule. The office will review eligibility before any payment is requested.";
+
+      const feeLine = quoteNeeded
+        ? "To be quoted by the office (additional-state or unusual filing situations require a separate quote)."
+        : `$${totalPrice}`;
 
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -15890,16 +17460,16 @@ app.post("/api/extension-request", async (req, res) => {
 We received your Tax Extension request for tax year ${taxYear}.
 
 Service:
-${serviceType === "business" ? "Business Extension" : "Individual Federal Extension"}${stateExtensionRequested ? " + State Extension Add-On (" + stateCode + ")" : ""}
+${serviceLabel}
 
 Professional service fee:
-$${totalPrice}
+${feeLine}
 
 ${nextStep}
 
 Important: An extension gives additional time to file. It does not extend the deadline to pay tax that may be owed.
 
-This is a standalone extension service. You may use any tax professional to prepare the full return.${request.consideringFullPreparation === true ? "\n\nYou asked for tax preparation quote or next-step information. The office will follow up after reviewing the extension request." : ""}
+This is a standalone extension service. You may use any tax professional to prepare the full return.${request.consideringFullPreparation === true ? "\n\nYou also asked for information about having Greatest Business Solution LLC prepare your full tax return. The office has recorded that interest and will follow up separately -- it does not affect or delay this extension." : ""}
 
 Reference number:
 ${leadId}
@@ -15929,7 +17499,9 @@ Greatest Business Solution LLC`
       leadId,
       checkoutEligible,
       deadlineReviewRequired:
-        !checkoutEligible,
+        deadlineStatus === "unsure_or_late",
+      quoteNeeded,
+      serviceLabel,
       totalPrice,
       emailSent,
       emailError:
@@ -15948,6 +17520,402 @@ Greatest Business Solution LLC`
       errors: [
         "Could not save the Tax Extension request. Please try again."
       ]
+    });
+  }
+});
+
+// =============================================================================
+// POST /api/installment-agreement-request
+// Price is computed and stored server-side from INSTALLMENT_AGREEMENT_PRICE_CENTS.
+// The browser never submits a price.
+// =============================================================================
+
+app.post("/api/installment-agreement-request", async (req, res) => {
+  const body = req.body || {};
+  const contact = body.contact || {};
+  const request = body.installment || {};
+  const errors = [];
+
+  const name = String(contact.name || "").trim();
+  const email = normalizeEmail(contact.email || "");
+  const phoneDigits =
+    String(contact.phone || "")
+      .replace(/\D/g, "")
+      .slice(0, 10);
+  const phone = formatPhoneNumber(phoneDigits);
+  const serviceTier =
+    String(request.serviceTier || "").trim().toLowerCase();
+  const taxYear =
+    String(request.taxYear || "").trim();
+  const entityCategory =
+    String(request.entityCategory || "").trim().toLowerCase();
+  const stateCode =
+    String(request.stateCode || "")
+      .trim()
+      .toUpperCase();
+  const priorDefault =
+    String(request.priorDefault || "").trim().toLowerCase();
+
+  if (!name) {
+    errors.push("Full name or business contact is required.");
+  }
+
+  if (!email) {
+    errors.push("Email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Email address format is invalid.");
+  }
+
+  if (phoneDigits.length !== 10) {
+    errors.push(
+      "Enter a 10-digit phone number in the format (555) 555-0123."
+    );
+  }
+
+  if (!["federal", "state", "package"].includes(serviceTier)) {
+    errors.push("Select a Federal, One State, or Federal + One State Package installment agreement service.");
+  }
+
+  const numericTaxYear = Number(taxYear);
+
+  if (
+    !/^\d{4}$/.test(taxYear) ||
+    numericTaxYear < 2000 ||
+    numericTaxYear > new Date().getFullYear()
+  ) {
+    errors.push("Enter a valid tax year that is not in the future.");
+  }
+
+  if (!["individual", "business"].includes(entityCategory)) {
+    errors.push("Select individual or business.");
+  }
+
+  if (
+    (serviceTier === "state" || serviceTier === "package") &&
+    !VALID_US_STATE_CODES.has(stateCode)
+  ) {
+    errors.push("Select valid two-letter state initials.");
+  }
+
+  if (
+    priorDefault &&
+    !["yes", "no", "unknown"].includes(priorDefault)
+  ) {
+    errors.push("Select yes, no, or unknown for a prior defaulted agreement.");
+  }
+
+  if (request.acknowledgmentAccepted !== true) {
+    errors.push(
+      "Acknowledge that approval, terms, penalties, interest, and government fees are determined by the taxing authority, not by this office."
+    );
+  }
+
+  if (errors.length) {
+    return res.status(400).json({
+      ok: false,
+      errors
+    });
+  }
+
+  const totalPriceCents = INSTALLMENT_AGREEMENT_PRICE_CENTS[serviceTier];
+  const totalPrice = totalPriceCents / 100;
+
+  const serviceLabel =
+    serviceTier === "federal"
+      ? "Federal Installment Agreement"
+      : serviceTier === "state"
+        ? "One State Installment Agreement"
+        : "Federal + One State Installment Agreement Package";
+
+  const now = new Date().toISOString();
+  const leadId =
+    "IA-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 7)
+      .toUpperCase();
+
+  const lead = {
+    leadId,
+    timestamp: now,
+    updatedAt: now,
+    priority: "high",
+    status: "Installment Agreement Request - Payment Pending",
+    notes: "Installment Agreement request submitted and awaiting Stripe payment.",
+    contact: {
+      name,
+      email,
+      phone
+    },
+    taxData: {
+      taxYear,
+      stateCode: stateCode || null
+    },
+    estimateSummary: {},
+    installmentAgreementRequest: {
+      version: 1,
+      requested: true,
+      requestedAt: now,
+      updatedAt: now,
+      serviceTier,
+      serviceLabel,
+      taxYear,
+      entityCategory,
+      stateCode:
+        serviceTier === "state" || serviceTier === "package"
+          ? stateCode
+          : "",
+      federalBalanceDue:
+        Math.max(0, Number(request.federalBalanceDue || 0)),
+      stateBalanceDue:
+        Math.max(0, Number(request.stateBalanceDue || 0)),
+      amountPayableNow:
+        Math.max(0, Number(request.amountPayableNow || 0)),
+      proposedMonthlyPayment:
+        Math.max(0, Number(request.proposedMonthlyPayment || 0)),
+      hasExistingNotice: request.hasExistingNotice === true,
+      hasExistingAgreement: request.hasExistingAgreement === true,
+      priorDefault: priorDefault || "unknown",
+      filingCompliant: request.filingCompliant === true,
+      bestContactMethod:
+        String(request.bestContactMethod || "").trim(),
+      clientNotes:
+        String(request.notes || "").trim(),
+      acknowledgmentAccepted: true,
+      totalPrice,
+      totalPriceCents,
+      paymentStatus: "Payment Pending",
+      stripeCheckoutUrl: "",
+      workStatus: "New",
+      agencyResult: "",
+      submittedAt: "",
+      confirmationStatus: "Not Delivered"
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead);
+    recentLeads.set(
+      savedLead.leadId,
+      savedLead
+    );
+
+    let emailSent = false;
+    let emailError = "";
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error(
+          "Email delivery is not configured."
+        );
+      }
+
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: email,
+        subject:
+          "We Received Your Installment Agreement Request",
+        text:
+`Hello ${name},
+
+We received your Installment Agreement request for tax year ${taxYear}.
+
+Service:
+${serviceLabel}
+
+Professional service fee:
+$${totalPrice}
+
+You may continue to the secure payment page. The office will review your balance and payment information and begin preparing your installment agreement request.
+
+Important: Approval, payment terms, penalties, interest, and government fees are determined by the IRS or applicable state taxing authority. Our fee covers professional preparation and assistance with the request. This is not a guarantee of approval, and the agreement is not in place until the taxing authority confirms it.
+
+Reference number:
+${leadId}
+
+Please do not email Social Security numbers, bank account numbers, tax documents, or passwords. Use the secure client portal when documents are requested.
+
+Thank you,
+
+Greatest Business Solution LLC`
+      });
+
+      emailSent = true;
+    } catch (emailErr) {
+      emailError =
+        emailErr?.message ||
+        "Confirmation email failed.";
+
+      console.error(
+        "[installment agreement request] Confirmation email failed:",
+        leadId,
+        emailError
+      );
+    }
+
+    return res.status(201).json({
+      ok: true,
+      leadId,
+      serviceLabel,
+      totalPrice,
+      emailSent,
+      emailError:
+        emailSent
+          ? null
+          : emailError
+    });
+  } catch (error) {
+    console.error(
+      "[installment agreement request] Save failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      errors: [
+        "Could not save the Installment Agreement request. Please try again."
+      ]
+    });
+  }
+});
+
+// =============================================================================
+// POST /api/create-installment-agreement-checkout
+// Amount is calculated from the saved request, never from browser pricing.
+// =============================================================================
+
+app.post("/api/create-installment-agreement-checkout", async (req, res) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "Stripe secret key is not configured."
+      });
+    }
+
+    const leadId = String(req.body?.leadId || "").trim();
+    const clientEmail = normalizeEmail(req.body?.clientEmail || "");
+
+    if (!leadId || !clientEmail) {
+      return res.status(400).json({
+        ok: false,
+        error: "The installment agreement reference number and client email are required."
+      });
+    }
+
+    const candidate = await findClientPortalLeadById(leadId);
+
+    if (!candidate) {
+      return res.status(404).json({
+        ok: false,
+        error: "The installment agreement request could not be found."
+      });
+    }
+
+    const lead = candidate.lead || {};
+    const request = lead.installmentAgreementRequest || {};
+
+    if (
+      normalizeEmail(
+        lead.contact?.email ||
+        getLeadEmailValue(candidate.raw)
+      ) !== clientEmail
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "The email address does not match the saved installment agreement request."
+      });
+    }
+
+    if (
+      /paid|verified/i.test(
+        String(request.paymentStatus || "")
+      )
+    ) {
+      return res.status(409).json({
+        ok: false,
+        error: "This Installment Agreement request is already marked paid."
+      });
+    }
+
+    const serviceTier =
+      String(request.serviceTier || "").trim().toLowerCase();
+
+    const expectedAmount =
+      INSTALLMENT_AGREEMENT_PRICE_CENTS[serviceTier];
+
+    const amount = Number(request.totalPriceCents || 0);
+
+    if (
+      !expectedAmount ||
+      !Number.isInteger(amount) ||
+      amount !== expectedAmount
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "The saved installment agreement price does not match the selected service."
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: leadId,
+      customer_email: clientEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: request.serviceLabel || "Installment Agreement Service",
+              description:
+                "Professional preparation and assistance requesting an installment agreement. This is a professional service fee, not an IRS or state setup fee, tax payment, penalty, or interest. Approval and terms are determined by the taxing authority."
+            },
+            unit_amount: amount
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        leadId,
+        clientName: String(lead.contact?.name || ""),
+        clientEmail,
+        service: "installment_agreement",
+        serviceTier,
+        taxYear: String(request.taxYear || "")
+      },
+      success_url:
+        `${APP_BASE_URL}/installment-agreement-thank-you?checkout=success&leadId=${encodeURIComponent(leadId)}`,
+      cancel_url:
+        `${APP_BASE_URL}/request-installment-agreement?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
+    });
+
+    await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => ({
+        ...record,
+        installmentAgreementRequest: {
+          ...(record.installmentAgreementRequest || {}),
+          stripeCheckoutUrl: session.url || "",
+          updatedAt: new Date().toISOString()
+        }
+      })
+    );
+
+    return res.status(200).json({
+      ok: true,
+      checkoutUrl: session.url
+    });
+  } catch (error) {
+    console.error(
+      "[create installment agreement checkout] Failed:",
+      error.message || error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: "Could not start secure payment. Please try again."
     });
   }
 });
@@ -16570,13 +18538,10 @@ app.post(
       });
     }
 
-    if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
-      return res.status(503).json({
-        ok: false,
-        error:
-          "Secure portal email delivery is not configured yet. Please contact Greatest Business Solution LLC."
-      });
-    }
+    // No hard guard here: the transporter falls back to a local test stub
+    // when EMAIL_USER/EMAIL_APP_PASSWORD are blank (dev/test only -- see
+    // EMAIL_DELIVERY_CONFIGURED), so activation delivery can be exercised
+    // end to end without real SMTP credentials.
 
     const candidate =
       await findClientPortalLeadById(leadId);
@@ -17671,6 +19636,23 @@ app.post(
 
     const session =
       req.clientPortalSession;
+
+    // Never trust the browser/UI for Pinnacle access -- re-check the same
+    // membership/access source of truth the generic view-access route uses
+    // (preview or paid Pinnacle enrollment) before accepting a save.
+    const access = await clientPortalSessionCanAccessView(
+      session,
+      "pinnacle"
+    );
+
+    if (!access.allowed) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Your account does not currently have Pinnacle Tax Action Plan access. Enroll or start a preview to save workspace data."
+      });
+    }
+
     const accountLeadId = String(
       session.payload?.accountLeadId ||
       ""
@@ -21851,6 +23833,10 @@ app.get("/request-tax-extension", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "extension-request.html"));
 });
 
+app.get("/request-installment-agreement", (req, res) => {
+  res.sendFile(path.join(__dirname, "ui", "installment-agreement-request.html"));
+});
+
 app.get("/contractor-1099-service", (req, res) => {
   res.sendFile(path.join(__dirname, "ui", "contractor-1099-service.html"));
 });
@@ -21866,6 +23852,11 @@ app.get("/professional-tax-services", (req, res) => {
 app.get("/extension-thank-you", (req, res) => {
   res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   res.sendFile(path.join(__dirname, "ui", "extension-thank-you.html"));
+});
+
+app.get("/installment-agreement-thank-you", (req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+  res.sendFile(path.join(__dirname, "ui", "installment-agreement-thank-you.html"));
 });
 
 app.get("/contact", (req, res) => {
@@ -23312,6 +25303,8 @@ function getClientPortalMembershipSummary(
       paymentHistory: [],
       paidThisYearCents: 0,
       paidThisYearDisplay: "$0.00",
+      cancelAtPeriodEnd: false,
+      cancelAt: "",
       programAccess
     };
   }
@@ -24318,8 +26311,17 @@ async function applyMembershipStripeUpdate(
           current.paymentSource ||
           "Stripe Subscription"
         ),
+        // cancelAtPeriodEnd falls back to the current stored value (not
+        // false) when a caller omits it entirely -- a payment/subscription
+        // webhook that doesn't explicitly report cancellation state must
+        // never silently erase an already-scheduled Stripe cancellation.
+        // Every real caller today sources this fresh from a live Stripe
+        // subscription retrieve, but this keeps the function itself safe
+        // even if a future/partial caller omits the field.
         cancelAtPeriodEnd:
-          details.cancelAtPeriodEnd === true,
+          details.cancelAtPeriodEnd !== undefined
+            ? details.cancelAtPeriodEnd === true
+            : current.cancelAtPeriodEnd === true,
         cancelAt: String(
           details.cancelAt ||
           current.cancelAt ||
@@ -24988,6 +26990,7 @@ app.post(
 
 app.post(
   "/api/leads/:leadId/membership-action",
+  requireOfficeDocumentReviewApi,
   async (req, res) => {
     const leadId = String(req.params.leadId || "").trim();
     const action = String(req.body?.action || "").trim();
@@ -25017,6 +27020,195 @@ app.post(
     }
 
     const now = new Date().toISOString();
+
+    // "cancel" gets special handling: it must reach Stripe before any local
+    // record is touched, so a customer can never be marked cancelled locally
+    // while Stripe keeps billing them (and vice versa -- a Stripe failure
+    // must never be swallowed into a false local cancellation).
+    if (action === "cancel") {
+      const existingLead = await findLeadRecordById(leadId);
+
+      if (!existingLead) {
+        return res.status(404).json({
+          ok: false,
+          error: "The membership record could not be found."
+        });
+      }
+
+      const currentEnrollment =
+        buildMembershipEnrollmentBase(existingLead);
+      const subscriptionId = String(
+        currentEnrollment.stripeSubscriptionId || ""
+      ).trim();
+
+      const alreadyEnded = [
+        "Cancelled",
+        "Expired",
+        "Closed"
+      ].includes(currentEnrollment.enrollmentStatus);
+
+      if (alreadyEnded) {
+        // Idempotent no-op: nothing left to cancel, nothing to call in Stripe.
+        return res.status(200).json({
+          ok: true,
+          action,
+          updatedAt: now,
+          alreadyCancelled: true,
+          lead: existingLead,
+          membershipEnrollment: currentEnrollment
+        });
+      }
+
+      if (!subscriptionId) {
+        // Documented business-rule exception: this enrollment has no live
+        // Stripe subscription on file (e.g. never completed checkout, or a
+        // legacy/manually-activated record) -- there is no ongoing Stripe
+        // billing to protect, so immediate local cancellation is correct
+        // and is not in conflict with "don't leave the customer billed."
+        const result = await updateLeadAfterStripePayment(
+          leadId,
+          (record = {}) => {
+            const request = getMembershipRequestRecord(record);
+            const nextEnrollment = applyMembershipAction(
+              record,
+              "cancel",
+              now
+            );
+
+            if (!nextEnrollment) {
+              return record;
+            }
+
+            nextEnrollment.latestAction =
+              "Membership cancelled by office staff (no Stripe subscription was on file to schedule).";
+
+            return {
+              ...record,
+              status: `Membership - ${nextEnrollment.enrollmentStatus}`,
+              contactRequest: {
+                ...request,
+                membershipEnrollment: nextEnrollment
+              },
+              updatedAt: now
+            };
+          }
+        );
+
+        if (!result.ok) {
+          return res.status(404).json({
+            ok: false,
+            error:
+              result.error ||
+              "The membership record could not be updated."
+          });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          action,
+          updatedAt: now,
+          noStripeSubscriptionOnFile: true,
+          lead: result.lead,
+          membershipEnrollment:
+            result.lead?.contactRequest?.membershipEnrollment || null
+        });
+      }
+
+      // Live Stripe subscription on file: schedule cancellation at the end
+      // of the already-paid billing period instead of cutting access off
+      // immediately. Idempotent -- Stripe itself no-ops a repeated
+      // cancel_at_period_end:true update; if the subscription has already
+      // fully ended, fall back to retrieving its real state and reconcile
+      // rather than erroring.
+      let subscription;
+      try {
+        subscription = await stripe.subscriptions.update(
+          subscriptionId,
+          { cancel_at_period_end: true }
+        );
+      } catch (updateError) {
+        try {
+          const existingSub = await stripe.subscriptions.retrieve(
+            subscriptionId
+          );
+
+          if (
+            existingSub &&
+            String(existingSub.status || "").toLowerCase() === "canceled"
+          ) {
+            subscription = existingSub;
+          } else {
+            throw updateError;
+          }
+        } catch (retrieveError) {
+          console.error(
+            "[membership cancel] Stripe cancellation failed:",
+            updateError.message || updateError
+          );
+
+          return res.status(502).json({
+            ok: false,
+            error:
+              "Stripe could not schedule the cancellation, so the membership was NOT changed. " +
+              (updateError.message || "Please try again.")
+          });
+        }
+      }
+
+      const stripeState =
+        getMembershipStripeStateFromSubscription(subscription);
+      const cancelAtIso = stripeUnixToIso(subscription.cancel_at || 0);
+      const periodEndIso = getStripeSubscriptionPeriodEnd(subscription);
+
+      const reconciled = await applyMembershipStripeUpdate(
+        leadId,
+        {
+          eventId: `admin-cancel-${leadId}-${Date.now()}`,
+          occurredAt: now,
+          planKey: currentEnrollment.planKey,
+          billingFrequency: currentEnrollment.billingFrequency,
+          enrollmentStatus: stripeState.enrollmentStatus,
+          paymentStatus: stripeState.paymentStatus,
+          latestAction:
+            stripeState.enrollmentStatus === "Cancelled"
+              ? "Membership cancelled by office staff and confirmed ended by Stripe"
+              : `Cancellation scheduled by office staff -- paid access continues through ${
+                  periodEndIso
+                    ? new Date(periodEndIso).toLocaleDateString()
+                    : "the end of the current billing period"
+                }`,
+          customerId: getStripeObjectId(subscription.customer),
+          subscriptionId: subscription.id,
+          subscriptionStatus: String(subscription.status || ""),
+          currentPeriodEnd: periodEndIso,
+          checkoutEnvironment: subscription.livemode ? "live" : "test",
+          paymentSource: "Stripe Subscription",
+          cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
+          cancelAt: cancelAtIso,
+          forceHistory: true
+        }
+      );
+
+      if (!reconciled.ok) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            reconciled.error ||
+            "Stripe scheduled the cancellation, but the local record could not be updated. Please refresh and verify."
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        action,
+        updatedAt: now,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
+        cancelAt: cancelAtIso,
+        lead: reconciled.lead,
+        membershipEnrollment:
+          reconciled.lead?.contactRequest?.membershipEnrollment || null
+      });
+    }
 
     const result = await updateLeadAfterStripePayment(
       leadId,
@@ -25550,6 +27742,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     contractor1099Request,
     contractor1099Work,
     extensionRequest,
+    installmentAgreementRequest,
     calendarAppointment,
     completedAt,
     closedAt,
@@ -25731,6 +27924,18 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       updatedEstimate.extensionRequest = {
         ...(updatedEstimate.extensionRequest || {}),
         ...extensionRequest,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    if (
+      installmentAgreementRequest &&
+      typeof installmentAgreementRequest === "object" &&
+      !Array.isArray(installmentAgreementRequest)
+    ) {
+      updatedEstimate.installmentAgreementRequest = {
+        ...(updatedEstimate.installmentAgreementRequest || {}),
+        ...installmentAgreementRequest,
         updatedAt: new Date().toISOString()
       };
     }
@@ -26023,6 +28228,18 @@ app.patch("/api/leads/:leadId", async (req, res) => {
         localLead.extensionRequest = {
           ...(localLead.extensionRequest || {}),
           ...extensionRequest,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (
+        installmentAgreementRequest &&
+        typeof installmentAgreementRequest === "object" &&
+        !Array.isArray(installmentAgreementRequest)
+      ) {
+        localLead.installmentAgreementRequest = {
+          ...(localLead.installmentAgreementRequest || {}),
+          ...installmentAgreementRequest,
           updatedAt: new Date().toISOString()
         };
       }
@@ -28479,6 +30696,21 @@ app.post("/api/create-extension-checkout", async (req, res) => {
       });
     }
 
+    const business =
+      String(request.serviceType || "")
+        .toLowerCase() === "business";
+
+    const hasState =
+      request.stateExtensionRequested === true;
+
+    if (request.quoteNeeded === true) {
+      return res.status(409).json({
+        ok: false,
+        error:
+          "This request requires a separate office quote before payment. Additional-state or unusual filing situations are not auto-priced."
+      });
+    }
+
     if (
       request.checkoutEligible !== true ||
       request.deadlineReviewRequired === true
@@ -28490,29 +30722,21 @@ app.post("/api/create-extension-checkout", async (req, res) => {
       });
     }
 
-    const business =
-      String(request.serviceType || "")
-        .toLowerCase() === "business";
+    // Revalidate against the canonical stored service tier -- never trust a
+    // browser-submitted amount. Falls back to recomputing the tier from
+    // serviceType/stateExtensionRequested only for older saved requests that
+    // predate the serviceTier field.
+    const serviceTier =
+      String(request.serviceTier || "").trim() ||
+      getExtensionServiceTier(request.serviceType, hasState);
 
-    const hasState =
-      request.stateExtensionRequested === true;
-
-    const expectedAmount =
-      (
-        business
-          ? 9900
-          : 4900
-      ) +
-      (
-        hasState
-          ? 2500
-          : 0
-      );
+    const expectedAmount = EXTENSION_PRICE_CENTS[serviceTier];
 
     const amount =
       Number(request.totalPriceCents || 0);
 
     if (
+      !expectedAmount ||
       !Number.isInteger(amount) ||
       amount !== expectedAmount
     ) {
@@ -28523,10 +30747,18 @@ app.post("/api/create-extension-checkout", async (req, res) => {
       });
     }
 
+    const serviceNames = {
+      individual_federal: "Individual Federal Tax Extension Service",
+      individual_federal_state: "Individual Federal + One State Tax Extension Service",
+      business_federal: "Business Federal Tax Extension Service",
+      business_federal_state: "Business Federal + One State Tax Extension Service"
+    };
+
     const serviceName =
-      business
+      serviceNames[serviceTier] ||
+      (business
         ? "Business Tax Extension Service"
-        : "Individual Federal Tax Extension Service";
+        : "Individual Federal Tax Extension Service");
 
     const stateText =
       hasState
@@ -28545,11 +30777,7 @@ app.post("/api/create-extension-checkout", async (req, res) => {
             price_data: {
               currency: "usd",
               product_data: {
-                name:
-                  serviceName +
-                  (hasState
-                    ? " + State Add-On"
-                    : ""),
+                name: serviceName,
                 description:
                   "Professional review, preparation, filing, and confirmation of a timely eligible tax extension request." +
                   stateText +
@@ -28568,6 +30796,7 @@ app.post("/api/create-extension-checkout", async (req, res) => {
             ),
           clientEmail,
           service: "tax_extension",
+          serviceTier,
           extensionType:
             business
               ? "business"
@@ -28582,7 +30811,8 @@ app.post("/api/create-extension-checkout", async (req, res) => {
             "no"
         },
         success_url:
-          `${APP_BASE_URL}/extension-thank-you?checkout=success&leadId=${encodeURIComponent(leadId)}`,
+          `${APP_BASE_URL}/extension-thank-you?checkout=success&leadId=${encodeURIComponent(leadId)}` +
+          (request.consideringFullPreparation === true ? "&prep=1" : ""),
         cancel_url:
           `${APP_BASE_URL}/request-tax-extension?checkout=cancelled&leadId=${encodeURIComponent(leadId)}`
       });

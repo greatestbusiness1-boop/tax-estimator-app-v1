@@ -1,6 +1,7 @@
-node_modules/ 
-.env 
-leads.json 
+node_modules/
+.env
+leads.json
+newsletter-issues.json
 # Local manual backups - do not commit
 *BACKUP*
 *-BACKUP-*
