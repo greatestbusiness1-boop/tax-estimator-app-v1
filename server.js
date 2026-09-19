@@ -234,6 +234,19 @@ const clientPortalSupabaseAdmin =
       )
     : null;
 
+// The leads table holds customer/payment/workflow records and must be
+// accessed with the server-only service-role client -- never the browser
+// anon/publishable key -- once supabase/leads-table-v1.sql locks the table
+// down to server-only access. Falls back to the anon client only when no
+// service-role key is configured (e.g. local development), matching the
+// posture the client-portal/document stores already use.
+const leadsSupabaseClient =
+  clientPortalSupabaseAdmin || supabase;
+
+const LEADS_SUPABASE_READY = Boolean(
+  clientPortalSupabaseAdmin
+);
+
 const clientPortalStore = createClientPortalStore({
   supabaseAdmin: clientPortalSupabaseAdmin,
   tableName: "client_portal_accounts",
@@ -309,6 +322,111 @@ const OFFICE_DOCUMENT_REVIEW_SECRET =
           "local-office-document-review-only"
         )
   );
+
+// =============================================================================
+// PUBLIC LEAD ACCESS TOKEN
+// Replaces "knowledge of leadId alone" as the effective credential for the
+// unauthenticated, lead-scoped customer endpoints (GET
+// /api/estimate-summary/:leadId, the public branch of PATCH
+// /api/leads/:leadId, POST /api/leads/:leadId/client-note). Stateless:
+// deterministically derived from the leadId with HMAC-SHA256, so it needs
+// no database migration, no stored plaintext token, and protects existing
+// (legacy) leadIds exactly the same as new ones -- any server-side code
+// that already has the leadId can (re)compute the same valid token at any
+// time, so no token value needs to be threaded through multiple functions.
+// =============================================================================
+
+const PUBLIC_LEAD_ACCESS_SECRET = String(
+  process.env.PUBLIC_LEAD_ACCESS_SECRET || ""
+).trim();
+
+const PUBLIC_LEAD_ACCESS_SECRET_READY =
+  PUBLIC_LEAD_ACCESS_SECRET.length >= 32;
+
+// Production with no real secret configured must fail closed (every public
+// lead-scoped request rejected) rather than silently accept an insecure
+// default. Local/dev gets an explicit, clearly-labeled fallback so the
+// public customer pages remain testable without requiring a real secret in
+// .env, exactly mirroring the office-review-secret pattern above.
+function effectivePublicLeadAccessSecret() {
+  if (PUBLIC_LEAD_ACCESS_SECRET_READY) {
+    return PUBLIC_LEAD_ACCESS_SECRET;
+  }
+
+  return CLIENT_PORTAL_PRODUCTION_HOST
+    ? ""
+    : "local-development-only-public-lead-access-secret-never-use-in-production";
+}
+
+function generateLeadAccessToken(leadId) {
+  const secret = effectivePublicLeadAccessSecret();
+  const cleanId = String(leadId || "").trim();
+
+  if (!secret || !cleanId) {
+    return null;
+  }
+
+  return crypto
+    .createHmac("sha256", secret)
+    .update(cleanId)
+    .digest("base64url");
+}
+
+function verifyLeadAccessToken(leadId, suppliedToken) {
+  const secret = effectivePublicLeadAccessSecret();
+  const cleanId = String(leadId || "").trim();
+  const supplied = String(suppliedToken || "").trim();
+
+  if (!secret || !cleanId || !supplied) {
+    return false;
+  }
+
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(cleanId)
+    .digest();
+
+  let suppliedBuffer;
+  try {
+    suppliedBuffer = Buffer.from(supplied, "base64url");
+  } catch {
+    return false;
+  }
+
+  if (
+    suppliedBuffer.length !== expected.length ||
+    suppliedBuffer.length === 0
+  ) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(suppliedBuffer, expected);
+}
+
+// Middleware for a public, leadId-scoped route: an authenticated office
+// session always passes through unchanged (office staff never need the
+// public token). Otherwise the caller must present a valid
+// X-Lead-Access-Token header bound to this exact :leadId -- missing,
+// malformed, forged, or issued-for-a-different-leadId tokens are all
+// rejected identically (401) to avoid distinguishing failure reasons to an
+// attacker.
+function requireLeadAccessOrOffice(req, res, next) {
+  if (officeDocumentReviewAuthenticated(req)) {
+    return next();
+  }
+
+  const leadId = req.params.leadId;
+  const token = req.get("X-Lead-Access-Token");
+
+  if (verifyLeadAccessToken(leadId, token)) {
+    return next();
+  }
+
+  return res.status(401).json({
+    ok: false,
+    error: "A valid lead access token is required."
+  });
+}
 
 function officeReviewBase64Url(value) {
   return Buffer.from(value)
@@ -953,6 +1071,58 @@ function writeLeads(leads) {
   fs.renameSync(tmp, LEADS_FILE);
 }
 
+// Safe, redacted diagnostic string for server-side logs. Keeps enough detail
+// (error code/message) to troubleshoot an outage without ever logging SSNs,
+// passwords, office/session secrets, or Supabase/Stripe key values -- those
+// never appear in a Postgres/client error today, but this stays defensive
+// if an error shape ever changes to include request/config context.
+function leadsErrorDiagnostic(err) {
+  const rawMessage = String(
+    (err && err.message) || err || "Unknown error"
+  ).slice(0, 500);
+  const code = err && err.code ? String(err.code) : "";
+  const redacted = rawMessage
+    .replace(/sk_(live|test)_[A-Za-z0-9]+/gi, "[redacted-stripe-key]")
+    .replace(/sb_(secret|publishable)_[A-Za-z0-9]+/gi, "[redacted-supabase-key]")
+    .replace(/eyJ[A-Za-z0-9_-]{20,}/g, "[redacted-token]");
+  return code ? `${code}: ${redacted}` : redacted;
+}
+
+// A distinguishable, typed error thrown when production lead persistence
+// genuinely fails (Supabase unreachable/erroring) so callers can fail closed
+// (HTTP 503) instead of reporting success or silently substituting
+// incomplete/ephemeral local data. Never thrown in local/dev, where the
+// local leads.json fallback remains intentional (see readLeads/writeLeads).
+function leadPersistFailure(cause) {
+  const error = new Error(
+    "Lead persistence failed: the production Supabase leads table could not be reached or the write was rejected."
+  );
+  error.code = "LEAD_PERSIST_FAILED";
+  error.userMessage =
+    "Your request could not be safely saved right now. Please try again in a few minutes.";
+  error.cause = cause;
+  return error;
+}
+
+// Shared helper: given a caught error, respond with the safe/appropriate
+// status + message for a lead-persistence failure (503, distinguishing a
+// genuine outage from a validation bug) or fall back to the caller's own
+// generic error handling. Returns true if it already sent a response.
+function respondIfLeadPersistFailure(res, err) {
+  if (!err || err.code !== "LEAD_PERSIST_FAILED") {
+    return false;
+  }
+
+  res.status(503).json({
+    ok: false,
+    error: err.userMessage,
+    errors: [err.userMessage],
+    retryable: true
+  });
+
+  return true;
+}
+
 // =============================================================================
 // NEWSLETTER ISSUE FILE HELPERS
 // Newsletter issues are internal admin content (not client/lead records), so
@@ -1008,7 +1178,7 @@ async function appendLead(lead) {
   };
 
   try {
-    const { error } = await supabase
+    const { error } = await leadsSupabaseClient
       .from("leads")
       .insert([row]);
 
@@ -1019,8 +1189,21 @@ async function appendLead(lead) {
     console.log("Lead saved to Supabase:", lead.leadId);
     return lead;
   } catch (err) {
-    console.error("Supabase insert failed. Saving to local  instead:", err.message || err);
+    console.error(
+      "[leads] Supabase insert failed:",
+      leadsErrorDiagnostic(err)
+    );
 
+    if (CLIENT_PORTAL_PRODUCTION_HOST) {
+      // Production: the leads table is the authoritative store. Never
+      // silently substitute Render's ephemeral local disk for a real
+      // customer/payment record -- surface the failure so the calling
+      // route can fail closed (HTTP 503) instead of reporting success.
+      throw leadPersistFailure(err);
+    }
+
+    // Local/dev only: Supabase is commonly unreachable on purpose (see
+    // .env), so local leads.json remains a safe, intentional fallback.
     const leads = readLeads();
     leads.push(lead);
     writeLeads(leads);
@@ -1199,10 +1382,14 @@ function buildFreeEstimatePdfBuffer(lead = {}) {
           .trim()
           .replace(/\/+$/, "");
 
+      const pdfLeadAccessToken = generateLeadAccessToken(lead.leadId);
       const summaryUrl =
         baseUrl +
         "/estimate/" +
-        encodeURIComponent(lead.leadId || "");
+        encodeURIComponent(lead.leadId || "") +
+        (pdfLeadAccessToken
+          ? "#lat=" + encodeURIComponent(pdfLeadAccessToken)
+          : "");
 
       const bookingUrl =
         "https://calendly.com/ngmsllc/tax-estimate-review-15-minutes";
@@ -2014,7 +2201,7 @@ async function findNewsletterSubscription({
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -2178,14 +2365,20 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
     return possibleIds.some((id) => String(id || "").trim() === cleanId);
   }
 
+  let supabaseUnavailable = false;
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[stripe webhook] Supabase lookup error:", error.message || error);
+      console.error(
+        "[stripe webhook] Supabase lookup error:",
+        leadsErrorDiagnostic(error)
+      );
+      supabaseUnavailable = true;
     }
 
     if (!error && Array.isArray(data)) {
@@ -2194,7 +2387,7 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
       if (matchingRow) {
         const updatedEstimate = applyUpdate(matchingRow.estimate || matchingRow);
 
-        let updateQuery = supabase
+        let updateQuery = leadsSupabaseClient
           .from("leads")
           .update({ estimate: updatedEstimate });
 
@@ -2213,8 +2406,19 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
         const { error: updateError } = await updateQuery;
 
         if (updateError) {
-          console.error("[stripe webhook] Supabase update error:", updateError.message || updateError);
-          return { ok: false, error: "Could not update Supabase lead." };
+          console.error(
+            "[stripe webhook] Supabase update error:",
+            leadsErrorDiagnostic(updateError)
+          );
+          // A found-but-failed-to-write row is always a genuine outage/error,
+          // in every environment -- never report success, and never fall
+          // through to a local write that would silently diverge from the
+          // Supabase row this same lookup just proved exists.
+          return {
+            ok: false,
+            code: "SUPABASE_UNAVAILABLE",
+            error: "Could not update the Supabase lead record."
+          };
         }
 
         const updatedLead = mapRowToLead({
@@ -2237,7 +2441,31 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
       }
     }
   } catch (err) {
-    console.error("[stripe webhook] Supabase update failed:", err.message || err);
+    console.error(
+      "[stripe webhook] Supabase update failed:",
+      leadsErrorDiagnostic(err)
+    );
+    supabaseUnavailable = true;
+  }
+
+  if (CLIENT_PORTAL_PRODUCTION_HOST) {
+    // Production: never substitute Render's ephemeral local disk for the
+    // authoritative Supabase record. A Supabase outage must be reported
+    // distinctly from a genuine "no such lead" so the caller can decide to
+    // retry (outage) rather than treat it as a permanent data problem.
+    if (supabaseUnavailable) {
+      return {
+        ok: false,
+        code: "SUPABASE_UNAVAILABLE",
+        error: "The production lead database could not be reached."
+      };
+    }
+
+    return {
+      ok: false,
+      code: "LEAD_NOT_FOUND",
+      error: "Lead not found."
+    };
   }
 
   const localLeads = readLeads();
@@ -2270,7 +2498,11 @@ async function updateLeadAfterStripePayment(leadId, applyUpdate) {
     };
   }
 
-  return { ok: false, error: "Lead not found." };
+  return {
+    ok: false,
+    code: "LEAD_NOT_FOUND",
+    error: "Lead not found."
+  };
 }
 
 async function findLeadRecordById(leadId) {
@@ -2294,20 +2526,43 @@ async function findLeadRecordById(leadId) {
     return possibleIds.some((id) => String(id || "").trim() === cleanId);
   }
 
+  let supabaseUnavailable = false;
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && Array.isArray(data)) {
+    if (error) {
+      supabaseUnavailable = true;
+      throw error;
+    }
+
+    if (Array.isArray(data)) {
       const matchingRow = data.find(matchesLeadId);
       if (matchingRow) {
         return mapRowToLead(matchingRow);
       }
     }
   } catch (err) {
-    console.error("[findLeadRecordById] Supabase lookup failed:", err.message || err);
+    supabaseUnavailable = true;
+    console.error(
+      "[findLeadRecordById] Supabase lookup failed:",
+      leadsErrorDiagnostic(err)
+    );
+  }
+
+  if (CLIENT_PORTAL_PRODUCTION_HOST) {
+    if (supabaseUnavailable) {
+      // Distinguishable from a genuine "not found" -- callers must not
+      // treat a database outage as though the lead simply doesn't exist.
+      throw leadPersistFailure(
+        new Error("Supabase lookup unavailable in production.")
+      );
+    }
+
+    return null;
   }
 
   const localMatch = readLeads().find(matchesLeadId);
@@ -3159,13 +3414,20 @@ async function findLeadServiceByPaymentIntentId(paymentIntentId) {
     return null;
   }
 
+  let supabaseUnavailable = false;
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && Array.isArray(data)) {
+    if (error) {
+      supabaseUnavailable = true;
+      throw error;
+    }
+
+    if (Array.isArray(data)) {
       for (const row of data) {
         const mapped = mapRowToLead(row);
         const svc = matchInLead(mapped);
@@ -3175,7 +3437,24 @@ async function findLeadServiceByPaymentIntentId(paymentIntentId) {
       }
     }
   } catch (err) {
-    console.error("[refund] Supabase lookup failed:", err.message || err);
+    supabaseUnavailable = true;
+    console.error(
+      "[refund] Supabase lookup failed:",
+      leadsErrorDiagnostic(err)
+    );
+  }
+
+  if (CLIENT_PORTAL_PRODUCTION_HOST) {
+    if (supabaseUnavailable) {
+      // Never silently treat "the database is down" as "no matching
+      // payment" -- that would drop a real refund on the floor instead of
+      // letting the caller signal Stripe to retry.
+      throw leadPersistFailure(
+        new Error("Supabase lookup unavailable while matching a refund.")
+      );
+    }
+
+    return null;
   }
 
   for (const row of readLeads()) {
@@ -3363,7 +3642,20 @@ async function processStripeChargeRefund(charge = {}, eventId = "") {
     return { ok: true, ignored: true, reason: "No payment_intent on charge." };
   }
 
-  const match = await findLeadServiceByPaymentIntentId(paymentIntentId);
+  let match;
+
+  try {
+    match = await findLeadServiceByPaymentIntentId(paymentIntentId);
+  } catch (err) {
+    if (err && err.code === "LEAD_PERSIST_FAILED") {
+      return {
+        ok: false,
+        code: "SUPABASE_UNAVAILABLE",
+        error: err.message
+      };
+    }
+    throw err;
+  }
 
   if (!match) {
     console.warn(
@@ -3404,7 +3696,7 @@ async function computeAdminRevenueSummary() {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -3729,7 +4021,7 @@ async function findWrittenReviewLeadForDelivery(leadId) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -3776,7 +4068,7 @@ async function findWrittenReviewLeadForDelivery(leadId) {
   };
 }
 
-app.post("/api/written-review/:leadId/send-completed", async (req, res) => {
+app.post("/api/written-review/:leadId/send-completed", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const leadId = String(req.params.leadId || "").trim();
 
@@ -3866,10 +4158,14 @@ app.post("/api/written-review/:leadId/send-completed", async (req, res) => {
     const baseUrl =
       String(APP_BASE_URL || "").replace(/\/+$/, "");
 
+    const reportAccessToken = generateLeadAccessToken(leadId);
     const reportUrl =
       baseUrl +
       "/written-review-report/" +
-      encodeURIComponent(leadId);
+      encodeURIComponent(leadId) +
+      (reportAccessToken
+        ? "#lat=" + encodeURIComponent(reportAccessToken)
+        : "");
 
     const subject =
       "Your Written Tax Estimate Red Flag Review Is Ready";
@@ -3977,7 +4273,7 @@ Greatest Business Solution LLC`;
 // Explicitly records delivery/completion and moves the lead to Closed Leads.
 // =============================================================================
 
-app.post("/api/written-review/:leadId/mark-delivered", async (req, res) => {
+app.post("/api/written-review/:leadId/mark-delivered", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const leadId = String(req.params.leadId || "").trim();
 
@@ -4191,10 +4487,14 @@ async function sendWrittenReviewWorksheetInvitation(
     };
   }
 
+  const worksheetAccessToken = generateLeadAccessToken(cleanId);
   const worksheetUrl =
     baseUrl +
     "/client-tax-strategy-worksheet/" +
-    encodeURIComponent(cleanId);
+    encodeURIComponent(cleanId) +
+    (worksheetAccessToken
+      ? "#lat=" + encodeURIComponent(worksheetAccessToken)
+      : "");
 
   const subject =
     "Complete Your Tax Strategy Worksheet";
@@ -4479,6 +4779,22 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
     return res.status(400).send("Webhook signature verification failed.");
   }
 
+  // Set whenever any persistence step below reports SUPABASE_UNAVAILABLE.
+  // A valid, signed Stripe event must never be acknowledged as processed
+  // when its payment/refund/subscription update could not actually be
+  // saved -- returning a non-2xx here tells Stripe to retry the same event
+  // later. Every apply*/updateLeadAfterStripePayment call already guards
+  // against duplicate processing via processedStripeEventIds/refund-id
+  // tracking, so a retry is safe and will not double-apply a payment.
+  let webhookPersistenceFailed = false;
+
+  function trackPersistenceResult(result) {
+    if (result && result.code === "SUPABASE_UNAVAILABLE") {
+      webhookPersistenceFailed = true;
+    }
+    return result;
+  }
+
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object || {};
@@ -4493,6 +4809,7 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         });
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error("[stripe webhook] Could not mark transcript lead paid:", result.error || result);
         } else {
           console.log("[stripe webhook] Transcript lead marked paid:", leadId, result.source);
@@ -4513,6 +4830,7 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         );
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Could not mark extension request paid:",
             result.error || result
@@ -4594,6 +4912,7 @@ Greatest Business Solution LLC`
         );
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Could not mark installment agreement request paid:",
             result.error || result
@@ -4679,6 +4998,7 @@ Greatest Business Solution LLC`
           );
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Could not record Tax Preparation payment:",
             result.error || result
@@ -4776,6 +5096,7 @@ Greatest Business Solution LLC`
           );
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Could not record Contractor 1099 payment:",
             result.error || result
@@ -4867,6 +5188,7 @@ Greatest Business Solution LLC`
           );
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Membership Checkout Session could not be synchronized:",
             result.error || result
@@ -4887,6 +5209,7 @@ Greatest Business Solution LLC`
         });
 
         if (!result.ok) {
+          trackPersistenceResult(result);
           console.error(
             "[stripe webhook] Could not mark written review paid:",
             result.error || result
@@ -4934,6 +5257,7 @@ Greatest Business Solution LLC`
       );
 
       if (!result.ok) {
+        trackPersistenceResult(result);
         console.error(
           "[stripe webhook] Membership invoice could not be synchronized:",
           result.error || result
@@ -4955,6 +5279,7 @@ Greatest Business Solution LLC`
         );
 
       if (!result.ok) {
+        trackPersistenceResult(result);
         console.error(
           "[stripe webhook] Membership subscription could not be synchronized:",
           result.error || result
@@ -4969,6 +5294,7 @@ Greatest Business Solution LLC`
       );
 
       if (!result.ok) {
+        trackPersistenceResult(result);
         console.error(
           "[stripe webhook] Refund could not be recorded:",
           result.error || result
@@ -4980,6 +5306,25 @@ Greatest Business Solution LLC`
           result.service
         );
       }
+    }
+
+    if (webhookPersistenceFailed) {
+      // A signed, verified Stripe event was received but at least one
+      // payment/refund/subscription update could not be safely persisted to
+      // the production database. Returning non-2xx tells Stripe to retry
+      // this exact event later rather than treating it as processed; every
+      // apply*/updateLeadAfterStripePayment path is idempotent (matched by
+      // Stripe event id or refund id), so a retry will not double-apply
+      // this payment or refund.
+      console.error(
+        "[stripe webhook] Persistence failed for one or more updates -- returning 503 so Stripe retries.",
+        { eventId: event.id, eventType: event.type }
+      );
+      return res.status(503).json({
+        received: false,
+        retry: true,
+        error: "The update could not be safely persisted. Please retry."
+      });
     }
 
     return res.json({ received: true });
@@ -5405,7 +5750,7 @@ async function loadClientPortalLeadCandidates() {
   const byId = new Map();
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -6239,6 +6584,9 @@ async function getFreeEstimateUsage(email, taxYear) {
     exemptionReason,
     latestSavedLeadId:
       latestFamily?.latest?.leadId || "",
+    latestSavedLeadAccessToken: generateLeadAccessToken(
+      latestFamily?.latest?.leadId || ""
+    ),
     latestEstimateFamilyId:
       latestFamily?.estimateFamilyId || "",
     identityEmail,
@@ -12308,7 +12656,7 @@ async function saveCalendlyAppointment(appointment) {
   };
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -12347,7 +12695,7 @@ async function saveCalendlyAppointment(appointment) {
         updatedAt: new Date().toISOString()
       };
 
-      let updateQuery = supabase
+      let updateQuery = leadsSupabaseClient
         .from("leads")
         .update({
           name: updatedEstimate.contact.name,
@@ -12426,7 +12774,7 @@ async function saveCalendlyAppointment(appointment) {
       filingYear: null
     };
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await leadsSupabaseClient
       .from("leads")
       .insert([row]);
 
@@ -13879,7 +14227,8 @@ app.post("/api/lead", async (req, res) => {
     savedLead = await appendLead(lead);
     recentLeads.set(savedLead.leadId, savedLead);
   } catch (err) {
-    console.error("[/api/lead] Save error:", err);
+    console.error("[/api/lead] Save error:", leadsErrorDiagnostic(err));
+    if (respondIfLeadPersistFailure(res, err)) return;
     return res.status(500).json({
       ok: false,
       errors: ["Could not save your request. Please try again."]
@@ -13958,7 +14307,10 @@ app.post("/api/lead", async (req, res) => {
       savedLead.leadId ||
       ""
     ).trim();
-    const summaryUrl = `${baseUrl}/estimate/${encodeURIComponent(savedLead.leadId)}`;
+    const leadAccessToken = generateLeadAccessToken(savedLead.leadId);
+    const summaryUrl =
+      `${baseUrl}/estimate/${encodeURIComponent(savedLead.leadId)}` +
+      (leadAccessToken ? `#lat=${encodeURIComponent(leadAccessToken)}` : "");
     const portalActivationUrl =
       `${baseUrl}/client-portal?activate=1&estimate=1&leadId=` +
       encodeURIComponent(stableEstimateReference) +
@@ -14081,6 +14433,7 @@ Greatest Business Solution LLC`,
   return res.status(201).json({
     ok: true,
     leadId: savedLead.leadId,
+    accessToken: generateLeadAccessToken(savedLead.leadId),
     estimateFamilyId: String(
       savedLead.freeEstimateRevision
         ?.estimateFamilyId ||
@@ -14218,7 +14571,7 @@ app.post("/api/calendar-appointment", async (req, res) => {
   const allCalendarLeads = [];
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*");
 
@@ -14371,8 +14724,9 @@ app.post("/api/calendar-appointment", async (req, res) => {
   } catch (error) {
     console.error(
       "[/api/calendar-appointment] Save failed:",
-      error.message || error
+      leadsErrorDiagnostic(error)
     );
+    if (respondIfLeadPersistFailure(res, error)) return;
 
     return res.status(500).json({
       ok: false,
@@ -14564,8 +14918,9 @@ app.post("/api/newsletter-signup", async (req, res) => {
     } catch (error) {
       console.error(
         "[newsletter] Save failed:",
-        error.message || error
+        leadsErrorDiagnostic(error)
       );
+      if (respondIfLeadPersistFailure(res, error)) return;
 
       return res.status(500).json({
         ok: false,
@@ -14873,7 +15228,7 @@ async function listNewsletterSubscribers() {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -15511,8 +15866,9 @@ Greatest Business Solution LLC`
   } catch (err) {
     console.error(
       "[contact request] Save failed:",
-      err.message || err
+      leadsErrorDiagnostic(err)
     );
+    if (respondIfLeadPersistFailure(res, err)) return;
 
     return res.status(500).json({
       ok: false,
@@ -16439,8 +16795,9 @@ Greatest Business Solution LLC`
   } catch (err) {
     console.error(
       "[tax preparation intake] Save failed:",
-      err.message || err
+      leadsErrorDiagnostic(err)
     );
+    if (respondIfLeadPersistFailure(res, err)) return;
 
     return res.status(500).json({
       ok: false,
@@ -17128,8 +17485,9 @@ Greatest Business Solution LLC`
   } catch (err) {
     console.error(
       "[contractor 1099 request] Save failed:",
-      err.message || err
+      leadsErrorDiagnostic(err)
     );
+    if (respondIfLeadPersistFailure(res, err)) return;
 
     return res.status(500).json({
       ok: false,
@@ -17512,8 +17870,9 @@ Greatest Business Solution LLC`
   } catch (error) {
     console.error(
       "[extension request] Save failed:",
-      error.message || error
+      leadsErrorDiagnostic(error)
     );
+    if (respondIfLeadPersistFailure(res, error)) return;
 
     return res.status(500).json({
       ok: false,
@@ -17769,8 +18128,9 @@ Greatest Business Solution LLC`
   } catch (error) {
     console.error(
       "[installment agreement request] Save failed:",
-      error.message || error
+      leadsErrorDiagnostic(error)
     );
+    if (respondIfLeadPersistFailure(res, error)) return;
 
     return res.status(500).json({
       ok: false,
@@ -23696,7 +24056,7 @@ app.post(
 // GET /api/estimate-summary/:leadId
 // =============================================================================
 
-app.get("/api/estimate-summary/:leadId", async (req, res) => {
+app.get("/api/estimate-summary/:leadId", requireLeadAccessOrOffice, async (req, res) => {
   const { leadId } = req.params;
   const cleanId = String(leadId || "").trim();
 
@@ -23728,15 +24088,20 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
     let localLeads = [];
     let foundLead = null;
     let foundSource = null;
+    let supabaseUnavailable = false;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await leadsSupabaseClient
         .from("leads")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Summary Supabase lookup error:", error.message || error);
+        console.error(
+          "[estimate-summary] Supabase lookup error:",
+          leadsErrorDiagnostic(error)
+        );
+        supabaseUnavailable = true;
       }
 
       if (!error && Array.isArray(data)) {
@@ -23748,51 +24113,101 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
         }
       }
     } catch (supabaseErr) {
-      console.error("Summary Supabase lookup failed:", supabaseErr.message || supabaseErr);
+      console.error(
+        "[estimate-summary] Supabase lookup failed:",
+        leadsErrorDiagnostic(supabaseErr)
+      );
+      supabaseUnavailable = true;
     }
 
-    if (!foundLead) {
-      localLeads = readLeads();
-      foundLead = findLeadById(localLeads);
+    if (CLIENT_PORTAL_PRODUCTION_HOST) {
+      // Production: Supabase is authoritative. An outage must never
+      // masquerade as "no record found", a stale local copy, or a
+      // successful lookup -- fail closed with a distinguishable 503
+      // instead of reading leads.json.
+      if (supabaseUnavailable) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "Your estimate could not be retrieved right now. Please try again in a few minutes.",
+          retryable: true
+        });
+      }
 
-      if (foundLead) {
-        foundSource = "local";
+      if (!foundLead) {
+        return res.status(404).json({
+          ok: false,
+          error: "Estimate not found.",
+          requestedLeadId: cleanId
+        });
+      }
+    } else {
+      if (!foundLead) {
+        localLeads = readLeads();
+        foundLead = findLeadById(localLeads);
+
+        if (foundLead) {
+          foundSource = "local";
+        }
+      }
+
+      console.log("[estimate-summary lookup]", {
+        requestedLeadId: cleanId,
+        supabaseCount: supabaseLeads.length,
+        localCount: localLeads.length,
+        found: Boolean(foundLead),
+        source: foundSource
+      });
+
+      if (!foundLead) {
+        return res.status(404).json({
+          ok: false,
+          error: "Estimate not found.",
+          requestedLeadId: cleanId,
+          supabaseCount: supabaseLeads.length,
+          localCount: localLeads.length
+        });
+      }
+
+      if (!localLeads.length) {
+        localLeads = readLeads();
       }
     }
 
-    console.log("[estimate-summary lookup]", {
-      requestedLeadId: cleanId,
-      supabaseCount: supabaseLeads.length,
-      localCount: localLeads.length,
-      found: Boolean(foundLead),
-      source: foundSource
-    });
-
-    if (!foundLead) {
-      return res.status(404).json({
-        ok: false,
-        error: "Estimate not found.",
-        requestedLeadId: cleanId,
-        supabaseCount: supabaseLeads.length,
-        localCount: localLeads.length
-      });
-    }
-
-    if (!localLeads.length) {
-      localLeads = readLeads();
-    }
-
-    const localLeadForRequest = findLeadById(localLeads);
-    const mergedRequest =
+    const localLeadForRequest = CLIENT_PORTAL_PRODUCTION_HOST
+      ? null
+      : findLeadById(localLeads);
+    const rawRequest =
       foundLead.Request ||
       foundLead.request ||
       localLeadForRequest?.Request ||
       localLeadForRequest?.request ||
       null;
-    const mergedTaxSavingsPlanner =
-      foundLead.taxSavingsPlanner ||
-      localLeadForRequest?.taxSavingsPlanner ||
-      null;
+
+    // Sanitized, minimum-fields public DTO -- this endpoint has no
+    // authentication beyond "the caller already knows this leadId", so it
+    // must never expose office-only or payment-sensitive data (internal
+    // notes, Stripe PaymentIntent/Checkout Session/refund IDs, workflow
+    // status, priority, etc.), even though the raw stored lead record
+    // contains all of that. Only the handful of fields the legitimate
+    // public callers (client-tax-strategy-worksheet.html,
+    // written-review-report.html, estimate-summary.html) actually read are
+    // included here.
+    const safeRequest =
+      rawRequest && typeof rawRequest === "object"
+        ? {
+            clientTaxStrategyWorksheet:
+              rawRequest.clientTaxStrategyWorksheet || null,
+            clientTaxStrategyWorksheetCompletedAt:
+              rawRequest.clientTaxStrategyWorksheetCompletedAt || "",
+            clientTaxStrategyWorksheetStatus:
+              rawRequest.clientTaxStrategyWorksheetStatus || "",
+            writtenReviewPreparedAt:
+              rawRequest.writtenReviewPreparedAt || "",
+            writtenReviewReportOpenedAt:
+              rawRequest.writtenReviewReportOpenedAt || ""
+          }
+        : null;
 
     return res.status(200).json({
       ok: true,
@@ -23800,15 +24215,17 @@ app.get("/api/estimate-summary/:leadId", async (req, res) => {
       lead: {
         leadId: foundLead.leadId || foundLead.id || foundLead.estimateId || foundLead.lead_id,
         timestamp: foundLead.timestamp || foundLead.created_at || null,
-        status: foundLead.status || "New",
-        priority: foundLead.priority || "medium",
-        notes: foundLead.notes || "",
         estimateSummary: foundLead.estimateSummary || null,
         taxData: foundLead.taxData || null,
-        contact: foundLead.contact || null,
-        taxSavingsPlanner: mergedTaxSavingsPlanner,
-        Request: mergedRequest,
-        request: mergedRequest
+        contact: foundLead.contact
+          ? {
+              name: foundLead.contact.name || "",
+              email: foundLead.contact.email || "",
+              phone: foundLead.contact.phone || ""
+            }
+          : null,
+        Request: safeRequest,
+        request: safeRequest
       }
     });
   } catch (err) {
@@ -23879,7 +24296,7 @@ app.get("/terms", (req, res) => {
 // =============================================================================
 // POST /api/leads/:leadId/opportunity-action
 // =============================================================================
-app.post("/api/leads/:leadId/opportunity-action", async (req, res) => {
+app.post("/api/leads/:leadId/opportunity-action", requireOfficeDocumentReviewApi, async (req, res) => {
   const { leadId } = req.params;
   const { action } = req.body || {};
   const cleanId = String(leadId || "").trim();
@@ -23943,7 +24360,7 @@ app.post("/api/leads/:leadId/opportunity-action", async (req, res) => {
     };
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await leadsSupabaseClient
         .from("leads")
         .select("*")
         .order("created_at", { ascending: false });
@@ -24424,7 +24841,7 @@ Greatest Business Solution LLC`
 // Sends a review-request email only for completed services.
 // Records the send date and prevents accidental duplicates.
 // =============================================================================
-app.post("/api/leads/:leadId/send-google-review-request", async (req, res) => {
+app.post("/api/leads/:leadId/send-google-review-request", requireOfficeDocumentReviewApi, async (req, res) => {
   const cleanId = String(req.params.leadId || "").trim();
   const force = req.body?.force === true;
   const now = new Date().toISOString();
@@ -24463,7 +24880,7 @@ app.post("/api/leads/:leadId/send-google-review-request", async (req, res) => {
 
   const findLead = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await leadsSupabaseClient
         .from("leads")
         .select("*")
         .order("created_at", { ascending: false });
@@ -27026,7 +27443,21 @@ app.post(
     // while Stripe keeps billing them (and vice versa -- a Stripe failure
     // must never be swallowed into a false local cancellation).
     if (action === "cancel") {
-      const existingLead = await findLeadRecordById(leadId);
+      let existingLead;
+
+      try {
+        existingLead = await findLeadRecordById(leadId);
+      } catch (err) {
+        console.error(
+          "[membership cancel] Lookup failed:",
+          leadsErrorDiagnostic(err)
+        );
+        if (respondIfLeadPersistFailure(res, err)) return;
+        return res.status(500).json({
+          ok: false,
+          error: "The membership record could not be looked up."
+        });
+      }
 
       if (!existingLead) {
         return res.status(404).json({
@@ -27402,8 +27833,9 @@ app.post(
     } catch (error) {
       console.error(
         "[membership preview] Activation failed:",
-        error.message || error
+        leadsErrorDiagnostic(error)
       );
+      if (respondIfLeadPersistFailure(res, error)) return;
 
       return res.status(500).json({
         ok: false,
@@ -27603,8 +28035,9 @@ app.post(
     } catch (error) {
       console.error(
         "[membership checkout] Creation failed:",
-        error.message || error
+        leadsErrorDiagnostic(error)
       );
+      if (respondIfLeadPersistFailure(res, error)) return;
 
       return res.status(500).json({
         ok: false,
@@ -27730,11 +28163,165 @@ app.post(
   }
 );
 
+// Explicit ALLOWLIST (not a blocklist) for unauthenticated callers. Every
+// legitimate public/customer-facing PATCH caller (audited: ui/app.js,
+// ui/estimate-summary.html, ui/client-tax-strategy-worksheet.html,
+// ui/tax-prep-request.html, ui/transcript-help-request.html,
+// ui/written-review-report.html) only ever sends fields from this set.
+// taxPreparationIntake/contractor1099Request/contactEmail were previously
+// allowed under the old blocklist model but are not actually used by any
+// current public caller, so they are treated as non-public here. Any field
+// not in this list is rejected outright for an unauthenticated request --
+// including any future/unknown property -- rather than merely blocking a
+// known-dangerous set.
+const PUBLIC_LEAD_PATCH_FIELDS = ["status", "notes", "Request", "transcriptRequest"];
+
+// A handful of legitimate customer status transitions are sent directly by
+// public forms (see ui/app.js). Anything else -- including any value an
+// office admin would use -- is rejected for an unauthenticated caller.
+const PUBLIC_ALLOWED_STATUS_VALUES = new Set([
+  "Transcript Help - Payment Pending"
+]);
+
+// Sub-fields of the Request/transcriptRequest bucket that must never be
+// settable by an unauthenticated caller. This object is a shared,
+// multi-purpose bucket written by several public forms *and* by the real
+// Stripe webhook handler (applyStripePaidUpdate merges payment fields into
+// it "in case older dashboard code still checks it") -- without this
+// denylist, an unauthenticated request could shallow-merge a fake
+// "paymentStatus": "Paid / Verified" or a fabricated Stripe identifier
+// directly onto their own record.
+const PUBLIC_REQUEST_DENIED_SUBFIELDS = new Set([
+  "stripeCheckoutSessionId",
+  "stripePaymentIntentId",
+  "processedStripeSessions",
+  "processedStripeRefundIds",
+  "refundStatus",
+  "refundedAmountCents",
+  "amountPaidCents",
+  "amountPaid",
+  "paymentVerifiedAt",
+  "paidAt",
+  "paymentSource"
+]);
+
+function sanitizePublicRequestSubmission(rawRequest) {
+  if (
+    !rawRequest ||
+    typeof rawRequest !== "object" ||
+    Array.isArray(rawRequest)
+  ) {
+    return { value: null, rejectedFields: [] };
+  }
+
+  const rejectedFields = [];
+  const sanitized = {};
+
+  for (const [key, value] of Object.entries(rawRequest)) {
+    if (PUBLIC_REQUEST_DENIED_SUBFIELDS.has(key)) {
+      rejectedFields.push(key);
+      continue;
+    }
+
+    if (
+      key === "paymentStatus" &&
+      typeof value === "string" &&
+      /paid|verified|confirmed/i.test(value)
+    ) {
+      // A public submission may record that payment is pending/awaited,
+      // never that it has already succeeded -- only the real Stripe
+      // webhook path may set a "paid" style status.
+      rejectedFields.push("paymentStatus");
+      continue;
+    }
+
+    sanitized[key] = value;
+  }
+
+  return { value: sanitized, rejectedFields };
+}
+
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
+  const body = req.body || {};
+
+  const isOfficeAuthenticated = Boolean(
+    officeDocumentReviewAuthenticated(req)
+  );
+
+  let publicNoteAppend = null;
+
+  if (!isOfficeAuthenticated) {
+    // A public caller must present a valid, leadId-bound access token --
+    // knowledge of the leadId alone is no longer sufficient. Checked before
+    // the field allowlist so an unauthenticated/forged-token request never
+    // even reaches field-level validation.
+    if (
+      !verifyLeadAccessToken(leadId, req.get("X-Lead-Access-Token"))
+    ) {
+      return res.status(401).json({
+        ok: false,
+        error: "A valid lead access token is required."
+      });
+    }
+
+    const attemptedFields = Object.keys(body);
+    const disallowedFields = attemptedFields.filter(
+      (field) => !PUBLIC_LEAD_PATCH_FIELDS.includes(field)
+    );
+
+    if (disallowedFields.length) {
+      return res.status(401).json({
+        ok: false,
+        error:
+          "Secure office document review sign-in is required to update these fields.",
+        fields: disallowedFields
+      });
+    }
+
+    if (
+      body.status !== undefined &&
+      !PUBLIC_ALLOWED_STATUS_VALUES.has(String(body.status))
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "That status transition is not permitted for this request."
+      });
+    }
+
+    // notes is append-only for unauthenticated callers: the client never
+    // gets to read or overwrite the existing internal note history (see
+    // GET /api/estimate-summary/:leadId, which no longer returns notes at
+    // all) -- their submitted text is appended to whatever is actually
+    // stored at write time, further below.
+    if (body.notes !== undefined) {
+      if (typeof body.notes !== "string" || body.notes.length > 2000) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid note content."
+        });
+      }
+      publicNoteAppend = body.notes.trim();
+    }
+
+    for (const key of ["Request", "transcriptRequest"]) {
+      if (body[key] === undefined) continue;
+      const { rejectedFields } = sanitizePublicRequestSubmission(body[key]);
+      if (rejectedFields.length) {
+        return res.status(403).json({
+          ok: false,
+          error:
+            "This request contains fields that cannot be set without office sign-in.",
+          field: key,
+          rejected: rejectedFields
+        });
+      }
+    }
+  }
+
   const {
     status,
-    notes,
+    notes: rawNotes,
     Request,
     transcriptRequest,
     taxPreparationIntake,
@@ -27747,7 +28334,12 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     completedAt,
     closedAt,
     contactEmail
-  } = req.body || {};
+  } = body;
+  // For an office-authenticated caller, notes is a direct replacement
+  // exactly as before. For a public caller, publicNoteAppend (validated
+  // above) is combined with the current stored notes at write time inside
+  // applyUpdateToEstimate -- never the raw client-supplied value.
+  const notes = isOfficeAuthenticated ? rawNotes : undefined;
   const cleanId = String(leadId || "").trim();
 
   const worksheetWasSubmitted =
@@ -27787,6 +28379,17 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
     if (typeof notes === "string") {
       updatedEstimate.notes = notes;
+    } else if (publicNoteAppend) {
+      // Public callers never overwrite notes -- append to whatever is
+      // actually stored right now (never the client-supplied "before"
+      // value, since the client is never shown internal notes at all).
+      const currentNotes =
+        typeof updatedEstimate.notes === "string"
+          ? updatedEstimate.notes.trim()
+          : "";
+      updatedEstimate.notes = currentNotes
+        ? currentNotes + "\n" + publicNoteAppend
+        : publicNoteAppend;
     }
 
     if (typeof completedAt === "string" && completedAt.trim()) {
@@ -27973,9 +28576,11 @@ app.patch("/api/leads/:leadId", async (req, res) => {
     return updatedEstimate;
   };
 
+  let patchSupabaseUnavailable = false;
+
   try {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await leadsSupabaseClient
         .from("leads")
         .select("*")
         .order("created_at", { ascending: false });
@@ -27983,8 +28588,9 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       if (error) {
         console.error(
           "[PATCH /api/leads] Supabase lookup error:",
-          error.message || error
+          leadsErrorDiagnostic(error)
         );
+        patchSupabaseUnavailable = true;
       }
 
       if (!error && Array.isArray(data)) {
@@ -27994,7 +28600,7 @@ app.patch("/api/leads/:leadId", async (req, res) => {
           const updatedEstimate =
             applyUpdateToEstimate(matchingRow.estimate || {});
 
-          let updateQuery = supabase
+          let updateQuery = leadsSupabaseClient
             .from("leads")
             .update({ estimate: updatedEstimate });
 
@@ -28029,12 +28635,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
           if (updateError) {
             console.error(
               "[PATCH /api/leads] Supabase update error:",
-              updateError.message || updateError
+              leadsErrorDiagnostic(updateError)
             );
 
-            return res.status(500).json({
+            return res.status(503).json({
               ok: false,
-              error: "Could not update lead."
+              error:
+                "Your update could not be safely saved right now. Please try again in a few minutes.",
+              retryable: true
             });
           }
 
@@ -28091,8 +28699,28 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       console.error(
         "[PATCH /api/leads] Supabase update failed:",
-        supabaseErr.message || supabaseErr
+        leadsErrorDiagnostic(supabaseErr)
       );
+      patchSupabaseUnavailable = true;
+    }
+
+    if (CLIENT_PORTAL_PRODUCTION_HOST) {
+      // Production: the leads table is authoritative. Never silently write
+      // a customer/payment/workflow update to Render's ephemeral local
+      // disk -- report failure so the client can retry instead.
+      if (patchSupabaseUnavailable) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "Your update could not be safely saved right now. Please try again in a few minutes.",
+          retryable: true
+        });
+      }
+
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
     }
 
     const localLeads = readLeads();
@@ -28119,6 +28747,14 @@ app.patch("/api/leads/:leadId", async (req, res) => {
 
       if (typeof notes === "string") {
         localLead.notes = notes;
+      } else if (publicNoteAppend) {
+        const currentNotes =
+          typeof localLead.notes === "string"
+            ? localLead.notes.trim()
+            : "";
+        localLead.notes = currentNotes
+          ? currentNotes + "\n" + publicNoteAppend
+          : publicNoteAppend;
       }
 
       if (typeof completedAt === "string" && completedAt.trim()) {
@@ -28346,6 +28982,52 @@ app.patch("/api/leads/:leadId", async (req, res) => {
       error: "Could not update lead."
     });
   }
+});
+
+// =============================================================================
+// POST /api/leads/:leadId/client-note
+// Narrow, public, append-only alternative to sending raw "notes" through
+// PATCH /api/leads/:leadId. Used by ui/estimate-summary.html to record that
+// the client started a checkout, without ever reading or overwriting the
+// lead's existing (possibly internal-office) note history. The caller
+// supplies only a short label; the server appends it with a timestamp to
+// whatever notes are actually stored at write time.
+// =============================================================================
+app.post("/api/leads/:leadId/client-note", requireLeadAccessOrOffice, async (req, res) => {
+  const leadId = String(req.params.leadId || "").trim();
+  const note = String(req.body?.note || "").trim();
+
+  if (!leadId) {
+    return res.status(400).json({ ok: false, error: "Missing lead ID." });
+  }
+
+  if (!note || note.length > 300) {
+    return res.status(400).json({ ok: false, error: "Invalid note." });
+  }
+
+  const entry = `[${new Date().toLocaleString()}] Client action: ${note}`;
+
+  const result = await updateLeadAfterStripePayment(leadId, (record = {}) => {
+    const updated = { ...record };
+    const currentNotes =
+      typeof updated.notes === "string" ? updated.notes.trim() : "";
+    updated.notes = currentNotes ? currentNotes + "\n" + entry : entry;
+    updated.updatedAt = new Date().toISOString();
+    return updated;
+  });
+
+  if (!result.ok) {
+    if (result.code === "SUPABASE_UNAVAILABLE") {
+      return res.status(503).json({
+        ok: false,
+        error: "Could not be saved right now. Please try again.",
+        retryable: true
+      });
+    }
+    return res.status(404).json({ ok: false, error: result.error });
+  }
+
+  return res.status(200).json({ ok: true });
 });
 
 // =============================================================================
@@ -28612,12 +29294,12 @@ async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
   }
 }
 
-app.get("/api/leads", async (req, res) => {
+app.get("/api/leads", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const includeLocal =
       String(req.query.includeLocal || "").trim() === "1";
 
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -28764,7 +29446,22 @@ app.get("/api/leads", async (req, res) => {
       leads
     });
   } catch (err) {
-    console.error("Supabase load leads failed. Loading local instead:", err.message || err);
+    console.error(
+      "[GET /api/leads] Supabase load failed:",
+      leadsErrorDiagnostic(err)
+    );
+
+    if (CLIENT_PORTAL_PRODUCTION_HOST) {
+      // Never let an outage masquerade as "zero leads" or substitute
+      // ephemeral local data as though it were the authoritative
+      // production set -- the admin UI must see a clear failure instead.
+      return res.status(503).json({
+        ok: false,
+        error:
+          "The lead database could not be reached. Please try again in a few minutes.",
+        retryable: true
+      });
+    }
 
     const leadsWithDocuments =
       await hydrateLeadsWithSecureDocumentSummaries(
@@ -28910,7 +29607,7 @@ app.post("/api/-help", (req, res) => {
   }
 });
 
-app.delete("/api/leads/:leadId", async (req, res) => {
+app.delete("/api/leads/:leadId", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const leadId = String(
       req.params.leadId || ""
@@ -28961,7 +29658,7 @@ app.delete("/api/leads/:leadId", async (req, res) => {
     let matchedSupabaseRow = null;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await leadsSupabaseClient
         .from("leads")
         .select("*")
         .order("created_at", {
@@ -29056,7 +29753,7 @@ app.delete("/api/leads/:leadId", async (req, res) => {
     }
 
     if (matchedSupabaseRow) {
-      let deleteQuery = supabase
+      let deleteQuery = leadsSupabaseClient
         .from("leads")
         .delete();
 
@@ -31068,7 +31765,7 @@ app.get("/api/debug/supabase-leads", async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await leadsSupabaseClient
       .from("leads")
       .select("*")
       .limit(5);
@@ -31135,22 +31832,6 @@ module.exports = app;
 
 
 
-
-
-
-app.get("/api/leads", (req, res) => {
-  try {
-    const clients = clientCore.getClientMasterData();
-    return res.json(clients || []);
-  } catch (err) {
-    console.log("[clientCore] fallback to legacy ");
-    const fs = require("fs");
-    const data = fs.existsSync("")
-      ? JSON.parse(fs.readFileSync("", "utf8"))
-      : [];
-    return res.json(data);
-  }
-});
 
 function getOfficeWorkQueue() {
   try {

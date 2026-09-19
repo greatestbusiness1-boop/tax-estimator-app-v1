@@ -680,6 +680,22 @@
   <script>
     const leadId = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
 
+    // Public lead access token (see server.js requireLeadAccessOrOffice):
+    // captured once from the URL fragment on a link delivered by email or
+    // another page, then remembered in sessionStorage keyed by leadId.
+    const leadAccessToken = (function(){
+      const match = /(?:^|[#&])lat=([^&]+)/.exec(location.hash);
+      const fromHash = match ? decodeURIComponent(match[1]) : "";
+      if (fromHash && leadId) {
+        try { sessionStorage.setItem("leadAccessToken:" + leadId, fromHash); } catch {}
+        return fromHash;
+      }
+      if (leadId) {
+        try { return sessionStorage.getItem("leadAccessToken:" + leadId) || ""; } catch { return ""; }
+      }
+      return "";
+    })();
+
     const $ = (id) => document.getElementById(id);
     const val = (name) => document.querySelector(`[name="${name}"]`)?.value?.trim() || "";
     const checkedValues = (group) => Array.from(document.querySelectorAll(`[data-group="${group}"]:checked`)).map(x => x.value);
@@ -879,23 +895,27 @@
 
     async function getSavedWorksheetFromLeadList(){
       try {
-        const res = await fetch("/api/leads");
-        const data = await res.json();
-        const leads = data && Array.isArray(data.leads) ? data.leads : [];
-        const lead = leads.find(function(item){
-          return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+          headers: { "X-Lead-Access-Token": leadAccessToken }
         });
-        const request = lead && (lead.Request || lead.request);
+        const data = await res.json();
+        if (!res.ok || !data.ok) return null;
+        const lead = data.lead || {};
+        const request = lead.Request || lead.request;
         return request && request.clientTaxStrategyWorksheet ? request.clientTaxStrategyWorksheet : null;
       } catch (err) {
-        console.warn("Could not check saved worksheet from /api/leads.", err);
+        console.warn("Could not check saved worksheet from /api/estimate-summary.", err);
         return null;
       }
     }
     async function loadLead(){
-      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId);
+      $("backToReport").href =
+        "/written-review-report/" + encodeURIComponent(leadId) +
+        (leadAccessToken ? "#lat=" + encodeURIComponent(leadAccessToken) : "");
 
-      const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+      const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+        headers: { "X-Lead-Access-Token": leadAccessToken }
+      });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error((data && data.error) || "Could not load client.");
 
@@ -947,7 +967,10 @@
       try {
         const res = await fetch("/api/leads/" + encodeURIComponent(leadId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Lead-Access-Token": leadAccessToken
+          },
           body: JSON.stringify({
             Request: {
               clientTaxStrategyWorksheet: payload,

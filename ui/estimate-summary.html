@@ -1275,6 +1275,44 @@
   <script>
     "use strict";
 
+    // ---------------------------------------------------------------------
+    // Public lead access token (see server.js requireLeadAccessOrOffice).
+    // Captured once from the URL fragment (#lat=...) on a link delivered by
+    // email or from another page, then remembered in sessionStorage keyed
+    // by leadId so it survives a reload without staying in the visible URL.
+    // ---------------------------------------------------------------------
+    function pageLeadId() {
+      return window.location.pathname
+        .split("/")
+        .filter(Boolean)
+        .pop();
+    }
+
+    function captureLeadAccessToken() {
+      const leadId = pageLeadId();
+      const match = /(?:^|[#&])lat=([^&]+)/.exec(window.location.hash);
+      const fromHash = match ? decodeURIComponent(match[1]) : "";
+
+      if (fromHash && leadId) {
+        try {
+          sessionStorage.setItem("leadAccessToken:" + leadId, fromHash);
+        } catch {}
+        return fromHash;
+      }
+
+      if (leadId) {
+        try {
+          return sessionStorage.getItem("leadAccessToken:" + leadId) || "";
+        } catch {
+          return "";
+        }
+      }
+
+      return "";
+    }
+
+    const leadAccessToken = captureLeadAccessToken();
+
     function numberValue(value) {
       const number = Number(value);
       return Number.isFinite(number) ? number : 0;
@@ -1356,37 +1394,22 @@
 
     async function trackSummaryAction(leadId, actionLabel) {
       try {
-        const readRes = await fetch(
-          `/api/estimate-summary/${encodeURIComponent(leadId)}`
-        );
-        const readData = await readRes.json();
-
-        if (!readRes.ok || !readData.ok) return false;
-
-        const notes = readData?.lead?.notes || "";
-        const status = readData?.lead?.status || "New";
-        const stamp = new Date().toLocaleString();
-        const actionNote =
-          `[${stamp}] Client action from detailed estimate summary: ${actionLabel}`;
-
-        const patchRes = await fetch(
-          `/api/leads/${encodeURIComponent(leadId)}`,
+        const noteRes = await fetch(
+          `/api/leads/${encodeURIComponent(leadId)}/client-note`,
           {
-            method: "PATCH",
+            method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "X-Lead-Access-Token": leadAccessToken,
             },
             body: JSON.stringify({
-              status,
-              notes: notes
-                ? `${notes}\n${actionNote}`
-                : actionNote,
+              note: `From detailed estimate summary: ${actionLabel}`,
             }),
           }
         );
 
-        const patchData = await patchRes.json();
-        return Boolean(patchRes.ok && patchData.ok);
+        const noteData = await noteRes.json();
+        return Boolean(noteRes.ok && noteData.ok);
       } catch {
         return false;
       }
@@ -1832,7 +1855,8 @@
 
       try {
         const response = await fetch(
-          `/api/estimate-summary/${encodeURIComponent(leadId)}`
+          `/api/estimate-summary/${encodeURIComponent(leadId)}`,
+          { headers: { "X-Lead-Access-Token": leadAccessToken } }
         );
         const data = await response.json();
 

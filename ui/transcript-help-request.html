@@ -284,6 +284,22 @@
     const $ = (id) => document.getElementById(id);
     const leadId = window.location.pathname.split("/").filter(Boolean).pop();
 
+    // Public lead access token (see server.js requireLeadAccessOrOffice):
+    // captured once from the URL fragment on a link delivered by email or
+    // another page, then remembered in sessionStorage keyed by leadId.
+    const leadAccessToken = (function(){
+      const match = /(?:^|[#&])lat=([^&]+)/.exec(location.hash);
+      const fromHash = match ? decodeURIComponent(match[1]) : "";
+      if (fromHash && leadId) {
+        try { sessionStorage.setItem("leadAccessToken:" + leadId, fromHash); } catch (e) {}
+        return fromHash;
+      }
+      if (leadId) {
+        try { return sessionStorage.getItem("leadAccessToken:" + leadId) || ""; } catch (e) { return ""; }
+      }
+      return "";
+    })();
+
     function setValue(id, value) {
       if ($(id) && value) $(id).value = value;
     }
@@ -297,10 +313,13 @@
     }
 
     async function loadLead() {
-      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId);
+      $("backToReport").href = "/written-review-report/" + encodeURIComponent(leadId) +
+        (leadAccessToken ? "#lat=" + encodeURIComponent(leadAccessToken) : "");
 
       try {
-        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+          headers: { "X-Lead-Access-Token": leadAccessToken }
+        });
         const data = await res.json();
 
         if (!res.ok || !data.ok) return;
@@ -397,7 +416,10 @@
       try {
         const res = await fetch("/api/leads/" + encodeURIComponent(leadId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Lead-Access-Token": leadAccessToken
+          },
           body: JSON.stringify(payload)
         });
 

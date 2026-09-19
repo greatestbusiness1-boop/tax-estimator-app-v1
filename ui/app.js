@@ -8,6 +8,35 @@ let _lastTaxInput = null;
 let _lastEstimate = null;
 let _leadGatewayUnlocked = false;
 let _leadGatewayContact = null;
+
+// =============================================================================
+// PUBLIC LEAD ACCESS TOKEN (see server.js requireLeadAccessOrOffice)
+// The unauthenticated lead-scoped APIs (estimate-summary, the public branch
+// of PATCH /api/leads/:leadId, client-note) now require a signed token bound
+// to the leadId, not just knowledge of the leadId itself. The server issues
+// this token whenever a lead is created/looked up; the browser remembers it
+// per-leadId in sessionStorage (cleared when the tab closes) and sends it
+// back via the X-Lead-Access-Token header.
+// =============================================================================
+
+function rememberLeadAccessToken(leadId, token) {
+  if (!leadId || !token) return;
+  try {
+    sessionStorage.setItem("leadAccessToken:" + leadId, token);
+  } catch {
+    // sessionStorage unavailable (private mode, etc.) -- token simply
+    // won't survive a reload; the page still works for the current load.
+  }
+}
+
+function getLeadAccessToken(leadId) {
+  if (!leadId) return "";
+  try {
+    return sessionStorage.getItem("leadAccessToken:" + leadId) || "";
+  } catch {
+    return "";
+  }
+}
 let _freeEstimateEditContext = null;
 let _workingChildCounter = 0;
 let _taxWatchUpdateContext = null;
@@ -560,7 +589,8 @@ async function requestTranscriptHelp() {
     const response = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Lead-Access-Token": getLeadAccessToken(leadId)
       },
       body: JSON.stringify({
         status: "Transcript Help - Payment Pending",
@@ -8297,8 +8327,14 @@ function renderFreeEstimateLimitReached(
   const email = String(
     context.email || ""
   ).trim();
+  if (latestLeadId && usage.latestSavedLeadAccessToken) {
+    rememberLeadAccessToken(latestLeadId, usage.latestSavedLeadAccessToken);
+  }
   const latestLink = latestLeadId
-    ? `/estimate/${encodeURIComponent(latestLeadId)}`
+    ? `/estimate/${encodeURIComponent(latestLeadId)}` +
+      (usage.latestSavedLeadAccessToken
+        ? `#lat=${encodeURIComponent(usage.latestSavedLeadAccessToken)}`
+        : "")
     : "";
   const claimUrl = buildClaimSavedEstimateUrl(
     latestLeadId,
@@ -8542,6 +8578,7 @@ async function submitLeadGateway(input, result, existingIdentity = null) {
     _lastTaxInput = input;
     _lastEstimate = result;
     _leadGatewayUnlocked = true;
+    rememberLeadAccessToken(data.leadId, data.accessToken);
     _leadGatewayContact = {
       fullName,
       email,
@@ -9376,8 +9413,10 @@ function renderClientEstimateSummaryLink() {
     leadId
   ).trim();
 
+  const leadAccessToken = getLeadAccessToken(leadId);
   const summaryUrl =
-    `${window.location.origin}/estimate/${encodeURIComponent(leadId)}`;
+    `${window.location.origin}/estimate/${encodeURIComponent(leadId)}` +
+    (leadAccessToken ? `#lat=${encodeURIComponent(leadAccessToken)}` : "");
 
   const activationUrl =
     buildClaimSavedEstimateUrl(

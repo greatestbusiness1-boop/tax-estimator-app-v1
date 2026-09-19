@@ -879,6 +879,35 @@
   </main>
 
   <script>
+    // Public lead access token (see server.js requireLeadAccessOrOffice),
+    // shared globally so every independent script block on this page (each
+    // does its own leadId extraction / API calls) can reuse it without
+    // re-deriving it. Captured once from the URL fragment on a link
+    // delivered by email or another page, remembered in sessionStorage
+    // keyed by leadId so it survives a reload without staying in the
+    // visible URL.
+    function getPageLeadId(){
+      return decodeURIComponent(
+        window.location.pathname.split("/").filter(Boolean).pop() || ""
+      );
+    }
+
+    function getLeadAccessToken(){
+      const leadId = getPageLeadId();
+      const match = /(?:^|[#&])lat=([^&]+)/.exec(window.location.hash);
+      const fromHash = match ? decodeURIComponent(match[1]) : "";
+      if (fromHash && leadId) {
+        try { sessionStorage.setItem("leadAccessToken:" + leadId, fromHash); } catch (e) {}
+        return fromHash;
+      }
+      if (leadId) {
+        try { return sessionStorage.getItem("leadAccessToken:" + leadId) || ""; } catch (e) { return ""; }
+      }
+      return "";
+    }
+
+    window.__leadAccessToken = getLeadAccessToken();
+
     const STANDARD_DEDUCTION = {
       "2025": { single:15750, mfs:15750, mfj:31500, qss:31500, hoh:23625 },
       "2026": { single:16100, mfs:16100, mfj:32200, qss:32200, hoh:24150 }
@@ -1359,21 +1388,23 @@
       const link = $("completeStrategyWorksheetLink");
       if (!link) return;
       const leadId = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
-      link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(leadId);
+      const tokenSuffix = window.__leadAccessToken ? "#lat=" + encodeURIComponent(window.__leadAccessToken) : "";
+      link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(leadId) + tokenSuffix;
     }
     async function loadReport(){
       const leadId = window.location.pathname.split("/").filter(Boolean).pop();
+      const tokenSuffix = window.__leadAccessToken ? "#lat=" + encodeURIComponent(window.__leadAccessToken) : "";
 
       const taxPrepLink = document.getElementById("taxPrepLink");
       if (taxPrepLink) {
-        taxPrepLink.href = "/tax-prep-request/" + encodeURIComponent(leadId);
+        taxPrepLink.href = "/tax-prep-request/" + encodeURIComponent(leadId) + tokenSuffix;
         taxPrepLink.removeAttribute("target");
         taxPrepLink.removeAttribute("rel");
       }
 
       const transcriptHelpLink = document.getElementById("transcriptHelpLink");
       if (transcriptHelpLink) {
-        transcriptHelpLink.href = "/transcript-help-request/" + encodeURIComponent(leadId);
+        transcriptHelpLink.href = "/transcript-help-request/" + encodeURIComponent(leadId) + tokenSuffix;
         transcriptHelpLink.removeAttribute("target");
         transcriptHelpLink.removeAttribute("rel");
       }
@@ -1384,7 +1415,9 @@
           "/tax-savings-planner.html?leadId=" + encodeURIComponent(leadId);
       }
       try {
-        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId));
+        const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+          headers: { "X-Lead-Access-Token": window.__leadAccessToken }
+        });
         const data = await res.json();
         if(!res.ok || !data.ok) throw new Error((data && data.error) || "Estimate not found.");
 
@@ -1513,11 +1546,12 @@
 
     if (!leadId) return;
 
-    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+    var tokenSuffix = window.__leadAccessToken ? "#lat=" + encodeURIComponent(window.__leadAccessToken) : "";
+    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId)) + tokenSuffix;
     link.addEventListener("click", function(e){
       if (!link.href || link.getAttribute("href") === "#") {
         e.preventDefault();
-        window.location.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+        window.location.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId)) + tokenSuffix;
       }
     });
   }
@@ -1537,16 +1571,17 @@
     var leadId = parts[parts.length - 1] || "";
     if (!leadId) return;
 
-    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId));
+    link.href = "/client-tax-strategy-worksheet/" + encodeURIComponent(decodeURIComponent(leadId)) +
+      (window.__leadAccessToken ? "#lat=" + encodeURIComponent(window.__leadAccessToken) : "");
 
     try {
-      var res = await fetch("/api/leads");
-      var data = await res.json();
-      var leads = data && Array.isArray(data.leads) ? data.leads : [];
-      var lead = leads.find(function(item){
-        return String(item.leadId || item.id || item.estimateId || "").trim() === String(decodeURIComponent(leadId)).trim();
+      var res = await fetch("/api/estimate-summary/" + encodeURIComponent(decodeURIComponent(leadId)), {
+        headers: { "X-Lead-Access-Token": window.__leadAccessToken }
       });
-      var request = lead && (lead.Request || lead.request);
+      var data = await res.json();
+      if (!res.ok || !data.ok) return;
+      var lead = data.lead || {};
+      var request = lead.Request || lead.request;
 
       if (request && request.clientTaxStrategyWorksheetCompletedAt) {
         link.textContent = "Worksheet Completed — View Locked Worksheet";
@@ -1770,12 +1805,11 @@
     if (existing) existing.remove();
 
     try {
-      const res = await fetch("/api/leads");
-      const data = await res.json();
-      const leads = data && Array.isArray(data.leads) ? data.leads : [];
-      const lead = leads.find(function(item){
-        return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+      const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+        headers: { "X-Lead-Access-Token": window.__leadAccessToken }
       });
+      const data = await res.json();
+      const lead = res.ok && data.ok ? (data.lead || {}) : {};
 
       const request = getRequest(lead);
       const worksheet = request.clientTaxStrategyWorksheet;
@@ -1814,14 +1848,13 @@
     if (!leadId) return;
 
     try {
-      const res = await fetch("/api/leads");
-      const data = await res.json();
-      const leads = data && Array.isArray(data.leads) ? data.leads : [];
-      const lead = leads.find(function(item){
-        return String(item.leadId || item.id || item.estimateId || "").trim() === String(leadId).trim();
+      const res = await fetch("/api/estimate-summary/" + encodeURIComponent(leadId), {
+        headers: { "X-Lead-Access-Token": window.__leadAccessToken }
       });
+      const data = await res.json();
+      const lead = res.ok && data.ok ? (data.lead || {}) : {};
 
-      const request = lead && (lead.Request || lead.request) || {};
+      const request = (lead.Request || lead.request) || {};
 
       if (request.writtenReviewPreparedAt || request.writtenReviewReportOpenedAt) {
         return;
@@ -1832,7 +1865,8 @@
       await fetch("/api/leads/" + encodeURIComponent(leadId), {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Lead-Access-Token": window.__leadAccessToken
         },
         body: JSON.stringify({
           Request: {
