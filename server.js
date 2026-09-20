@@ -3723,10 +3723,26 @@ async function computeAdminRevenueSummary() {
   function addFlatService(categoryKey, sub, amountField) {
     if (!sub || typeof sub !== "object") return;
     const paymentStatus = String(sub.paymentStatus || "").toLowerCase();
+    const refundStatus = String(sub.refundStatus || "").toLowerCase();
     const grossCents = Math.max(0, Number(sub[amountField] || 0));
     const refundedCents = Math.max(0, Number(sub.refundedAmountCents || 0));
 
-    if (!grossCents || !paymentStatus.includes("paid")) {
+    // A record counts as a real, previously-paid transaction either because
+    // its payment status still says "paid" (the normal case) or because it
+    // has since been refunded -- refundStatus is only ever set by
+    // applyRefundToLead() after matching a genuine prior Stripe payment by
+    // its paymentIntentId, so its presence alone is authoritative proof the
+    // underlying transaction was actually paid, even though a refund has
+    // since replaced paymentStatus with "Refunded"/"Partially Refunded"
+    // (which no longer contains "paid"). Without this, a refunded
+    // transaction disappeared from Revenue Summary entirely instead of
+    // showing gross/refunded/net.
+    const wasEverPaid =
+      paymentStatus.includes("paid") ||
+      refundStatus === "refunded" ||
+      refundStatus === "partial";
+
+    if (!grossCents || !wasEverPaid) {
       return;
     }
 
@@ -3751,6 +3767,24 @@ async function computeAdminRevenueSummary() {
         if (String(entry?.status || "") !== "Paid") return;
         const amountCents = Math.max(0, Number(entry.amountPaidCents || 0));
         if (!amountCents) return;
+
+        // In production, exclude Stripe TEST-mode subscription payments
+        // from real revenue. Prefer the entry's own environment (set from
+        // Stripe's own invoice.livemode flag at webhook time -- the most
+        // authoritative signal available) and fall back to the
+        // enrollment-level checkoutEnvironment for older entries that
+        // predate the per-entry field. An entry with no environment
+        // recorded at all (older legitimate records) is treated as
+        // legitimate rather than guessed-and-excluded. Dev/test Revenue
+        // Summary (CLIENT_PORTAL_PRODUCTION_HOST false) is never filtered.
+        const entryEnvironment = String(
+          entry.environment || enrollment.checkoutEnvironment || ""
+        ).toLowerCase();
+
+        if (CLIENT_PORTAL_PRODUCTION_HOST && entryEnvironment === "test") {
+          return;
+        }
+
         categories[categoryKey].collectedCents += amountCents;
         categories[categoryKey].transactionCount += 1;
       });
