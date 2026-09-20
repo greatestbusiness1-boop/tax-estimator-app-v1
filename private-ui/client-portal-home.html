@@ -1066,6 +1066,33 @@
       padding:13px 14px;
       font-size:16px
     }
+    .password-field{
+      position:relative
+    }
+    .password-field input{
+      padding-right:70px
+    }
+    .password-toggle{
+      position:absolute;
+      top:50%;
+      right:8px;
+      transform:translateY(-50%);
+      border:0;
+      background:transparent;
+      color:var(--navy);
+      padding:6px 8px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer
+    }
+    .password-toggle:hover{
+      text-decoration:underline
+    }
+    .password-toggle:focus-visible{
+      outline:2px solid var(--navy);
+      outline-offset:2px;
+      border-radius:3px
+    }
     .button{
       border:0;
       background:var(--navy);
@@ -6738,17 +6765,26 @@
 
           <div class="field">
             <label for="currentPassword">Current password</label>
-            <input id="currentPassword" type="password" autocomplete="current-password" required>
+            <div class="password-field">
+              <input id="currentPassword" type="password" autocomplete="current-password" required>
+              <button type="button" class="password-toggle" data-password-toggle="currentPassword" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
           </div>
 
           <div class="field">
             <label for="newPassword">New password</label>
-            <input id="newPassword" type="password" autocomplete="new-password" required>
+            <div class="password-field">
+              <input id="newPassword" type="password" autocomplete="new-password" required>
+              <button type="button" class="password-toggle" data-password-toggle="newPassword" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
           </div>
 
           <div class="field">
             <label for="confirmPassword">Confirm new password</label>
-            <input id="confirmPassword" type="password" autocomplete="new-password" required>
+            <div class="password-field">
+              <input id="confirmPassword" type="password" autocomplete="new-password" required>
+              <button type="button" class="password-toggle" data-password-toggle="confirmPassword" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -14494,6 +14530,22 @@
         }
       }
     );
+
+    // Show/Hide toggle for password fields -- only flips the input's type
+    // attribute between "password"/"text" so the browser reveals what was
+    // already typed; never reads, copies, or logs the value anywhere.
+    document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+      const input = document.getElementById(button.dataset.passwordToggle);
+      if (!input) return;
+
+      button.addEventListener("click", () => {
+        const showing = input.type === "text";
+        input.type = showing ? "password" : "text";
+        button.textContent = showing ? "Show" : "Hide";
+        button.setAttribute("aria-pressed", String(!showing));
+        button.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+      });
+    });
 
     document.getElementById(
       "changePasswordForm"

@@ -14,6 +14,11 @@
     label{display:block;font-weight:900;margin:18px 0 6px}
     input{width:100%;padding:12px;border:1px solid #aeb9c4;font:inherit}
     button{width:100%;margin-top:16px;border:0;background:#0f2d4a;color:white;padding:13px;font-weight:900;cursor:pointer}
+    .password-field{position:relative}
+    .password-field input{padding-right:70px}
+    .password-toggle{width:auto;margin-top:0;position:absolute;top:50%;right:8px;transform:translateY(-50%);border:0;background:transparent;color:#0f2d4a;padding:6px 8px;font-size:12px;font-weight:900;cursor:pointer}
+    .password-toggle:hover{text-decoration:underline}
+    .password-toggle:focus-visible{outline:2px solid #0f2d4a;outline-offset:2px;border-radius:3px}
     .message{display:none;margin-top:14px;padding:12px;background:#fff0ef;border-left:5px solid #b42318;color:#8c1d18;font-weight:800}
     .message.show{display:block}
     .note{margin-top:18px;padding:12px;background:#fff7e6;border-left:5px solid #a15c00;font-size:14px}
@@ -25,7 +30,10 @@
     <p>Enter the private office review key configured on the production server.</p>
     <form id="form">
       <label for="accessKey">Office review access key</label>
-      <input id="accessKey" type="password" autocomplete="current-password" required>
+      <div class="password-field">
+        <input id="accessKey" type="password" autocomplete="current-password" required>
+        <button type="button" class="password-toggle" data-password-toggle="accessKey" aria-label="Show access key" aria-pressed="false">Show</button>
+      </div>
       <button type="submit">Open Secure Office Review</button>
     </form>
     <div class="message" id="message" role="alert"></div>
@@ -34,6 +42,22 @@
     </div>
   </main>
   <script>
+    // Show/Hide toggle -- only flips the input's type attribute so the
+    // browser reveals what was already typed; never reads, copies, or logs
+    // the value anywhere.
+    document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+      const input = document.getElementById(button.dataset.passwordToggle);
+      if (!input) return;
+
+      button.addEventListener("click", () => {
+        const showing = input.type === "text";
+        input.type = showing ? "password" : "text";
+        button.textContent = showing ? "Show" : "Hide";
+        button.setAttribute("aria-pressed", String(!showing));
+        button.setAttribute("aria-label", showing ? "Show access key" : "Hide access key");
+      });
+    });
+
     const officeReviewReturnTo =
       new URLSearchParams(
         window.location.search

@@ -19285,6 +19285,374 @@ app.post(
   }
 );
 
+// =============================================================================
+// RESET ACCESS (forgot password for an already-activated account)
+// Deliberately separate from request-activation/activate above: those two
+// routes exist to bind a brand-new portal account to a specific lead by
+// requiring the client reference number. An account that is already
+// status:"active" is already bound -- proving control of its registered
+// email address is sufficient on its own, so these two routes never accept
+// or require a leadId from the caller. They reuse the exact same hashed,
+// salted, time-limited, single-use, rate-limited code mechanism as
+// activation (clientPortalSecurity.generateActivationCode/
+// hashActivationCode/verifyActivationCode, clientPortalStore's "activation"
+// column) purely by looking the account up by email first
+// (clientPortalStore.getActiveByEmail via findActiveClientPortalAccountByEmail).
+// Both routes return an identical, neutral response regardless of whether
+// the email is registered, matching the pattern already used by
+// request-activation above, so neither route can be used to enumerate
+// which email addresses have a portal account.
+// =============================================================================
+
+app.post(
+  "/api/client-portal/request-reset",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "reset-request",
+      email
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 5,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many reset requests. Please wait 15 minutes and try again."
+      });
+    }
+
+    // Identical wording/shape whether or not the account exists -- never
+    // change status code, message, or timing-observable behavior based on
+    // whether this email is registered.
+    const neutralResponse = {
+      ok: true,
+      message:
+        "If an account exists for that email, reset instructions have been sent."
+    };
+
+    if (
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email)
+    ) {
+      return res.status(200).json(neutralResponse);
+    }
+
+    if (!clientPortalStore.isAvailable()) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure portal credential storage is not configured yet. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const account =
+      await findActiveClientPortalAccountByEmail(
+        email
+      );
+
+    if (!account) {
+      return res.status(200).json(neutralResponse);
+    }
+
+    const code =
+      clientPortalSecurity.generateActivationCode();
+
+    const codeRecord =
+      clientPortalSecurity.hashActivationCode(code);
+
+    const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() +
+      (CLIENT_PORTAL_ACTIVATION_MINUTES * 60 * 1000)
+    ).toISOString();
+
+    // Overwrites any prior activation/reset code on this account outright
+    // -- a new reset request always invalidates whatever code came before.
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...account,
+        activation: {
+          hash: codeRecord.hash,
+          salt: codeRecord.salt,
+          expiresAt,
+          attempts: 0,
+          requestedAt: now.toISOString()
+        }
+      });
+
+    if (!accountUpdate.ok) {
+      console.error(
+        "[client portal] Reset code storage failed:",
+        accountUpdate.error
+      );
+
+      // Still neutral -- a storage failure must not distinguish itself from
+      // "no account found" in the response shape.
+      return res.status(200).json(neutralResponse);
+    }
+
+    const candidate =
+      await findClientPortalLeadById(
+        account.leadId
+      );
+
+    const clientName = getLeadNameValue(
+      candidate?.lead ||
+      candidate?.raw ||
+      {}
+    );
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_USER,
+        to: account.email,
+        subject:
+          "Your Secure Client Portal Password Reset Code",
+        text:
+`Hello ${clientName || "Client"},
+
+Your six-digit password reset code is:
+
+${code}
+
+This code expires in ${CLIENT_PORTAL_ACTIVATION_MINUTES} minutes.
+
+Your portal username is:
+${account.email}
+
+Open your secure portal:
+${String(APP_BASE_URL || "").replace(/\/+$/, "")}/client-portal?reset=1
+
+For your protection, your password is never included in email. If you did not request this reset, you can safely ignore this email -- your password will not change unless this code is used.
+
+Thank you,
+Greatest Business Solution LLC`
+      });
+    } catch (error) {
+      console.error(
+        "[client portal] Reset code email failed:",
+        error.message || error
+      );
+
+      return res.status(200).json(neutralResponse);
+    }
+
+    clearClientPortalAttempts(rateKey);
+
+    return res.status(200).json(neutralResponse);
+  }
+);
+
+app.post(
+  "/api/client-portal/reset",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+
+    const code = String(
+      req.body?.code || ""
+    ).replace(/\D/g, "").slice(0, 6);
+
+    const password = String(
+      req.body?.password || ""
+    );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "reset-verify",
+      email
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 7,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many code attempts. Request a new reset code after 15 minutes."
+      });
+    }
+
+    const policy =
+      clientPortalSecurity.passwordPolicy(password);
+
+    if (
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email) ||
+      code.length !== 6 ||
+      !policy.ok
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          policy.ok
+            ? "Enter the complete six-digit reset code."
+            : policy.errors.join(" ")
+      });
+    }
+
+    const account =
+      await findActiveClientPortalAccountByEmail(
+        email
+      );
+
+    // No leadId is ever accepted from the caller here -- the account (and
+    // therefore its leadId) is resolved entirely from the email + code.
+    // An unknown email and a real email with a wrong/expired code return
+    // the exact same error, so this step never reveals which is true.
+    if (!account) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The reset code is invalid or expired. Request a new code and try again."
+      });
+    }
+
+    const activation = account.activation || {};
+
+    const matches = Boolean(
+      activation.hash &&
+      activation.salt &&
+      Date.parse(activation.expiresAt || "") > Date.now() &&
+      Number(activation.attempts || 0) < 7 &&
+      clientPortalSecurity.verifyActivationCode(
+        code,
+        activation
+      )
+    );
+
+    if (!matches) {
+      await clientPortalStore.upsert({
+        ...account,
+        activation: {
+          ...(account.activation || {}),
+          attempts:
+            Number(
+              account.activation?.attempts || 0
+            ) + 1
+        }
+      });
+
+      return res.status(400).json({
+        ok: false,
+        error:
+          "The reset code is invalid or expired. Request a new code and try again."
+      });
+    }
+
+    const passwordRecord =
+      clientPortalSecurity.hashPassword(password);
+
+    const now = new Date().toISOString();
+
+    // Single-use: activation is cleared on success exactly like activate()
+    // above, so this same code can never be replayed.
+    const accountUpdate =
+      await clientPortalStore.upsert({
+        ...account,
+        passwordAlgorithm:
+          passwordRecord.algorithm,
+        passwordIterations:
+          passwordRecord.iterations,
+        passwordSalt:
+          passwordRecord.salt,
+        passwordHash:
+          passwordRecord.hash,
+        sessionVersion:
+          Number(account.sessionVersion || 0) + 1,
+        passwordUpdatedAt: now,
+        lastLoginAt: now,
+        lastActivityAt: now,
+        activation: null
+      });
+
+    if (!accountUpdate.ok) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Your password could not be reset."
+      });
+    }
+
+    const updatedPortal = accountUpdate.record;
+
+    await updateClientPortalLeadStatus(
+      updatedPortal.leadId,
+      (current = {}) => ({
+        ...current,
+        status: "active",
+        email: updatedPortal.email,
+        sourceLeadId: updatedPortal.leadId,
+        passwordUpdatedAt: now,
+        lastLoginAt: now,
+        lastActivityAt: now
+      }),
+      { awaitPrimary: true }
+    );
+
+    setClientPortalSessionCookie(
+      req,
+      res,
+      {
+        accountLeadId: updatedPortal.leadId,
+        portalId: updatedPortal.portalId,
+        email: updatedPortal.email,
+        sessionVersion:
+          Number(updatedPortal.sessionVersion || 1)
+      }
+    );
+
+    clearClientPortalAttempts(rateKey);
+
+    void sendClientPortalAccountEmail({
+      to: updatedPortal.email,
+      clientName: "Client",
+      leadId: updatedPortal.leadId,
+      subject:
+        "Your Secure Tax Portal Password Was Changed",
+      headline:
+        "Your secure portal password was reset successfully.",
+      message:
+        "Your username and all saved Planner data, reports, tax-year records, and future document history remain connected to the same client profile."
+    });
+
+    console.log(
+      "[client portal] Password reset completed and secure session issued:",
+      updatedPortal.leadId
+    );
+
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Your password has been reset. You are now signed in.",
+      redirect: "/client-portal/home"
+    });
+  }
+);
+
 app.post(
   "/api/client-portal/login",
   async (req, res) => {
