@@ -10111,6 +10111,18 @@ function buildClientPortalTaxWatchSummary(
   const currentTaxData = currentEntry?.lead?.taxData || null;
   const isActive = Boolean(profileEntry);
   const previewWindow = getTaxWatchPreviewWindow(profile);
+  // isActive alone only means a taxWatchProfile record exists with a
+  // preview/active-looking status string -- it says nothing about whether
+  // the preview's own end date has already passed (that stored status
+  // string is never rewritten when the window expires; expiry is only ever
+  // computed dynamically via previewWindow.expired). The top-level
+  // active/status fields below must never report current access for a
+  // preview whose window has expired -- only previewCurrentlyActive (not
+  // bare isActive) may be used for those two fields. taxWatch.preview
+  // intentionally keeps using bare isActive elsewhere in this function so
+  // the expired-preview UI (dates, countdown, "Preview ended" messaging)
+  // still receives real data.
+  const previewCurrentlyActive = isActive && !previewWindow.expired;
   const membership = getClientPortalMembershipSummary(
     accessible
   );
@@ -10333,7 +10345,7 @@ function buildClientPortalTaxWatchSummary(
 
   return {
     available: Boolean(current),
-    active: isActive || membershipIsActive,
+    active: previewCurrentlyActive || membershipIsActive,
     canEdit: membershipIsActive
       ? true
       : isActive
@@ -10347,9 +10359,11 @@ function buildClientPortalTaxWatchSummary(
           ? "cancelled"
           : membership.enrollmentStatus === "Expired"
             ? "expired"
-            : isActive
+            : previewCurrentlyActive
               ? String(profile.status || "preview")
-              : "not-started",
+              : isActive
+                ? "preview-expired"
+                : "not-started",
     planName:
       membership.planName || "Tax Watch Pro",
     serviceName: "Tax Money Tracker",
