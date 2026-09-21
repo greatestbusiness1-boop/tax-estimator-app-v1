@@ -790,8 +790,12 @@ test("M. renderPortalPlanNavigation uses only the server-authoritative programAc
 // =============================================================================
 
 function extractFunctionSource(source, functionName) {
+  // (?:async\s+)? -- an async function's "async" keyword must be captured
+  // as part of the extracted source (via match.index pointing at its
+  // start), or the extracted text becomes a plain function containing a
+  // now-illegal top-level `await`.
   const declPattern = new RegExp(
-    `function\\s+${functionName}\\s*\\(`
+    `(?:async\\s+)?function\\s+${functionName}\\s*\\(`
   );
   const match = declPattern.exec(source);
   assert.ok(match, `function ${functionName} must exist in client-portal-home.html`);
@@ -969,4 +973,136 @@ test("R. applyPortalBillingMode(): Monthly/Annual checkout button text still upd
   sandbox.applyPortalBillingMode("annual");
   assert.equal(checkoutEl.textContent, "Open Annual Checkout — $119");
   assert.equal(checkoutEl.dataset.membershipCheckoutBilling, "annual");
+});
+
+// =============================================================================
+// S-W. Cancelled Tax Watch checkout return experience.
+//
+// Root cause: the Stripe cancel_url landed on the access-gated #tax-watch
+// view, which -- for an account with no current Tax Watch access -- tripped
+// openPortalView()'s restricted-view redirect and showed "That page is not
+// included in your current plan." #plans-pricing (view "plans") is never
+// listed in portalRestrictedViews, so returning there instead never trips
+// that branch at all.
+// =============================================================================
+
+test("S. Server: a cancelled Tax Watch Pro checkout redirects to #plans-pricing, not #tax-watch", () => {
+  const serverSource = fs.readFileSync(path.join(REPO_ROOT, "server.js"), "utf8");
+
+  assert.match(
+    serverSource,
+    /config\.planKey === "tax-watch-pro"\s*\n\s*\?\s*`\$\{baseUrl\}\/client-portal\/home` \+\s*\n\s*"\?membershipCheckout=cancelled" \+\s*\n\s*`&billing=\$\{config\.billingFrequency\}` \+\s*\n\s*"#plans-pricing"/,
+    "the tax-watch-pro cancel_url branch must use #plans-pricing (with the billing frequency carried through), not #tax-watch"
+  );
+});
+
+test("T. Server: a cancelled Pinnacle checkout is left unchanged (#tax-watch, no billing param)", () => {
+  const serverSource = fs.readFileSync(path.join(REPO_ROOT, "server.js"), "utf8");
+
+  assert.match(
+    serverSource,
+    /:\s*`\$\{baseUrl\}\/client-portal\/home` \+\s*\n\s*"\?membershipCheckout=cancelled" \+\s*\n\s*"#tax-watch"/,
+    "the non-tax-watch-pro (Pinnacle) cancel_url branch must remain exactly #tax-watch, unmodified"
+  );
+});
+
+test("U. Server: the successful-checkout return path (success_url) is byte-for-byte unchanged", () => {
+  const serverSource = fs.readFileSync(path.join(REPO_ROOT, "server.js"), "utf8");
+
+  assert.match(
+    serverSource,
+    /success_url:\s*\n\s*`\$\{baseUrl\}\/client-portal\/home` \+\s*\n\s*"\?membershipCheckout=success" \+\s*\n\s*"&session_id=\{CHECKOUT_SESSION_ID\}" \+\s*\n\s*"#tax-watch",/,
+    "success_url must remain exactly as it was before this fix"
+  );
+});
+
+test("V. Frontend: #plans-pricing (view \"plans\") is never a restricted/access-gated view", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+
+  const restrictedMatch = /const portalRestrictedViews = \{[\s\S]*?\n\s*\};/.exec(frontendSource);
+  assert.ok(restrictedMatch, "portalRestrictedViews must exist");
+  assert.doesNotMatch(
+    restrictedMatch[0],
+    /["']?plans["']?\s*:/,
+    "\"plans\" must not appear as a key in portalRestrictedViews -- otherwise " +
+      "landing there after a cancelled checkout would itself trip the " +
+      "access-denied warning"
+  );
+
+  const hashMatch = /plans:\s*"plans-pricing"/.exec(frontendSource);
+  assert.ok(
+    hashMatch,
+    "the \"plans\" view must map to the #plans-pricing hash so the cancel_url's " +
+      "hash resolves to the unrestricted plans view"
+  );
+});
+
+test("W. Frontend: cancelled-checkout handling shows the correct message and preserves the Monthly/Annual selection, using the real extracted source", async () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+
+  const confirmSource = extractFunctionSource(
+    frontendSource,
+    "confirmMembershipCheckoutFromUrl"
+  );
+  const messageSource = extractFunctionSource(
+    frontendSource,
+    "showMembershipCheckoutMessage"
+  );
+  const billingSource = extractFunctionSource(
+    frontendSource,
+    "applyPortalBillingMode"
+  );
+
+  const messageEl = createFakeCheckoutButton();
+  const checkoutEl = createFakeCheckoutButton();
+  const idElements = {
+    membershipCheckoutMessage: messageEl,
+    taxWatchPricingCheckoutButton: checkoutEl
+  };
+  const replaceStateCalls = [];
+
+  const sandbox = {
+    document: {
+      getElementById(id) {
+        return idElements[id] || null;
+      },
+      querySelectorAll() {
+        return [];
+      }
+    },
+    window: {
+      location: {
+        href: "https://portal.example.test/client-portal/home?membershipCheckout=cancelled&billing=monthly#plans-pricing"
+      },
+      history: {
+        replaceState(...args) {
+          replaceStateCalls.push(args);
+        }
+      }
+    },
+    URL,
+    membershipCheckoutConfirming: false,
+    portalBillingMode: "annual",
+    console
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(
+    `${messageSource}\n${billingSource}\n${confirmSource}`,
+    sandbox
+  );
+
+  const confirmed = await sandbox.confirmMembershipCheckoutFromUrl();
+
+  assert.equal(confirmed, false);
+  assert.match(messageEl.textContent, /Checkout cancelled\. No payment was made\./);
+  // Monthly was carried through the return URL's billing param and must be
+  // reflected in the actual pricing button text (proves the real
+  // applyPortalBillingMode() ran, not just that the message changed).
+  assert.equal(checkoutEl.textContent, "Open Monthly Checkout — $11.99");
+  assert.equal(sandbox.portalBillingMode, "monthly");
+  // membershipCheckout/session_id/billing must be scrubbed from the URL
+  // after handling, same as the pre-existing cleanup behavior.
+  assert.equal(replaceStateCalls.length, 1);
+  const [, , newUrl] = replaceStateCalls[0];
+  assert.doesNotMatch(newUrl, /membershipCheckout|session_id|billing=/);
 });

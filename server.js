@@ -28441,10 +28441,23 @@ app.post(
             "?membershipCheckout=success" +
             "&session_id={CHECKOUT_SESSION_ID}" +
             "#tax-watch",
+          // A cancelled Tax Watch Pro checkout must never land on the
+          // access-gated #tax-watch view (the account has no Tax Watch
+          // access yet, which triggers the "not included in your current
+          // plan" warning and an unwanted redirect). #plans-pricing is
+          // never access-gated. billing is carried through only so the
+          // return page can restore the Monthly/Annual selection the user
+          // started checkout with. Scoped to tax-watch-pro only -- Pinnacle
+          // checkout cancellation is left unchanged.
           cancel_url:
-            `${baseUrl}/client-portal/home` +
-            "?membershipCheckout=cancelled" +
-            "#tax-watch"
+            config.planKey === "tax-watch-pro"
+              ? `${baseUrl}/client-portal/home` +
+                "?membershipCheckout=cancelled" +
+                `&billing=${config.billingFrequency}` +
+                "#plans-pricing"
+              : `${baseUrl}/client-portal/home` +
+                "?membershipCheckout=cancelled" +
+                "#tax-watch"
         });
       const now = new Date().toISOString();
       const saveResult =

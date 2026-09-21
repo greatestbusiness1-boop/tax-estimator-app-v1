@@ -9694,9 +9694,19 @@
       const sessionId = url.searchParams.get("session_id") || "";
 
       if (result === "cancelled") {
-        showMembershipCheckoutMessage("Stripe Checkout was cancelled. No charge was made. Your saved records remain connected.");
+        // Preserve the Monthly/Annual selection the user started checkout
+        // with, if the return URL carried it. Not critical -- if this is
+        // ever missing/invalid, the pricing page simply keeps its current
+        // default selection, which is still a correct, working state.
+        const billing = url.searchParams.get("billing");
+        if (billing === "monthly" || billing === "annual") {
+          applyPortalBillingMode(billing);
+        }
+
+        showMembershipCheckoutMessage("Checkout cancelled. No payment was made. Your saved records remain connected.");
         url.searchParams.delete("membershipCheckout");
         url.searchParams.delete("session_id");
+        url.searchParams.delete("billing");
         window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
         return false;
       }
