@@ -1106,3 +1106,90 @@ test("W. Frontend: cancelled-checkout handling shows the correct message and pre
   const [, , newUrl] = replaceStateCalls[0];
   assert.doesNotMatch(newUrl, /membershipCheckout|session_id|billing=/);
 });
+
+// =============================================================================
+// X-Y. Missing #membershipCheckoutMessage element fix.
+//
+// Root cause: showMembershipCheckoutMessage() correctly targeted
+// document.getElementById("membershipCheckoutMessage"), but no element with
+// that id existed anywhere in the page, so every Tax Watch checkout status
+// message (checkout-creation, cancellation, success, and every error) was
+// silently discarded. Test W above only proved the *function* behaves
+// correctly against a fake element keyed by that id -- it could not catch a
+// missing real element, since it never reads the real template. Test X
+// closes that gap by checking the real template string directly.
+// =============================================================================
+
+test("X. membershipCheckoutMessage exists on the Tax Watch Pro pricing card, inside the same container as the checkout button", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+
+  const cardMatch = /const taxWatchCheckoutAction = activeMembership[\s\S]*?: `<div class="tax-watch-preview-actions">[\s\S]*?<\/div>`;/.exec(
+    frontendSource
+  );
+  assert.ok(
+    cardMatch,
+    "the Tax Watch Pro pricing card's non-active-membership checkout template must exist"
+  );
+
+  const template = cardMatch[0];
+  assert.match(template, /id="taxWatchPricingCheckoutButton"/);
+  assert.match(
+    template,
+    /id="membershipCheckoutMessage"/,
+    "membershipCheckoutMessage must exist inside the same tax-watch-preview-actions " +
+      "container as the checkout button -- otherwise showMembershipCheckoutMessage() " +
+      "silently discards every Tax Watch checkout status message"
+  );
+  assert.match(
+    template,
+    /class="tax-watch-message" id="membershipCheckoutMessage" role="status" aria-live="polite"/,
+    "must mirror the existing pinnacleCheckoutMessage element pattern exactly"
+  );
+});
+
+test("Y. showMembershipCheckoutMessage(): real function writes visible text/class for cancellation, checkout-creation, and error messages", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+  const messageSource = extractFunctionSource(
+    frontendSource,
+    "showMembershipCheckoutMessage"
+  );
+
+  const messageEl = createFakeCheckoutButton();
+  const sandbox = {
+    document: {
+      getElementById(id) {
+        return id === "membershipCheckoutMessage" ? messageEl : null;
+      }
+    },
+    console
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(messageSource, sandbox);
+
+  // B: the exact cancellation text confirmMembershipCheckoutFromUrl() sends.
+  sandbox.showMembershipCheckoutMessage(
+    "Checkout cancelled. No payment was made. Your saved records remain connected."
+  );
+  assert.equal(
+    messageEl.textContent,
+    "Checkout cancelled. No payment was made. Your saved records remain connected."
+  );
+  assert.match(messageEl.className, /\bshow\b/);
+
+  // C: the exact checkout-creation text startMembershipCheckout() sends.
+  sandbox.showMembershipCheckoutMessage(
+    "Creating your secure Stripe subscription checkout. No charge occurs until you review and complete Stripe Checkout."
+  );
+  assert.match(messageEl.textContent, /Creating your secure Stripe subscription checkout/);
+  assert.match(messageEl.className, /\bshow\b/);
+
+  // D: an error message, using the real "bad" type used on checkout-creation
+  // and confirmation failures.
+  sandbox.showMembershipCheckoutMessage(
+    "Secure Stripe checkout could not be opened. No charge was made.",
+    "bad"
+  );
+  assert.match(messageEl.textContent, /could not be opened/);
+  assert.match(messageEl.className, /\bshow\b/);
+  assert.match(messageEl.className, /\bbad\b/);
+});
