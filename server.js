@@ -3785,7 +3785,13 @@ async function computeAdminRevenueSummary() {
           return;
         }
 
-        categories[categoryKey].collectedCents += amountCents;
+        // Net out refunds the same way addFlatService() does for one-time
+        // services, so a refunded subscription payment isn't counted as
+        // full collected revenue in Revenue Summary.
+        const refundedCents = Math.max(0, Number(entry.refundedAmountCents || 0));
+
+        categories[categoryKey].collectedCents += Math.max(0, amountCents - refundedCents);
+        categories[categoryKey].refundedCents += refundedCents;
         categories[categoryKey].transactionCount += 1;
       });
     }
@@ -10370,13 +10376,17 @@ function buildClientPortalTaxWatchSummary(
     serviceSubtitle: "Year-Round Income, Expense, and Tax Tracking",
     accessLabel: membershipIsActive
       ? `${membership.planName} membership active`
-      : membershipNeedsPayment
-        ? `${membership.enrollmentStatus} — payment not confirmed`
-        : isActive
-          ? previewWindow.expired
-            ? "Preview ended — no charge occurred"
-            : "Preview active — no charge during preview"
-          : "Not started",
+      : membership.enrollmentStatus === "Cancelled"
+        ? "Membership cancelled — no active access"
+        : membership.enrollmentStatus === "Expired"
+          ? "Membership expired — no active access"
+          : membershipNeedsPayment
+            ? `${membership.enrollmentStatus} — payment not confirmed`
+            : isActive
+              ? previewWindow.expired
+                ? "Preview ended — no charge occurred"
+                : "Preview active — no charge during preview"
+              : "Not started",
     membership,
     checkout: getMembershipCheckoutAvailability(),
     preview: isActive
@@ -27288,6 +27298,12 @@ async function applyMembershipStripeUpdate(
         next.cancelledAt = now;
         next.endedAt = now;
         next.nextRenewalAt = "";
+        // Clear the displayed payment method alongside renewal state so a
+        // stale card from before cancellation is never shown as the
+        // current payment method. Historical paymentHistory entries are
+        // untouched -- only the "current card on file" fields reset.
+        next.paymentMethodBrand = "";
+        next.paymentMethodLast4 = "";
       }
 
       if (
@@ -27296,6 +27312,8 @@ async function applyMembershipStripeUpdate(
         next.expiredAt = now;
         next.endedAt = now;
         next.nextRenewalAt = "";
+        next.paymentMethodBrand = "";
+        next.paymentMethodLast4 = "";
       }
 
       if (

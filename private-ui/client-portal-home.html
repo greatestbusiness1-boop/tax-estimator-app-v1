@@ -11248,16 +11248,16 @@
       if (!root) return;
       const membership = portal.taxWatch?.membership || {};
       const access = membership.programAccess || {};
-      const taxWatch = portal.taxWatch || {};
+      // The server (buildClientPortalTaxWatchSummary / getClientPortalMembershipSummary)
+      // is the single source of truth for Tax Watch access -- it already
+      // folds active-preview and paid-membership state into
+      // programAccess["tax-watch-pro"].hasAccess. Do not independently
+      // recreate access here from taxWatch.active/status; that produced a
+      // second, drift-prone calculation of the same fact.
       portalProgramAccessState = {
         "tax-watch-pro": {
           ...(access["tax-watch-pro"] || {}),
-          hasAccess: Boolean(
-            access["tax-watch-pro"]?.hasAccess ||
-            taxWatch.active ||
-            taxWatch.status === "preview" ||
-            taxWatch.status === "active-preview"
-          )
+          hasAccess: Boolean(access["tax-watch-pro"]?.hasAccess)
         },
         pinnacle: {
           ...(access.pinnacle || {}),

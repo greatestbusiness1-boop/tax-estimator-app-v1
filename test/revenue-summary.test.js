@@ -417,6 +417,167 @@ test("6. Historical 'Paid / Verified' Written Review with no amountPaidCents con
   }
 });
 
+// =============================================================================
+// D. Tax Watch Pro / Pinnacle subscription payments must net refunds too
+// (final certification fix batch, mirrors the one-time-service pattern above)
+// =============================================================================
+
+test("8. Partially refunded live Tax Watch Pro payment nets collected/refunded correctly", async () => {
+  const leadId = await createDevLead("REVSUM-TWP-PARTIAL-REFUND-" + Date.now());
+
+  try {
+    const before = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    patchLocalLead(leadId, {
+      contactRequest: {
+        membershipEnrollment: {
+          planKey: "tax-watch-pro",
+          checkoutEnvironment: "live",
+          paymentHistory: [
+            {
+              status: "Paid",
+              amountPaidCents: 1199,
+              environment: "live",
+              refundedAmountCents: 500
+            }
+          ]
+        }
+      }
+    });
+
+    const after = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    assert.equal(after.collectedCents, before.collectedCents + 699);
+    assert.equal(after.refundedCents, before.refundedCents + 500);
+    assert.equal(after.transactionCount, before.transactionCount + 1);
+  } finally {
+    removeTestLead(leadId);
+  }
+});
+
+test("9. Fully refunded live Tax Watch Pro payment nets to $0 collected, full amount refunded", async () => {
+  const leadId = await createDevLead("REVSUM-TWP-FULL-REFUND-" + Date.now());
+
+  try {
+    const before = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    patchLocalLead(leadId, {
+      contactRequest: {
+        membershipEnrollment: {
+          planKey: "tax-watch-pro",
+          checkoutEnvironment: "live",
+          paymentHistory: [
+            {
+              status: "Paid",
+              amountPaidCents: 1199,
+              environment: "live",
+              refundedAmountCents: 1199
+            }
+          ]
+        }
+      }
+    });
+
+    const after = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    assert.equal(after.collectedCents, before.collectedCents + 0);
+    assert.equal(after.refundedCents, before.refundedCents + 1199);
+    assert.equal(after.transactionCount, before.transactionCount + 1);
+  } finally {
+    removeTestLead(leadId);
+  }
+});
+
+test("10. Refunded TEST-mode Tax Watch Pro payment contributes $0 to PRODUCTION revenue and refunded totals", async () => {
+  const leadId = await createDevLead("REVSUM-TWP-TEST-REFUND-" + Date.now());
+
+  try {
+    const before = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    patchLocalLead(leadId, {
+      contactRequest: {
+        membershipEnrollment: {
+          planKey: "tax-watch-pro",
+          checkoutEnvironment: "test",
+          paymentHistory: [
+            {
+              status: "Paid",
+              amountPaidCents: 1199,
+              environment: "test",
+              refundedAmountCents: 1199
+            }
+          ]
+        }
+      }
+    });
+
+    const after = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "tax_watch_pro"
+    );
+
+    assert.equal(after.collectedCents, before.collectedCents);
+    assert.equal(after.refundedCents, before.refundedCents);
+    assert.equal(after.transactionCount, before.transactionCount);
+  } finally {
+    removeTestLead(leadId);
+  }
+});
+
+test("11. Partially refunded live Pinnacle payment nets collected/refunded correctly", async () => {
+  const leadId = await createDevLead("REVSUM-PINNACLE-PARTIAL-REFUND-" + Date.now());
+
+  try {
+    const before = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "pinnacle"
+    );
+
+    patchLocalLead(leadId, {
+      contactRequest: {
+        membershipEnrollment: {
+          planKey: "pinnacle",
+          checkoutEnvironment: "live",
+          paymentHistory: [
+            {
+              status: "Paid",
+              amountPaidCents: 9900,
+              environment: "live",
+              refundedAmountCents: 2000
+            }
+          ]
+        }
+      }
+    });
+
+    const after = categoryOf(
+      await getRevenueSummary(PROD_PORT, prodCookie),
+      "pinnacle"
+    );
+
+    assert.equal(after.collectedCents, before.collectedCents + 7900);
+    assert.equal(after.refundedCents, before.refundedCents + 2000);
+    assert.equal(after.transactionCount, before.transactionCount + 1);
+  } finally {
+    removeTestLead(leadId);
+  }
+});
+
 test("7. Unpaid Extension request with only a computed totalPriceCents is still excluded", async () => {
   const leadId = await createDevLead("REVSUM-EXT-UNPAID-" + Date.now());
 

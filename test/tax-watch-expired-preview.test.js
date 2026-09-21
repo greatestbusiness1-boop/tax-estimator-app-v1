@@ -21,11 +21,26 @@
 //
 // Run with: npm test  (node --test test/)
 
+// Also covers the final Tax Watch production-certification fix batch:
+//   - accessLabel must not say "Not started" for Cancelled/Expired
+//     memberships (buildClientPortalTaxWatchSummary).
+//   - applyMembershipStripeUpdate() must clear paymentMethodBrand/Last4
+//     (not just nextRenewalAt) when a subscription transitions to
+//     Cancelled/Expired, proven end-to-end through the real
+//     /api/stripe-webhook route using a locally HMAC-signed test event
+//     (stripe.webhooks.generateTestHeaderString -- pure local signing, no
+//     network call, no real Stripe API access).
+//   - private-ui/client-portal-home.html's renderPortalPlanNavigation()
+//     must use only the server-authoritative
+//     programAccess["tax-watch-pro"].hasAccess, not a duplicated
+//     taxWatch.active/status OR-chain.
+
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
+const Stripe = require("stripe");
 
 const REPO_ROOT = path.join(__dirname, "..");
 const LEADS_FILE = path.join(REPO_ROOT, "leads.json");
@@ -46,6 +61,10 @@ const PUBLIC_LEAD_ACCESS_SECRET =
   "test-only-public-lead-access-secret-for-automated-tests-32ch";
 const CLIENT_PORTAL_SESSION_SECRET =
   "test-only-client-portal-session-secret-automated-tests-32chr";
+const STRIPE_WEBHOOK_SECRET =
+  "whsec_test_only_dummy_secret_for_automated_tests";
+const STRIPE_DUMMY_KEY =
+  "sk_test_dummy_key_constructed_only_never_used_for_a_real_api_call";
 
 const DEV_PORT = 3931;
 
@@ -101,6 +120,30 @@ async function waitForServer(port, timeoutMs = 20000) {
 }
 
 const base = () => `http://127.0.0.1:${DEV_PORT}`;
+
+const stripeTestClient = new Stripe(STRIPE_DUMMY_KEY);
+
+// Locally HMAC-signs a Stripe event payload with the same dummy webhook
+// secret the spawned server is configured with (stripe.webhooks.
+// generateTestHeaderString performs no network call -- it is pure local
+// signing, identical to what Stripe's own test suite uses) and posts it to
+// the real /api/stripe-webhook route, exercising the actual
+// processMembershipSubscription -> applyMembershipStripeUpdate code path.
+async function postSignedStripeWebhook(eventPayload) {
+  const payload = JSON.stringify(eventPayload);
+  const header = stripeTestClient.webhooks.generateTestHeaderString({
+    payload,
+    secret: STRIPE_WEBHOOK_SECRET
+  });
+  return fetch(`${base()}/api/stripe-webhook`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Stripe-Signature": header
+    },
+    body: payload
+  });
+}
 
 async function postJson(pathname, payload) {
   return fetch(`${base()}${pathname}`, {
@@ -448,3 +491,283 @@ test("G. This fix does not touch the membership test/live isolation functions", 
     "isMembershipEnrollmentRecord's production test-mode guard must remain exactly as shipped earlier"
   );
 });
+
+// =============================================================================
+// H. State A -- clean account: no Tax Watch profile, no membership at all
+// =============================================================================
+
+test("H. Clean account (no profile, no membership): no access, not active, no active service, accessLabel is Not started", async () => {
+  const account = await createActivatedAccount("clean-account-" + Date.now());
+
+  try {
+    const taxWatch = await getSessionTaxWatch(account.cookie);
+
+    assert.equal(taxWatch.active, false);
+    assert.equal(taxWatch.status, "not-started");
+    assert.equal(taxWatch.accessLabel, "Not started");
+    assert.equal(
+      taxWatch.membership?.programAccess?.["tax-watch-pro"]?.hasAccess,
+      false
+    );
+    // Nothing blocks a fresh live checkout for this account: no membership
+    // record exists at all for getClientPortalMembershipSummary to find.
+    assert.equal(taxWatch.membership?.exists, false);
+  } finally {
+    removePortalAccountAndLead(account);
+  }
+});
+
+// =============================================================================
+// I. Cancelled live membership
+// =============================================================================
+
+test("I. Cancelled live membership: no paid access, accurate accessLabel, no current renewal", async () => {
+  const account = await createActivatedAccount("cancelled-" + Date.now());
+  const membershipLeadId = await createLead(
+    "cancelled-membership-" + Date.now(),
+    account.email
+  );
+
+  try {
+    patchLocalLead(
+      membershipLeadId,
+      membershipEnrollmentFixture({
+        enrollmentStatus: "Cancelled",
+        paymentStatus: "Cancelled",
+        nextRenewalAt: "",
+        paymentMethodBrand: "",
+        paymentMethodLast4: ""
+      })
+    );
+
+    const taxWatch = await getSessionTaxWatch(account.cookie);
+
+    assert.equal(taxWatch.active, false);
+    assert.equal(taxWatch.status, "cancelled");
+    assert.equal(
+      taxWatch.accessLabel,
+      "Membership cancelled — no active access"
+    );
+    assert.notEqual(taxWatch.accessLabel, "Not started");
+    assert.equal(
+      taxWatch.membership?.programAccess?.["tax-watch-pro"]?.hasAccess,
+      false
+    );
+    assert.equal(taxWatch.membership?.nextRenewalAt, "");
+  } finally {
+    removePortalAccountAndLead(account, [membershipLeadId]);
+  }
+});
+
+// =============================================================================
+// J. Expired live membership
+// =============================================================================
+
+test("J. Expired live membership: no active paid access, accurate accessLabel", async () => {
+  const account = await createActivatedAccount("expired-membership-" + Date.now());
+  const membershipLeadId = await createLead(
+    "expired-membership-lead-" + Date.now(),
+    account.email
+  );
+
+  try {
+    patchLocalLead(
+      membershipLeadId,
+      membershipEnrollmentFixture({
+        enrollmentStatus: "Expired",
+        paymentStatus: "Expired",
+        nextRenewalAt: "",
+        paymentMethodBrand: "",
+        paymentMethodLast4: ""
+      })
+    );
+
+    const taxWatch = await getSessionTaxWatch(account.cookie);
+
+    assert.equal(taxWatch.active, false);
+    assert.equal(taxWatch.status, "expired");
+    assert.equal(
+      taxWatch.accessLabel,
+      "Membership expired — no active access"
+    );
+    assert.notEqual(taxWatch.accessLabel, "Not started");
+    assert.equal(
+      taxWatch.membership?.programAccess?.["tax-watch-pro"]?.hasAccess,
+      false
+    );
+  } finally {
+    removePortalAccountAndLead(account, [membershipLeadId]);
+  }
+});
+
+// =============================================================================
+// K. Past Due / payment-failure state
+// =============================================================================
+
+test("K. Past Due membership: entitlement matches server rules, accessLabel does not imply healthy active access", async () => {
+  const account = await createActivatedAccount("past-due-" + Date.now());
+  const membershipLeadId = await createLead(
+    "past-due-membership-" + Date.now(),
+    account.email
+  );
+
+  try {
+    patchLocalLead(
+      membershipLeadId,
+      membershipEnrollmentFixture({
+        enrollmentStatus: "Past Due",
+        paymentStatus: "Past Due"
+      })
+    );
+
+    const taxWatch = await getSessionTaxWatch(account.cookie);
+
+    // Entitlement: Past Due must never grant paid access.
+    assert.equal(taxWatch.active, false);
+    assert.notEqual(taxWatch.status, "active-membership");
+    assert.equal(
+      taxWatch.membership?.programAccess?.["tax-watch-pro"]?.hasAccess,
+      false
+    );
+    // Wording: must not falsely present healthy active paid status, and
+    // must not fall through to the generic (and here misleading) "Not
+    // started" wording either.
+    assert.equal(taxWatch.accessLabel, "Past Due — payment not confirmed");
+    assert.notEqual(taxWatch.accessLabel, "Not started");
+  } finally {
+    removePortalAccountAndLead(account, [membershipLeadId]);
+  }
+});
+
+// =============================================================================
+// L. Stale payment card cleared end-to-end through the real Stripe webhook
+// route (customer.subscription.deleted), proving the write-path fix in
+// applyMembershipStripeUpdate() -- not just a read-path/source check.
+// =============================================================================
+
+test("L. Webhook-driven cancellation clears paymentMethodBrand/Last4 and nextRenewalAt, but preserves paymentHistory", async () => {
+  const account = await createActivatedAccount("webhook-cancel-" + Date.now());
+  const membershipLeadId = await createLead(
+    "webhook-cancel-membership-" + Date.now(),
+    account.email
+  );
+
+  try {
+    // Simulate a previously-active paid membership with a saved card on
+    // file, exactly the state that used to go stale after cancellation.
+    patchLocalLead(
+      membershipLeadId,
+      membershipEnrollmentFixture({
+        enrollmentStatus: "Active Membership",
+        paymentStatus: "Paid / Confirmed",
+        nextRenewalAt: new Date(
+          Date.now() + 20 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+        paymentMethodBrand: "Visa",
+        paymentMethodLast4: "4242",
+        stripeSubscriptionId: "sub_test_defect3_" + Date.now(),
+        paymentHistory: [
+          {
+            id: "live-payment-defect3",
+            status: "Paid",
+            amountPaidCents: 1199,
+            paidAt: new Date().toISOString(),
+            environment: "live"
+          }
+        ]
+      })
+    );
+
+    const before = await getSessionTaxWatch(account.cookie);
+    assert.equal(before.membership?.paymentMethodBrand, "Visa");
+    assert.equal(before.membership?.paymentMethodLast4, "4242");
+    assert.ok(before.membership?.nextRenewalAt);
+
+    const subscriptionId = "sub_test_defect3_webhook_" + Date.now();
+    const webhookRes = await postSignedStripeWebhook({
+      id: "evt_test_defect3_" + Date.now(),
+      object: "event",
+      type: "customer.subscription.deleted",
+      created: Math.floor(Date.now() / 1000),
+      livemode: false,
+      data: {
+        object: {
+          id: subscriptionId,
+          object: "subscription",
+          customer: "cus_test_defect3",
+          status: "canceled",
+          livemode: false,
+          cancel_at_period_end: false,
+          cancel_at: null,
+          metadata: {
+            leadId: membershipLeadId,
+            service: "year_round_membership",
+            planKey: "tax-watch-pro",
+            billingFrequency: "monthly"
+          }
+        }
+      }
+    });
+    assert.equal(webhookRes.status, 200);
+
+    const after = await getSessionTaxWatch(account.cookie);
+
+    // Defect 3: stale card and renewal date both cleared.
+    assert.equal(after.membership?.paymentMethodBrand, "");
+    assert.equal(after.membership?.paymentMethodLast4, "");
+    assert.equal(after.membership?.nextRenewalAt, "");
+    assert.equal(after.status, "cancelled");
+    assert.equal(after.accessLabel, "Membership cancelled — no active access");
+
+    // Historical paymentHistory must survive the same update untouched.
+    const history = after.membership?.paymentHistory || [];
+    assert.ok(
+      history.some((entry) => entry.id === "live-payment-defect3"),
+      "historical paymentHistory entry must be preserved after cancellation"
+    );
+  } finally {
+    removePortalAccountAndLead(account, [membershipLeadId]);
+  }
+});
+
+// =============================================================================
+// M. Frontend no longer independently reconstructs Tax Watch access
+// =============================================================================
+
+test("M. renderPortalPlanNavigation uses only the server-authoritative programAccess hasAccess flag", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+
+  const fnMatch = /function renderPortalPlanNavigation\(portal = \{\}\) \{[\s\S]*?\r?\n    \}\r?\n/.exec(
+    frontendSource
+  );
+  assert.ok(fnMatch, "renderPortalPlanNavigation must still exist");
+  const fnBody = fnMatch[0];
+  // Strip // line comments before checking for taxWatch.active/status usage
+  // -- the explanatory comment left in place by the fix itself legitimately
+  // mentions "taxWatch.active/status" in prose, which must not trip these
+  // code-content assertions.
+  const fnCode = fnBody.replace(/\/\/[^\r\n]*/g, "");
+
+  assert.match(
+    fnCode,
+    /hasAccess:\s*Boolean\(access\["tax-watch-pro"\]\?\.hasAccess\)/,
+    "hasAccess must be sourced solely from access[\"tax-watch-pro\"]?.hasAccess"
+  );
+  assert.doesNotMatch(
+    fnCode,
+    /taxWatch\.active/,
+    "must no longer independently read taxWatch.active"
+  );
+  assert.doesNotMatch(
+    fnCode,
+    /taxWatch\.status\s*===\s*["']preview["']/,
+    "must no longer independently read taxWatch.status === \"preview\""
+  );
+});
+
+// =============================================================================
+// N. Item 12 (paid live membership + expired old preview remains active) is
+// already covered above by test E, unchanged by this batch -- see
+// "E. A paid live membership remains active even alongside an old expired
+// preview". No duplicate test added here.
+// =============================================================================
