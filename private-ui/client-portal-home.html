@@ -11191,6 +11191,14 @@
         Number(portal.generalRequestCount || 0) > 0
       );
 
+      // The server always returns taxWatch.checkout regardless of
+      // taxWatch.active (an expired preview or no-access account can still
+      // have a genuinely available checkout). configureTaxWatchPreview()
+      // -- the only other place that updates currentMembershipCheckout --
+      // is skipped whenever taxWatch.active is false, so this must be set
+      // here unconditionally or the checkout button below is stuck
+      // disabled for exactly the accounts that most need to check out.
+      currentMembershipCheckout = (portal.taxWatch || {}).checkout || {};
       renderClientExperienceExplore(portal, serviceState);
       renderTaxWatchPro(portal.taxWatch || {});
     }

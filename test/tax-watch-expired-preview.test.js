@@ -34,12 +34,20 @@
 //     must use only the server-authoritative
 //     programAccess["tax-watch-pro"].hasAccess, not a duplicated
 //     taxWatch.active/status OR-chain.
+//
+// Also covers the disabled-checkout-button fix: the portal render flow must
+// copy portal.taxWatch.checkout into currentMembershipCheckout
+// unconditionally (not only as a side effect of configureTaxWatchPreview(),
+// which is skipped whenever taxWatch.active is false), so a genuinely
+// available checkout is never left permanently disabled for an account
+// with no current preview/membership access.
 
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
+const vm = require("node:vm");
 const Stripe = require("stripe");
 
 const REPO_ROOT = path.join(__dirname, "..");
@@ -771,3 +779,194 @@ test("M. renderPortalPlanNavigation uses only the server-authoritative programAc
 // "E. A paid live membership remains active even alongside an old expired
 // preview". No duplicate test added here.
 // =============================================================================
+
+// =============================================================================
+// O-R. Disabled Tax Watch checkout button fix.
+//
+// Behavioral coverage below executes the REAL extracted source (via Node's
+// built-in vm module -- no new dependency) against a minimal fake DOM,
+// rather than re-implementing the logic, so these tests fail if the shipped
+// behavior regresses even if the surrounding code is refactored.
+// =============================================================================
+
+function extractFunctionSource(source, functionName) {
+  const declPattern = new RegExp(
+    `function\\s+${functionName}\\s*\\(`
+  );
+  const match = declPattern.exec(source);
+  assert.ok(match, `function ${functionName} must exist in client-portal-home.html`);
+
+  // Skip past the entire parameter list first -- a default value containing
+  // its own braces would otherwise be mistaken for the function body's
+  // closing brace.
+  let parenDepth = 1;
+  let i = match.index + match[0].length;
+  for (; i < source.length && parenDepth > 0; i += 1) {
+    if (source[i] === "(") parenDepth += 1;
+    if (source[i] === ")") parenDepth -= 1;
+  }
+
+  const openBraceIndex = source.indexOf("{", i);
+  assert.ok(openBraceIndex > -1);
+
+  let depth = 0;
+  for (let j = openBraceIndex; j < source.length; j += 1) {
+    if (source[j] === "{") depth += 1;
+    if (source[j] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(match.index, j + 1);
+      }
+    }
+  }
+
+  throw new Error(`Could not find end of function ${functionName}`);
+}
+
+function createFakeCheckoutButton(dataset = {}) {
+  const attrs = {};
+  const classes = new Set();
+  return {
+    dataset: { ...dataset },
+    disabled: false,
+    title: "",
+    textContent: "",
+    classList: {
+      add: (c) => classes.add(c),
+      remove: (c) => classes.delete(c),
+      toggle: (c, force) => {
+        if (force === undefined) {
+          classes.has(c) ? classes.delete(c) : classes.add(c);
+        } else if (force) {
+          classes.add(c);
+        } else {
+          classes.delete(c);
+        }
+      },
+      contains: (c) => classes.has(c)
+    },
+    setAttribute(name, value) {
+      attrs[name] = String(value);
+    },
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attrs, name)
+        ? attrs[name]
+        : null;
+    },
+    removeAttribute(name) {
+      delete attrs[name];
+    }
+  };
+}
+
+function buildPortalCheckoutSandbox(frontendSource, { withBillingToggle } = {}) {
+  const configureSource = extractFunctionSource(
+    frontendSource,
+    "configureMembershipCheckoutButtons"
+  );
+
+  const checkoutButtons = [];
+  const idElements = {};
+
+  const fakeDocument = {
+    querySelectorAll(selector) {
+      if (selector === "[data-membership-checkout-plan]") return checkoutButtons;
+      return [];
+    },
+    getElementById(id) {
+      return idElements[id] || null;
+    }
+  };
+
+  const sandbox = {
+    document: fakeDocument,
+    currentMembershipCheckout: {},
+    portal: {},
+    portalBillingMode: "annual",
+    console
+  };
+  vm.createContext(sandbox);
+
+  let script = configureSource;
+  if (withBillingToggle) {
+    script += "\n" + extractFunctionSource(frontendSource, "applyPortalBillingMode");
+    idElements.taxWatchPricingCheckoutButton = createFakeCheckoutButton();
+  }
+  vm.runInContext(script, sandbox);
+
+  return { sandbox, checkoutButtons, idElements };
+}
+
+test("O. The portal render flow copies taxWatch.checkout into currentMembershipCheckout before renderClientExperienceExplore runs, unconditionally on taxWatch.active", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+
+  const flowMatch = /currentMembershipCheckout = \(portal\.taxWatch \|\| \{\}\)\.checkout \|\| \{\};[\s\S]{0,80}?renderClientExperienceExplore\(portal, serviceState\);/.exec(
+    frontendSource
+  );
+  assert.ok(
+    flowMatch,
+    "currentMembershipCheckout must be assigned from portal.taxWatch.checkout " +
+      "immediately before renderClientExperienceExplore(portal, serviceState) runs, " +
+      "so it is populated on every render regardless of taxWatch.active"
+  );
+});
+
+test("P. Real fix line + real configureMembershipCheckoutButtons(): taxWatch.active === false with checkout.taxWatchAvailable === true still enables the button", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+  const fixLineMatch = /currentMembershipCheckout = \(portal\.taxWatch \|\| \{\}\)\.checkout \|\| \{\};/.exec(
+    frontendSource
+  );
+  assert.ok(fixLineMatch, "the render-flow fix line must exist");
+
+  const { sandbox, checkoutButtons } = buildPortalCheckoutSandbox(frontendSource);
+  const button = createFakeCheckoutButton({ membershipCheckoutPlan: "tax-watch-pro" });
+  checkoutButtons.push(button);
+
+  // Exactly the reported production scenario: no current preview/membership
+  // access, but the server reports checkout as genuinely available.
+  sandbox.portal = {
+    taxWatch: { active: false, checkout: { taxWatchAvailable: true } }
+  };
+  vm.runInContext(fixLineMatch[0], sandbox);
+  sandbox.configureMembershipCheckoutButtons();
+
+  assert.equal(button.disabled, false);
+  assert.equal(button.getAttribute("aria-disabled"), "false");
+});
+
+test("Q. Real fix line + real configureMembershipCheckoutButtons(): checkout.taxWatchAvailable === false keeps the button disabled", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+  const fixLineMatch = /currentMembershipCheckout = \(portal\.taxWatch \|\| \{\}\)\.checkout \|\| \{\};/.exec(
+    frontendSource
+  );
+  assert.ok(fixLineMatch, "the render-flow fix line must exist");
+
+  const { sandbox, checkoutButtons } = buildPortalCheckoutSandbox(frontendSource);
+  const button = createFakeCheckoutButton({ membershipCheckoutPlan: "tax-watch-pro" });
+  checkoutButtons.push(button);
+
+  sandbox.portal = {
+    taxWatch: { active: false, checkout: { taxWatchAvailable: false } }
+  };
+  vm.runInContext(fixLineMatch[0], sandbox);
+  sandbox.configureMembershipCheckoutButtons();
+
+  assert.equal(button.disabled, true);
+  assert.equal(button.getAttribute("aria-disabled"), "true");
+});
+
+test("R. applyPortalBillingMode(): Monthly/Annual checkout button text still updates correctly after the fix", () => {
+  const frontendSource = fs.readFileSync(CLIENT_PORTAL_HOME_FILE, "utf8");
+  const { sandbox, idElements } = buildPortalCheckoutSandbox(frontendSource, {
+    withBillingToggle: true
+  });
+  const checkoutEl = idElements.taxWatchPricingCheckoutButton;
+
+  sandbox.applyPortalBillingMode("monthly");
+  assert.equal(checkoutEl.textContent, "Open Monthly Checkout — $11.99");
+  assert.equal(checkoutEl.dataset.membershipCheckoutBilling, "monthly");
+
+  sandbox.applyPortalBillingMode("annual");
+  assert.equal(checkoutEl.textContent, "Open Annual Checkout — $119");
+  assert.equal(checkoutEl.dataset.membershipCheckoutBilling, "annual");
+});
