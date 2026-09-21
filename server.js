@@ -25985,9 +25985,35 @@ function isMembershipEnrollmentRecord(record = {}) {
   const text = `${request.service || ""} ${request.message || ""}`
     .toLowerCase();
 
-  return text.includes("tax watch pro") ||
+  const isMembershipRecord =
+    text.includes("tax watch pro") ||
     text.includes("pinnacle tax action plan") ||
     Boolean(request.membershipEnrollment);
+
+  if (!isMembershipRecord) {
+    return false;
+  }
+
+  // Production must never treat a Stripe TEST-mode enrollment as a real
+  // membership -- this is the single shared filter behind
+  // getClientPortalMembershipSummary() (active status, program access,
+  // billing history, preview reconciliation, checkout-confirm responses)
+  // and findMembershipEnrollmentLead() (checkout eligibility + which lead a
+  // new Stripe checkout reuses), so fixing it here covers both without
+  // touching either caller. Records with no checkoutEnvironment recorded at
+  // all (older/legacy enrollments) are left untouched -- only an
+  // enrollment explicitly marked "test" is excluded. Dev/test environments
+  // (CLIENT_PORTAL_PRODUCTION_HOST false) are completely unaffected.
+  if (
+    CLIENT_PORTAL_PRODUCTION_HOST &&
+    String(
+      request.membershipEnrollment?.checkoutEnvironment || ""
+    ) === "test"
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function getMembershipRecordSortTime(record = {}) {
