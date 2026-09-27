@@ -2491,6 +2491,18 @@
     .pinnacle-action-plan-priority-low{background:#eef2f6;color:#52637a}
     .pinnacle-action-plan-status{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;color:#116149;background:#e8f8f1;padding:3px 10px;border-radius:999px}
     .pinnacle-action-plan-disclosure{margin-top:16px;font-size:12px;color:#8296a8;line-height:1.5}
+    .pinnacle-tax-position{margin:18px 0 22px;padding:18px 20px;border:1px solid #bdd3e2;border-radius:16px;background:linear-gradient(90deg,#f7fbfd 0%,#eaf4fa 100%);box-shadow:0 6px 18px rgba(14,55,84,.06)}
+    .pinnacle-tax-position-head span{display:block;margin-bottom:4px;color:#6a7f90;font-size:11px;font-weight:900;letter-spacing:.08em}
+    .pinnacle-tax-position-head h3{margin:0 0 10px;color:#0a3154}
+    .pinnacle-tax-position-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .pinnacle-tax-position-grid > div{background:#fff;border:1px solid #dbe8f0;border-radius:10px;padding:10px 12px}
+    .pinnacle-tax-position-grid span{display:block;color:#6a7f90;font-size:11px;font-weight:800;letter-spacing:.02em;margin-bottom:4px}
+    .pinnacle-tax-position-grid strong{display:block;color:#0a3154;font-size:16px}
+    .pinnacle-tax-position-grid .emphasis{border-color:#0b5d8d}
+    .pinnacle-tax-position-grid .gold strong{color:#8a6100}
+    .pinnacle-tax-position-rate{margin:12px 0 0;color:#526b80;font-size:12px}
+    .pinnacle-tax-position-assumptions{margin:10px 0 0;padding-left:18px;color:#8296a8;font-size:12px;line-height:1.5}
+    @media(max-width:760px){.pinnacle-tax-position-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:900px){
       .pinnacle-dashboard-card,
       .pinnacle-hero-card,
@@ -6186,6 +6198,8 @@
             <div class="pinnacle-business-field"><label for="pinnacleBusinessActivity">Primary business activity</label><input id="pinnacleBusinessActivity" name="activity" placeholder="Example: Tax preparation"></div>
             <div class="pinnacle-business-field"><label for="pinnacleBusinessStartDate">Business start date</label><input id="pinnacleBusinessStartDate" name="startDate" type="date"></div>
             <div class="pinnacle-business-field"><label for="pinnacleBusinessState">State organized or registered</label><input id="pinnacleBusinessState" name="state" placeholder="Example: Arizona"></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessFilingStatus">Your tax filing status</label><select id="pinnacleBusinessFilingStatus" name="filingStatus"><option value="">Select filing status</option><option value="single">Single</option><option value="mfj">Married Filing Jointly</option><option value="mfs">Married Filing Separately</option><option value="hoh">Head of Household</option><option value="qw">Qualifying Widow(er)</option></select><div class="pinnacle-business-help">Used only for your Estimated Tax Position calculation below.</div></div>
+            <div class="pinnacle-business-field"><label for="pinnacleBusinessOtherIncome">Other household taxable income</label><input id="pinnacleBusinessOtherIncome" name="otherTaxableIncome" type="number" min="0" step="0.01" placeholder="0"><div class="pinnacle-business-help">Income outside this business (e.g. a W-2 job or spouse's income). Leave blank if none.</div></div>
             <div class="pinnacle-business-field"><label for="pinnacleBusinessEinStatus">EIN status</label><select id="pinnacleBusinessEinStatus" name="einStatus"><option value="">Select status</option><option value="none">No EIN</option><option value="has">Has EIN</option><option value="applied">Applied / waiting</option><option value="unknown">Not sure</option></select></div>
             <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessEinField"><label for="pinnacleBusinessEinLast4">EIN — last four digits only</label><input id="pinnacleBusinessEinLast4" name="einLast4" inputmode="numeric" maxlength="4" placeholder="1234"><div class="pinnacle-business-help">Full secure EIN collection will be added separately.</div></div>
             <div class="pinnacle-business-field pinnacle-conditional" id="pinnacleBusinessOwnerCountField"><label for="pinnacleBusinessOwnerCount">Number of owners</label><input id="pinnacleBusinessOwnerCount" name="ownerCount" type="number" min="2" max="100" placeholder="2"></div>
@@ -6497,12 +6511,20 @@
           </div>
         </div>
 
+        <div class="pinnacle-tax-position" id="pinnacleTaxPositionSection">
+          <div class="pinnacle-tax-position-head">
+            <span>ESTIMATED TAX POSITION</span>
+            <h3>Your tax-aware reserve calculation</h3>
+          </div>
+          <div id="pinnacleTaxPositionContent"><p>Loading your estimated tax position...</p></div>
+        </div>
+
         <div class="pinnacle-financial-grid">
           <div class="pinnacle-financial-card"><span>Gross Business Income YTD</span><strong id="pinnacleFinancialGross">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Tracked Business Expenses</span><strong id="pinnacleFinancialExpenses">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Mileage Deduction</span><strong id="pinnacleFinancialMileage">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialMileageDetails">View Mileage Details</button></div>
           <div class="pinnacle-financial-card emphasis"><span>Net Business Income</span><strong id="pinnacleFinancialNet">$0.00</strong></div>
-          <div class="pinnacle-financial-card"><span>Recommended Tax Savings Target</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
+          <div class="pinnacle-financial-card"><span>Quick Reserve Estimate (rough planning only)</span><strong id="pinnacleFinancialReserve">$0.00</strong></div>
           <div class="pinnacle-financial-card"><span>Tax Savings Deposited</span><strong id="pinnacleFinancialDeposited">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddDeposit">Add Deposit</button></div>
           <div class="pinnacle-financial-card"><span>Estimated Tax Payments Made</span><strong id="pinnacleFinancialPayments">$0.00</strong><button type="button" class="pinnacle-financial-detail-link" id="pinnacleFinancialAddPayment">Add Payment</button></div>
           <div class="pinnacle-financial-card"><span>Total Covered Toward Taxes</span><strong id="pinnacleFinancialCovered">$0.00</strong></div>
@@ -13211,6 +13233,54 @@
       `;
     }
 
+    // Renders the server-authoritative Pinnacle tax reserve calculation
+    // (server.js computePinnacleTaxReserve()). This is display-only -- the
+    // browser never computes or overrides these figures, it only formats
+    // the numbers the server already returned.
+    function renderPinnacleTaxPositionSection(reserve={}){
+      const content = document.getElementById("pinnacleTaxPositionContent");
+      if(!content) return;
+
+      const status = reserve.calculationStatus || "no_business_income";
+      const assumptions = Array.isArray(reserve.assumptions) ? reserve.assumptions : [];
+      const assumptionsHtml = assumptions.length
+        ? `<ul class="pinnacle-tax-position-assumptions">${assumptions.map((a)=>`<li>${escapeHtml(a)}</li>`).join("")}</ul>`
+        : "";
+
+      if(status === "no_business_income"){
+        content.innerHTML = `<p>Add your business income in the Income Tracker to see your estimated tax position here.</p>`;
+        return;
+      }
+
+      if(status === "missing_filing_status"){
+        content.innerHTML = `
+          <p>Add your tax filing status in your Business Profile to see a complete federal and Arizona tax estimate.</p>
+          ${assumptionsHtml}
+        `;
+        return;
+      }
+
+      if(status !== "complete"){
+        content.innerHTML = `<p>${escapeHtml(assumptions[0] || "An estimated tax position is not currently available.")}</p>`;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="pinnacle-tax-position-grid">
+          <div><span>Net Business Income</span><strong>${pinnacleMoney(reserve.netBusinessIncome)}</strong></div>
+          <div><span>Self-Employment Tax</span><strong>${pinnacleMoney(reserve.selfEmploymentTax)}</strong></div>
+          <div><span>Estimated Federal Income Tax</span><strong>${pinnacleMoney(reserve.estimatedFederalIncomeTax)}</strong></div>
+          <div><span>Estimated Arizona Income Tax</span><strong>${pinnacleMoney(reserve.estimatedArizonaIncomeTax)}</strong></div>
+          <div class="emphasis"><span>Estimated Total Tax</span><strong>${pinnacleMoney(reserve.estimatedTotalTax)}</strong></div>
+          <div><span>Tax Payments Recorded</span><strong>${pinnacleMoney(reserve.taxPaymentsRecorded)}</strong></div>
+          <div class="emphasis"><span>Remaining Estimated Tax</span><strong>${pinnacleMoney(reserve.remainingEstimatedTax)}</strong></div>
+          <div class="gold"><span>Recommended Reserve</span><strong>${pinnacleMoney(reserve.recommendedReserve)}</strong></div>
+        </div>
+        <p class="pinnacle-tax-position-rate">Effective estimated tax rate: ${escapeHtml(String(reserve.effectiveEstimatedTaxRate ?? 0))}% of net business income${reserve.taxYear ? ` &middot; Tax year ${escapeHtml(String(reserve.taxYear))}` : ""}</p>
+        ${assumptionsHtml}
+      `;
+    }
+
     async function hydratePinnacleWorkspace(serverWorkspace={}){
       const localWorkspace=collectPinnacleWorkspaceFromStorage();
       const serverHasData=Boolean(serverWorkspace?.hasData)||pinnacleWorkspaceHasData(serverWorkspace);
@@ -14272,6 +14342,10 @@
 
       renderPinnacleActionPlanSection(
         portal.pinnacleActionPlan || {}
+      );
+
+      renderPinnacleTaxPositionSection(
+        portal.pinnacleTaxReserve || {}
       );
 
       if (portal.taxWatch?.membership?.exists) {

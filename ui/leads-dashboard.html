@@ -17567,6 +17567,7 @@ function closeRevenueSummaryModal(){
 
 let pinnacleActionPlanLeadId = "";
 let pinnacleActionPlanDraft = null;
+let pinnacleTaxReserveForModal = null;
 
 function findLeadByIdForPinnacle(leadId){
   return (allLeads || []).find(
@@ -17611,7 +17612,24 @@ async function openPinnacleActionPlanModal(leadId){
       : {};
 
   pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(existingPlan);
+  pinnacleTaxReserveForModal = null;
   renderPinnacleActionPlanModal(lead);
+
+  // Read-only for the preparer to review -- never written into the Action
+  // Plan automatically, and never treated as an approved recommendation.
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-tax-reserve/${encodeURIComponent(pinnacleActionPlanLeadId)}`,
+      { credentials: "same-origin" }
+    );
+    const result = await response.json();
+    if(response.ok && result.ok){
+      pinnacleTaxReserveForModal = result.pinnacleTaxReserve;
+      if(pinnacleActionPlanLeadId === leadId) renderPinnacleActionPlanModal(lead);
+    }
+  }catch(error){
+    console.error("Pinnacle tax reserve could not be loaded:", error);
+  }
 }
 
 function closePinnacleActionPlanModal(){
@@ -17626,10 +17644,10 @@ function pinnacleWorkspaceSummaryHtml(lead){
     lead?.pinnacleWorkspace && typeof lead.pinnacleWorkspace === "object"
       ? lead.pinnacleWorkspace
       : {};
+  // The business profile is stored as { structure, fields: { legalName, ... } }
+  // (matching collectPinnacleBusinessDraft() on the client), not flat fields.
   const businessName =
-    workspace.businessProfile?.businessName ||
-    workspace.businessProfile?.legalName ||
-    workspace.businessProfile?.name ||
+    workspace.businessProfile?.fields?.legalName ||
     "";
 
   return `
@@ -17642,6 +17660,34 @@ function pinnacleWorkspaceSummaryHtml(lead){
         &middot; Vehicles: ${(workspace.vehicles || []).length}
         &middot; Tax activity entries: ${(workspace.taxActivity || []).length}
       </div>
+    </div>
+  `;
+}
+
+function pinnacleTaxReserveSummaryHtml(reserve){
+  const money = (value) => "$" + Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if(!reserve){
+    return `<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#94a3b8;">Loading tax reserve estimate...</div>`;
+  }
+
+  if(reserve.calculationStatus !== "complete"){
+    const note = (reserve.assumptions || [])[0] || "A tax reserve estimate is not currently available for this lead.";
+    return `<div style="background:#fffbeb;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#7c5a00;"><strong>Tax Reserve Estimate:</strong> ${escapeOfficeHtml(note)}</div>`;
+  }
+
+  return `
+    <div style="background:#eef6fb;border:1px solid #bcd9ea;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#0a3154;">
+      <strong>Tax Reserve Estimate (read-only, tax year ${escapeOfficeHtml(String(reserve.taxYear || ""))})</strong>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+        <div>Net Business Income<br><strong>${money(reserve.netBusinessIncome)}</strong></div>
+        <div>Self-Employment Tax<br><strong>${money(reserve.selfEmploymentTax)}</strong></div>
+        <div>Est. Federal Income Tax<br><strong>${money(reserve.estimatedFederalIncomeTax)}</strong></div>
+        <div>Est. Arizona Income Tax<br><strong>${money(reserve.estimatedArizonaIncomeTax)}</strong></div>
+        <div>Tax Payments Recorded<br><strong>${money(reserve.taxPaymentsRecorded)}</strong></div>
+        <div>Remaining Estimated Tax<br><strong>${money(reserve.remainingEstimatedTax)}</strong></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#52637a;">For preparer review only -- this figure is never automatically added to the Action Plan as a recommendation.</div>
     </div>
   `;
 }
@@ -17702,6 +17748,7 @@ function renderPinnacleActionPlanModal(lead){
   body.innerHTML = `
     <div style="margin-bottom:10px;color:#0f2f55;font-weight:700;">${escapeOfficeHtml(clientName)}</div>
     ${pinnacleWorkspaceSummaryHtml(lead)}
+    ${pinnacleTaxReserveSummaryHtml(pinnacleTaxReserveForModal)}
     <div id="pinnacleActionPlanMessage" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-weight:700;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
       <label>Plan Status

@@ -43,6 +43,13 @@ const { estimate } = require("./taxEstimator");
 const {
   getStateSupport
 } = require("./engines/stateEngine");
+const {
+  getRules: getPinnacleFederalTaxRules
+} = require("./engines/federalEngine");
+const {
+  FILING_STATUSES: PINNACLE_VALID_FILING_STATUSES,
+  SUPPORTED_TAX_YEARS: PINNACLE_SUPPORTED_TAX_YEARS
+} = require("./schema/input.schema");
 
 require("dotenv").config();
 const STRIPE_SECRET_KEY = String(
@@ -20248,6 +20255,15 @@ app.get(
         primary
       );
 
+    const pinnacleTaxReserve =
+      getClientPortalPinnacleTaxReserve(
+        primary,
+        {
+          fallbackFilingStatus:
+            primary?.lead?.taxData?.filingStatus || ""
+        }
+      );
+
     const documentCenter =
       await getClientPortalDocumentCenterState(
         session
@@ -20387,6 +20403,7 @@ app.get(
         taxWatch,
         pinnacleWorkspace,
         pinnacleActionPlan,
+        pinnacleTaxReserve,
         documentCenter
       }
     });
@@ -20863,6 +20880,420 @@ app.patch(
     return res.status(200).json({
       ok: true,
       pinnacleActionPlan: savedPlan
+    });
+  }
+);
+
+
+// =============================================================================
+// PINNACLE TAX RESERVE -- server-authoritative, tax-aware reserve calculation
+//
+// Replaces the old flat-percentage-of-net-income reserve guess with a real
+// calculation built on the same federal tax engine (engines/federalEngine.js)
+// and marginal with-vs-without-self-employment diff technique already
+// shipped and proven in computeSelfEmploymentTaxReserve() for Tax Watch Pro
+// (see buildClientPortalTaxWatchSummary, ~line 9902-9931 above). This does
+// NOT reimplement any tax logic -- it calls the exact same estimate()
+// pipeline (taxEstimator.js -> federalEngine.js + stateEngine.js) that the
+// rest of the app already relies on and tests.
+//
+// Known, deliberate limitations (surfaced to the caller via `assumptions`,
+// never silently hidden):
+//   - Federal: standard deduction only (the engine has no itemized-deduction
+//     path at all); no QBI/Section 199A deduction (not implemented anywhere
+//     in federalEngine.js).
+//   - State: Arizona only, and always computed using Arizona's rules
+//     regardless of the client's own recorded state -- the field is named
+//     "estimatedArizonaIncomeTax" specifically because it is an Arizona
+//     planning figure, not a generic "your state" calculation.
+//   - Daily odometer logs and individual trips are both included in the
+//     mileage figure, but ONLY the classified/derived *business* portion of
+//     each (trip.classification === "business"; daily = odometer delta minus
+//     personalMiles/commutingMiles) -- personal and commuting miles are
+//     never counted, and vehicle expenses logged separately (Pinnacle's
+//     "Car & Truck Expenses (not mileage)" category exists specifically so
+//     clients do not double-log the same cost both ways).
+// =============================================================================
+
+// The federal engine's own rules table (federalEngine.js TAX_RULES) can
+// contain a newer year (e.g. 2026) before that year is exposed through the
+// public estimate() pipeline -- schema/input.schema.js's SUPPORTED_TAX_YEARS
+// is the authoritative list of years estimate() will actually accept, and is
+// what this must be checked against, not getRules() alone (which would
+// throw "Tax Year must be one of..." for an unsupported year via
+// estimate(), even though getRules() itself succeeds for it).
+function getPinnacleReserveTaxYear() {
+  const currentYear = new Date().getFullYear();
+
+  if (PINNACLE_SUPPORTED_TAX_YEARS.includes(currentYear)) {
+    return { taxYear: currentYear, isCurrentYear: true };
+  }
+
+  const eligible = PINNACLE_SUPPORTED_TAX_YEARS.filter((year) => year <= currentYear);
+  const fallbackYear = eligible.length
+    ? Math.max(...eligible)
+    : Math.max(...PINNACLE_SUPPORTED_TAX_YEARS);
+
+  return { taxYear: fallbackYear, isCurrentYear: false };
+}
+
+function sumPinnacleWorkspaceIncome(workspace = {}) {
+  return (Array.isArray(workspace.incomeSources) ? workspace.incomeSources : [])
+    .reduce(
+      (sum, item) => sum + Math.max(0, getTaxWatchNumber(item?.ytd)),
+      0
+    );
+}
+
+function sumPinnacleWorkspaceExpenses(workspace = {}) {
+  return (Array.isArray(workspace.expenses) ? workspace.expenses : [])
+    .reduce(
+      (sum, item) => sum + Math.max(0, getTaxWatchNumber(item?.amount)),
+      0
+    );
+}
+
+function getPinnacleTripBusinessMiles(trip = {}) {
+  if (String(trip?.classification || "").toLowerCase() !== "business") {
+    return 0;
+  }
+  const miles = Math.max(0, getTaxWatchNumber(trip.miles));
+  return trip.roundTrip === "yes" ? miles * 2 : miles;
+}
+
+function getPinnacleDailyBusinessMilesServer(entry = {}) {
+  const start = Math.max(0, getTaxWatchNumber(entry?.startOdometer));
+  const end = Math.max(0, getTaxWatchNumber(entry?.endOdometer));
+  const personal = Math.max(0, getTaxWatchNumber(entry?.personalMiles));
+  const commuting = Math.max(0, getTaxWatchNumber(entry?.commutingMiles));
+  return Math.max(0, end - start - personal - commuting);
+}
+
+function isPinnacleDateInFirstHalfOfYear(dateValue) {
+  const month = parseInt(String(dateValue || "").slice(5, 7), 10);
+  return Number.isFinite(month) && month >= 1 && month <= 6;
+}
+
+function sumPinnacleWorkspaceMileage(workspace = {}, splitRequired) {
+  const trips = Array.isArray(workspace.trips) ? workspace.trips : [];
+  const dailyMileage = Array.isArray(workspace.dailyMileage) ? workspace.dailyMileage : [];
+
+  let janJun = 0;
+  let julDec = 0;
+  let total = 0;
+
+  const apply = (miles, dateValue) => {
+    if (!miles) return;
+    total += miles;
+    if (isPinnacleDateInFirstHalfOfYear(dateValue)) {
+      janJun += miles;
+    } else {
+      julDec += miles;
+    }
+  };
+
+  trips.forEach((trip) => apply(getPinnacleTripBusinessMiles(trip), trip?.date));
+  dailyMileage.forEach((entry) => apply(getPinnacleDailyBusinessMilesServer(entry), entry?.date));
+
+  return splitRequired
+    ? { businessMileage: 0, businessMileageJanJun: janJun, businessMileageJulDec: julDec }
+    : { businessMileage: total, businessMileageJanJun: 0, businessMileageJulDec: 0 };
+}
+
+function sumPinnacleWorkspaceTaxPayments(workspace = {}, taxYear) {
+  const entries = Array.isArray(workspace.taxActivity) ? workspace.taxActivity : [];
+
+  return entries.reduce((sum, item) => {
+    if (!item || typeof item !== "object") return sum;
+    if (item.voidedAt) return sum;
+    // Only entries the client explicitly recorded as an actual payment to a
+    // tax authority count here -- generic savings/deposit entries are a
+    // different recordType and must never be treated as a tax payment.
+    if (String(item.recordType || "") !== "estimated-payment") return sum;
+    if (String(item.taxYear || "") !== String(taxYear)) return sum;
+    return sum + Math.max(0, getTaxWatchNumber(item.amount));
+  }, 0);
+}
+
+function computePinnacleTaxReserve(workspace = {}, options = {}) {
+  const { taxYear, isCurrentYear } = getPinnacleReserveTaxYear();
+  const businessProfile =
+    workspace?.businessProfile && typeof workspace.businessProfile === "object"
+      ? workspace.businessProfile
+      : {};
+
+  const grossIncome = sumPinnacleWorkspaceIncome(workspace);
+
+  if (grossIncome <= 0) {
+    return {
+      taxYear,
+      calculationStatus: "no_business_income",
+      netBusinessIncome: 0,
+      selfEmploymentTax: 0,
+      deductibleHalfOfSETax: 0,
+      estimatedFederalIncomeTax: null,
+      estimatedArizonaIncomeTax: null,
+      estimatedTotalTax: 0,
+      taxPaymentsRecorded: Math.round(sumPinnacleWorkspaceTaxPayments(workspace, taxYear)),
+      remainingEstimatedTax: 0,
+      recommendedReserve: 0,
+      effectiveEstimatedTaxRate: 0,
+      assumptions: [
+        "No Pinnacle business income has been recorded yet, so no tax reserve estimate is available."
+      ]
+    };
+  }
+
+  let rules;
+  try {
+    rules = getPinnacleFederalTaxRules(taxYear);
+  } catch {
+    return {
+      taxYear,
+      calculationStatus: "calculation_unavailable",
+      netBusinessIncome: null,
+      selfEmploymentTax: null,
+      deductibleHalfOfSETax: null,
+      estimatedFederalIncomeTax: null,
+      estimatedArizonaIncomeTax: null,
+      estimatedTotalTax: null,
+      taxPaymentsRecorded: Math.round(sumPinnacleWorkspaceTaxPayments(workspace, taxYear)),
+      remainingEstimatedTax: null,
+      recommendedReserve: null,
+      effectiveEstimatedTaxRate: null,
+      assumptions: [
+        `A tax reserve estimate is not currently available for ${taxYear}.`
+      ]
+    };
+  }
+
+  const assumptions = [
+    "This estimate applies the federal standard deduction only; itemized deductions are not modeled.",
+    "This estimate does not include the Qualified Business Income (QBI / Section 199A) deduction.",
+    "Arizona figures assume Arizona filing and are informational; they do not apply if you file in another state."
+  ];
+
+  if (!isCurrentYear) {
+    assumptions.push(
+      `This estimate uses ${taxYear} tax rules, the most recent year currently supported.`
+    );
+  }
+
+  const businessExpenses = sumPinnacleWorkspaceExpenses(workspace);
+  const mileageInputs = sumPinnacleWorkspaceMileage(workspace, Boolean(rules.mileageRateSchedule));
+
+  // The Pinnacle Business Profile is stored as { structure, fields: {...} },
+  // matching collectPinnacleBusinessDraft()'s shape on the frontend -- the
+  // filing-status/other-income fields added for this calculation live under
+  // .fields, alongside legalName/owner/state/etc.
+  const businessProfileFields =
+    businessProfile.fields && typeof businessProfile.fields === "object"
+      ? businessProfile.fields
+      : {};
+
+  const rawFilingStatus = String(
+    businessProfileFields.filingStatus || options.fallbackFilingStatus || ""
+  ).toLowerCase();
+  const filingStatus = PINNACLE_VALID_FILING_STATUSES.includes(rawFilingStatus)
+    ? rawFilingStatus
+    : "";
+  const otherIncome = Math.max(0, getTaxWatchNumber(businessProfileFields.otherTaxableIncome));
+
+  if (!businessProfileFields.otherTaxableIncome) {
+    assumptions.push(
+      "Other household income was not entered in the Pinnacle Business Profile and is assumed to be $0."
+    );
+  }
+
+  const taxPaymentsRecorded = Math.round(sumPinnacleWorkspaceTaxPayments(workspace, taxYear));
+
+  if (!filingStatus) {
+    return {
+      taxYear,
+      calculationStatus: "missing_filing_status",
+      netBusinessIncome: null,
+      selfEmploymentTax: null,
+      deductibleHalfOfSETax: null,
+      estimatedFederalIncomeTax: null,
+      estimatedArizonaIncomeTax: null,
+      estimatedTotalTax: null,
+      taxPaymentsRecorded,
+      remainingEstimatedTax: null,
+      recommendedReserve: null,
+      effectiveEstimatedTaxRate: null,
+      assumptions: [
+        "Filing status has not been entered in the Pinnacle Business Profile, so a federal/Arizona tax estimate cannot be calculated yet.",
+        "Add a filing status in the Pinnacle Business Profile to unlock a complete tax reserve estimate."
+      ]
+    };
+  }
+
+  // age/isFullTimeStudent/canBeClaimedAsDependent are required by the
+  // shared estimate() schema but are not tracked anywhere in the Pinnacle
+  // data model, and adding them would expand this phase into a fuller
+  // tax-return questionnaire than the smallest-necessary-addition scope
+  // calls for. A neutral, disclosed default (adult, not a dependent, not a
+  // student) is used instead -- accurate for the large majority of
+  // self-employed business owners, but surfaced via `assumptions` since it
+  // would be wrong for an actual student/dependent.
+  assumptions.push(
+    "This estimate assumes you are an adult who cannot be claimed as a dependent and are not a full-time student."
+  );
+
+  const baseInput = {
+    taxYear,
+    filingStatus,
+    stateCode: "AZ",
+    age: 30,
+    isFullTimeStudent: false,
+    canBeClaimedAsDependent: false,
+    otherIncome,
+    selfEmploymentIncome: grossIncome,
+    businessExpenses,
+    ...mileageInputs
+  };
+
+  const withSE = estimate(baseInput);
+  const withoutSE = estimate({
+    ...baseInput,
+    selfEmploymentIncome: 0,
+    businessExpenses: 0,
+    businessMileage: 0,
+    businessMileageJanJun: 0,
+    businessMileageJulDec: 0
+  });
+
+  if (!withSE.ok || !withoutSE.ok) {
+    return {
+      taxYear,
+      calculationStatus: "calculation_unavailable",
+      netBusinessIncome: null,
+      selfEmploymentTax: null,
+      deductibleHalfOfSETax: null,
+      estimatedFederalIncomeTax: null,
+      estimatedArizonaIncomeTax: null,
+      estimatedTotalTax: null,
+      taxPaymentsRecorded,
+      remainingEstimatedTax: null,
+      recommendedReserve: null,
+      effectiveEstimatedTaxRate: null,
+      assumptions: [
+        "A tax reserve estimate could not be calculated from the current Pinnacle Business Profile information."
+      ]
+    };
+  }
+
+  const federalWith = withSE.result.federal.summary;
+  const federalWithout = withoutSE.result.federal.summary;
+  const stateWith = withSE.result.state?.summary || {};
+  const stateWithout = withoutSE.result.state?.summary || {};
+
+  const selfEmploymentTax = Math.max(0, getTaxWatchNumber(federalWith.selfEmploymentTax));
+  const deductibleHalfOfSETax = Math.max(0, getTaxWatchNumber(federalWith.seAboveLineDeduction));
+  const netBusinessIncome = getTaxWatchNumber(federalWith.netSelfEmploymentIncome);
+
+  // Marginal technique: the federal/state liability difference between an
+  // otherwise-identical return with and without this self-employment
+  // activity isolates exactly the tax impact of the business, already
+  // correctly reflecting filing status, the standard deduction, and the
+  // deductible half of SE tax (all handled once, identically, by the same
+  // federal engine on both passes). Subtracting selfEmploymentTax itself
+  // from the federal marginal difference isolates the *income*-tax portion
+  // of that difference, mirroring computeSelfEmploymentTaxReserve().
+  const federalMarginal = Math.max(
+    0,
+    getTaxWatchNumber(federalWith.taxAfterCredits) - getTaxWatchNumber(federalWithout.taxAfterCredits)
+  );
+  const estimatedFederalIncomeTax = Math.max(0, Math.round(federalMarginal - selfEmploymentTax));
+
+  const estimatedArizonaIncomeTax = Math.max(
+    0,
+    Math.round(getTaxWatchNumber(stateWith.stateTax) - getTaxWatchNumber(stateWithout.stateTax))
+  );
+
+  const estimatedTotalTax = Math.round(
+    selfEmploymentTax + estimatedFederalIncomeTax + estimatedArizonaIncomeTax
+  );
+  const remainingEstimatedTax = Math.max(0, Math.round(estimatedTotalTax - taxPaymentsRecorded));
+  const effectiveEstimatedTaxRate =
+    netBusinessIncome > 0
+      ? Math.round((estimatedTotalTax / netBusinessIncome) * 1000) / 10
+      : 0;
+
+  return {
+    taxYear,
+    calculationStatus: "complete",
+    netBusinessIncome: Math.round(netBusinessIncome),
+    selfEmploymentTax: Math.round(selfEmploymentTax),
+    deductibleHalfOfSETax: Math.round(deductibleHalfOfSETax),
+    estimatedFederalIncomeTax,
+    estimatedArizonaIncomeTax,
+    estimatedTotalTax,
+    taxPaymentsRecorded,
+    remainingEstimatedTax,
+    recommendedReserve: remainingEstimatedTax,
+    effectiveEstimatedTaxRate,
+    assumptions
+  };
+}
+
+function getClientPortalPinnacleTaxReserve(entry = {}, options = {}) {
+  const workspace =
+    entry?.lead?.pinnacleWorkspace ||
+    entry?.raw?.estimate?.pinnacleWorkspace ||
+    entry?.raw?.pinnacleWorkspace ||
+    {};
+
+  return computePinnacleTaxReserve(
+    normalizeClientPortalPinnacleWorkspace(workspace),
+    options
+  );
+}
+
+// Office-only: read the same authoritative tax-reserve calculation for a
+// specific lead, for the preparer to review while working on that
+// customer's Pinnacle Action Plan. This is read-only and computed fresh on
+// every call -- it is never written into the lead record, and it never
+// automatically becomes (or alters) an Action Plan recommendation.
+app.get(
+  "/api/admin/pinnacle-tax-reserve/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    let lead;
+    try {
+      // findLeadRecordById() already returns a mapRowToLead()-shaped object.
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const reserve = computePinnacleTaxReserve(
+      normalizeClientPortalPinnacleWorkspace(lead?.pinnacleWorkspace || {}),
+      { fallbackFilingStatus: lead?.taxData?.filingStatus || "" }
+    );
+
+    return res.status(200).json({
+      ok: true,
+      pinnacleTaxReserve: reserve
     });
   }
 );
