@@ -3389,6 +3389,16 @@
     </div>
   </div>
 
+  <div id="pinnacleActionPlanOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:14px;max-width:840px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;color:#0f2f55;">Pinnacle Tax Action Plan</h2>
+        <button type="button" onclick="closePinnacleActionPlanModal()" style="border:none;background:#e5e7eb;border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer;">Close</button>
+      </div>
+      <div id="pinnacleActionPlanBody" style="font-size:14px;color:#334155;">Loading...</div>
+    </div>
+  </div>
+
   <main class="main">
     <h1 id="viewTitle">All Leads</h1>
     <div id="leadCount"> </div>
@@ -11403,6 +11413,17 @@ function renderLeads(){
                     >
                       Open
                     </button>
+                    ${
+                      currentView === "pinnacleenrollments"
+                        ? `<button
+                            class="closed-open-btn"
+                            style="margin-top:6px;"
+                            onclick="openPinnacleActionPlanModal(${escapeOfficeHtml(JSON.stringify(String(lead?.leadId || "")))})"
+                          >
+                            Manage Action Plan
+                          </button>`
+                        : ""
+                    }
                   </td>
                 </tr>`;
             }).join("")}
@@ -17534,6 +17555,252 @@ async function openRevenueSummaryModal(){
 function closeRevenueSummaryModal(){
   const overlay = document.getElementById("revenueSummaryOverlay");
   if(overlay) overlay.style.display = "none";
+}
+
+// =============================================================================
+// Pinnacle Tax Action Plan -- office editor (foundation phase)
+//
+// Self-contained modal, deliberately independent of the generic
+// openPanel()/detail-panel system used for other services -- keeps this
+// phase scoped without touching that shared, heavily-used code path.
+// =============================================================================
+
+let pinnacleActionPlanLeadId = "";
+let pinnacleActionPlanDraft = null;
+
+function findLeadByIdForPinnacle(leadId){
+  return (allLeads || []).find(
+    (l) => String(l?.leadId || "") === String(leadId || "")
+  );
+}
+
+function pinnacleActionPlanDraftFromPlan(plan = {}){
+  return {
+    status: plan.status || "draft",
+    taxYear: plan.taxYear || String(new Date().getFullYear()),
+    executiveSummary: plan.executiveSummary || "",
+    currentTaxPosition: plan.currentTaxPosition || "",
+    preparerNotes: plan.preparerNotes || "",
+    assumptions: plan.assumptions || "",
+    reviewedBy: plan.reviewedBy || "",
+    recommendations: Array.isArray(plan.recommendations)
+      ? plan.recommendations.map((r) => ({ ...r }))
+      : []
+  };
+}
+
+async function openPinnacleActionPlanModal(leadId){
+  const overlay = document.getElementById("pinnacleActionPlanOverlay");
+  const body = document.getElementById("pinnacleActionPlanBody");
+  if(!overlay || !body) return;
+
+  pinnacleActionPlanLeadId = String(leadId || "").trim();
+  overlay.style.display = "flex";
+  body.innerHTML = "Loading...";
+
+  const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
+
+  if(!lead){
+    body.innerHTML = `<div style="color:#991b1b;">This lead record could not be found. Reload the leads list and try again.</div>`;
+    return;
+  }
+
+  const existingPlan =
+    lead.pinnacleActionPlan && typeof lead.pinnacleActionPlan === "object"
+      ? lead.pinnacleActionPlan
+      : {};
+
+  pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(existingPlan);
+  renderPinnacleActionPlanModal(lead);
+}
+
+function closePinnacleActionPlanModal(){
+  const overlay = document.getElementById("pinnacleActionPlanOverlay");
+  if(overlay) overlay.style.display = "none";
+  pinnacleActionPlanDraft = null;
+  pinnacleActionPlanLeadId = "";
+}
+
+function pinnacleWorkspaceSummaryHtml(lead){
+  const workspace =
+    lead?.pinnacleWorkspace && typeof lead.pinnacleWorkspace === "object"
+      ? lead.pinnacleWorkspace
+      : {};
+  const businessName =
+    workspace.businessProfile?.businessName ||
+    workspace.businessProfile?.legalName ||
+    workspace.businessProfile?.name ||
+    "";
+
+  return `
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#334155;">
+      <strong>Pinnacle workspace on file</strong>
+      ${businessName ? `<div>Business: ${escapeOfficeHtml(businessName)}</div>` : ""}
+      <div>
+        Income sources: ${(workspace.incomeSources || []).length}
+        &middot; Expenses: ${(workspace.expenses || []).length}
+        &middot; Vehicles: ${(workspace.vehicles || []).length}
+        &middot; Tax activity entries: ${(workspace.taxActivity || []).length}
+      </div>
+    </div>
+  `;
+}
+
+function renderPinnacleActionPlanModal(lead){
+  const body = document.getElementById("pinnacleActionPlanBody");
+  if(!body || !pinnacleActionPlanDraft) return;
+
+  const draft = pinnacleActionPlanDraft;
+  const clientName = lead?.contact?.name || "No Name";
+
+  const statusOptions = ["draft", "needs_review", "approved", "delivered"];
+  const priorityOptions = ["high", "medium", "low"];
+  const recStatusOptions = [
+    "proposed",
+    "approved",
+    "client_action_needed",
+    "completed",
+    "dismissed"
+  ];
+
+  const recommendationsHtml = draft.recommendations.map((rec, i) => `
+    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong>Recommendation ${i + 1}</strong>
+        <button type="button" onclick="removePinnacleRecommendation(${i})" style="border:none;background:#fee2e2;color:#991b1b;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;">Remove</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <label>Priority
+          <select onchange="pinnacleActionPlanDraft.recommendations[${i}].priority=this.value">
+            ${priorityOptions.map((p) => `<option value="${p}" ${rec.priority === p ? "selected" : ""}>${p}</option>`).join("")}
+          </select>
+        </label>
+        <label>Status
+          <select onchange="pinnacleActionPlanDraft.recommendations[${i}].status=this.value">
+            ${recStatusOptions.map((s) => `<option value="${s}" ${rec.status === s ? "selected" : ""}>${s}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <label>Category<input type="text" value="${escapeOfficeHtml(rec.category || "")}" oninput="pinnacleActionPlanDraft.recommendations[${i}].category=this.value" style="width:100%;"></label>
+      <label>Title<input type="text" value="${escapeOfficeHtml(rec.title || "")}" oninput="pinnacleActionPlanDraft.recommendations[${i}].title=this.value" style="width:100%;"></label>
+      <label>Recommendation<textarea rows="2" oninput="pinnacleActionPlanDraft.recommendations[${i}].recommendation=this.value" style="width:100%;">${escapeOfficeHtml(rec.recommendation || "")}</textarea></label>
+      <label>Rationale<textarea rows="2" oninput="pinnacleActionPlanDraft.recommendations[${i}].rationale=this.value" style="width:100%;">${escapeOfficeHtml(rec.rationale || "")}</textarea></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <label>Estimated Impact<input type="text" placeholder="e.g. approx. $1,200 savings" value="${escapeOfficeHtml(rec.estimatedImpact || "")}" oninput="pinnacleActionPlanDraft.recommendations[${i}].estimatedImpact=this.value" style="width:100%;"></label>
+        <label>Deadline<input type="date" value="${escapeOfficeHtml((rec.deadline || "").slice(0, 10))}" onchange="pinnacleActionPlanDraft.recommendations[${i}].deadline=this.value" style="width:100%;"></label>
+      </div>
+      <label>Documents Needed<textarea rows="2" oninput="pinnacleActionPlanDraft.recommendations[${i}].documentsNeeded=this.value" style="width:100%;">${escapeOfficeHtml(rec.documentsNeeded || "")}</textarea></label>
+      <label>Client Action<textarea rows="2" oninput="pinnacleActionPlanDraft.recommendations[${i}].clientAction=this.value" style="width:100%;">${escapeOfficeHtml(rec.clientAction || "")}</textarea></label>
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" ${rec.requiresProfessionalReview ? "checked" : ""} onchange="pinnacleActionPlanDraft.recommendations[${i}].requiresProfessionalReview=this.checked">
+        Requires professional review before delivery
+      </label>
+      <label>Preparer Notes (office-only, never shown to client)<textarea rows="2" oninput="pinnacleActionPlanDraft.recommendations[${i}].preparerNotes=this.value" style="width:100%;background:#fffbeb;">${escapeOfficeHtml(rec.preparerNotes || "")}</textarea></label>
+    </div>
+  `).join("");
+
+  body.innerHTML = `
+    <div style="margin-bottom:10px;color:#0f2f55;font-weight:700;">${escapeOfficeHtml(clientName)}</div>
+    ${pinnacleWorkspaceSummaryHtml(lead)}
+    <div id="pinnacleActionPlanMessage" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-weight:700;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <label>Plan Status
+        <select onchange="pinnacleActionPlanDraft.status=this.value">
+          ${statusOptions.map((s) => `<option value="${s}" ${draft.status === s ? "selected" : ""}>${s}</option>`).join("")}
+        </select>
+      </label>
+      <label>Tax Year<input type="text" value="${escapeOfficeHtml(draft.taxYear)}" oninput="pinnacleActionPlanDraft.taxYear=this.value" style="width:100%;"></label>
+    </div>
+    <label>Executive Summary<textarea rows="3" oninput="pinnacleActionPlanDraft.executiveSummary=this.value" style="width:100%;">${escapeOfficeHtml(draft.executiveSummary)}</textarea></label>
+    <label>Current Tax Position<textarea rows="3" oninput="pinnacleActionPlanDraft.currentTaxPosition=this.value" style="width:100%;">${escapeOfficeHtml(draft.currentTaxPosition)}</textarea></label>
+    <label>Assumptions<textarea rows="2" oninput="pinnacleActionPlanDraft.assumptions=this.value" style="width:100%;">${escapeOfficeHtml(draft.assumptions)}</textarea></label>
+    <label>Preparer Notes (office-only, never shown to client)<textarea rows="2" oninput="pinnacleActionPlanDraft.preparerNotes=this.value" style="width:100%;background:#fffbeb;">${escapeOfficeHtml(draft.preparerNotes)}</textarea></label>
+    <label>Reviewed By (optional, free text)<input type="text" value="${escapeOfficeHtml(draft.reviewedBy)}" oninput="pinnacleActionPlanDraft.reviewedBy=this.value" style="width:100%;"></label>
+
+    <h3 style="margin-top:18px;color:#0f2f55;">Recommended Actions</h3>
+    <div id="pinnacleRecommendationsList">${recommendationsHtml || `<div style="color:#94a3b8;font-size:13px;">No recommendations added yet.</div>`}</div>
+    <button type="button" onclick="addPinnacleRecommendation()" style="margin-top:8px;border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;">+ Add Recommendation</button>
+
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button type="button" onclick="savePinnacleActionPlan()" style="border:none;background:#0f2f55;color:#fff;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Save Action Plan</button>
+      <span style="font-size:12px;color:#94a3b8;">Only a plan marked "approved" or "delivered" is visible to the client, and preparer notes are never shown to the client.</span>
+    </div>
+  `;
+}
+
+function addPinnacleRecommendation(){
+  if(!pinnacleActionPlanDraft) return;
+  pinnacleActionPlanDraft.recommendations.push({
+    priority: "medium",
+    category: "",
+    title: "",
+    recommendation: "",
+    rationale: "",
+    estimatedImpact: "",
+    impactType: "",
+    deadline: "",
+    documentsNeeded: "",
+    clientAction: "",
+    status: "proposed",
+    requiresProfessionalReview: false,
+    preparerNotes: ""
+  });
+  renderPinnacleActionPlanModal(findLeadByIdForPinnacle(pinnacleActionPlanLeadId));
+}
+
+function removePinnacleRecommendation(index){
+  if(!pinnacleActionPlanDraft) return;
+  pinnacleActionPlanDraft.recommendations.splice(index, 1);
+  renderPinnacleActionPlanModal(findLeadByIdForPinnacle(pinnacleActionPlanLeadId));
+}
+
+async function savePinnacleActionPlan(){
+  if(!pinnacleActionPlanDraft || !pinnacleActionPlanLeadId) return;
+  const priorMessageEl = document.getElementById("pinnacleActionPlanMessage");
+
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-action-plan/${encodeURIComponent(pinnacleActionPlanLeadId)}`,
+      {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pinnacleActionPlanDraft)
+      }
+    );
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "The Pinnacle Action Plan could not be saved.");
+    }
+
+    const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
+    if(lead){
+      lead.pinnacleActionPlan = result.pinnacleActionPlan;
+    }
+
+    pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(
+      result.pinnacleActionPlan || {}
+    );
+
+    renderPinnacleActionPlanModal(lead);
+
+    const messageEl = document.getElementById("pinnacleActionPlanMessage");
+    if(messageEl){
+      messageEl.style.display = "block";
+      messageEl.style.background = "#e8f8f1";
+      messageEl.style.color = "#116149";
+      messageEl.textContent = "Saved.";
+    }
+  }catch(error){
+    if(priorMessageEl){
+      priorMessageEl.style.display = "block";
+      priorMessageEl.style.background = "#fff0f0";
+      priorMessageEl.style.color = "#9a2525";
+      priorMessageEl.textContent =
+        error.message || "The Pinnacle Action Plan could not be saved.";
+    }
+  }
 }
 
 async function updateMembershipLifecycle(leadId, action){

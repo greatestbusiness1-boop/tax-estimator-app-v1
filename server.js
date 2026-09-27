@@ -2099,6 +2099,11 @@ function mapRowToLead(row) {
       row.pinnacleWorkspace ||
       row.pinnacle_workspace ||
       null,
+    pinnacleActionPlan:
+      estimate.pinnacleActionPlan ||
+      row.pinnacleActionPlan ||
+      row.pinnacle_action_plan ||
+      null,
     clientPortal: sanitizeClientPortalRecord(
       estimate.clientPortal ||
       row.clientPortal ||
@@ -20238,6 +20243,11 @@ app.get(
         primary
       );
 
+    const pinnacleActionPlan =
+      getClientPortalPinnacleActionPlan(
+        primary
+      );
+
     const documentCenter =
       await getClientPortalDocumentCenterState(
         session
@@ -20376,6 +20386,7 @@ app.get(
         transcriptRequests,
         taxWatch,
         pinnacleWorkspace,
+        pinnacleActionPlan,
         documentCenter
       }
     });
@@ -20495,6 +20506,363 @@ app.post(
             savedWorkspace
           )
       }
+    });
+  }
+);
+
+
+// =============================================================================
+// PINNACLE TAX ACTION PLAN -- foundation data model
+//
+// This is the preparer-authored recommendations/action-items layer that sits
+// on top of the existing client-entered pinnacleWorkspace data (business
+// profile, income sources, expenses, mileage, tax activity). It is
+// office-authored content: office staff create/edit it through the
+// dedicated admin route below; authenticated Pinnacle clients only ever
+// receive a filtered, read-only view (see getClientPortalPinnacleActionPlan)
+// that never includes preparer notes and never includes a recommendation
+// that hasn't been approved. No automatic recommendation-generation logic,
+// PDF/report export, or Stripe activation is part of this phase.
+// =============================================================================
+
+const PINNACLE_ACTION_PLAN_STATUSES = [
+  "draft",
+  "needs_review",
+  "approved",
+  "delivered"
+];
+
+const PINNACLE_RECOMMENDATION_STATUSES = [
+  "proposed",
+  "approved",
+  "client_action_needed",
+  "completed",
+  "dismissed"
+];
+
+const PINNACLE_RECOMMENDATION_PRIORITIES = [
+  "high",
+  "medium",
+  "low"
+];
+
+// Recommendation statuses that represent office-only draft/rejected content
+// and must never be shown to the client as if they were finalized advice.
+const PINNACLE_RECOMMENDATION_CLIENT_HIDDEN_STATUSES = new Set([
+  "proposed",
+  "dismissed"
+]);
+
+function capPinnacleText(value, maxLength, fallback = "") {
+  if (typeof value === "string") {
+    return value.trim().slice(0, maxLength);
+  }
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+  return String(value).trim().slice(0, maxLength);
+}
+
+function normalizePinnacleActionPlanDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? text.slice(0, 32) : "";
+}
+
+function normalizePinnacleActionPlanTaxYear(value, fallback = "") {
+  const num = parseInt(value, 10);
+  if (Number.isFinite(num) && num >= 2000 && num <= 2100) {
+    return String(num);
+  }
+  return fallback;
+}
+
+// Only ever reads specific, known fields off the caller-supplied object --
+// never spreads/copies arbitrary keys -- so this is prototype-pollution-safe
+// by construction rather than by blocklist.
+function normalizePinnacleRecommendation(raw, existingById, now) {
+  const source =
+    raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const suppliedId = capPinnacleText(source.id, 100);
+  const existing = suppliedId ? existingById.get(suppliedId) : null;
+  const id = existing?.id || suppliedId || crypto.randomUUID();
+
+  const priority = PINNACLE_RECOMMENDATION_PRIORITIES.includes(
+    String(source.priority || "").toLowerCase()
+  )
+    ? String(source.priority).toLowerCase()
+    : existing?.priority || "medium";
+
+  const status = PINNACLE_RECOMMENDATION_STATUSES.includes(
+    String(source.status || "").toLowerCase()
+  )
+    ? String(source.status).toLowerCase()
+    : existing?.status || "proposed";
+
+  return {
+    id,
+    priority,
+    category: capPinnacleText(source.category, 100, existing?.category || ""),
+    title: capPinnacleText(source.title, 200, existing?.title || ""),
+    recommendation: capPinnacleText(
+      source.recommendation,
+      4000,
+      existing?.recommendation || ""
+    ),
+    rationale: capPinnacleText(source.rationale, 4000, existing?.rationale || ""),
+    // Preparer-entered label, never a computed/trusted figure -- e.g.
+    // "approximately $1,200 in reduced tax" typed by the preparer.
+    estimatedImpact: capPinnacleText(
+      source.estimatedImpact,
+      200,
+      existing?.estimatedImpact || ""
+    ),
+    impactType: capPinnacleText(source.impactType, 100, existing?.impactType || ""),
+    deadline: source.deadline !== undefined
+      ? normalizePinnacleActionPlanDate(source.deadline)
+      : existing?.deadline || "",
+    documentsNeeded: capPinnacleText(
+      source.documentsNeeded,
+      2000,
+      existing?.documentsNeeded || ""
+    ),
+    clientAction: capPinnacleText(
+      source.clientAction,
+      2000,
+      existing?.clientAction || ""
+    ),
+    status,
+    requiresProfessionalReview:
+      source.requiresProfessionalReview !== undefined
+        ? Boolean(source.requiresProfessionalReview)
+        : Boolean(existing?.requiresProfessionalReview),
+    // Office-only. Never included in the client-facing view -- see
+    // getClientPortalPinnacleActionPlan.
+    preparerNotes: capPinnacleText(
+      source.preparerNotes,
+      4000,
+      existing?.preparerNotes || ""
+    ),
+    createdAt: existing?.createdAt || now,
+    updatedAt: now
+  };
+}
+
+// Partial-update semantics: any field omitted from `raw` keeps its existing
+// stored value. The server is authoritative for status/priority enum
+// validity, ids, and timestamps -- arbitrary client-provided values for
+// those are never trusted as-is.
+function normalizePinnacleActionPlan(raw, existingPlan) {
+  const source =
+    raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const existing =
+    existingPlan && typeof existingPlan === "object" && !Array.isArray(existingPlan)
+      ? existingPlan
+      : {};
+
+  const now = new Date().toISOString();
+
+  const status = PINNACLE_ACTION_PLAN_STATUSES.includes(
+    String(source.status || "").toLowerCase()
+  )
+    ? String(source.status).toLowerCase()
+    : existing.status || "draft";
+
+  const existingRecommendations = Array.isArray(existing.recommendations)
+    ? existing.recommendations
+    : [];
+  const existingById = new Map(
+    existingRecommendations
+      .filter((item) => item && typeof item === "object")
+      .map((item) => [String(item.id || ""), item])
+  );
+
+  const recommendations = Array.isArray(source.recommendations)
+    ? source.recommendations
+        .slice(0, 200)
+        .map((item) => normalizePinnacleRecommendation(item, existingById, now))
+    : existingRecommendations;
+
+  const statusBecameReviewed =
+    status === "approved" || status === "needs_review";
+
+  return {
+    version: 1,
+    status,
+    taxYear: source.taxYear !== undefined
+      ? normalizePinnacleActionPlanTaxYear(source.taxYear, existing.taxYear || "")
+      : existing.taxYear || "",
+    executiveSummary: source.executiveSummary !== undefined
+      ? capPinnacleText(source.executiveSummary, 6000)
+      : existing.executiveSummary || "",
+    currentTaxPosition: source.currentTaxPosition !== undefined
+      ? capPinnacleText(source.currentTaxPosition, 6000)
+      : existing.currentTaxPosition || "",
+    recommendations,
+    // Office-only. Never included in the client-facing view.
+    preparerNotes: source.preparerNotes !== undefined
+      ? capPinnacleText(source.preparerNotes, 6000)
+      : existing.preparerNotes || "",
+    assumptions: source.assumptions !== undefined
+      ? capPinnacleText(source.assumptions, 4000)
+      : existing.assumptions || "",
+    lastReviewedAt: statusBecameReviewed ? now : existing.lastReviewedAt || "",
+    reviewedBy: source.reviewedBy !== undefined
+      ? capPinnacleText(source.reviewedBy, 200)
+      : existing.reviewedBy || "",
+    deliveredAt: status === "delivered" ? existing.deliveredAt || now : "",
+    createdAt: existing.createdAt || now,
+    updatedAt: now
+  };
+}
+
+// The only view an authenticated Pinnacle client ever receives. Strips
+// preparerNotes entirely (plan-level and per-recommendation) and, unless the
+// plan itself has been approved/delivered, returns no recommendation content
+// at all -- only a professional "being prepared" status message. This is a
+// server-side data boundary, not a frontend display choice: a draft plan's
+// content is never sent to the browser in the first place.
+function buildClientFacingPinnacleActionPlan(rawPlan) {
+  const plan =
+    rawPlan && typeof rawPlan === "object" && !Array.isArray(rawPlan)
+      ? rawPlan
+      : null;
+
+  const status = plan?.status || "not_started";
+  const taxYear = plan?.taxYear || "";
+  const planIsReadyForClient = status === "approved" || status === "delivered";
+
+  if (!plan || !planIsReadyForClient) {
+    return {
+      status,
+      taxYear,
+      available: false,
+      message:
+        "Your Pinnacle Tax Action Plan is being prepared and reviewed by your tax professional. You will be able to review it here once it is ready."
+    };
+  }
+
+  const recommendations = (Array.isArray(plan.recommendations)
+    ? plan.recommendations
+    : []
+  )
+    .filter(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        !PINNACLE_RECOMMENDATION_CLIENT_HIDDEN_STATUSES.has(
+          String(item.status || "").toLowerCase()
+        )
+    )
+    .map((item) => ({
+      id: item.id,
+      priority: item.priority,
+      category: item.category,
+      title: item.title,
+      recommendation: item.recommendation,
+      rationale: item.rationale,
+      estimatedImpact: item.estimatedImpact,
+      impactType: item.impactType,
+      deadline: item.deadline,
+      documentsNeeded: item.documentsNeeded,
+      clientAction: item.clientAction,
+      status: item.status,
+      requiresProfessionalReview: Boolean(item.requiresProfessionalReview)
+      // preparerNotes intentionally omitted -- office-only.
+    }));
+
+  return {
+    status,
+    taxYear,
+    available: true,
+    executiveSummary: plan.executiveSummary || "",
+    currentTaxPosition: plan.currentTaxPosition || "",
+    assumptions: plan.assumptions || "",
+    deliveredAt: plan.deliveredAt || "",
+    updatedAt: plan.updatedAt || "",
+    recommendations,
+    disclosure:
+      "This plan is based on the information you have provided and current tax law. It may need to be updated if your facts or the tax law change."
+    // preparerNotes, reviewedBy, and lastReviewedAt are intentionally
+    // omitted -- office-only.
+  };
+}
+
+function getClientPortalPinnacleActionPlan(entry = {}) {
+  const rawPlan =
+    entry?.lead?.pinnacleActionPlan ||
+    entry?.raw?.estimate?.pinnacleActionPlan ||
+    entry?.raw?.pinnacleActionPlan ||
+    null;
+
+  return buildClientFacingPinnacleActionPlan(rawPlan);
+}
+
+// Office-only: create/update a Pinnacle Action Plan for a specific lead.
+// Never exposes or accepts the raw whole-lead JSON blob -- only the
+// pinnacleActionPlan sub-object, fully re-validated/normalized server-side
+// on every write (see normalizePinnacleActionPlan).
+app.patch(
+  "/api/admin/pinnacle-action-plan/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    const body =
+      req.body && typeof req.body === "object" && !Array.isArray(req.body)
+        ? req.body
+        : {};
+
+    const updateResult = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => {
+        const existingPlan =
+          record.pinnacleActionPlan &&
+          typeof record.pinnacleActionPlan === "object" &&
+          !Array.isArray(record.pinnacleActionPlan)
+            ? record.pinnacleActionPlan
+            : {};
+
+        const normalizedPlan = normalizePinnacleActionPlan(
+          body,
+          existingPlan
+        );
+
+        return {
+          ...record,
+          pinnacleActionPlan: normalizedPlan,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    );
+
+    if (!updateResult.ok) {
+      return res.status(
+        updateResult.code === "LEAD_NOT_FOUND" ? 404 : 500
+      ).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "The Pinnacle Action Plan could not be saved."
+      });
+    }
+
+    const savedPlan =
+      updateResult.lead?.pinnacleActionPlan ||
+      updateResult.lead?.raw?.pinnacleActionPlan ||
+      null;
+
+    return res.status(200).json({
+      ok: true,
+      pinnacleActionPlan: savedPlan
     });
   }
 );

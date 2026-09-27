@@ -2478,6 +2478,19 @@
       line-height:1.55;
       border-radius:0 10px 10px 0;
     }
+    .pinnacle-action-plan-pending{color:#526b80;line-height:1.55;margin:6px 0 0}
+    .pinnacle-action-plan-meta{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0 4px;color:#0a3154;font-weight:700}
+    #pinnacleActionPlanContent h4{margin:16px 0 4px;color:#0a3154}
+    #pinnacleActionPlanContent p{margin:4px 0;color:#3c5468;line-height:1.5}
+    .pinnacle-action-plan-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+    .pinnacle-action-plan-item{border:1px solid #c7dae7;border-radius:12px;background:#fff;padding:14px 16px}
+    .pinnacle-action-plan-item-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+    .pinnacle-action-plan-item-head strong{color:#0a3154;font-size:15px}
+    .pinnacle-action-plan-priority{font-size:11px;font-weight:900;letter-spacing:.04em;padding:3px 10px;border-radius:999px;background:#eaf4fa;color:#0b5d8d}
+    .pinnacle-action-plan-priority-high{background:#fdecec;color:#9a2525}
+    .pinnacle-action-plan-priority-low{background:#eef2f6;color:#52637a}
+    .pinnacle-action-plan-status{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;color:#116149;background:#e8f8f1;padding:3px 10px;border-radius:999px}
+    .pinnacle-action-plan-disclosure{margin-top:16px;font-size:12px;color:#8296a8;line-height:1.5}
     @media(max-width:900px){
       .pinnacle-dashboard-card,
       .pinnacle-hero-card,
@@ -6044,6 +6057,15 @@
             <button type="button" data-portal-open="business-profile" id="pinnacleBusinessProfileStatusButton">Open / Edit Business Profile</button>
             <button type="button" class="secondary" data-portal-open="pinnacle-income-sources">Income Tracker</button>
             <button type="button" class="secondary" data-portal-open="pinnacle-expense-tracker">Expense Tracker</button>
+          </div>
+        </div>
+
+        <div class="pinnacle-profile-access-card" id="pinnacleActionPlanSection">
+          <div style="width:100%;">
+            <span>PINNACLE TAX ACTION PLAN</span>
+            <div id="pinnacleActionPlanContent">
+              <p>Loading your Pinnacle Tax Action Plan...</p>
+            </div>
           </div>
         </div>
 
@@ -13126,6 +13148,69 @@
       },250);
     }
 
+    // Renders the read-only Pinnacle Tax Action Plan the server already
+    // filtered for client visibility (see buildClientFacingPinnacleActionPlan
+    // / getClientPortalPinnacleActionPlan in server.js). This function never
+    // receives preparer notes or draft/unapproved recommendations at all --
+    // there is nothing to hide here, the server never sent it.
+    function renderPinnacleActionPlanSection(actionPlan={}){
+      const content = document.getElementById("pinnacleActionPlanContent");
+      if(!content) return;
+
+      if(!actionPlan.available){
+        content.innerHTML = `
+          <p class="pinnacle-action-plan-pending">
+            ${escapeHtml(
+              actionPlan.message ||
+              "Your Pinnacle Tax Action Plan is being prepared and reviewed by your tax professional. You will be able to review it here once it is ready."
+            )}
+          </p>
+        `;
+        return;
+      }
+
+      const priorityLabel = { high: "High", medium: "Medium", low: "Low" };
+      const statusLabel = {
+        approved: "Approved",
+        client_action_needed: "Action Needed",
+        completed: "Completed"
+      };
+
+      const recommendations = Array.isArray(actionPlan.recommendations)
+        ? actionPlan.recommendations
+        : [];
+
+      const recommendationsHtml = recommendations.length
+        ? recommendations.map((rec) => `
+            <article class="pinnacle-action-plan-item">
+              <div class="pinnacle-action-plan-item-head">
+                <strong>${escapeHtml(rec.title || rec.category || "Recommended action")}</strong>
+                <span class="pinnacle-action-plan-priority pinnacle-action-plan-priority-${escapeHtml(rec.priority || "medium")}">${escapeHtml(priorityLabel[rec.priority] || "Medium")} priority</span>
+              </div>
+              ${rec.recommendation ? `<p>${escapeHtml(rec.recommendation)}</p>` : ""}
+              ${rec.estimatedImpact ? `<p><strong>Estimated impact:</strong> ${escapeHtml(rec.estimatedImpact)}</p>` : ""}
+              ${rec.deadline ? `<p><strong>Deadline:</strong> ${escapeHtml(rec.deadline)}</p>` : ""}
+              ${rec.documentsNeeded ? `<p><strong>Documents needed:</strong> ${escapeHtml(rec.documentsNeeded)}</p>` : ""}
+              ${rec.clientAction ? `<p><strong>What to do:</strong> ${escapeHtml(rec.clientAction)}</p>` : ""}
+              <span class="pinnacle-action-plan-status">${escapeHtml(statusLabel[rec.status] || "Approved")}</span>
+            </article>
+          `).join("")
+        : `<p>Your tax professional has approved this plan and has not identified any action items at this time.</p>`;
+
+      content.innerHTML = `
+        <div class="pinnacle-action-plan-meta">
+          <span><strong>Status:</strong> ${escapeHtml(actionPlan.status === "delivered" ? "Delivered" : "Approved")}</span>
+          ${actionPlan.taxYear ? `<span><strong>Tax year:</strong> ${escapeHtml(actionPlan.taxYear)}</span>` : ""}
+        </div>
+        ${actionPlan.executiveSummary ? `<h4>Executive Summary</h4><p>${escapeHtml(actionPlan.executiveSummary)}</p>` : ""}
+        ${actionPlan.currentTaxPosition ? `<h4>Current Tax Position</h4><p>${escapeHtml(actionPlan.currentTaxPosition)}</p>` : ""}
+        <h4>Prioritized Recommended Actions</h4>
+        <div class="pinnacle-action-plan-list">${recommendationsHtml}</div>
+        ${actionPlan.assumptions ? `<h4>Assumptions</h4><p>${escapeHtml(actionPlan.assumptions)}</p>` : ""}
+        <p class="pinnacle-action-plan-disclosure">${escapeHtml(actionPlan.disclosure || "")}</p>
+      `;
+    }
+
     async function hydratePinnacleWorkspace(serverWorkspace={}){
       const localWorkspace=collectPinnacleWorkspaceFromStorage();
       const serverHasData=Boolean(serverWorkspace?.hasData)||pinnacleWorkspaceHasData(serverWorkspace);
@@ -14183,6 +14268,10 @@
 
       await hydratePinnacleWorkspace(
         portal.pinnacleWorkspace || {}
+      );
+
+      renderPinnacleActionPlanSection(
+        portal.pinnacleActionPlan || {}
       );
 
       if (portal.taxWatch?.membership?.exists) {
