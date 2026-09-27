@@ -53,6 +53,10 @@ const {
 const {
   buildPinnaclePlanningOpportunities
 } = require("./engines/pinnaclePlanningEngine");
+const {
+  computeQbiPreliminary,
+  computeRetirementPlanning
+} = require("./engines/pinnacleAdvancedPlanning");
 
 require("dotenv").config();
 const STRIPE_SECRET_KEY = String(
@@ -21286,6 +21290,12 @@ function computePinnacleTaxReserve(workspace = {}, options = {}) {
     remainingEstimatedTax,
     recommendedReserve: remainingEstimatedTax,
     effectiveEstimatedTaxRate,
+    // Additive: the engine's own taxable-income figure (already computed
+    // with no QBI deduction applied anywhere in federalEngine.js), reused
+    // by the Pinnacle Advanced Planning QBI calculation instead of being
+    // recomputed -- see engines/pinnacleAdvancedPlanning.js.
+    taxableIncomeBeforeQbi: Math.round(getTaxWatchNumber(federalWith.taxableIncome)),
+    filingStatus,
     assumptions
   };
 }
@@ -21362,8 +21372,60 @@ app.get(
 // recommendation (which starts as "proposed", never auto-approved).
 // =============================================================================
 
+function getPinnacleBusinessProfileFields(workspace = {}) {
+  const businessProfile =
+    workspace?.businessProfile && typeof workspace.businessProfile === "object"
+      ? workspace.businessProfile
+      : {};
+  return businessProfile.fields && typeof businessProfile.fields === "object"
+    ? businessProfile.fields
+    : {};
+}
+
+// Builds the input context for engines/pinnacleAdvancedPlanning.js (QBI +
+// retirement) from an already-computed reserve result, so the reserve is
+// never calculated twice for the same request. age and
+// outsideElectiveDeferralsThisYear are the two new, minimal Pinnacle
+// Business Profile fields added for Solo 401(k) catch-up/coordination
+// planning -- both optional, both bounded/validated here server-side.
+function buildPinnacleAdvancedPlanningContext(workspace = {}, reserve = {}) {
+  const businessProfileFields = getPinnacleBusinessProfileFields(workspace);
+
+  const rawAge = businessProfileFields.age;
+  const age =
+    rawAge === undefined || rawAge === null || String(rawAge).trim() === ""
+      ? null
+      : Math.max(0, Math.min(120, Math.trunc(getTaxWatchNumber(rawAge))));
+
+  return {
+    taxYear: reserve.taxYear,
+    reserveStatus: reserve.calculationStatus,
+    netBusinessIncome: reserve.netBusinessIncome,
+    deductibleHalfOfSETax: reserve.deductibleHalfOfSETax,
+    filingStatus: reserve.filingStatus || "",
+    taxableIncomeBeforeQbi: reserve.taxableIncomeBeforeQbi,
+    age,
+    outsideElectiveDeferralsThisYear: Math.max(
+      0,
+      getTaxWatchNumber(businessProfileFields.outsideElectiveDeferralsThisYear)
+    )
+  };
+}
+
+function getPinnacleAdvancedPlanningForWorkspace(workspace = {}, options = {}) {
+  const normalized = normalizeClientPortalPinnacleWorkspace(workspace);
+  const reserve = computePinnacleTaxReserve(normalized, options);
+  const context = buildPinnacleAdvancedPlanningContext(normalized, reserve);
+
+  return {
+    qbi: computeQbiPreliminary(context),
+    retirement: computeRetirementPlanning(context)
+  };
+}
+
 function buildPinnaclePlanningContext(workspace = {}, options = {}) {
   const reserve = computePinnacleTaxReserve(workspace, options);
+  const advancedContext = buildPinnacleAdvancedPlanningContext(workspace, reserve);
 
   return {
     taxYear: reserve.taxYear,
@@ -21372,7 +21434,9 @@ function buildPinnaclePlanningContext(workspace = {}, options = {}) {
     businessExpenses: sumPinnacleWorkspaceExpenses(workspace),
     businessMileageTotal: sumPinnacleWorkspaceMileage(workspace, false).businessMileage,
     incompleteMileageRecordCount: countPinnacleIncompleteMileageRecords(workspace),
-    savingsDeposited: sumPinnacleWorkspaceSavingsDeposits(workspace)
+    savingsDeposited: sumPinnacleWorkspaceSavingsDeposits(workspace),
+    qbi: computeQbiPreliminary(advancedContext),
+    retirement: computeRetirementPlanning(advancedContext)
   };
 }
 
@@ -21587,6 +21651,53 @@ app.post(
       ok: true,
       pinnacleActionPlan: savedPlan,
       addedRecommendation
+    });
+  }
+);
+
+// Office-only: preliminary QBI (Section 199A) and self-employed retirement
+// (SEP-IRA / Solo 401(k)) planning calculations for a specific lead. See
+// engines/pinnacleAdvancedPlanning.js -- preparer decision support only,
+// read-only, computed fresh on every call, never written into the lead
+// record, and never exposed through the client portal.
+app.get(
+  "/api/admin/pinnacle-advanced-planning/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const advancedPlanning = getPinnacleAdvancedPlanningForWorkspace(
+      lead?.pinnacleWorkspace || {},
+      { fallbackFilingStatus: lead?.taxData?.filingStatus || "" }
+    );
+
+    return res.status(200).json({
+      ok: true,
+      advancedPlanning
     });
   }
 );

@@ -17569,6 +17569,7 @@ let pinnacleActionPlanLeadId = "";
 let pinnacleActionPlanDraft = null;
 let pinnacleTaxReserveForModal = null;
 let pinnaclePlanningOpportunitiesForModal = null;
+let pinnacleAdvancedPlanningForModal = null;
 
 function findLeadByIdForPinnacle(leadId){
   return (allLeads || []).find(
@@ -17615,6 +17616,7 @@ async function openPinnacleActionPlanModal(leadId){
   pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(existingPlan);
   pinnacleTaxReserveForModal = null;
   pinnaclePlanningOpportunitiesForModal = null;
+  pinnacleAdvancedPlanningForModal = null;
   renderPinnacleActionPlanModal(lead);
 
   // Read-only for the preparer to review -- never written into the Action
@@ -17634,6 +17636,7 @@ async function openPinnacleActionPlanModal(leadId){
   }
 
   await refreshPinnaclePlanningOpportunities(leadId);
+  await refreshPinnacleAdvancedPlanning(leadId);
 }
 
 // Read-only planning-opportunity analysis, run fresh on demand. Never
@@ -17659,12 +17662,36 @@ async function refreshPinnaclePlanningOpportunities(leadId){
   }
 }
 
+// Read-only QBI / retirement preliminary calculations, run fresh on demand.
+// Preparer decision support only -- never written into the lead record and
+// never shown to the client except through a deliberately-approved Action
+// Plan recommendation.
+async function refreshPinnacleAdvancedPlanning(leadId){
+  if(pinnacleActionPlanLeadId !== leadId) return;
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-advanced-planning/${encodeURIComponent(leadId)}`,
+      { credentials: "same-origin" }
+    );
+    const result = await response.json();
+    if(response.ok && result.ok){
+      pinnacleAdvancedPlanningForModal = result.advancedPlanning;
+      if(pinnacleActionPlanLeadId === leadId){
+        renderPinnacleActionPlanModal(findLeadByIdForPinnacle(leadId));
+      }
+    }
+  }catch(error){
+    console.error("Pinnacle advanced planning could not be loaded:", error);
+  }
+}
+
 function closePinnacleActionPlanModal(){
   const overlay = document.getElementById("pinnacleActionPlanOverlay");
   if(overlay) overlay.style.display = "none";
   pinnacleActionPlanDraft = null;
   pinnacleActionPlanLeadId = "";
   pinnaclePlanningOpportunitiesForModal = null;
+  pinnacleAdvancedPlanningForModal = null;
 }
 
 function pinnacleWorkspaceSummaryHtml(lead){
@@ -17776,6 +17803,82 @@ function pinnaclePlanningOpportunitiesHtml(planning){
   `;
 }
 
+// Office-only, read-only QBI + retirement preliminary calculations.
+// Preparer decision support only -- see engines/pinnacleAdvancedPlanning.js.
+// Rendered as a native <details> panel to stay out of the way until opened.
+function pinnacleAdvancedPlanningHtml(advancedPlanning){
+  const money = (value) => typeof value === "number"
+    ? "$" + Math.round(value).toLocaleString("en-US")
+    : "Not calculated";
+
+  if(!advancedPlanning){
+    return `<details style="margin-bottom:16px;"><summary style="cursor:pointer;font-weight:700;color:#0f2f55;">Advanced Planning Calculations (office-only)</summary><div style="padding:10px 0;color:#94a3b8;font-size:13px;">Loading...</div></details>`;
+  }
+
+  const qbi = advancedPlanning.qbi || {};
+  const retirement = advancedPlanning.retirement || {};
+
+  const qbiReviewReasons = Array.isArray(qbi.reviewReasons) ? qbi.reviewReasons : [];
+  const qbiAssumptions = Array.isArray(qbi.assumptions) ? qbi.assumptions : [];
+
+  const qbiHtml = `
+    <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <strong style="color:#0f2f55;">QBI / Section 199A (preliminary, status: ${escapeOfficeHtml(qbi.status || "unknown")})</strong>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;font-size:13px;">
+        <div>Estimated QBI<br><strong>${money(qbi.estimatedQualifiedBusinessIncome)}</strong></div>
+        <div>Tentative deduction (20%-style, unlimited)<br><strong>${money(qbi.tentativeQbiDeduction)}</strong></div>
+        <div>Taxable income before QBI<br><strong>${money(qbi.taxableIncomeBeforeQbi)}</strong></div>
+        <div>Taxable-income limitation<br><strong>${money(qbi.taxableIncomeLimitation)}</strong></div>
+        <div style="grid-column:span 2;">Preliminary estimated deduction<br><strong>${money(qbi.estimatedQbiDeduction)}</strong></div>
+      </div>
+      ${qbiReviewReasons.length ? `<div style="font-size:12px;color:#92400e;margin-top:8px;"><strong>Review reasons:</strong> ${escapeOfficeHtml(qbiReviewReasons.join(" "))}</div>` : ""}
+      ${qbiAssumptions.length ? `<div style="font-size:11px;color:#94a3b8;margin-top:6px;"><strong>Assumptions:</strong> ${escapeOfficeHtml(qbiAssumptions.join(" "))}</div>` : ""}
+    </div>
+  `;
+
+  const sep = retirement.sepIra || {};
+  const solo = retirement.solo401k || {};
+  const retirementReviewReasons = Array.isArray(retirement.reviewReasons) ? retirement.reviewReasons : [];
+  const retirementComparisonNotes = Array.isArray(retirement.comparisonNotes) ? retirement.comparisonNotes : [];
+  const soloAssumptions = Array.isArray(solo.assumptions) ? solo.assumptions : [];
+  const sepAssumptions = Array.isArray(sep.assumptions) ? sep.assumptions : [];
+
+  const retirementHtml = `
+    <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
+      <strong style="color:#0f2f55;">Self-employed retirement (preliminary, status: ${escapeOfficeHtml(retirement.status || "unknown")})</strong>
+      <div style="font-size:13px;margin-top:6px;">Self-employment compensation used<br><strong>${money(retirement.selfEmploymentCompensation)}</strong></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+        <div style="font-size:13px;">
+          <div><strong>SEP-IRA</strong></div>
+          <div>Estimated maximum<br><strong>${money(sep.estimatedMaximumContribution)}</strong></div>
+          ${sepAssumptions.length ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">${escapeOfficeHtml(sepAssumptions.join(" "))}</div>` : ""}
+        </div>
+        <div style="font-size:13px;">
+          <div><strong>Solo 401(k)</strong></div>
+          <div>Employee deferral<br><strong>${money(solo.employeeDeferralComponent)}</strong></div>
+          <div>Employer contribution<br><strong>${money(solo.employerContributionComponent)}</strong></div>
+          <div>Catch-up<br><strong>${money(solo.catchUpComponent)}</strong></div>
+          <div>Estimated maximum<br><strong>${money(solo.estimatedMaximumContribution)}</strong></div>
+          ${soloAssumptions.length ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">${escapeOfficeHtml(soloAssumptions.join(" "))}</div>` : ""}
+        </div>
+      </div>
+      ${retirementReviewReasons.length ? `<div style="font-size:12px;color:#92400e;margin-top:8px;"><strong>Review reasons:</strong> ${escapeOfficeHtml(retirementReviewReasons.join(" "))}</div>` : ""}
+      ${retirementComparisonNotes.length ? `<div style="font-size:11px;color:#94a3b8;margin-top:6px;"><strong>Comparison notes:</strong> ${escapeOfficeHtml(retirementComparisonNotes.join(" "))}</div>` : ""}
+    </div>
+  `;
+
+  return `
+    <details style="margin-bottom:16px;">
+      <summary style="cursor:pointer;font-weight:700;color:#0f2f55;">Advanced Planning Calculations (office-only)</summary>
+      <div style="padding-top:10px;">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">Preparer decision support only -- never shown to the client except through a deliberately-approved Action Plan recommendation.</div>
+        ${qbiHtml}
+        ${retirementHtml}
+      </div>
+    </details>
+  `;
+}
+
 function renderPinnacleActionPlanModal(lead){
   const body = document.getElementById("pinnacleActionPlanBody");
   if(!body || !pinnacleActionPlanDraft) return;
@@ -17834,6 +17937,7 @@ function renderPinnacleActionPlanModal(lead){
     ${pinnacleWorkspaceSummaryHtml(lead)}
     ${pinnacleTaxReserveSummaryHtml(pinnacleTaxReserveForModal)}
     ${pinnaclePlanningOpportunitiesHtml(pinnaclePlanningOpportunitiesForModal)}
+    ${pinnacleAdvancedPlanningHtml(pinnacleAdvancedPlanningForModal)}
     <div id="pinnacleActionPlanMessage" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-weight:700;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
       <label>Plan Status

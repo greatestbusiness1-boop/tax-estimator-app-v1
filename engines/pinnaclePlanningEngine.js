@@ -333,30 +333,50 @@ function buildFundingGapOpportunity(context) {
 // QBI / retirement / entity -- detection only, no calculations
 // =============================================================================
 
+// Phase 4 note: even when engines/pinnacleAdvancedPlanning.js can produce a
+// defensible preliminary number (context.qbi), this opportunity always keeps
+// estimatedImpact: null and requiresProfessionalReview: true -- the
+// preliminary figure is surfaced only through calculationDetails/finding for
+// the preparer to review, never as a trusted "impact" amount.
 function buildQbiOpportunity(context) {
   const netBusinessIncome = numberOrZero(context.reserve?.netBusinessIncome);
   if (netBusinessIncome <= 0) return null;
+
+  const qbi = context.qbi && typeof context.qbi === "object" ? context.qbi : null;
+  const hasPreliminaryAmount = Boolean(
+    qbi && qbi.status === "preliminary_below_threshold" && typeof qbi.estimatedQbiDeduction === "number"
+  );
+
+  const finding = hasPreliminaryAmount
+    ? `Positive qualified-looking self-employment/business income (${money(netBusinessIncome)} net business income) was identified. A tentative, below-threshold Section 199A calculation estimates a preliminary QBI deduction of ${money(qbi.estimatedQbiDeduction)} -- see calculationDetails.`
+    : `Positive qualified-looking self-employment/business income (${money(netBusinessIncome)} net business income) was identified.`;
+
+  const rationale = qbi && qbi.reviewReasons && qbi.reviewReasons.length
+    ? `The current tax engine does not calculate a final Qualified Business Income (Section 199A) deduction. ${qbi.reviewReasons.join(" ")}`
+    : "The current tax engine does not calculate the Qualified Business Income (Section 199A) deduction. Eligibility and the deduction amount depend on facts -- taxable income level, business type, W-2 wages paid, and qualified property -- that are not yet fully modeled in this repository. This is a review opportunity only.";
 
   return baseOpportunity({
     strategyKey: "qbi_section_199a_review",
     category: "planning-review",
     priority: PRIORITY.MEDIUM,
     title: "QBI / Section 199A review opportunity",
-    finding: `Positive qualified-looking self-employment/business income (${money(netBusinessIncome)} net business income) was identified.`,
-    rationale: "The current tax engine does not calculate the Qualified Business Income (Section 199A) deduction. Eligibility and the deduction amount depend on facts -- taxable income level, business type, W-2 wages paid, and qualified property -- that are not yet fully modeled in this repository. This is a review opportunity only.",
+    finding,
+    rationale,
     estimatedImpact: null,
     impactType: "",
     documentsNeeded: ["Complete business income and expense detail", "Prior-year tax return"],
     suggestedClientAction: "Discuss with your preparer whether your business income may qualify for the QBI deduction.",
-    sourceInputs: ["reserve.netBusinessIncome"],
+    sourceInputs: ["reserve.netBusinessIncome", "advancedPlanning.qbi"],
     assumptions: [
       "This does not state that the client qualifies for the QBI deduction.",
-      "No deduction amount is calculated or implied."
+      "No deduction amount is calculated or implied by this opportunity, even when a preliminary figure is available in calculationDetails.",
+      ...(qbi?.assumptions || [])
     ],
     confidence: CONFIDENCE.REVIEW_REQUIRED,
     requiresProfessionalReview: true,
     calculationDetails: {
-      netBusinessIncome
+      netBusinessIncome,
+      preliminaryQbiCalculation: qbi || null
     }
   });
 }
@@ -365,26 +385,41 @@ function buildRetirementOpportunity(context) {
   const netBusinessIncome = numberOrZero(context.reserve?.netBusinessIncome);
   if (netBusinessIncome < RETIREMENT_REVIEW_MIN_NET_INCOME) return null;
 
+  const retirement = context.retirement && typeof context.retirement === "object" ? context.retirement : null;
+  const hasPreliminaryAmounts = Boolean(
+    retirement &&
+    retirement.status === "complete" &&
+    typeof retirement.sepIra?.estimatedMaximumContribution === "number" &&
+    typeof retirement.solo401k?.estimatedMaximumContribution === "number"
+  );
+
+  const finding = hasPreliminaryAmounts
+    ? `Meaningful positive self-employment income (${money(netBusinessIncome)} net business income) was identified. Preliminary estimates: up to ${money(retirement.sepIra.estimatedMaximumContribution)} SEP-IRA or up to ${money(retirement.solo401k.estimatedMaximumContribution)} Solo 401(k) -- see calculationDetails.`
+    : `Meaningful positive self-employment income (${money(netBusinessIncome)} net business income) was identified.`;
+
   return baseOpportunity({
     strategyKey: "self_employed_retirement_review",
     category: "planning-review",
     priority: PRIORITY.MEDIUM,
     title: "Self-employed retirement plan review",
-    finding: `Meaningful positive self-employment income (${money(netBusinessIncome)} net business income) was identified.`,
-    rationale: "The current tax engine does not calculate SEP-IRA or Solo 401(k) contribution limits. This is a review opportunity to open the conversation -- the actual contribution-limit calculation is a dedicated later phase.",
+    finding,
+    rationale: "This is a review opportunity to open the conversation. A higher estimated maximum contribution is not automatically the better strategy, and the preliminary figures below do not account for the client's cash-flow needs or administrative preferences.",
     estimatedImpact: null,
     impactType: "",
     documentsNeeded: ["Current-year net business income detail", "Existing retirement account statements, if any"],
     suggestedClientAction: "Discuss with your preparer whether a SEP-IRA or Solo 401(k) contribution may reduce your tax liability this year.",
-    sourceInputs: ["reserve.netBusinessIncome"],
+    sourceInputs: ["reserve.netBusinessIncome", "advancedPlanning.retirement"],
     assumptions: [
-      "No contribution limit or tax-savings amount is calculated or implied."
+      "No contribution amount is recommended by this opportunity, even when preliminary maximums are available in calculationDetails.",
+      "A higher estimated maximum contribution is not automatically the better strategy.",
+      ...(retirement?.comparisonNotes || [])
     ],
     confidence: CONFIDENCE.REVIEW_REQUIRED,
     requiresProfessionalReview: true,
     calculationDetails: {
       netBusinessIncome,
-      threshold: RETIREMENT_REVIEW_MIN_NET_INCOME
+      threshold: RETIREMENT_REVIEW_MIN_NET_INCOME,
+      preliminaryRetirementCalculation: retirement || null
     }
   });
 }
