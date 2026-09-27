@@ -7,7 +7,30 @@
 const TAX_RULES = {
 
   2026: {
-    // Internal federal support only; 2026 is not exposed to clients yet.
+    // Internal federal support only; 2026 is not exposed to clients yet
+    // (schema/input.schema.js SUPPORTED_TAX_YEARS stops at 2025 -- see the
+    // Pinnacle Phase 2.5 2026-readiness audit).
+    //
+    // Verification pass (2026-09-26), checked directly against primary
+    // sources, not extrapolated/guessed:
+    //   - standardDeduction, brackets (single/mfj confirmed directly against
+    //     the values published by irs.gov's own 2026 inflation-adjustment
+    //     release; mfs/hoh follow the standard "MFS = 1/2 of MFJ" statutory
+    //     construction and are internally consistent with that release).
+    //   - socialSecurityWageBase (184500): confirmed via SSA's published
+    //     2026 contribution-and-benefit-base announcement.
+    //   - mileageRateSchedule (72.5 cents Jan-Jun, 76 cents Jul-Dec): confirmed
+    //     directly against IRS.gov's own 2026 standard-mileage-rate release
+    //     and its mid-year increase notice.
+    //   - childTaxCredit (2200/1700): confirmed against reporting on the
+    //     2026 OBBBA-indexed Child Tax Credit amount.
+    //   - lifetimeLearningCredit phase-out ($80k-$90k / $160k-$180k):
+    //     confirmed unadjusted for 2026 per irs.gov.
+    // NOT independently source-confirmed in this pass: americanOpportunityCredit
+    // and childTaxCredit phase-out thresholds beyond the credit amount itself
+    // (not statutorily inflation-indexed historically, so unchanged values are
+    // expected but were not re-verified line-by-line against a primary source
+    // this pass), enhancedSeniorDeduction, dependentDeduction, seniorAdditional.
     standardDeduction: { single: 16100, mfj: 32200, mfs: 16100, hoh: 24150, qw: 32200 },
     dependentDeduction: { floor: 1350, earnedBonus: 450 },
     seniorAdditional: { single: 2050, mfj: 1650, mfs: 1650, hoh: 2050, qw: 1650 },

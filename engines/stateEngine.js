@@ -1915,6 +1915,21 @@ const STATE_YEAR_OVERRIDES = {
   },
 
   2026: {
+    // Pinnacle Phase 2.5 2026-readiness audit (2026-09-26): flatRate and
+    // `deduction` are corroborated -- Arizona conforms its standard
+    // deduction to the federal standard deduction (confirmed via reporting
+    // on Arizona's IRC-conformity legislation for tax year 2026), and the
+    // federal 2026 standard deduction itself was independently confirmed
+    // directly against irs.gov (see federalEngine.js TAX_RULES[2026]).
+    // However, azdor.gov's own public "Individual Income Tax Highlights"
+    // page had not been updated past 2025 as of this pass, and the
+    // dependentCredit figures below (particularly the under17 increase to
+    // 125) could not be confirmed against a live, primary Arizona source --
+    // only that AZ legislation increasing the dependent credit for 2026
+    // exists, not its exact dollar amount. `planningRule: true` is
+    // therefore intentionally left in place; this remains a planning-level
+    // estimate, not a verified one, until azdor.gov publishes its own 2026
+    // figures and they are checked directly against this file.
     AZ: {
       name:     "Arizona",
       type:     "flat",
