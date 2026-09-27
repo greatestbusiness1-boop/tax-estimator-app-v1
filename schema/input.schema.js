@@ -23,7 +23,17 @@
 // CONSTANTS
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const SUPPORTED_TAX_YEARS = [2022, 2023, 2024, 2025];
+// 2026 added following the Pinnacle Phase 2.5 2026-readiness certification
+// (verified 2026-09-26): federal brackets/standard deduction/mileage
+// schedule/Social Security wage base/Child Tax Credit confirmed directly
+// against irs.gov and SSA sources; Arizona standard deduction and dependent
+// tax credit confirmed directly against Arizona H.B. 4168 (57th Legislature,
+// 2nd Regular Session, House Engrossed), including its exact effective-date
+// clauses. This is the single source of truth for which tax years the
+// public estimate() pipeline accepts -- ui/index.html's free-estimator year
+// dropdown is a separate, statically-capped-at-2025 UI control and is
+// unaffected by this list.
+const SUPPORTED_TAX_YEARS = [2022, 2023, 2024, 2025, 2026];
 
 const FILING_STATUSES = ["single", "mfj", "mfs", "hoh", "qw"];
 

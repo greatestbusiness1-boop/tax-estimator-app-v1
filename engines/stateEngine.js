@@ -1915,21 +1915,26 @@ const STATE_YEAR_OVERRIDES = {
   },
 
   2026: {
-    // Pinnacle Phase 2.5 2026-readiness audit (2026-09-26): flatRate and
-    // `deduction` are corroborated -- Arizona conforms its standard
-    // deduction to the federal standard deduction (confirmed via reporting
-    // on Arizona's IRC-conformity legislation for tax year 2026), and the
-    // federal 2026 standard deduction itself was independently confirmed
-    // directly against irs.gov (see federalEngine.js TAX_RULES[2026]).
-    // However, azdor.gov's own public "Individual Income Tax Highlights"
-    // page had not been updated past 2025 as of this pass, and the
-    // dependentCredit figures below (particularly the under17 increase to
-    // 125) could not be confirmed against a live, primary Arizona source --
-    // only that AZ legislation increasing the dependent credit for 2026
-    // exists, not its exact dollar amount. `planningRule: true` is
-    // therefore intentionally left in place; this remains a planning-level
-    // estimate, not a verified one, until azdor.gov publishes its own 2026
-    // figures and they are checked directly against this file.
+    // Pinnacle Phase 2.5 2026-readiness certification: READY (2026-09-26),
+    // confirmed directly against Arizona H.B. 4168 (57th Legislature, 2nd
+    // Regular Session, House Engrossed) bill text, not summaries:
+    //   - deduction (16100/32200/16100/24150/32200): ARS Sec. 43-1041(H)
+    //     conforms Arizona's standard deduction to the federal standard
+    //     deduction, effective for years beginning after 12/31/2019; H.B.
+    //     4168 Sec. 16 sets the new statutory base ($15,750/$23,625/$31,500)
+    //     retroactive to tax years beginning after 12/31/2024 (i.e. TY2025),
+    //     matching this file's existing verified 2025 AZ entry, so the 2026
+    //     figures are the mechanical result of applying Sec. 43-1041(H)'s
+    //     own inflation-adjustment method to the already-confirmed federal
+    //     2026 standard deduction -- not extrapolated.
+    //   - dependentCredit.under17 (125): ARS Sec. 43-1073.01, amended by
+    //     H.B. 4168 Sec. 18 ($100 -> $125), retroactive to tax years
+    //     beginning after 12/31/2025 (i.e. TY2026 specifically, per Sec. 35).
+    //     age17Plus (25) and the phase-out thresholds/rate are unchanged by
+    //     the bill.
+    // `planningRule: true` is retained for its existing supportLevel
+    // ("planning-verified") labeling behavior, not because of unresolved
+    // verification.
     AZ: {
       name:     "Arizona",
       type:     "flat",

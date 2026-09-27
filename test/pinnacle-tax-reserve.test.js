@@ -261,8 +261,12 @@ async function adminGetTaxReserve(leadId, cookie) {
 }
 
 // Full-income workspace fixture used across most tests: gross $60,000,
-// expenses $10,000, 1,000 business miles (2025's supported-year rate,
-// non-split), filing status "single", no other income, no tax payments.
+// expenses $10,000, 1,000 business miles in March (Jan-Jun half of 2026's
+// split mileage schedule), filing status "single", no other income, no tax
+// payments. Pinnacle always calculates against the current calendar year
+// (getPinnacleReserveTaxYear()), which is 2026 following the Phase 2.5
+// 2026-readiness certification -- not the calendar year embedded in these
+// transaction dates.
 function pinnacleWorkspaceFixture(overrides = {}) {
   return {
     version: 4,
@@ -275,12 +279,12 @@ function pinnacleWorkspaceFixture(overrides = {}) {
       }
     },
     incomeSources: [{ id: "INC-1", name: "Test Business", ytd: "60000" }],
-    expenses: [{ id: "EXP-1", amount: "10000", date: "2025-03-15" }],
+    expenses: [{ id: "EXP-1", amount: "10000", date: "2026-03-15" }],
     vehicles: [],
     trips: [
       {
         id: "TRIP-1",
-        date: "2025-03-15",
+        date: "2026-03-15",
         miles: "1000",
         roundTrip: "no",
         classification: "business"
@@ -322,17 +326,21 @@ test("A/B/C. Known Schedule-C-style scenario produces the expected net business 
     const reserve = body.portal?.pinnacleTaxReserve || {};
 
     assert.equal(reserve.calculationStatus, "complete");
-    assert.equal(reserve.taxYear, 2025);
+    assert.equal(reserve.taxYear, 2026);
 
-    // A: net business income = 60000 gross - 10000 expenses - 700 mileage
-    // deduction (1000mi x 2025's $0.70/mi rate) = 49300.
-    assert.equal(reserve.netBusinessIncome, 49300);
+    // A: net business income = 60000 gross - 10000 expenses - 725 mileage
+    // deduction (1000mi in the Jan-Jun half of 2026's split schedule, x
+    // $0.725/mi) = 49275.
+    assert.equal(reserve.netBusinessIncome, 49275);
 
     // B: cross-check against a direct, independent call to the exact same
     // public estimate() pipeline the server itself uses -- this is the
     // authoritative calculation logic being matched, not a reimplementation.
+    // 2026 uses a split mileage schedule, so the direct check must supply
+    // businessMileageJanJun/JulDec (matching production's mileageInputs),
+    // not the flat businessMileage field 2025 and earlier years use.
     const directBaseInput = {
-      taxYear: 2025,
+      taxYear: 2026,
       filingStatus: "single",
       stateCode: "AZ",
       age: 30,
@@ -341,20 +349,22 @@ test("A/B/C. Known Schedule-C-style scenario produces the expected net business 
       otherIncome: 0,
       selfEmploymentIncome: 60000,
       businessExpenses: 10000,
-      businessMileage: 1000
+      businessMileageJanJun: 1000,
+      businessMileageJulDec: 0
     };
     const directWithSE = estimate(directBaseInput);
     const directWithoutSE = estimate({
       ...directBaseInput,
       selfEmploymentIncome: 0,
       businessExpenses: 0,
-      businessMileage: 0
+      businessMileageJanJun: 0,
+      businessMileageJulDec: 0
     });
     assert.equal(directWithSE.ok, true);
     assert.equal(directWithoutSE.ok, true);
 
     assert.equal(reserve.selfEmploymentTax, directWithSE.result.federal.summary.selfEmploymentTax);
-    assert.equal(reserve.selfEmploymentTax, 6966);
+    assert.equal(reserve.selfEmploymentTax, 6963);
 
     // C: deductible half of SE tax must match the engine's own
     // seAboveLineDeduction (not a locally-recomputed / hardcoded 50%).
@@ -362,7 +372,7 @@ test("A/B/C. Known Schedule-C-style scenario produces the expected net business 
       reserve.deductibleHalfOfSETax,
       directWithSE.result.federal.summary.seAboveLineDeduction
     );
-    assert.equal(reserve.deductibleHalfOfSETax, 3483);
+    assert.equal(reserve.deductibleHalfOfSETax, 3482);
 
     const expectedFederalMarginal = Math.max(
       0,
@@ -374,7 +384,7 @@ test("A/B/C. Known Schedule-C-style scenario produces the expected net business 
       Math.round(expectedFederalMarginal - directWithSE.result.federal.summary.selfEmploymentTax)
     );
     assert.equal(reserve.estimatedFederalIncomeTax, expectedEstimatedFederalIncomeTax);
-    assert.equal(reserve.estimatedFederalIncomeTax, 3370);
+    assert.equal(reserve.estimatedFederalIncomeTax, 3315);
 
     const expectedArizona = Math.max(
       0,
@@ -384,10 +394,10 @@ test("A/B/C. Known Schedule-C-style scenario produces the expected net business 
       )
     );
     assert.equal(reserve.estimatedArizonaIncomeTax, expectedArizona);
-    assert.equal(reserve.estimatedArizonaIncomeTax, 752);
+    assert.equal(reserve.estimatedArizonaIncomeTax, 742);
 
-    assert.equal(reserve.estimatedTotalTax, 6966 + 3370 + 752);
-    assert.equal(reserve.effectiveEstimatedTaxRate, 22.5);
+    assert.equal(reserve.estimatedTotalTax, 6963 + 3315 + 742);
+    assert.equal(reserve.effectiveEstimatedTaxRate, 22.4);
     assert.ok(Array.isArray(reserve.assumptions) && reserve.assumptions.length > 0);
   } finally {
     removePortalAccountAndLead(account);
@@ -410,16 +420,16 @@ test("D/E. Only estimated-payment taxActivity entries reduce the remaining estim
             recordType: "estimated-payment",
             paymentType: "Federal estimated tax payment",
             amount: "2000.00",
-            date: "2025-04-15",
-            taxYear: "2025"
+            date: "2026-04-15",
+            taxYear: "2026"
           },
           {
             id: "TSD-1",
             recordType: "deposit",
             paymentType: "Transfer to tax savings account",
             amount: "500.00",
-            date: "2025-04-15",
-            taxYear: "2025"
+            date: "2026-04-15",
+            taxYear: "2026"
           }
         ]
       })
@@ -433,7 +443,7 @@ test("D/E. Only estimated-payment taxActivity entries reduce the remaining estim
     // Only the $2,000 estimated payment counts -- the $500 deposit must not
     // be added in (2000, not 2500).
     assert.equal(reserve.taxPaymentsRecorded, 2000);
-    assert.equal(reserve.estimatedTotalTax, 6966 + 3370 + 752);
+    assert.equal(reserve.estimatedTotalTax, 6963 + 3315 + 742);
     assert.equal(
       reserve.remainingEstimatedTax,
       Math.max(0, reserve.estimatedTotalTax - 2000)
@@ -455,8 +465,8 @@ test("E2. A voided estimated-payment entry does not count toward tax payments re
             id: "ETP-2",
             recordType: "estimated-payment",
             amount: "2000.00",
-            date: "2025-04-15",
-            taxYear: "2025",
+            date: "2026-04-15",
+            taxYear: "2026",
             voidedAt: new Date().toISOString()
           }
         ]
@@ -539,11 +549,11 @@ test("G. One authenticated client cannot see another client's tax reserve calcul
     const bodyB = await resB.json();
     const reserveB = bodyB.portal?.pinnacleTaxReserve || {};
     assert.equal(reserveB.calculationStatus, "no_business_income");
-    assert.notEqual(reserveB.netBusinessIncome, 49300);
+    assert.notEqual(reserveB.netBusinessIncome, 49275);
 
     const resA = await getClientPortalSession(accountA.cookie);
     const bodyA = await resA.json();
-    assert.equal(bodyA.portal?.pinnacleTaxReserve?.netBusinessIncome, 49300);
+    assert.equal(bodyA.portal?.pinnacleTaxReserve?.netBusinessIncome, 49275);
   } finally {
     removePortalAccountAndLead(accountA);
     removePortalAccountAndLead(accountB);
@@ -677,6 +687,59 @@ test("L. Tax Watch Pro session data is unaffected by the Pinnacle tax reserve ad
     assert.equal(body.portal?.taxWatch?.active, true);
     assert.equal(body.portal?.taxWatch?.status, "preview");
     assert.equal(body.portal?.pinnacleTaxReserve?.calculationStatus, "complete");
+  } finally {
+    removePortalAccountAndLead(account);
+  }
+});
+
+// =============================================================================
+// M/N/O. Pinnacle Phase 2.5 2026-readiness: Pinnacle uses 2026 as its current
+// tax year, not a stale 2025 fallback
+// =============================================================================
+
+test("M/N. Pinnacle now calculates against tax year 2026 (the current year, per SUPPORTED_TAX_YEARS) instead of falling back to 2025", async () => {
+  const account = await createActivatedAccount("mn-uses-2026-" + Date.now());
+
+  try {
+    patchLocalLead(account.leadId, { pinnacleWorkspace: pinnacleWorkspaceFixture() });
+
+    const res = await getClientPortalSession(account.cookie);
+    const body = await res.json();
+    const reserve = body.portal?.pinnacleTaxReserve || {};
+
+    // M: Pinnacle reports the current tax year (2026), not a fallback year.
+    assert.equal(reserve.taxYear, 2026);
+    assert.equal(reserve.calculationStatus, "complete");
+
+    // N: the resulting figures reflect 2026 rules specifically (2026's
+    // split mileage schedule + AZ H.B. 4168-confirmed standard deduction),
+    // matching the same independently-calculated values as test A/B/C --
+    // this would be a different number under 2025's flat $0.70/mi rate.
+    assert.equal(reserve.netBusinessIncome, 49275);
+  } finally {
+    removePortalAccountAndLead(account);
+  }
+});
+
+test("O. A valid, current-year 2026 calculation does not carry the obsolete most-recent-supported-year fallback assumption", async () => {
+  const account = await createActivatedAccount("o-no-stale-assumption-" + Date.now());
+
+  try {
+    patchLocalLead(account.leadId, { pinnacleWorkspace: pinnacleWorkspaceFixture() });
+
+    const res = await getClientPortalSession(account.cookie);
+    const body = await res.json();
+    const reserve = body.portal?.pinnacleTaxReserve || {};
+
+    assert.equal(reserve.calculationStatus, "complete");
+    assert.equal(reserve.taxYear, 2026);
+    // This assumption text is only correct/added when Pinnacle is falling
+    // back to a past year because the true current year is unsupported --
+    // now that 2026 (the current year) is directly supported, it must not
+    // appear.
+    assert.ok(
+      !reserve.assumptions.some((a) => /most recent year currently supported/i.test(a))
+    );
   } finally {
     removePortalAccountAndLead(account);
   }
