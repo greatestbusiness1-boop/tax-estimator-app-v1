@@ -17568,6 +17568,7 @@ function closeRevenueSummaryModal(){
 let pinnacleActionPlanLeadId = "";
 let pinnacleActionPlanDraft = null;
 let pinnacleTaxReserveForModal = null;
+let pinnaclePlanningOpportunitiesForModal = null;
 
 function findLeadByIdForPinnacle(leadId){
   return (allLeads || []).find(
@@ -17613,6 +17614,7 @@ async function openPinnacleActionPlanModal(leadId){
 
   pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(existingPlan);
   pinnacleTaxReserveForModal = null;
+  pinnaclePlanningOpportunitiesForModal = null;
   renderPinnacleActionPlanModal(lead);
 
   // Read-only for the preparer to review -- never written into the Action
@@ -17630,6 +17632,31 @@ async function openPinnacleActionPlanModal(leadId){
   }catch(error){
     console.error("Pinnacle tax reserve could not be loaded:", error);
   }
+
+  await refreshPinnaclePlanningOpportunities(leadId);
+}
+
+// Read-only planning-opportunity analysis, run fresh on demand. Never
+// written into the lead record and never automatically added to the Action
+// Plan -- a preparer must click "Add to Action Plan" on a specific
+// opportunity for it to become a draft recommendation.
+async function refreshPinnaclePlanningOpportunities(leadId){
+  if(pinnacleActionPlanLeadId !== leadId) return;
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-planning-opportunities/${encodeURIComponent(leadId)}`,
+      { credentials: "same-origin" }
+    );
+    const result = await response.json();
+    if(response.ok && result.ok){
+      pinnaclePlanningOpportunitiesForModal = result.planningOpportunities;
+      if(pinnacleActionPlanLeadId === leadId){
+        renderPinnacleActionPlanModal(findLeadByIdForPinnacle(leadId));
+      }
+    }
+  }catch(error){
+    console.error("Pinnacle planning opportunities could not be loaded:", error);
+  }
 }
 
 function closePinnacleActionPlanModal(){
@@ -17637,6 +17664,7 @@ function closePinnacleActionPlanModal(){
   if(overlay) overlay.style.display = "none";
   pinnacleActionPlanDraft = null;
   pinnacleActionPlanLeadId = "";
+  pinnaclePlanningOpportunitiesForModal = null;
 }
 
 function pinnacleWorkspaceSummaryHtml(lead){
@@ -17688,6 +17716,62 @@ function pinnacleTaxReserveSummaryHtml(reserve){
         <div>Remaining Estimated Tax<br><strong>${money(reserve.remainingEstimatedTax)}</strong></div>
       </div>
       <div style="margin-top:8px;font-size:11px;color:#52637a;">For preparer review only -- this figure is never automatically added to the Action Plan as a recommendation.</div>
+    </div>
+  `;
+}
+
+function pinnaclePlanningOpportunityPriorityColor(priority){
+  if(priority === "high") return "#991b1b";
+  if(priority === "medium") return "#92400e";
+  return "#3f6212";
+}
+
+// Office-only, read-only detection results. Never rendered to the client
+// portal in any form -- this HTML only ever exists inside the office
+// leads dashboard's Pinnacle Action Plan modal.
+function pinnaclePlanningOpportunitiesHtml(planning){
+  if(!planning){
+    return `<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#94a3b8;">Loading planning opportunities...</div>`;
+  }
+
+  const opportunities = Array.isArray(planning.opportunities) ? planning.opportunities : [];
+
+  const itemsHtml = opportunities.map((opp) => {
+    const impact = typeof opp.estimatedImpact === "number"
+      ? "$" + Math.round(opp.estimatedImpact).toLocaleString("en-US")
+      : "Not calculated -- requires professional review";
+    const documents = Array.isArray(opp.documentsNeeded) ? opp.documentsNeeded.join(", ") : "";
+    const sourceInputs = Array.isArray(opp.sourceInputs) ? opp.sourceInputs.join(", ") : "";
+    const assumptions = Array.isArray(opp.assumptions) ? opp.assumptions : [];
+
+    return `
+      <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div>
+            <span style="font-weight:800;color:${pinnaclePlanningOpportunityPriorityColor(opp.priority)};text-transform:uppercase;font-size:11px;">${escapeOfficeHtml(opp.priority || "")}</span>
+            <span style="margin-left:8px;font-size:11px;color:#64748b;">${escapeOfficeHtml(opp.confidence || "")}${opp.requiresProfessionalReview ? " &middot; requires professional review" : ""}</span>
+            <div style="font-weight:700;color:#0f2f55;margin-top:2px;">${escapeOfficeHtml(opp.title || "")}</div>
+          </div>
+          <button type="button" onclick="addPinnacleOpportunityToActionPlan('${escapeOfficeHtml(opp.strategyKey || "")}')" style="border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add to Action Plan</button>
+        </div>
+        <div style="font-size:13px;color:#334155;margin-top:8px;">${escapeOfficeHtml(opp.finding || "")}</div>
+        <div style="font-size:12px;color:#52637a;margin-top:6px;"><strong>Rationale:</strong> ${escapeOfficeHtml(opp.rationale || "")}</div>
+        <div style="font-size:12px;color:#52637a;margin-top:6px;"><strong>Estimated impact:</strong> ${escapeOfficeHtml(impact)}</div>
+        ${sourceInputs ? `<div style="font-size:11px;color:#94a3b8;margin-top:6px;"><strong>Trigger basis:</strong> ${escapeOfficeHtml(sourceInputs)}</div>` : ""}
+        ${documents ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;"><strong>Documents needed:</strong> ${escapeOfficeHtml(documents)}</div>` : ""}
+        ${assumptions.length ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;"><strong>Assumptions:</strong> ${escapeOfficeHtml(assumptions.join(" "))}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <strong style="color:#0f2f55;">Pinnacle Planning Opportunities (office-only)</strong>
+        <button type="button" onclick="refreshPinnaclePlanningOpportunities(pinnacleActionPlanLeadId)" style="border:none;background:#e5e7eb;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;">Refresh</button>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin:6px 0 10px;">These are detected opportunities only, never shown to the client. Adding one creates a new draft recommendation below -- it is not approved or delivered until you save the plan with an approved/delivered status.</div>
+      ${itemsHtml || `<div style="color:#94a3b8;font-size:13px;">No planning opportunities detected from the current Pinnacle data.</div>`}
     </div>
   `;
 }
@@ -17749,6 +17833,7 @@ function renderPinnacleActionPlanModal(lead){
     <div style="margin-bottom:10px;color:#0f2f55;font-weight:700;">${escapeOfficeHtml(clientName)}</div>
     ${pinnacleWorkspaceSummaryHtml(lead)}
     ${pinnacleTaxReserveSummaryHtml(pinnacleTaxReserveForModal)}
+    ${pinnaclePlanningOpportunitiesHtml(pinnaclePlanningOpportunitiesForModal)}
     <div id="pinnacleActionPlanMessage" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-weight:700;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
       <label>Plan Status
@@ -17799,6 +17884,44 @@ function removePinnacleRecommendation(index){
   if(!pinnacleActionPlanDraft) return;
   pinnacleActionPlanDraft.recommendations.splice(index, 1);
   renderPinnacleActionPlanModal(findLeadByIdForPinnacle(pinnacleActionPlanLeadId));
+}
+
+// Deliberate, one-at-a-time preparer action -- never bulk-adds. The server
+// re-derives the opportunity itself from the lead's current data (it does
+// not trust a client-submitted opportunity payload) and always creates the
+// new recommendation with status "proposed", never auto-approved.
+async function addPinnacleOpportunityToActionPlan(strategyKey){
+  if(!pinnacleActionPlanLeadId || !strategyKey) return;
+
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-planning-opportunities/${encodeURIComponent(pinnacleActionPlanLeadId)}/add-to-action-plan`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ strategyKey })
+      }
+    );
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "That opportunity could not be added to the Action Plan.");
+    }
+
+    const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
+    if(lead){
+      lead.pinnacleActionPlan = result.pinnacleActionPlan;
+    }
+
+    pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(
+      result.pinnacleActionPlan || {}
+    );
+
+    renderPinnacleActionPlanModal(lead);
+  }catch(error){
+    alert(error.message || "That opportunity could not be added to the Action Plan.");
+  }
 }
 
 async function savePinnacleActionPlan(){

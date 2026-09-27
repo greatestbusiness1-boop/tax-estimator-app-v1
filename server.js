@@ -50,6 +50,9 @@ const {
   FILING_STATUSES: PINNACLE_VALID_FILING_STATUSES,
   SUPPORTED_TAX_YEARS: PINNACLE_SUPPORTED_TAX_YEARS
 } = require("./schema/input.schema");
+const {
+  buildPinnaclePlanningOpportunities
+} = require("./engines/pinnaclePlanningEngine");
 
 require("dotenv").config();
 const STRIPE_SECRET_KEY = String(
@@ -20661,6 +20664,19 @@ function normalizePinnacleRecommendation(raw, existingById, now) {
       4000,
       existing?.preparerNotes || ""
     ),
+    // Provenance, populated only when this recommendation originated from a
+    // Pinnacle Planning Opportunity (see buildPinnacleRecommendationFromOpportunity
+    // below) -- additive fields, so recommendations created before Phase 3
+    // simply carry "" here and remain fully compatible.
+    strategyKey: capPinnacleText(source.strategyKey, 100, existing?.strategyKey || ""),
+    sourceOpportunityId: capPinnacleText(
+      source.sourceOpportunityId,
+      100,
+      existing?.sourceOpportunityId || ""
+    ),
+    generatedAt: source.generatedAt !== undefined
+      ? normalizePinnacleActionPlanDate(source.generatedAt)
+      : existing?.generatedAt || "",
     createdAt: existing?.createdAt || now,
     updatedAt: now
   };
@@ -21015,6 +21031,43 @@ function sumPinnacleWorkspaceTaxPayments(workspace = {}, taxYear) {
   }, 0);
 }
 
+// Actual money the client has recorded as SAVED toward taxes -- never to be
+// confused with sumPinnacleWorkspaceTaxPayments() above, which counts money
+// actually PAID to a taxing authority. Mirrors the frontend's own
+// summarizePinnacleTaxActivity() deposit total (client-portal-home.html):
+// all non-voided "deposit" entries, not filtered by tax year, since a
+// client's tax-savings fund is not necessarily earmarked to a single year.
+function sumPinnacleWorkspaceSavingsDeposits(workspace = {}) {
+  const entries = Array.isArray(workspace.taxActivity) ? workspace.taxActivity : [];
+
+  return entries.reduce((sum, item) => {
+    if (!item || typeof item !== "object") return sum;
+    if (item.voidedAt) return sum;
+    if (String(item.recordType || "") !== "deposit") return sum;
+    return sum + Math.max(0, getTaxWatchNumber(item.amount));
+  }, 0);
+}
+
+// Counts recorded mileage entries that are missing information the
+// workspace itself already tracks (a date, or a mile/odometer value) --
+// used only to flag existing records for completion, never to guess at
+// mileage that was never recorded at all.
+function countPinnacleIncompleteMileageRecords(workspace = {}) {
+  const trips = Array.isArray(workspace.trips) ? workspace.trips : [];
+  const dailyMileage = Array.isArray(workspace.dailyMileage) ? workspace.dailyMileage : [];
+
+  const incompleteTrips = trips.filter((trip) => {
+    if (String(trip?.classification || "").toLowerCase() !== "business") return false;
+    return !trip?.date || !(Math.max(0, getTaxWatchNumber(trip.miles)) > 0);
+  }).length;
+
+  const incompleteDaily = dailyMileage.filter((entry) => {
+    return !entry?.date || (!getTaxWatchNumber(entry?.startOdometer) && !getTaxWatchNumber(entry?.endOdometer));
+  }).length;
+
+  return incompleteTrips + incompleteDaily;
+}
+
 function computePinnacleTaxReserve(workspace = {}, options = {}) {
   const { taxYear, isCurrentYear } = getPinnacleReserveTaxYear();
   const businessProfile =
@@ -21294,6 +21347,246 @@ app.get(
     return res.status(200).json({
       ok: true,
       pinnacleTaxReserve: reserve
+    });
+  }
+);
+
+
+// =============================================================================
+// PINNACLE PLANNING INTELLIGENCE V1 -- office-only, deterministic planning
+// opportunities, built from the same authoritative Pinnacle reserve
+// calculation above plus a few additional raw workspace sums. See
+// engines/pinnaclePlanningEngine.js for the actual strategy rules. This
+// module never talks to a client directly: opportunities are always
+// office-only until a preparer explicitly copies one into an Action Plan
+// recommendation (which starts as "proposed", never auto-approved).
+// =============================================================================
+
+function buildPinnaclePlanningContext(workspace = {}, options = {}) {
+  const reserve = computePinnacleTaxReserve(workspace, options);
+
+  return {
+    taxYear: reserve.taxYear,
+    reserve,
+    grossBusinessIncome: sumPinnacleWorkspaceIncome(workspace),
+    businessExpenses: sumPinnacleWorkspaceExpenses(workspace),
+    businessMileageTotal: sumPinnacleWorkspaceMileage(workspace, false).businessMileage,
+    incompleteMileageRecordCount: countPinnacleIncompleteMileageRecords(workspace),
+    savingsDeposited: sumPinnacleWorkspaceSavingsDeposits(workspace)
+  };
+}
+
+function getPinnaclePlanningOpportunitiesForWorkspace(workspace = {}, options = {}) {
+  const context = buildPinnaclePlanningContext(
+    normalizeClientPortalPinnacleWorkspace(workspace),
+    options
+  );
+  return buildPinnaclePlanningOpportunities(context);
+}
+
+// Converts a detected opportunity into a DRAFT Action Plan recommendation.
+// Always status "proposed" regardless of any caller-supplied override --
+// a preparer adding an opportunity is not the same as a preparer approving
+// it; the plan-level status (and per-recommendation status) must still be
+// deliberately advanced through the existing Action Plan workflow before a
+// client ever sees it.
+function buildPinnacleRecommendationFromOpportunity(opportunity, overrides = {}, generatedAt) {
+  const source = overrides && typeof overrides === "object" && !Array.isArray(overrides) ? overrides : {};
+
+  const documentsNeededText = Array.isArray(opportunity.documentsNeeded)
+    ? opportunity.documentsNeeded.join(", ")
+    : String(opportunity.documentsNeeded || "");
+
+  const estimatedImpactText = typeof opportunity.estimatedImpact === "number"
+    ? `Approximately $${Math.round(opportunity.estimatedImpact).toLocaleString("en-US")} (system-calculated estimate)`
+    : "";
+
+  return {
+    category: source.category !== undefined ? source.category : opportunity.category,
+    title: source.title !== undefined ? source.title : opportunity.title,
+    recommendation: source.recommendation !== undefined ? source.recommendation : opportunity.finding,
+    rationale: source.rationale !== undefined ? source.rationale : opportunity.rationale,
+    estimatedImpact: source.estimatedImpact !== undefined ? source.estimatedImpact : estimatedImpactText,
+    impactType: source.impactType !== undefined ? source.impactType : opportunity.impactType,
+    deadline: source.deadline !== undefined ? source.deadline : opportunity.deadline,
+    documentsNeeded: source.documentsNeeded !== undefined ? source.documentsNeeded : documentsNeededText,
+    clientAction: source.clientAction !== undefined ? source.clientAction : opportunity.suggestedClientAction,
+    priority: source.priority !== undefined ? source.priority : opportunity.priority,
+    status: "proposed",
+    requiresProfessionalReview: opportunity.requiresProfessionalReview,
+    preparerNotes: source.preparerNotes !== undefined ? source.preparerNotes : "",
+    strategyKey: opportunity.strategyKey,
+    sourceOpportunityId: opportunity.id,
+    generatedAt
+  };
+}
+
+// Office-only: run the deterministic planning-opportunity analysis fresh for
+// a specific lead. Read-only -- never written into the lead record.
+app.get(
+  "/api/admin/pinnacle-planning-opportunities/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const planningOpportunities = getPinnaclePlanningOpportunitiesForWorkspace(
+      lead?.pinnacleWorkspace || {},
+      { fallbackFilingStatus: lead?.taxData?.filingStatus || "" }
+    );
+
+    return res.status(200).json({
+      ok: true,
+      planningOpportunities
+    });
+  }
+);
+
+// Office-only: a preparer deliberately copies ONE detected opportunity into
+// the Action Plan as a new draft/proposed recommendation. Opportunities are
+// re-derived server-side from the lead's current data (never trusted from
+// the request body) so a stale or fabricated strategyKey cannot be injected.
+// This never bulk-adds, never auto-approves, and never touches the plan's
+// own status.
+app.post(
+  "/api/admin/pinnacle-planning-opportunities/:leadId/add-to-action-plan",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    const strategyKey = String(req.body?.strategyKey || "").trim();
+    if (!strategyKey) {
+      return res.status(400).json({
+        ok: false,
+        error: "A strategyKey is required."
+      });
+    }
+
+    const overrides =
+      req.body?.overrides &&
+      typeof req.body.overrides === "object" &&
+      !Array.isArray(req.body.overrides)
+        ? req.body.overrides
+        : {};
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const planningOpportunities = getPinnaclePlanningOpportunitiesForWorkspace(
+      lead?.pinnacleWorkspace || {},
+      { fallbackFilingStatus: lead?.taxData?.filingStatus || "" }
+    );
+    const opportunity = planningOpportunities.opportunities.find(
+      (item) => item.strategyKey === strategyKey
+    );
+
+    if (!opportunity) {
+      return res.status(404).json({
+        ok: false,
+        error: "That planning opportunity is no longer present for this client."
+      });
+    }
+
+    const draftRecommendation = buildPinnacleRecommendationFromOpportunity(
+      opportunity,
+      overrides,
+      planningOpportunities.generatedAt
+    );
+
+    const updateResult = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => {
+        const existingPlan =
+          record.pinnacleActionPlan &&
+          typeof record.pinnacleActionPlan === "object" &&
+          !Array.isArray(record.pinnacleActionPlan)
+            ? record.pinnacleActionPlan
+            : {};
+
+        const existingRecommendations = Array.isArray(existingPlan.recommendations)
+          ? existingPlan.recommendations
+          : [];
+
+        const normalizedPlan = normalizePinnacleActionPlan(
+          { recommendations: [...existingRecommendations, draftRecommendation] },
+          existingPlan
+        );
+
+        return {
+          ...record,
+          pinnacleActionPlan: normalizedPlan,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    );
+
+    if (!updateResult.ok) {
+      return res.status(
+        updateResult.code === "LEAD_NOT_FOUND" ? 404 : 500
+      ).json({
+        ok: false,
+        error:
+          updateResult.error ||
+          "The opportunity could not be added to the Action Plan."
+      });
+    }
+
+    const savedPlan =
+      updateResult.lead?.pinnacleActionPlan ||
+      updateResult.lead?.raw?.pinnacleActionPlan ||
+      null;
+    const addedRecommendation = Array.isArray(savedPlan?.recommendations)
+      ? savedPlan.recommendations[savedPlan.recommendations.length - 1]
+      : null;
+
+    return res.status(200).json({
+      ok: true,
+      pinnacleActionPlan: savedPlan,
+      addedRecommendation
     });
   }
 );
