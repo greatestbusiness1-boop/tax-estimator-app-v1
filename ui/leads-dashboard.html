@@ -4205,6 +4205,35 @@ function getTaxWatchWorklistActivityAt(lead){
   return getLeadEnteredAt(lead);
 }
 
+// Deterministic, derived office workflow for a Pinnacle enrollment lead --
+// no separate stored status field, so this can never drift out of sync with
+// the actual pinnacleActionPlan.status. "No plan yet" and "plan still draft"
+// are treated identically as NEW ENROLLMENT, matching the task definition.
+function getPinnacleWorkflowStatus(lead){
+  const plan =
+    lead?.pinnacleActionPlan && typeof lead.pinnacleActionPlan === "object"
+      ? lead.pinnacleActionPlan
+      : null;
+  const planStatus = plan?.status || "draft";
+
+  if(planStatus === "needs_review"){
+    return { key:"needs_review", label:"Needs Review", nextActionLabel:"Review Action Plan" };
+  }
+  if(planStatus === "approved"){
+    return { key:"ready_to_deliver", label:"Ready to Deliver", nextActionLabel:"Preview / Deliver" };
+  }
+  if(planStatus === "delivered"){
+    return { key:"delivered", label:"Delivered", nextActionLabel:"View Delivered Plan" };
+  }
+  return { key:"new_enrollment", label:"New Enrollment", nextActionLabel:"Create / Manage Action Plan" };
+}
+
+// Delivered plans require no further office action -- excluded from the
+// attention count (task section 4).
+function pinnacleWorkflowNeedsAttention(lead){
+  return getPinnacleWorkflowStatus(lead).key !== "delivered";
+}
+
 function isPinnacleEnrollmentLead(lead){
   const enrollment = getMembershipEnrollmentText(lead);
   const service = enrollment.service.toLowerCase();
@@ -4578,9 +4607,12 @@ function updateMembershipEnrollmentCounts(){
       buttonId: "pinnacleEnrollmentsSidebarButton",
       badgeId: "pinnacleEnrollmentsSidebarCount",
       label: "Pinnacle Tax Action Plan",
-      recordLabel: "enrollment",
+      recordLabel: "needing office attention",
+      // Attention count, not a total -- delivered plans need no further
+      // office action and are excluded (task section 4).
       count: (allLeads || [])
         .filter(isPinnacleEnrollmentLead)
+        .filter(pinnacleWorkflowNeedsAttention)
         .length
     }
   ];
@@ -11383,6 +11415,18 @@ function renderLeads(){
                 String(lead?.leadId || "Not provided");
               const latestAction =
                 getMembershipLatestAction(lead);
+              const pinnacleWorkflow =
+                currentView === "pinnacleenrollments"
+                  ? getPinnacleWorkflowStatus(lead)
+                  : null;
+              const pinnacleLastPlanUpdate =
+                pinnacleWorkflow
+                  ? formatLeadDate(
+                      lead?.pinnacleActionPlan?.updatedAt ||
+                      lead?.pinnacleActionPlan?.lastReviewedAt ||
+                      ""
+                    )
+                  : "";
 
               return `
                 <tr>
@@ -11405,7 +11449,13 @@ function renderLeads(){
                   <td>
                     <strong>${escapeOfficeHtml(reference)}</strong>
                   </td>
-                  <td>${escapeOfficeHtml(latestAction)}</td>
+                  <td>
+                    ${
+                      pinnacleWorkflow
+                        ? `<span class="status-pill" style="text-transform:uppercase;font-size:11px;">${escapeOfficeHtml(pinnacleWorkflow.label)}</span>${lead?.pinnacleActionPlan?.taxYear ? ` <span style="font-size:11px;color:#64748b;">(TY ${escapeOfficeHtml(lead.pinnacleActionPlan.taxYear)})</span>` : ""}<br>${pinnacleLastPlanUpdate ? `<span style="font-size:11px;color:#64748b;">Plan updated ${escapeOfficeHtml(pinnacleLastPlanUpdate)}</span>` : `<span style="font-size:11px;color:#64748b;">${escapeOfficeHtml(latestAction)}</span>`}`
+                        : escapeOfficeHtml(latestAction)
+                    }
+                  </td>
                   <td>
                     <button
                       class="closed-open-btn"
@@ -11414,13 +11464,13 @@ function renderLeads(){
                       Open
                     </button>
                     ${
-                      currentView === "pinnacleenrollments"
+                      pinnacleWorkflow
                         ? `<button
                             class="closed-open-btn"
                             style="margin-top:6px;"
                             onclick="openPinnacleActionPlanModal(${escapeOfficeHtml(JSON.stringify(String(lead?.leadId || "")))})"
                           >
-                            Manage Action Plan
+                            ${escapeOfficeHtml(pinnacleWorkflow.nextActionLabel)}
                           </button>`
                         : ""
                     }
@@ -17935,6 +17985,7 @@ function renderPinnacleActionPlanModal(lead){
   body.innerHTML = `
     <div style="margin-bottom:10px;color:#0f2f55;font-weight:700;">${escapeOfficeHtml(clientName)}</div>
     ${pinnacleWorkspaceSummaryHtml(lead)}
+    ${pinnacleNotificationsSummaryHtml(lead)}
     ${pinnacleTaxReserveSummaryHtml(pinnacleTaxReserveForModal)}
     ${pinnaclePlanningOpportunitiesHtml(pinnaclePlanningOpportunitiesForModal)}
     ${pinnacleAdvancedPlanningHtml(pinnacleAdvancedPlanningForModal)}
@@ -17961,9 +18012,71 @@ function renderPinnacleActionPlanModal(lead){
       <button type="button" onclick="savePinnacleActionPlan()" style="border:none;background:#0f2f55;color:#fff;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Save Action Plan</button>
       <button type="button" onclick="previewPinnacleActionPlanReport()" style="border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Preview Client Action Plan</button>
       ${draft.status === "approved" ? `<button type="button" onclick="deliverPinnacleActionPlan()" style="border:none;background:#f59e0b;color:#3d2b00;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Mark as Delivered</button>` : ""}
+      ${draft.status === "delivered" ? `<button type="button" onclick="resendPinnacleNotification('plan-ready')" style="border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Resend Plan-Ready Email</button>` : ""}
+      ${isPinnacleEnrollmentLead(lead) ? `<button type="button" onclick="resendPinnacleNotification('enrollment-confirmation')" style="border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Resend Enrollment Email</button>` : ""}
       <span style="font-size:12px;color:#94a3b8;">Only a plan marked "approved" or "delivered" is visible to the client, and preparer notes are never shown to the client.</span>
     </div>
   `;
+}
+
+// Concise, office-only notification status -- no raw SMTP errors, matching
+// the task's "keep raw errors out of normal UI" requirement (detailed
+// errors are only ever logged server-side via console.warn).
+function pinnacleNotificationsSummaryHtml(lead){
+  const notifications = lead?.pinnacleNotifications && typeof lead.pinnacleNotifications === "object"
+    ? lead.pinnacleNotifications
+    : {};
+
+  const describe = (entry) => {
+    if(!entry) return "Not sent";
+    if(entry.status === "sent" && entry.sentAt) return `Sent ${escapeOfficeHtml(entry.sentAt)}`;
+    if(entry.status === "unavailable") return "Not sent -- no valid email on file";
+    if(entry.status === "failed") return "Failed -- see server logs";
+    return "Not sent";
+  };
+
+  return `
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#334155;">
+      <strong>Pinnacle Notifications (office-only)</strong>
+      <div style="margin-top:6px;">Enrollment confirmation: ${describe(notifications.enrollmentConfirmation)}</div>
+      <div>Plan-ready notification: ${describe(notifications.planReady)}</div>
+    </div>
+  `;
+}
+
+async function resendPinnacleNotification(kind){
+  if(!pinnacleActionPlanLeadId) return;
+  const path = kind === "plan-ready"
+    ? `/api/admin/pinnacle-action-plan/${encodeURIComponent(pinnacleActionPlanLeadId)}/resend-plan-ready-email`
+    : `/api/admin/pinnacle-action-plan/${encodeURIComponent(pinnacleActionPlanLeadId)}/resend-enrollment-confirmation`;
+
+  try{
+    const response = await fetch(path, { method: "POST", credentials: "same-origin" });
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "The notification could not be resent.");
+    }
+
+    alert(result.notification?.ok ? "Notification sent." : "The notification attempt failed. See server logs for details.");
+
+    const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
+    if(lead){
+      const key = kind === "plan-ready" ? "planReady" : "enrollmentConfirmation";
+      const previous = lead.pinnacleNotifications?.[key] || {};
+      lead.pinnacleNotifications = {
+        ...(lead.pinnacleNotifications || {}),
+        [key]: {
+          ...previous,
+          status: result.notification?.ok ? "sent" : (result.notification?.reason === "no_email" ? "unavailable" : "failed"),
+          sentAt: result.notification?.ok ? new Date().toISOString() : (previous.sentAt || "")
+        }
+      };
+    }
+    renderPinnacleActionPlanModal(lead);
+  }catch(error){
+    alert(error.message || "The notification could not be resent.");
+  }
 }
 
 function previewPinnacleActionPlanReport(){
@@ -17989,6 +18102,14 @@ async function deliverPinnacleActionPlan(){
     const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
     if(lead){
       lead.pinnacleActionPlan = result.pinnacleActionPlan;
+      lead.pinnacleNotifications = {
+        ...(lead.pinnacleNotifications || {}),
+        planReady: {
+          ...(lead.pinnacleNotifications?.planReady || {}),
+          status: result.notification?.ok ? "sent" : (result.notification?.reason === "no_email" ? "unavailable" : "failed"),
+          sentAt: result.notification?.ok ? new Date().toISOString() : (lead.pinnacleNotifications?.planReady?.sentAt || "")
+        }
+      };
     }
 
     pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(result.pinnacleActionPlan || {});

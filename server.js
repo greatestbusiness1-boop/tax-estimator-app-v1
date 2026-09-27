@@ -2118,6 +2118,16 @@ function mapRowToLead(row) {
       row.pinnacleActionPlan ||
       row.pinnacle_action_plan ||
       null,
+    // Office-only notification audit trail (Phase 6) -- enrollment-
+    // confirmation and plan-ready email send state. Deliberately separate
+    // from pinnacleActionPlan/membershipEnrollment so an email attempt or
+    // failure can never touch deliveredAt/deliveryVersion/deliveredSnapshot
+    // or enrollment status.
+    pinnacleNotifications:
+      estimate.pinnacleNotifications ||
+      row.pinnacleNotifications ||
+      row.pinnacle_notifications ||
+      null,
     clientPortal: sanitizeClientPortalRecord(
       estimate.clientPortal ||
       row.clientPortal ||
@@ -21043,6 +21053,244 @@ function buildPinnacleActionPlanReport(lead = {}, options = {}) {
   };
 }
 
+// =============================================================================
+// PINNACLE WORKFLOW + NOTIFICATIONS (Phase 6)
+//
+// Two Pinnacle-specific transactional emails, modeled directly on the
+// existing sendSecureTranscriptDeliveryEmail() convention: secure-portal-CTA
+// only, never sensitive tax content, a plain try/caught sendMail call that
+// never throws. Unlike that helper, these return {ok, error} so the caller
+// can persist an office-readable notification status instead of only
+// logging to the console.
+//
+// State lives in the additive, isolated lead.pinnacleNotifications field
+// (see mapRowToLead() above) -- never inside pinnacleActionPlan or
+// membershipEnrollment, so an email attempt or failure can never touch
+// deliveredAt/deliveryVersion/deliveredSnapshot or enrollment status.
+// =============================================================================
+
+function isUsablePinnacleNotificationEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function getPinnacleClientPortalUrl() {
+  return String(APP_BASE_URL || "").replace(/\/+$/, "") + "/client-portal";
+}
+
+// A lead is treated as an active Pinnacle enrollment purely from the
+// existing generic membership model (contactRequest.membershipEnrollment)
+// -- no separate Pinnacle-only enrollment record is introduced.
+function isPinnacleActiveEnrollment(lead = {}) {
+  const enrollment =
+    lead?.contactRequest?.membershipEnrollment ||
+    lead?.Request?.membershipEnrollment ||
+    null;
+  return Boolean(
+    enrollment &&
+    enrollment.planKey === "pinnacle" &&
+    enrollment.enrollmentStatus === "Active Membership"
+  );
+}
+
+async function sendPinnacleEnrollmentConfirmationEmail({ to, clientName }) {
+  const email = normalizeEmail(to);
+  if (!email) return { ok: false, error: "No recipient email." };
+
+  const portalUrl = getPinnacleClientPortalUrl();
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject: "You're enrolled in the Pinnacle Tax Action Plan",
+      text:
+`Hello ${clientName || "Client"},
+
+You are enrolled in the Pinnacle Tax Action Plan.
+
+Your tax professional will prepare and review your Action Plan using the business and income information you provide. This can take some time, and your plan is not ready immediately -- you will be able to review it in your secure client portal once it has been prepared and approved.
+
+In the meantime, please sign in and complete or update your Pinnacle Business Profile so your Action Plan can be prepared accurately:
+${portalUrl}
+
+For your security, we never send tax calculations, account numbers, or other sensitive information by email. Everything related to your Action Plan stays inside your secure client portal.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error?.message || String(error) };
+  }
+}
+
+async function sendPinnacleActionPlanReadyEmail({ to, clientName }) {
+  const email = normalizeEmail(to);
+  if (!email) return { ok: false, error: "No recipient email." };
+
+  const portalUrl = getPinnacleClientPortalUrl();
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: email,
+      subject: "Your Pinnacle Tax Action Plan is ready",
+      text:
+`Hello ${clientName || "Client"},
+
+Your Pinnacle Tax Action Plan has been reviewed and is ready for you to view in your secure client portal:
+${portalUrl}
+
+This plan is based on the information available when it was prepared. If your income, expenses, or other facts have changed, or if you have questions about any recommendation, please contact your preparer before acting on it.
+
+For your security, this email does not include your tax calculations or recommendations -- please sign in to the secure client portal to review your complete Action Plan.
+
+Thank you,
+Greatest Business Solution LLC`
+    });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error?.message || String(error) };
+  }
+}
+
+// Idempotent: sends at most once per enrollment unless {resend:true} is
+// explicitly passed by a deliberate office action. Never throws -- a send
+// failure is recorded as a status, not propagated, so it can never corrupt
+// or roll back the underlying membership enrollment.
+async function maybeSendPinnacleEnrollmentConfirmation(lead = {}, options = {}) {
+  const leadId = String(lead?.leadId || "").trim();
+  if (!leadId) return { attempted: false, reason: "no_lead" };
+
+  if (!options.resend && !isPinnacleActiveEnrollment(lead)) {
+    return { attempted: false, reason: "not_active_pinnacle_enrollment" };
+  }
+
+  const existing = lead?.pinnacleNotifications?.enrollmentConfirmation || {};
+  if (!options.resend && existing.sentAt) {
+    return { attempted: false, alreadySent: true };
+  }
+
+  const email = getLeadEmailValue(lead);
+  const clientName = getLeadNameValue(lead);
+  const now = new Date().toISOString();
+
+  if (!isUsablePinnacleNotificationEmail(email)) {
+    await updateLeadAfterStripePayment(leadId, (record = {}) => ({
+      ...record,
+      pinnacleNotifications: {
+        ...(record.pinnacleNotifications && typeof record.pinnacleNotifications === "object" ? record.pinnacleNotifications : {}),
+        enrollmentConfirmation: {
+          ...existing,
+          status: "unavailable",
+          lastAttemptAt: now,
+          lastError: "No valid email address is on file for this account."
+        }
+      }
+    }));
+    return { attempted: false, reason: "no_email" };
+  }
+
+  const sendResult = await sendPinnacleEnrollmentConfirmationEmail({ to: email, clientName });
+  const sentAt = new Date().toISOString();
+
+  await updateLeadAfterStripePayment(leadId, (record = {}) => {
+    const currentNotifications =
+      record.pinnacleNotifications && typeof record.pinnacleNotifications === "object"
+        ? record.pinnacleNotifications
+        : {};
+    const currentEntry =
+      currentNotifications.enrollmentConfirmation && typeof currentNotifications.enrollmentConfirmation === "object"
+        ? currentNotifications.enrollmentConfirmation
+        : {};
+
+    return {
+      ...record,
+      pinnacleNotifications: {
+        ...currentNotifications,
+        enrollmentConfirmation: {
+          status: sendResult.ok ? "sent" : "failed",
+          sentAt: sendResult.ok ? sentAt : currentEntry.sentAt || "",
+          lastAttemptAt: sentAt,
+          lastError: sendResult.ok ? "" : sendResult.error || "Email delivery failed."
+        }
+      }
+    };
+  });
+
+  return { attempted: true, ok: sendResult.ok, error: sendResult.error };
+}
+
+// Idempotent per deliveryVersion: an automatic post-delivery attempt only
+// sends once for a given deliveryVersion; {resend:true} (the dedicated
+// office resend action) always attempts again without touching deliveredAt/
+// deliveryVersion/deliveredSnapshot -- this function never writes to
+// pinnacleActionPlan at all, only to the isolated pinnacleNotifications field.
+async function maybeSendPinnacleActionPlanReadyEmail(lead = {}, plan = {}, options = {}) {
+  const leadId = String(lead?.leadId || "").trim();
+  if (!leadId) return { attempted: false, reason: "no_lead" };
+
+  const existing = lead?.pinnacleNotifications?.planReady || {};
+  const alreadySentForThisVersion =
+    existing.sentAt && existing.deliveryVersion === (plan?.deliveryVersion ?? null);
+
+  if (!options.resend && alreadySentForThisVersion) {
+    return { attempted: false, alreadySent: true };
+  }
+
+  const email = getLeadEmailValue(lead);
+  const clientName = getLeadNameValue(lead);
+  const now = new Date().toISOString();
+
+  if (!isUsablePinnacleNotificationEmail(email)) {
+    await updateLeadAfterStripePayment(leadId, (record = {}) => ({
+      ...record,
+      pinnacleNotifications: {
+        ...(record.pinnacleNotifications && typeof record.pinnacleNotifications === "object" ? record.pinnacleNotifications : {}),
+        planReady: {
+          ...existing,
+          status: "unavailable",
+          lastAttemptAt: now,
+          lastError: "No valid email address is on file for this account."
+        }
+      }
+    }));
+    return { attempted: false, reason: "no_email" };
+  }
+
+  const sendResult = await sendPinnacleActionPlanReadyEmail({ to: email, clientName });
+  const sentAt = new Date().toISOString();
+
+  await updateLeadAfterStripePayment(leadId, (record = {}) => {
+    const currentNotifications =
+      record.pinnacleNotifications && typeof record.pinnacleNotifications === "object"
+        ? record.pinnacleNotifications
+        : {};
+    const currentEntry =
+      currentNotifications.planReady && typeof currentNotifications.planReady === "object"
+        ? currentNotifications.planReady
+        : {};
+
+    return {
+      ...record,
+      pinnacleNotifications: {
+        ...currentNotifications,
+        planReady: {
+          status: sendResult.ok ? "sent" : "failed",
+          sentAt: sendResult.ok ? sentAt : currentEntry.sentAt || "",
+          deliveryVersion: sendResult.ok
+            ? (plan?.deliveryVersion ?? currentEntry.deliveryVersion ?? null)
+            : currentEntry.deliveryVersion ?? null,
+          lastAttemptAt: sentAt,
+          lastError: sendResult.ok ? "" : sendResult.error || "Email delivery failed."
+        }
+      }
+    };
+  });
+
+  return { attempted: true, ok: sendResult.ok, error: sendResult.error };
+}
+
 // Office-only: create/update a Pinnacle Action Plan for a specific lead.
 // Never exposes or accepts the raw whole-lead JSON blob -- only the
 // pinnacleActionPlan sub-object, fully re-validated/normalized server-side
@@ -21244,12 +21492,143 @@ app.post(
       });
     }
 
+    // Attempt the plan-ready notification after the delivery itself has
+    // already succeeded and been persisted. This never runs inside the
+    // write above, and a failure here is recorded to pinnacleNotifications
+    // only -- it can never revert delivered status or touch deliveredAt/
+    // deliveryVersion/deliveredSnapshot (see maybeSendPinnacleActionPlanReadyEmail).
+    const notification = await maybeSendPinnacleActionPlanReadyEmail(
+      updateResult.lead || {},
+      savedPlan
+    );
+
     return res.status(200).json({
       ok: true,
-      pinnacleActionPlan: savedPlan
+      pinnacleActionPlan: savedPlan,
+      notification
     });
   }
 );
+
+// Office-only: resend the plan-ready email for an already-delivered plan.
+// Never changes deliveredAt, never increments deliveryVersion, never
+// rebuilds deliveredSnapshot -- only records a new send attempt.
+app.post(
+  "/api/admin/pinnacle-action-plan/:leadId/resend-plan-ready-email",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({ ok: false, error: "A leadId is required." });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({ ok: false, error: "Lead not found." });
+    }
+
+    const plan =
+      lead.pinnacleActionPlan && typeof lead.pinnacleActionPlan === "object"
+        ? lead.pinnacleActionPlan
+        : {};
+
+    if (plan.status !== "delivered") {
+      return res.status(400).json({
+        ok: false,
+        error: "This plan has not been delivered yet, so there is no plan-ready email to resend."
+      });
+    }
+
+    const notification = await maybeSendPinnacleActionPlanReadyEmail(lead, plan, { resend: true });
+
+    return res.status(200).json({ ok: true, notification });
+  }
+);
+
+// Office-only: resend/retry the Pinnacle enrollment confirmation email.
+// Since Pinnacle Stripe checkout remains disabled, this is also the only
+// way to (re)send an enrollment confirmation today for a lead whose
+// enrollment was recorded through another channel.
+app.post(
+  "/api/admin/pinnacle-action-plan/:leadId/resend-enrollment-confirmation",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({ ok: false, error: "A leadId is required." });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({ ok: false, error: "Lead not found." });
+    }
+
+    if (!isPinnacleActiveEnrollment(lead)) {
+      return res.status(400).json({
+        ok: false,
+        error: "This lead does not have an active Pinnacle enrollment to send a confirmation for."
+      });
+    }
+
+    const notification = await maybeSendPinnacleEnrollmentConfirmation(lead, { resend: true });
+
+    return res.status(200).json({ ok: true, notification });
+  }
+);
+
+// Local-only (no production bypass, unlike GET /api/dev/sent-test-emails):
+// exercises the same idempotent maybeSendPinnacleEnrollmentConfirmation()
+// the real Stripe webhook path calls, without needing a real Stripe
+// subscription/invoice. Since Pinnacle checkout is disabled, this is the
+// only way to test the natural (non-resend) enrollment-confirmation gate
+// end-to-end -- it does not add any office- or client-reachable surface.
+app.post("/api/dev/pinnacle-notifications/trigger-enrollment-confirmation/:leadId", async (req, res) => {
+  const host = String(req.headers.host || "").toLowerCase();
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+
+  if (!isLocal) {
+    return res.status(404).json({ ok: false, error: "Not found." });
+  }
+
+  const leadId = String(req.params.leadId || "").trim();
+  if (!leadId) {
+    return res.status(400).json({ ok: false, error: "A leadId is required." });
+  }
+
+  let lead;
+  try {
+    lead = await findLeadRecordById(leadId);
+  } catch (error) {
+    return res.status(503).json({ ok: false, error: error?.message || "The lead database could not be reached." });
+  }
+
+  if (!lead) {
+    return res.status(404).json({ ok: false, error: "Lead not found." });
+  }
+
+  const result = await maybeSendPinnacleEnrollmentConfirmation(lead);
+  return res.status(200).json({ ok: true, result });
+});
 
 // Office-only: preview the exact report a client would see, using the same
 // client-safe buildPinnacleActionPlanReport() model the client route below
@@ -29062,6 +29441,22 @@ async function applyMembershipStripeUpdate(
           error?.message || error
         );
       }
+    }
+
+    // Pinnacle-only, additive: attempt the enrollment confirmation email.
+    // isPinnacleActiveEnrollment() gates this to planKey "pinnacle" only,
+    // so Tax Watch Pro enrollments are completely unaffected, and
+    // maybeSendPinnacleEnrollmentConfirmation() is idempotent (sends at
+    // most once) and never throws, so it cannot affect this function's own
+    // return value or the membership state that was already persisted
+    // above.
+    try {
+      await maybeSendPinnacleEnrollmentConfirmation(updateResult.lead || {});
+    } catch (error) {
+      console.warn(
+        "[pinnacle] Enrollment confirmation email attempt failed:",
+        error?.message || error
+      );
     }
   }
 
