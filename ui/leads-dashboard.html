@@ -17959,9 +17959,43 @@ function renderPinnacleActionPlanModal(lead){
 
     <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button type="button" onclick="savePinnacleActionPlan()" style="border:none;background:#0f2f55;color:#fff;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Save Action Plan</button>
+      <button type="button" onclick="previewPinnacleActionPlanReport()" style="border:none;background:#e0f2fe;color:#075985;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Preview Client Action Plan</button>
+      ${draft.status === "approved" ? `<button type="button" onclick="deliverPinnacleActionPlan()" style="border:none;background:#f59e0b;color:#3d2b00;border-radius:8px;padding:10px 18px;font-weight:800;cursor:pointer;">Mark as Delivered</button>` : ""}
       <span style="font-size:12px;color:#94a3b8;">Only a plan marked "approved" or "delivered" is visible to the client, and preparer notes are never shown to the client.</span>
     </div>
   `;
+}
+
+function previewPinnacleActionPlanReport(){
+  if(!pinnacleActionPlanLeadId) return;
+  window.open(`/office/pinnacle-action-plan-report/${encodeURIComponent(pinnacleActionPlanLeadId)}`, "_blank", "noopener");
+}
+
+async function deliverPinnacleActionPlan(){
+  if(!pinnacleActionPlanLeadId) return;
+  if(!confirm("Mark this Pinnacle Tax Action Plan as delivered? The client will be able to view it in their portal.")) return;
+
+  try{
+    const response = await fetch(
+      `/api/admin/pinnacle-action-plan/${encodeURIComponent(pinnacleActionPlanLeadId)}/deliver`,
+      { method: "POST", credentials: "same-origin" }
+    );
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || "The plan could not be marked as delivered.");
+    }
+
+    const lead = findLeadByIdForPinnacle(pinnacleActionPlanLeadId);
+    if(lead){
+      lead.pinnacleActionPlan = result.pinnacleActionPlan;
+    }
+
+    pinnacleActionPlanDraft = pinnacleActionPlanDraftFromPlan(result.pinnacleActionPlan || {});
+    renderPinnacleActionPlanModal(lead);
+  }catch(error){
+    alert(error.message || "The plan could not be marked as delivered.");
+  }
 }
 
 function addPinnacleRecommendation(){

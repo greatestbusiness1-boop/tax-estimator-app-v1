@@ -13226,6 +13226,7 @@
           <span><strong>Status:</strong> ${escapeHtml(actionPlan.status === "delivered" ? "Delivered" : "Approved")}</span>
           ${actionPlan.taxYear ? `<span><strong>Tax year:</strong> ${escapeHtml(actionPlan.taxYear)}</span>` : ""}
         </div>
+        <a class="portal-tier1-button" href="/client-portal/pinnacle/action-plan-report" target="_blank" rel="noopener" style="display:inline-block;margin:6px 0 16px;text-decoration:none;text-align:center;">View My Pinnacle Tax Action Plan</a>
         ${actionPlan.executiveSummary ? `<h4>Executive Summary</h4><p>${escapeHtml(actionPlan.executiveSummary)}</p>` : ""}
         ${actionPlan.currentTaxPosition ? `<h4>Current Tax Position</h4><p>${escapeHtml(actionPlan.currentTaxPosition)}</p>` : ""}
         <h4>Prioritized Recommended Actions</h4>

@@ -18736,6 +18736,39 @@ app.get(
   }
 );
 
+// The client's own Pinnacle Tax Action Plan report page. No leadId query
+// param -- the page's own JS fetches
+// GET /api/client-portal/pinnacle/action-plan-report, which derives the
+// lead from the session itself, so there is nothing here for a client to
+// manipulate to reach another customer's plan.
+app.get(
+  "/client-portal/pinnacle/action-plan-report",
+  requireClientPortalPageSession,
+  (req, res) => {
+    setClientPortalNoStore(res);
+    res.sendFile(
+      path.join(__dirname, "ui", "pinnacle-action-plan-report.html")
+    );
+  }
+);
+
+// Office-only preview of the same report page, in "office preview" mode
+// (the page's own JS detects the /office/ path and fetches the office
+// preview API instead of the client API). Serves the identical HTML file
+// as the client route above -- the client-safety guarantee comes from
+// buildPinnacleActionPlanReport() on the server, not from anything in this
+// page.
+app.get(
+  "/office/pinnacle-action-plan-report/:leadId",
+  requireOfficeDocumentReviewPage,
+  (req, res) => {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    res.sendFile(
+      path.join(__dirname, "ui", "pinnacle-action-plan-report.html")
+    );
+  }
+);
+
 
 app.get(
   "/office-document-review/sign-in",
@@ -20556,6 +20589,21 @@ const PINNACLE_ACTION_PLAN_STATUSES = [
   "delivered"
 ];
 
+// Status-transition rule (Phase 5): a plan may only become "delivered" from
+// "approved" (or stay "delivered" on a no-op re-save). draft -> delivered and
+// needs_review -> delivered are never allowed, so a client can never receive
+// a plan that skipped preparer approval. Regressing a plan backward (e.g.
+// approved -> draft, or even delivered -> draft, for corrections) remains
+// allowed -- see normalizePinnacleActionPlan's deliveredAt handling, which
+// preserves the original delivery timestamp as history even after a
+// regression, rather than clearing it.
+function isPinnacleActionPlanTransitionAllowed(fromStatus, toStatus) {
+  if (toStatus === "delivered") {
+    return fromStatus === "approved" || fromStatus === "delivered";
+  }
+  return true;
+}
+
 const PINNACLE_RECOMMENDATION_STATUSES = [
   "proposed",
   "approved",
@@ -20748,7 +20796,17 @@ function normalizePinnacleActionPlan(raw, existingPlan) {
     reviewedBy: source.reviewedBy !== undefined
       ? capPinnacleText(source.reviewedBy, 200)
       : existing.reviewedBy || "",
-    deliveredAt: status === "delivered" ? existing.deliveredAt || now : "",
+    // Once a plan has ever been delivered, deliveredAt is permanent history
+    // -- it is never cleared just because the status later regresses back to
+    // draft/needs_review for corrections (see
+    // isPinnacleActionPlanTransitionAllowed's comment above).
+    deliveredAt: existing.deliveredAt || (status === "delivered" ? now : ""),
+    // Additive, office-only delivery audit trail (Phase 5). Never settable
+    // via this generic normalizer's `source` input -- only the dedicated
+    // POST /api/admin/pinnacle-action-plan/:leadId/deliver route ever writes
+    // a new value, by merging it onto this function's output afterward.
+    deliveryVersion: existing.deliveryVersion || 0,
+    deliveredSnapshot: existing.deliveredSnapshot || null,
     createdAt: existing.createdAt || now,
     updatedAt: now
   };
@@ -20836,6 +20894,155 @@ function getClientPortalPinnacleActionPlan(entry = {}) {
   return buildClientFacingPinnacleActionPlan(rawPlan);
 }
 
+// =============================================================================
+// PINNACLE TAX ACTION PLAN REPORT (Phase 5) -- the premium client deliverable.
+//
+// Built entirely on top of buildClientFacingPinnacleActionPlan() above (the
+// same approved/delivered gate, the same PINNACLE_RECOMMENDATION_CLIENT_HIDDEN_STATUSES
+// filter, the same preparerNotes stripping) plus the authoritative
+// computePinnacleTaxReserve() for the tax-position snapshot. This module
+// performs no tax calculations of its own and copies no office-only field
+// (preparerNotes, calculationDetails, confidence, sourceInputs, review
+// reasons, raw planning opportunities) into the report model -- the model
+// returned here is exactly what both the client route and the office preview
+// route send to the browser.
+// =============================================================================
+
+const PINNACLE_REPORT_DISCLOSURE =
+  "This Pinnacle Tax Action Plan is based on the information available when it was prepared. Estimates may change if your income, expenses, or the underlying tax law change. Review any item still marked for professional review with your preparer before acting on it. This is tax-planning guidance, not a filed tax return.";
+
+// Splits a free-text field (documentsNeeded) on common delimiters into
+// individual checklist items -- documentsNeeded is preparer-entered as a
+// comma/semicolon-separated list in the existing admin UI.
+function splitPinnacleReportChecklistText(value) {
+  return String(value || "")
+    .split(/[,;\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function dedupePinnacleReportChecklistItems(items) {
+  const seen = new Set();
+  const result = [];
+  items.forEach((item) => {
+    const key = item.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(item);
+  });
+  return result;
+}
+
+function groupPinnacleReportRecommendationsByPriority(recommendations) {
+  const groups = { high: [], medium: [], low: [] };
+
+  recommendations.forEach((rec) => {
+    const key = groups[rec.priority] ? rec.priority : "medium";
+    groups[key].push({
+      title: rec.title || "",
+      recommendation: rec.recommendation || "",
+      rationale: rec.rationale || "",
+      estimatedImpact: rec.estimatedImpact || "",
+      impactType: rec.impactType || "",
+      deadline: rec.deadline || "",
+      documentsNeeded: rec.documentsNeeded || "",
+      clientAction: rec.clientAction || "",
+      status: rec.status || ""
+    });
+  });
+
+  return groups;
+}
+
+function buildPinnacleReportKeyDates(recommendations) {
+  return recommendations
+    .filter((rec) => rec.deadline && Number.isFinite(Date.parse(rec.deadline)))
+    .map((rec) => ({ title: rec.title || "", deadline: rec.deadline }))
+    .sort((a, b) => Date.parse(a.deadline) - Date.parse(b.deadline));
+}
+
+function buildPinnacleReportDocumentChecklist(recommendations) {
+  return dedupePinnacleReportChecklistItems(
+    recommendations.flatMap((rec) => splitPinnacleReportChecklistText(rec.documentsNeeded))
+  );
+}
+
+// clientAction is treated as a single sentence per recommendation (not
+// comma-split, unlike documentsNeeded) so an instruction containing a comma
+// is never fragmented -- only exact duplicate instructions are deduplicated.
+function buildPinnacleReportClientActionChecklist(recommendations) {
+  const items = recommendations
+    .map((rec) => String(rec.clientAction || "").trim())
+    .filter(Boolean);
+  return dedupePinnacleReportChecklistItems(items);
+}
+
+// lead is the mapRowToLead()-shaped object (as returned by
+// findLeadRecordById()), matching the convention already used by the other
+// Pinnacle admin routes -- not the {lead, raw} wrapper shape used only by
+// the taxWatch-derived `primary` entry in /api/client-portal/session.
+function buildPinnacleActionPlanReport(lead = {}, options = {}) {
+  const clientFacing = buildClientFacingPinnacleActionPlan(lead?.pinnacleActionPlan || null);
+
+  if (!clientFacing.available) {
+    return {
+      available: false,
+      preview: Boolean(options.preview),
+      status: clientFacing.status,
+      message: clientFacing.message
+    };
+  }
+
+  const recommendations = Array.isArray(clientFacing.recommendations)
+    ? clientFacing.recommendations
+    : [];
+
+  const normalizedWorkspace = normalizeClientPortalPinnacleWorkspace(
+    lead?.pinnacleWorkspace || {}
+  );
+  const businessName = normalizedWorkspace?.businessProfile?.fields?.legalName || "";
+
+  // Authoritative tax-position snapshot only -- the unresolved legacy
+  // per-source/month-filtered flat-reserve figures (client-portal-home.html's
+  // own local calculatePinnacleFinancialPlan()) are never touched by this
+  // server-side report and so can never leak into it.
+  const reserve = computePinnacleTaxReserve(normalizedWorkspace, {
+    fallbackFilingStatus: lead?.taxData?.filingStatus || ""
+  });
+  const taxPositionSnapshot = reserve.calculationStatus === "complete"
+    ? {
+        taxYear: reserve.taxYear,
+        estimatedTotalTax: reserve.estimatedTotalTax,
+        taxPaymentsRecorded: reserve.taxPaymentsRecorded,
+        remainingEstimatedTax: reserve.remainingEstimatedTax
+      }
+    : null;
+
+  return {
+    available: true,
+    preview: Boolean(options.preview),
+    identity: {
+      clientName: getLeadNameValue(lead),
+      businessName,
+      taxYear: clientFacing.taxYear,
+      preparedDate: clientFacing.updatedAt || "",
+      deliveredAt: clientFacing.deliveredAt || "",
+      status: clientFacing.status
+    },
+    executiveSummary: clientFacing.executiveSummary || "",
+    currentTaxPosition: {
+      narrative: clientFacing.currentTaxPosition || "",
+      snapshot: taxPositionSnapshot
+    },
+    priorityActionPlan: groupPinnacleReportRecommendationsByPriority(recommendations),
+    keyDates: buildPinnacleReportKeyDates(recommendations),
+    documentChecklist: buildPinnacleReportDocumentChecklist(recommendations),
+    clientActionChecklist: buildPinnacleReportClientActionChecklist(recommendations),
+    assumptions: clientFacing.assumptions || "",
+    disclosure: PINNACLE_REPORT_DISCLOSURE
+  };
+}
+
 // Office-only: create/update a Pinnacle Action Plan for a specific lead.
 // Never exposes or accepts the raw whole-lead JSON blob -- only the
 // pinnacleActionPlan sub-object, fully re-validated/normalized server-side
@@ -20857,6 +21064,28 @@ app.patch(
       req.body && typeof req.body === "object" && !Array.isArray(req.body)
         ? req.body
         : {};
+
+    if (body.status !== undefined) {
+      const requestedStatus = String(body.status || "").toLowerCase();
+      if (PINNACLE_ACTION_PLAN_STATUSES.includes(requestedStatus)) {
+        let currentLead;
+        try {
+          currentLead = await findLeadRecordById(leadId);
+        } catch (error) {
+          return res.status(503).json({
+            ok: false,
+            error: error?.message || "The lead database could not be reached."
+          });
+        }
+        const currentStatus = currentLead?.pinnacleActionPlan?.status || "draft";
+        if (!isPinnacleActionPlanTransitionAllowed(currentStatus, requestedStatus)) {
+          return res.status(400).json({
+            ok: false,
+            error: `A plan cannot move from "${currentStatus}" to "${requestedStatus}" directly. Only an approved plan can be marked as delivered -- use the dedicated deliver action once the plan is approved.`
+          });
+        }
+      }
+    }
 
     const updateResult = await updateLeadAfterStripePayment(
       leadId,
@@ -20900,6 +21129,213 @@ app.patch(
     return res.status(200).json({
       ok: true,
       pinnacleActionPlan: savedPlan
+    });
+  }
+);
+
+// Office-only: the dedicated "Mark as Delivered" action. Only an approved
+// plan may transition to delivered (enforced here independently of the
+// generic PATCH route's own transition guard, as defense in depth); the
+// delivered timestamp and the delivery snapshot/version are both generated
+// server-side -- a browser-supplied value for either is never trusted.
+// Recommendation statuses are left untouched.
+app.post(
+  "/api/admin/pinnacle-action-plan/:leadId/deliver",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const existingPlan =
+      lead.pinnacleActionPlan && typeof lead.pinnacleActionPlan === "object"
+        ? lead.pinnacleActionPlan
+        : {};
+
+    if (existingPlan.status !== "approved") {
+      return res.status(400).json({
+        ok: false,
+        error: 'Only an approved plan can be marked as delivered. Approve the plan first.'
+      });
+    }
+
+    const updateResult = await updateLeadAfterStripePayment(
+      leadId,
+      (record = {}) => {
+        const currentPlan =
+          record.pinnacleActionPlan && typeof record.pinnacleActionPlan === "object"
+            ? record.pinnacleActionPlan
+            : {};
+
+        // Re-check inside the write itself, in case the plan changed between
+        // the pre-flight read above and this write.
+        if (currentPlan.status !== "approved") {
+          return record;
+        }
+
+        const normalizedPlan = normalizePinnacleActionPlan(
+          { status: "delivered" },
+          currentPlan
+        );
+
+        // The snapshot is built from `lead` (the mapRowToLead()-shaped
+        // object read just above, before this write) rather than from
+        // `record` (the raw, differently-shaped storage row passed into
+        // this callback) merged with the freshly normalized plan --
+        // pinnacleWorkspace/taxData/contact are read-only inputs here and
+        // cannot have changed between that read and this write.
+        const deliveredSnapshot = buildPinnacleActionPlanReport({
+          ...lead,
+          pinnacleActionPlan: normalizedPlan
+        });
+
+        return {
+          ...record,
+          pinnacleActionPlan: {
+            ...normalizedPlan,
+            deliveryVersion: (currentPlan.deliveryVersion || 0) + 1,
+            deliveredSnapshot
+          },
+          updatedAt: new Date().toISOString()
+        };
+      }
+    );
+
+    if (!updateResult.ok) {
+      return res.status(
+        updateResult.code === "LEAD_NOT_FOUND" ? 404 : 500
+      ).json({
+        ok: false,
+        error: updateResult.error || "The plan could not be marked as delivered."
+      });
+    }
+
+    const savedPlan =
+      updateResult.lead?.pinnacleActionPlan ||
+      updateResult.lead?.raw?.pinnacleActionPlan ||
+      null;
+
+    if (!savedPlan || savedPlan.status !== "delivered") {
+      return res.status(409).json({
+        ok: false,
+        error: "The plan's status changed before delivery could complete. Reload and try again."
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      pinnacleActionPlan: savedPlan
+    });
+  }
+);
+
+// Office-only: preview the exact report a client would see, using the same
+// client-safe buildPinnacleActionPlanReport() model the client route below
+// uses. Honors the same approved/delivered gate -- a draft/needs_review plan
+// previews as the same "being prepared" message the client would see, so a
+// preview is always faithful to what actually renders once delivered.
+app.get(
+  "/api/admin/pinnacle-action-plan-report/:leadId",
+  requireOfficeDocumentReviewApi,
+  async (req, res) => {
+    const leadId = String(req.params.leadId || "").trim();
+
+    if (!leadId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A leadId is required."
+      });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "Lead not found."
+      });
+    }
+
+    const report = buildPinnacleActionPlanReport(lead, { preview: true });
+
+    return res.status(200).json({
+      ok: true,
+      report
+    });
+  }
+);
+
+// Client-authenticated: the customer's own Pinnacle Tax Action Plan report.
+// The lead is derived exclusively from the verified client-portal session's
+// own accountLeadId -- never from a client-supplied leadId -- so a customer
+// can never request another customer's report.
+app.get(
+  "/api/client-portal/pinnacle/action-plan-report",
+  requireClientPortalApiSession,
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const leadId = String(req.clientPortalSession?.payload?.accountLeadId || "").trim();
+
+    if (!leadId) {
+      return res.status(404).json({
+        ok: false,
+        error: "No Pinnacle Tax Action Plan is associated with this account."
+      });
+    }
+
+    let lead;
+    try {
+      lead = await findLeadRecordById(leadId);
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
+        error: error?.message || "The lead database could not be reached."
+      });
+    }
+
+    if (!lead) {
+      return res.status(404).json({
+        ok: false,
+        error: "No Pinnacle Tax Action Plan is associated with this account."
+      });
+    }
+
+    const report = buildPinnacleActionPlanReport(lead);
+
+    return res.status(200).json({
+      ok: true,
+      report
     });
   }
 );
