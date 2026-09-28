@@ -19168,6 +19168,126 @@ Greatest Business Solution LLC`
   }
 );
 
+// Establishes the minimum secure client identity (email + a
+// server-generated permanent client reference) needed for a visitor to
+// enter the existing portal activation flow, without requiring a
+// completed Free Tax Estimator. This route only ever mints identity --
+// it never creates a Stripe session and never accepts a caller-supplied
+// leadId. The existing request-activation/activate routes are reused
+// unchanged once the lead this route creates exists.
+app.post(
+  "/api/client-portal/membership-signup",
+  async (req, res) => {
+    setClientPortalNoStore(res);
+
+    const email = normalizeEmail(
+      req.body?.email || ""
+    );
+    const name = String(
+      req.body?.name || ""
+    ).trim().slice(0, 200);
+    const planKey = normalizeMembershipPlanKey(
+      req.body?.planKey
+    );
+    const billingFrequency =
+      normalizeMembershipBillingFrequency(
+        req.body?.billingFrequency
+      );
+
+    const rateKey = clientPortalRateLimitKey(
+      req,
+      "membership-signup",
+      email
+    );
+
+    const rate = consumeClientPortalAttempt(
+      rateKey,
+      {
+        limit: 5,
+        windowMs: 15 * 60 * 1000
+      }
+    );
+
+    if (!rate.allowed) {
+      return res.status(429).json({
+        ok: false,
+        error:
+          "Too many signup requests. Please wait 15 minutes and try again."
+      });
+    }
+
+    if (
+      !email ||
+      !/^\S+@\S+\.\S+$/.test(email)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "Enter a valid email address."
+      });
+    }
+
+    if (!clientPortalStore.isAvailable()) {
+      return res.status(503).json({
+        ok: false,
+        error:
+          "Secure portal credential storage is not configured yet. Please contact Greatest Business Solution LLC."
+      });
+    }
+
+    const existingAccount =
+      await findActiveClientPortalAccountByEmail(
+        email
+      );
+
+    if (existingAccount) {
+      return res.status(200).json({
+        ok: true,
+        existingAccount: true,
+        planKey,
+        billingFrequency,
+        message:
+          "An active secure portal account already exists for this email address. Sign in to continue your selected purchase."
+      });
+    }
+
+    const config = getMembershipCheckoutPlanConfig(
+      planKey,
+      billingFrequency
+    );
+
+    // Reuse the same (email, planKey) lookup ensureMembershipEnrollmentLead
+    // already uses, so retrying signup before activation (e.g. an abandoned
+    // first attempt) reconnects to the same not-yet-activated lead instead
+    // of minting an orphaned duplicate every time.
+    const reused = await findMembershipEnrollmentLead(
+      email,
+      config.planKey
+    );
+
+    const created =
+      reused ||
+      await createMembershipOnlyLead(
+        email,
+        name,
+        config
+      );
+
+    // Unlike request-activation (where a code is single-use and clearing
+    // the bucket only helps a legitimate follow-up), a signup success here
+    // is not self-limiting -- an attacker could otherwise retry endlessly
+    // and never trip the limiter. The bucket is left to expire on its own.
+
+    return res.status(200).json({
+      ok: true,
+      existingAccount: false,
+      leadId: created.leadId,
+      email,
+      planKey: config.planKey,
+      billingFrequency: config.billingFrequency
+    });
+  }
+);
+
 app.post(
   "/api/client-portal/activate",
   async (req, res) => {
@@ -28933,20 +29053,19 @@ async function findMembershipEnrollmentLead(
     )[0] || null;
 }
 
-async function ensureMembershipEnrollmentLead(
-  session,
-  config
+// Shared membership-only lead minting logic. Used both by the
+// already-authenticated checkout path (ensureMembershipEnrollmentLead,
+// which resolves name/phone from the existing portal session) and by
+// the pre-session direct-signup route (membership-signup), which has
+// only an email and an optional name to offer. Preserves the exact
+// lead/enrollment shape both callers have always produced -- this is
+// not a new identity model, just a single place that builds it.
+async function createMembershipOnlyLead(
+  email,
+  name,
+  config,
+  phone
 ) {
-  const existing =
-    await findMembershipEnrollmentLead(
-      session.email,
-      config.planKey
-    );
-
-  if (existing) {
-    return existing;
-  }
-
   const submittedAt = new Date().toISOString();
   const leadId =
     "CONTACT-" +
@@ -28956,16 +29075,11 @@ async function ensureMembershipEnrollmentLead(
       .toString(36)
       .slice(2, 7)
       .toUpperCase();
-  const name = String(
-    getLeadNameValue(
-      session.accountLead?.raw || {}
-    ) || "Client"
-  ).trim();
-  const phone = String(
-    session.accountLead?.lead?.contact?.phone ||
-    session.accountLead?.raw?.phone ||
-    "Not provided"
-  ).trim();
+  const resolvedName =
+    String(name || "Client").trim() || "Client";
+  const resolvedPhone =
+    String(phone || "Not provided").trim() ||
+    "Not provided";
   const message =
     `I selected ${config.planName} — ` +
     `${config.billingLabel} — ` +
@@ -29009,9 +29123,9 @@ async function ensureMembershipEnrollmentLead(
     notes:
       `${config.planName} ${config.billingLabel} secure checkout selected.`,
     contact: {
-      name,
-      email: session.email,
-      phone: phone || "Not provided"
+      name: resolvedName,
+      email,
+      phone: resolvedPhone
     },
     taxData: {},
     estimateSummary: {},
@@ -29039,6 +29153,39 @@ async function ensureMembershipEnrollmentLead(
     lead: saved,
     source: "created"
   };
+}
+
+async function ensureMembershipEnrollmentLead(
+  session,
+  config
+) {
+  const existing =
+    await findMembershipEnrollmentLead(
+      session.email,
+      config.planKey
+    );
+
+  if (existing) {
+    return existing;
+  }
+
+  const name = String(
+    getLeadNameValue(
+      session.accountLead?.raw || {}
+    ) || "Client"
+  ).trim();
+  const phone = String(
+    session.accountLead?.lead?.contact?.phone ||
+    session.accountLead?.raw?.phone ||
+    "Not provided"
+  ).trim();
+
+  return createMembershipOnlyLead(
+    session.email,
+    name,
+    config,
+    phone
+  );
 }
 
 function getMembershipStripeStateFromSubscription(

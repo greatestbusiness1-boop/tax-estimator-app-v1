@@ -5234,6 +5234,129 @@
   <script>
     (function () {
       var intentKey = "taxEstimatorMembershipIntent.v1";
+      var directModal = null;
+
+      function storeIntent(details) {
+        localStorage.setItem(intentKey, JSON.stringify(Object.assign({
+          version: 2,
+          sourcePage: window.location.pathname || "/",
+          createdAt: new Date().toISOString()
+        }, details)));
+      }
+
+      function closeDirectModal() {
+        if (directModal) {
+          directModal.parentNode && directModal.parentNode.removeChild(directModal);
+          directModal = null;
+        }
+      }
+
+      // Used only when no Free Estimator context exists yet. Collects the
+      // minimum identity (email required, name optional) needed to create a
+      // permanent client reference via /api/client-portal/membership-signup,
+      // then hands off into the existing, unchanged Client Portal activation
+      // (or sign-in, for a returning customer) flow. The Free Estimator
+      // remains fully optional -- this path never touches it.
+      function openDirectModal(planKey, action, billingFrequency) {
+        closeDirectModal();
+
+        var overlay = document.createElement("div");
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.style.cssText = "position:fixed;inset:0;background:rgba(27,42,65,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
+
+        var card = document.createElement("div");
+        card.style.cssText = "background:#fffefb;max-width:420px;width:100%;padding:28px;border-radius:4px;box-shadow:0 20px 55px rgba(27,42,65,.25);font-family:Inter,ui-sans-serif,system-ui,sans-serif;";
+        card.innerHTML =
+          '<h3 style="margin:0 0 10px;font-family:Georgia,serif;color:#1b2a41;">Start Your Secure Purchase</h3>' +
+          '<p style="margin:0 0 16px;color:#5d6876;font-size:14px;line-height:1.5;">No Free Tax Estimate is required. Enter your email to create your secure Client Portal access and continue to checkout.</p>' +
+          '<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:#1b2a41;">Email address</label>' +
+          '<input type="email" id="directPurchaseEmail" required style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #bfc8cf;font-size:15px;"></div>' +
+          '<div style="margin-bottom:16px;"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:#1b2a41;">Name (optional)</label>' +
+          '<input type="text" id="directPurchaseName" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #bfc8cf;font-size:15px;"></div>' +
+          '<div id="directPurchaseMessage" style="display:none;margin-bottom:14px;padding:10px 12px;font-size:13px;font-weight:600;border-left:4px solid #a64138;background:#fff0ee;color:#8b211d;"></div>' +
+          '<button type="button" id="directPurchaseContinue" style="width:100%;border:0;background:#c08a2e;color:#fff;padding:14px;font-size:15px;font-weight:900;cursor:pointer;">Continue</button>' +
+          '<button type="button" id="directPurchaseCancel" style="width:100%;border:0;background:transparent;color:#5d6876;padding:10px;font-size:13px;margin-top:8px;cursor:pointer;">Cancel</button>';
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+        directModal = overlay;
+
+        var emailInput = card.querySelector("#directPurchaseEmail");
+        var nameInput = card.querySelector("#directPurchaseName");
+        var messageEl = card.querySelector("#directPurchaseMessage");
+        var continueButton = card.querySelector("#directPurchaseContinue");
+
+        function showMessage(text) {
+          messageEl.textContent = text;
+          messageEl.style.display = "block";
+        }
+
+        card.querySelector("#directPurchaseCancel").addEventListener("click", closeDirectModal);
+        overlay.addEventListener("click", function (event) {
+          if (event.target === overlay) closeDirectModal();
+        });
+
+        continueButton.addEventListener("click", function () {
+          var email = String(emailInput.value || "").trim();
+          var name = String(nameInput.value || "").trim();
+
+          if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+            showMessage("Enter a valid email address.");
+            return;
+          }
+
+          continueButton.disabled = true;
+          continueButton.textContent = "Setting up secure access...";
+
+          fetch("/api/client-portal/membership-signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email, name: name, planKey: planKey, billingFrequency: billingFrequency })
+          })
+            .then(function (response) {
+              return response.json().catch(function () { return {}; }).then(function (data) {
+                return { ok: response.ok, data: data };
+              });
+            })
+            .then(function (result) {
+              if (!result.ok || !result.data.ok) {
+                throw new Error(result.data.error || "We could not start secure setup. Please try again.");
+              }
+
+              var data = result.data;
+
+              storeIntent({
+                fullName: name,
+                email: email,
+                leadId: data.leadId || "",
+                planKey: data.planKey || planKey,
+                action: action,
+                billingFrequency: data.billingFrequency || billingFrequency
+              });
+
+              if (data.existingAccount) {
+                closeDirectModal();
+                window.location.href =
+                  "/client-portal?membershipIntent=1&email=" + encodeURIComponent(email);
+                return;
+              }
+
+              closeDirectModal();
+              window.location.href =
+                "/client-portal?activate=1&membershipIntent=1" +
+                "&leadId=" + encodeURIComponent(data.leadId) +
+                "&email=" + encodeURIComponent(email);
+            })
+            .catch(function (error) {
+              continueButton.disabled = false;
+              continueButton.textContent = "Continue";
+              showMessage(error.message || "We could not start secure setup. Please try again.");
+            });
+        });
+
+        emailInput.focus();
+      }
 
       function beginMembershipAction(button) {
         var planKey = String(button.getAttribute("data-estimator-membership-plan") || "").trim();
@@ -5245,29 +5368,24 @@
 
         if (!planKey || !action) return;
 
-        if (!context.ready) {
-          alert("Complete and submit your Free Tax Estimate first. Your full name, email address, and permanent client reference will then carry into Secure Client Portal setup.");
-          var estimatorStart = document.getElementById("screen-form") || document.querySelector("[data-screen='form']");
-          if (estimatorStart) estimatorStart.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (context.ready) {
+          storeIntent({
+            fullName: context.fullName,
+            email: context.email,
+            leadId: context.leadId,
+            planKey: planKey,
+            action: action,
+            billingFrequency: billingFrequency
+          });
+
+          window.location.href =
+            "/client-portal?activate=1&estimate=1&membershipIntent=1" +
+            "&leadId=" + encodeURIComponent(context.leadId) +
+            "&email=" + encodeURIComponent(context.email);
           return;
         }
 
-        localStorage.setItem(intentKey, JSON.stringify({
-          version: 2,
-          fullName: context.fullName,
-          email: context.email,
-          leadId: context.leadId,
-          planKey: planKey,
-          action: action,
-          billingFrequency: billingFrequency,
-          sourcePage: window.location.pathname || "/",
-          createdAt: new Date().toISOString()
-        }));
-
-        window.location.href =
-          "/client-portal?activate=1&estimate=1&membershipIntent=1" +
-          "&leadId=" + encodeURIComponent(context.leadId) +
-          "&email=" + encodeURIComponent(context.email);
+        openDirectModal(planKey, action, billingFrequency);
       }
 
       document.querySelectorAll("[data-estimator-membership-plan]").forEach(function (button) {
