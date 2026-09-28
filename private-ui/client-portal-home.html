@@ -9101,7 +9101,7 @@
             </ul>
           </details>
           <p><strong>Designed for freelancers and self-employed individuals.</strong> Larger businesses with complex entities, payroll, inventory, or full bookkeeping needs may require separate professional services.</p>
-          <button class="portal-button-tier1" type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Pinnacle Checkout Opens When Plan Is Ready</button>
+          <button class="portal-button-tier1" type="button" data-membership-checkout-plan="pinnacle" data-membership-checkout-billing="monthly">Purchase Monthly — $34.99</button>
           </div>
         </article>
       `;
@@ -9678,6 +9678,13 @@
       message.className = `tax-watch-message ${text ? "show" : ""} ${type}`.trim();
     }
 
+    // Feature-flag-driven: reads only the server-authoritative
+    // pinnacleAvailable/taxWatchAvailable flags (PINNACLE_STRIPE_CHECKOUT_ENABLED
+    // server-side). Also swaps the button's own visible label, not just its
+    // disabled/title state, so enabling the flag later needs no further UI
+    // copy change -- the button's real purchase text (captured once into
+    // data-ready-text) is restored automatically the next time this runs
+    // after the flag flips on.
     function configureMembershipCheckoutButtons() {
       document.querySelectorAll("[data-membership-checkout-plan]").forEach((button) => {
         const planKey = button.dataset.membershipCheckoutPlan || "tax-watch-pro";
@@ -9686,13 +9693,21 @@
           ? currentMembershipCheckout.pinnacleAvailable === true
           : currentMembershipCheckout.taxWatchAvailable === true;
 
+        if (!button.dataset.readyText) {
+          button.dataset.readyText = button.textContent;
+        }
+
         button.disabled = !available;
         button.setAttribute("aria-disabled", String(!available));
         if (!available) {
+          button.textContent = isPinnacle
+            ? "Pinnacle Checkout Not Yet Available"
+            : "Tax Watch Pro Checkout Not Yet Available";
           button.title = isPinnacle
-            ? "Pinnacle checkout opens after the complete Pinnacle tools are ready."
+            ? "Pinnacle checkout opens after secure checkout is enabled for this account."
             : "Secure Stripe checkout is not enabled for this portal yet.";
         } else {
+          button.textContent = button.dataset.readyText;
           button.removeAttribute("title");
         }
       });

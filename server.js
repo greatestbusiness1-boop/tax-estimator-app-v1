@@ -30406,17 +30406,21 @@ app.post(
         getClientPortalMembershipSummary(
           taxWatchContext.accessible
         );
+      // Plan-scoped duplicate check: existingMembership's own top-level
+      // enrollmentStatus/paymentStatus reflect whichever membership is
+      // "preferred" across ALL plans (see getClientPortalMembershipSummary),
+      // not necessarily the plan being purchased here -- a customer with
+      // active Tax Watch Pro attempting to buy Pinnacle (or vice versa) must
+      // never be blocked by the OTHER plan's active status. programAccess is
+      // already keyed by planKey specifically for this purpose.
       const activeMembershipExists =
-        existingMembership.enrollmentStatus ===
-          "Active Membership" &&
-        existingMembership.paymentStatus ===
-          "Paid / Confirmed";
+        existingMembership.programAccess?.[config.planKey]?.paidActive === true;
 
       if (activeMembershipExists) {
         return res.status(409).json({
           ok: false,
           error:
-            "Your Tax Watch Pro membership is already active. No second Stripe subscription was created."
+            `Your ${config.planName} membership is already active. No second Stripe subscription was created.`
         });
       }
 

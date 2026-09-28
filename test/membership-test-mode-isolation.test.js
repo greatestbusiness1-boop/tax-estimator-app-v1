@@ -411,12 +411,22 @@ test("E/F. getClientPortalMembershipSummary and findMembershipEnrollmentLead bot
       "(its sole membership-type gate) before ever comparing planKey"
   );
 
-  // Confirm the actual call sites in the route layer that depend on these
-  // two functions still exist and are wired the way the audit found them.
+  // Confirm the actual call site in the route layer that depends on these
+  // two functions still reads eligibility from getClientPortalMembershipSummary's
+  // output. Phase 7 (Pinnacle launch hardening) fixed a real plan-scoping
+  // bug here: the original comparison read existingMembership's top-level
+  // enrollmentStatus/paymentStatus, which reflect whichever membership is
+  // "preferred" across ALL plans (see getClientPortalMembershipSummary's own
+  // `preferred` selection) -- so a customer with active Tax Watch Pro
+  // attempting to buy Pinnacle (or vice versa) was incorrectly blocked. The
+  // fix reads the same object's already-plan-scoped programAccess[planKey]
+  // field instead. This assertion was updated to match; see
+  // test/pinnacle-launch-hardening.test.js tests A/B for the behavioral
+  // regression coverage of the fix itself.
   assert.match(
     serverSource,
-    /const\s+activeMembershipExists\s*=\s*\n?\s*existingMembership\.enrollmentStatus\s*===\s*\n?\s*["']Active Membership["']/,
-    "the membership-checkout route's eligibility gate must still read enrollmentStatus from getClientPortalMembershipSummary's output"
+    /const\s+activeMembershipExists\s*=\s*\n?\s*existingMembership\.programAccess\?\.\[config\.planKey\]\?\.paidActive\s*===\s*\n?\s*true/,
+    "the membership-checkout route's eligibility gate must read the plan-scoped programAccess[config.planKey].paidActive from getClientPortalMembershipSummary's output"
   );
 });
 
