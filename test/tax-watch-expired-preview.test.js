@@ -76,14 +76,42 @@ const STRIPE_DUMMY_KEY =
 
 const DEV_PORT = 3931;
 
+// Supabase stand-in for this test file. Pointing Supabase at a dead address
+// (127.0.0.1:1) made every server-side Supabase read take ~7s, because
+// @supabase/postgrest-js retries failed GET/HEAD requests on network errors
+// three times with 1s/2s/4s backoff. This file makes many reads per test, so
+// it took 10+ minutes and looked stalled. This stub answers every request
+// immediately with HTTP 500, which postgrest-js does not retry (it only
+// retries 503/520). The server receives the same returned-error result and
+// takes the same "Supabase unavailable" local-fallback paths, just quickly.
+const http = require("node:http");
+let supabaseStub;
+let supabaseStubUrl = "http://127.0.0.1:1";
+
+function startSupabaseStub() {
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      req.resume();
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          code: "TEST_STUB",
+          message: "Test stub: Supabase is intentionally unavailable."
+        })
+      );
+    });
+    server.listen(0, "127.0.0.1", () => resolve(server));
+  });
+}
+
 function baseEnv(port) {
   return {
     ...process.env,
     PORT: String(port),
     NODE_ENV: "",
     RENDER: "",
-    SUPABASE_URL: "http://127.0.0.1:1",
-    NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:1",
+    SUPABASE_URL: supabaseStubUrl,
+    NEXT_PUBLIC_SUPABASE_URL: supabaseStubUrl,
     SUPABASE_PUBLISHABLE_KEY: "test-anon-key-not-real",
     NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key-not-real",
     SUPABASE_SECRET_KEY: "",
@@ -338,12 +366,15 @@ async function getSessionTaxWatch(cookie) {
 let devServer;
 
 before(async () => {
+  supabaseStub = await startSupabaseStub();
+  supabaseStubUrl = `http://127.0.0.1:${supabaseStub.address().port}`;
   devServer = startServer(DEV_PORT);
   await waitForServer(DEV_PORT);
 });
 
 after(() => {
   if (devServer) devServer.kill();
+  if (supabaseStub) supabaseStub.close();
 });
 
 // =============================================================================

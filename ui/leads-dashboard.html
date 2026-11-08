@@ -3168,6 +3168,29 @@
       }
     }
 
+    .leads-load-status {
+      margin:12px 0;
+      padding:12px 14px;
+      border:2px solid #b42318;
+      border-radius:8px;
+      background:#fef3f2;
+      color:#7a271a;
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .leads-load-status strong {
+      display:block;
+      margin-bottom:4px;
+    }
+
+    .leads-load-status a,
+    .leads-load-status button {
+      margin-top:8px;
+      margin-right:8px;
+      font-size:14px;
+    }
+
   </style>
 </head>
 
@@ -3402,6 +3425,7 @@
   <main class="main">
     <h1 id="viewTitle">All Leads</h1>
     <div id="leadCount"> </div>
+    <div id="leadsLoadStatus" class="leads-load-status" role="alert" aria-live="assertive" hidden></div>
     <div id="officeCommandCenter" class="office-command-center" style="display: none;">
       <div class="office-command-hero">
         <h2>Lead Conversion Snapshot</h2>
@@ -3823,6 +3847,14 @@
 <script src="/data/schedule-c-code-search.js"></script>
 <script>
 let allLeads = [];
+// Lead list load state: only a confirmed successful /api/leads response
+// marks the list as loaded (see loadLeads / interpretLeadsApiResponse).
+let leadsLoadState = {
+  status: "loading",
+  loadedOnce: false,
+  lastSuccessAt: "",
+  error: null
+};
 let currentView = "all";
 let currentOfficeQueueTab = "all";
 let currentTaxPrepFilter = "all";
@@ -10954,6 +10986,12 @@ function updateTranscriptSidebarCount(){
 }
 
 function renderLeads(){
+  // Never present an unloaded/failed lead list as a real "0 leads" result.
+  if(!leadsLoadState.loadedOnce){
+    renderLeadsUnavailable();
+    return;
+  }
+
   updateTranscriptSidebarCount();
   updateTaxPrepRequestCounts();
   updateContractor1099Counts();
@@ -18315,12 +18353,175 @@ function openMembershipEnrollment(index){
   }
 }
 
-async function loadLeads(){
-  try{
-    const res=await fetch("/api/leads?includeLocal=1");
-    const data=await res.json();
+// -----------------------------------------------------------------------------
+// Lead loading state. A lead list is only treated as real (including a real
+// empty list) after a confirmed successful /api/leads response. Auth failures,
+// server errors, malformed responses, and network errors are shown as a
+// visible error instead of a misleading "0 leads" result.
+// -----------------------------------------------------------------------------
 
-    allLeads = data.leads || [];
+const LEADS_SIGN_IN_URL =
+  "/office-document-review/sign-in?next=" +
+  encodeURIComponent("/leads-dashboard");
+
+// leadsLoadState is declared beside allLeads (top of this script) so that
+// renderLeads() can safely read it at any time.
+
+function interpretLeadsApiResponse(httpStatus, data){
+  const status = Number(httpStatus) || 0;
+
+  if(status === 401 || status === 403){
+    return {
+      ok: false,
+      kind: "auth",
+      message: "Your office sign-in has expired or is missing. Sign in again to load leads."
+    };
+  }
+
+  if(status < 200 || status >= 300){
+    return {
+      ok: false,
+      kind: "server",
+      message: "The lead service returned an error (HTTP " + status + "). Leads were not loaded."
+    };
+  }
+
+  if(
+    !data ||
+    typeof data !== "object" ||
+    data.ok !== true ||
+    !Array.isArray(data.leads)
+  ){
+    return {
+      ok: false,
+      kind: "malformed",
+      message: "The lead service returned an unexpected response. Leads were not loaded."
+    };
+  }
+
+  return {
+    ok: true,
+    kind: "success",
+    leads: data.leads
+  };
+}
+
+async function fetchLeadsResult(fetchImpl){
+  let res;
+
+  try{
+    res = await fetchImpl("/api/leads?includeLocal=1");
+  }catch(e){
+    return {
+      ok: false,
+      kind: "network",
+      message: "The lead service could not be reached. Check your connection and try again."
+    };
+  }
+
+  let data = null;
+
+  try{
+    data = await res.json();
+  }catch(e){
+    data = null;
+  }
+
+  return interpretLeadsApiResponse(res && res.status, data);
+}
+
+function renderLeadsLoadStatus(){
+  const box = document.getElementById("leadsLoadStatus");
+  if(!box) return;
+
+  const error = leadsLoadState.error;
+
+  if(leadsLoadState.status !== "error" || !error){
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+
+  const staleNote = leadsLoadState.loadedOnce
+    ? "The leads shown below are from the last successful load" +
+      (leadsLoadState.lastSuccessAt
+        ? " (" + new Date(leadsLoadState.lastSuccessAt).toLocaleString() + ")"
+        : "") +
+      " and may be out of date."
+    : "No leads are displayed because the lead list could not be loaded. This does not mean there are zero leads.";
+
+  const signIn = error.kind === "auth"
+    ? '<a href="' + escapeOfficeHtml(LEADS_SIGN_IN_URL) + '">Sign in again</a>'
+    : "";
+
+  box.innerHTML =
+    "<strong>Leads could not be loaded.</strong>" +
+    "<div>" + escapeOfficeHtml(error.message) + "</div>" +
+    "<div>" + escapeOfficeHtml(staleNote) + "</div>" +
+    signIn +
+    '<button type="button" onclick="loadLeads()">Retry</button>';
+  box.hidden = false;
+}
+
+function renderLeadsUnavailable(){
+  const loading = leadsLoadState.status === "loading";
+  const count = document.getElementById("leadCount");
+  const list = document.getElementById("leadList");
+
+  if(count){
+    count.innerText = loading ? "Loading leads..." : "Leads unavailable";
+  }
+
+  if(list){
+    list.innerHTML = loading
+      ? '<div class="office-empty">Loading leads...</div>'
+      : '<div class="office-empty">Leads could not be loaded. See the message above; this is not an empty lead list.</div>';
+  }
+
+  document
+    .querySelectorAll('[id$="SidebarCount"]')
+    .forEach(badge => {
+      badge.textContent = loading ? "…" : "–";
+      badge.setAttribute(
+        "aria-label",
+        loading ? "Count loading" : "Count unavailable"
+      );
+    });
+}
+
+async function loadLeads(){
+  const result = await fetchLeadsResult(window.fetch.bind(window));
+
+  if(!result.ok){
+    leadsLoadState = {
+      ...leadsLoadState,
+      status: "error",
+      error: result
+    };
+    console.error(
+      "[leads dashboard] Lead list load failed:",
+      result.kind,
+      result.message
+    );
+    renderLeadsLoadStatus();
+
+    if(!leadsLoadState.loadedOnce){
+      renderLeadsUnavailable();
+    }
+
+    return allLeads;
+  }
+
+  allLeads = result.leads;
+  leadsLoadState = {
+    status: "ok",
+    loadedOnce: true,
+    lastSuccessAt: new Date().toISOString(),
+    error: null
+  };
+  renderLeadsLoadStatus();
+
+  try{
     populateAllLeadFilters();
     populateTaxPrepAdvancedFilters();
     populateContactAdvancedFilters();
@@ -18328,11 +18529,11 @@ async function loadLeads(){
     updateExtensionRequestCounts();
     updateContractor1099Counts();
     renderLeads();
-    return allLeads;
-
   }catch(e){
     console.log(e);
   }
+
+  return allLeads;
 }
 
 window.addEventListener("DOMContentLoaded", loadLeads);
