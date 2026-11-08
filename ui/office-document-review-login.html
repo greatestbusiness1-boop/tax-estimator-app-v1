@@ -21,6 +21,7 @@
     .password-toggle:focus-visible{outline:2px solid #0f2d4a;outline-offset:2px;border-radius:3px}
     .message{display:none;margin-top:14px;padding:12px;background:#fff0ef;border-left:5px solid #b42318;color:#8c1d18;font-weight:800}
     .message.show{display:block}
+    .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
     .note{margin-top:18px;padding:12px;background:#fff7e6;border-left:5px solid #a15c00;font-size:14px}
   </style>
 </head>
@@ -29,9 +30,25 @@
     <h1>Secure Office Document Review</h1>
     <p>Enter the private office review key configured on the production server.</p>
     <form id="form">
+      <!--
+        Fixed, non-secret account label so password managers can save and
+        autofill the office access key as a normal username/password pair.
+        It is never sent to the server and grants no access by itself.
+      -->
+      <input
+        id="officeAccountLabel"
+        class="visually-hidden"
+        type="text"
+        name="username"
+        value="tax-lead-center-office"
+        autocomplete="username"
+        readonly
+        tabindex="-1"
+        aria-hidden="true"
+      >
       <label for="accessKey">Office review access key</label>
       <div class="password-field">
-        <input id="accessKey" type="password" autocomplete="current-password" required>
+        <input id="accessKey" name="password" type="password" autocomplete="current-password" required>
         <button type="button" class="password-toggle" data-password-toggle="accessKey" aria-label="Show access key" aria-pressed="false">Show</button>
       </div>
       <button type="submit">Open Secure Office Review</button>

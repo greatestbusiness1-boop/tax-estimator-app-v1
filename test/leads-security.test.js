@@ -415,3 +415,123 @@ test("J. Public single-lead lookup cannot enumerate all leads (valid token for a
   assert.equal(body.ok, false);
   assert.equal(body.lead, undefined);
 });
+
+// =============================================================================
+// OFFICE SIGN-IN RETURN-TO-DASHBOARD (production-mode server)
+// =============================================================================
+
+async function officeSignInWithNext(port, next, accessKey = OFFICE_KEY) {
+  const res = await fetch(
+    `http://127.0.0.1:${port}/api/office-document-review/sign-in`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessKey, next })
+    }
+  );
+  const body = await res.json();
+  return { res, body, setCookie: res.headers.get("set-cookie") || "" };
+}
+
+test("K. Valid office sign-in with next=/leads-dashboard returns to the Tax Lead Center", async () => {
+  const { res, body, setCookie } = await officeSignInWithNext(PROD_PORT, "/leads-dashboard");
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.redirectTo, "/leads-dashboard");
+  assert.match(setCookie, /^tsp_office_document_review=[^;]+/);
+});
+
+test("L. A same-origin /leads-dashboard query string is preserved", async () => {
+  const { body } = await officeSignInWithNext(PROD_PORT, "/leads-dashboard?view=websitecontact");
+  assert.equal(body.redirectTo, "/leads-dashboard?view=websitecontact");
+});
+
+test("M. External and unsafe sign-in redirects are rejected (fall back to /office-document-review)", async () => {
+  const unsafe = [
+    "https://evil.example/leads-dashboard",
+    "http://evil.example",
+    "//evil.example/leads-dashboard",
+    "/\evil.example",
+    "\\evil.example",
+    "javascript:alert(1)",
+    "/leads-dashboard.evil.example",
+    "/leads-dashboardx",
+    "/leads-dashboard/../admin",
+    "leads-dashboard",
+    "/api/leads",
+    ""
+  ];
+
+  for (const next of unsafe) {
+    const { res, body } = await officeSignInWithNext(PROD_PORT, next);
+    assert.equal(res.status, 200, `sign-in itself should succeed for next=${JSON.stringify(next)}`);
+    assert.equal(
+      body.redirectTo,
+      "/office-document-review",
+      `unsafe next=${JSON.stringify(next)} must not be honored`
+    );
+  }
+});
+
+test("N. Wrong access key is rejected even with next=/leads-dashboard and sets no session", async () => {
+  const { res, body, setCookie } = await officeSignInWithNext(
+    PROD_PORT,
+    "/leads-dashboard",
+    "wrong-key-wrong-key-wrong-key"
+  );
+  assert.equal(res.status, 401);
+  assert.equal(body.ok, false);
+  assert.equal(body.redirectTo, undefined);
+  assert.equal(setCookie, "");
+});
+
+test("O. Production office session cookie keeps HttpOnly, Secure, SameSite=Strict and the 8-hour lifetime", async () => {
+  const { setCookie } = await officeSignInWithNext(PROD_PORT, "/leads-dashboard");
+  assert.match(setCookie, /;\s*HttpOnly/i);
+  assert.match(setCookie, /;\s*Secure/i);
+  assert.match(setCookie, /;\s*SameSite=Strict/i);
+  assert.match(setCookie, /;\s*Path=\//i);
+  assert.match(setCookie, /;\s*Max-Age=28800\b/);
+});
+
+test("P. /api/leads stays protected in production: no cookie and a forged cookie are both rejected", async () => {
+  const noCookie = await fetch(`http://127.0.0.1:${PROD_PORT}/api/leads`);
+  assert.equal(noCookie.status, 401);
+
+  const forged = await fetch(`http://127.0.0.1:${PROD_PORT}/api/leads`, {
+    headers: { Cookie: "tsp_office_document_review=eyJwdXJwb3NlIjoib2ZmaWNlIn0.forged-signature" }
+  });
+  assert.equal(forged.status, 401);
+});
+
+test("Q. Sign-in page offers a fixed, non-secret username for password managers and sends only the key and next", () => {
+  const html = fs.readFileSync(
+    path.join(REPO_ROOT, "ui", "office-document-review-login.html"),
+    "utf8"
+  );
+
+  const usernameInput = /<input[^>]*id="officeAccountLabel"[^>]*>/.exec(html);
+  assert.ok(usernameInput, "username field must exist");
+  assert.match(usernameInput[0], /autocomplete="username"/);
+  assert.match(usernameInput[0], /value="tax-lead-center-office"/);
+  assert.match(usernameInput[0], /readonly/);
+
+  const keyInput = /<input[^>]*id="accessKey"[^>]*>/.exec(html);
+  assert.ok(keyInput);
+  assert.match(keyInput[0], /type="password"/);
+  assert.match(keyInput[0], /autocomplete="current-password"/);
+  assert.doesNotMatch(keyInput[0], /\svalue=/, "the key field must never have a prefilled value");
+
+  // The request body contains only the typed key and the return path.
+  const bodyMatch = /body:JSON\.stringify\(\{([\s\S]*?)\}\)/.exec(html);
+  assert.ok(bodyMatch);
+  const bodyKeys = bodyMatch[1]
+    .split(",")
+    .map((part) => part.split(":")[0].trim())
+    .filter(Boolean);
+  assert.deepEqual(bodyKeys, ["accessKey", "next"]);
+
+  // No office key, session secret, or env var value is embedded in the page.
+  assert.doesNotMatch(html, /test-only-office-access-key/);
+  assert.doesNotMatch(html, /process\.env/);
+});

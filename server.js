@@ -653,6 +653,11 @@ function getSafeOfficeDocumentReviewRedirect(
       "/newsletter-admin" ||
     target.startsWith(
       "/newsletter-admin?"
+    ) ||
+    target ===
+      "/leads-dashboard" ||
+    target.startsWith(
+      "/leads-dashboard?"
     );
 
   return allowed
