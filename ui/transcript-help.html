@@ -504,7 +504,7 @@
             } catch (err) {
                 showStatus(
                     "error",
-                    "The request page is ready, but the server save route is not connected yet. Next step is adding /api/transcript-help to the server."
+                    (err && err.message) || "We could not save your transcript help request. Please try again in a few minutes."
                 );
             }
         });

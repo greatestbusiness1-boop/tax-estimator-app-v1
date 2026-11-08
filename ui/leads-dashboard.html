@@ -3184,6 +3184,15 @@
       margin-bottom:4px;
     }
 
+    .owner-alert-status ul {
+      margin:6px 0 0;
+      padding-left:18px;
+    }
+
+    .owner-alert-status li {
+      margin:4px 0;
+    }
+
     .leads-load-status a,
     .leads-load-status button {
       margin-top:8px;
@@ -3426,6 +3435,7 @@
     <h1 id="viewTitle">All Leads</h1>
     <div id="leadCount"> </div>
     <div id="leadsLoadStatus" class="leads-load-status" role="alert" aria-live="assertive" hidden></div>
+    <div id="ownerAlertStatus" class="leads-load-status owner-alert-status" role="status" aria-live="polite" hidden></div>
     <div id="officeCommandCenter" class="office-command-center" style="display: none;">
       <div class="office-command-hero">
         <h2>Lead Conversion Snapshot</h2>
@@ -18489,6 +18499,124 @@ function renderLeadsUnavailable(){
     });
 }
 
+// -----------------------------------------------------------------------------
+// Owner inquiry alert visibility. Each lead may carry ownerAlerts[kind] with
+// a delivery status recorded by the server. Unresolved alerts (failed,
+// retrying, or pending longer than a short grace period) are surfaced here so
+// the owner never depends on Gmail alone to discover a customer.
+// -----------------------------------------------------------------------------
+
+const OWNER_ALERT_PENDING_GRACE_MS = 2 * 60 * 1000;
+
+function getUnresolvedOwnerAlerts(leads, nowMs){
+  const now = Number(nowMs) || Date.now();
+  const rows = [];
+
+  (Array.isArray(leads) ? leads : []).forEach(lead => {
+    const alerts =
+      lead && lead.ownerAlerts && typeof lead.ownerAlerts === "object"
+        ? lead.ownerAlerts
+        : {};
+
+    Object.keys(alerts).forEach(kind => {
+      const state = alerts[kind] || {};
+      const status = String(state.status || "");
+
+      if(status === "pending"){
+        const created = Date.parse(state.createdAt || "") || 0;
+        if(now - created < OWNER_ALERT_PENDING_GRACE_MS) return;
+      } else if(status !== "retrying" && status !== "failed"){
+        return;
+      }
+
+      rows.push({
+        leadId: String(lead.leadId || ""),
+        name: String(lead.contact?.name || "Unknown customer"),
+        kind,
+        label: String(state.label || kind),
+        status,
+        attempts: Number(state.attempts || 0),
+        lastError: String(state.lastError || ""),
+        nextAttemptAt: String(state.nextAttemptAt || "")
+      });
+    });
+  });
+
+  const order = { failed: 0, pending: 1, retrying: 2 };
+  rows.sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+  return rows;
+}
+
+function describeOwnerAlertStatus(row){
+  if(row.status === "failed"){
+    return "Alert FAILED after " + row.attempts + " attempt(s) - needs attention";
+  }
+  if(row.status === "retrying"){
+    return "Alert delivery failed; retrying automatically" +
+      (row.nextAttemptAt
+        ? " (next attempt " + new Date(row.nextAttemptAt).toLocaleString() + ")"
+        : "");
+  }
+  return "Alert not yet delivered";
+}
+
+function renderOwnerAlertStatus(){
+  const box = document.getElementById("ownerAlertStatus");
+  if(!box) return;
+
+  const rows = getUnresolvedOwnerAlerts(allLeads);
+
+  if(!rows.length){
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+
+  const items = rows.slice(0, 15).map(row =>
+    "<li>" +
+      "<strong>" + escapeOfficeHtml(row.label) + "</strong> - " +
+      escapeOfficeHtml(row.name) +
+      " (" + escapeOfficeHtml(row.leadId) + "): " +
+      escapeOfficeHtml(describeOwnerAlertStatus(row)) +
+      (row.lastError ? " [" + escapeOfficeHtml(row.lastError) + "]" : "") +
+      ' <button type="button" data-lead-id="' + escapeOfficeHtml(row.leadId) +
+      '" onclick="retryOwnerAlerts(this.dataset.leadId)">Retry now</button>' +
+    "</li>"
+  ).join("");
+
+  box.innerHTML =
+    "<strong>" + rows.length + " customer inquiry alert" +
+    (rows.length === 1 ? " has" : "s have") +
+    " not been delivered.</strong>" +
+    "<div>These inquiries are saved below. The owner email alert did not go out yet; review them here.</div>" +
+    "<ul>" + items + "</ul>" +
+    (rows.length > 15 ? "<div>And " + (rows.length - 15) + " more.</div>" : "") +
+    '<button type="button" onclick="retryOwnerAlerts()">Retry all now</button>';
+  box.hidden = false;
+}
+
+async function retryOwnerAlerts(leadId){
+  try{
+    const res = await fetch("/api/owner-alerts/retry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(leadId ? { leadId } : {})
+    });
+
+    if(!res.ok){
+      alert(
+        res.status === 401 || res.status === 403
+          ? "Your office sign-in has expired. Sign in again, then retry."
+          : "The alert retry could not be completed. Please try again."
+      );
+    }
+  }catch(e){
+    alert("The alert retry could not be completed. Check your connection and try again.");
+  }
+
+  await loadLeads();
+}
+
 async function loadLeads(){
   const result = await fetchLeadsResult(window.fetch.bind(window));
 
@@ -18520,6 +18648,7 @@ async function loadLeads(){
     error: null
   };
   renderLeadsLoadStatus();
+  renderOwnerAlertStatus();
 
   try{
     populateAllLeadFilters();

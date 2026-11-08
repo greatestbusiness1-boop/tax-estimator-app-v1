@@ -6,6 +6,13 @@ const { createClientPortalSecurity } = require("./server/clientPortalSecurity");
 const { createClientPortalStore } = require("./server/clientPortalStore");
 const { createClientDocumentStore } = require("./server/clientDocumentStore");
 const {
+  createOwnerInquiryAlerts,
+  isOpenAlertState,
+  writeAlertStateWithConcurrencyGuard
+} = require("./server/ownerInquiryAlerts");
+
+let ownerAlertUnguardedWarned = false;
+const {
   MAX_FILE_BYTES: CLIENT_DOCUMENT_MAX_BYTES,
   DOCUMENT_CATEGORIES: CLIENT_DOCUMENT_CATEGORIES,
   REVIEW_STATUSES: CLIENT_DOCUMENT_REVIEW_STATUSES,
@@ -1048,8 +1055,28 @@ const transporter = EMAIL_DELIVERY_CONFIGURED
         "[email] EMAIL_USER/EMAIL_APP_PASSWORD not configured -- using a local test transport. No real email will be sent."
       );
       const jsonTransport = nodemailer.createTransport({ jsonTransport: true });
+      // LOCAL AUTOMATED TESTS ONLY: simulate an SMTP failure for listed
+      // recipients. This local transport only exists when real email is NOT
+      // configured, and the switch is ignored on any production host.
+      const simulatedFailureRecipients = CLIENT_PORTAL_PRODUCTION_HOST
+        ? new Set()
+        : new Set(
+            String(process.env.LOCAL_TEST_EMAIL_FAIL_RECIPIENTS || "")
+              .split(",")
+              .map((value) => value.trim().toLowerCase())
+              .filter(Boolean)
+          );
       return {
         sendMail: async (mailOptions) => {
+          if (
+            simulatedFailureRecipients.has(
+              String(mailOptions.to || "").trim().toLowerCase()
+            )
+          ) {
+            const simulated = new Error("Simulated local SMTP failure.");
+            simulated.code = "ECONNECTION";
+            throw simulated;
+          }
           const info = await jsonTransport.sendMail(mailOptions);
           sentTestEmails.push({
             sentAt: new Date().toISOString(),
@@ -1167,7 +1194,43 @@ function writeNewsletterIssues(issues) {
   fs.renameSync(tmp, NEWSLETTER_ISSUES_FILE);
 }
 
-async function appendLead(lead) {
+// options.ownerAlert = { kind, label } records the owner alert state in the
+// SAME insert as the lead (so a saved inquiry can never be missing its alert
+// state) and, after the lead is safely persisted, starts delivery in the
+// background. Pass options.deferOwnerAlert = true when the route sends its own
+// detailed alert via ownerInquiryAlerts.notify() after saving.
+async function appendLead(lead, options = {}) {
+  const ownerAlert = options.ownerAlert || null;
+
+  if (ownerAlert && ownerAlert.kind) {
+    lead.ownerAlerts = {
+      ...(lead.ownerAlerts || {}),
+      [ownerAlert.kind]: ownerInquiryAlerts.initialState(lead, ownerAlert)
+    };
+  }
+
+  const savedLead = await appendLeadRecord(lead);
+
+  if (
+    ownerAlert &&
+    ownerAlert.kind &&
+    !options.deferOwnerAlert &&
+    savedLead?.ownerAlerts?.[ownerAlert.kind]?.status === "pending"
+  ) {
+    ownerInquiryAlerts
+      .notify(savedLead, {
+        kind: ownerAlert.kind,
+        label: ownerAlert.label
+      })
+      .catch(() => {
+        console.error("[owner alert] Unexpected alert error:", savedLead.leadId, ownerAlert.kind);
+      });
+  }
+
+  return savedLead;
+}
+
+async function appendLeadRecord(lead) {
   const row = {
     leadId: lead.leadId,
     name: lead.contact?.name || "",
@@ -1190,7 +1253,9 @@ async function appendLead(lead) {
       contactRequest: lead.contactRequest || null,
       calendarAppointment: lead.calendarAppointment || null,
       submissionType: lead.submissionType || null,
-      freeEstimateUsage: lead.freeEstimateUsage || null
+      freeEstimateUsage: lead.freeEstimateUsage || null,
+      transcriptRequest: lead.transcriptRequest || null,
+      ownerAlerts: lead.ownerAlerts || null
     },
     taxYear: lead.taxData?.taxYear || null,
     filingYear: lead.taxData?.filingYear || null
@@ -1230,6 +1295,203 @@ async function appendLead(lead) {
     console.log("Lead saved locally:", lead.leadId);
     return lead;
   }
+}
+
+// =============================================================================
+// OWNER INQUIRY ALERTS -- persistence helpers and instance
+// =============================================================================
+
+const OWNER_ALERT_RECIPIENT = String(
+  process.env.OWNER_ALERT_EMAIL ||
+  process.env.CONTACT_EMAIL ||
+  "greatestbusiness1@gmail.com"
+).trim();
+
+function ownerAlertDeliveryConfig() {
+  // On a production host, the local JSON test transport must never count as
+  // a delivered alert -- real SMTP credentials are required.
+  if (CLIENT_PORTAL_PRODUCTION_HOST && !EMAIL_DELIVERY_CONFIGURED) {
+    return { ready: false, reason: "EMAIL_NOT_CONFIGURED" };
+  }
+
+  return {
+    ready: true,
+    from: EMAIL_USER || "local-test@localhost",
+    to: OWNER_ALERT_RECIPIENT,
+    dashboardUrl:
+      String(APP_BASE_URL || "").replace(/\/+$/, "") + "/leads-dashboard"
+  };
+}
+
+async function loadLeadForOwnerAlert(leadId) {
+  const cleanId = String(leadId || "").trim();
+  if (!cleanId) return null;
+
+  try {
+    const { data, error } = await leadsSupabaseClient
+      .from("leads")
+      .select("*")
+      .eq("leadId", cleanId)
+      .limit(1);
+
+    if (!error && Array.isArray(data) && data[0]) {
+      return mapRowToLead(data[0]);
+    }
+  } catch {
+    // fall through
+  }
+
+  if (CLIENT_PORTAL_PRODUCTION_HOST) return null;
+
+  const local = readLeads().find(
+    (entry) => String(entry?.leadId || "") === cleanId
+  );
+  return local ? mapRowToLead(local) : null;
+}
+
+async function saveOwnerAlertState(leadId, kind, state) {
+  const cleanId = String(leadId || "").trim();
+  if (!cleanId || !kind) return { ok: false };
+
+  const cleanState = JSON.parse(JSON.stringify(state || {}));
+
+  try {
+    // Compare-and-swap on updated_at so an alert-state write can never
+    // revert a concurrent payment, office, or customer update to the lead.
+    const result = await writeAlertStateWithConcurrencyGuard({
+      kind,
+      state: cleanState,
+      load: async () => {
+        const { data, error } = await leadsSupabaseClient
+          .from("leads")
+          .select("*")
+          .eq("leadId", cleanId)
+          .limit(1);
+
+        if (error || !Array.isArray(data) || !data[0]) {
+          return { found: false };
+        }
+
+        return {
+          found: true,
+          estimate: data[0].estimate || {},
+          version: data[0].updated_at || undefined
+        };
+      },
+      save: async (updatedEstimate, version) => {
+        let query = leadsSupabaseClient
+          .from("leads")
+          .update({ estimate: updatedEstimate })
+          .eq("leadId", cleanId);
+
+        if (version) {
+          query = query.eq("updated_at", version);
+        }
+
+        const { data, error } = await query.select("leadId");
+
+        if (error) return { ok: false };
+        if (version && (!Array.isArray(data) || data.length === 0)) {
+          return { ok: false, conflict: true };
+        }
+        return { ok: true };
+      }
+    });
+
+    if (result.ok) {
+      if (!result.guarded && !ownerAlertUnguardedWarned) {
+        ownerAlertUnguardedWarned = true;
+        console.warn(
+          "[owner alert] leads.updated_at is unavailable; alert-state writes are not concurrency-guarded. Apply supabase/leads-table-v1.sql."
+        );
+      }
+      const cached = recentLeads.get(cleanId);
+      if (cached) {
+        cached.ownerAlerts = result.estimate.ownerAlerts;
+      }
+      return { ok: true, source: "supabase" };
+    }
+
+    if (result.reason === "conflict-retries-exhausted") {
+      console.error("[owner alert] Alert state write kept conflicting:", cleanId, kind);
+      return { ok: false };
+    }
+  } catch {
+    // fall through
+  }
+
+  if (CLIENT_PORTAL_PRODUCTION_HOST) return { ok: false };
+
+  const leads = readLeads();
+  const index = leads.findIndex(
+    (entry) => String(entry?.leadId || "") === cleanId
+  );
+  if (index < 0) return { ok: false };
+
+  leads[index] = {
+    ...leads[index],
+    ownerAlerts: {
+      ...(leads[index].ownerAlerts || {}),
+      [kind]: cleanState
+    }
+  };
+  writeLeads(leads);
+  return { ok: true, source: "local" };
+}
+
+async function listLeadsWithOpenOwnerAlerts() {
+  const since = new Date(
+    Date.now() - 14 * 24 * 60 * 60 * 1000
+  ).toISOString();
+  const byId = new Map();
+
+  try {
+    const { data, error } = await leadsSupabaseClient
+      .from("leads")
+      .select("*")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(data)) {
+      data.map(mapRowToLead).forEach((lead) => {
+        if (lead?.leadId) byId.set(lead.leadId, lead);
+      });
+    }
+  } catch {
+    // fall through
+  }
+
+  if (!CLIENT_PORTAL_PRODUCTION_HOST) {
+    readLeads().forEach((entry) => {
+      const lead = mapRowToLead(entry);
+      if (lead?.leadId && !byId.has(lead.leadId)) byId.set(lead.leadId, lead);
+    });
+  }
+
+  return Array.from(byId.values()).filter((lead) =>
+    Object.values(lead.ownerAlerts || {}).some(isOpenAlertState)
+  );
+}
+
+const ownerInquiryAlerts = createOwnerInquiryAlerts({
+  sendMail: (mailOptions) => transporter.sendMail(mailOptions),
+  getDeliveryConfig: ownerAlertDeliveryConfig,
+  loadLead: loadLeadForOwnerAlert,
+  saveAlertState: saveOwnerAlertState,
+  listLeadsWithOpenAlerts: listLeadsWithOpenOwnerAlerts,
+  suppressedEmails: String(process.env.OWNER_ALERT_TEST_EMAILS || "").split(",")
+});
+
+// Background retry sweep for pending/retrying owner alerts. Unref'd so it
+// never keeps a process (or a test run) alive.
+const OWNER_ALERT_SWEEP_MS = 5 * 60 * 1000;
+const ownerAlertSweepTimer = setInterval(() => {
+  ownerInquiryAlerts.retryDue().catch(() => {
+    console.error("[owner alert] Retry sweep failed.");
+  });
+}, OWNER_ALERT_SWEEP_MS);
+if (typeof ownerAlertSweepTimer.unref === "function") {
+  ownerAlertSweepTimer.unref();
 }
 
 // =============================================================================
@@ -2139,7 +2401,14 @@ function mapRowToLead(row) {
       row.client_portal ||
       null
     ),
-    Request: estimate.Request || estimate.request || row.Request || row.request || null
+    Request: estimate.Request || estimate.request || row.Request || row.request || null,
+    ownerAlerts:
+      (estimate.ownerAlerts && typeof estimate.ownerAlerts === "object"
+        ? estimate.ownerAlerts
+        : null) ||
+      (row.ownerAlerts && typeof row.ownerAlerts === "object"
+        ? row.ownerAlerts
+        : null)
   };
 }
 
@@ -4832,6 +5101,47 @@ async function triggerAutomaticWrittenReviewDelivery(
 // POST /api/stripe-webhook
 // =============================================================================
 
+const STRIPE_PAYMENT_OWNER_ALERTS = {
+  irs_transcript_help: "Payment Received - IRS Transcript Help",
+  irs__help: "Payment Received - IRS Transcript Help",
+  tax_extension: "Payment Received - Tax Extension",
+  installment_agreement: "Payment Received - IRS Installment Agreement",
+  tax_preparation: "Payment Received - Tax Preparation",
+  contractor_1099: "Payment Received - Contractor Forms 1099",
+  year_round_membership: "Payment Received - Membership (Pinnacle / Tax Watch Pro)",
+  written_review: "Payment Received - Written Tax Estimate Review"
+};
+
+function queueStripePaymentOwnerAlert(session = {}) {
+  const service = String(session.metadata?.service || "");
+  const label = STRIPE_PAYMENT_OWNER_ALERTS[service];
+  const leadId = String(
+    session.metadata?.leadId || session.client_reference_id || ""
+  ).trim();
+
+  if (!label || !leadId || session.payment_status !== "paid") return;
+
+  // A Stripe test-mode payment on the live site is a test, not a customer.
+  if (CLIENT_PORTAL_PRODUCTION_HOST && session.livemode === false) return;
+
+  const kind =
+    "payment-" +
+    (service === "irs__help" ? "irs_transcript_help" : service).replace(/_/g, "-");
+
+  loadLeadForOwnerAlert(leadId)
+    .then((lead) => {
+      if (!lead) return null;
+      return ownerInquiryAlerts.notify(lead, {
+        kind,
+        label,
+        persistPendingFirst: true
+      });
+    })
+    .catch(() => {
+      console.error("[owner alert] Unexpected payment alert error:", leadId, kind);
+    });
+}
+
 app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     console.error("[stripe webhook] STRIPE_WEBHOOK_SECRET is not configured.");
@@ -5399,6 +5709,13 @@ Greatest Business Solution LLC`
         retry: true,
         error: "The update could not be safely persisted. Please retry."
       });
+    }
+
+    // Owner alert for a newly paid service, only after every payment update
+    // above was persisted. Background, idempotent per (leadId, kind), and
+    // never affects the webhook response or payment processing.
+    if (event.type === "checkout.session.completed") {
+      queueStripePaymentOwnerAlert(event.data.object || {});
     }
 
     return res.json({ received: true });
@@ -14316,7 +14633,12 @@ app.post("/api/lead", async (req, res) => {
   let savedLead;
 
   try {
-    savedLead = await appendLead(lead);
+    savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "free-estimate",
+        label: "Free Tax Estimate"
+      }
+    });
     recentLeads.set(savedLead.leadId, savedLead);
   } catch (err) {
     console.error("[/api/lead] Save error:", leadsErrorDiagnostic(err));
@@ -14803,7 +15125,12 @@ app.post("/api/calendar-appointment", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "calendar-appointment",
+        label: "Consultation Appointment Request"
+      }
+    });
     recentLeads.set(savedLead.leadId, savedLead);
 
     return res.status(201).json({
@@ -15865,25 +16192,24 @@ app.post("/api/contact-request", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const ownerAlertKind = "contact-request";
+    const ownerAlertLabel = "Contact Request - " + service;
+    const savedLead = await appendLead(lead, {
+      ownerAlert: { kind: ownerAlertKind, label: ownerAlertLabel },
+      deferOwnerAlert: true
+    });
     recentLeads.set(savedLead.leadId, savedLead);
 
     let notificationSent = false;
     let confirmationSent = false;
     let emailError = "";
 
-    try {
-      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
-        throw new Error("Email delivery is not configured.");
-      }
-
-      const businessRecipient =
-        process.env.CONTACT_EMAIL ||
-        "greatestbusiness1@gmail.com";
-
-      await transporter.sendMail({
-        from: EMAIL_USER,
-        to: businessRecipient,
+    // Owner alert: lead is already persisted; delivery state is recorded on
+    // the lead and retried automatically if this attempt fails.
+    const ownerAlertResult = await ownerInquiryAlerts.notify(savedLead, {
+      kind: ownerAlertKind,
+      label: ownerAlertLabel,
+      mail: {
         replyTo: email,
         subject: "New Contact Request - " + service,
         text:
@@ -15900,9 +16226,19 @@ ${message}
 
 Reference number:
 ${leadId}`
-      });
+      }
+    });
 
-      notificationSent = true;
+    notificationSent = ownerAlertResult.status === "sent";
+
+    if (!notificationSent && ownerAlertResult.status !== "suppressed" && ownerAlertResult.status !== "duplicate") {
+      emailError = "Owner alert queued for retry.";
+    }
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error("Email delivery is not configured.");
+      }
 
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -15974,6 +16310,135 @@ Greatest Business Solution LLC`
 // =============================================================================
 // POST /api/tax-preparation-intake
 // =============================================================================
+
+// =============================================================================
+// POST /api/transcript-help
+// Homepage IRS Transcript Help request (ui/transcript-help.html). Replaces a
+// damaged, unreachable "/api/-help" route that only wrote to the temporary
+// Render disk. Saves through appendLead (production Supabase; fails closed
+// with 503 if the database write fails) in the same transcriptRequest shape
+// the estimate-results transcript workflow uses, then alerts the owner.
+// No price is set and no payment is started here; the existing
+// /transcript-help-next.html step is unchanged.
+// =============================================================================
+
+app.post("/api/transcript-help", async (req, res) => {
+  const body = req.body || {};
+  const clip = (value, max) => String(value || "").trim().slice(0, max);
+
+  const clientName = clip(body.clientName, 120);
+  const clientEmail = String(body.clientEmail || "").trim().toLowerCase().slice(0, 254);
+  const clientPhoneRaw = clip(body.clientPhone, 40);
+  const taxYear = clip(body.taxYear, 40);
+  const multipleYears = clip(body.multipleYears, 200);
+  const issueType = clip(body.issueType, 120);
+  const transcriptType = clip(body.transcriptType, 120);
+  const clientExplanation = clip(body.clientExplanation, 4000);
+
+  const errors = [];
+
+  if (!clientName) errors.push("Full name is required.");
+  if (!clientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+    errors.push("A valid email address is required.");
+  }
+  if (!clientPhoneRaw) errors.push("Phone number is required.");
+  if (!taxYear) errors.push("Tax year is required.");
+  if (!issueType) errors.push("Please select what you need help with.");
+  if (!clientExplanation) errors.push("Please briefly explain what you need.");
+  if (taxYear === "Multiple Years" && !multipleYears) {
+    errors.push("Please enter the tax years needed.");
+  }
+
+  if (errors.length) {
+    return res.status(400).json({
+      ok: false,
+      error: errors[0],
+      errors
+    });
+  }
+
+  const nowIso = new Date().toISOString();
+  const leadId =
+    "TRANSCRIPT-" +
+    Date.now() +
+    "-" +
+    crypto.randomBytes(3).toString("hex").toUpperCase();
+  const clientPhone = formatPhoneNumber(clientPhoneRaw);
+  const taxYears =
+    taxYear === "Multiple Years"
+      ? multipleYears
+          .split(/[\s,;]+/)
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .slice(0, 20)
+      : [taxYear];
+  const transcriptTypes = transcriptType ? [transcriptType] : [];
+
+  const lead = {
+    leadId,
+    timestamp: nowIso,
+    priority: "high",
+    status: "Transcript Help - Payment Pending",
+    notes:
+      "IRS Transcript Help request submitted from the transcript help page. " +
+      "Issue: " + issueType + ".",
+    contact: {
+      name: clientName,
+      email: clientEmail,
+      phone: clientPhone || "Not provided"
+    },
+    taxData: {
+      taxYear: taxYears[0] || taxYear
+    },
+    estimateSummary: {},
+    submissionType: "transcript-help",
+    transcriptRequest: {
+      requested: true,
+      requestedAt: nowIso,
+      source: "Transcript Help Request Page",
+      paymentStatus: "Need Payment",
+      authorizationStatus: "Need 8821",
+      identityVerified: "No",
+      internalStatus: "Waiting on payment",
+      issueType,
+      transcriptType: transcriptType || "Not sure / preparer review needed",
+      transcriptTypes,
+      taxYear,
+      taxYears,
+      yearsNeeded: taxYears,
+      clientIssue: clientExplanation,
+      clientComment: clientExplanation,
+      lastSavedAt: nowIso
+    }
+  };
+
+  try {
+    const savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "transcript-help-request",
+        label: "IRS Transcript Help Request"
+      }
+    });
+    recentLeads.set(savedLead.leadId, savedLead);
+
+    return res.status(201).json({
+      ok: true,
+      leadId: savedLead.leadId,
+      message: "Transcript help request saved."
+    });
+  } catch (err) {
+    console.error(
+      "[transcript help] Save failed:",
+      leadsErrorDiagnostic(err)
+    );
+    if (respondIfLeadPersistFailure(res, err)) return;
+
+    return res.status(500).json({
+      ok: false,
+      error: "Could not save your transcript help request. Please try again."
+    });
+  }
+});
 
 app.post("/api/tax-preparation-intake", async (req, res) => {
   const body = req.body || {};
@@ -16777,7 +17242,12 @@ app.post("/api/tax-preparation-intake", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "tax-preparation-intake",
+        label: "Tax Preparation Intake"
+      }
+    });
     recentLeads.set(savedLead.leadId, savedLead);
 
     let emailSent = false;
@@ -17418,7 +17888,12 @@ app.post("/api/contractor-1099-request", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const ownerAlertKind = "contractor-1099-request";
+    const ownerAlertLabel = "Contractor Forms 1099 Request";
+    const savedLead = await appendLead(lead, {
+      ownerAlert: { kind: ownerAlertKind, label: ownerAlertLabel },
+      deferOwnerAlert: true
+    });
     recentLeads.set(savedLead.leadId, savedLead);
 
     let officeEmailSent = false;
@@ -17441,18 +17916,12 @@ app.post("/api/contractor-1099-request", async (req, res) => {
           "&email=" +
           encodeURIComponent(email);
 
-    try {
-      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
-        throw new Error("Email delivery is not configured.");
-      }
-
-      const businessRecipient =
-        process.env.CONTACT_EMAIL ||
-        "greatestbusiness1@gmail.com";
-
-      await transporter.sendMail({
-        from: EMAIL_USER,
-        to: businessRecipient,
+    // Owner alert: lead is already persisted; delivery state is recorded on
+    // the lead and retried automatically if this attempt fails.
+    const ownerAlertResult = await ownerInquiryAlerts.notify(savedLead, {
+      kind: ownerAlertKind,
+      label: ownerAlertLabel,
+      mail: {
         replyTo: email,
         subject:
           "New Contractor Forms 1099 Request - " +
@@ -17490,9 +17959,19 @@ Reference number:
 ${leadId}
 
 Open Tax Lead Center > Contractor 1099 Requests.`
-      });
+      }
+    });
 
-      officeEmailSent = true;
+    officeEmailSent = ownerAlertResult.status === "sent";
+
+    if (!officeEmailSent && ownerAlertResult.status !== "suppressed" && ownerAlertResult.status !== "duplicate") {
+      emailError = "Owner alert queued for retry.";
+    }
+
+    try {
+      if (!EMAIL_USER || !EMAIL_APP_PASSWORD) {
+        throw new Error("Email delivery is not configured.");
+      }
 
       await transporter.sendMail({
         from: EMAIL_USER,
@@ -17873,7 +18352,12 @@ app.post("/api/extension-request", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "extension-request",
+        label: "Tax Extension Request"
+      }
+    });
     recentLeads.set(
       savedLead.leadId,
       savedLead
@@ -18147,7 +18631,12 @@ app.post("/api/installment-agreement-request", async (req, res) => {
   };
 
   try {
-    const savedLead = await appendLead(lead);
+    const savedLead = await appendLead(lead, {
+      ownerAlert: {
+        kind: "installment-agreement-request",
+        label: "IRS Installment Agreement Request"
+      }
+    });
     recentLeads.set(
       savedLead.leadId,
       savedLead
@@ -30904,6 +31393,46 @@ function sanitizePublicRequestSubmission(rawRequest) {
   return { value: sanitized, rejectedFields };
 }
 
+// Owner alerts for customer requests added to an EXISTING lead through the
+// public PATCH /api/leads/:leadId path (transcript help, tax prep help, and
+// tax strategy worksheet submissions). Office edits never trigger alerts.
+// Runs after the update is persisted; idempotent per (leadId, kind).
+function customerRequestOwnerAlertKinds(body = {}, { worksheetWasSubmitted } = {}) {
+  const kinds = [];
+  const transcript = body.transcriptRequest || null;
+
+  if (
+    (transcript && transcript.requested === true) ||
+    String(body.status || "") === "Transcript Help - Payment Pending"
+  ) {
+    kinds.push({ kind: "transcript-help-request", label: "IRS Transcript Help Request" });
+  }
+
+  if (body.Request && body.Request.writtenReviewTaxPrepHelpRequest) {
+    kinds.push({ kind: "tax-prep-help-request", label: "Tax Preparation Help Request" });
+  }
+
+  if (worksheetWasSubmitted) {
+    kinds.push({ kind: "tax-strategy-worksheet", label: "Client Tax Strategy Worksheet Submitted" });
+  }
+
+  return kinds;
+}
+
+function queueCustomerRequestOwnerAlerts(lead, body, { isOfficeAuthenticated, worksheetWasSubmitted } = {}) {
+  if (isOfficeAuthenticated || !lead?.leadId) return;
+
+  const mapped = mapRowToLead(lead);
+
+  for (const { kind, label } of customerRequestOwnerAlertKinds(body, { worksheetWasSubmitted })) {
+    ownerInquiryAlerts
+      .notify(mapped, { kind, label, persistPendingFirst: true })
+      .catch(() => {
+        console.error("[owner alert] Unexpected alert error:", mapped.leadId, kind);
+      });
+  }
+}
+
 app.patch("/api/leads/:leadId", async (req, res) => {
   const { leadId } = req.params;
   const body = req.body || {};
@@ -31330,6 +31859,11 @@ app.patch("/api/leads/:leadId", async (req, res) => {
               );
           }
 
+          queueCustomerRequestOwnerAlerts(updatedLead, body, {
+            isOfficeAuthenticated,
+            worksheetWasSubmitted
+          });
+
           return res.status(200).json({
             ok: true,
             source: "supabase",
@@ -31620,6 +32154,11 @@ app.patch("/api/leads/:leadId", async (req, res) => {
             localBaseUrl
           );
       }
+
+      queueCustomerRequestOwnerAlerts(localLead, body, {
+        isOfficeAuthenticated,
+        worksheetWasSubmitted
+      });
 
       return res.status(200).json({
         ok: true,
@@ -31957,6 +32496,32 @@ async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
   }
 }
 
+// POST /api/owner-alerts/retry -- office only. Forces one delivery attempt
+// for unresolved (pending / retrying / failed) owner inquiry alerts, either
+// for one lead ({ leadId }) or for all recent leads. Returns counts only.
+app.post("/api/owner-alerts/retry", requireOfficeDocumentReviewApi, async (req, res) => {
+  const leadId = String(req.body?.leadId || "").trim();
+
+  if (leadId && (leadId.length > 120 || !/^[A-Za-z0-9_.:-]+$/.test(leadId))) {
+    return res.status(400).json({ ok: false, error: "Invalid lead reference." });
+  }
+
+  try {
+    const summary = await ownerInquiryAlerts.retryDue({
+      leadId,
+      force: true
+    });
+
+    return res.status(200).json({ ok: true, summary });
+  } catch {
+    console.error("[owner alert] Manual retry failed.");
+    return res.status(500).json({
+      ok: false,
+      error: "Owner alert retry could not be completed."
+    });
+  }
+});
+
 app.get("/api/leads", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const includeLocal =
@@ -32169,106 +32734,6 @@ app.use((err, req, res, next) => {
 // =============================================================================
 // START
 // =============================================================================
-
-app.post("/api/-help", (req, res) => {
-  try {
-    const body = req.body || {};
-
-    const clientName = String(body.clientName || "").trim();
-    const clientEmail = String(body.clientEmail || "").trim();
-    const clientPhone = String(body.clientPhone || "").trim();
-    const taxYear = String(body.taxYear || "").trim();
-    const multipleYears = String(body.multipleYears || "").trim();
-    const issueType = String(body.issueType || "").trim();
-    const Type = String(body.Type || "Not sure / preparer review needed").trim();
-    const clientExplanation = String(body.clientExplanation || "").trim();
-
-    if (!clientName || !clientEmail || !clientPhone || !taxYear || !issueType || !clientExplanation) {
-      return res.status(400).json({
-        ok: false,
-        error: "Missing required  help request fields."
-      });
-    }
-
-    if (taxYear === "Multiple Years" && !multipleYears) {
-      return res.status(400).json({
-        ok: false,
-        error: "Please enter the tax years needed."
-      });
-    }
-
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const leadId = `-${Date.now()}`;
-    const taxYearForLead = taxYear === "Multiple Years" && multipleYears ? multipleYears : taxYear;
-
-    const notes = [
-      `[${nowIso}] Client submitted  Help Request.`,
-      `Issue Type: ${issueType}`,
-      `Tax Year Needed: ${taxYearForLead}`,
-      ` Type Selected: ${Type}`,
-      `Client Explanation: ${clientExplanation}`,
-      `Payment Status: Requested / Waiting for Payment Verification`,
-      `Authorization Status: Not requested yet`
-    ].join("\n");
-
-    const leads = readLeads();
-
-    const newLead = {
-      leadId,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-      status: " Help - Payment Pending",
-      priority: "high",
-      source: " Help Request Page",
-      contact: {
-        name: clientName,
-        email: clientEmail,
-        phone: clientPhone
-      },
-      taxData: {
-        taxYear: taxYearForLead
-      },
-      notes,
-      Request: {
-        requested: true,
-        requestedAt: nowIso,
-        serviceName: "IRS  Help & Tax Records Review",
-        issueType,
-        Type,
-        clientExplanation,
-        taxYear,
-        multipleYears,
-        paymentStatus: "Requested / Waiting for Payment Verification",
-        authorizationStatus: "Not requested yet",
-        authorizationReceivedDate: "",
-        PulledDate: "",
-        ReceivedDate: "",
-        deliveryMethod: "",
-        deliveryDate: "",
-        mailCertifiedFee: "",
-        errorStatus: "No error",
-        internalNotes: "New client-facing  help request submitted.",
-        fee: "$150 flat service fee"
-      }
-    };
-
-    leads.unshift(newLead);
-    writeLeads(leads);
-
-    res.json({
-      ok: true,
-      leadId,
-      message: " help request saved."
-    });
-  } catch (err) {
-    console.error("[-help] Save error:", err);
-    res.status(500).json({
-      ok: false,
-      error: "Could not save  help request."
-    });
-  }
-});
 
 app.delete("/api/leads/:leadId", requireOfficeDocumentReviewApi, async (req, res) => {
   try {

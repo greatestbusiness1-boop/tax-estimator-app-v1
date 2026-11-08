@@ -79,6 +79,7 @@ function makeElement(id) {
 function makeDocument() {
   const elements = {
     leadsLoadStatus: makeElement("leadsLoadStatus"),
+    ownerAlertStatus: makeElement("ownerAlertStatus"),
     leadCount: makeElement("leadCount"),
     leadList: makeElement("leadList"),
     contractor1099RequestsSidebarCount: makeElement(
@@ -117,7 +118,10 @@ const LOAD_FUNCTIONS = [
   "renderLeadsLoadStatus",
   "renderLeadsUnavailable",
   "loadLeads",
-  "renderLeads"
+  "renderLeads",
+  "getUnresolvedOwnerAlerts",
+  "describeOwnerAlertStatus",
+  "renderOwnerAlertStatus"
 ];
 
 function loadDashboardSandbox(fetchImpl) {
@@ -171,6 +175,7 @@ function loadDashboardSandbox(fetchImpl) {
     "var allLeads = [];",
     "var leadsLoadState = { status: 'loading', loadedOnce: false, lastSuccessAt: '', error: null };",
     extractConstSource(SOURCE, "LEADS_SIGN_IN_URL"),
+    extractConstSource(SOURCE, "OWNER_ALERT_PENDING_GRACE_MS"),
     ...LOAD_FUNCTIONS.map((name) => extractFunctionSource(SOURCE, name)),
     "this.LEADS_SIGN_IN_URL = LEADS_SIGN_IN_URL;"
   ].join("\n");
@@ -514,4 +519,88 @@ test("existing classification rules are preserved: CONTACT- is not a Contractor 
     true
   );
   assert.equal(sandbox.isWebsiteContactLead({ leadId: "C1099-123", status: "Contractor 1099 - New" }), false);
+});
+
+// =============================================================================
+// Owner inquiry alert visibility
+// =============================================================================
+
+function leadWithAlert(leadId, kind, state) {
+  return {
+    leadId,
+    contact: { name: "Pat Customer", email: "pat@customer-mail.net" },
+    ownerAlerts: { [kind]: state }
+  };
+}
+
+test("getUnresolvedOwnerAlerts: surfaces failed, retrying, and stale pending alerts only", () => {
+  const sandbox = loadDashboardSandbox(jsonResponse(200, {}));
+  const now = Date.parse("2026-11-08T12:00:00.000Z");
+  const leads = [
+    leadWithAlert("L-SENT", "contact-request", { status: "sent", attempts: 1 }),
+    leadWithAlert("L-SUPP", "contact-request", { status: "suppressed" }),
+    leadWithAlert("L-DUP", "contact-request", { status: "duplicate" }),
+    leadWithAlert("L-FRESH", "free-estimate", { status: "pending", createdAt: "2026-11-08T11:59:30.000Z" }),
+    leadWithAlert("L-STALE", "free-estimate", { status: "pending", createdAt: "2026-11-08T11:50:00.000Z" }),
+    leadWithAlert("L-RETRY", "contractor-1099-request", { status: "retrying", attempts: 2, lastError: "ECONNECTION", label: "Contractor Forms 1099 Request" }),
+    leadWithAlert("L-FAIL", "contact-request", { status: "failed", attempts: 6, lastError: "EAUTH_535" }),
+    { leadId: "L-LEGACY", contact: { name: "Old" } }
+  ];
+
+  const rows = sandbox.getUnresolvedOwnerAlerts(leads, now);
+  assert.deepEqual(
+    Array.from(rows, (row) => row.leadId),
+    ["L-FAIL", "L-STALE", "L-RETRY"]
+  );
+  assert.equal(rows[2].label, "Contractor Forms 1099 Request");
+});
+
+test("loadLeads: unresolved owner alerts are shown in the authenticated dashboard with a retry action", async () => {
+  const leads = [
+    leadWithAlert("CONTACT-1794019105793-TEST1", "contact-request", {
+      status: "failed",
+      attempts: 6,
+      lastError: "ECONNECTION",
+      label: "Contact Request - Contractor Forms 1099"
+    })
+  ];
+  const sandbox = loadDashboardSandbox(jsonResponse(200, { ok: true, leads }));
+  await sandbox.loadLeads();
+
+  const box = sandbox.document.elements.ownerAlertStatus;
+  assert.equal(box.hidden, false);
+  assert.match(box.innerHTML, /1 customer inquiry alert has not been delivered/);
+  assert.match(box.innerHTML, /CONTACT-1794019105793-TEST1/);
+  assert.match(box.innerHTML, /Alert FAILED after 6 attempt/);
+  assert.match(box.innerHTML, /\[ECONNECTION\]/);
+  assert.match(box.innerHTML, /data-lead-id="CONTACT-1794019105793-TEST1"/);
+  assert.match(box.innerHTML, /retryOwnerAlerts\(this\.dataset\.leadId\)/);
+  assert.match(box.innerHTML, /Retry all now/);
+});
+
+test("loadLeads: no owner alert banner when every alert was delivered", async () => {
+  const sandbox = loadDashboardSandbox(
+    jsonResponse(200, {
+      ok: true,
+      leads: [leadWithAlert("L-1", "contact-request", { status: "sent", attempts: 1 })]
+    })
+  );
+  await sandbox.loadLeads();
+  assert.equal(sandbox.document.elements.ownerAlertStatus.hidden, true);
+});
+
+test("owner alert banner escapes customer-controlled text", () => {
+  const sandbox = loadDashboardSandbox(jsonResponse(200, {}));
+  sandbox.allLeads = [
+    {
+      leadId: "L-X",
+      contact: { name: "<img src=x onerror=alert(1)>" },
+      ownerAlerts: { "contact-request": { status: "failed", attempts: 6, label: "<b>x</b>" } }
+    }
+  ];
+  sandbox.renderOwnerAlertStatus();
+  const html = sandbox.document.elements.ownerAlertStatus.innerHTML;
+  assert.doesNotMatch(html, /<img/);
+  assert.doesNotMatch(html, /<b>x<\/b>/);
+  assert.match(html, /&lt;img/);
 });
