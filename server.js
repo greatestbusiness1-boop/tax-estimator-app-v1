@@ -34485,6 +34485,10 @@ Greatest Business Solution LLC`
 
 app.post("/api/create-extension-checkout", async (req, res) => {
   try {
+    // officeRequest (office payment-link email) requires a real office
+    // session; checked before any Stripe, email, or lead side effect.
+    if (rejectUnauthenticatedOfficeRequest(req, res)) return;
+
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({
         ok: false,

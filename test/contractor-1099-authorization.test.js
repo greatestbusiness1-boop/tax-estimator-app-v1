@@ -576,3 +576,138 @@ test("J. Tax Preparation checkout: officeRequest needs an office session; custom
   assert.equal(sessionsFor(lead.leadId).length, 2);
   assert.equal(emailsTo(lead.contact.email).length, 1);
 });
+
+// =============================================================================
+// K. Related: Tax Extension checkout (POST /api/create-extension-checkout)
+// =============================================================================
+
+function extensionLead(requestOverrides = {}) {
+  const leadId = uniqueId("EXT");
+  const email = `${leadId.toLowerCase()}@example.test`;
+  return insertLead({
+    leadId,
+    timestamp: new Date().toISOString(),
+    status: "Tax Extension - Payment Pending",
+    contact: { name: "Auth Test Extension", email, phone: "(555) 555-0172" },
+    extensionRequest: {
+      serviceType: "individual",
+      stateExtensionRequested: false,
+      serviceTier: "individual_federal",
+      totalPriceCents: 15000,
+      checkoutEligible: true,
+      deadlineReviewRequired: false,
+      quoteNeeded: false,
+      paymentStatus: "Payment Pending",
+      ...requestOverrides
+    }
+  });
+}
+
+test("K1. Extension checkout: anonymous or forged officeRequest is denied with no session, email, or lead change", async () => {
+  const lead = extensionLead();
+  const before = JSON.stringify(getLead(lead.leadId));
+
+  for (const headers of [{}, { Cookie: FORGED_OFFICE_COOKIE }, { Cookie: "tsp_office_document_review=" }]) {
+    const { res, json } = await post(
+      "/api/create-extension-checkout",
+      { leadId: lead.leadId, clientEmail: lead.contact.email, officeRequest: true },
+      headers
+    );
+    assert.equal(res.status, 401);
+    assert.equal(json.ok, false);
+    assert.equal(json.checkoutUrl, undefined);
+  }
+
+  assert.equal(sessionsFor(lead.leadId).length, 0);
+  assert.equal(emailsTo(lead.contact.email).length, 0);
+  assert.equal(JSON.stringify(getLead(lead.leadId)), before);
+});
+
+test("K2. Extension checkout: customer self-service still works (as used by the extension request page)", async () => {
+  const lead = extensionLead();
+
+  const wrongEmail = await post("/api/create-extension-checkout", {
+    leadId: lead.leadId,
+    clientEmail: "someone-else@example.test"
+  });
+  assert.equal(wrongEmail.res.status, 400);
+  assert.equal(sessionsFor(lead.leadId).length, 0);
+
+  const { res, json } = await post("/api/create-extension-checkout", {
+    leadId: lead.leadId,
+    clientEmail: lead.contact.email
+  });
+  assert.equal(res.status, 200, JSON.stringify(json));
+  assert.equal(json.ok, true);
+  assert.match(json.checkoutUrl, /^https:\/\/checkout\.stripe\.test\/mock\//);
+
+  const sessions = sessionsFor(lead.leadId);
+  assert.equal(sessions.length, 1);
+  assert.equal(sessions[0].params.line_items[0].price_data.unit_amount, 15000);
+  assert.equal(emailsTo(lead.contact.email).length, 0, "self-service never sends the office email");
+  assert.equal(getLead(lead.leadId).extensionRequest.stripeCheckoutSessionId, sessions[0].session.id);
+});
+
+test("K3. Extension checkout: authenticated office checkout still creates the session and emails the client", async () => {
+  const cookie = await officeCookie();
+  const lead = extensionLead();
+
+  const { res, json } = await post(
+    "/api/create-extension-checkout",
+    { leadId: lead.leadId, clientEmail: lead.contact.email, officeRequest: true },
+    { Cookie: cookie }
+  );
+  assert.equal(res.status, 200, JSON.stringify(json));
+  assert.equal(json.emailSent, true);
+  assert.equal(sessionsFor(lead.leadId).length, 1);
+
+  const emails = emailsTo(lead.contact.email);
+  assert.equal(emails.length, 1);
+  assert.equal(emails[0].subject, "Your Secure Tax Extension Payment Link");
+});
+
+test("K4. Extension checkout: client-supplied prices never override the saved service price", async () => {
+  const cookie = await officeCookie();
+  const lead = extensionLead();
+
+  for (const [headers, extra] of [
+    [{}, {}],
+    [{ Cookie: cookie }, { officeRequest: true }]
+  ]) {
+    const { res } = await post(
+      "/api/create-extension-checkout",
+      {
+        leadId: lead.leadId,
+        clientEmail: lead.contact.email,
+        totalPriceCents: 1,
+        amount: 1,
+        unit_amount: 1,
+        serviceTier: "business_federal_state",
+        ...extra
+      },
+      headers
+    );
+    assert.equal(res.status, 200);
+  }
+  for (const session of sessionsFor(lead.leadId)) {
+    assert.equal(session.params.line_items[0].price_data.unit_amount, 15000);
+  }
+
+  // A tampered saved price that does not match the service tier is refused.
+  const tampered = extensionLead({ totalPriceCents: 100 });
+  const refused = await post("/api/create-extension-checkout", {
+    leadId: tampered.leadId,
+    clientEmail: tampered.contact.email
+  });
+  assert.equal(refused.res.status, 400);
+  assert.equal(sessionsFor(tampered.leadId).length, 0);
+
+  // Already-paid requests are not charged again.
+  const paid = extensionLead({ paymentStatus: "Paid / Verified" });
+  const again = await post("/api/create-extension-checkout", {
+    leadId: paid.leadId,
+    clientEmail: paid.contact.email
+  });
+  assert.equal(again.res.status, 409);
+  assert.equal(sessionsFor(paid.leadId).length, 0);
+});
