@@ -711,3 +711,116 @@ test("K4. Extension checkout: client-supplied prices never override the saved se
   assert.equal(again.res.status, 409);
   assert.equal(sessionsFor(paid.leadId).length, 0);
 });
+
+// =============================================================================
+// L. Office email routes: Tax Preparation completion, Tax Extension closure
+// =============================================================================
+
+function completedTaxPreparationLead(workOverrides = {}) {
+  return taxPreparationLead({ workStatus: "Accepted / Completed", ...workOverrides });
+}
+
+function closedExtensionLead(requestOverrides = {}) {
+  return extensionLead({ workStatus: "Completed", taxYear: "2025", ...requestOverrides });
+}
+
+const OFFICE_EMAIL_ROUTES = [
+  {
+    name: "Tax Preparation completion email",
+    path: "/api/tax-preparation-completion-email",
+    makeReady: () => completedTaxPreparationLead(),
+    makeAlreadySent: () =>
+      completedTaxPreparationLead({
+        completionEmailSentAt: "2026-11-01T12:00:00.000Z",
+        completionEmailStatus: "Sent",
+        completionEmailResendCount: 0
+      }),
+    record: (lead) => lead.taxPreparationWork,
+    sentAtField: "completionEmailSentAt",
+    subject: "Your Tax Return Is Complete"
+  },
+  {
+    name: "Tax Extension closure email",
+    path: "/api/extension-closure-email",
+    makeReady: () => closedExtensionLead(),
+    makeAlreadySent: () =>
+      closedExtensionLead({
+        closureEmailSentAt: "2026-11-01T12:00:00.000Z",
+        closureEmailStatus: "Sent"
+      }),
+    record: (lead) => lead.extensionRequest,
+    sentAtField: "closureEmailSentAt",
+    subject: "Your Tax Extension Service Is Complete"
+  }
+];
+
+for (const route of OFFICE_EMAIL_ROUTES) {
+  test(`L1. ${route.name}: anonymous and forged-session requests are rejected with no email, no lead change, no details`, async () => {
+    const ready = route.makeReady();
+    const alreadySent = route.makeAlreadySent();
+    const snapshots = [ready, alreadySent].map((lead) => JSON.stringify(getLead(lead.leadId)));
+
+    for (const headers of [{}, { Cookie: FORGED_OFFICE_COOKIE }, { Cookie: "tsp_office_document_review=" }]) {
+      for (const [lead, resend] of [[ready, false], [alreadySent, true]]) {
+        const { res, json } = await post(route.path, { leadId: lead.leadId, resend }, headers);
+        assert.equal(res.status, 401);
+        assert.deepEqual(Object.keys(json).sort(), ["error", "ok"], "denial reveals nothing else");
+        assert.equal(json.ok, false);
+      }
+      // Unknown references are rejected the same way (no existence probing).
+      const probe = await post(route.path, { leadId: "DOES-NOT-EXIST-AUTHTEST" }, headers);
+      assert.equal(probe.res.status, 401);
+    }
+
+    assert.equal(emailsTo(ready.contact.email).length, 0);
+    assert.equal(emailsTo(alreadySent.contact.email).length, 0);
+    [ready, alreadySent].forEach((lead, index) => {
+      assert.equal(JSON.stringify(getLead(lead.leadId)), snapshots[index]);
+    });
+  });
+
+  test(`L2. ${route.name}: authorized office request sends once, is idempotent, and resends only when asked`, async () => {
+    const cookie = await officeCookie();
+    const lead = route.makeReady();
+
+    const first = await post(route.path, { leadId: lead.leadId }, { Cookie: cookie });
+    assert.equal(first.res.status, 200, JSON.stringify(first.json));
+    assert.equal(first.json.ok, true);
+    let emails = emailsTo(lead.contact.email);
+    assert.equal(emails.length, 1);
+    assert.equal(emails[0].subject, route.subject);
+    const sentAt = route.record(getLead(lead.leadId))[route.sentAtField];
+    assert.ok(sentAt);
+
+    const repeat = await post(route.path, { leadId: lead.leadId }, { Cookie: cookie });
+    assert.equal(repeat.res.status, 200);
+    assert.equal(repeat.json.alreadySent, true);
+    assert.equal(emailsTo(lead.contact.email).length, 1, "no duplicate email without resend");
+
+    const resend = await post(route.path, { leadId: lead.leadId, resend: true }, { Cookie: cookie });
+    assert.equal(resend.res.status, 200, JSON.stringify(resend.json));
+    emails = emailsTo(lead.contact.email);
+    assert.equal(emails.length, 2);
+  });
+}
+
+test("L3. Existing completion and closure requirements are still enforced for the office", async () => {
+  const cookie = await officeCookie();
+
+  const notDone = taxPreparationLead({ workStatus: "Preparing" });
+  const taxPrep = await post("/api/tax-preparation-completion-email", { leadId: notDone.leadId }, { Cookie: cookie });
+  assert.equal(taxPrep.res.status, 409);
+  assert.equal(emailsTo(notDone.contact.email).length, 0);
+
+  const notClosed = extensionLead({ workStatus: "In Progress" });
+  const extension = await post("/api/extension-closure-email", { leadId: notClosed.leadId }, { Cookie: cookie });
+  assert.equal(extension.res.status, 409);
+  assert.equal(emailsTo(notClosed.contact.email).length, 0);
+
+  const notEligible = closedExtensionLead({ workStatus: "Closed — Not Eligible" });
+  const update = await post("/api/extension-closure-email", { leadId: notEligible.leadId }, { Cookie: cookie });
+  assert.equal(update.res.status, 200, JSON.stringify(update.json));
+  const emails = emailsTo(notEligible.contact.email);
+  assert.equal(emails.length, 1);
+  assert.equal(emails[0].subject, "Update on Your Tax Extension Request");
+});

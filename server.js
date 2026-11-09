@@ -33125,7 +33125,7 @@ Greatest Business Solution LLC`
 // Extensions when an older record or delivery exception needs attention.
 // =============================================================================
 
-app.post("/api/extension-closure-email", async (req, res) => {
+app.post("/api/extension-closure-email", requireOfficeDocumentReviewApi, async (req, res) => {
   const leadId =
     String(req.body?.leadId || "").trim();
   const resend =
@@ -33600,7 +33600,7 @@ Greatest Business Solution LLC`
 // Sends or resends the final client completion message and saves delivery status.
 // =============================================================================
 
-app.post("/api/tax-preparation-completion-email", async (req, res) => {
+app.post("/api/tax-preparation-completion-email", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const leadId = String(req.body?.leadId || "").trim();
     const resend = req.body?.resend === true;
