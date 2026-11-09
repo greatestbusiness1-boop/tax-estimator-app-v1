@@ -733,6 +733,29 @@ function requireOfficeDocumentReviewApi(
   });
 }
 
+// For routes that serve BOTH a public customer flow and an office-only flow
+// selected by a request-body flag (e.g. officeRequest: true on checkout
+// routes). The flag alone never grants office behavior: an office-only
+// request must carry a valid office session, or it is rejected here BEFORE
+// any side effect (no Stripe session, no email, no lead update). Returns true
+// when it has already sent the 401 response.
+function rejectUnauthenticatedOfficeRequest(req, res) {
+  if (req.body?.officeRequest !== true) {
+    return false;
+  }
+
+  if (officeDocumentReviewAuthenticated(req)) {
+    return false;
+  }
+
+  res.status(401).json({
+    ok: false,
+    error:
+      "Secure office document review sign-in is required."
+  });
+  return true;
+}
+
 function officeDocumentReviewKeyMatches(
   supplied
 ) {
@@ -33338,7 +33361,7 @@ app.post("/api/extension-closure-email", async (req, res) => {
 // Sends or resends the final service-completion message.
 // =============================================================================
 
-app.post("/api/contractor-1099-completion-email", async (req, res) => {
+app.post("/api/contractor-1099-completion-email", requireOfficeDocumentReviewApi, async (req, res) => {
   try {
     const leadId = String(req.body?.leadId || "").trim();
     const resend = req.body?.resend === true;
@@ -33784,6 +33807,10 @@ Greatest Business Solution LLC`
 
 app.post("/api/create-tax-preparation-checkout", async (req, res) => {
   try {
+    // officeRequest (office payment-link email) requires a real office
+    // session; checked before any Stripe, email, or lead side effect.
+    if (rejectUnauthenticatedOfficeRequest(req, res)) return;
+
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({
         ok: false,
@@ -34084,6 +34111,10 @@ Greatest Business Solution LLC`
 
 app.post("/api/create-contractor-1099-checkout", async (req, res) => {
   try {
+    // officeRequest (office payment-link email) requires a real office
+    // session; checked before any Stripe, email, or lead side effect.
+    if (rejectUnauthenticatedOfficeRequest(req, res)) return;
+
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({
         ok: false,
