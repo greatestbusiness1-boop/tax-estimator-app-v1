@@ -12,6 +12,12 @@ const {
 } = require("./server/ownerInquiryAlerts");
 
 let ownerAlertUnguardedWarned = false;
+// Tax1099 Phase 2A: internal, office-only SANDBOX verification routes.
+// Registers nothing unless TAX1099_ENABLED=true on a non-production,
+// sandbox-only host (see server/tax1099/officeRoutes.js).
+const {
+  registerTax1099OfficeRoutes
+} = require("./server/tax1099/officeRoutes");
 const {
   MAX_FILE_BYTES: CLIENT_DOCUMENT_MAX_BYTES,
   DOCUMENT_CATEGORIES: CLIENT_DOCUMENT_CATEGORIES,
@@ -32518,6 +32524,13 @@ async function hydrateLeadsWithSecureDocumentSummaries(leads = []) {
     return safeLeads;
   }
 }
+
+// Tax1099 sandbox office tools (Phase 2A). Fail-closed: no-op unless
+// explicitly enabled on a non-production sandbox host; every action also
+// requires the office session plus a server-configured verification key.
+registerTax1099OfficeRoutes(app, {
+  requireOfficeApi: requireOfficeDocumentReviewApi
+});
 
 // POST /api/owner-alerts/retry -- office only. Forces one delivery attempt
 // for unresolved (pending / retrying / failed) owner inquiry alerts, either

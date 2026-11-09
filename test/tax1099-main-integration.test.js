@@ -261,9 +261,12 @@ test("data API destinations stay limited to the sandbox registry and the single 
 // 4. No public / unauthorized invocation surface
 // -----------------------------------------------------------------------------
 
-test("no HTTP route, page, or server import exposes the Tax1099 module", () => {
+test("no public HTTP route, page, or broad server import exposes the Tax1099 module", () => {
   const serverSource = fs.readFileSync(path.join(REPO_ROOT, "server.js"), "utf8");
-  assert.doesNotMatch(serverSource, /require\(\s*["'`]\.\/server\/tax1099/);
+
+  // Phase 2A: server.js may import ONLY the fail-closed office route module.
+  const tax1099Imports = serverSource.match(/require\(\s*["'`]\.\/server\/tax1099\/[^"'`]+["'`]\s*\)/g) || [];
+  assert.deepEqual(tax1099Imports, ['require("./server/tax1099/officeRoutes")']);
   assert.doesNotMatch(serverSource, /app\.(get|post|put|patch|delete|all|use)\(\s*["'`][^"'`]*tax1099/i);
 
   for (const dir of ["ui", "private-ui"]) {
@@ -272,13 +275,14 @@ test("no HTTP route, page, or server import exposes the Tax1099 module", () => {
     for (const file of fs.readdirSync(full)) {
       if (!/\.(html|js)$/.test(file)) continue;
       const text = fs.readFileSync(path.join(full, file), "utf8");
-      assert.doesNotMatch(text, /\/api\/tax1099/i, `${dir}/${file} must not call a Tax1099 API`);
+      assert.doesNotMatch(text, /\/api\/(office\/)?tax1099/i, `${dir}/${file} must not call a Tax1099 API`);
     }
   }
 
-  // Only the five reviewed modules exist; no route module was copied.
+  // Only the reviewed modules exist; the sandbox repo's public route module
+  // was not copied. officeRoutes.js is the Phase 2A office-only module.
   const files = fs.readdirSync(MODULE_DIR).filter((name) => name.endsWith(".js")).sort();
-  assert.deepEqual(files, MODULE_FILES.map((name) => `${name}.js`).sort());
+  assert.deepEqual(files, [...MODULE_FILES, "officeRoutes"].map((name) => `${name}.js`).sort());
 });
 
 test("pricing verification rejects callers without the trusted server-side authorization value", async () => {
